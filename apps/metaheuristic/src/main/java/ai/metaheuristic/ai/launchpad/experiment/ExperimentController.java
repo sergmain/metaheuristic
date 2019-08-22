@@ -17,12 +17,15 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
+import ai.metaheuristic.ai.launchpad.plan.PlanController;
 import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
+import ai.metaheuristic.api.launchpad.Workbook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -54,11 +57,12 @@ public class ExperimentController {
     private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiment/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
     private final WorkbookService workbookService;
+    private final WorkbookCache workbookCache;
     private final ExperimentCache experimentCache;
     private final PlanTopLevelService planTopLevelService;
 
     @GetMapping("/experiments")
-    public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
+    public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable,
                        @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                        @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
         ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
@@ -69,7 +73,7 @@ public class ExperimentController {
 
     // for AJAX
     @PostMapping("/experiments-part")
-    public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable) {
+    public String getExperimentsAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
         ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
         model.addAttribute("result", experiments);
         return "launchpad/experiment/experiments :: table";
@@ -144,6 +148,7 @@ public class ExperimentController {
 
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("experimentResult", result.experimentInfo);
+        model.addAttribute("progress", result.progress);
         return "launchpad/experiment/experiment-info";
     }
 
@@ -159,6 +164,16 @@ public class ExperimentController {
         model.addAttribute("simpleExperiment", r.simpleExperiment);
         model.addAttribute("snippetResult", r.snippetResult);
         return "launchpad/experiment/experiment-edit-form";
+    }
+
+    @GetMapping("/workbook-target-exec-state/{experimentId}/{state}/{id}")
+    public String workbookTargetExecState(@PathVariable Long experimentId, @PathVariable String state, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = planTopLevelService.changeWorkbookExecState(state, id);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        }
+        return "redirect:/launchpad/experiment/experiment-info/" + experimentId;
     }
 
     @PostMapping(value = "/experiment-upload-from-file")
@@ -218,7 +233,7 @@ public class ExperimentController {
     }
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
-    public String metadataDeleteCommit(@PathVariable long experimentId, @PathVariable String key, final RedirectAttributes redirectAttributes) {
+    public String metadataDeleteCommit(@PathVariable Long experimentId, @PathVariable String key, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.metadataDeleteCommit(experimentId, key);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
@@ -227,7 +242,7 @@ public class ExperimentController {
     }
 
     @GetMapping("/experiment-metadata-default-add-commit/{experimentId}")
-    public String metadataDefaultAddCommit(@PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
+    public String metadataDefaultAddCommit(@PathVariable Long experimentId, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.metadataDefaultAddCommit(experimentId);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
@@ -236,7 +251,7 @@ public class ExperimentController {
     }
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{snippetCode}")
-    public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable String snippetCode, final RedirectAttributes redirectAttributes) {
+    public String snippetDeleteCommit(@PathVariable Long experimentId, @PathVariable String snippetCode, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.snippetDeleteCommit(experimentId, snippetCode);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
@@ -265,10 +280,15 @@ public class ExperimentController {
                     "#285.260 experiment wasn't found, experimentId: " + id);
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
-        OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(experiment.workbookId);
-        if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+        if (experiment.workbookId!=null) {
+            Workbook wb = workbookCache.findById(experiment.workbookId);
+            if (wb != null) {
+                OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(experiment.workbookId);
+                if (operationStatusRest.isErrorMessages()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+                    return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+                }
+            }
         }
         OperationStatusRest status = experimentTopLevelService.experimentDeleteCommit(id);
         if (status.isErrorMessages()) {
@@ -295,9 +315,19 @@ public class ExperimentController {
         return "redirect:/launchpad/experiment/experiment-info/"+id;
     }
 
+    // this method is here and not in rest controller because it's using from html via ajax request
     @PostMapping("/task-rerun/{taskId}")
-    public @ResponseBody boolean rerunTask(@PathVariable long taskId) {
+    public @ResponseBody boolean rerunTask(@PathVariable Long taskId) {
         return workbookService.resetTask(taskId).status== EnumsApi.OperationStatus.OK;
+    }
+
+    @PostMapping("/bind-experiment-to-plan-with-resource")
+    public String bindExperimentToPlanWithResource(Long experimentId, String experimentCode, String resourcePoolCode, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = experimentTopLevelService.bindExperimentToPlanWithResource(experimentCode, resourcePoolCode);
+        if (status.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+        }
+        return "redirect:/launchpad/experiment/experiment-info/"+experimentId;
     }
 
 }

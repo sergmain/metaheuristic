@@ -2,7 +2,6 @@
 
 @import '~@angular/material/theming';
 @import './theme-palettes/dark.scss';
-@import './theme-palettes/dark-warn.scss';
 
 @import './theme-palettes/light.scss';
 
@@ -16,7 +15,6 @@
     @include angular-material-theme($theme);
 
     @include simpleTable();
-    @include rowOfButtons();
     @include section($theme);
     @include flex();
 }
@@ -29,12 +27,6 @@
     @include angular-material-theme($theme);
 
     @include simpleTable();
-    @include rowOfButtons();
     @include section($theme);
     @include flex();
-
-    ct-section-caption {
-        border-bottom: 1px solid rgba(192, 192, 192, 1);
-    }
-
 } 

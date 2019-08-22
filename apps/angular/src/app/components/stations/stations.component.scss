@@ -1,0 +1,17 @@
+.section {
+    .first-row {
+        td {
+            border-width: 0;
+        }
+    }
+}
+
+.first-row td,
+.first-row th {
+    border-bottom: none;
+}
+
+.second-row td,
+.second-row th {
+    border: none;
+}

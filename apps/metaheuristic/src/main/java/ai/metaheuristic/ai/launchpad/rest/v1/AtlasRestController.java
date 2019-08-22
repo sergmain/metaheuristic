@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/rest/v1/launchpad/atlas")
@@ -34,7 +35,7 @@ import org.springframework.web.bind.annotation.*;
 @Profile("launchpad")
 @CrossOrigin
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class AtlasRestController {
 
     private final AtlasService atlasService;
@@ -77,6 +78,11 @@ public class AtlasRestController {
 
     @PostMapping("/atlas-experiment-feature-progress-part/{atlasId}/{experimentId}/{featureId}/{params}/part")
     public AtlasData.ExperimentFeatureExtendedResult getFeatureProgressPart(@PathVariable Long atlasId, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
-        return atlasTopLevelService.getFeatureProgressPart(atlasId, experimentId, featureId, params, pageable);
+        return atlasTopLevelService.getFeatureProgressPart(atlasId, featureId, params, pageable);
+    }
+
+    @PostMapping(value = "/atlas-experiment-upload-from-file")
+    public OperationStatusRest uploadAtlas(final MultipartFile file) {
+        return atlasTopLevelService.uploadExperiment(file);
     }
 }

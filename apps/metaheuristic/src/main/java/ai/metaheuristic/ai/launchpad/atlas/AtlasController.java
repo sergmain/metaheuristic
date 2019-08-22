@@ -22,12 +22,16 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.AbstractResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
@@ -41,6 +45,7 @@ import java.util.ArrayList;
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class AtlasController {
 
+    private static final String REDIRECT_LAUNCHPAD_ATLAS_ATLAS_EXPERIMENTS = "redirect:/launchpad/atlas/atlas-experiments";
     private final AtlasService atlasService;
     private final AtlasTopLevelService atlasTopLevelService;
 
@@ -103,9 +108,35 @@ public class AtlasController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/atlas/atlas-experiments";
+        return REDIRECT_LAUNCHPAD_ATLAS_ATLAS_EXPERIMENTS;
     }
 
+    @GetMapping(value= "/atlas-experiment-export/atlas-{atlasId}.yaml", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<AbstractResource> downloadProcessingResult(@PathVariable("atlasId") Long atlasId) {
+        //noinspection UnnecessaryLocalVariable
+        ResponseEntity<AbstractResource> res = atlasTopLevelService.exportAtlasToFile(atlasId);
+        return res;
+    }
+
+    @PostMapping(value = "/atlas-experiment-upload-from-file")
+    public String uploadAtlas(final MultipartFile file, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = atlasTopLevelService.uploadExperiment(file);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+        }
+        return REDIRECT_LAUNCHPAD_ATLAS_ATLAS_EXPERIMENTS;
+    }
+
+    @GetMapping(value= "/atlas-experiment-export/{atlasId}")
+    public String exportExperiment(Model model, @PathVariable("atlasId") Long atlasId) {
+        model.addAttribute("atlasId", atlasId);
+        return "launchpad/atlas/atlas-experiment-export";
+    }
+
+    @GetMapping(value= "/atlas-experiment-import")
+    public String importExperiment(Model model) {
+        return "launchpad/atlas/atlas-experiment-import";
+    }
 
     @GetMapping(value = "/atlas-experiment-feature-progress/{atlasId}/{experimentId}/{featureId}")
     public String getFeatures(
@@ -155,7 +186,7 @@ public class AtlasController {
     @PostMapping("/atlas-experiment-feature-progress-part/{atlasId}/{experimentId}/{featureId}/{params}/part")
     public String getFeatureProgressPart(Model model, @PathVariable Long atlasId, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
         AtlasData.ExperimentFeatureExtendedResult experimentProgressResult =
-                atlasTopLevelService.getFeatureProgressPart(atlasId, experimentId, featureId, params, pageable);
+                atlasTopLevelService.getFeatureProgressPart(atlasId, featureId, params, pageable);
 
         model.addAttribute("metrics", experimentProgressResult.metricsResult);
         model.addAttribute("params", experimentProgressResult.hyperParamResult);

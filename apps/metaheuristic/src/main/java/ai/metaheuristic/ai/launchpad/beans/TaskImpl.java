@@ -38,7 +38,7 @@ public class TaskImpl implements Serializable, Task {
     private Integer version;
 
     /**
-     * TaskParamsYamlV1 represented as String
+     * TaskParamsYaml represented as String
      */
     @Column(name = "PARAMS")
     public String params;
@@ -68,6 +68,7 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "EXEC_STATE")
     public int execState;
 
+    // FILE_PROCESSING or EXPERIMENT
     @Column(name = "PROCESS_TYPE")
     public int processType;
 

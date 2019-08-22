@@ -1,10 +1,13 @@
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { HttpClient, } from '@angular/common/http';
-import { urls } from './urls';
 import { Observable } from 'rxjs';
-import { PlanResponse } from '@app/models';
+import { urls } from './urls';
+
+export * from './Bacth';
+export * from './response';
 
 @Injectable({ providedIn: 'root' })
+
 export class BatchService {
 
     constructor(
@@ -12,18 +15,40 @@ export class BatchService {
     ) {}
 
     batches: any = {
-        get: (data: any): Observable < object > => this.http.get(urls.batches.get(data))
+        get: (data: any): Observable < any > =>
+            this.http.get(urls.batches.get(data))
     };
 
     batch: any = {
-        get: (id: string): Observable < object > => this.http.get(urls.batch.get(id)),
+        get: (id: string): Observable < any > =>
+            this.http.get(urls.batch.get(id)),
 
-        delete: (id: string | number): Observable < object > => {
-            return this.http.post(urls.batch.delete({ id }), { id });
-        },
+        delete: (batchId: string): Observable < any > =>
+            this.http.get(urls.batch.delete(batchId)),
 
-        add: (code: string, params: string): Observable < PlanResponse.Response > => {
-            return this.http.post < PlanResponse.Response > (urls.batch.add(), { code, params });
-        }
+        deleteCommit: (batchId: string): Observable < any > =>
+            this.http.post(urls.batch.deleteCommit(batchId), { batchId }),
+
+        status: (id: string): Observable < any > =>
+            this.http.get(urls.batch.status(id)),
+
+        add: (): Observable < any > =>
+            this.http.get < any > (urls.batch.add()),
+
+        upload: (formData: any): Observable < any > =>
+            this.http.post(urls.batch.upload(), formData),
+        downloadBatchResult: (batchId: string): Observable < any > =>
+            this.http.get(urls.batch.downloadBatchResult(batchId))
     };
+
+    downloadFileSystem(batchId: string): Observable < HttpResponse < Blob >> {
+        let headers = new HttpHeaders();
+        headers = headers.append('Accept', 'application/octet-stream');
+
+        return this.http.get(urls.batch.downloadBatchResult(batchId), {
+            headers,
+            observe: 'response',
+            responseType: 'blob'
+        });
+    }
 }

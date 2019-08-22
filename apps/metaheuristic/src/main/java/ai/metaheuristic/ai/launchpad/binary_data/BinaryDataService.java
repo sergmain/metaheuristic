@@ -141,19 +141,19 @@ public class BinaryDataService {
 
     @Transactional(readOnly = true)
     public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode, Long workbookId) {
+        if (inputResourcePoolCode.isEmpty()) {
+            return List.of();
+        }
         return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode, workbookId);
     }
 
     @Transactional(readOnly = true)
     public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode) {
+        if (inputResourcePoolCode.isEmpty()) {
+            return List.of();
+        }
         return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode);
     }
-
-/*
-    public List<SimpleCodeAndStorageUrl> getResourceCodes(List<String> inputResourceCode) {
-        return binaryDataRepository.getCodeAndStorageUrl(inputResourceCode);
-    }
-*/
 
     public void deleteByCodeAndDataType(String code, BinaryDataType binaryDataType) {
         binaryDataRepository.deleteByCodeAndDataType(code, binaryDataType.value);

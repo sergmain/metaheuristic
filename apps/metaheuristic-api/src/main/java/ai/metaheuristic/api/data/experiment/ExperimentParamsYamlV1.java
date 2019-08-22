@@ -42,6 +42,8 @@ public class ExperimentParamsYamlV1 implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class HyperParamV1 {
         public String key;
         public String values;

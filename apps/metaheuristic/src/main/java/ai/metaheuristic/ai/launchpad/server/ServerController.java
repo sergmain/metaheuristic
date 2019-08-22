@@ -43,6 +43,7 @@ import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -59,6 +60,7 @@ import java.io.*;
 @Slf4j
 @Profile("launchpad")
 @RequestMapping("/rest/v1")
+@PreAuthorize("hasAnyRole('ADMIN', 'SERVER_REST_ACCESS')")
 public class ServerController {
 
     private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadResourceStatus.OK, null);

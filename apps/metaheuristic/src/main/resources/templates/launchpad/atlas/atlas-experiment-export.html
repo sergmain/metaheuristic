@@ -1,0 +1,25 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+     xmlns:th="http://www.thymeleaf.org"
+     layout:decorate="~{layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+>
+    <!--/*@thymesVar id="atlasId" type="java.lang.Long"*/-->
+    <h1 class="widget-header">Export an experiment from atlas</h1>
+
+    <table>
+        <tr>
+            <td>
+                <a class="pure-button pure-button-primary" href="#"
+                   th:href="${'/launchpad/atlas/atlas-experiment-export/atlas-' + atlasId + '.yaml'}">Export</a>
+            </td>
+            <td>
+                &nbsp;
+            </td>
+            <td>
+                <a class="pure-button pure-button-primary" href="atlas-experiments.html"
+                   th:href="${'/launchpad/atlas/atlas-experiments'}">Cancel</a>
+            </td>
+        </tr>
+    </table>
+
+</div>

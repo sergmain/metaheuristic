@@ -95,6 +95,8 @@ public class ExperimentParamsYaml implements BaseParams {
     public static class ExperimentProcessing {
         public boolean isAllTaskProduced = false;
         public boolean isFeatureProduced = false;
+        public boolean maxValueCalculated = false;
+        public boolean exportedToAtlas = false;
 
         public int numberOfTask = 0;
 
@@ -102,7 +104,7 @@ public class ExperimentParamsYaml implements BaseParams {
         public List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
     }
 
-    public final int version=1;
+    public final int version=2;
     public long createdOn;
     public ExperimentYaml experimentYaml = new ExperimentYaml();
     public ExperimentProcessing processing = new ExperimentProcessing();

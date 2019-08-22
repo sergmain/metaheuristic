@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.account.AccountCache;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -45,25 +46,33 @@ public class CustomUserDetails implements UserDetailsService {
     @Data
     public static class ComplexUsername {
         String username;
-        String token;
 
-        private ComplexUsername(String username, String token) {
+        /**
+         * won't delete this field for backward compatibility
+         */
+        @Deprecated
+        final String token = "";
+
+        private ComplexUsername(String username) {
             this.username = username;
-            this.token = token;
         }
 
         public static ComplexUsername getInstance(String fullUsername) {
             int idx = fullUsername.lastIndexOf('=');
+            final String username;
             if (idx == -1) {
-                return null;
+                username = fullUsername;
             }
-            ComplexUsername complexUsername = new ComplexUsername(fullUsername.substring(0, idx), fullUsername.substring(idx + 1));
+            else {
+                username = fullUsername.substring(0, idx);
+            }
+            ComplexUsername complexUsername = new ComplexUsername(username);
 
             return complexUsername.isValid() ? complexUsername : null;
         }
 
         private boolean isValid() {
-            return username.length() > 0 && token.length() > 0;
+            return username!=null && !username.isBlank();
         }
     }
 
@@ -79,30 +88,26 @@ public class CustomUserDetails implements UserDetailsService {
             throw new UsernameNotFoundException("Username not found");
         }
 
-        if (StringUtils.equals(globals.launchpadMasterUsername, complexUsername.getUsername()) && StringUtils.equals(globals.launchpadMasterToken, complexUsername.getToken())) {
+        if (StringUtils.equals(globals.launchpadMasterUsername, complexUsername.getUsername())) {
 
             Account account = new Account();
 
-            // fake Id, I hope it won't make any collision with real accounts
+            // fake Id, I hope it won't make any collision with the real accounts
             // need to think of better solution for virtual accounts
             account.setId( Integer.MAX_VALUE -5L );
             account.setUsername(globals.launchpadMasterUsername);
-            account.setToken(globals.launchpadMasterToken);
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
             account.setPassword(globals.launchpadMasterPassword);
 
-            account.setRoles("ROLE_ADMIN, ROLE_MANAGER, ROLE_ACCESS_REST");
+            account.setRoles("ROLE_ADMIN, ROLE_MANAGER, ROLE_SERVER_REST_ACCESS");
             return account;
         }
 
         Account account = accountService.findByUsername(complexUsername.getUsername());
         if (account == null) {
-            throw new UsernameNotFoundException("Username not found");
-        }
-        if (!complexUsername.getToken().equals(account.getToken())) {
             throw new UsernameNotFoundException("Username not found");
         }
         return account;

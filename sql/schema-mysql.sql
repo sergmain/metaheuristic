@@ -70,6 +70,9 @@ CREATE INDEX mh_data_data_type_idx
 CREATE INDEX mh_data_ref_id_ref_type_idx
   ON mh_data (REF_ID, REF_TYPE);
 
+CREATE INDEX mh_data_ref_type_idx
+  ON mh_data (REF_TYPE);
+
 CREATE INDEX mh_data_pool_code_id_idx
     ON mh_data (POOL_CODE);
 
@@ -154,6 +157,21 @@ CREATE TABLE mh_atlas
   CREATED_ON    bigint not null,
   EXPERIMENT    LONGTEXT NOT NULL
 );
+
+CREATE TABLE mh_atlas_task
+(
+    ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION     NUMERIC(5, 0)  NOT NULL,
+    ATLAS_ID    NUMERIC(10, 0)   NOT NULL,
+    TASK_ID     NUMERIC(10, 0)   NOT NULL,
+    PARAMS      MEDIUMTEXT not null
+);
+
+CREATE INDEX mh_atlas_task_atlas_id_idx
+    ON mh_atlas_task (ATLAS_ID);
+
+CREATE INDEX mh_atlas_task_atlas_id_task_id_idx
+    ON mh_atlas_task (ATLAS_ID, TASK_ID);
 
 create table mh_batch
 (

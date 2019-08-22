@@ -79,9 +79,15 @@ public class Account implements UserDetails {
     private String phoneAsStr;
 
     /**
-     * токен для проверки логин/пароля/токена
+     * won't delete this field for backward compatibility
      */
-    private String token;
+    @Deprecated
+    private String token = "";
+
+    // for backward compatibility, token must be not-null in db
+    public String getToken() {
+        return "";
+    }
 
     @Column(name="created_on")
     private long createdOn;
@@ -98,6 +104,6 @@ public class Account implements UserDetails {
     }
 
     public String getLogin() {
-        return username + '=' + token;
+        return username;
     }
 }

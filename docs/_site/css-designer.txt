@@ -1,5 +1,0 @@
-https://purecss.io/
-https://yui.github.io/skinbuilder/?mode=pure
-
-current design
-https://yui.github.io/skinbuilder/index.html?opt=mine,5E8D74,ffffff,1,1,10,1.5&h=0,-99,60&n=0,-99,75&l=0,-99,80&b=0,-99,90&mode=pure

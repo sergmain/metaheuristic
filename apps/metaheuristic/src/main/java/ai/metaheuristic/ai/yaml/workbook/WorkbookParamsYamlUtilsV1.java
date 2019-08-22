@@ -41,7 +41,7 @@ public class WorkbookParamsYamlUtilsV1
     }
 
     @Override
-    public WorkbookParamsYamlV2 upgradeTo(WorkbookParamsYamlV1 workbookParams) {
+    public WorkbookParamsYamlV2 upgradeTo(WorkbookParamsYamlV1 workbookParams, Long ... vars) {
         WorkbookParamsYamlV2 t = new WorkbookParamsYamlV2();
         BeanUtils.copyProperties(workbookParams, t.workbookYaml);
         if (workbookParams.poolCodes!=null) {
@@ -67,8 +67,8 @@ public class WorkbookParamsYamlUtilsV1
         return null;
     }
 
-    public String toString(WorkbookParamsYamlV1 planYaml) {
-        return getYaml().dump(planYaml);
+    public String toString(WorkbookParamsYamlV1 yaml) {
+        return getYaml().dump(yaml);
     }
 
     public WorkbookParamsYamlV1 to(String s) {

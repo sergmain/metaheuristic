@@ -72,13 +72,16 @@ public class ExperimentProcessService {
         else {
             e = experimentCache.findById(experimentId);
         }
+
         PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
         if (e==null) {
             result.status = EnumsApi.PlanProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
             return result;
         }
 
-        // TODO 2019-06-23 workbookId is set even it isn't in persistent mode. Need to check fro side-effects
+        if (!isPersist) {
+            e = e.clone();
+        }
         e.setWorkbookId(workbookId);
         if (isPersist) {
             e = experimentCache.save(e);
@@ -103,6 +106,7 @@ public class ExperimentProcessService {
             for (String poolCode : list) {
                 List<String> newResources = collectedInputs.get(poolCode);
                 if (newResources==null) {
+                    log.warn("#714.010 Can't find input resource for poolCode {}", poolCode);
                     result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
@@ -117,6 +121,7 @@ public class ExperimentProcessService {
 
                 PlanService.ResourcePools metaPools = new PlanService.ResourcePools(initialInputResourceCodes);
                 if (metaPools.status != EnumsApi.PlanProducingStatus.OK) {
+                    log.warn("#714.020 (metaPools.status != EnumsApi.PlanProducingStatus.OK), metaPools.status {}", metaPools.status);
                     result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
@@ -125,6 +130,7 @@ public class ExperimentProcessService {
 
             features = collectedInputs.get(meta.getValue());
             if (features==null) {
+                log.warn("#714.030 Can't find input resource for meta.value {}", meta.getValue());
                 result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                 return result;
             }

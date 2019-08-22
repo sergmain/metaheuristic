@@ -19,16 +19,16 @@ package ai.metaheuristic.ai.launchpad.station;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.StationData;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.yaml.station_status.StationStatus;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +59,10 @@ public class StationTopLevelService {
     private final WorkbookService workbookService;
     private final TaskRepository taskRepository;
 
-    private static final long STATION_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
+    // Attention, this value must be greater than
+    // ai.metaheuristic.ai.launchpad.server.ServerService.SESSION_UPDATE_TIMEOUT
+    // at least for 20 seconds
+    public static final long STATION_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
 
     public static String createNewSessionId() {
         return UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
@@ -119,7 +123,7 @@ public class StationTopLevelService {
     public void storeStationStatus(Protocol.ReportStationStatus command) {
         final Long stationId = Long.valueOf(command.getStationId());
         final Object obj = syncMap.computeIfAbsent(stationId, o -> new Object());
-        log.debug("Before entering in sync block");
+        log.debug("Before entering in sync block, storeStationStatus()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
@@ -128,10 +132,26 @@ public class StationTopLevelService {
                     // we throw ISE cos all checks have to be made early
                     throw new IllegalStateException("Station wasn't found for stationId: " + stationId);
                 }
-                final String stationStatus = StationStatusUtils.toString(command.status);
-                if (!stationStatus.equals(station.status)) {
-                    station.status = stationStatus;
-                    station.setUpdatedOn(System.currentTimeMillis());
+                StationStatus ss = StationStatusUtils.to(station.status);
+                if (isStationStatusDifferent(command.status, ss)) {
+                    ss.env = command.status.env;
+                    ss.gitStatusInfo = command.status.gitStatusInfo;
+                    ss.schedule = command.status.schedule;
+
+                    // Do not include updating of sessionId
+                    // ss.sessionId = command.status.sessionId;
+
+                    // Do not include updating of sessionCreatedOn!
+                    // ss.sessionCreatedOn = command.status.sessionCreatedOn;
+
+                    ss.ip = command.status.ip;
+                    ss.host = command.status.host;
+                    ss.errors = command.status.errors;
+                    ss.logDownloadable = command.status.logDownloadable;
+                    ss.taskParamsVersion = command.status.taskParamsVersion;
+
+                    station.status = StationStatusUtils.toString(ss);
+                    station.updatedOn = System.currentTimeMillis();
                     try {
                         log.debug("Save new station status, station: {}", station);
                         stationCache.save(station);
@@ -144,7 +164,7 @@ public class StationTopLevelService {
                     }
                 }
                 else {
-                    log.info("Station status is equal to stored in db, new: {}, db: {}", stationStatus, station.status);
+                    log.debug("Station status is equal to the status stored in db");
                 }
             }
             finally {
@@ -154,6 +174,19 @@ public class StationTopLevelService {
         log.debug("After leaving sync block");
     }
 
+    public static boolean isStationStatusDifferent(StationStatus status, StationStatus ss) {
+        return
+        !Objects.equals(ss.env, status.env) ||
+        !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||
+        !Objects.equals(ss.schedule, status.schedule) ||
+        !Objects.equals(ss.ip, status.ip) ||
+        !Objects.equals(ss.host, status.host) ||
+        !Objects.equals(ss.errors, status.errors) ||
+        ss.logDownloadable!=status.logDownloadable ||
+        ss.taskParamsVersion!=status.taskParamsVersion;
+    }
+
+    // TODO Need to re-write this method
     public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
         final long stationId = Long.parseLong(stationIdAsStr);
         List<Object[]> tasks = taskRepository.findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(stationId);

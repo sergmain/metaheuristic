@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -39,5 +40,6 @@ public class RealLaunchpadService implements LaunchpadService{
     private final ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad;
     private final StationTopLevelService stationTopLevelService;
     private final WorkbookService workbookService;
+    private final WorkbookSchedulerService workbookSchedulerService;
 }
 

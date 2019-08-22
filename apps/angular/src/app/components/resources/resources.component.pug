@@ -1,0 +1,71 @@
+mixin create_resource_button
+    button(mat-flat-button color="primary" '[disabled]'="currentStates.has(states.loading) || currentStates.has(states.firstLoading)" routerLink="/launchpad/resources/add/") Create resource
+ct-section 
+    ct-section-header
+        ct-section-header-row
+            ct-flex(justify-content="space-between")
+                ct-flex-item: ct-heading Resources
+                ct-flex-item: +create_resource_button
+    
+
+
+    ct-section-body
+        ct-section-body-row
+            ct-table(#table)
+                table(mat-table [dataSource]="dataSource" class="mat-table") 
+                    ng-container(matColumnDef="id" sticky) 
+                        th(mat-header-cell *matHeaderCellDef ) id 
+                        td(mat-cell *matCellDef="let el") {{el.id}} 
+                    ng-container(matColumnDef="valid") 
+                        th(mat-header-cell *matHeaderCellDef) Is Valid? 
+                        td(mat-cell *matCellDef="let el") {{el.valid}} 
+                    ng-container(matColumnDef="uploadTs") 
+                        th(mat-header-cell *matHeaderCellDef) Upload Date 
+                        td(mat-cell *matCellDef="let el") {{el.uploadTs | date}} 
+                    ng-container(matColumnDef="dataTypeAsStr") 
+                        th(mat-header-cell *matHeaderCellDef) Type of <br>Resource 
+                        td(mat-cell *matCellDef="let el") {{el.dataTypeAsStr}} 
+                    ng-container(matColumnDef="checksum") 
+                        th(mat-header-cell *matHeaderCellDef) Checksum 
+                        td(mat-cell *matCellDef="let el") {{el.checksum}} 
+                    ng-container(matColumnDef="code") 
+                        th(mat-header-cell *matHeaderCellDef) Code 
+                        td(mat-cell *matCellDef="let el") {{el.code}} 
+                    ng-container(matColumnDef="poolCode") 
+                        th(mat-header-cell *matHeaderCellDef) Pool Code 
+                        td(mat-cell *matCellDef="let el") {{el.poolCode}} 
+                    ng-container(matColumnDef="manual") 
+                        th(mat-header-cell *matHeaderCellDef) Is Manual 
+                        td(mat-cell *matCellDef="let el") {{el.manual}} 
+                    ng-container(matColumnDef="filename") 
+                        th(mat-header-cell *matHeaderCellDef) Filename 
+                        td(mat-cell *matCellDef="let el") {{el.filename}} 
+                    ng-container(matColumnDef="storageUrl") 
+                        th(mat-header-cell *matHeaderCellDef) Storage Url 
+                        td(mat-cell *matCellDef="let el") {{el.storageUrl}} 
+                    ng-container(matColumnDef="bts" stickyEnd) 
+                        th(mat-header-cell *matHeaderCellDef)  
+                        td(mat-cell *matCellDef="let el") 
+                            ct-flex(justify-content="flex-end")
+                                ct-flex-item
+                                    button(mat-flat-button color="warn" size="forTableRow" '(click)'="delete(el)"): mat-icon delete 
+                    tr(mat-header-row *matHeaderRowDef="columnsToDisplay;")  
+                    tr(mat-row *matRowDef="let row; columns: columnsToDisplay;" '[class.deleted-table-row]'="deletedResourses.includes(row)")
+        ct-section-body-row('*ngIf'="currentStates.has(states.firstLoading)")
+                mat-progress-bar(mode="indeterminate")
+
+
+
+    ct-section-footer
+        ct-section-footer-row
+            ct-flex(justify-content="space-between")
+                ct-flex-item
+                    ct-flex(justify-content="flex-end" gap="8px")
+                        ct-flex-item: button(mat-flat-button color="primary" #prevTable disabled '(click)'='prev()'): mat-icon arrow_back_ios
+                        ct-flex-item: button(mat-flat-button color="primary" #nextTable disabled '(click)'='next()'): mat-icon arrow_forward_ios
+
+                ct-flex-item: +create_resource_button
+
+
+
+

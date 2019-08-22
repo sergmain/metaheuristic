@@ -53,12 +53,12 @@ public class Schedulers {
         // Launchpad schedulers
 
         private static final long TIMEOUT_BETWEEN_RECONCILIATION = TimeUnit.MINUTES.toMillis(1);
-        private long prevReconsilationTime = 0L;
+        private long prevReconciliationTime = 0L;
 
         /**
          * update status of all workbooks which are in 'started' state. Also, if workbook is finished, atlas will be produced
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-workbook'), 5, 40, 5)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-workbook'), 1, 40, 2)*1000 }")
         public void updateWorkbookStatuses() {
             if (globals.isUnitTesting) {
                 return;
@@ -69,16 +69,18 @@ public class Schedulers {
             log.info("Invoke WorkbookService.updateWorkbookStatuses()");
             boolean needReconciliation = false;
             try {
-                if ((System.currentTimeMillis()- prevReconsilationTime)>TIMEOUT_BETWEEN_RECONCILIATION) {
+                if ((System.currentTimeMillis()- prevReconciliationTime)>TIMEOUT_BETWEEN_RECONCILIATION) {
                     needReconciliation = true;
                 }
-                launchpadService.getWorkbookService().updateWorkbookStatuses(needReconciliation);
+                launchpadService.getWorkbookSchedulerService().updateWorkbookStatuses(needReconciliation);
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("!!! need to investigate. Error while updateWorkbookStatuses()",e);
+            } catch (Throwable th) {
+                log.error("Error while updateWorkbookStatuses()", th);
             }
             finally {
                 if (needReconciliation) {
-                    prevReconsilationTime = System.currentTimeMillis();
+                    prevReconciliationTime = System.currentTimeMillis();
                 }
             }
         }
@@ -105,6 +107,18 @@ public class Schedulers {
             }
             log.info("Invoke PlanService.producingWorkbooks()");
             launchpadService.getArtifactCleanerAtLaunchpad().fixedDelay();
+        }
+
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.exteriment-finisher'), 5, 300, 10)*1000 }")
+        public void experimentFinisher() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.isLaunchpadEnabled) {
+                return;
+            }
+            log.info("Invoke PlanService.producingWorkbooks()");
+            launchpadService.getExperimentService().experimentFinisher();
         }
 
         @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
@@ -189,7 +203,7 @@ public class Schedulers {
         /**
          * this scheduler is being run at the station side
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('ai.metaheuristic.station.timeout.request-launchpad'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('ai.metaheuristic.station.timeout.request-launchpad'), 3, 20, 6)*1000 }")
         public void launchRequester() {
             if (globals.isUnitTesting) {
                 return;

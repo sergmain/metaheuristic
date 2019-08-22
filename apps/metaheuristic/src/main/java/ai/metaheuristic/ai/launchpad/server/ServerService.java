@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -68,7 +69,7 @@ public class ServerService {
     private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
 
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
-    public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(1);
+    public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
     private final Globals globals;
     private final BinaryDataService binaryDataService;
@@ -130,7 +131,7 @@ public class ServerService {
             copyChunk(assetFile.file, f, offset, realSize);
             long len = f.length();
         }
-        return new ResponseEntity<>(new FileSystemResource(f.toPath()), getHeader(httpHeaders, f.length()), HttpStatus.OK);
+        return new ResponseEntity<>(new FileSystemResource(f.toPath()), RestUtils.getHeader(httpHeaders, f.length()), HttpStatus.OK);
     }
 
     public static void copyChunk(File sourceFile, File destFile, long offset, long size) {
@@ -161,16 +162,6 @@ public class ServerService {
         catch (Throwable th) {
             ExceptionUtils.wrapAndThrow(th);
         }
-    }
-
-    private static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
-        HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
-        header.setContentLength(length);
-        header.setCacheControl("max-age=0");
-        header.setExpires(0);
-        header.setPragma("no-cache");
-
-        return header;
     }
 
     @Service
@@ -233,10 +224,12 @@ public class ServerService {
 
     private Command[] checkStationId(String stationId, String sessionId, String remoteAddress) {
         if (StringUtils.isBlank(stationId)) {
+            log.warn("#442.045 StringUtils.isBlank(stationId), return RequestStationId()");
             return commandProcessor.process(new Protocol.RequestStationId());
         }
         final Station station = stationsRepository.findByIdForUpdate(Long.parseLong(stationId));
         if (station == null) {
+            log.warn("#442.046 station == null, return ReAssignStationId() with new stationId and new sessionId");
             return reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
         }
         StationStatus ss;
@@ -249,32 +242,47 @@ public class ServerService {
             return Protocol.NOP_ARRAY;
         }
         if (StringUtils.isBlank(sessionId)) {
+            log.debug("#442.070 StringUtils.isBlank(sessionId), return ReAssignStationId() with new sessionId");
             // the same station but with different and expired sessionId
             // so we can continue to use this stationId with new sessionId
             return assignNewSessionId(station, ss);
         }
         if (!ss.sessionId.equals(sessionId)) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
+                log.debug("#442.071 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignStationId() with new sessionId");
                 // the same station but with different and expired sessionId
                 // so we can continue to use this stationId with new sessionId
                 // we won't use station's sessionIf to be sure that sessionId has valid format
                 return assignNewSessionId(station, ss);
             } else {
+                log.debug("#442.072 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignStationId() with new stationId and new sessionId");
                 // different stations with the same stationId
                 // there is other active station with valid sessionId
                 return reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
             }
         }
         else {
+            // see logs in method
             return updateSession(station, ss);
         }
     }
 
+    /**
+     * session is Ok, so we need to update session's timestamp periodically
+     */
     private Command[] updateSession(Station station, StationStatus ss) {
-        if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_UPDATE_TIMEOUT) {
+        final long millis = System.currentTimeMillis();
+        final long diff = millis - ss.sessionCreatedOn;
+        if (diff > SESSION_UPDATE_TIMEOUT) {
+            log.debug("#442.074 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
+                    "'    station.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
+                    "'    station.status:\n{},\n" +
+                    "'    return ReAssignStationId() with the same stationId and sessionId. only session's timestamp was updated.",
+                    station.version, millis, ss.sessionCreatedOn, diff, SESSION_UPDATE_TIMEOUT, station.status);
             // the same station, with the same sessionId
-            // so we need just to refresh sessionId
-            ss.sessionCreatedOn = System.currentTimeMillis();
+            // so we just need to refresh sessionId timestamp
+            ss.sessionCreatedOn = millis;
+            station.updatedOn = millis;
             station.status = StationStatusUtils.toString(ss);
             try {
                 stationCache.save(station);
@@ -283,9 +291,12 @@ public class ServerService {
                 log.error("#442.085 Error");
                 throw e;
             }
+            Station s = stationCache.findById(station.id);
+            log.debug("#442.086 old station.version: {}, in cache station.version: {}, station.status:\n{},\n", station.version, s.version, s.status);
             // the same stationId but new sessionId
-            return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
-        } else {
+            return null;
+        }
+        else {
             // the same stationId, the same sessionId, session isn't expired
             return null;
         }
@@ -295,6 +306,7 @@ public class ServerService {
         ss.sessionId = StationTopLevelService.createNewSessionId();
         ss.sessionCreatedOn = System.currentTimeMillis();
         station.status = StationStatusUtils.toString(ss);
+        station.updatedOn = ss.sessionCreatedOn;
         stationCache.save(station);
         // the same stationId but new sessionId
         return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
@@ -312,6 +324,7 @@ public class ServerService {
                 "[unknown]", "[unknown]", null, false, 1);
 
         s.status = StationStatusUtils.toString(ss);
+        s.updatedOn = ss.sessionCreatedOn;
         stationCache.save(s);
         return new Command[]{new Protocol.ReAssignStationId(s.getId(), sessionId)};
     }

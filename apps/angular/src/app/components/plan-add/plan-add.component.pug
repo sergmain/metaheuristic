@@ -1,0 +1,27 @@
+ct-cols
+    ct-col(size='6')
+        ct-section
+            ct-section-header
+                ct-section-header-row
+                    ct-heading New Plan
+            ct-section-body
+                form( '[formGroup]'="form" novalidate)
+                    ct-section-body-row
+                        mat-form-field(appearance="outline")
+                            mat-label Parameters of Plan
+                            textarea(formControlName="planYaml" matInput cdkTextareaAutosize cdkAutosizeMinRows="10" value="" autocomplete="off")
+                            mat-hint This is a required field.
+
+            ct-section-footer
+                ct-section-footer-row
+                    ct-flex(justify-content="flex-end" gap="8px")
+                        ct-flex-item: button(mat-stroked-button '(click)'="cancel()") Back 
+                        ct-flex-item: button(#submitButton mat-flat-button '(click)'="create()" color="primary" '[disabled]'="!form.valid") Add
+    ct-col(size='6' '*ngIf'="response")
+        ct-section
+            ct-section-body
+                ct-section-body-row
+                    div STATUS: {{response.status}}
+                    p(*ngFor="let error of response.errorMessages; index as i; trackBy: trackByFn") {{error}}
+                    p(*ngFor="let info of response.infoMessages; index as i; trackBy: trackByFn") {{info}}
+

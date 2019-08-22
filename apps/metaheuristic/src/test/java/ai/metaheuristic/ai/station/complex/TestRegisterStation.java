@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.core.JsonUtils;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
+import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
@@ -150,7 +151,7 @@ public class TestRegisterStation {
         assertNotNull(s);
 
         StationStatus ss1 = StationStatusUtils.to(s.status);
-        assertEquals(ss, ss1);
+        assertFalse(StationTopLevelService.isStationStatusDifferent(ss, ss1));
 
         //noinspection unused
         int i=0;

@@ -76,7 +76,7 @@ public class TestTimeParsing {
 
 
         SimpleYamlHolder holder;
-        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/extended-time-period.yaml")) {
+        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods/extended-time-period.yaml")) {
             holder = SimpleYamlHolderUtils.to(is);
         }
         assertNotNull(holder);
@@ -111,11 +111,55 @@ public class TestTimeParsing {
     }
 
     @Test
+    public void parseExtendedTimeYamlWithWeek() throws IOException, ParseException {
+
+
+        SimpleYamlHolder holder;
+        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods/extended-time-period-with-weeks.yaml")) {
+            holder = SimpleYamlHolderUtils.to(is);
+        }
+        assertNotNull(holder);
+        assertNotNull(holder.holder);
+        ExtendedTimePeriod period = ExtendedTimePeriodUtils.to(holder.holder);
+
+        assertNull(period.workingDay);
+        assertNull(period.weekend);
+        assertNotNull(period.week);
+
+        assertEquals("dd/MM/yyyy", period.dayMask);
+        assertEquals("15/01/2019,16/01/2019", period.holiday);
+        assertEquals("19/01/2019", period.exceptionWorkingDay);
+
+        SimpleDateFormat sdf = new SimpleDateFormat(period.dayMask);
+        Date date = sdf.parse(period.exceptionWorkingDay);
+
+        Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        assertEquals(19, c.get(Calendar.DAY_OF_MONTH));
+        assertEquals(1, c.get(Calendar.MONTH)+1);
+        assertEquals(2019, c.get(Calendar.YEAR));
+        assertEquals(Calendar.SATURDAY, c.get(Calendar.DAY_OF_WEEK));
+
+        LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
+        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm");
+
+        assertFalse(schedule.isActive(LocalDateTime.parse( "05/08/2019 13:05", fmt)));
+        assertTrue(schedule.isActive(LocalDateTime.parse( "06/08/2019 13:05", fmt)));
+        assertTrue(schedule.isActive(LocalDateTime.parse( "07/08/2019 13:05", fmt)));
+        assertFalse(schedule.isActive(LocalDateTime.parse( "08/08/2019 13:05", fmt)));
+        assertTrue(schedule.isActive(LocalDateTime.parse( "09/08/2019 13:05", fmt)));
+        assertFalse(schedule.isActive(LocalDateTime.parse( "10/08/2019 13:05", fmt)));
+        assertTrue(schedule.isActive(LocalDateTime.parse( "11/08/2019 13:05", fmt)));
+
+        assertTrue(schedule.isActive(LocalDateTime.parse( "20/01/2019 13:05", fmt)));
+    }
+
+    @Test
     public void parseExtendedTimeYaml_short() throws IOException {
 
 
         SimpleYamlHolder holder;
-        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/extended-time-period-short.yaml")) {
+        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods//extended-time-period-short.yaml")) {
             holder = SimpleYamlHolderUtils.to(is);
         }
         assertNotNull(holder);
@@ -142,7 +186,7 @@ public class TestTimeParsing {
     @Test
     public void parseExtendedTimeYaml_alwaysPermitted() throws IOException {
         SimpleYamlHolder holder;
-        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/extended-time-period-always-permitted.yaml")) {
+        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods//extended-time-period-always-permitted.yaml")) {
             holder = SimpleYamlHolderUtils.to(is);
         }
         assertNotNull(holder);
@@ -163,15 +207,15 @@ public class TestTimeParsing {
         LocalDateTime time = LocalDateTime.parse("14/01/2019 23:59:29", fmt1);
         assertTrue(schedule.isActive(time));
 
-        DateTimeFormatter fmt2 = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
-        time = LocalDateTime.parse("2019-05-10 23:59:19", fmt2);
+        DateTimeFormatter fmt2 = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        time = LocalDateTime.parse("2019-05-10 23:59:19.138", fmt2);
         assertTrue(schedule.isActive(time));
     }
 
     @Test
     public void parseExtendedTimeYaml_weekendRestricted() throws IOException {
         SimpleYamlHolder holder;
-        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/extended-time-weekend-restricted.yaml")) {
+        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods/extended-time-weekend-restricted.yaml")) {
             holder = SimpleYamlHolderUtils.to(is);
         }
         assertNotNull(holder);
@@ -185,9 +229,9 @@ public class TestTimeParsing {
         assertNull(period.exceptionWorkingDay);
 
         LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
-        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss");
-        assertFalse(schedule.isActive(LocalDateTime.parse( "27/04/2019 23:59:59", fmt)));
-        assertFalse(schedule.isActive(LocalDateTime.parse( "27/04/2019 00:01:00", fmt)));
+        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss.SSS");
+        assertFalse(schedule.isActive(LocalDateTime.parse( "27/04/2019 23:59:59.138", fmt)));
+        assertTrue(schedule.isActive(LocalDateTime.parse( "27/04/2019 00:01:00.000", fmt)));
 
     }
 

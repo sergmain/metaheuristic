@@ -45,10 +45,15 @@ public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
     Slice<Workbook> findAllByOrderByExecStateDescCompletedOnDesc(Pageable pageable);
 
     @Transactional(readOnly = true)
-    List<Workbook> findByExecStateOrderByCreatedOnAsc(int execSate);
+    @Query(value="select e.id from WorkbookImpl e where e.execState=:execState order by e.createdOn asc ")
+    List<Long> findByExecStateOrderByCreatedOnAsc(int execState);
 
     @Transactional
     List<WorkbookImpl> findByExecState(int execState);
+
+    @Transactional(readOnly = true)
+    @Query(value="select e.id from WorkbookImpl e where e.execState=:execState")
+    List<Long> findIdsByExecState(int execState);
 
     Slice<Workbook> findByPlanId(Pageable pageable, Long planId);
 

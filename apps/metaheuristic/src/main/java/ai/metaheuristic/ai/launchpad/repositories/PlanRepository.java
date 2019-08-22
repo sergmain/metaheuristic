@@ -41,6 +41,10 @@ public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
     Page<PlanImpl> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
+    @Query(value="select p.id from PlanImpl p")
+    List<Long> findAllAsIds();
+
+    @Transactional(readOnly = true)
     @Query(value="select p from PlanImpl p")
     List<Plan> findAllAsPlan();
 

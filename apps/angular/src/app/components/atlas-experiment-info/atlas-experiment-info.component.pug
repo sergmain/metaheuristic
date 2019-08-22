@@ -1,0 +1,11 @@
+div(*ngIf='experimentInfo')
+    div 
+        br
+        div Workbook Exec State 
+        div(style="font-size:48px;letter-spacing: 0.1em;") {{experimentInfo.workbookExecState}}
+        br
+    include general-info.partial.pug
+    br
+    include hyper-parameters.partial.pug
+    br
+    include features.partial.pug

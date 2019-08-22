@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'ACCESS_REST')")
+@PreAuthorize("hasAnyRole('ADMIN')")
 public class StationsRestController {
 
     private final StationTopLevelService stationTopLevelService;

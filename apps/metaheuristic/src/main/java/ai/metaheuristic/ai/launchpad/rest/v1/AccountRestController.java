@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.*;
 @Profile("launchpad")
 @CrossOrigin
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'ACCESS_REST')")
+@PreAuthorize("hasAnyRole('ADMIN')")
 public class AccountRestController {
 
     private final AccountTopLevelService accountTopLevelService;
@@ -58,6 +58,11 @@ public class AccountRestController {
     @PostMapping("/account-edit-commit")
     public OperationStatusRest editFormCommit(Long id, String publicName, boolean enabled) {
         return accountTopLevelService.editFormCommit(id, publicName, enabled);
+    }
+
+    @PostMapping("/account-role-commit")
+    public OperationStatusRest roleFormCommit(Long accountId, String roles) {
+        return accountTopLevelService.roleFormCommit(accountId, roles);
     }
 
     @PostMapping("/account-password-edit-commit")

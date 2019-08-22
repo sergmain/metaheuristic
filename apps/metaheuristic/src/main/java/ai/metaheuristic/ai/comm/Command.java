@@ -49,7 +49,7 @@ public class Command implements Serializable {
         RequestTask /*  */,
         AssignedTask /*  */,
         ReportStationStatus /* returned after processing AssignedStationId and ReAssignStationId */,
-        ReportTaskProcessingResult /* returned result of processing sequence at station */,
+        ReportTaskProcessingResult /* returned result of processing task at station */,
         ReportResultDelivering, /* results were delivered to the launchpad */
         WorkbookStatus, /* current exec status of experiments sent by launchpad every iteration with station */
         StationTaskStatus, /* sent by station, contains all active taskId which is present as station side*/

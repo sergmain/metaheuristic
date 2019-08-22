@@ -19,12 +19,15 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.core.ExecProcessService;
+import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.env.EnvService;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.station.station_resource.ResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.ExtendedTimePeriod;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.EnumsApi;
@@ -66,6 +69,7 @@ public class TaskProcessor {
     private final StationService stationService;
     private final ResourceProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
+    private final TaskProcessorStateService taskProcessorStateService;
 
     @Data
     public static class SnippetPrepareResult {
@@ -73,9 +77,8 @@ public class TaskProcessor {
         public AssetFile snippetAssetFile;
         public SnippetApiData.SnippetExecResult snippetExecResult;
         boolean isLoaded = true;
+        boolean isError = false;
     }
-
-    private Long currentTaskId;
 
     public void fixedDelay() {
         if (globals.isUnitTesting) {
@@ -90,8 +93,8 @@ public class TaskProcessor {
         for (StationTask task : tasks) {
 
             log.info("Start processing task {}", task);
-            if (task.launchedOn!=null && currentTaskId==null) {
-                log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched", task.taskId);
+            if (task.launchedOn!=null && task.finishedOn!=null && taskProcessorStateService.currentTaskId==null) {
+                log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched and then finished", task.taskId);
             }
 
             final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
@@ -108,7 +111,7 @@ public class TaskProcessor {
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
 
             if (launchpad.schedule.isCurrentTimeInactive()) {
-                log.info("Can't process task for url {} at this time, time: {}, permitted period of time: {}", task.launchpadUrl, new Date(), launchpad.schedule.asString);
+                log.info("Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.launchpadUrl, new Date(), launchpad.schedule.asString);
                 return;
             }
 
@@ -118,12 +121,14 @@ public class TaskProcessor {
             }
             EnumsApi.WorkbookExecState state = currentExecState.getState(task.launchpadUrl, task.workbookId);
             if (state== EnumsApi.WorkbookExecState.UNKNOWN) {
-                log.info("The state for Workbook #{}, host {} is unknown, skip it", task.workbookId, task.launchpadUrl);
+                stationTaskService.delete(task.launchpadUrl, task.taskId);
+                log.info("The state for Workbook #{}, host {} is unknown, delete a task #{}", task.workbookId, task.launchpadUrl, task.taskId);
                 continue;
             }
 
             if (state!= EnumsApi.WorkbookExecState.STARTED) {
-                log.info("The state for Workbook #{}, host: {}, is {}, skip it", task.workbookId, task.launchpadUrl, state);
+                stationTaskService.delete(task.launchpadUrl, task.taskId);
+                log.info("The state for Workbook #{}, host: {}, is {}, delete a task #{}", task.workbookId, task.launchpadUrl, state, task.taskId);
                 continue;
             }
 
@@ -198,6 +203,11 @@ public class TaskProcessor {
             SnippetPrepareResult result;
             for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
                 result = prepareSnippet(launchpadCode, preSnippetConfig);
+                if (result.isError) {
+                    markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
+                    isNotReady = true;
+                    break;
+                }
                 if (!result.isLoaded || !isAllLoaded) {
                     isNotReady = true;
                     break;
@@ -209,6 +219,10 @@ public class TaskProcessor {
             }
 
             result = prepareSnippet(launchpadCode, taskParamYaml.taskYaml.getSnippet());
+            if (result.isError) {
+                markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
+                continue;
+            }
             results[idx++] = result;
             if (!result.isLoaded || !isAllLoaded) {
                 continue;
@@ -216,6 +230,11 @@ public class TaskProcessor {
 
             for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
                 result = prepareSnippet(launchpadCode, postSnippetConfig);
+                if (result.isError) {
+                    markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
+                    isNotReady = true;
+                    break;
+                }
                 if (!result.isLoaded) {
                     isNotReady = true;
                     break;
@@ -233,19 +252,41 @@ public class TaskProcessor {
             // at this point all required resources have to be prepared
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
             try {
-                currentTaskId = task.taskId;
+                taskProcessorStateService.currentTaskId = task.taskId;
                 execAllSnippets(task, launchpadCode, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, results);
-            } finally {
-                currentTaskId = null;
+            }
+            catch(ScheduleInactivePeriodException e) {
+                stationTaskService.resetTask(task.launchpadUrl, task.taskId);
+                stationTaskService.delete(task.launchpadUrl, task.taskId);
+                log.info("An execution of task #{} was terminated because of the beginning of inactivity period. " +
+                        "This task will be processed later", task.taskId);
+            }
+            finally {
+                taskProcessorStateService.currentTaskId = null;
             }
         }
     }
 
-    private void execAllSnippets(StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamsYaml taskParamYaml, File artifactDir, File systemDir, SnippetPrepareResult[] results) {
+    private void markSnippetAsFinishedWithPermanentError(String launchpadUrl, Long taskId, SnippetPrepareResult result) {
+        SnippetApiData.SnippetExecResult execResult = new SnippetApiData.SnippetExecResult(
+                result.getSnippet().code, false, -990,
+                "#100.105 Snippet "+result.getSnippet().code+" has permanent error: " + result.getSnippetExecResult().console);
+        stationTaskService.markAsFinished(launchpadUrl, taskId,
+                new SnippetApiData.SnippetExec(null, null, null, execResult));
+
+    }
+
+    private void execAllSnippets(
+            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
+            File systemDir, SnippetPrepareResult[] results) {
         List<SnippetApiData.SnippetExecResult> preSnippetExecResult = new ArrayList<>();
         List<SnippetApiData.SnippetExecResult> postSnippetExecResult = new ArrayList<>();
         boolean isOk = true;
         int idx = 0;
+        LaunchpadSchedule schedule = launchpad.schedule!=null && launchpad.schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
+                ? launchpad.schedule : null;
         for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
             SnippetPrepareResult result = results[idx++];
             SnippetApiData.SnippetExecResult execResult;
@@ -255,7 +296,7 @@ public class TaskProcessor {
                         "#100.110 Illegal State, result of preparing of snippet "+preSnippetConfig.code+" is null");
             }
             else {
-                execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
+                execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result, schedule);
             }
             preSnippetExecResult.add(execResult);
             if (!execResult.isOk) {
@@ -275,7 +316,7 @@ public class TaskProcessor {
             }
             if (isOk) {
                 SnippetApiData.SnippetConfig mainSnippetConfig = result.snippet;
-                snippetExecResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
+                snippetExecResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result, schedule);
                 if (!snippetExecResult.isOk) {
                     isOk = false;
                 }
@@ -289,7 +330,7 @@ public class TaskProcessor {
                                     "#100.130 Illegal State, result of preparing of snippet "+postSnippetConfig.code+" is null");
                         }
                         else {
-                            execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
+                            execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result, schedule);
                         }
                         postSnippetExecResult.add(execResult);
                         if (!execResult.isOk) {
@@ -361,7 +402,8 @@ public class TaskProcessor {
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
     public SnippetApiData.SnippetExecResult execSnippet(
-            StationTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, SnippetPrepareResult snippetPrepareResult) {
+            StationTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, SnippetPrepareResult snippetPrepareResult,
+            LaunchpadSchedule schedule) {
 
         File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + String.format(Consts.PARAMS_YAML_MASK, snippetPrepareResult.snippet.getTaskParamsVersion()));
 
@@ -428,9 +470,13 @@ public class TaskProcessor {
 
             // Exec snippet
             snippetExecResult = execProcessService.execCommand(
-                    cmd, taskDir, consoleLogFile, taskParamYaml.taskYaml.timeoutBeforeTerminate, snippetPrepareResult.snippet.code);
+                    cmd, taskDir, consoleLogFile, taskParamYaml.taskYaml.timeoutBeforeTerminate, snippetPrepareResult.snippet.code, schedule);
 
-        } catch (Throwable th) {
+        }
+        catch (ScheduleInactivePeriodException e) {
+            throw e;
+        }
+        catch (Throwable th) {
             log.error("#100.180 Error exec process:\n" +
                     "\tenv: " + snippetPrepareResult.snippet.env +"\n" +
                     "\tinterpreter: " + interpreter+"\n" +
@@ -471,6 +517,7 @@ public class TaskProcessor {
                 log.warn("Snippet {} has a permanent error, {}", snippetPrepareResult.snippet.code, result.error);
                 snippetPrepareResult.snippetExecResult = new SnippetApiData.SnippetExecResult(snippet.code, false, -1, result.error);
                 snippetPrepareResult.isLoaded = false;
+                snippetPrepareResult.isError = true;
                 return snippetPrepareResult;
             }
             snippetPrepareResult.snippetAssetFile = new AssetFile();

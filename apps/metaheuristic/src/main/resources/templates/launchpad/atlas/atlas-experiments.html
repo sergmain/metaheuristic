@@ -29,6 +29,11 @@
 
     <p></p>
 
+    <div align="right">
+        <a class="pure-button pure-button-primary" href="atlas-experiment-import.html" th:href="${'/launchpad/atlas/atlas-experiment-import'}">Import experiment</a>
+    </div>
+
+    <p></p>
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>
@@ -46,6 +51,7 @@
                     <div th:text="${'Desc: ' + r.description}">Description</div>
                 </td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-info/' + r.id}">Details</a></td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-export/' + r.id}">Export</a></td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-delete/' + r.id}">Delete</a></td>
             </tr>
             <tr valign="top">

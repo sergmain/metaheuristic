@@ -40,56 +40,56 @@ public class PlanRestController {
     // ============= Plan =============
 
     @GetMapping("/plans")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public PlanApiData.PlansResult plans(@PageableDefault(size = 5) Pageable pageable) {
         return planTopLevelService.getPlans(pageable, false);
     }
 
     @GetMapping("/plans-archived-only")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public PlanApiData.PlansResult plansArchivedOnly(@PageableDefault(size = 5) Pageable pageable) {
         return planTopLevelService.getPlans(pageable, true);
     }
 
     @GetMapping(value = "/plan/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public PlanApiData.PlanResult edit(@PathVariable Long id) {
         return planTopLevelService.getPlan(id);
     }
 
     @GetMapping(value = "/plan-validate/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public PlanApiData.PlanResult validate(@PathVariable Long id) {
         return planTopLevelService.validatePlan(id);
     }
 
     @PostMapping("/plan-add-commit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public PlanApiData.PlanResult addFormCommit(@RequestParam(name = "planYaml") String planYamlAsStr) {
         return planTopLevelService.addPlan(planYamlAsStr);
     }
 
     @PostMapping("/plan-edit-commit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public PlanApiData.PlanResult editFormCommit(Long planId, @RequestParam(name = "planYaml") String planYamlAsStr) {
         return planTopLevelService.updatePlan(planId, planYamlAsStr);
     }
 
     @PostMapping("/plan-delete-commit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(Long id) {
         return planTopLevelService.deletePlanById(id);
     }
 
     @PostMapping("/plan-archive-commit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest archiveCommit(Long id) {
         return planTopLevelService.archivePlanById(id);
     }
 
     @PostMapping(value = "/plan-upload-from-file")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
-    public OperationStatusRest uploadSnippet(final MultipartFile file) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    public OperationStatusRest uploadPlan(final MultipartFile file) {
         return planTopLevelService.uploadPlan(file);
     }
 

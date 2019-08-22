@@ -35,11 +35,13 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * User: Serg
@@ -98,6 +100,7 @@ public class LaunchpadRequestor {
     }
 
     private long lastRequestForMissingResources = 0;
+    private long lastCheckForResendTaskOutputResource = 0;
 
     public void proceedWithRequest() {
         if (globals.isUnitTesting) {
@@ -138,6 +141,21 @@ public class LaunchpadRequestor {
                     if (b) {
                         data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.acceptOnlySignedSnippets));
                     }
+                    else {
+                        if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
+                            // let's check resources for non-completed and not-sending yet tasks
+                            List<Protocol.ResendTaskOutputResourceResult.SimpleStatus> statuses = stationTaskService.findAllByCompletedIsFalse(launchpadUrl).stream()
+                                    .filter(t -> t.delivered && t.finishedOn!=null && !t.resourceUploaded)
+                                    .map(t->
+                                            new Protocol.ResendTaskOutputResourceResult.SimpleStatus(
+                                                    t.taskId, stationService.resendTaskOutputResource(launchpadUrl, t.taskId)
+                                            )
+                                    ).collect(Collectors.toList());
+
+                            data.setCommands( new Command[]{new Protocol.ResendTaskOutputResourceResult(statuses)});
+                            lastCheckForResendTaskOutputResource = System.currentTimeMillis();
+                        }
+                    }
                 }
                 if (System.currentTimeMillis() - lastRequestForMissingResources > 15_000) {
                     data.setCommand(new Protocol.CheckForMissingOutputResources());
@@ -162,7 +180,7 @@ public class LaunchpadRequestor {
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 if (launchpad.launchpadLookup.securityEnabled) {
-                    String auth = launchpad.launchpadLookup.restUsername + '=' + launchpad.launchpadLookup.restToken + ':' + launchpad.launchpadLookup.restPassword;
+                    String auth = launchpad.launchpadLookup.restUsername + ':' + launchpad.launchpadLookup.restPassword;
                     byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
                     String authHeader = "Basic " + new String(encodedAuth);
                     headers.set("Authorization", authHeader);
@@ -172,10 +190,11 @@ public class LaunchpadRequestor {
                 Monitoring.log("##015", Enums.Monitor.MEMORY);
 
                 log.debug("Start to request a launchpad at {}", url);
+                log.debug("ExchangeData: {}", data);
                 ResponseEntity<ExchangeData> response = restTemplate.exchange(url, HttpMethod.POST, request, ExchangeData.class);
                 Monitoring.log("##016", Enums.Monitor.MEMORY);
                 ExchangeData result = response.getBody();
-                log.debug("ExchangeData from launchpad: {}", data);
+                log.debug("ExchangeData from launchpad: {}", result);
                 if (result == null) {
                     log.warn("#775.050 Launchpad returned null as a result");
                     return;
@@ -202,7 +221,11 @@ public class LaunchpadRequestor {
                 Throwable cause = e.getCause();
                 if (cause instanceof SocketException) {
                     log.error("#775.090 Connection error: url: {}, err: {}", url, cause.toString());
-                } else {
+                }
+                else if (cause instanceof UnknownHostException) {
+                    log.error("#775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                }
+                else {
                     log.error("#775.100 Error, url: " + url, e);
                 }
             } catch (RestClientException e) {
@@ -221,12 +244,13 @@ public class LaunchpadRequestor {
         if (list.isEmpty()) {
             return;
         }
+        log.info("Number of tasks for reporting: " + list.size());
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask task : list) {
             if (task.isDelivered() && !task.isReported() ) {
                 log.warn("#775.140 This state need to be investigating: (task.isDelivered() && !task.isReported())==true");
             }
-            // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enought?
+            // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enough?
             if (task.isDelivered() && task.isReported() ) {
                 continue;
             }

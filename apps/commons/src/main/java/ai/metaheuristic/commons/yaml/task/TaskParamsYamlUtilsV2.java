@@ -16,12 +16,12 @@
 
 package ai.metaheuristic.commons.yaml.task;
 
-import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
-import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV1;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV2;
+import ai.metaheuristic.api.data.task.TaskParamsYamlV3;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -31,7 +31,7 @@ import org.yaml.snakeyaml.Yaml;
  * Time: 12:10 AM
  */
 public class TaskParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<TaskParamsYamlV2, TaskParamsYaml, Void, TaskParamsYamlV1, TaskParamsYamlUtilsV1, TaskParamsYaml> {
+        extends AbstractParamsYamlUtils<TaskParamsYamlV2, TaskParamsYamlV3, TaskParamsYamlUtilsV3, TaskParamsYamlV1, TaskParamsYamlUtilsV1, TaskParamsYamlV2> {
 
     @Override
     public int getVersion() {
@@ -43,9 +43,9 @@ public class TaskParamsYamlUtilsV2
     }
 
     @Override
-    public TaskParamsYaml upgradeTo(TaskParamsYamlV2 yaml) {
-        TaskParamsYaml t = new TaskParamsYaml();
-        t.taskYaml = new TaskParamsYaml.TaskYaml();
+    public TaskParamsYamlV3 upgradeTo(TaskParamsYamlV2 yaml, Long ... vars) {
+        TaskParamsYamlV3 t = new TaskParamsYamlV3();
+        t.taskYaml = new TaskParamsYamlV3.TaskYamlV3();
         BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml);
         t.checkIntegrity();
 
@@ -53,7 +53,7 @@ public class TaskParamsYamlUtilsV2
     }
 
     @Override
-    public TaskParamsYamlV1 downgradeTo(TaskParamsYaml yaml) {
+    public TaskParamsYamlV1 downgradeTo(TaskParamsYamlV2 yaml) {
         TaskParamsYamlV1 t = new TaskParamsYamlV1();
         BeanUtils.copyProperties(yaml.taskYaml, t);
         if (yaml.taskYaml.preSnippets!=null && yaml.taskYaml.preSnippets.size()>0) {
@@ -72,8 +72,8 @@ public class TaskParamsYamlUtilsV2
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public TaskParamsYamlUtilsV3 nextUtil() {
+        return (TaskParamsYamlUtilsV3) TaskParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
     }
 
     @Override

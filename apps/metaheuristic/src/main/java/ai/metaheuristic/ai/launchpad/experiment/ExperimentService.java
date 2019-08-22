@@ -27,10 +27,10 @@ import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
@@ -96,11 +96,11 @@ public class ExperimentService {
     private final TaskPersistencer taskPersistencer;
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
-    private final WorkbookGraphService workbookGraphService;
+    private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
-
-    private final ExperimentCache experimentCache;
+    private final WorkbookRepository workbookRepository;
     private final ExperimentRepository experimentRepository;
+    private final ExperimentCache experimentCache;
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
         for (int i = 0; i < Math.min(o1.getValues().size(), o2.getValues().size()); i++) {
@@ -124,12 +124,34 @@ public class ExperimentService {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
 
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
-        BeanUtils.copyProperties(e, ed);
+        ed.id = e.id;
+        ed.version = e.version;
+        ed.code = e.code;
+        ed.workbookId = e.workbookId;
         ed.name = params.experimentYaml.name;
         ed.seed = params.experimentYaml.seed;
         ed.description = params.experimentYaml.description;
         ed.hyperParams = params.experimentYaml.hyperParams==null ? new ArrayList<>() : params.experimentYaml.hyperParams;
         ed.hyperParamsAsMap = getHyperParamsAsMap(ed.hyperParams);
+        ed.createdOn = params.createdOn;
+        ed.numberOfTask = params.processing.numberOfTask;
+
+        return ed;
+    }
+
+    public static ExperimentApiData.ExperimentData asExperimentDataShort(Experiment e) {
+        ExperimentParamsYaml params = e.getExperimentParamsYaml();
+
+        ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
+        ed.id = e.id;
+        ed.version = e.version;
+        ed.code = e.code;
+        ed.workbookId = e.workbookId;
+        ed.name = params.experimentYaml.name;
+        ed.seed = params.experimentYaml.seed;
+        ed.description = params.experimentYaml.description;
+        ed.hyperParams = null;
+        ed.hyperParamsAsMap = null;
         ed.createdOn = params.createdOn;
         ed.numberOfTask = params.processing.numberOfTask;
 
@@ -197,6 +219,41 @@ public class ExperimentService {
         return paramByIndex;
     }
 
+    public void experimentFinisher() {
+
+        List<Long> experimentIds = experimentRepository.findAllIds();
+        for (Long experimentId : experimentIds) {
+            Experiment e = experimentCache.findById(experimentId);
+            if (e==null) {
+                log.warn("Experiment wasn't found for id: {}", experimentId);
+                continue;
+            }
+            if (e.workbookId==null) {
+                log.warn("This shouldn't be happened");
+                continue;
+            }
+            WorkbookImpl wb = workbookCache.findById(e.workbookId);
+            if (wb==null) {
+                log.info("Can't calc max values and export to atlas because workbookId is null");
+                continue;
+            }
+            if (wb.execState!=EnumsApi.WorkbookExecState.FINISHED.code) {
+                continue;
+            }
+            ExperimentParamsYaml epy = e.getExperimentParamsYaml();
+            if (!epy.processing.maxValueCalculated) {
+                updateMaxValueForExperimentFeatures(e.id);
+            }
+/*
+            // TODO 2019-07-29 because of OOM don't export to atlas right now
+            if (!epy.processing.exportedToAtlas) {
+                atlasService.toAtlas(e.workbookId, experimentId);
+                setExportedToAtlas(experimentId);
+            }
+*/
+        }
+    }
+
     private static class ParamFilter {
         String key;
         int idx;
@@ -221,19 +278,42 @@ public class ExperimentService {
 
     public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
         Experiment experiment= experimentCache.findById(experimentId);
-//        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         ExperimentFeature feature =
                 epy.processing.features.stream().filter(o->o.id.equals(featureId)).findFirst().orElse(null);
 
-        //noinspection UnnecessaryLocalVariable
         ExperimentApiData.PlotData data = findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
+        // TODO 2019-07-23 right now 2D lines plot isn't working. need to investigate
+        //  so it'll be 3D with a fake zero data
+        fixData(data);
         return data;
     }
 
-    public void updateMaxValueForExperimentFeatures(Long workbookId) {
-        Experiment experiment = experimentRepository.findIdByWorkbookIdForUpdate(workbookId);
+    @SuppressWarnings("Duplicates")
+    private void fixData(ExperimentApiData.PlotData data) {
+        if (data.x.size()==1) {
+            data.x.add("stub");
+            BigDecimal[][] z = new BigDecimal[data.z.length][2];
+            for (int i = 0; i < data.z.length; i++) {
+                z[i][0] = data.z[i][0];
+                z[i][1] = BigDecimal.ZERO;
+            }
+            data.z = z;
+        }
+        else if (data.y.size()==1) {
+            data.y.add("stub");
+            BigDecimal[][] z = new BigDecimal[2][data.z[0].length];
+            for (int i = 0; i < data.z[0].length; i++) {
+                z[0][i] = data.z[0][i];
+                z[1][i] = BigDecimal.ZERO;
+            }
+            data.z = z;
+        }
+    }
+
+    private void updateMaxValueForExperimentFeatures(Long experimentId) {
+        Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment==null) {
             return;
         }
@@ -246,6 +326,18 @@ public class ExperimentService {
             log.info("\tFeature #{}, max value: {}", feature.getId(), value);
             feature.setMaxValue(value);
         }
+        epy.processing.maxValueCalculated = true;
+        experiment.updateParams(epy);
+        experimentCache.save(experiment);
+    }
+
+    private void setExportedToAtlas(Long experimentId) {
+        Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
+        if (experiment==null) {
+            return;
+        }
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+        epy.processing.exportedToAtlas = true;
         experiment.updateParams(epy);
         experimentCache.save(experiment);
     }
@@ -269,7 +361,7 @@ public class ExperimentService {
                 for (TaskWIthType taskWIthType : slice) {
                     experiment.getExperimentParamsYaml().processing.taskFeatures
                             .stream()
-                            .filter(t -> t.id.equals(taskWIthType.task.getId()))
+                            .filter(t -> t.taskId.equals(taskWIthType.task.getId()))
                             .findFirst()
                             .ifPresent(etf -> taskWIthType.type = EnumsApi.ExperimentTaskType.from(etf.getTaskType()).value);
                 }
@@ -279,10 +371,6 @@ public class ExperimentService {
     }
 
     private Slice<TaskWIthType> findPredictTasks(Pageable pageable, Experiment experiment, Long featureId) {
-//        @Query("SELECT new ai.metaheuristic.api.data.task.TaskWIthType(t, tef.taskType) FROM TaskImpl t, ExperimentTaskFeature tef " +
-//                "where t.id=tef.taskId and tef.featureId=:featureId order by t.id asc ")
-//        Slice<TaskWIthType> findPredictTasks(Pageable pageable, Long featureId);
-
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         long total = epy.processing.taskFeatures
@@ -297,9 +385,13 @@ public class ExperimentService {
                 .limit(pageable.getPageSize())
                 .collect(Collectors.toList());
 
+        if (etfs.isEmpty()) {
+            return Page.empty();
+        }
+
         List<Long> ids = etfs.stream().mapToLong(ExperimentTaskFeature::getTaskId).boxed().collect(Collectors.toList());
 
-        List<TaskImpl> tasks = taskRepository.findTasksByIds(pageable, ids);
+        List<TaskImpl> tasks = taskRepository.findTasksByIds(ids);
         List<TaskWIthType> list = new ArrayList<>();
         for (TaskImpl task : tasks) {
             ExperimentTaskFeature tf = etfs.stream().filter(o->o.taskId.equals(task.id)).findFirst().orElse(null);
@@ -501,7 +593,7 @@ public class ExperimentService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookService.findAll(workbook);
 
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
@@ -515,14 +607,11 @@ public class ExperimentService {
     }
 
     public List<Task> findByIsCompletedIsTrueAndFeatureId(ExperimentParamsYaml epy, Long featureId) {
-        // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS
-//        @Query("SELECT t FROM TaskImpl t, ExperimentTaskFeature tef " +
-//                "where t.id=tef.taskId and tef.featureId=:featureId and " +
-//                " t.execState > 1")
-//        List<Task> findByIsCompletedIsTrueAndIds(Long featureId);
-
         List<Long> ids = epy.getTaskFeatureIds(featureId);
-
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        //noinspection UnnecessaryLocalVariable
         List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndIds(ids);
         return tasks;
     }
@@ -545,7 +634,7 @@ public class ExperimentService {
         return experimentHyperParams.stream().collect(Collectors.toMap(HyperParam::getKey, HyperParam::getValues, (a, b) -> b, HashMap::new));
     }
 
-    public void resetExperimentByWorkbookId(long workbookId) {
+    public void resetExperimentByWorkbookId(Long workbookId) {
 
         Experiment e = experimentRepository.findIdByWorkbookIdForUpdate(workbookId);
         if (e==null) {
@@ -556,6 +645,22 @@ public class ExperimentService {
         epy.processing = new ExperimentProcessing();
         e.updateParams(epy);
         e.setWorkbookId(null);
+
+        //noinspection UnusedAssignment
+        e = experimentCache.save(e);
+    }
+
+    public void bindExperimentToWorkbook(Long experimentId, Long workbookId) {
+
+        Experiment e = experimentRepository.findByIdForUpdate(experimentId);
+        if (e==null) {
+            return;
+        }
+
+        ExperimentParamsYaml epy = e.getExperimentParamsYaml();
+        epy.processing = new ExperimentProcessing();
+        e.updateParams(epy);
+        e.setWorkbookId(workbookId);
 
         //noinspection UnusedAssignment
         e = experimentCache.save(e);
@@ -587,12 +692,12 @@ public class ExperimentService {
         final List<ExperimentFeature> features = epy.processing.features;
 
         // there is 2 because we have 2 types of snippets - fit and predict
-        // feature has real value only when isPersist==true
+        // feature has the real value only when isPersist==true
         int totalVariants = features.size() * calcTotalVariants * 2;
 
-        if (totalVariants > globals.maxTasksPerPlan) {
+        if (totalVariants > globals.maxTasksPerWorkbook) {
             log.error("#179.200 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
-                                "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + calcTotalVariants);
+                                "Allowed maximum number of tasks per workbook: " + globals.maxTasksPerWorkbook +", tasks in this workbook: " + totalVariants);
             return TOO_MANY_TASKS_PER_PLAN_ERROR;
         }
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
@@ -630,11 +735,11 @@ public class ExperimentService {
                     continue;
                 }
                 List<String> inputResourceCodes = numberOfVariants.values;
-                List<Long> prevParentTaskIds = parentTaskIds;
                 for (HyperParams hyperParams : allHyperParams) {
 
                     TaskImpl prevTask;
                     TaskImpl task = null;
+                    List<Long> prevParentTaskIds = new ArrayList<>(parentTaskIds);
                     for (String snippetCode : experimentSnippets) {
                         if (boolHolder.get()) {
                             return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
@@ -660,11 +765,14 @@ public class ExperimentService {
 
                         yaml.taskYaml.setHyperParams(hyperParams.toSortedMap());
                         // TODO need to implement an unit-test for a plan without metas in experiment
-                        // TODO and see that features are correctly defined
+                        //  and check that features are correctly defined
+                        // TODO 2019-07-17 right now it doesn't work
+                        //  - you need to specify 'feature', dataset' (not sure) in metas
                         yaml.taskYaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
 
                             // TODO 2019.04.24 need to decide do we need this check or not
+                            // TODO 2019-07-17 see comment above about required metas
                             // if ("feature".equals(entry.getKey())) {
                             //     log.info("Output type is the same as workbook inputResourceParam:\n"+ workbook.inputResourceParam );
                             // }
@@ -741,6 +849,7 @@ public class ExperimentService {
                             }
                         }
                         yaml.taskYaml.clean = planParams.planYaml.clean;
+                        yaml.taskYaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
                         String currTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);
 
@@ -761,7 +870,8 @@ public class ExperimentService {
                             if (task == null) {
                                 return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
-                            workbookGraphService.addNewTasksToGraph(workbookCache.findById(workbookId), prevParentTaskIds, taskIds);
+                            final WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+                            workbookService.addNewTasksToGraph(workbook, prevParentTaskIds, taskIds);
                         }
                         prevParentTaskIds = taskIds;
                     }

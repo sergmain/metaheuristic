@@ -65,9 +65,12 @@ public class TaskParamsYaml implements BaseParams {
         // TODO as a result we'll support only direct access to files
         public Map<String, List<String>> inputResourceAbsolutePaths = new HashMap<>();
         public String outputResourceAbsolutePath;
+
+        // key - resource code, value - real file name of resource
+        public Map<String, String> realNames;
     }
 
-    public final int version = 2;
+    public final int version = 3;
     public TaskYaml taskYaml = new TaskYaml();
 
 }

@@ -72,13 +72,14 @@ public class PlanService {
     private final BinaryDataService binaryDataService;
 
     private final ExperimentProcessService experimentProcessService;
+    private final ExperimentService experimentService;
+    private final ExperimentProcessValidator experimentProcessValidator;
+
     private final FileProcessService fileProcessService;
     private final WorkbookRepository workbookRepository;
     private final PlanCache planCache;
     private final PlanRepository planRepository;
 
-    private final ExperimentService experimentService;
-    private final ExperimentProcessValidator experimentProcessValidator;
     private final FileProcessValidator fileProcessValidator;
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
@@ -193,10 +194,12 @@ public class PlanService {
             throw new IllegalStateException("#701.110 Error: (result.plan==null || result.workbook==null)");
         }
 
-        workbook.setExecState(execState.code);
-        workbookCache.save(workbook);
+        if (workbook.execState!=execState.code) {
+            workbook.setExecState(execState.code);
+            workbookCache.save(workbook);
 
-        setLockedTo(plan.getId(), true);
+            setLockedTo(plan.getId(), true);
+        }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -358,6 +361,7 @@ public class PlanService {
     public static class ResourcePools {
         public final Map<String, List<String>> collectedInputs = new HashMap<>();
         public Map<String, DataStorageParams> inputStorageUrls=null;
+        public final Map<String, String> mappingCodeToOriginalFilename = new HashMap<>();
         public EnumsApi.PlanProducingStatus status = EnumsApi.PlanProducingStatus.OK;
 
         public ResourcePools(List<SimpleCodeAndStorageUrl> initialInputResourceCodes) {
@@ -371,6 +375,8 @@ public class PlanService {
                 collectedInputs.computeIfAbsent(o.poolCode, p -> new ArrayList<>()).add(o.code)
             );
 
+            initialInputResourceCodes.forEach(o-> mappingCodeToOriginalFilename.put(o.code, o.originalFilename));
+
             //noinspection Convert2MethodRef
             inputStorageUrls = initialInputResourceCodes
                     .stream()
@@ -381,6 +387,7 @@ public class PlanService {
         public void clean() {
             collectedInputs.values().forEach(o-> o.forEach(inputStorageUrls::remove));
             collectedInputs.clear();
+            mappingCodeToOriginalFilename.clear();
         }
 
         public void add(String outputType, List<String> outputResourceCodes) {
@@ -394,6 +401,7 @@ public class PlanService {
                     key, value, (o, o1) -> {o.addAll(o1); return o;} )
             );
             inputStorageUrls.putAll(metaPools.inputStorageUrls);
+            mappingCodeToOriginalFilename.putAll((metaPools.mappingCodeToOriginalFilename));
         }
     }
 
@@ -483,17 +491,18 @@ public class PlanService {
             Monitoring.log("##030", Enums.Monitor.MEMORY);
             if (process.outputParams.storageType!=null) {
                 pools.add(process.outputParams.storageType, produceTaskResult.outputResourceCodes);
+                for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
+                    pools.inputStorageUrls.put(outputResourceCode, process.outputParams);
+                }
             }
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }
 
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
         if (isPersist) {
-            result.workbook = workbookService.toProduced(workbookId);
+            workbookService.toProduced(workbookId);
         }
-        else {
-            result.workbook = workbookCache.findById(workbookId);
-        }
+        result.workbook = workbookCache.findById(workbookId);
         result.planYaml = planParams.planYaml;
         result.numberOfTasks += numberOfTasks;
         result.planValidateStatus = EnumsApi.PlanValidateStatus.OK;

@@ -1,0 +1,66 @@
+ct-cols(align-items="flex-start")
+    ct-col(size="6")
+        ct-section
+            ct-section-header
+                ct-section-header-row
+                    ct-heading  New Workbook with Single Input
+            ct-section-body
+                ct-section-body-row
+                    ct-section-content
+                        mat-form-field(appearance="outline") 
+                            mat-label Input pool code for this plan
+                            input(matInput '[(ngModel)]'="code" autocomplete="off") 
+                            mat-hint This is a required field.
+            ct-section-footer
+                ct-section-footer-row
+                    ct-flex(justify-content="flex-end" gap="8px")
+                        ct-flex-item: button(mat-stroked-button '(click)'="cancel()") Back 
+                        ct-flex-item: button(mat-flat-button '(click)'="createWithCode()" color="primary" '[disabled]'="currentStates.has(states.loading)") Create 
+    ct-col(size="6")
+        ct-section(*ngIf="responseSingle")
+            ct-section-body
+                ct-section-body-row
+                    ct-section-content
+                        p(*ngFor="let info of responseSingle.infoMessages; index as i; trackBy: trackByFn") {{info}}
+                        p(*ngFor="let error of responseSingle.errorMessages; index as i; trackBy: trackByFn") {{error}}
+
+
+
+
+
+
+ct-cols(align-items="flex-start")
+    ct-col(size="6")
+        ct-section
+            ct-section-header
+                ct-section-header-row
+                    ct-heading New Workbook with Multiply Inputs
+            ct-section-body
+                ct-section-body-row
+                    ct-section-content
+                        div Example:
+                        pre
+                            |poolCodes:
+                            |    dataset-files:
+                            |      - file-01.csv
+                            |      - file-02.csv
+                            |    vocabular:
+                            |      - voc-01.txt
+                        br
+                        mat-form-field(appearance="outline") 
+                            mat-label Input resources of workbook
+                            textarea('[(ngModel)]'="resources" matInput cdkTextareaAutosize cdkAutosizeMinRows="10" value="" autocomplete="off") )  
+                            mat-hint This is a required field.
+            ct-section-footer
+                ct-section-footer-row
+                    ct-flex(justify-content="flex-end" gap="8px")
+                        ct-flex-item: button(mat-stroked-button '(click)'="cancel()") Back 
+                        ct-flex-item: button(mat-flat-button '(click)'="createWithResource()" color="primary" '[disabled]'="currentStates.has(states.loading)") Create 
+
+    ct-col(size="6")
+        ct-section(*ngIf="responseMulti")
+            ct-section-body
+                ct-section-body-row
+                    ct-section-content
+                        p(*ngFor="let info of responseMulti.infoMessages; index as i; trackBy: trackByFn") {{info}}
+                        p(*ngFor="let error of responseMulti.errorMessages; index as i; trackBy: trackByFn") {{error}}

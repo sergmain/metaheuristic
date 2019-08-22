@@ -1,0 +1,79 @@
+.app-view
+    div(*ngIf="isAuth(); then thenBlock else elseBlock")
+    ng-template(#thenBlock)
+        mat-toolbar.toolbar(color="primary")
+            mat-toolbar-row
+                ct-flex(justify-content="space-between" align-items="baseline")
+                    ct-flex-item
+                        ct-flex(justify-content="flex-start" gap="4px" align-items="baseline")
+                            ct-flex-item
+                                button(class="mat-button mat-button--sidenav" 
+                                    mat-button 
+                                    '[disabled]'="sidenavIsDisabled"
+                                    '(click)'="sideToggle()")
+                                        mat-icon(class="mat-icon") menu
+                            ct-flex-item
+                                button(class="mat-button mat-button--menu-item" 
+                                    mat-button 
+                                    routerLinkActive="active" 
+                                    '[routerLinkActiveOptions]'="{ exact: true }" 
+                                    routerLink="") Metaheuristic
+                            ct-flex-item
+                                button(class="mat-button mat-button--menu-item" 
+                                    mat-button 
+                                    routerLinkActive="active" 
+                                    routerLink="/launchpad") {{ 'app-view.Launchpad' | translate }}
+                            //- ct-flex-item
+                            //-     button(class="mat-button mat-button--menu-item" 
+                            //-         mat-button 
+                            //-         routerLinkActive="active" 
+                            //-         routerLink="/billing") Billing
+                    ct-flex-item
+                        ct-flex(justify-content="flex-end" gap="4px" align-items="baseline")
+                            ct-flex-item
+                                mat-slide-toggle(#matSlideToggleTheme '[checked]'="themeActive" 
+                                    '(change)'="themeToggle($event)")
+                            ct-flex-item
+                                mat-select(#matSelectLanguage '[(value)]'="language.active" '(selectionChange)'="languageChanged()")
+                                    mat-option('*ngFor'="let item of language.list" '[value]'="item") {{item}}
+                            ct-flex-item
+                                button(class="mat-button mat-button--menu-item" 
+                                    mat-button 
+                                    routerLinkActive="active" 
+                                    routerLink="/about") {{ 'app-view.About' | translate }}
+                            //- ct-flex-item
+                            //-     button(class="mat-button mat-button--menu-item" 
+                            //-         mat-button 
+                            //-         routerLinkActive="active" 
+                            //-         routerLink="/testview") Test
+                            ct-flex-item
+                                button(class="mat-button mat-button--menu-item" 
+                                    mat-button
+                                    '(click)'="logout()") {{ 'app-view.Logout' | translate }}
+
+
+        mat-sidenav-container(class="app-view__container")
+            mat-sidenav(class="app-view__sidenav" mode="side" '[opened]'="sidenavIsOpen")
+                router-outlet(name="nav")
+            mat-sidenav-content(class="app-view__sidenav-content")
+                .content
+                    .content__body
+                        router-outlet(name="body")
+                    .content__footer Metaheuristic, © 2017-2019
+
+
+    ng-template(#elseBlock)
+        mat-toolbar.toolbar(color="primary")
+            mat-toolbar-row.toolbar__row
+                .toolbar__left
+                    button(class="mat-button" mat-button routerLink="/") Metaheuristic
+                .toolbar__right
+        mat-sidenav-container(class="app-view__container")
+            mat-sidenav-content(class="app-view__sidenav-content")
+                .content
+                    .content__body
+                        ct-cols
+                            ct-col(size="8"): about-view 
+                            ct-col(size="4"): login-view 
+
+                    .content__footer Metaheuristic, © 2017-2019

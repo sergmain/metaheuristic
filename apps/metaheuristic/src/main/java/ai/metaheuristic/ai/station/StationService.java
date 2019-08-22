@@ -116,7 +116,7 @@ public class StationService {
 
     public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(String launchpadUrl, long taskId) {
         if (launchpadUrl==null) {
-            throw new IllegalStateException("#747.07 launchpadUrl is null");
+            throw new IllegalStateException("#747.010 launchpadUrl is null");
         }
         StationTask task = stationTaskService.findById(launchpadUrl, taskId);
         if (task==null) {
@@ -126,7 +126,7 @@ public class StationService {
         File taskDir = stationTaskService.prepareTaskDir(metadataService.launchpadUrlAsCode(launchpadUrl), taskId);
 
 /*
-        // TODO 2019.06.21 if everythig will work fine, delete this commented part
+        // TODO 2019.06.21 if everything will work fine, delete this commented part
         File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + String.format(Consts.PARAMS_YAML_MASK, snippetPrepareResult.snippet.getTaskParamsVersion()));
         if (!paramFile.isFile() || !paramFile.exists()) {
             return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
@@ -145,7 +145,7 @@ public class StationService {
         try {
             resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
         } catch (ResourceProviderException e) {
-            log.error("#747.23 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.taskYaml.outputResourceCode);
+            log.error("#747.020 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.taskYaml.outputResourceCode);
             return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
         }
         if (resourceProvider instanceof DiskResourceProvider) {
@@ -153,9 +153,13 @@ public class StationService {
         }
 
         final AssetFile assetFile = ResourceUtils.prepareArtifactFile(taskDir, taskParamYaml.taskYaml.outputResourceCode, taskParamYaml.taskYaml.outputResourceCode);
+
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
-            log.warn("#747.28 Resource hasn't been prepared yet, {}", assetFile);
+            log.warn("#747.030 Resource wasn't found. Considering that this task is broken, {}", assetFile);
+            stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId,
+                    "#747.030 Resource wasn't found. Considering that this task is broken");
+            stationTaskService.setCompleted(task.launchpadUrl, task.taskId);
             return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
         }
         final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
@@ -183,8 +187,9 @@ public class StationService {
                 for (String resourceCode : value) {
                     final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(resourceCode);
                     if (params==null) {
-                        log.error("inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml));
-                        throw new BreakFromForEachException();
+                        final String es = "#747.040 resource code: " + resourceCode + ", inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml);
+                        log.error(es);
+                        throw new BreakFromForEachException(es);
                     }
                     ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                     List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, params);
@@ -200,12 +205,12 @@ public class StationService {
             });
         }
         catch (BreakFromForEachException e) {
-            stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
+            stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.getMessage());
             result.isError = true;
             return result;
         }
         catch (ResourceProviderException e) {
-            log.error("Error", e);
+            log.error("#747.050 Error", e);
             stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
             result.isError = true;
             return result;
@@ -234,7 +239,7 @@ public class StationService {
                     taskDir, launchpad, task, taskParamYaml.taskYaml.outputResourceCode, dataStorageParams);
             return outputResourceFile;
         } catch (ResourceProviderException e) {
-            final String msg = "#747.42 Error: " + e.toString();
+            final String msg = "#747.060 Error: " + e.toString();
             log.error(msg, e);
             stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, msg);
             return null;

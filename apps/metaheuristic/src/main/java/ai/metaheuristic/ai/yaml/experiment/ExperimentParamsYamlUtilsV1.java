@@ -16,11 +16,10 @@
 
 package ai.metaheuristic.ai.yaml.experiment;
 
-import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYamlV1;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV1;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYamlV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -32,7 +31,7 @@ import java.util.stream.Collectors;
  * Time: 11:36 PM
  */
 public class ExperimentParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<ExperimentParamsYamlV1, ExperimentParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<ExperimentParamsYamlV1, ExperimentParamsYamlV2, ExperimentParamsYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -44,21 +43,27 @@ public class ExperimentParamsYamlUtilsV1
     }
 
     @Override
-    public ExperimentParamsYaml upgradeTo(ExperimentParamsYamlV1 src) {
+    public ExperimentParamsYamlV2 upgradeTo(ExperimentParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
-        ExperimentParamsYaml trg = new ExperimentParamsYaml();
+        ExperimentParamsYamlV2 trg = new ExperimentParamsYamlV2();
         trg.createdOn = src.createdOn;
         BeanUtils.copyProperties(src.experimentYaml, trg.experimentYaml, "hyperParams");
         trg.experimentYaml.hyperParams = src.experimentYaml.hyperParams
                 .stream()
-                .map(o->new ExperimentParamsYaml.HyperParam(o.key, o.values, o.variants))
+                .map(o->new ExperimentParamsYamlV2.HyperParamV2(o.key, o.values, o.variants))
                 .collect(Collectors.toList());
 
-        BeanUtils.copyProperties(src.processing, trg.processing, "taskFeatures", "features");
+//        BeanUtils.copyProperties(src.processing, trg.processing, "taskFeatures", "features");
+        trg.processing.isAllTaskProduced = src.processing.isAllTaskProduced;
+        trg.processing.isFeatureProduced = src.processing.isFeatureProduced;
+        trg.processing.maxValueCalculated = false;
+        trg.processing.exportedToAtlas = false;
+        trg.processing.numberOfTask = src.processing.numberOfTask;
+
         trg.processing.features = src.processing.features
                 .stream()
                 .map(o->{
-                    ExperimentParamsYaml.ExperimentFeature f = new ExperimentParamsYaml.ExperimentFeature();
+                    ExperimentParamsYamlV2.ExperimentFeatureV2 f = new ExperimentParamsYamlV2.ExperimentFeatureV2();
                     BeanUtils.copyProperties(o, f);
                     return f;
                 })
@@ -67,7 +72,7 @@ public class ExperimentParamsYamlUtilsV1
         trg.processing.taskFeatures = src.processing.taskFeatures
                 .stream()
                 .map(o->{
-                    ExperimentParamsYaml.ExperimentTaskFeature f = new ExperimentParamsYaml.ExperimentTaskFeature();
+                    ExperimentParamsYamlV2.ExperimentTaskFeatureV2 f = new ExperimentParamsYamlV2.ExperimentTaskFeatureV2();
                     BeanUtils.copyProperties(o, f);
                     return f;
                 })
@@ -83,8 +88,8 @@ public class ExperimentParamsYamlUtilsV1
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public ExperimentParamsYamlUtilsV2 nextUtil() {
+        return (ExperimentParamsYamlUtilsV2)ExperimentParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override
@@ -95,10 +100,6 @@ public class ExperimentParamsYamlUtilsV1
     @Override
     public String toString(ExperimentParamsYamlV1 yaml) {
         return null;
-    }
-
-    public String toString(PlanParamsYamlV1 planYaml) {
-        return getYaml().dump(planYaml);
     }
 
     public ExperimentParamsYamlV1 to(String s) {

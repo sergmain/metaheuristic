@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.commons.utils.SecUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +39,7 @@ import java.util.Random;
 @Component
 @Slf4j
 @ToString
+@RequiredArgsConstructor
 public class Globals {
 
     private final Environment env;
@@ -76,9 +78,6 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-username')) }")
     public String launchpadMasterUsername;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-token')) }")
-    public String launchpadMasterToken;
-
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-password')) }")
     public String launchpadMasterPassword;
 
@@ -91,8 +90,8 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.launchpad.dir' )) }")
     public File launchpadDir;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.max-tasks-per-plan'), 1, 10000, 2000) }")
-    public int maxTasksPerPlan;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.max-tasks-per-workbook'), 1, 100000, 5000) }")
+    public int maxTasksPerWorkbook;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.resource-table-rows-limit'), 5, 100, 20) }")
     public int resourceRowsLimit;
@@ -133,6 +132,12 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.dir' )) }")
     public File stationDir;
 
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.default-launchpad-yaml-file' )) }")
+    public File defaultLaunchpadYamlFile;
+
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.default-env-yaml-file' )) }")
+    public File defaultEnvYamlFile;
+
 
     // some fields
     public File launchpadTempDir;
@@ -146,9 +151,8 @@ public class Globals {
 
     public Long chunkSize = null;
 
-    public Globals(Environment env) {
-        this.env = env;
-    }
+    // TODO 2019-07-28 need to handle this case
+    //  https://stackoverflow.com/questions/37436927/utf-8-encoding-of-application-properties-attributes-in-spring-boot
 
     @PostConstruct
     public void init() {
@@ -229,16 +233,16 @@ public class Globals {
         }
 
         if (isLaunchpadEnabled && launchpadDir==null) {
-            launchpadDir = new File("./target/mh-launchpad");
+            launchpadDir = new File("target/mh-launchpad");
             log.warn("Launchpad is enabled, but launchpadDir in null. " +
                     "Will be used a default value as: {}", launchpadDir.getAbsolutePath());
         }
 
         if (isLaunchpadEnabled) {
-            if (launchpadMasterUsername==null || launchpadMasterToken==null || launchpadMasterPassword==null) {
+            if (launchpadMasterUsername==null || launchpadMasterPassword==null) {
                 throw new IllegalArgumentException(
                         "if mh.secure-rest-url=true, then mh.launchpad.master-username, " +
-                                "mh.launchpad.master-token, and mh.launchpad.master-password have to be not null");
+                                "and mh.launchpad.master-password have to be not null");
             }
 
             launchpadTempDir = new File(launchpadDir, "temp");
@@ -332,25 +336,26 @@ public class Globals {
 
     private void logGlobals() {
         log.info("Current globals:");
-        log.info("\tthreadNumber: {}", threadNumber);
-        log.info("\tbranding: {}", branding);
-        log.info("\tisUnitTesting: {}", isUnitTesting);
-        log.info("\tisSecurityEnabled: {}", isSecurityEnabled);
-        log.info("\tisSslRequired: {}", isSslRequired);
-        log.info("\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
-        log.info("\tlaunchpadDir: {}", launchpadDir);
-        log.info("\tchunkSize: {}", chunkSize);
-        log.info("\tresourceRowsLimit: {}", resourceRowsLimit);
-        log.info("\texperimentRowsLimit: {}", experimentRowsLimit);
-        log.info("\tplanRowsLimit: {}", planRowsLimit);
-        log.info("\tworkbookRowsLimit: {}", workbookRowsLimit);
-        log.info("\tstationRowsLimit: {}", stationRowsLimit);
-        log.info("\taccountRowsLimit: {}", accountRowsLimit);
-        log.info("\tisReplaceSnapshot: {}", isReplaceSnapshot);
-        log.info("\tisStationEnabled: {}", isStationEnabled);
-        log.info("\tstationDir: {}", stationDir);
+        log.info("'\tthreadNumber: {}", threadNumber);
+        log.info("'\tbranding: {}", branding);
+        log.info("'\tisUnitTesting: {}", isUnitTesting);
+        log.info("'\tisSecurityEnabled: {}", isSecurityEnabled);
+        log.info("'\tisSslRequired: {}", isSslRequired);
+        log.info("'\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
+        log.info("'\tlaunchpadDir: {}", launchpadDir!=null ? launchpadDir.getAbsolutePath() : null);
+        log.info("'\tchunkSize: {}", chunkSize);
+        log.info("'\tresourceRowsLimit: {}", resourceRowsLimit);
+        log.info("'\texperimentRowsLimit: {}", experimentRowsLimit);
+        log.info("'\tplanRowsLimit: {}", planRowsLimit);
+        log.info("'\tworkbookRowsLimit: {}", workbookRowsLimit);
+        log.info("'\tstationRowsLimit: {}", stationRowsLimit);
+        log.info("'\taccountRowsLimit: {}", accountRowsLimit);
+        log.info("'\tisReplaceSnapshot: {}", isReplaceSnapshot);
+        log.info("'\tisStationEnabled: {}", isStationEnabled);
+        log.info("'\tstationDir: {}", stationDir);
     }
 
+    // TODO 2019-07-20 should method createTempFileForLaunchpad() be moved to other class/package?
     private static final Random r = new Random();
     public File createTempFileForLaunchpad(String prefix) {
         if (StringUtils.isBlank(prefix)) {

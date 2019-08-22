@@ -118,15 +118,8 @@ public class TestReAssignStationIdTimeoutSessionId {
         ExchangeData d = serverService.processRequest(data, "127.0.0.1");
 
         assertNotNull(d);
-        assertNotNull(d.getReAssignedStationId());
-        assertNotNull(d.getReAssignedStationId().getReAssignedStationId());
-        assertNotNull(d.getReAssignedStationId().getSessionId());
 
-        final Long stationId = Long.valueOf(d.getReAssignedStationId().getReAssignedStationId());
-        assertEquals(stationIdBefore, stationId);
-        assertEquals(sessionIdBefore, d.getReAssignedStationId().getSessionId());
-
-        Station s = stationCache.findById(stationId);
+        Station s = stationCache.findById(stationIdBefore);
 
         assertNotNull(s);
         StationStatus ss = StationStatusUtils.to(s.status);

@@ -22,9 +22,9 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
+import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.launchpad.Workbook;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -120,6 +120,21 @@ public class AtlasData {
     @Data
     public static class HyperParamResult {
         public final List<ExperimentApiData.HyperParamList> elements = new ArrayList<>();
+
+        /**
+         * for plotting we need at least 2 HyperParams to be selected.
+         * in case when there is only one list ov values of params
+         * we will use all HyperParams for axises
+         */
+        public boolean useAllHyperParamsInPlot() {
+            int count=0;
+            for (ExperimentApiData.HyperParamList element : elements) {
+                if (element.list.size()>1) {
+                    count++;
+                }
+            }
+            return count<2;
+        }
     }
 
     @Data
@@ -146,7 +161,7 @@ public class AtlasData {
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class TasksResult extends BaseDataClass {
-        public Slice<AtlasParamsYaml.TaskWithParams> items;
+        public Slice<AtlasTaskParamsYaml> items;
     }
 
     @Data
@@ -155,7 +170,7 @@ public class AtlasData {
     public static class ExperimentFeatureExtendedResult extends BaseDataClass {
         public MetricsResult metricsResult;
         public HyperParamResult hyperParamResult;
-        public Slice<AtlasParamsYaml.TaskWithParams> tasks;
+        public Slice<AtlasTaskParamsYaml> tasks;
         public ExperimentApiData.ExperimentFeatureData experimentFeature;
         public ConsoleResult consoleResult;
 

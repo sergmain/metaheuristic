@@ -86,7 +86,7 @@ public class SnippetTopLevelService {
         }
         if (!StringUtils.equalsAny(ext.toLowerCase(), ZIP_EXT, YAML_EXT, YML_EXT)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.03 only '.zip', '.rar', '.yml' and '.yaml' files are supported, filename: " + originFilename);
+                    "#422.03 only '.zip', '.yml' and '.yaml' files are supported, filename: " + originFilename);
         }
 
         final String location = System.getProperty("java.io.tmpdir");

@@ -1,11 +1,19 @@
 import { Component } from '@angular/core';
-import {FormBuilder, FormGroup} from '@angular/forms';
+import { SettingsService } from '@services/settings/settings.service';
+import { TranslateService } from '@ngx-translate/core';
+
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'metaheuristic-app';
+    title = 'metaheuristic-app';
+    constructor(
+        private settingsService: SettingsService,
+        private translate: TranslateService
+    ) {
+        this.settingsService.languageObserver.subscribe((lang: string) => this.translate.use(lang));
+    }
 }

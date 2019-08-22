@@ -17,13 +17,14 @@
 package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
+import ai.metaheuristic.ai.launchpad.beans.TaskProgress;
+import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.api.launchpad.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +34,11 @@ import java.util.stream.Stream;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
+public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
+
+    @Transactional
+    @Query(value="select t from TaskImpl t where t.id=:id")
+    TaskImpl findByIdForUpdate(Long id);
 
     @Transactional(readOnly = true)
     @Query(value="select t.id, t.metrics from TaskImpl t where t.id in :ids ")
@@ -43,7 +48,8 @@ public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
     Page<TaskImpl> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
-    List<Task> findAllByWorkbookId(Long workbookId);
+    @Query(value="select t.id from TaskImpl t where t.workbookId=:workbookId")
+    List<Long> findAllTaskIdsByWorkbookId(Long workbookId);
 
     @Transactional
     @Query(value="select t from TaskImpl t where t.workbookId=:workbookId")
@@ -78,8 +84,8 @@ public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
     Stream<Object[]> findByWorkbookId(Long workbookId);
 
     @Transactional
-    @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId ")
-    Slice<Task> findForAssigning(Pageable pageable, Long workbookId);
+    @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId and t.id in :ids ")
+    List<Task> findForAssigning(Long workbookId, List<Long> ids);
 
     @Transactional(readOnly = true)
     @Query("SELECT t.id FROM TaskImpl t where t.stationId=:stationId and t.isCompleted=false")
@@ -95,10 +101,9 @@ public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
     @Query("SELECT t FROM TaskImpl t where t.id in :ids and t.execState > 1 ")
     List<Task> findByIsCompletedIsTrueAndIds(List<Long> ids);
 
-    // !!! class must not be inner class
     @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.id in :ids order by t.id asc ")
-    List<TaskImpl> findTasksByIds(Pageable pageable, List<Long> ids);
+    List<TaskImpl> findTasksByIds(List<Long> ids);
 
 
     @SuppressWarnings("SqlRedundantOrderingDirection")
@@ -106,12 +111,19 @@ public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
     @Query(nativeQuery = true, value = "select z.* "+
             "from ( "+
             "           SELECT count(*) count, t.TASK_ORDER "+
-            "           FROM MH_TASK t  \n"+
+            "           FROM MH_TASK t  "+
             "           where t.WORKBOOK_ID =:workbookId "+
             "           group by t.TASK_ORDER "+
             "     ) z "+
             "order by z.TASK_ORDER asc")
     List<Object[]> getCountPerOrder(Long workbookId);
+
+    @Query(value="select new ai.metaheuristic.ai.launchpad.beans.TaskProgress(" +
+            "t.workbookId, count(*), t.execState, t.isCompleted, t.resultReceived ) " +
+            "from TaskImpl t where t.workbookId=:workbookId " +
+            "group by t.workbookId, t.execState, t.isCompleted, t.resultReceived "
+    )
+    List<TaskProgress> getTaskProgress(Long workbookId);
 
 }
 

@@ -1,0 +1,23 @@
+.simple-notification {
+    word-break: break-word;
+    float: right !important;
+    width: auto !important;
+    min-width: 300px;
+    padding: 8px;
+}
+
+.simple-notification-wrapper {
+    min-width: 300px;
+    width: auto !important;
+    max-width: 400px;
+}
+
+.simple-notification .sn-title {
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.simple-notification .sn-content {
+    font-size: 13px;
+    line-height: 1.2;
+}

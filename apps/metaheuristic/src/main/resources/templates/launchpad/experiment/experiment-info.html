@@ -2,12 +2,12 @@
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
-     sec:authorize="isAuthenticated()"
 >
     <h1 class="widget-header">The experiment info</h1>
 
     <!--/*@thymesVar id="experimentResult" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentInfoResult"*/-->
     <!--/*@thymesVar id="experiment" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentData"*/-->
+    <!--/*@thymesVar id="progress" type="java.util.List<ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentProgressResult>"*/-->
 
     <h1 class="widget-header">Progress of experiment</h1>
     <table>
@@ -16,41 +16,79 @@
                 <table class="pure-table pure-table-bordered" >
                     <thead>
                     <tr>
-                        <th width="150">Workbook Exec state</th>
+                        <th width="150">Exec state</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
                         <td th:text="${experimentResult.workbookExecState}">exec state</td>
                     </tr>
+                    </tbody>
                 </table>
             </td>
-            <td width="50">
-                &nbsp;
-            </td>
+            <td width="50">&nbsp;</td>
             <td valign="top">
-                <a class="pure-button table-nav-button-fill pure-button-primary"
-                   th:href="${'/launchpad/experiment/experiment-to-atlas/'+ experiment.id }">to Atlas</a>
-
+                <a class="pure-button pure-button-primary" href="#"
+                   th:if="${experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).NONE.code}"
+                   th:href="${'/launchpad/experiment/workbook-target-exec-state/'+experiment.id+'/producing/' + experimentResult.workbook.id}">Produce tasks</a>
+                <a class="pure-button pure-button-primary" href="#"
+                   th:if="${experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).PRODUCED.code or
+                   experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).STOPPED.code}"
+                   th:href="${'/launchpad/experiment/workbook-target-exec-state/'+experiment.id+'/started/' + experimentResult.workbook.id}">Start</a>
+                <a class="pure-button pure-button-primary" href="#"
+                   th:if="${experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).STARTED.code}"
+                   th:href="${'/launchpad/experiment/workbook-target-exec-state/'+experiment.id+'/stopped/' + experimentResult.workbook.id}">Stop</a>
+            </td>
+            <td width="20">&nbsp; </td>
+            <td valign="top">
+                <a class="pure-button table-nav-button-fill pure-button-primary" href="#"
+                   th:href="${'/launchpad/experiment/experiment-to-atlas/'+ experiment.id }">Export to Atlas</a>
+            </td>
+            <td width="20">&nbsp; </td>
+            <td valign="top">
+                <a class="pure-button pure-button-primary" href="experiments.html"
+                   th:href="${'/launchpad/experiment/experiments'}">To list of experiments</a>
             </td>
         </tr>
     </table>
     <p>&nbsp;</p>
 
-        <h1 class="widget-header">General info</h1>
-        <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table">
-            <tbody>
-            <tr><td>#Id</td><td  th:text="${experiment.id}">#Id</td></tr>
-            <tr><td>Created on</td><td th:text="${#dates.formatISO(experiment.createdOn)}">CreatedOn</td></tr>
-            <tr><td>Name</td><td th:text="${experiment.name}">name</td></tr>
-            <tr><td>Description</td><td th:text="${experiment.description}">desc</td></tr>
-            <tr><td>Seed</td><td th:text="${experiment.seed}">seed</td></tr>
-            <tr><td>Number of tasks</td><td th:text="${experiment.getNumberOfTask()}">Number of sequnces</td></tr>
-            </tbody>
-        </table>
-        <p>&nbsp;</p>
+    <h1 class="widget-header">Progress of all tasks</h1>
+    <table class="pure-table pure-table-bordered">
+        <thead>
+        <tr>
+            <th width="150">Exec state</th>
+            <th width="150">Count</th>
+            <th width="150">Is completed</th>
+            <th width="150">Is result received</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${progress}">
+            <td th:text="${p.execStateAsStr}">exec state as string</td>
+            <td th:text="${p.count}">count</td>
+            <td th:text="${p.completed}">Is completed</td>
+            <td th:text="${p.resultReceived}">Is result received</td>
+        </tr>
+        </tbody>
+    </table>
+    <p>&nbsp;</p>
+
+    <h1 class="widget-header">General info</h1>
+    <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table">
+        <tbody>
+        <tr><td>#Id</td><td  th:text="${experiment.id}">#Id</td></tr>
+        <tr><td>Created on</td><td th:text="${#dates.formatISO(experiment.createdOn)}">CreatedOn</td></tr>
+        <tr><td>Name</td><td th:text="${experiment.name}">name</td></tr>
+        <tr><td>Description</td><td th:text="${experiment.description}">desc</td></tr>
+        <tr><td>Seed</td><td th:text="${experiment.seed}">seed</td></tr>
+        <tr><td>Number of ML tasks</td><td th:text="${experiment.getNumberOfTask()}">Number of ML tasks</td></tr>
+        </tbody>
+    </table>
+    <p>&nbsp;</p>
 
 <!--
+        TODO need to fix this part
         <h1 class="widget-header">Snippets</h1>
         <table class="pure-table pure-table-bordered" id="table-snippet" th:fragment="table-snippet">
             <thead>
@@ -69,48 +107,27 @@
         </table>
 -->
 
-        <p>&nbsp;</p>
-        <h1 class="widget-header">Hyper parameterst</h1>
-        <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
-            <thead>
-            <tr>
-                <th width="150">Key</th>
-                <th width="550">Value</th>
-                <th width="150">Variants</th>
-            </tr>
-            </thead>
+    <p>&nbsp;</p>
+    <h1 class="widget-header">Hyper parameterst</h1>
+    <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+        <thead>
+        <tr>
+            <th width="150">Key</th>
+            <th width="550">Value</th>
+            <th width="150">Variants</th>
+        </tr>
+        </thead>
 
-            <tbody>
-            <tr th:each="m : ${experiment.hyperParams}">
-                <td th:text="${m.key}">Key</td>
-                <td th:text="${m.values}">Value</td>
-                <td th:text="${m.variants}">Variants</td>
-            </tr>
-            </tbody>
-        </table>
-        <p>&nbsp;</p>
+        <tbody>
+        <tr th:each="m : ${experiment.hyperParams}">
+            <td th:text="${m.key}">Key</td>
+            <td th:text="${m.values}">Value</td>
+            <td th:text="${m.variants}">Variants</td>
+        </tr>
+        </tbody>
+    </table>
+    <p>&nbsp;</p>
 
-<!--
-        <h1 class="widget-header">Features</h1>
-        <table class="pure-table pure-table-bordered" id="table-group" th:if="${!experimentResult.features.isEmpty()}">
-            <thead>
-            <tr>
-                <th width="50">Id</th>
-                <th width="600">Resource code</th>
-            </tr>
-            </thead>
-
-            <tbody>
-            <tr th:each="g : ${experimentResult.features}">
-                <td th:text="${g.id}">Feature Id</td>
-                <td th:text="${g.resourceCodes}">Resource codes</td>
-            </tr>
-            </tbody>
-        </table>
-        <p th:if="${experimentResult.features.isEmpty()}">Features isn't assigned</p>
-
-        <p>&nbsp;</p>
--->
 
     <div th:remove="tag">
         <h1 class="widget-header">Features</h1>
@@ -139,7 +156,7 @@
         <p>&nbsp;</p>
     </div>
 
-        <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiment/experiments'}">To list of experiments</a>
+    <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiment/experiments'}">To list of experiments</a>
 
 
 </div>

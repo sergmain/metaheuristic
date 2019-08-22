@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 
 public interface LaunchpadService {
@@ -30,6 +31,6 @@ public interface LaunchpadService {
     TaskService getTaskService();
     PlanService getPlanService();
     WorkbookService getWorkbookService();
-
+    WorkbookSchedulerService getWorkbookSchedulerService();
     ArtifactCleanerAtLaunchpad getArtifactCleanerAtLaunchpad();
 }

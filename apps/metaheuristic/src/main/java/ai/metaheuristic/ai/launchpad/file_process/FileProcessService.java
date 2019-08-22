@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -47,7 +47,7 @@ public class FileProcessService {
 
     private final TaskRepository taskRepository;
     private final SnippetService snippetService;
-    private final WorkbookGraphService workbookGraphService;
+    private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
 
     @SuppressWarnings("Duplicates")
@@ -55,8 +55,7 @@ public class FileProcessService {
             boolean isPersist, Long planId, PlanParamsYaml planParams, Long workbookId,
             Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
 
-        Map<String, List<String>> collectedInputs = pools.collectedInputs;
-        Map<String, DataStorageParams> inputStorageUrls = pools.inputStorageUrls;
+        Map<String, DataStorageParams> inputStorageUrls = new HashMap<>(pools.inputStorageUrls);
 
         PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
 
@@ -64,12 +63,13 @@ public class FileProcessService {
         if (process.parallelExec) {
             for (int i = 0; i < process.snippets.size(); i++) {
                 SnippetDefForPlan snDef = process.snippets.get(i);
-                String resourceName = StrUtils.normalizeSnippetCode(snDef.code);
-                String outputResourceCode = PlanUtils.getResourceCode(planId, workbookId, process.code, resourceName, process.order, i);
+                String tempCode = snDef.params != null && !snDef.params.isBlank() ? snDef.code + ' ' + snDef.params : snDef.code;
+                String normalizeSnippetCode = StrUtils.normalizeSnippetCode(tempCode);
+                String outputResourceCode = PlanUtils.getResourceCode(workbookId, process.code, normalizeSnippetCode, process.order, i);
                 result.outputResourceCodes.add(outputResourceCode);
                 inputStorageUrls.put(outputResourceCode, process.outputParams);
                 if (isPersist) {
-                    Task t = createTaskInternal(planParams, workbookId, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
+                    Task t = createTaskInternal(planParams, workbookId, process, outputResourceCode, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
                     if (t!=null) {
                         result.taskIds.add(t.getId());
                     }
@@ -78,12 +78,13 @@ public class FileProcessService {
         }
         else {
             SnippetDefForPlan snDef = process.snippets.get(0);
-            String resourceName = StrUtils.normalizeSnippetCode(snDef.code);
-            String outputResourceCode = PlanUtils.getResourceCode(planId, workbookId, process.code, resourceName, process.order, 0);
+            String tempCode = snDef.params != null && !snDef.params.isBlank() ? snDef.code + ' ' + snDef.params : snDef.code;
+            String normalizeSnippetCode = StrUtils.normalizeSnippetCode(tempCode);
+            String outputResourceCode = PlanUtils.getResourceCode(workbookId, process.code, normalizeSnippetCode, process.order, 0);
             result.outputResourceCodes.add(outputResourceCode);
             inputStorageUrls.put(outputResourceCode, process.outputParams);
             if (isPersist) {
-                Task t = createTaskInternal(planParams, workbookId, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
+                Task t = createTaskInternal(planParams, workbookId, process, outputResourceCode, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
                 if (t!=null) {
                     result.taskIds.add(t.getId());
                 }
@@ -92,7 +93,7 @@ public class FileProcessService {
         result.status = EnumsApi.PlanProducingStatus.OK;
         result.numberOfTasks = result.outputResourceCodes.size();
 
-        workbookGraphService.addNewTasksToGraph(workbookCache.findById(workbookId), parentTaskIds, result.taskIds);
+        workbookService.addNewTasksToGraph(workbookCache.findById(workbookId), parentTaskIds, result.taskIds);
 
         return result;
     }
@@ -101,7 +102,8 @@ public class FileProcessService {
     private TaskImpl createTaskInternal(
             PlanParamsYaml planParams, Long workbookId, Process process,
             String outputResourceCode,
-            SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls) {
+            SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls,
+            Map<String, String> mappingCodeToOriginalFilename) {
         if (process.type!= EnumsApi.ProcessType.FILE_PROCESSING) {
             throw new IllegalStateException("#171.01 Wrong type of process, " +
                     "expected: "+ EnumsApi.ProcessType.FILE_PROCESSING+", " +
@@ -113,6 +115,7 @@ public class FileProcessService {
             yaml.taskYaml.inputResourceCodes.put(entry.getKey(), entry.getValue());
         }
         yaml.taskYaml.outputResourceCode = outputResourceCode;
+        yaml.taskYaml.realNames = mappingCodeToOriginalFilename;
 
         // work around with SnakeYaml's refs
         Map<String, DataStorageParams> map = new HashMap<>();

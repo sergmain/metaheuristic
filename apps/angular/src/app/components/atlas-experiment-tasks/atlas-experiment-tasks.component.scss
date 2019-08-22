@@ -1,0 +1,51 @@
+.tasks {
+    white-space: nowrap;
+    line-height: 1.6;
+
+    table {
+        button {
+            margin: 0 8px;
+            margin: 2px 0;
+            font-size: 14px;
+        }
+
+        td {
+            vertical-align: top;
+            font-size: 14px;
+        }
+
+        td:last-child {
+            vertical-align: middle;
+            width: 100%;
+        }
+
+        table {
+            width: auto;
+            border-collapse: collapse;
+
+            td {
+                padding: 0 4px;
+                vertical-align: top;
+            }
+
+            td:first-child {
+                padding: 0;
+                padding-right: 0.5em;
+            }
+
+            td:last-child {
+                padding: 0;
+            }
+        }
+    }
+    .completed {
+        background-color: crimson;
+        padding: 0 4px; 
+        color:white;
+        font-weight: bold;
+        border-radius: 3px
+    }
+    .completed--on {
+        background-color: mediumseagreen;
+    }
+}

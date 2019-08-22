@@ -1,5 +1,5 @@
-import { environment } from 'environments/environment';
-import jsonToUrlParams from '@app/helpers/jsonToUrlParams';
+import { environment } from '@src/environments/environment';
+import { jsonToUrlParams as toURL } from '@app/helpers/jsonToUrlParams';
 
 const base: string = environment.baseUrl + 'launchpad/account';
 
@@ -8,16 +8,16 @@ const urls: any = {
         get: (page: number): string => `${base}/accounts?page=${page}`
     },
     account: {
-        get: (id: number | string): string => `${base}/account/${id}`,
-        addCommit: (data): string => `${base}/account-add-commit?${jsonToUrlParams(data)}`,
-        editCommit: (data): string => `${base}/account-edit-commit?${jsonToUrlParams(data)}`,
-        passwordEditCommit: (data): string => `${base}/account-password-edit-commit?${jsonToUrlParams(data)}`,
+        get: (id: string): string => `${base}/account/${id}`,
+        addCommit: (data): string => `${base}/account-add-commit?${toURL(data)}`,
+        editCommit: (data): string => `${base}/account-edit-commit?${toURL(data)}`,
+        passwordEditCommit: (data): string => `${base}/account-password-edit-commit?${toURL(data)}`,
+        roleCommit: (data): string => `${base}/account-role-commit?${toURL(data)}`,
     }
 };
 
-export {
-    urls
-};
+export { urls };
+
 
 // @GetMapping("/accounts")
 // public AccountData.AccountsResult accounts(@PageableDefault(size = 5) Pageable pageable) {
@@ -37,6 +37,11 @@ export {
 // @PostMapping("/account-edit-commit")
 // public OperationStatusRest editFormCommit(Long id, String publicName, boolean enabled) {
 //     return accountTopLevelService.editFormCommit(id, publicName, enabled);
+// }
+
+// @PostMapping("/account-role-commit")
+// public OperationStatusRest roleFormCommit(Long accountId, String roles) {
+//     return accountTopLevelService.roleFormCommit(accountId, roles);
 // }
 
 // @PostMapping("/account-password-edit-commit")

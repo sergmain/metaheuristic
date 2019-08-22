@@ -1,0 +1,13 @@
+:host {
+    display: block;
+    font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+    padding: 0;
+    font-size: 12px; 
+    line-height: 1.6;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+:host[overflow-x="auto"] {
+    overflow-x: auto;
+}

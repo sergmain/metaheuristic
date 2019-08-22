@@ -109,7 +109,7 @@ public class GitSourcingService {
             File consoleLogFile = File.createTempFile("console-", ".log");
             consoleLogFile.deleteOnExit();
             SnippetApiData.SnippetExecResult snippetExecResult = execProcessService.execCommand(
-                    gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec" );
+                    gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec", null );
 
             log.info("snippetExecResult: {}" , snippetExecResult);
             return new GitExecResult(snippetExecResult, snippetExecResult.isOk, snippetExecResult.console);

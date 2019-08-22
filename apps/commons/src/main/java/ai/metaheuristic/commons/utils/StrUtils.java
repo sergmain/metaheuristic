@@ -36,7 +36,7 @@ public class StrUtils {
     }
 
     public static String normalizeSnippetCode(String code) {
-        return StringUtils.replaceEach(code, new String[]{":", "."}, new String[]{"-", "_"});
+        return StringUtils.replaceEach(code, new String[]{":", ".", " "}, new String[]{"-", "_", "_"});
     }
 
     public static String getExtension(String filename) {

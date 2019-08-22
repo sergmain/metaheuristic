@@ -1,0 +1,112 @@
+:host {
+    display: block;
+    position: relative;
+    margin: 0 16px;
+    overflow-y: auto;
+
+    /deep/ {
+        .mat-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: none;
+        }
+
+        .mat-header-row {
+            height: auto;
+        }
+
+        .mat-header-cell,
+        .mat-cell,
+        .mat-footer-cell {
+            border-bottom-width: 1px;
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-top-style: solid;
+        }
+
+        .mat-header-cell {
+            white-space: nowrap;
+            padding: 11px 12px 8px;
+            font-weight: bold;
+            vertical-align: baseline;
+            color: inherit;
+            font-size: 14px;
+            font-family: 'Roboto Condensed', sans-serif;
+        }
+
+        .mat-cell {
+            padding: 8px 12px 8px;
+            vertical-align: baseline;
+        }
+
+        .mat-header-cell:first-child,
+        .mat-cell:first-child {
+            padding-left: 24px;
+        }
+
+        .mat-header-cell:last-child,
+        .mat-cell:last-child {
+            padding-right: 24px;
+        }
+
+        .mat-row {
+            height: auto;
+        }
+    }
+}
+
+:host-context(.light-theme) {
+    /deep/ {
+        .mat-header-cell,
+        .mat-cell,
+        .mat-footer-cell {
+            border-top-color: rgb(240, 240, 240,);
+            border-bottom-color: rgb(240, 240, 240,);
+        }
+    }
+}
+
+
+:host-context(.dark-theme) {
+    /deep/ {
+        .mat-header-cell,
+        .mat-cell,
+        .mat-footer-cell {
+            border-top-color: #474747;
+            border-bottom-color: #474747;
+        }
+    }
+}
+
+
+
+.ct-table {
+
+    position: relative;
+}
+
+.ct-table__wait {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(256, 256, 256, 0.1);
+}
+
+.ct-table--wait {
+    .ct-table__body {
+        opacity: 0.5;
+    }
+
+    .ct-table__wait {
+        display: flex;
+    }
+}
+
+.ct-table button {
+    line-height: 24px;
+}

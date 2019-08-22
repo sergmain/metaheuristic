@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.rest.v1;
 
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class ExperimentRestController {
 
     private final ExperimentTopLevelService experimentTopLevelService;
@@ -111,18 +112,18 @@ public class ExperimentRestController {
     }
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
-    public OperationStatusRest metadataDeleteCommit(@PathVariable long experimentId, @PathVariable String key) {
+    public OperationStatusRest metadataDeleteCommit(@PathVariable Long experimentId, @PathVariable String key) {
         if (true) throw new IllegalStateException("Need to change this in web(html files) and angular");
         return experimentTopLevelService.metadataDeleteCommit(experimentId, key);
     }
 
     @GetMapping("/experiment-metadata-default-add-commit/{experimentId}")
-    public OperationStatusRest metadataDefaultAddCommit(@PathVariable long experimentId) {
+    public OperationStatusRest metadataDefaultAddCommit(@PathVariable Long experimentId) {
         return experimentTopLevelService.metadataDefaultAddCommit(experimentId);
     }
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{snippetCode}")
-    public OperationStatusRest snippetDeleteCommit(@PathVariable long experimentId, @PathVariable String snippetCode) {
+    public OperationStatusRest snippetDeleteCommit(@PathVariable Long experimentId, @PathVariable String snippetCode) {
         return experimentTopLevelService.snippetDeleteCommit(experimentId, snippetCode);
     }
 
@@ -137,13 +138,33 @@ public class ExperimentRestController {
     }
 
     @PostMapping("/task-rerun/{taskId}")
-    public OperationStatusRest rerunTask(@PathVariable long taskId) {
+    public OperationStatusRest rerunTask(@PathVariable Long taskId) {
         return workbookService.resetTask(taskId);
     }
 
     @PostMapping(value = "/experiment-upload-from-file")
     public OperationStatusRest uploadSnippet(final MultipartFile file) {
         return experimentTopLevelService.uploadExperiment(file);
+    }
+
+    @PostMapping("/bind-experiment-to-plan-with-resource")
+    public OperationStatusRest bindExperimentToPlanWithResource(String experimentCode, String resourcePoolCode) {
+        return experimentTopLevelService.bindExperimentToPlanWithResource(experimentCode, resourcePoolCode);
+    }
+
+    @PostMapping("/produce-tasks")
+    public OperationStatusRest produceTasks(String experimentCode) {
+        return experimentTopLevelService.produceTasks(experimentCode);
+    }
+
+    @PostMapping("/start-processing-of-tasks")
+    public OperationStatusRest startProcessingOfTasks(String experimentCode) {
+        return experimentTopLevelService.startProcessingOfTasks(experimentCode);
+    }
+
+    @GetMapping("/processing-status/{experimentCode}")
+    public EnumsApi.WorkbookExecState getExperimentProcessingStatus(@PathVariable String experimentCode) {
+        return experimentTopLevelService.getExperimentProcessingStatus(experimentCode);
     }
 
     @GetMapping(value = "/experiment-to-atlas/{id}")

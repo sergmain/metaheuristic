@@ -20,9 +20,27 @@ import lombok.Data;
 
 @Data
 public class ExtendedTimePeriod {
+
+    public enum SchedulePolicy {
+        normal, strict
+    }
+
+    @Data
+    public static class WeekTimePeriod {
+        public String mon;
+        public String tue;
+        public String wed;
+        public String thu;
+        public String fri;
+        public String sat;
+        public String sun;
+    }
+
     public String workingDay;
     public String weekend;
     public String dayMask;
     public String holiday;
     public String exceptionWorkingDay;
+    public WeekTimePeriod week;
+    public SchedulePolicy policy = SchedulePolicy.normal;
 }

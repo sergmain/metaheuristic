@@ -33,7 +33,7 @@ import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.yaml.pilot.BatchParamsUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -86,7 +86,7 @@ public class BatchService {
     private final BatchRepository batchRepository;
     private final WorkbookRepository workbookRepository;
     private final WorkbookCache workbookCache;
-    private final WorkbookGraphService workbookGraphService;
+    private final WorkbookService workbookService;
     private final BatchWorkbookRepository batchWorkbookRepository;
     private final BinaryDataService binaryDataService;
     private final TaskRepository taskRepository;
@@ -158,8 +158,10 @@ public class BatchService {
                     log.warn("#990.050 batch wasn't found {}", batchId);
                     return null;
                 }
-                if (b.execState != Enums.BatchExecState.Processing.code && b.execState != Enums.BatchExecState.Finished.code) {
-                    throw new IllegalStateException("\"#990.060 Can't change state to Finished, " +
+                if (b.execState != Enums.BatchExecState.Processing.code
+                        && b.execState != Enums.BatchExecState.Finished.code
+                ) {
+                    throw new IllegalStateException("#990.060 Can't change state to Finished, " +
                             "current state: " + Enums.BatchExecState.toState(b.execState));
                 }
                 if (b.execState == Enums.BatchExecState.Finished.code) {
@@ -227,7 +229,9 @@ public class BatchService {
             synchronized (obj) {
                 try {
                     batch = batchCache.findById(batchId);
-                    if (batch.execState != Enums.BatchExecState.Finished.code && batch.execState != Enums.BatchExecState.Archived.code) {
+                    if (batch.execState != Enums.BatchExecState.Finished.code &&
+                            batch.execState != Enums.BatchExecState.Error.code &&
+                            batch.execState != Enums.BatchExecState.Archived.code) {
                         Boolean isFinished = null;
                         for (Workbook fi : workbookRepository.findWorkbookByBatchId(batch.id)) {
                             isFinished = Boolean.TRUE;
@@ -369,7 +373,7 @@ public class BatchService {
 
             List<WorkbookParamsYaml.TaskVertex> taskVertices;
             try {
-                taskVertices = workbookGraphService.findLeafs(wb);
+                taskVertices = workbookService.findLeafs(wb);
             } catch (ObjectOptimisticLockingFailureException e) {
                 String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
                 log.warn(msg);
@@ -428,6 +432,7 @@ public class BatchService {
                     isOk = true;
                     continue;
                 case ERROR:
+                case BROKEN:
                     bs.add(getStatusForError(batchId, wb, mainDocument, task, snippetExec, stationIpAndHost));
                     isOk = true;
                     continue;
@@ -478,6 +483,10 @@ public class BatchService {
                 "stationId: " + task.getStationId() + "\n" +
                 stationIpAndHost + "\n\n";
         StringBuilder sb = new StringBuilder(header);
+        if (snippetExec.generalExec!=null) {
+            sb.append("General execution state:\n");
+            sb.append(execResultAsStr(snippetExec.generalExec));
+        }
         if (snippetExec.preExecs!=null && !snippetExec.preExecs.isEmpty()) {
             sb.append("Pre snippets:\n");
             for (SnippetApiData.SnippetExecResult preExec : snippetExec.preExecs) {
@@ -553,7 +562,7 @@ public class BatchService {
             String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
 
             List<WorkbookParamsYaml.TaskVertex> taskVertices;
-            taskVertices = workbookGraphService.findLeafs(wb);
+            taskVertices = workbookService.findLeafs(wb);
             if (taskVertices.isEmpty()) {
                 String msg = "#990.290 " + mainDocument + ", Can't find any task for batchId: " + batchId;
                 log.info(msg);
@@ -605,6 +614,7 @@ public class BatchService {
                     isOk = true;
                     continue;
                 case ERROR:
+                case BROKEN:
                     bs.add("#990.330 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + "\n" +
                             "stationId: " + task.getStationId() + "\n" +

@@ -1,26 +1,8 @@
-import {
-    Injectable
-} from '@angular/core';
-import {
-    HttpRequest,
-    HttpHandler,
-    HttpEvent,
-    HttpInterceptor,
-    HttpResponse,
-    HttpErrorResponse
-} from '@angular/common/http';
-import {
-    Observable,
-    throwError
-} from 'rxjs';
-import {
-    tap,
-    catchError
-} from 'rxjs/operators';
-import {
-    NotificationsService,
-    NotificationType
-} from 'angular2-notifications';
+import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { NotificationsService } from 'angular2-notifications';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 
 @Injectable()
 
@@ -62,7 +44,6 @@ export class NotificationsInterceptor implements HttpInterceptor {
                 return throwError(error);
             })
         );
-
     }
 
     private modifyBody(body: any): any {
@@ -83,7 +64,7 @@ export class NotificationsInterceptor implements HttpInterceptor {
                     timeOut: 10000,
                     showProgressBar: true,
                     pauseOnHover: true,
-                    clickToClose: false,
+                    clickToClose: true,
                 });
             } else {
                 this.notificationsService.info(status, info, {
@@ -99,7 +80,7 @@ export class NotificationsInterceptor implements HttpInterceptor {
                 timeOut: 10000,
                 showProgressBar: true,
                 pauseOnHover: true,
-                clickToClose: false,
+                clickToClose: true,
             });
         }
     }

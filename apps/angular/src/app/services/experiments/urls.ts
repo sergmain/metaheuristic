@@ -1,40 +1,41 @@
-import { environment } from 'environments/environment';
-import jsonToUrlParams from '@app/helpers/jsonToUrlParams'
+import jsonToUrlParams from '@app/helpers/jsonToUrlParams';
+import { environment } from '@src/environments/environment';
 
-let base = environment.baseUrl + 'launchpad/experiment';
+const base: string = environment.baseUrl + 'launchpad/experiment';
 
-let urls = {
-    experiments: {
-        get: page => `${base}/experiments?page=${page}`
-    },
-    experiment: {
-        get: id => `${base}/experiment/${id}`,
-        info: (id) => `${base}/experiment-info/${id}`,
-        edit: (id) => `${base}/experiment-edit/${id}`,
-        addCommit: () => `${base}/experiment-add-commit`,
-        editCommit: () => `${base}/experiment-edit-commit`,
-        deleteCommit: (data) => `${base}/experiment-delete-commit?${jsonToUrlParams(data)}`,
-        cloneCommit: (data) => `${base}/experiment-clone-commit?${jsonToUrlParams(data)}`,
+const experiments: any = {
+    get: (page: number): string => `${base}/experiments?page=${page}`
+}
+const experiment: any = {
+    get: (id: string): string => `${base}/experiment/${id}`,
+    info: (id: string): string => `${base}/experiment-info/${id}`,
+    edit: (id: string): string => `${base}/experiment-edit/${id}`,
+    addCommit: (): string => `${base}/experiment-add-commit`,
+    editCommit: (): string => `${base}/experiment-edit-commit`,
+    deleteCommit: (data: any): string => `${base}/experiment-delete-commit?${jsonToUrlParams(data)}`,
+    cloneCommit: (data: any): string => `${base}/experiment-clone-commit?${jsonToUrlParams(data)}`,
 
-        featurePlotDataPart: (experimentId, featureId, params, paramsAxis) => `${base}/experiment-feature-plot-data-part/${experimentId}/${featureId}/${params}/${paramsAxis}/part`,
-        featureProgressConsolePart: taskId => `${base}/experiment-feature-progress-console-part/${taskId}`,
-        featureProgressConsole: taskId => `${base}/experiment-feature-progress-console/${taskId}`,
-        featureProgressPart: (experimentId, featureId, params) => `${base}/experiment-feature-progress-part/${experimentId}/${featureId}/${params}/part`,
-        featureProgress: (experimentId, featureId) => `${base}/experiment-feature-progress/${experimentId}/${featureId}`,
+    featurePlotDataPart: (experimentId: string, featureId: string, params: string, paramsAxis: string): string => `${base}/experiment-feature-plot-data-part/${experimentId}/${featureId}/${params}/${paramsAxis}/part`,
+    featureProgressConsolePart: (taskId: string): string => `${base}/experiment-feature-progress-console-part/${taskId}`,
+    featureProgressConsole: (taskId: string): string => `${base}/experiment-feature-progress-console/${taskId}`,
+    featureProgressPart: (experimentId: string, featureId: string, params: string): string => `${base}/experiment-feature-progress-part/${experimentId}/${featureId}/${params}/part`,
+    featureProgress: (experimentId: string, featureId: string): string => `${base}/experiment-feature-progress/${experimentId}/${featureId}`,
 
-        metadataAddCommit: (experimentId,data) => `${base}/experiment-metadata-add-commit/${experimentId}?${jsonToUrlParams(data)}`,
-        metadataEditCommit: (experimentId, data) => `${base}/experiment-metadata-edit-commit/${experimentId}?${jsonToUrlParams(data)}`,
-        metadataDeleteCommit: (experimentId, id) => `${base}/experiment-metadata-delete-commit/${experimentId}/${id}`,
-        metadataDefaultAddCommit: (experimentId) => `${base}/experiment-metadata-default-add-commit/${experimentId}`,
+    metadataAddCommit: (experimentId: string, data: any): string => `${base}/experiment-metadata-add-commit/${experimentId}?${jsonToUrlParams(data)}`,
+    metadataEditCommit: (experimentId: string, data: any): string => `${base}/experiment-metadata-edit-commit/${experimentId}?${jsonToUrlParams(data)}`,
+    metadataDeleteCommit: (experimentId: string, id: string): string => `${base}/experiment-metadata-delete-commit/${experimentId}/${id}`,
+    metadataDefaultAddCommit: (experimentId: string): string => `${base}/experiment-metadata-default-add-commit/${experimentId}`,
 
-        snippetAddCommit: (id,data) => `${base}/experiment-snippet-add-commit/${id}?${jsonToUrlParams(data)}`,
-        snippetDeleteCommit: (experimentId, id) => `${base}/experiment-snippet-delete-commit/${experimentId}/${id}`,
+    snippetAddCommit: (id: string, data: any): string => `${base}/experiment-snippet-add-commit/${id}?${jsonToUrlParams(data)}`,
+    snippetDeleteCommit: (experimentId: string, id: string): string => `${base}/experiment-snippet-delete-commit/${experimentId}/${id}`,
 
-        taskRerun: (taskId) => `${base}/task-rerun/${taskId}`
-    }
+    taskRerun: (taskId: string): string => `${base}/task-rerun/${taskId}`,
+    toAtlas: (id: string): string => `${base}/experiment-to-atlas/${id}`
 }
 
-export { urls }
+const urls: any = { experiment, experiments }
+
+export { experiment, experiments, urls };
 
 
 // GET ("/experiments")

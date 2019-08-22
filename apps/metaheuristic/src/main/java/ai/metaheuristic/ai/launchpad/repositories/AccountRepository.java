@@ -20,7 +20,8 @@ import ai.metaheuristic.ai.launchpad.beans.Account;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface AccountRepository extends JpaRepository<Account, Long> {
+public interface AccountRepository extends CrudRepository<Account, Long> {
+
+    @Query(value="select a from Account a where a.id=:id")
+    Account findByIdForUpdate(Long id);
 
     @Transactional(readOnly = true)
     Account findByUsername(String username);

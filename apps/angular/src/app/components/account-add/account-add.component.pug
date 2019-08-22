@@ -1,0 +1,48 @@
+ct-cols(align-items="baseline")
+    ct-col(size="6")
+        ct-section
+            ct-section-header
+                ct-section-header-row
+                    ct-heading New Account
+
+            ct-section-body
+                ct-section-body-row
+                    form('[formGroup]'="form" novalidate)
+                        ct-section-content
+                            mat-form-field(appearance="outline")
+                                mat-label Username
+                                input(type="text" matInput autocomplete="off" formControlName="username")
+                                mat-hint This is a required field.
+                        ct-section-content
+                            mat-form-field(appearance="outline")
+                                mat-label Password
+                                input(type="password" matInput autocomplete="off" formControlName="password")
+                                mat-hint This is a required field.
+                        ct-section-content
+                            mat-form-field(appearance="outline")
+                                mat-label Password again
+                                input(type="password" matInput autocomplete="off" formControlName="password2")
+                                mat-hint This is a required field.
+                        ct-section-content
+                            mat-form-field(appearance="outline")
+                                mat-label Public name
+                                input(type="text" matInput autocomplete="off" formControlName="publicName")
+                                mat-hint This is a required field.
+            ct-section-footer
+                ct-section-footer-row
+                    ct-flex(justify-content="flex-end" gap="8px")
+                        ct-flex-item: button(mat-stroked-button routerLink="/launchpad/accounts/") Cancel
+                        ct-flex-item: button(mat-flat-button '(click)'="create()" color="primary" '[disabled]'="currentStates.has(states.wait) || form.invalid") Create
+
+    ct-col(size="6")
+        ct-section(*ngIf="response")
+            ct-section-body
+                ct-section-body-row
+                    p STATUS: {{response.status}}
+                    p(*ngFor="let error of response.errorMessages; index as i; trackBy: trackByFn") {{error}}
+
+
+
+
+
+

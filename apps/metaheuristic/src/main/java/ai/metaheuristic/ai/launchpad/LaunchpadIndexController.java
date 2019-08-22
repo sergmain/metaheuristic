@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/launchpad")
 @Profile("launchpad")
+@PreAuthorize("isAuthenticated()")
 public class LaunchpadIndexController {
 
     @GetMapping("/index")

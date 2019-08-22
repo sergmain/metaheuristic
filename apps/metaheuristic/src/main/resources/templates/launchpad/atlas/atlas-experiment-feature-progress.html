@@ -2,9 +2,9 @@
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
-    <!--/*@thymesVar id="tasks" type="Slice<AtlasParamsYaml.TaskWithParams>"*/-->
-    <!--/*@thymesVar id="feature" type="ai.metaheuristic.api.data.experiment.ExperimentParamsYaml$ExperimentFeature"*/-->
-    <!--/*@thymesVar id="consoleResult" type="ai.metaheuristic.ai.launchpad.data.AtlasData.ConsoleResult"*/-->
+    <!--/*@thymesVar id="tasks" type="Slice<ai.metaheuristic.api.data.atlas.AtlasParamsYaml$TaskWithParams>"*/-->
+    <!--/*@thymesVar id="feature" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentFeatureData"*/-->
+    <!--/*@thymesVar id="consoleResult" type="ai.metaheuristic.ai.launchpad.data.AtlasData$ConsoleResult"*/-->
     <!--/*@thymesVar id="params" type="ai.metaheuristic.ai.launchpad.data.AtlasData$HyperParamResult"*/-->
     <!--/*@thymesVar id="metrics" type="ai.metaheuristic.ai.launchpad.data.AtlasData$MetricsResult"*/-->
     <!--/*@thymesVar id="atlasId" type="java.lang.Long"*/-->
@@ -274,28 +274,6 @@
             return false;
         }
 
-        /**
-         * @param {int} taskId
-         */
-        function rerunTask(taskId) {
-            // console.log("Start rerunTask()");
-            my_confirm('Do you really want to re-run this task?', 'Re-run task?', "Re-run", function() {
-                console.log("re-run was confirmed.");
-                $.post('/launchpad/task-rerun/' + taskId, function(status) {
-                    // console.log("task-rerun is finished, Status: " + status);
-                    if (status===true) {
-                        // console.log("task-rerun is finished, status " + status);
-                        my_alert('Task was prepared for re-run. You need update page to see changes', 'Status');
-                    }
-                    else {
-                        // console.log("task-rerun is finished, status " + status);
-                        my_alert('There is some problem with re-run this sequence. Status: '+status+'. Try to reload this page', 'Status');
-                    }
-                });
-            });
-            return false;
-        }
-
         function paramsForUrlAxis() {
             let suffix = '';
             Object.keys(buttonAxisStateMap).forEach(
@@ -425,7 +403,7 @@
                             </td>
                             <td>
                                 <a class='pure-button' href="#" th:id="${'button-axis-'+g.index}"
-                                   th:if="${e.list.size()>1}"
+                                   th:if="${params.useAllHyperParamsInPlot() or e.list.size()>1}"
                                    th:data-id="${'button-axis-'+g.index}"
                                    th:data-key="${e.key}"
                                    onclick="switchButtonAxis(this.getAttribute('data-id'), this.getAttribute('data-key'));"
@@ -462,7 +440,7 @@
                         <td th:text="${m.params}">Hyper params</td>
                     </tr>
                     <tr>
-                        <td th:colspan="${metrics.metrics.size()}">
+                        <td th:colspan="${metrics.metrics.size() + 1}">
                             <div th:if="${feature!=null and experimentId!=null}">
                                 <ul class='pagination pagination-centered'>
                                     <li class="table-nav-padding">
@@ -533,16 +511,10 @@
                             <td th:text="${'completed on: ' + #dates.format(t.completedOn, 'dd-MMM-yy HH:mm')}">completed on</td>
                         </tr>
                         <tr valign="top">
-                            <td>
+                            <td colspan="2">
                                 <a class='ajax-elem-console table-nav-button pure-button' th:id="${'a-console-'+ g.index}" href="#"
                                    th:href="${'/launchpad/atlas/atlas-experiment-feature-progress-console-part/'+atlasId+'/'+t.taskId}"
                                    title='Console output'>Info</a>
-                            </td>
-                            <td>
-                                <a class='table-nav-button pure-button' href="#"
-                                   th:data-id="${t.taskId}"
-                                   onclick="rerunTask( this.getAttribute('data-id') ); return false;"
-                                   title='Console output'>Re-run</a>
                             </td>
                         </tr>
                     </div>

@@ -32,4 +32,8 @@ public final class S {
     public static String f(Locale l, String format, Object... args) {
         return String.format(l, format, args);
     }
+
+    public static boolean b(String s) {
+        return s==null || s.isBlank();
+    }
 }

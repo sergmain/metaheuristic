@@ -24,7 +24,7 @@ import java.net.URL;
 
 public class HttpClientExecutor {
 
-    public static Executor getExecutor(String launchpadUrl, String restUsername, String restToken, String restPassword) {
+    public static Executor getExecutor(String launchpadUrl, String restUsername, String restPassword) {
         HttpHost launchpadHttpHostWithAuth;
         try {
             launchpadHttpHostWithAuth = URIUtils.extractHost(new URL(launchpadUrl).toURI());
@@ -33,6 +33,6 @@ public class HttpClientExecutor {
         }
         return Executor.newInstance()
                 .authPreemptive(launchpadHttpHostWithAuth)
-                .auth(launchpadHttpHostWithAuth,restUsername+'=' + restToken, restPassword);
+                .auth(launchpadHttpHostWithAuth,restUsername, restPassword);
     }
 }
