@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class Consts {
 
     public static final int TASK_ORDER_START_VALUE = 1;
@@ -99,6 +100,12 @@ public class Consts {
     public static final String RAR_EXT = ".rar";
 
     // snippets' metas
-    public static final String SNIPPET_PARAMS_AS_FILE_META = "snippet-params-as-file";
-    public static final String SNIPPET_PARAMS_FILE_EXT_META = "snippet-params-file-ext";
+    public static final String META_MH_SNIPPET_PARAMS_AS_FILE_META = "mh.snippet-params-as-file";
+    @Deprecated
+    public static final String META_SNIPPET_PARAMS_AS_FILE_META = "snippet-params-as-file";
+
+    // extension for scripting file which will be executed as snippet
+    public static final String META_MH_SNIPPET_PARAMS_FILE_EXT_META = "mh.snippet-params-file-ext";
+    @Deprecated
+    public static final String META_SNIPPET_PARAMS_FILE_EXT_META = "snippet-params-file-ext";
 }

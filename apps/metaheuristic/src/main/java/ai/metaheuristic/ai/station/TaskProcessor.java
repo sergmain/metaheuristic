@@ -399,7 +399,7 @@ public class TaskProcessor {
         return count;
     }
 
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "deprecation"})
     // TODO 2019.05.02 implement unit-test for this method
     public SnippetApiData.SnippetExecResult execSnippet(
             StationTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, SnippetPrepareResult snippetPrepareResult,
@@ -449,9 +449,13 @@ public class TaskProcessor {
 
             if (!snippetPrepareResult.snippet.skipParams) {
                 if (StringUtils.isNoneBlank(snippetPrepareResult.snippet.params)) {
-                    final Meta meta = snippetPrepareResult.snippet.getMeta(Consts.SNIPPET_PARAMS_AS_FILE_META);
+                    final Meta meta = snippetPrepareResult.snippet.getMeta(
+                            Consts.META_MH_SNIPPET_PARAMS_AS_FILE_META,
+                            Consts.META_SNIPPET_PARAMS_AS_FILE_META);
                     if (meta!=null && Boolean.parseBoolean(meta.value)) {
-                        final Meta metaExt = snippetPrepareResult.snippet.getMeta(Consts.SNIPPET_PARAMS_FILE_EXT_META);
+                        final Meta metaExt = snippetPrepareResult.snippet.getMeta(
+                                Consts.META_MH_SNIPPET_PARAMS_FILE_EXT_META,
+                                Consts.META_SNIPPET_PARAMS_FILE_EXT_META);
                         String ext = (metaExt!=null && metaExt.value!=null && !metaExt.value.isBlank())
                                 ? metaExt.value : ".txt";
 
