@@ -16,12 +16,11 @@
 
 package ai.metaheuristic.ai.launchpad.task;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
 /**
@@ -33,37 +32,32 @@ import java.util.function.Supplier;
 @Slf4j
 public class TaskFunctions {
     private static final ConcurrentHashMap<Long, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
+    private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
-    static TaskImpl changeTaskReturnTask(Long taskId, Supplier<TaskImpl> function) {
-        final AtomicInteger obj = syncMap.computeIfAbsent(taskId, o -> new AtomicInteger());
-        obj.incrementAndGet();
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return function.get();
-            }
-            finally {
-                if (obj.get()==1) {
-                    syncMap.remove(taskId);
-                }
-                obj.decrementAndGet();
-            }
+    @SuppressWarnings("Duplicates")
+    static <T> T getWithSync(Long taskId, Supplier<T> function) {
+        final AtomicInteger obj;
+        try {
+            writeLock.lock();
+            obj = syncMap.computeIfAbsent(taskId, o -> new AtomicInteger());
+        } finally {
+            writeLock.unlock();
         }
-    }
-
-    static Enums.UploadResourceStatus changeTaskReturnUploadResourceStatus(Long taskId, Supplier<Enums.UploadResourceStatus> function) {
-        final AtomicInteger obj = syncMap.computeIfAbsent(taskId, o -> new AtomicInteger());
-        obj.incrementAndGet();
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
+            obj.incrementAndGet();
             try {
                 return function.get();
-            }
-            finally {
-                if (obj.get()==1) {
-                    syncMap.remove(taskId);
+            } finally {
+                try {
+                    writeLock.lock();
+                    if (obj.get() == 1) {
+                        syncMap.remove(taskId);
+                    }
+                    obj.decrementAndGet();
+                } finally {
+                    writeLock.unlock();
                 }
-                obj.decrementAndGet();
             }
         }
     }

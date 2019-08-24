@@ -485,30 +485,14 @@ public class WorkbookService {
         return ids;
     }
 
-//    private static final ConcurrentHashMap<Long, Object> syncMap = new ConcurrentHashMap<>(1000, 0.75f, 10);
-
     // workbook graph methods
 
     public OperationStatusRest updateTaskExecStateByWorkbookId(Long workbookId, Long taskId, int execState) {
-        return WorkbookFunctions.requestAndReturnOperationStatusRest(workbookId, () -> {
+        return WorkbookFunctions.getWithSync(workbookId, () -> {
             WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
             final WorkbookOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(workbook, taskId, execState);
             return status.status;
         });
-/*
-        final Object obj = syncMap.computeIfAbsent(workbookId, o -> new Object());
-        log.debug("Before entering in sync block, updateTaskExecStateInternal()");
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
-                final WorkbookOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(workbook, taskId, execState);
-                return status.status;
-            } finally {
-                syncMap.remove(workbookId);
-            }
-        }
-*/
     }
 
     private WorkbookOperationStatusWithTaskList updateTaskExecStateWithoutSync(WorkbookImpl workbook, Long taskId, int execState) {
@@ -519,162 +503,50 @@ public class WorkbookService {
     }
 
     public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
-        return WorkbookFunctions.requestAndReturnListVertices(workbook.getId(), () -> workbookGraphService.findAll(workbook));
-/*
-        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        synchronized (obj) {
-            try {
-                return workbookGraphService.findAll(workbook);
-            } finally {
-                syncMap.remove(workbook.getId());
-            }
-        }
-*/
+        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.findAll(workbook));
     }
 
     public WorkbookOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(WorkbookImpl workbook, Long taskId) {
-        return WorkbookFunctions.requestAndReturnTaskList(workbook.getId(), () -> workbookGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, taskId));
-/*
-
-        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block, updateGraphWithInvalidatingAllChildrenTasks()");
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return workbookGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, taskId);
-            } finally {
-                syncMap.remove(workbook.getId());
-            }
-        }
-*/
+        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, taskId));
     }
 
     public OperationStatusRest addNewTasksToGraph(WorkbookImpl workbook, List<Long> parentTaskIds, List<Long> taskIds) {
         if (workbook==null || workbook.getId()==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
-        return WorkbookFunctions.requestAndReturnOperationStatusRest(workbook.getId(), () -> workbookGraphService.addNewTasksToGraph(workbook, parentTaskIds, taskIds));
-
-/*
-        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-//        log.debug("Before entering in sync block, addNewTasksToGraph()");
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return workbookGraphService.addNewTasksToGraph(workbook, parentTaskIds, taskIds);
-            } finally {
-                syncMap.remove(workbook.getId());
-            }
-        }
-*/
+        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.addNewTasksToGraph(workbook, parentTaskIds, taskIds));
     }
 
     public List<WorkbookParamsYaml.TaskVertex> findLeafs(WorkbookImpl workbook) {
-        return WorkbookFunctions.requestAndReturnListVertices(workbook.getId(), () -> workbookGraphService.findLeafs(workbook));
-/*
-
-        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block, findLeafs()");
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return workbookGraphService.findLeafs(workbook);
-            } finally {
-                syncMap.remove(workbook.getId());
-            }
-        }
-*/
+        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.findLeafs(workbook));
     }
 
     public Set<WorkbookParamsYaml.TaskVertex> findDescendants(WorkbookImpl workbook, Long taskId) {
-        return WorkbookFunctions.requestAndReturnSetVertices(workbook.getId(), () -> workbookGraphService.findDescendants(workbook, taskId));
-/*
-        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block, findDescendants()");
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return workbookGraphService.findDescendants(workbook, taskId);
-            } finally {
-                syncMap.remove(workbook.getId());
-            }
-        }
-*/
+        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.findDescendants(workbook, taskId));
     }
 
     public long getCountUnfinishedTasks(WorkbookImpl workbook) {
-        return WorkbookFunctions.requestAndReturnLong(workbook.getId(), () -> workbookGraphService.getCountUnfinishedTasks(workbook));
-/*
-        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block, getCountUnfinishedTasks()");
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return workbookGraphService.getCountUnfinishedTasks(workbook);
-            } finally {
-                syncMap.remove(workbook.getId());
-            }
-        }
-*/
+        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.getCountUnfinishedTasks(workbook));
     }
 
     public WorkbookOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
-        return WorkbookFunctions.requestAndReturnTaskList(workbook.getId(), () -> workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, taskId));
-/*
-        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block, updateGraphWithResettingAllChildrenTasks()");
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, taskId);
-            } finally {
-                syncMap.remove(workbook.getId());
-            }
-        }
-*/
+        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, taskId));
     }
 
     public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(WorkbookImpl workbook) {
-        return WorkbookFunctions.requestAndReturnListVertices(workbook.getId(), () -> workbookGraphService.findAllForAssigning(workbook));
-/*
-        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-//        log.debug("Before entering in sync block, findAll()");
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return workbookGraphService.findAllForAssigning(workbook);
-            } finally {
-                syncMap.remove(workbook.getId());
-            }
-        }
-*/
+        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.findAllForAssigning(workbook));
     }
 
     public WorkbookOperationStatusWithTaskList updateTaskExecStates(WorkbookImpl wb, ConcurrentHashMap<Long, Integer> taskStates) {
         if (taskStates==null || taskStates.isEmpty()) {
             return new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
         }
-        return WorkbookFunctions.requestAndReturnTaskList(wb.getId(), () -> {
+        return WorkbookFunctions.getWithSync(wb.getId(), () -> {
             WorkbookImpl workbook = workbookRepository.findByIdForUpdate(wb.id);
             final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecStates(workbook, taskStates);
             updateTasksStateInDb(status);
             return status;
         });
-/*
-        final Object obj = syncMap.computeIfAbsent(wb.getId(), o -> new Object());
-        log.debug("Before entering in sync block, updateTaskExecStates()");
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(wb.id);
-                final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecStates(workbook, taskStates);
-                updateTasksStateInDb(status);
-                return status;
-            } finally {
-                syncMap.remove(wb.getId());
-            }
-        }
-*/
     }
 
     private void updateTasksStateInDb(WorkbookOperationStatusWithTaskList status) {
@@ -709,7 +581,4 @@ public class WorkbookService {
                 throw new IllegalStateException("Right now it must be initialized somewhere else. state: " + state);
         }
     }
-
-
-
 }

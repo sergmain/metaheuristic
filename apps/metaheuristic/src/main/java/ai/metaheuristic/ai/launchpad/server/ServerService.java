@@ -59,7 +59,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,8 +73,6 @@ import java.util.stream.Stream;
 @Slf4j
 @RequiredArgsConstructor
 public class ServerService {
-
-    private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
 
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
     public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
@@ -92,10 +95,47 @@ public class ServerService {
         return deliverResource(binaryDataType, code, null, chunkSize, chunkNum);
     }
 
+    private static final ConcurrentHashMap<String, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
+    private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
+
+    @SuppressWarnings("Duplicates")
+    private static <T> T getWithSync(final EnumsApi.BinaryDataType binaryDataType, final String code, Supplier<T> function) {
+        final String key = "--" + binaryDataType + "--" + code;
+        final AtomicInteger obj;
+        try {
+            writeLock.lock();
+            obj = syncMap.computeIfAbsent(key, o -> new AtomicInteger());
+        } finally {
+            writeLock.unlock();
+        }
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            obj.incrementAndGet();
+            try {
+                return function.get();
+            } finally {
+                try {
+                    writeLock.lock();
+                    if (obj.get() == 1) {
+                        syncMap.remove(key);
+                    }
+                    obj.decrementAndGet();
+                } finally {
+                    writeLock.unlock();
+                }
+            }
+        }
+    }
+
     // return a requested resource to a station
-    public ResponseEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders, String chunkSize, int chunkNum) {
+    private ResponseEntity<AbstractResource> deliverResource(final EnumsApi.BinaryDataType binaryDataType, final String code, final HttpHeaders httpHeaders, final String chunkSize, final int chunkNum) {
+        return getWithSync(binaryDataType, code,
+                () -> getAbstractResourceResponseEntity(httpHeaders, chunkSize, chunkNum, binaryDataType, code));
+    }
+
+    private ResponseEntity<AbstractResource> getAbstractResourceResponseEntity(HttpHeaders httpHeaders, String chunkSize, int chunkNum, EnumsApi.BinaryDataType binaryDataType, String code) {
         AssetFile assetFile;
-        switch(binaryDataType) {
+        switch (binaryDataType) {
             case SNIPPET:
                 assetFile = ResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, code, null);
                 break;
@@ -108,24 +148,23 @@ public class ServerService {
                 throw new IllegalStateException("Unknown type of data: " + binaryDataType);
         }
 
-        if (assetFile==null) {
-            String es = "#442.010 resource with code "+code+" wasn't found";
+        if (assetFile == null) {
+            String es = "#442.010 resource with code " + code + " wasn't found";
             log.error(es);
             throw new BinaryDataNotFoundException(es);
         }
         try {
             binaryDataService.storeToFile(code, assetFile.file);
         } catch (BinaryDataNotFoundException e) {
-            log.error("#442.020 Error store data to temp file, data doesn't exist in db, code " + code+", file: " + assetFile.file.getPath());
+            log.error("#442.020 Error store data to temp file, data doesn't exist in db, code " + code + ", file: " + assetFile.file.getPath());
             throw e;
         }
         File f;
-        boolean isLastChunk = false;
-        if (chunkSize==null || chunkSize.isBlank()) {
+        boolean isLastChunk;
+        if (chunkSize == null || chunkSize.isBlank()) {
             f = assetFile.file;
             isLastChunk = true;
-        }
-        else {
+        } else {
             f = new File(DirUtils.createTempDir("chunked-file-"), "file-part.bin");
             final long size = Long.parseLong(chunkSize);
             final long offset = size * chunkNum;

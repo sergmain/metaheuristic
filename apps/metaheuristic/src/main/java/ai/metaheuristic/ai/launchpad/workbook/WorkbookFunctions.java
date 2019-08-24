@@ -16,13 +16,9 @@
 
 package ai.metaheuristic.ai.launchpad.workbook;
 
-import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
 /**
@@ -30,92 +26,35 @@ import java.util.function.Supplier;
  * Date: 8/11/2019
  * Time: 10:56 AM
  */
-@SuppressWarnings("Duplicates")
 public class WorkbookFunctions {
 
     private static final ConcurrentHashMap<Long, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
+    private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
-    static Long requestAndReturnLong(Long workbookId, Supplier<Long> function) {
-        final AtomicInteger obj = syncMap.computeIfAbsent(workbookId, o -> new AtomicInteger());
-        obj.incrementAndGet();
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return function.get();
-            }
-            finally {
-                if (obj.get()==1) {
-                    syncMap.remove(workbookId);
-                }
-                obj.decrementAndGet();
-            }
+    @SuppressWarnings("Duplicates")
+    static <T> T getWithSync(Long workbookId, Supplier<T> function) {
+        final AtomicInteger obj;
+        try {
+            writeLock.lock();
+            obj = syncMap.computeIfAbsent(workbookId, o -> new AtomicInteger());
+        } finally {
+            writeLock.unlock();
         }
-    }
-
-    static OperationStatusRest requestAndReturnOperationStatusRest(Long workbookId, Supplier<OperationStatusRest> function) {
-        final AtomicInteger obj = syncMap.computeIfAbsent(workbookId, o -> new AtomicInteger());
-        obj.incrementAndGet();
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
+            obj.incrementAndGet();
             try {
                 return function.get();
-            }
-            finally {
-                if (obj.get()==1) {
-                    syncMap.remove(workbookId);
+            } finally {
+                try {
+                    writeLock.lock();
+                    if (obj.get() == 1) {
+                        syncMap.remove(workbookId);
+                    }
+                    obj.decrementAndGet();
+                } finally {
+                    writeLock.unlock();
                 }
-                obj.decrementAndGet();
-            }
-        }
-    }
-
-    static List<WorkbookParamsYaml.TaskVertex> requestAndReturnListVertices(Long workbookId, Supplier<List<WorkbookParamsYaml.TaskVertex>> function) {
-        final AtomicInteger obj = syncMap.computeIfAbsent(workbookId, o -> new AtomicInteger());
-        obj.incrementAndGet();
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return function.get();
-            }
-            finally {
-                if (obj.get()==1) {
-                    syncMap.remove(workbookId);
-                }
-                obj.decrementAndGet();
-            }
-        }
-    }
-
-    static Set<WorkbookParamsYaml.TaskVertex> requestAndReturnSetVertices(Long workbookId, Supplier<Set<WorkbookParamsYaml.TaskVertex>> function) {
-        final AtomicInteger obj = syncMap.computeIfAbsent(workbookId, o -> new AtomicInteger());
-        obj.incrementAndGet();
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return function.get();
-            }
-            finally {
-                if (obj.get()==1) {
-                    syncMap.remove(workbookId);
-                }
-                obj.decrementAndGet();
-            }
-        }
-    }
-
-    static WorkbookOperationStatusWithTaskList requestAndReturnTaskList(Long workbookId, Supplier<WorkbookOperationStatusWithTaskList> function) {
-        final AtomicInteger obj = syncMap.computeIfAbsent(workbookId, o -> new AtomicInteger());
-        obj.incrementAndGet();
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                return function.get();
-            }
-            finally {
-                if (obj.get()==1) {
-                    syncMap.remove(workbookId);
-                }
-                obj.decrementAndGet();
             }
         }
     }

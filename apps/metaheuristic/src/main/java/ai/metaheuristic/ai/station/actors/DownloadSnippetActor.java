@@ -241,8 +241,12 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 }
 
                 try (FileOutputStream fos = new FileOutputStream(snippetTempFile)) {
-                    for (int i = 0; i < idx; i++) {
-                        FileUtils.copyFile(new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp"), fos);
+                    for (int i = 0; i <= idx; i++) {
+                        final File input = new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp");
+                        if (input.length()==0) {
+                            continue;
+                        }
+                        FileUtils.copyFile(input, fos);
                     }
                 }
 
