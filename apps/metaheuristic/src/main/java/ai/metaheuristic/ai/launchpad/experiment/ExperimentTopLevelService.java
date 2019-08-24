@@ -66,6 +66,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -233,6 +234,7 @@ public class ExperimentTopLevelService {
 
         List<TaskProgress> taskProgresses = taskRepository.getTaskProgress(workbook.id);
         result.progress = taskProgresses.stream()
+                .sorted(Comparator.comparingInt(t -> t.execState))
                 .map(t->new ExperimentApiData.ExperimentProgressResult(t.count, t.execState, EnumsApi.TaskExecState.from(t.execState).toString(), t.isCompleted, t.isResultReceived))
                 .collect(Collectors.toList());
         return result;
