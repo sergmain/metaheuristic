@@ -140,6 +140,7 @@ public class SnippetApiData {
             return null;
         }
 
+        @SuppressWarnings("deprecation")
         public int getTaskParamsVersion() {
             final Meta meta = getMeta(ConstsApi.META_MH_TASK_PARAMS_VERSION, ConstsApi.META_TASK_PARAMS_VERSION);
             return (meta!=null) ? Integer.valueOf(meta.value) : 1;

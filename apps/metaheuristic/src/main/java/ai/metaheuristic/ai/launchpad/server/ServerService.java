@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.server;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Command;
@@ -44,6 +45,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -51,6 +53,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.MultiValueMap;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -117,21 +120,29 @@ public class ServerService {
             throw e;
         }
         File f;
+        boolean isLastChunk = false;
         if (chunkSize==null || chunkSize.isBlank()) {
             f = assetFile.file;
+            isLastChunk = true;
         }
         else {
             f = new File(DirUtils.createTempDir("chunked-file-"), "file-part.bin");
             final long size = Long.parseLong(chunkSize);
             final long offset = size * chunkNum;
             if (offset >= assetFile.file.length()) {
-                return null;
+                MultiValueMap<String, String> headers = new HttpHeaders();
+                headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, "true");
+                headers.add(Consts.HEADER_MH_CHUNK_SIZE, "0");
+                return new ResponseEntity<>(new ByteArrayResource(new byte[0]), headers, HttpStatus.OK);
             }
             final long realSize = assetFile.file.length() < offset + size ? assetFile.file.length() - offset : size;
             copyChunk(assetFile.file, f, offset, realSize);
-            long len = f.length();
+            isLastChunk = (assetFile.file.length() == (offset + realSize));
         }
-        return new ResponseEntity<>(new FileSystemResource(f.toPath()), RestUtils.getHeader(httpHeaders, f.length()), HttpStatus.OK);
+        final HttpHeaders headers = RestUtils.getHeader(httpHeaders, f.length());
+        headers.add(Consts.HEADER_MH_CHUNK_SIZE, Long.toString(f.length()));
+        headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, Boolean.toString(isLastChunk));
+        return new ResponseEntity<>(new FileSystemResource(f.toPath()), headers, HttpStatus.OK);
     }
 
     public static void copyChunk(File sourceFile, File destFile, long offset, long size) {

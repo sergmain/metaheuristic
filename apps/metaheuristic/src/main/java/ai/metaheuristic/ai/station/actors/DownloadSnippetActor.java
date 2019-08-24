@@ -33,6 +33,9 @@ import ai.metaheuristic.commons.utils.Checksum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
@@ -150,7 +153,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
                 String mask = assetFile.file.getName() + ".%s.tmp";
                 File dir = assetFile.file.getParentFile();
-                Enums.FlowState flowState = Enums.FlowState.none;
+                Enums.ResourceState resourceState = Enums.ResourceState.none;
                 int idx = 0;
                 do {
                     try {
@@ -175,9 +178,29 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                             response = request.execute();
                         }
                         File partFile = new File(dir, String.format(mask, idx));
-                        response.saveContent(partFile);
+
+                        final HttpResponse httpResponse = response.returnResponse();
+                        try (final FileOutputStream out = new FileOutputStream(partFile)) {
+                            final HttpEntity entity = httpResponse.getEntity();
+                            if (entity != null) {
+                                entity.writeTo(out);
+                            }
+                            else {
+                                log.warn("#811.045 http entity is null");
+                            }
+                        }
+                        final Header[] headers = httpResponse.getAllHeaders();
+                        if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
+                            log.error("#811.047 error while downloading chunk of snippet {}, size is different", snippetCode);
+                            resourceState = Enums.ResourceState.transmitting_error;
+                            break;
+                        }
+                        if (DownloadUtils.isLastChunk(headers)) {
+                            resourceState = Enums.ResourceState.ok;
+                            break;
+                        }
                         if (partFile.length()==0) {
-                            flowState = Enums.FlowState.ok;
+                            resourceState = Enums.ResourceState.ok;
                             break;
                         }
                     } catch (HttpResponseException e) {
@@ -185,31 +208,35 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                             final String es = String.format("#811.050 Resource %s wasn't found on launchpad. Task #%s is finished.", task.snippetCode, task.getTaskId());
                             log.warn(es);
                             stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
-                            flowState = Enums.FlowState.resource_doesnt_exist;
+                            resourceState = Enums.ResourceState.resource_doesnt_exist;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
                             final String es = String.format("#811.060 Unknown error with a resource %s. Task #%s is finished.", task.snippetCode, task.getTaskId());
                             log.warn(es);
                             stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
-                            flowState = Enums.FlowState.unknow_error;
+                            resourceState = Enums.ResourceState.unknown_error;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
                             final String es = String.format("#811.070 Unknown error with a resource %s. Task #%s is finished.", task.snippetCode, task.getTaskId());
                             log.warn(es);
                             stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
-                            flowState = Enums.FlowState.unknow_error;
+                            resourceState = Enums.ResourceState.unknown_error;
                             break;
                         }
                     }
                     idx++;
                 } while (idx<1000);
-                if (flowState==Enums.FlowState.none) {
-                    log.error("#811.080  something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
+                if (resourceState == Enums.ResourceState.none) {
+                    log.error("#811.080 something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
                     continue;
                 }
-                else if (flowState==Enums.FlowState.unknow_error || flowState==Enums.FlowState.resource_doesnt_exist) {
+                else if (resourceState == Enums.ResourceState.unknown_error || resourceState == Enums.ResourceState.resource_doesnt_exist) {
+                    log.warn("#811.082 snippet {} can't be acquired, state: {}", snippetCode, resourceState);
+                    continue;
+                }
+                else if (resourceState == Enums.ResourceState.transmitting_error) {
                     continue;
                 }
 

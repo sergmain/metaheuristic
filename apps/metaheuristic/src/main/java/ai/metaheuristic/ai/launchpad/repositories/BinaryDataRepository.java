@@ -90,7 +90,8 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     @Query(value="select new ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource(" +
             "b.id, b.version, b.code, b.poolCode, b.dataType, b.uploadTs, b.checksum, b.valid, b.manual, b.filename, " +
             "b.params ) " +
-            "from BinaryDataImpl b where b.manual=true ")
+            "from BinaryDataImpl b where b.manual=true " +
+            "order by b.uploadTs desc ")
     Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);
 
 

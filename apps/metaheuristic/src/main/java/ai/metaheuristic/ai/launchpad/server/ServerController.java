@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.server;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.ExchangeData;
@@ -40,10 +41,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -104,7 +107,7 @@ public class ServerController {
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @SuppressWarnings("unused") String stationId,
             @SuppressWarnings("unused") Long taskId,
-            String code, String chunkSize, Integer chunkNum) throws IOException {
+            String code, String chunkSize, Integer chunkNum) {
         String normalCode = new File(code).getName();
         log.debug("deliverResourceAuth(), globals.isSecurityEnabled: {}, typeAsStr: {}, code: {}, chunkSize: {}, chunkNum: {}",
                 globals.isSecurityEnabled, typeAsStr, normalCode, chunkSize, chunkNum);
@@ -117,9 +120,6 @@ public class ServerController {
             entity = serverService.deliverResource(typeAsStr, normalCode, chunkSize, chunkNum);
         } catch (BinaryDataNotFoundException e) {
             return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.GONE);
-        }
-        if (entity==null) {
-            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.OK);
         }
         return entity;
     }
