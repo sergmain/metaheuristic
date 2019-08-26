@@ -113,19 +113,19 @@ public class BatchStatus {
         {
             String progressStr = getProgressStatus().sb.toString();
             if (!progressStr.isBlank()) {
-                status = progressStr + DELEMITER_2;
+                status += progressStr + DELEMITER_2;
             }
         }
         {
             String okStr = getOkStatus().sb.toString();
             if (!okStr.isBlank()) {
-                status = okStr + DELEMITER_2;
+                status += okStr + DELEMITER_2;
             }
         }
         {
             String errorStr = getErrorStatus().sb.toString();
             if (!errorStr.isBlank()) {
-                status = errorStr + DELEMITER_2;
+                status += errorStr + DELEMITER_2;
             }
         }
 
