@@ -34,41 +34,79 @@ import java.util.Map;
 @AllArgsConstructor
 public class BatchStatus {
 
+    public static class StatusPart {
+
+        @JsonIgnore
+        private final StringBuilder sb = new StringBuilder();
+
+        public void add(String status) {
+            sb.append(status);
+        }
+
+        public void add(char c) {
+            sb.append(c);
+        }
+
+        public void add(String status, char c) {
+            sb.append(status);
+            sb.append(c);
+        }
+    }
+
     @JsonIgnore
-    private final StringBuilder sb = new StringBuilder();
+    public final StatusPart generalStatus = new StatusPart();
+    @JsonIgnore
+    public final StatusPart okStatus = new StatusPart();
+    @JsonIgnore
+    public final StatusPart progressStatus = new StatusPart();
+    @JsonIgnore
+    public final StatusPart errorStatus = new StatusPart();
 
     @JsonIgnore
     public final Map<String, String> renameTo = new HashMap<>();
 
     public boolean ok = false;
-    //        public BatchParams batchParams;
-    public String status;
+    private String status;
 
-    public void add(String status) {
-        sb.append(status);
-    }
-
-    public void add(String status, char c) {
-        sb.append(status);
-        sb.append(c);
-    }
-
-    public void setStatus(String status) {
-        sb.append(status);
-    }
+//    public void setStatus(String status) {
+//        sb.append(status);
+//    }
 
     public String getStatus() {
         return status;
     }
 
-    public void add(char c) {
-        sb.append(c);
-    }
-
+    private static final String DELEMITER_1 = "----------------------------------\n";
     /**
      * Don't forget to call this method before storing in db
      */
+    private static final String DELEMITER_2 = "\n\n==================================\n";
+
     public void init() {
-        status = sb.toString();
+        {
+            String generalStr = generalStatus.sb.toString();
+            if (!generalStr.isBlank()) {
+                status = generalStr + DELEMITER_2;
+            }
+        }
+        {
+            String progressStr = progressStatus.sb.toString();
+            if (!progressStr.isBlank()) {
+                status = progressStr + DELEMITER_2;
+            }
+        }
+        {
+            String okStr = okStatus.sb.toString();
+            if (!okStr.isBlank()) {
+                status = okStr + DELEMITER_2;
+            }
+        }
+        {
+            String errorStr = errorStatus.sb.toString();
+            if (!errorStr.isBlank()) {
+                status = errorStr + DELEMITER_2;
+            }
+        }
+
     }
 }
