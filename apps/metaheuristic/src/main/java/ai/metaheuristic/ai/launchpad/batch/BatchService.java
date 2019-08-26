@@ -194,7 +194,7 @@ public class BatchService {
                     batchParams = new BatchParams();
                 }
                 batchParams.batchStatus = new BatchStatus();
-                batchParams.batchStatus.generalStatus.add(error);
+                batchParams.batchStatus.getGeneralStatus().add(error);
                 batchParams.batchStatus.init();
 
                 b.params = BatchParamsUtils.toString(batchParams);
@@ -281,7 +281,7 @@ public class BatchService {
             }
             catch(NeedRetryAfterCacheCleanException e) {
                 final BatchStatus status = new BatchStatus();
-                status.generalStatus.add("#990.100 Can't update batch status, Try later");
+                status.getGeneralStatus().add("#990.100 Can't update batch status, Try later");
                 return status;
             }
         }
@@ -294,7 +294,7 @@ public class BatchService {
             b = batchCache.findById(batchId);
             if (b == null) {
                 final BatchStatus bs = new BatchStatus();
-                bs.generalStatus.add("#990.110, Batch wasn't found, batchId: " + batchId, '\n');
+                bs.getGeneralStatus().add("#990.110, Batch wasn't found, batchId: " + batchId, '\n');
                 bs.ok = false;
                 return bs;
             }
@@ -310,7 +310,7 @@ public class BatchService {
             b = batchCache.findById(batchId);
             if (b == null) {
                 final BatchStatus bs = new BatchStatus();
-                bs.generalStatus.add("#990.113, Batch wasn't found, batchId: " + batchId, '\n');
+                bs.getGeneralStatus().add("#990.113, Batch wasn't found, batchId: " + batchId, '\n');
                 bs.ok = false;
                 return bs;
             }
@@ -343,7 +343,7 @@ public class BatchService {
 
         List<Long> ids = batchWorkbookRepository.findWorkbookIdsByBatchId(batchId);
         if (ids.isEmpty()) {
-            bs.generalStatus.add("#990.130 Batch is empty, there isn't any task, batchId: " + batchId, '\n');
+            bs.getGeneralStatus().add("#990.130 Batch is empty, there isn't any task, batchId: " + batchId, '\n');
             bs.ok = true;
             return bs;
         }
@@ -353,7 +353,7 @@ public class BatchService {
             WorkbookImpl wb = workbookCache.findById(workbookId);
             if (wb == null) {
                 String msg = "#990.140 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
-                bs.generalStatus.add(msg, '\n');
+                bs.getGeneralStatus().add(msg, '\n');
                 log.warn(msg);
                 isOk = false;
                 continue;
@@ -365,7 +365,7 @@ public class BatchService {
                 String msg = "#990.150 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
                         "batchId: " + batchId + ", workbookId: " + workbookId;
                 log.warn(msg);
-                bs.generalStatus.add(msg, '\n');
+                bs.getGeneralStatus().add(msg, '\n');
                 isOk = false;
                 continue;
             }
@@ -377,14 +377,14 @@ public class BatchService {
             } catch (ObjectOptimisticLockingFailureException e) {
                 String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
                 log.warn(msg);
-                bs.generalStatus.add(msg,'\n');
+                bs.getGeneralStatus().add(msg,'\n');
                 isOk = false;
                 continue;
             }
             if (taskVertices.isEmpty()) {
                 String msg = "#990.170 " + mainDocument + ", Can't find any task for batchId: " + batchId;
                 log.info(msg);
-                bs.generalStatus.add(msg,'\n');
+                bs.getGeneralStatus().add(msg,'\n');
                 isOk = false;
                 continue;
             }
@@ -392,7 +392,7 @@ public class BatchService {
                 String msg = "#990.180 " + mainDocument + ", Can't download file because there are more than one task " +
                         "at the final state, batchId: " + batchId + ", workbookId: " + wb.getId();
                 log.info(msg);
-                bs.generalStatus.add(msg,'\n');
+                bs.getGeneralStatus().add(msg,'\n');
                 isOk = false;
                 continue;
             }
@@ -400,7 +400,7 @@ public class BatchService {
             if (task==null) {
                 String msg = "#990.183 " + mainDocument + ", Can't find task #" + taskVertices.get(0).taskId;
                 log.info(msg);
-                bs.generalStatus.add(msg,'\n');
+                bs.getGeneralStatus().add(msg,'\n');
                 isOk = false;
                 continue;
             }
@@ -410,7 +410,7 @@ public class BatchService {
             try {
                 snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
             } catch (YAMLException e) {
-                bs.generalStatus.add("#990.190 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                bs.getGeneralStatus().add("#990.190 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                         ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                         "taskId: " + task.getId(),'\n');
                 isOk = false;
@@ -424,7 +424,7 @@ public class BatchService {
             switch (execState) {
                 case NONE:
                 case IN_PROGRESS:
-                    bs.progressStatus.add("#990.200 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                    bs.getProgressStatus().add("#990.200 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                                     ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                     "taskId: " + task.getId() + ", stationId: " + task.getStationId() +
                                     ", " + stationIpAndHost
@@ -433,12 +433,12 @@ public class BatchService {
                     continue;
                 case ERROR:
                 case BROKEN:
-                    bs.errorStatus.add(getStatusForError(batchId, wb, mainDocument, task, snippetExec, stationIpAndHost));
+                    bs.getErrorStatus().add(getStatusForError(batchId, wb, mainDocument, task, snippetExec, stationIpAndHost));
                     isOk = true;
                     continue;
                 case OK:
                     if (fullConsole) {
-                        bs.okStatus.add("#990.220 " + mainDocument + ", Task completed without any error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                        bs.getOkStatus().add("#990.220 " + mainDocument + ", Task completed without any error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                 "taskId: " + task.getId() + "\n" +
                                 "stationId: " + task.getStationId() + "\n" +
                                 stationIpAndHost + "\n" +
@@ -452,7 +452,7 @@ public class BatchService {
             }
 
             if (wb.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
-                bs.progressStatus.add("#990.230 " + mainDocument + ", Task hasn't completed yet, " +
+                bs.getProgressStatus().add("#990.230 " + mainDocument + ", Task hasn't completed yet, " +
                                 "batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                 "taskId: " + task.getId() + ", " +
                                 "stationId: " + task.getStationId() + ", " + stationIpAndHost
@@ -464,7 +464,7 @@ public class BatchService {
             if (!fullConsole) {
                 String msg = "#990.240 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", workbookId: " + workbookId +
                         ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
-                bs.okStatus.add(msg,'\n');
+                bs.getOkStatus().add(msg,'\n');
                 isOk = true;
             }
         }
@@ -519,21 +519,21 @@ public class BatchService {
     public BatchStatus prepareStatusAndData(Long batchId, File zipDir, boolean fullConsole, boolean storeToDisk) {
         final BatchStatus bs = new BatchStatus();
         if (zipDir == null) {
-            bs.generalStatus.add("#990.268 zipDir is null", '\n');
+            bs.getGeneralStatus().add("#990.268 zipDir is null", '\n');
             bs.ok = false;
             return bs;
         }
 
         Batch batch = batchCache.findById(batchId);
         if (batch == null) {
-            bs.generalStatus.add("#990.270 Batch #"+batchId+" wasn't found", '\n');
+            bs.getGeneralStatus().add("#990.270 Batch #"+batchId+" wasn't found", '\n');
             bs.ok = false;
             return bs;
         }
 
         List<Long> ids = batchWorkbookRepository.findWorkbookIdsByBatchId(batchId);
         if (ids.isEmpty()) {
-            bs.generalStatus.add("#990.250 Batch is empty, there isn't any task, batchId: " + batchId, '\n');
+            bs.getGeneralStatus().add("#990.250 Batch is empty, there isn't any task, batchId: " + batchId, '\n');
             bs.ok = true;
             return bs;
         }
@@ -543,7 +543,7 @@ public class BatchService {
             WorkbookImpl wb = workbookCache.findById(workbookId);
             if (wb == null) {
                 String msg = "#990.260 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
-                bs.generalStatus.add(msg, '\n');
+                bs.getGeneralStatus().add(msg, '\n');
                 log.warn(msg);
                 isOk = false;
                 continue;
@@ -555,7 +555,7 @@ public class BatchService {
                 String msg = "#990.270 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
                         "batchId: " + batchId + ", workbookId: " + workbookId;
                 log.warn(msg);
-                bs.generalStatus.add(msg, '\n');
+                bs.getGeneralStatus().add(msg, '\n');
                 isOk = false;
                 continue;
             }
@@ -566,7 +566,7 @@ public class BatchService {
             if (taskVertices.isEmpty()) {
                 String msg = "#990.290 " + mainDocument + ", Can't find any task for batchId: " + batchId;
                 log.info(msg);
-                bs.generalStatus.add(msg,'\n');
+                bs.getGeneralStatus().add(msg,'\n');
                 isOk = false;
                 continue;
             }
@@ -574,7 +574,7 @@ public class BatchService {
                 String msg = "#990.300 " + mainDocument + ", Can't download file because there are more than one task " +
                         "at the final state, batchId: " + batchId + ", workbookId: " + wb.getId();
                 log.info(msg);
-                bs.generalStatus.add(msg,'\n');
+                bs.getGeneralStatus().add(msg,'\n');
                 isOk = false;
                 continue;
             }
@@ -582,7 +582,7 @@ public class BatchService {
             if (task==null) {
                 String msg = "#990.303 " + mainDocument + ", Can't find task #" + taskVertices.get(0).taskId;
                 log.info(msg);
-                bs.generalStatus.add(msg,'\n');
+                bs.getGeneralStatus().add(msg,'\n');
                 isOk = false;
                 continue;
             }
@@ -592,7 +592,7 @@ public class BatchService {
             try {
                 snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
             } catch (YAMLException e) {
-                bs.generalStatus.add("#990.310 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                bs.getGeneralStatus().add("#990.310 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                         ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                         "taskId: " + task.getId(),'\n');
                 isOk = false;
@@ -606,7 +606,7 @@ public class BatchService {
             switch (execState) {
                 case NONE:
                 case IN_PROGRESS:
-                    bs.progressStatus.add("#990.320 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                    bs.getProgressStatus().add("#990.320 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                                     ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                     "taskId: " + task.getId() + ", stationId: " + task.getStationId() +
                                     ", " + stationIpAndHost
@@ -615,7 +615,7 @@ public class BatchService {
                     continue;
                 case ERROR:
                 case BROKEN:
-                    bs.errorStatus.add("#990.330 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                    bs.getErrorStatus().add("#990.330 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + "\n" +
                             "stationId: " + task.getStationId() + "\n" +
                             stationIpAndHost + "\n" +
@@ -626,7 +626,7 @@ public class BatchService {
                     continue;
                 case OK:
                     if (fullConsole) {
-                        bs.okStatus.add("#990.340 " + mainDocument + ", Task completed without any error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                        bs.getOkStatus().add("#990.340 " + mainDocument + ", Task completed without any error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                 "taskId: " + task.getId() + "\n" +
                                 "stationId: " + task.getStationId() + "\n" +
                                 stationIpAndHost + "\n" +
@@ -643,7 +643,7 @@ public class BatchService {
             try {
                 taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (YAMLException e) {
-                bs.errorStatus.add("#990.350 " + mainDocument + ", Task has broken data in params, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                bs.getErrorStatus().add("#990.350 " + mainDocument + ", Task has broken data in params, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                         ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                         "taskId: " + task.getId(), '\n');
                 isOk = false;
@@ -651,7 +651,7 @@ public class BatchService {
             }
 
             if (wb.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
-                bs.progressStatus.add("#990.360 " + mainDocument + ", Task hasn't completed yet, " +
+                bs.getProgressStatus().add("#990.360 " + mainDocument + ", Task hasn't completed yet, " +
                                 "batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                 "taskId: " + task.getId() + ", " +
                                 "stationId: " + task.getStationId() + ", " + stationIpAndHost
@@ -666,7 +666,7 @@ public class BatchService {
             } catch (IOException e) {
                 String msg = "#990.370 Error create a temp file in "+zipDir.getAbsolutePath();
                 log.error(msg);
-                bs.generalStatus.add(msg,'\n');
+                bs.getGeneralStatus().add(msg,'\n');
                 isOk = false;
                 continue;
             }
@@ -681,7 +681,7 @@ public class BatchService {
                     String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.taskYaml.outputResourceCode +
                             ", file: " + tempFile.getPath();
                     log.error(msg);
-                    bs.generalStatus.add(msg,'\n');
+                    bs.getGeneralStatus().add(msg,'\n');
                     isOk = false;
                     continue;
                 }
@@ -690,7 +690,7 @@ public class BatchService {
             if (!fullConsole) {
                 String msg = "#990.380 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", workbookId: " + workbookId +
                         ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
-                bs.okStatus.add(msg,'\n');
+                bs.getOkStatus().add(msg,'\n');
                 isOk = true;
             }
 

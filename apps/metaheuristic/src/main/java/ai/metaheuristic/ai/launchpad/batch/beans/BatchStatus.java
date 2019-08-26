@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.beans.Transient;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,7 +35,12 @@ import java.util.Map;
 @AllArgsConstructor
 public class BatchStatus {
 
+    private static final String DELEMITER_1 = "--------------------------------------------------------------------\n";
+    private static final String DELEMITER_2 = "\n====================================================================\n";
+
+    @NoArgsConstructor
     public static class StatusPart {
+
 
         @JsonIgnore
         private final StringBuilder sb = new StringBuilder();
@@ -54,55 +60,70 @@ public class BatchStatus {
     }
 
     @JsonIgnore
-    public final StatusPart generalStatus = new StatusPart();
+    private final StatusPart generalStatus = new StatusPart();
     @JsonIgnore
-    public final StatusPart okStatus = new StatusPart();
+    private final StatusPart okStatus = new StatusPart();
     @JsonIgnore
-    public final StatusPart progressStatus = new StatusPart();
+    private final StatusPart progressStatus = new StatusPart();
     @JsonIgnore
-    public final StatusPart errorStatus = new StatusPart();
+    private final StatusPart errorStatus = new StatusPart();
+
+    @Transient
+    public StatusPart getGeneralStatus() {
+        return generalStatus;
+    }
+
+    @Transient
+    public StatusPart getOkStatus() {
+        return okStatus;
+    }
+
+    @Transient
+    public StatusPart getProgressStatus() {
+        return progressStatus;
+    }
+
+    @Transient
+    public StatusPart getErrorStatus() {
+        return errorStatus;
+    }
 
     @JsonIgnore
     public final Map<String, String> renameTo = new HashMap<>();
 
+    // must be public for yaml's marshalling
     public boolean ok = false;
-    private String status;
-
-//    public void setStatus(String status) {
-//        sb.append(status);
-//    }
+    // must be public for yaml's marshalling
+    public String status;
 
     public String getStatus() {
         return status;
     }
 
-    private static final String DELEMITER_1 = "----------------------------------\n";
     /**
      * Don't forget to call this method before storing in db
      */
-    private static final String DELEMITER_2 = "\n\n==================================\n";
-
     public void init() {
         {
-            String generalStr = generalStatus.sb.toString();
+            String generalStr = getGeneralStatus().sb.toString();
             if (!generalStr.isBlank()) {
                 status = generalStr + DELEMITER_2;
             }
         }
         {
-            String progressStr = progressStatus.sb.toString();
+            String progressStr = getProgressStatus().sb.toString();
             if (!progressStr.isBlank()) {
                 status = progressStr + DELEMITER_2;
             }
         }
         {
-            String okStr = okStatus.sb.toString();
+            String okStr = getOkStatus().sb.toString();
             if (!okStr.isBlank()) {
                 status = okStr + DELEMITER_2;
             }
         }
         {
-            String errorStr = errorStatus.sb.toString();
+            String errorStr = getErrorStatus().sb.toString();
             if (!errorStr.isBlank()) {
                 status = errorStr + DELEMITER_2;
             }
