@@ -92,33 +92,42 @@ public class TaskProcessor {
         List<StationTask> tasks = stationTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
 
-            log.info("Start processing task {}", task);
             if (task.launchedOn!=null && task.finishedOn!=null && taskProcessorStateService.currentTaskId==null) {
                 log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched and then finished", task.taskId);
             }
-
-            final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
-
             if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.010 Broken task. LaunchpadUrl is blank.");
+                final String es = "#100.005 task.launchpadUrl is blank for task #" + task.taskId;
+                log.warn(es);
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
                 continue;
             }
-            if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.020 Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
+
+            final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
+            if (launchpadCode==null) {
+                final String es = "#100.010 launchpadCode is null for "+task.launchpadUrl+". task #" + task.taskId;
+                log.warn(es);
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
                 continue;
             }
 
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
+            if (launchpad==null) {
+                final String es = "#100.020 Broken task #"+task.taskId+". Launchpad wasn't found for url " + task.launchpadUrl;
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
+                continue;
+            }
 
             if (launchpad.schedule.isCurrentTimeInactive()) {
                 log.info("Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.launchpadUrl, new Date(), launchpad.schedule.asString);
+                stationTaskService.delete(task.launchpadUrl, task.taskId);
                 return;
             }
 
             if (StringUtils.isBlank(task.getParams())) {
-                log.warn("#100.030 Params for task {} is blank", task.getTaskId());
+                log.warn("#100.030 Params for task #{} is blank", task.getTaskId());
                 continue;
             }
+
             EnumsApi.WorkbookExecState state = currentExecState.getState(task.launchpadUrl, task.workbookId);
             if (state== EnumsApi.WorkbookExecState.UNKNOWN) {
                 stationTaskService.delete(task.launchpadUrl, task.taskId);
@@ -132,6 +141,7 @@ public class TaskProcessor {
                 continue;
             }
 
+            log.info("Start processing task {}", task);
             File taskDir = stationTaskService.prepareTaskDir(task.launchpadUrl, task.taskId);
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());

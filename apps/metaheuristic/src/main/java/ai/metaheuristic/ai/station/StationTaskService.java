@@ -489,12 +489,13 @@ public class StationTaskService {
 
     public StationTask findById(String launchpadUrl, Long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
-                if (task.taskId == taskId) {
-                    return task;
-                }
-            }
-            return null;
+            return getMapForLaunchpadUrl(launchpadUrl)
+                    .entrySet()
+                    .stream()
+                    .filter(e -> e.getValue().taskId == taskId)
+                    .findFirst()
+                    .map(Map.Entry::getValue)
+                    .orElse(null);
         }
     }
 
