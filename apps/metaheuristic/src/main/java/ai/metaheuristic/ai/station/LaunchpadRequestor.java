@@ -110,10 +110,6 @@ public class LaunchpadRequestor {
             return;
         }
 
-        if (launchpad.schedule.isCurrentTimeInactive()) {
-            log.info("LaunchpadRequestor for url {} is inactive", launchpadUrl);
-            return;
-        }
         try {
             Monitoring.log("##010", Enums.Monitor.MEMORY);
             ExchangeData data = new ExchangeData();
@@ -138,7 +134,7 @@ public class LaunchpadRequestor {
                     Monitoring.log("##011", Enums.Monitor.MEMORY);
                     final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
                     Monitoring.log("##012", Enums.Monitor.MEMORY);
-                    if (b) {
+                    if (b && !launchpad.schedule.isCurrentTimeInactive()) {
                         data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.acceptOnlySignedSnippets));
                     }
                     else {

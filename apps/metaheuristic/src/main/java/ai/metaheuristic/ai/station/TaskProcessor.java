@@ -118,8 +118,8 @@ public class TaskProcessor {
             }
 
             if (launchpad.schedule.isCurrentTimeInactive()) {
-                log.info("Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.launchpadUrl, new Date(), launchpad.schedule.asString);
                 stationTaskService.delete(task.launchpadUrl, task.taskId);
+                log.info("Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.launchpadUrl, new Date(), launchpad.schedule.asString);
                 return;
             }
 
