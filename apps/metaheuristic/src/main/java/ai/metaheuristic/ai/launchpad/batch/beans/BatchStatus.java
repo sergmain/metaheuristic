@@ -94,7 +94,7 @@ public class BatchStatus {
     // must be public for yaml's marshalling
     public boolean ok = false;
     // must be public for yaml's marshalling
-    public String status;
+    public String status = "";
 
     public String getStatus() {
         return status;
