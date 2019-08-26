@@ -92,6 +92,10 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Long> findAnyActiveForStationId(Pageable limit, Long stationId);
 
     @Transactional(readOnly = true)
+    @Query("SELECT t FROM TaskImpl t where t.workbookId=:workbookId and t.execState = :execState ")
+    List<TaskImpl> findTasksByExecState(Long workbookId, int execState);
+
+    @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.stationId=:stationId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - result_resource_scheduled_on > 15000) ")
     List<Task> findForMissingResultResources(Long stationId, long mills, int execState);
