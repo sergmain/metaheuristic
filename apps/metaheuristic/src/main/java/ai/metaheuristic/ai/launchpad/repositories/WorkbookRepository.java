@@ -27,6 +27,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 @Repository
@@ -40,6 +41,10 @@ public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
     @Transactional(readOnly = true)
     @Query(value="select f from WorkbookImpl f")
     Stream<Workbook> findAllAsStream();
+
+    @Transactional(readOnly = true)
+    @Query(value="select w.id from WorkbookImpl w")
+    List<Long> findAllIds();
 
     @Transactional(readOnly = true)
     Slice<Workbook> findAllByOrderByExecStateDescCompletedOnDesc(Pageable pageable);

@@ -16,74 +16,53 @@
 package ai.metaheuristic.ai.launchpad;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 @Service
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class ArtifactCleanerAtLaunchpad {
 
     private final Globals globals;
-    private final CleanerTasks cleanerTasks;
     private final WorkbookRepository workbookRepository;
+    private final TaskRepository taskRepository;
 
-    @Service
-    @Profile("launchpad")
-    public static class CleanerTasks {
-        private final TaskRepository taskRepository;
-
-        public CleanerTasks(TaskRepository taskRepository) {
-            this.taskRepository = taskRepository;
-        }
-
-        @Transactional
-        public int cleanTasks(Set<Long> ids, int page, AtomicBoolean isFound) {
-            try (Stream<Object[]> stream = taskRepository.findAllAsTaskSimple(PageRequest.of(page++, 100))) {
-                stream
-                        .forEach(t -> {
-                            isFound.set(true);
-                            if (!ids.contains((Long) t[1])) {
-                                log.info("Found orphan task #{}, workbookId: #{}", t[0], t[1]);
-                                taskRepository.deleteById((Long) t[0]);
-                            }
-                        });
-            }
-            return page;
-        }
-    }
-
-    public ArtifactCleanerAtLaunchpad(Globals globals, WorkbookRepository workbookRepository, CleanerTasks cleanerTasks) {
-        this.globals = globals;
-        this.workbookRepository = workbookRepository;
-        this.cleanerTasks = cleanerTasks;
+    public int cleanTasks(List<Long> ids, int page, AtomicBoolean isFound) {
+        taskRepository.findAllAsTaskSimple(PageRequest.of(page++, 1000))
+                .forEach(t -> {
+                    isFound.set(true);
+                    Long id = (Long) t[1];
+                    if (!ids.contains(id)) {
+                        log.info("Found orphan task #{}, workbookId: #{}", t[0], t[1]);
+                        taskRepository.deleteById((Long) t[0]);
+                    }
+                });
+        return page;
     }
 
     public void fixedDelay() {
-        // maybe we have to delete this because we already have @Profile("launchpad")
+        // TODO 2019-08-26 maybe we have to delete this because we already have @Profile("launchpad")
         if (!globals.isLaunchpadEnabled) {
             return;
         }
 
-        Set<Long> ids = new HashSet<>();
-        workbookRepository.findAll().forEach( o -> ids.add(o.getId()));
+        List<Long> ids = workbookRepository.findAllIds();;
 
         int page = 0;
         final AtomicBoolean isFound = new AtomicBoolean();
         do {
             isFound.set(false);
-            page = cleanerTasks.cleanTasks(ids, page, isFound);
+            page = cleanTasks(ids, page, isFound);
         } while (isFound.get());
     }
-
 }

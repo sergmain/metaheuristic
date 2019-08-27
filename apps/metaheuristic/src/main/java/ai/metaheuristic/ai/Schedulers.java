@@ -97,7 +97,7 @@ public class Schedulers {
             launchpadService.getPlanService().createAllTasks();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.artifact-cleaner'), 30, 300, 30)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.artifact-cleaner'), 30, 300, 60)*1000 }")
         public void artifactCleanerAtLaunchpad() {
             if (globals.isUnitTesting) {
                 return;
