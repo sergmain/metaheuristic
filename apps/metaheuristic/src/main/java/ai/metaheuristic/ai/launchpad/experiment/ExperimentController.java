@@ -320,7 +320,7 @@ public class ExperimentController {
         return workbookService.resetTask(taskId).status == EnumsApi.OperationStatus.OK;
     }
 
-    @PostMapping("/task-reset-all-broken/{workbookId}/{experimentId}")
+    @GetMapping("/task-reset-all-broken/{workbookId}/{experimentId}")
     public String rerunBrokenTasks(
             @PathVariable Long workbookId, @PathVariable Long experimentId, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = workbookService.resetBrokenTasks(workbookId);
