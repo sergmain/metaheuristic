@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.repositories;
 import ai.metaheuristic.ai.launchpad.beans.AtlasTask;
 import ai.metaheuristic.api.launchpad.Plan;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -32,6 +33,10 @@ import java.util.Set;
 @Transactional
 @Profile("launchpad")
 public interface AtlasTaskRepository extends CrudRepository<AtlasTask, Long> {
+
+    @Transactional(readOnly = true)
+    @Query(value="select t.id from AtlasTask t where t.atlasId=:atlasId ")
+    List<Long> findAllAsTaskSimple(Pageable pageable, Long atlasId);
 
     @Transactional(readOnly = true)
     @Query("SELECT at FROM AtlasTask at where at.atlasId=:atlasId and at.taskId in :ids ")

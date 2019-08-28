@@ -38,7 +38,7 @@ public class ArtifactCleanerAtLaunchpad {
     private final TaskRepository taskRepository;
 
     public int cleanTasks(List<Long> ids, int page, AtomicBoolean isFound) {
-        taskRepository.findAllAsTaskSimple(PageRequest.of(page++, 1000))
+        taskRepository.findAllAsTaskSimple(PageRequest.of(page++, 100))
                 .forEach(t -> {
                     isFound.set(true);
                     Long workbookIdd = (Long) t[1];
