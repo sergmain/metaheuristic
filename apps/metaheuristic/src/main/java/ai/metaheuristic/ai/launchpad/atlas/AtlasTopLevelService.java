@@ -380,8 +380,8 @@ public class AtlasTopLevelService {
     }
 
     public OperationStatusRest atlasDeleteCommit(Long id) {
-        Atlas atlas = atlasRepository.findById(id).orElse(null);
-        if (atlas == null) {
+        Long atlasId = atlasRepository.findIdById(id);
+        if (atlasId == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.220 experiment wasn't found in atlas, id: " + id);
         }
