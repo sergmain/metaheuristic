@@ -39,8 +39,8 @@ public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
     WorkbookImpl findByIdForUpdate(Long id);
 
     @Transactional(readOnly = true)
-    @Query(value="select f from WorkbookImpl f")
-    Stream<Workbook> findAllAsStream();
+    @Query(value="select w.id, w.execState from WorkbookImpl w ")
+    List<Object[]> findAllExecStates();
 
     @Transactional(readOnly = true)
     @Query(value="select w.id from WorkbookImpl w")
@@ -71,5 +71,9 @@ public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
     @Transactional(readOnly = true)
     @Query(value="select w from BatchWorkbook b, WorkbookImpl w where b.batchId=:batchId and b.workbookId=w.id")
     List<Workbook> findWorkbookByBatchId(long batchId);
+
+    @Transactional(readOnly = true)
+    @Query(value="select w.execState from BatchWorkbook b, WorkbookImpl w where b.batchId=:batchId and b.workbookId=w.id")
+    List<Integer> findWorkbookExecStateByBatchId(long batchId);
 }
 

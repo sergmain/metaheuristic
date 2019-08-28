@@ -80,6 +80,7 @@ public class WorkbookService {
     private final StationCache stationCache;
     private final WorkbookCache workbookCache;
     private final WorkbookGraphService workbookGraphService;
+    private final WorkbookSyncService workbookSyncService;
 
     @Data
     @NoArgsConstructor
@@ -94,28 +95,28 @@ public class WorkbookService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#705.010 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
-        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(task.getWorkbookId());
-        if (workbook == null) {
-            taskPersistencer.finishTaskAsBrokenOrError(taskId, EnumsApi.TaskExecState.BROKEN);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#705.020 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
-        }
-
         Task t = taskPersistencer.resetTask(task.id);
         if (t==null) {
-            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithSettingAllChildrenTasksAsBroken(workbook, task.id);
+            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithSettingAllChildrenTasksAsBroken(task.getWorkbookId(), task.id);
             updateTasksStateInDb(withTaskList);
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.030 Can't re-run task #" + taskId + ", see log for more information");
             }
         }
         else {
-            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithResettingAllChildrenTasks(workbook, task.id);
+            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithResettingAllChildrenTasks(task.workbookId, task.id);
+            if (withTaskList == null) {
+                taskPersistencer.finishTaskAsBrokenOrError(taskId, EnumsApi.TaskExecState.BROKEN);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        "#705.020 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
+            }
+
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.040 Can't re-run task #" + taskId + ", see log for more information");
             }
             updateTasksStateInDb(withTaskList);
 
+            WorkbookImpl workbook = workbookCache.findById(task.workbookId);
             if (workbook.execState==EnumsApi.WorkbookExecState.FINISHED.code) {
                 toState(workbook.id, EnumsApi.WorkbookExecState.STARTED);
             }
@@ -306,6 +307,8 @@ public class WorkbookService {
         return result;
     }
 
+    // TODO 2019.08.27 is it good to synchronize whole method?
+    //  but it's working
     public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long workbookId) {
 
         final Station station = stationCache.findById(stationId);
@@ -350,7 +353,7 @@ public class WorkbookService {
             workbookIds = List.of(workbook.id);
         }
 
-        for (long wbId : workbookIds) {
+        for (Long wbId : workbookIds) {
             TasksAndAssignToStationResult result = findUnassignedTaskAndAssign(wbId, station, isAcceptOnlySigned);
             if (!result.equals(EMPTY_RESULT)) {
                 return result;
@@ -387,7 +390,7 @@ public class WorkbookService {
         int page = 0;
         Task resultTask = null;
         List<Task> tasks;
-        while ((tasks= getAllByStationIdIsNullAndWorkbookIdAndIdIn(workbookId, vertices, page++)).size()>0) {
+        while ((tasks = getAllByStationIdIsNullAndWorkbookIdAndIdIn(workbookId, vertices, page++)).size()>0) {
             for (Task task : tasks) {
                 final TaskParamsYaml taskParamYaml;
                 try {
@@ -487,9 +490,30 @@ public class WorkbookService {
 
     // workbook graph methods
 
+    // read-only operations with graph
+    public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
+        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAll(workbook));
+    }
+
+    public List<WorkbookParamsYaml.TaskVertex> findLeafs(WorkbookImpl workbook) {
+        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findLeafs(workbook));
+    }
+
+    public Set<WorkbookParamsYaml.TaskVertex> findDescendants(WorkbookImpl workbook, Long taskId) {
+        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findDescendants(workbook, taskId));
+    }
+
+    public long getCountUnfinishedTasks(WorkbookImpl workbook) {
+        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.getCountUnfinishedTasks(workbook));
+    }
+
+    public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(WorkbookImpl workbook) {
+        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAllForAssigning(workbook));
+    }
+
+    // write operations with graph
     public OperationStatusRest updateTaskExecStateByWorkbookId(Long workbookId, Long taskId, int execState) {
-        return WorkbookFunctions.getWithSync(workbookId, () -> {
-            WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+        return workbookSyncService.getWithSync(workbookId, workbook -> {
             final WorkbookOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(workbook, taskId, execState);
             return status.status;
         });
@@ -502,47 +526,24 @@ public class WorkbookService {
         return status;
     }
 
-    public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
-        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.findAll(workbook));
+    public WorkbookOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(Long workbookId, Long taskId) {
+        return workbookSyncService.getWithSync(workbookId, (workbook) -> workbookGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, taskId));
     }
 
-    public WorkbookOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(WorkbookImpl workbook, Long taskId) {
-        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, taskId));
+    public OperationStatusRest addNewTasksToGraph(Long workbookId, List<Long> parentTaskIds, List<Long> taskIds) {
+        final OperationStatusRest withSync = workbookSyncService.getWithSync(workbookId, (workbook) -> workbookGraphService.addNewTasksToGraph(workbook, parentTaskIds, taskIds));
+        return withSync != null ? withSync : OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest addNewTasksToGraph(WorkbookImpl workbook, List<Long> parentTaskIds, List<Long> taskIds) {
-        if (workbook==null || workbook.getId()==null) {
-            return OperationStatusRest.OPERATION_STATUS_OK;
-        }
-        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.addNewTasksToGraph(workbook, parentTaskIds, taskIds));
-    }
-
-    public List<WorkbookParamsYaml.TaskVertex> findLeafs(WorkbookImpl workbook) {
-        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.findLeafs(workbook));
-    }
-
-    public Set<WorkbookParamsYaml.TaskVertex> findDescendants(WorkbookImpl workbook, Long taskId) {
-        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.findDescendants(workbook, taskId));
-    }
-
-    public long getCountUnfinishedTasks(WorkbookImpl workbook) {
-        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.getCountUnfinishedTasks(workbook));
-    }
-
-    public WorkbookOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
-        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, taskId));
-    }
-
-    public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(WorkbookImpl workbook) {
-        return WorkbookFunctions.getWithSync(workbook.getId(), () -> workbookGraphService.findAllForAssigning(workbook));
+    public WorkbookOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(Long workbookId, Long taskId) {
+        return workbookSyncService.getWithSync(workbookId, (workbook) -> workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, taskId));
     }
 
     public WorkbookOperationStatusWithTaskList updateTaskExecStates(WorkbookImpl wb, ConcurrentHashMap<Long, Integer> taskStates) {
         if (taskStates==null || taskStates.isEmpty()) {
             return new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
         }
-        return WorkbookFunctions.getWithSync(wb.getId(), () -> {
-            WorkbookImpl workbook = workbookRepository.findByIdForUpdate(wb.id);
+        return workbookSyncService.getWithSync(wb.getId(), (workbook) -> {
             final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecStates(workbook, taskStates);
             updateTasksStateInDb(status);
             return status;

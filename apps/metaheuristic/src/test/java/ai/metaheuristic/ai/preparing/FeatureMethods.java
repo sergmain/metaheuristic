@@ -70,7 +70,8 @@ public abstract class FeatureMethods extends PreparingPlan {
     }
 
     public void toStarted() {
-        workbook = planService.toStarted(workbook.getId());
+        planService.toStarted(workbook);
+        workbook = workbookCache.findById(workbook.getId());
         assertEquals(EnumsApi.WorkbookExecState.STARTED.code, workbook.getExecState());
     }
 

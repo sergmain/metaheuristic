@@ -52,7 +52,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
 import java.io.File;
@@ -63,10 +62,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Profile("launchpad")
@@ -81,7 +78,7 @@ public class ServerService {
     private final BinaryDataService binaryDataService;
     private final CommandProcessor commandProcessor;
     private final StationCache stationCache;
-    private final CommandSetter commandSetter;
+    private final WorkbookRepository workbookRepository;
     private final StationsRepository stationsRepository;
 
     // return a requested resource to a station
@@ -214,24 +211,12 @@ public class ServerService {
         }
     }
 
-    @Service
-    @Profile("launchpad")
-    public static class CommandSetter {
-        private final WorkbookRepository workbookRepository;
-
-        public CommandSetter(WorkbookRepository workbookRepository) {
-            this.workbookRepository = workbookRepository;
-        }
-
-        // TODO 2019-05-28 Transaction is read-only but method is setCommandInTransaction
-        // need to investigate why and fix it
-        @Transactional(readOnly = true)
-        public void setCommandInTransaction(ExchangeData resultData) {
-            try (Stream<Workbook> stream = workbookRepository.findAllAsStream() ) {
-                resultData.setCommand(new Protocol.WorkbookStatus(
-                        stream.map(ServerService::to).collect(Collectors.toList())));
-            }
-        }
+    private void setCommandInTransaction(ExchangeData resultData) {
+        resultData.setCommand(new Protocol.WorkbookStatus(
+                workbookRepository.findAllExecStates()
+                        .stream()
+                        .map(o -> ServerService.toSimpleStatus((Long)o[0], (Integer)o[1]))
+                        .collect(Collectors.toList())));
     }
 
     public ExchangeData processRequest(ExchangeData data, String remoteAddress) {
@@ -243,7 +228,7 @@ public class ServerService {
             }
 
             ExchangeData resultData = new ExchangeData();
-            commandSetter.setCommandInTransaction(resultData);
+            setCommandInTransaction(resultData);
 
             List<Command> commands = data.getCommands();
             log.debug("Start processing commands");
@@ -381,6 +366,10 @@ public class ServerService {
 
     private static Protocol.WorkbookStatus.SimpleStatus to(Workbook workbook) {
         return new Protocol.WorkbookStatus.SimpleStatus(workbook.getId(), EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
+    }
+
+    private static Protocol.WorkbookStatus.SimpleStatus toSimpleStatus(Long workbookId, Integer execSate) {
+        return new Protocol.WorkbookStatus.SimpleStatus(workbookId, EnumsApi.WorkbookExecState.toState(execSate));
     }
 
 }

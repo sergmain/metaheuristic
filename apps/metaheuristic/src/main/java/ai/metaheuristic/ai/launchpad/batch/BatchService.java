@@ -229,14 +229,13 @@ public class BatchService {
             synchronized (obj) {
                 try {
                     batch = batchCache.findById(batchId);
-                    if (batch.execState != Enums.BatchExecState.Finished.code &&
+                    if (batch!=null && batch.execState != Enums.BatchExecState.Finished.code &&
                             batch.execState != Enums.BatchExecState.Error.code &&
                             batch.execState != Enums.BatchExecState.Archived.code) {
                         Boolean isFinished = null;
-                        for (Workbook fi : workbookRepository.findWorkbookByBatchId(batch.id)) {
+                        for (Integer execState : workbookRepository.findWorkbookExecStateByBatchId(batch.id)) {
                             isFinished = Boolean.TRUE;
-                            if (fi.getExecState() != EnumsApi.WorkbookExecState.ERROR.code &&
-                                    fi.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
+                            if (execState != EnumsApi.WorkbookExecState.ERROR.code && execState != EnumsApi.WorkbookExecState.FINISHED.code) {
                                 isFinished = Boolean.FALSE;
                                 break;
                             }
@@ -250,18 +249,19 @@ public class BatchService {
                 }
             }
             String planCode = PLAN_NOT_FOUND;
-            Plan plan = planCache.findById(batch.getPlanId());
-            boolean ok = true;
-            if (plan!=null) {
-                planCode = plan.getCode();
-            }
-            else {
-                if (batch.execState!=Enums.BatchExecState.Preparing.code) {
-                    ok = false;
+            if (batch!=null) {
+                Plan plan = planCache.findById(batch.getPlanId());
+                boolean ok = true;
+                if (plan != null) {
+                    planCode = plan.getCode();
+                } else {
+                    if (batch.execState != Enums.BatchExecState.Preparing.code) {
+                        ok = false;
+                    }
                 }
+                String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
+                items.add(new BatchData.ProcessResourceItem(batch, planCode, execStateStr, batch.execState, ok));
             }
-            String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
-            items.add( new BatchData.ProcessResourceItem(batch, planCode, execStateStr, batch.execState, ok));
         }
         return items;
     }

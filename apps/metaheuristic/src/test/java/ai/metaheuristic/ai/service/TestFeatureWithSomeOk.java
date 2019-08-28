@@ -42,7 +42,8 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         produceTasks();
         log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
-        workbook = planService.toStarted(workbook.getId());
+        planService.toStarted(workbook);
+        workbook = workbookCache.findById(workbook.getId());
         assertEquals(EnumsApi.WorkbookExecState.STARTED.code, workbook.getExecState());
 
         getTaskAndAssignToStation_mustBeNewTask();

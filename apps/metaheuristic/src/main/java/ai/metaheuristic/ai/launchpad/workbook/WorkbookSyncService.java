@@ -16,9 +16,16 @@
 
 package ai.metaheuristic.ai.launchpad.workbook;
 
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -26,13 +33,18 @@ import java.util.function.Supplier;
  * Date: 8/11/2019
  * Time: 10:56 AM
  */
-public class WorkbookFunctions {
+@Service
+@RequiredArgsConstructor
+@Profile("launchpad")
+public class WorkbookSyncService {
+
+    private final WorkbookRepository workbookRepository;
 
     private static final ConcurrentHashMap<Long, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
     @SuppressWarnings("Duplicates")
-    static <T> T getWithSync(Long workbookId, Supplier<T> function) {
+    <T> T getWithSync(Long workbookId, Function<WorkbookImpl, T> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();
@@ -44,12 +56,41 @@ public class WorkbookFunctions {
         synchronized (obj) {
             obj.incrementAndGet();
             try {
-                return function.get();
+                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+                return workbook == null ? null : function.apply(workbook);
             } finally {
                 try {
                     writeLock.lock();
                     if (obj.get() == 1) {
                         syncMap.remove(workbookId);
+                    }
+                    obj.decrementAndGet();
+                } finally {
+                    writeLock.unlock();
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("Duplicates")
+    <T> T getWithSyncReadOnly(WorkbookImpl workbook, Supplier<T> function) {
+        final AtomicInteger obj;
+        try {
+            writeLock.lock();
+            obj = syncMap.computeIfAbsent(workbook.id, o -> new AtomicInteger());
+        } finally {
+            writeLock.unlock();
+        }
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            obj.incrementAndGet();
+            try {
+                return workbook == null ? null : function.get();
+            } finally {
+                try {
+                    writeLock.lock();
+                    if (obj.get() == 1) {
+                        syncMap.remove(workbook.id);
                     }
                     obj.decrementAndGet();
                 } finally {

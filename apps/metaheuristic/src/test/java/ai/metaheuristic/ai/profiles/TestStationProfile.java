@@ -38,7 +38,7 @@ public class TestStationProfile {
     public void simpleTest() {
         System.out.println("We don't need any test here " +
                 "because this test is about " +
-                "correctness of class wiring for profile." +
+                "correctness of class wiring for 'station' profile." +
                 "Number of threads: " + globals.threadNumber);
     }
 }

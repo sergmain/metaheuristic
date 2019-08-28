@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
@@ -40,12 +41,14 @@ public class ExperimentProcessValidator implements ProcessValidator {
 
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
-    private final WorkbookRepository workbookRepository;
+    private final WorkbookCache workbookCache;
 
-    // TODO experiment has to be stateless and have its own instances
+    // TODO experiment has to be stateless and has its own instances
     // TODO 2019.05.02 do we need an experiment to have its own instance still?
     // TODO 2019.07.04 current thought is that we don't need stateless experiment
-    // TODO because each experiment has its own set of hyper parameters
+    //      because each experiment has its own set of hyper parameters
+    // TODO 2019.08.26 an experiment will be always stateful.
+    //      that means that there won't be separated description of experiment and instances of experiment
 
     @Override
     public EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst) {
@@ -64,7 +67,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
             return EnumsApi.PlanValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
         }
         if (e.getWorkbookId()!=null) {
-            Workbook workbook = workbookRepository.findById(e.getWorkbookId()).orElse(null);
+            Workbook workbook = workbookCache.findById(e.getWorkbookId());
             if (workbook != null) {
                 if (!plan.getId().equals(workbook.getPlanId())) {
                     return EnumsApi.PlanValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;

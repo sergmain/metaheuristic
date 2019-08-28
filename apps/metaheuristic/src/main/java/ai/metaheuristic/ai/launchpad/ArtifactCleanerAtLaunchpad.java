@@ -41,9 +41,9 @@ public class ArtifactCleanerAtLaunchpad {
         taskRepository.findAllAsTaskSimple(PageRequest.of(page++, 1000))
                 .forEach(t -> {
                     isFound.set(true);
-                    Long id = (Long) t[1];
-                    if (!ids.contains(id)) {
-                        log.info("Found orphan task #{}, workbookId: #{}", t[0], t[1]);
+                    Long workbookIdd = (Long) t[1];
+                    if (!ids.contains(workbookIdd)) {
+                        log.info("Found orphan task #{}, workbookId: #{}", t[0], workbookIdd);
                         taskRepository.deleteById((Long) t[0]);
                     }
                 });

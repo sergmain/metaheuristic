@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.TaskProgress;
-import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.api.launchpad.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;

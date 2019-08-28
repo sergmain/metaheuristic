@@ -93,7 +93,7 @@ public class FileProcessService {
         result.status = EnumsApi.PlanProducingStatus.OK;
         result.numberOfTasks = result.outputResourceCodes.size();
 
-        workbookService.addNewTasksToGraph(workbookCache.findById(workbookId), parentTaskIds, result.taskIds);
+        workbookService.addNewTasksToGraph(workbookId, parentTaskIds, result.taskIds);
 
         return result;
     }

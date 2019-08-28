@@ -18,9 +18,8 @@ package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookOperationStatusWithTaskList;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.launchpad.Task;
@@ -41,7 +40,6 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final WorkbookService workbookService;
-    private final WorkbookRepository workbookRepository;
 
     public List<Long> resourceReceivingChecker(long stationId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
@@ -51,31 +49,31 @@ public class TaskService {
     public void processResendTaskOutputResourceResult(String stationId, Enums.ResendTaskOutputResourceStatus status, long taskId) {
         switch(status) {
             case SEND_SCHEDULED:
-                log.info("#317.01 Station #{} scheduled the output resource of task #{} for sending. This is normal operation of plan", stationId, taskId);
+                log.info("#317.010 Station #{} scheduled the output resource of task #{} for sending. This is normal operation of plan", stationId, taskId);
                 break;
             case RESOURCE_NOT_FOUND:
             case TASK_IS_BROKEN:
             case TASK_PARAM_FILE_NOT_FOUND:
                 TaskImpl task = taskRepository.findById(taskId).orElse(null);
                 if (task==null) {
-                    log.warn("#317.05 Task obsolete and was already deleted");
+                    log.warn("#317.020 Task obsolete and was already deleted");
                     return;
                 }
                 taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
-                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(task.workbookId);
-                if (workbook==null) {
-                    log.warn("#317.11 Workbook for this task was already deleted");
+                WorkbookOperationStatusWithTaskList workbookOperationStatusWithTaskList =
+                        workbookService.updateGraphWithSettingAllChildrenTasksAsBroken(task.workbookId, task.id);
+                if (workbookOperationStatusWithTaskList==null) {
+                    log.warn("#317.030 Workbook for this task was already deleted");
                     return;
                 }
-                workbookService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, task.id);
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
                 Enums.UploadResourceStatus uploadResourceStatus = taskPersistencer.setResultReceived(taskId, true);
                 if (uploadResourceStatus==Enums.UploadResourceStatus.OK) {
-                    log.info("#317.28 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of plan", taskId);
+                    log.info("#317.040 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of plan", taskId);
                 }
                 else {
-                    log.info("#317.30 can't update isCompleted field for task #{}", taskId);
+                    log.info("#317.050 can't update isCompleted field for task #{}", taskId);
                 }
                 break;
         }

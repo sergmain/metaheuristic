@@ -86,16 +86,9 @@ public class PlanService {
     private final CommonProcessValidatorService commonProcessValidatorService;
     private final SnippetRepository snippetRepository;
 
-    public WorkbookImpl toStarted(Long workbookId) {
-        WorkbookImpl wb = workbookRepository.findByIdForUpdate(workbookId);
-        if (wb==null) {
-            String es = "#701.010 Can't change exec state to PRODUCED for workbook #" + workbookId;
-            log.error(es);
-            throw new IllegalStateException(es);
-        }
-        PlanImpl plan = planCache.findById(wb.getPlanId());
-        wb.setExecState(plan == null ? EnumsApi.WorkbookExecState.ERROR.code : EnumsApi.WorkbookExecState.STARTED.code);
-        return workbookCache.save(wb);
+    public void toStarted(Workbook workbook) {
+        PlanImpl plan = planCache.findById(workbook.getPlanId());
+        workbookService.toState(workbook.getId(), plan == null ? EnumsApi.WorkbookExecState.ERROR : EnumsApi.WorkbookExecState.STARTED);
     }
 
     // TODO 2019.05.19 add reporting of producing of tasks
@@ -517,10 +510,12 @@ public class PlanService {
         experimentService.resetExperimentByWorkbookId(workbookId);
         binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
         Workbook workbook = workbookCache.findById(workbookId);
-        if (workbook!=null && workbook.getPlanId()!=null) {
-            setLockedTo(workbook.getPlanId(), false);
+        if (workbook != null) {
+            if (workbook.getPlanId() != null) {
+                setLockedTo(workbook.getPlanId(), false);
+            }
+            workbookCache.deleteById(workbookId);
         }
-        workbookCache.deleteById(workbookId);
     }
 
 
