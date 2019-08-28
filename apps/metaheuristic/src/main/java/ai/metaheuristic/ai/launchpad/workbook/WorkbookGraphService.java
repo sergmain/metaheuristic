@@ -326,6 +326,20 @@ class WorkbookGraphService {
         }
     }
 
+    public List<WorkbookParamsYaml.TaskVertex> findAllBroken(WorkbookImpl workbook) {
+        try {
+            return readOnlyGraphListOfTaskVertex(workbook, graph -> {
+                return graph.vertexSet().stream()
+                        .filter( v -> v.execState == EnumsApi.TaskExecState.BROKEN || v.execState == EnumsApi.TaskExecState.ERROR )
+                        .collect(Collectors.toList());
+            });
+        }
+        catch (Throwable th) {
+            log.error("#915.030 Error", th);
+            return null;
+        }
+    }
+
     private boolean isParentFullyProcessedWithoutErrors(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph, WorkbookParamsYaml.TaskVertex vertex) {
         for (WorkbookParamsYaml.TaskVertex ancestor : graph.getAncestors(vertex)) {
             if (ancestor.execState!=EnumsApi.TaskExecState.OK) {

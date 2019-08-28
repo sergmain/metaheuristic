@@ -111,7 +111,7 @@ public class TaskPersistencer {
             task.setExecState(EnumsApi.TaskExecState.NONE.value);
             task.setResultReceived(false);
             task.setResultResourceScheduledOn(0);
-            taskRepository.save(task);
+            task = taskRepository.save(task);
 
             return task;
         });

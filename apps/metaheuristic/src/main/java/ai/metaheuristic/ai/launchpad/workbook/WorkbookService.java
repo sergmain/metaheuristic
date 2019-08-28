@@ -89,42 +89,6 @@ public class WorkbookService {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-    public OperationStatusRest resetTask(Long taskId) {
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#705.010 Can't re-run task "+taskId+", task with such taskId wasn't found");
-        }
-        Task t = taskPersistencer.resetTask(task.id);
-        if (t==null) {
-            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithSettingAllChildrenTasksAsBroken(task.getWorkbookId(), task.id);
-            updateTasksStateInDb(withTaskList);
-            if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.030 Can't re-run task #" + taskId + ", see log for more information");
-            }
-        }
-        else {
-            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithResettingAllChildrenTasks(task.workbookId, task.id);
-            if (withTaskList == null) {
-                taskPersistencer.finishTaskAsBrokenOrError(taskId, EnumsApi.TaskExecState.BROKEN);
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#705.020 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
-            }
-
-            if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.040 Can't re-run task #" + taskId + ", see log for more information");
-            }
-            updateTasksStateInDb(withTaskList);
-
-            WorkbookImpl workbook = workbookCache.findById(task.workbookId);
-            if (workbook.execState==EnumsApi.WorkbookExecState.FINISHED.code) {
-                toState(workbook.id, EnumsApi.WorkbookExecState.STARTED);
-            }
-        }
-
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
     public static class WorkbookDeletionEvent extends ApplicationEvent {
         public long workbookId;
 
@@ -154,6 +118,57 @@ public class WorkbookService {
         public void onApplicationEvent( WorkbookDeletionEvent event) {
             consumer.accept(event.workbookId);
         }
+    }
+
+    public OperationStatusRest resetBrokenTasks(Long workbookId) {
+        final WorkbookImpl workbook = workbookCache.findById(workbookId);
+        if (workbook==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.003 Can't find workbook with id #"+workbookId);
+        }
+        List<WorkbookParamsYaml.TaskVertex> vertices = findAllBroken(workbook);
+        if (vertices==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.005 Can't find workbook with id #"+workbookId);
+        }
+        for (WorkbookParamsYaml.TaskVertex vertex : vertices) {
+            resetTask(vertex.taskId);
+        }
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public OperationStatusRest resetTask(Long taskId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#705.010 Can't re-run task "+taskId+", task with such taskId wasn't found");
+        }
+        Task t = taskPersistencer.resetTask(task.id);
+        if (t==null) {
+            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithSettingAllChildrenTasksAsBroken(task.getWorkbookId(), task.id);
+            updateTasksStateInDb(withTaskList);
+            if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.030 Can't re-run task #" + taskId + ", see log for more information");
+            }
+        }
+        else {
+            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithResettingAllChildrenTasks(task.workbookId, task.id);
+            if (withTaskList == null) {
+                taskPersistencer.finishTaskAsBrokenOrError(taskId, EnumsApi.TaskExecState.BROKEN);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        "#705.020 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
+            }
+
+            if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.040 Can't re-run task #" + taskId + ", see log for more information");
+            }
+            updateTasksStateInDb(withTaskList);
+
+            WorkbookImpl workbook = workbookCache.findById(task.workbookId);
+            if (workbook.execState != EnumsApi.WorkbookExecState.STARTED.code) {
+                toState(workbook.id, EnumsApi.WorkbookExecState.STARTED);
+            }
+        }
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public void toProduced(Long workbookId) {
@@ -488,7 +503,7 @@ public class WorkbookService {
         return ids;
     }
 
-    // workbook graph methods
+    // section 'workbook graph methods'
 
     // read-only operations with graph
     public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
@@ -509,6 +524,10 @@ public class WorkbookService {
 
     public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(WorkbookImpl workbook) {
         return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAllForAssigning(workbook));
+    }
+
+    public List<WorkbookParamsYaml.TaskVertex> findAllBroken(WorkbookImpl workbook) {
+        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAllBroken(workbook));
     }
 
     // write operations with graph
@@ -549,6 +568,9 @@ public class WorkbookService {
             return status;
         });
     }
+
+    // end of section 'workbook graph methods'
+
 
     private void updateTasksStateInDb(WorkbookOperationStatusWithTaskList status) {
         status.childrenTasks.forEach(t -> {

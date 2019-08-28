@@ -74,6 +74,9 @@ public class WorkbookSyncService {
 
     @SuppressWarnings("Duplicates")
     <T> T getWithSyncReadOnly(WorkbookImpl workbook, Supplier<T> function) {
+        if (workbook==null) {
+            return null;
+        }
         final AtomicInteger obj;
         try {
             writeLock.lock();
