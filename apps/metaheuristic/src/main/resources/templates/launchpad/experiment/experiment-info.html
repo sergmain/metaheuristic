@@ -46,6 +46,11 @@
             </td>
             <td width="20">&nbsp; </td>
             <td valign="top">
+                <a class="pure-button table-nav-button-fill pure-button-primary" href="#"
+                   th:href="${'/launchpad/experiment/task-reset-all-broken/' + experimentResult.workbook.id +'/'+ experiment.id }">Reset broken tasks</a>
+            </td>
+            <td width="20">&nbsp; </td>
+            <td valign="top">
                 <a class="pure-button pure-button-primary" href="experiments.html"
                    th:href="${'/launchpad/experiment/experiments'}">To list of experiments</a>
             </td>
