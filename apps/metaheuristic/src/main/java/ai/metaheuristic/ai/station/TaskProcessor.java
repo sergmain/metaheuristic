@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.core.ExecProcessService;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.resource.AssetFile;
@@ -539,9 +538,5 @@ public class TaskProcessor {
             log.info("Snippet asset file: {}, exist: {}", snippetPrepareResult.snippetAssetFile.file.getAbsolutePath(), snippetPrepareResult.snippetAssetFile.file.exists() );
         }
         return snippetPrepareResult;
-    }
-
-    public void processWorkbookStatus(String launchpadUrl, List<Protocol.WorkbookStatus.SimpleStatus> statuses) {
-        currentExecState.register(launchpadUrl, statuses);
     }
 }

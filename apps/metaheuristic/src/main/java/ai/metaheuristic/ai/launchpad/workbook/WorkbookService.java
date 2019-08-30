@@ -19,14 +19,12 @@ package ai.metaheuristic.ai.launchpad.workbook;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
-import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -34,6 +32,8 @@ import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
@@ -46,7 +46,8 @@ import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
@@ -69,8 +70,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class WorkbookService {
 
-    private static final TasksAndAssignToStationResult EMPTY_RESULT = new TasksAndAssignToStationResult(null);
-
     private final Globals globals;
     private final WorkbookRepository workbookRepository;
     private final PlanCache planCache;
@@ -81,13 +80,6 @@ public class WorkbookService {
     private final WorkbookCache workbookCache;
     private final WorkbookGraphService workbookGraphService;
     private final WorkbookSyncService workbookSyncService;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class TasksAndAssignToStationResult {
-        Protocol.AssignedTask.Task simpleTask;
-    }
 
     public static class WorkbookDeletionEvent extends ApplicationEvent {
         public long workbookId;
@@ -324,12 +316,12 @@ public class WorkbookService {
 
     // TODO 2019.08.27 is it good to synchronize whole method?
     //  but it's working
-    public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long workbookId) {
+    public synchronized LaunchpadCommParamsYaml.AssignedTask getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long workbookId) {
 
         final Station station = stationCache.findById(stationId);
         if (station == null) {
             log.error("#705.140 Station wasn't found for id: {}", stationId);
-            return EMPTY_RESULT;
+            return null;
         }
         StationStatus ss;
         try {
@@ -337,18 +329,18 @@ public class WorkbookService {
         } catch (Throwable e) {
             log.error("#705.150 Error parsing current status of station:\n{}", station.status);
             log.error("#705.151 Error ", e);
-            return EMPTY_RESULT;
+            return null;
         }
         if (ss.taskParamsVersion < TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
             // this station is blacklisted. ignore it
-            return EMPTY_RESULT;
+            return null;
         }
 
         List<Long> anyTaskId = taskRepository.findAnyActiveForStationId(Consts.PAGE_REQUEST_1_REC, stationId);
         if (!anyTaskId.isEmpty()) {
             // this station already has active task
             log.info("#705.160 can't assign any new task to the station #{} because this station has an active task #{}", stationId, anyTaskId);
-            return EMPTY_RESULT;
+            return null;
         }
 
         List<Long> workbookIds;
@@ -359,22 +351,22 @@ public class WorkbookService {
             WorkbookImpl workbook = workbookCache.findById(workbookId);
             if (workbook==null) {
                 log.warn("#705.170 Workbook wasn't found for id: {}", workbookId);
-                return EMPTY_RESULT;
+                return null;
             }
             if (workbook.getExecState()!= EnumsApi.WorkbookExecState.STARTED.code) {
                 log.warn("#705.180 Workbook wasn't started. Current exec state: {}", EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
-                return EMPTY_RESULT;
+                return null;
             }
             workbookIds = List.of(workbook.id);
         }
 
         for (Long wbId : workbookIds) {
-            TasksAndAssignToStationResult result = findUnassignedTaskAndAssign(wbId, station, isAcceptOnlySigned);
-            if (!result.equals(EMPTY_RESULT)) {
+            LaunchpadCommParamsYaml.AssignedTask result = findUnassignedTaskAndAssign(wbId, station, isAcceptOnlySigned);
+            if (result!=null) {
                 return result;
             }
         }
-        return EMPTY_RESULT;
+        return null;
     }
 
     private final Map<Long, LongHolder> bannedSince = new HashMap<>();
@@ -390,15 +382,15 @@ public class WorkbookService {
                 .collect(Collectors.toList());
     }
 
-    private TasksAndAssignToStationResult findUnassignedTaskAndAssign(Long workbookId, Station station, boolean isAcceptOnlySigned) {
+    private LaunchpadCommParamsYaml.AssignedTask findUnassignedTaskAndAssign(Long workbookId, Station station, boolean isAcceptOnlySigned) {
 
         LongHolder longHolder = bannedSince.computeIfAbsent(station.getId(), o -> new LongHolder(0));
         if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
-            return EMPTY_RESULT;
+            return null;
         }
         WorkbookImpl workbook = workbookCache.findById(workbookId);
         if (workbook==null) {
-            return EMPTY_RESULT;
+            return null;
         }
         List<WorkbookParamsYaml.TaskVertex> vertices = findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
 
@@ -458,13 +450,13 @@ public class WorkbookService {
             }
         }
         if (resultTask==null) {
-            return EMPTY_RESULT;
+            return null;
         }
 
         // normal way of operation
         longHolder.value = 0;
 
-        Protocol.AssignedTask.Task assignedTask = new Protocol.AssignedTask.Task();
+        LaunchpadCommParamsYaml.AssignedTask assignedTask = new LaunchpadCommParamsYaml.AssignedTask();
         assignedTask.setTaskId(resultTask.getId());
         assignedTask.setWorkbookId(workbookId);
         assignedTask.setParams(resultTask.getParams());
@@ -477,7 +469,7 @@ public class WorkbookService {
         taskRepository.save((TaskImpl)resultTask);
         updateTaskExecStateByWorkbookId(workbookId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
 
-        return new TasksAndAssignToStationResult(assignedTask);
+        return assignedTask;
     }
 
     private List<Task> getAllByStationIdIsNullAndWorkbookIdAndIdIn(Long workbookId, List<WorkbookParamsYaml.TaskVertex> vertices, int page) {
@@ -488,7 +480,7 @@ public class WorkbookService {
         return taskRepository.findForAssigning(workbookId, idsForSearch);
     }
 
-    public List<Long> storeAllConsoleResults(List<SimpleTaskExecResult> results) {
+    public List<Long> storeAllConsoleResults(List<StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results) {
         final Consumer<Task> action = t -> {
             if (t!=null) {
                 updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
@@ -496,7 +488,7 @@ public class WorkbookService {
         };
 
         List<Long> ids = new ArrayList<>();
-        for (SimpleTaskExecResult result : results) {
+        for (StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result : results) {
             ids.add(result.taskId);
             taskPersistencer.storeExecResult(result, action);
         }

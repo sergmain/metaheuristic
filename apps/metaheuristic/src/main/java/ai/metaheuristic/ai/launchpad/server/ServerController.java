@@ -16,10 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.server;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
@@ -41,12 +39,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.dao.PessimisticLockingFailureException;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -91,10 +87,16 @@ public class ServerController {
     }
 
     @PostMapping("/srv/{random-part}")
-    public ExchangeData processRequestAuth(
+    public String processRequestAuth(@SuppressWarnings("unused") @PathVariable("random-part") String randomPart,@RequestBody String data) {
+        log.debug("processRequestAuth(), globals.isSecurityEnabled: {}, data: {}", globals.isSecurityEnabled, data);
+        return "{}";
+    }
+
+    @PostMapping("/srv-v2/{random-part}")
+    public String processRequestAuth(
             HttpServletRequest request,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
-            @RequestBody ExchangeData data
+            @RequestBody String data
             ) {
         log.debug("processRequestAuth(), globals.isSecurityEnabled: {}, data: {}", globals.isSecurityEnabled, data);
         return serverService.processRequest(data, request.getRemoteAddr());

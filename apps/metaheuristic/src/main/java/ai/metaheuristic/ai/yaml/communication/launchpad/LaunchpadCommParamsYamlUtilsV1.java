@@ -14,10 +14,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.workbook;
+package ai.metaheuristic.ai.yaml.communication.launchpad;
 
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -25,32 +23,28 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 12:10 AM
+ * Date: 8/29/2019
+ * Time: 6:02 PM
  */
-public class WorkbookParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<WorkbookParamsYamlV2, WorkbookParamsYaml, Void, Void, Void, Void> {
+public class LaunchpadCommParamsYamlUtilsV1
+        extends AbstractParamsYamlUtils<LaunchpadCommParamsYamlV1, LaunchpadCommParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 1;
     }
 
     public Yaml getYaml() {
-        return YamlUtils.init(WorkbookParamsYamlV2.class);
+        return YamlUtils.init(LaunchpadCommParamsYamlV1.class);
     }
 
     @Override
-    public WorkbookParamsYaml upgradeTo(WorkbookParamsYamlV2 yaml, Long ... vars) {
-        WorkbookParamsYaml t = new WorkbookParamsYaml();
+    public LaunchpadCommParamsYaml upgradeTo(LaunchpadCommParamsYamlV1 yaml, Long ... vars) {
+        LaunchpadCommParamsYaml t = new LaunchpadCommParamsYaml();
 
         // right now we don't need to convert Graph because if has only one version of structure
         // so just copying of graph field is Ok
-        BeanUtils.copyProperties(yaml.workbookYaml, t.workbookYaml);
-        if (yaml.workbookYaml.poolCodes!=null) {
-            t.workbookYaml.poolCodes.putAll(yaml.workbookYaml.poolCodes);
-        }
-        t.graph = yaml.graph;
+        BeanUtils.copyProperties(yaml, t);
         return t;
     }
 
@@ -69,12 +63,12 @@ public class WorkbookParamsYamlUtilsV2
         return null;
     }
 
-    public String toString(WorkbookParamsYamlV2 yaml) {
+    public String toString(LaunchpadCommParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    public WorkbookParamsYamlV2 to(String s) {
-        final WorkbookParamsYamlV2 p = getYaml().load(s);
+    public LaunchpadCommParamsYamlV1 to(String s) {
+        final LaunchpadCommParamsYamlV1 p = getYaml().load(s);
         return p;
     }
 

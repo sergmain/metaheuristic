@@ -14,27 +14,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.station;
+package ai.metaheuristic.ai.yaml.communication.station;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
-@Service
-@Profile("!station")
-public class NullStationServicesHolder implements StationServicesHolder {
+import java.util.Map;
 
-    @Override
-    public StationService getStationService() {
-        return null;
-    }
+/**
+ * @author Serge
+ * Date: 8/29/2019
+ * Time: 6:00 PM
+ */
+public class StationCommParamsYamlUtils {
 
-    @Override
-    public TaskProcessor getTaskProcessor() {
-        return null;
-    }
+    private static final StationCommParamsYamlUtilsV1 YAML_UTILS_V_1 = new StationCommParamsYamlUtilsV1();
+    private static final StationCommParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    @Override
-    public MetadataService getMetadataService() {
-        return null;
-    }
+    public static final BaseYamlUtils<StationCommParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(1, YAML_UTILS_V_1),
+            DEFAULT_UTILS
+    );
 }

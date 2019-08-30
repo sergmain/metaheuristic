@@ -16,11 +16,10 @@
 
 package ai.metaheuristic.ai.commands;
 
-import ai.metaheuristic.ai.comm.Command;
-import ai.metaheuristic.ai.comm.ExchangeData;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.core.JsonUtils;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import com.mysql.cj.protocol.Protocol;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -34,10 +33,8 @@ public class TestJson {
 
     @Test
     public void testStationId() throws IOException {
-        ExchangeData ed = new ExchangeData();
-        final Protocol.AssignedStationId cmd = new Protocol.AssignedStationId();
+        final LaunchpadCommParamsYaml.AssignedStationId cmd = new Protocol.AssignedStationId();
         cmd.setAssignedStationId("42");
-        ed.setSuccess(true);
         ed.setCommand(cmd);
         String asJson = JsonUtils.toJson(ed);
         Assert.assertTrue(asJson.contains("42"));

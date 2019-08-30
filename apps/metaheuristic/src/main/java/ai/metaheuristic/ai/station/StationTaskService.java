@@ -17,8 +17,8 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.utils.DigitUtils;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metrics.Metrics;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
@@ -237,6 +237,29 @@ public class StationTaskService {
         }
     }
 
+    public StationCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult(String launchpadUrl) {
+        final List<StationTask> list = getForReporting(launchpadUrl);
+        if (list.isEmpty()) {
+            return null;
+        }
+        log.info("Number of tasks for reporting: " + list.size());
+        final StationCommParamsYaml.ReportTaskProcessingResult processingResult = new StationCommParamsYaml.ReportTaskProcessingResult();
+        for (StationTask task : list) {
+            if (task.isDelivered() && !task.isReported() ) {
+                log.warn("#775.140 This state need to be investigating: (task.isDelivered() && !task.isReported())==true");
+            }
+            // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enough?
+            if (task.isDelivered() && task.isReported() ) {
+                continue;
+            }
+            final StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
+                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), task.getMetrics());
+            processingResult.results.add(result);
+            setReportedOn(launchpadUrl, task.taskId);
+        }
+        return processingResult;
+    }
+
     public void markAsFinishedWithError(String launchpadUrl, long taskId, String es) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             markAsFinished(launchpadUrl, taskId,
@@ -365,13 +388,13 @@ public class StationTaskService {
         return getMapForLaunchpadUrl(launchpadUrl).values().stream().filter( o -> o.finishedOn!=null);
     }
 
-    public Protocol.StationTaskStatus produceStationTaskStatus(String launchpadUrl) {
-        Protocol.StationTaskStatus status = new Protocol.StationTaskStatus(new ArrayList<>());
+    public StationCommParamsYaml.ReportStationTaskStatus produceStationTaskStatus(String launchpadUrl) {
+        List<StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus> statuses = new ArrayList<>();
         List<StationTask> list = findAll(launchpadUrl);
         for (StationTask task : list) {
-            status.getStatuses().add( new Protocol.StationTaskStatus.SimpleStatus(task.getTaskId()));
+            statuses.add( new StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus(task.getTaskId()));
         }
-        return status;
+        return new StationCommParamsYaml.ReportStationTaskStatus(statuses);
     }
 
     public void createTask(String launchpadUrl, long taskId, Long workbookId, String params) {

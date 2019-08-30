@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.exceptions.ResourceProviderException;
 import ai.metaheuristic.ai.resource.AssetFile;
@@ -29,9 +28,10 @@ import ai.metaheuristic.ai.station.station_resource.DiskResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
 import ai.metaheuristic.ai.station.tasks.UploadResourceTask;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -66,10 +66,11 @@ public class StationService {
     private final ResourceProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
-    Protocol.ReportStationStatus produceReportStationStatus(String launchpadUrl, LaunchpadSchedule schedule) {
+    StationCommParamsYaml.ReportStationStatus produceReportStationStatus(String launchpadUrl, LaunchpadSchedule schedule) {
 
         // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
-        StationStatus status = new StationStatus(
+        // TODO 2019-08-29 why not? do we have to use a different type?
+        StationCommParamsYaml.ReportStationStatus status = new StationCommParamsYaml.ReportStationStatus(
                 envService.getEnvYaml(),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
@@ -87,7 +88,7 @@ public class StationService {
             status.addError(ExceptionUtils.getStackTrace(e));
         }
 
-        return new Protocol.ReportStationStatus(status);
+        return status;
     }
 
     /**
@@ -103,14 +104,12 @@ public class StationService {
         }
     }
 
-    public void assignTasks(String launchpadUrl, List<Protocol.AssignedTask.Task> tasks) {
-        if (tasks==null || tasks.isEmpty()) {
+    public void assignTasks(String launchpadUrl, LaunchpadCommParamsYaml.AssignedTask task) {
+        if (task==null) {
             return;
         }
         synchronized (StationSyncHolder.stationGlobalSync) {
-            for (Protocol.AssignedTask.Task task : tasks) {
-                stationTaskService.createTask(launchpadUrl, task.taskId, task.workbookId, task.params);
-            }
+            stationTaskService.createTask(launchpadUrl, task.taskId, task.workbookId, task.params);
         }
     }
 

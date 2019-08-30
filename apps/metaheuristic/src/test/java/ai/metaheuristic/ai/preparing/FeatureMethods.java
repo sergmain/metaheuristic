@@ -16,7 +16,6 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
@@ -25,6 +24,7 @@ import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -111,7 +111,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertNotNull(experiment.getWorkbookId());
     }
 
-    protected Protocol.AssignedTask.Task getTaskAndAssignToStation_mustBeNewTask() {
+    protected LaunchpadCommParamsYaml.AssignedTask getTaskAndAssignToStation_mustBeNewTask() {
         long mills;
 
         mills = System.currentTimeMillis();

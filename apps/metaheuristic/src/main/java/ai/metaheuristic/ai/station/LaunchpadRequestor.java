@@ -20,12 +20,12 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.comm.Command;
-import ai.metaheuristic.ai.comm.CommandProcessor;
-import ai.metaheuristic.ai.comm.ExchangeData;
-import ai.metaheuristic.ai.comm.Protocol;
-import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
-import ai.metaheuristic.ai.yaml.station_task.StationTask;
+import ai.metaheuristic.ai.launchpad.server.LaunchpadConfig;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.*;
@@ -34,13 +34,14 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -50,57 +51,123 @@ import java.util.stream.Collectors;
  */
 
 @Slf4j
+@RequiredArgsConstructor
 public class LaunchpadRequestor {
 
+    private final String launchpadUrl;
     private final Globals globals;
 
-    private final RestTemplate restTemplate;
-
-    private final CommandProcessor commandProcessor;
     private final StationTaskService stationTaskService;
     private final StationService stationService;
     private final MetadataService metadataService;
     private final CurrentExecState currentExecState;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
+    private final StationCommandProcessor stationCommandProcessor;
 
-    private final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad;
-    private final String launchpadUrl;
-    private final String serverRestUrl;
+    private RestTemplate restTemplate;
 
-    public LaunchpadRequestor(String launchpadUrl, Globals globals, CommandProcessor commandProcessor, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService, CurrentExecState currentExecState, LaunchpadLookupExtendedService launchpadLookupExtendedService) {
-        this.launchpadUrl = launchpadUrl;
-        this.globals = globals;
-        this.commandProcessor = commandProcessor;
-        this.stationTaskService = stationTaskService;
-        this.stationService = stationService;
-        this.metadataService = metadataService;
-        this.currentExecState = currentExecState;
-        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
+    private LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad;
+    private String serverRestUrl;
+
+    @PostConstruct
+    public void init() {
         this.restTemplate = new RestTemplate();
         this.launchpad = this.launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
         if (launchpad == null) {
             throw new IllegalStateException("#775.010 Can'r find launchpad config for url " + launchpadUrl);
         }
         serverRestUrl = launchpadUrl + Consts.REST_V1_URL + Consts.SERVER_REST_URL;
-
-    }
-
-    private final List<Command> commands = new ArrayList<>();
-
-    private void addCommand(Command cmd) {
-        synchronized (commands) {
-            commands.add(cmd);
-        }
-    }
-
-    private void addCommands(List<Command> cmds) {
-        synchronized (commands) {
-            commands.addAll(cmds);
-        }
+        nextRequest = new StationCommParamsYaml();
     }
 
     private long lastRequestForMissingResources = 0;
     private long lastCheckForResendTaskOutputResource = 0;
+
+    private StationCommParamsYaml nextRequest;
+
+    private static final Object syncObj = new Object();
+    private static <T> T getWithSync(Supplier<T> function) {
+        synchronized (syncObj) {
+            return function.get();
+        }
+    }
+
+    private static void withSync(Supplier<Void> function) {
+        synchronized (syncObj) {
+            function.get();
+        }
+    }
+
+    private void setRequestStationId(StationCommParamsYaml scpy, final StationCommParamsYaml.RequestStationId requestStationId) {
+        withSync(() -> { scpy.requestStationId = requestStationId; return null; });
+    }
+
+    private void setStationCommContext(StationCommParamsYaml scpy, StationCommParamsYaml.StationCommContext stationCommContext) {
+        withSync(() -> { scpy.stationCommContext = stationCommContext; return null; });
+    }
+
+    private void setReportStationStatus(StationCommParamsYaml scpy, StationCommParamsYaml.ReportStationStatus produceReportStationStatus) {
+        withSync(() -> { scpy.reportStationStatus = produceReportStationStatus; return null; });
+    }
+
+    private void setReportStationTaskStatus(StationCommParamsYaml scpy, StationCommParamsYaml.ReportStationTaskStatus produceStationTaskStatus) {
+        withSync(() -> { scpy.reportStationTaskStatus = produceStationTaskStatus; return null; });
+    }
+
+    private void setRequestTask(StationCommParamsYaml scpy, StationCommParamsYaml.RequestTask requestTask) {
+        withSync(() -> { scpy.requestTask = requestTask; return null; });
+    }
+
+    private void setResendTaskOutputResourceResult(StationCommParamsYaml scpy, StationCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResourceResult) {
+        withSync(() -> { scpy.resendTaskOutputResourceResult = resendTaskOutputResourceResult; return null; });
+    }
+
+    private void setCheckForMissingOutputResources(StationCommParamsYaml scpy, StationCommParamsYaml.CheckForMissingOutputResources checkForMissingOutputResources) {
+        withSync(() -> { scpy.checkForMissingOutputResources = checkForMissingOutputResources; return null; });
+    }
+
+    private void setReportTaskProcessingResult(StationCommParamsYaml scpy, StationCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult) {
+        withSync(() -> { scpy.reportTaskProcessingResult = reportTaskProcessingResult; return null; });
+    }
+
+    private void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String launchpadUrl, LaunchpadCommParamsYaml launchpadYaml) {
+        withSync(() -> {
+            storeLaunchpadConfig(launchpadUrl, launchpadYaml);
+            stationCommandProcessor.processLaunchpadCommParamsYaml(scpy, launchpadUrl, launchpadYaml);
+            return null;
+        });
+    }
+
+    private void storeLaunchpadConfig(String launchpadUrl, LaunchpadCommParamsYaml launchpadCommParamsYaml) {
+        if (launchpadCommParamsYaml==null || launchpadCommParamsYaml.launchpadCommContext==null) {
+            return;
+        }
+        LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
+                launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
+
+        if (launchpad==null) {
+            return;
+        }
+        storeLaunchpadConfig(launchpadCommParamsYaml, launchpad);
+    }
+
+    private void storeLaunchpadConfig(LaunchpadCommParamsYaml launchpadCommParamsYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad) {
+        if (launchpad.config==null) {
+            launchpad.config = new LaunchpadConfig();
+        }
+        if (launchpadCommParamsYaml.launchpadCommContext==null) {
+            return;
+        }
+        launchpad.config.chunkSize = launchpadCommParamsYaml.launchpadCommContext.chunkSize;
+    }
+
+    private StationCommParamsYaml swap() {
+        return getWithSync(() -> {
+            StationCommParamsYaml temp = nextRequest;
+            nextRequest = new StationCommParamsYaml();
+            return temp;
+        });
+    }
 
     public void proceedWithRequest() {
         if (globals.isUnitTesting) {
@@ -112,22 +179,20 @@ public class LaunchpadRequestor {
 
         try {
             Monitoring.log("##010", Enums.Monitor.MEMORY);
-            ExchangeData data = new ExchangeData();
+            StationCommParamsYaml scpy = swap();
+
             final String stationId = metadataService.getStationId(launchpadUrl);
             final String sessionId = metadataService.getSessionId(launchpadUrl);
-            data.initRequestToLaunchpad(stationId, sessionId);
-
-            // !!! always use data.setCommand() for correct initializing of stationId !!!
 
             if (stationId == null || sessionId==null) {
-                data.setCommand(new Protocol.RequestStationId());
+                setRequestStationId(scpy, new StationCommParamsYaml.RequestStationId());
             }
             else {
+                setStationCommContext(scpy, new StationCommParamsYaml.StationCommContext(stationId, sessionId));
 
                 // always report about current active sequences, if we have actual stationId
-                final Protocol.StationTaskStatus stationTaskStatus = stationTaskService.produceStationTaskStatus(launchpadUrl);
-                data.setCommand(stationTaskStatus);
-                data.setCommand(stationService.produceReportStationStatus(launchpadUrl, launchpad.schedule));
+                setReportStationTaskStatus(scpy, stationTaskService.produceStationTaskStatus(launchpadUrl));
+                setReportStationStatus(scpy, stationService.produceReportStationStatus(launchpadUrl, launchpad.schedule));
 
                 // we have to pull new tasks from server constantly
                 if (currentExecState.isInited(launchpadUrl)) {
@@ -135,39 +200,32 @@ public class LaunchpadRequestor {
                     final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
                     Monitoring.log("##012", Enums.Monitor.MEMORY);
                     if (b && !launchpad.schedule.isCurrentTimeInactive()) {
-                        data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.acceptOnlySignedSnippets));
+                        setRequestTask(scpy, new StationCommParamsYaml.RequestTask(launchpad.launchpadLookup.acceptOnlySignedSnippets));
                     }
                     else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
                             // let's check resources for non-completed and not-sending yet tasks
-                            List<Protocol.ResendTaskOutputResourceResult.SimpleStatus> statuses = stationTaskService.findAllByCompletedIsFalse(launchpadUrl).stream()
+                            List<StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = stationTaskService.findAllByCompletedIsFalse(launchpadUrl).stream()
                                     .filter(t -> t.delivered && t.finishedOn!=null && !t.resourceUploaded)
                                     .map(t->
-                                            new Protocol.ResendTaskOutputResourceResult.SimpleStatus(
+                                            new StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(
                                                     t.taskId, stationService.resendTaskOutputResource(launchpadUrl, t.taskId)
                                             )
                                     ).collect(Collectors.toList());
 
-                            data.setCommands( new Command[]{new Protocol.ResendTaskOutputResourceResult(statuses)});
+                            setResendTaskOutputResourceResult(scpy, new StationCommParamsYaml.ResendTaskOutputResourceResult(statuses));
                             lastCheckForResendTaskOutputResource = System.currentTimeMillis();
                         }
                     }
                 }
                 if (System.currentTimeMillis() - lastRequestForMissingResources > 15_000) {
-                    data.setCommand(new Protocol.CheckForMissingOutputResources());
+                    setCheckForMissingOutputResources(scpy, new StationCommParamsYaml.CheckForMissingOutputResources());
                     lastRequestForMissingResources = System.currentTimeMillis();
                 }
 
                 Monitoring.log("##013", Enums.Monitor.MEMORY);
-                reportTaskProcessingResult(data);
+                setReportTaskProcessingResult(scpy, stationTaskService.reportTaskProcessingResult(launchpadUrl));
                 Monitoring.log("##014", Enums.Monitor.MEMORY);
-
-                List<Command> cmds;
-                synchronized (commands) {
-                    cmds = new ArrayList<>(commands);
-                    commands.clear();
-                }
-                data.setCommands(cmds);
             }
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;
@@ -182,28 +240,28 @@ public class LaunchpadRequestor {
                     headers.set("Authorization", authHeader);
                 }
 
-                HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
+                String yaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
+                HttpEntity<String> request = new HttpEntity<>(yaml, headers);
                 Monitoring.log("##015", Enums.Monitor.MEMORY);
 
                 log.debug("Start to request a launchpad at {}", url);
-                log.debug("ExchangeData: {}", data);
-                ResponseEntity<ExchangeData> response = restTemplate.exchange(url, HttpMethod.POST, request, ExchangeData.class);
+                log.debug("ExchangeData: {}", yaml);
+                ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
                 Monitoring.log("##016", Enums.Monitor.MEMORY);
-                ExchangeData result = response.getBody();
+                String result = response.getBody();
                 log.debug("ExchangeData from launchpad: {}", result);
                 if (result == null) {
                     log.warn("#775.050 Launchpad returned null as a result");
                     return;
                 }
-                if (!result.isSuccess()) {
+                LaunchpadCommParamsYaml launchpadYaml = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
+
+                if (!launchpadYaml.success) {
                     log.error("#775.060 Something wrong at the launchpad side. Check the launchpad's logs for more info.");
                     return;
                 }
-                result.launchpadUrl = launchpadUrl;
-                storeLaunchpadConfig(result);
-
                 Monitoring.log("##017", Enums.Monitor.MEMORY);
-                addCommands(commandProcessor.processExchangeData(result).getCommands());
+                processLaunchpadCommParamsYaml(scpy, launchpadUrl, launchpadYaml);
                 Monitoring.log("##018", Enums.Monitor.MEMORY);
             } catch (HttpClientErrorException e) {
                 if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
@@ -233,42 +291,6 @@ public class LaunchpadRequestor {
         } catch (Throwable e) {
             log.error("#775.130 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
         }
-    }
-
-    private void reportTaskProcessingResult(ExchangeData data) {
-        final List<StationTask> list = stationTaskService.getForReporting(launchpadUrl);
-        if (list.isEmpty()) {
-            return;
-        }
-        log.info("Number of tasks for reporting: " + list.size());
-        final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
-        for (StationTask task : list) {
-            if (task.isDelivered() && !task.isReported() ) {
-                log.warn("#775.140 This state need to be investigating: (task.isDelivered() && !task.isReported())==true");
-            }
-            // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enough?
-            if (task.isDelivered() && task.isReported() ) {
-                continue;
-            }
-            command.getResults().add(new SimpleTaskExecResult(task.getTaskId(),
-                    task.getSnippetExecResult(),
-                    task.getMetrics()));
-            stationTaskService.setReportedOn(launchpadUrl, task.taskId);
-        }
-        data.setCommand(command);
-    }
-
-    private void storeLaunchpadConfig(ExchangeData data) {
-        if (data==null || data.getLaunchpadConfig()==null) {
-            return;
-        }
-        LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
-                launchpadLookupExtendedService.lookupExtendedMap.get(data.launchpadUrl);
-
-        if (launchpad==null) {
-            return;
-        }
-        launchpad.config = data.getLaunchpadConfig();
     }
 }
 

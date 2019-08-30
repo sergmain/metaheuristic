@@ -19,11 +19,8 @@ package ai.metaheuristic.ai.launchpad.server;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.Command;
-import ai.metaheuristic.ai.comm.CommandProcessor;
-import ai.metaheuristic.ai.comm.ExchangeData;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.launchpad.LaunchpadCommandProcessor;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
@@ -34,6 +31,10 @@ import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -76,7 +77,7 @@ public class ServerService {
 
     private final Globals globals;
     private final BinaryDataService binaryDataService;
-    private final CommandProcessor commandProcessor;
+    private final LaunchpadCommandProcessor launchpadCommandProcessor;
     private final StationCache stationCache;
     private final WorkbookRepository workbookRepository;
     private final StationsRepository stationsRepository;
@@ -211,61 +212,70 @@ public class ServerService {
         }
     }
 
-    private void setCommandInTransaction(ExchangeData resultData) {
-        resultData.setCommand(new Protocol.WorkbookStatus(
+    private LaunchpadCommParamsYaml.WorkbookStatus getWorkbookStatuses() {
+        return new LaunchpadCommParamsYaml.WorkbookStatus(
                 workbookRepository.findAllExecStates()
                         .stream()
                         .map(o -> ServerService.toSimpleStatus((Long)o[0], (Integer)o[1]))
-                        .collect(Collectors.toList())));
+                        .collect(Collectors.toList()));
+    }
+    public String processRequest(String data, String remoteAddress) {
+        LaunchpadCommParamsYaml lcpy = new LaunchpadCommParamsYaml();
+        StationCommParamsYaml scpy = StationCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
+        processRequestInternal(remoteAddress, scpy, lcpy);
+        //noinspection UnnecessaryLocalVariable
+        String yaml = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.toString(lcpy);
+        return yaml;
     }
 
-    public ExchangeData processRequest(ExchangeData data, String remoteAddress) {
+    public void processRequestInternal(String remoteAddress, StationCommParamsYaml scpy, LaunchpadCommParamsYaml lcpy) {
         try {
-            Command[] cmds = checkStationId(data.getStationId(), data.getSessionId(), remoteAddress);
-            if (cmds!=null) {
-                log.debug("Cmds after checking stationId isn't null: {}", (Object[]) cmds);
-                return new ExchangeData(cmds);
+            if (scpy.stationCommContext==null) {
+                lcpy.assignedStationId = launchpadCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
+                return;
+            }
+            checkStationId(scpy.stationCommContext.getStationId(), scpy.stationCommContext.getSessionId(), remoteAddress, lcpy);
+            if (isStationContextNeedToBeChanged(lcpy)) {
+                log.debug("isStationContextNeedToBeChanged is true, {}", lcpy);
+                return;
             }
 
-            ExchangeData resultData = new ExchangeData();
-            setCommandInTransaction(resultData);
+            lcpy.workbookStatus = getWorkbookStatuses();
 
-            List<Command> commands = data.getCommands();
             log.debug("Start processing commands");
-            for (Command command : commands) {
-                log.debug("\tcommand: {}", command);
-                if (data.getStationId()!=null && command instanceof Protocol.RequestStationId) {
-                    continue;
-                }
-                final Command[] process = commandProcessor.process(command);
-                log.debug("\tresult of precessing of command: {}", (Object[]) process);
-                resultData.setCommands(process);
-            }
-            addLaunchpadInfo(resultData);
-
-            return resultData;
+            launchpadCommandProcessor.process(scpy, lcpy);
+            addLaunchpadInfo(lcpy);
         } catch (Throwable th) {
-            log.error("#442.040 Error while processing client's request,ExchangeData:\n{}", data);
+            log.error("#442.040 Error while processing client's request, LaunchpadCommParamsYaml:\n{}", lcpy);
             log.error("#442.041 Error", th);
-            return new ExchangeData(Protocol.NOP, false);
+            lcpy.success = false;
+            lcpy.msg = th.getMessage();
         }
     }
 
-    private void addLaunchpadInfo(ExchangeData data) {
-        LaunchpadConfig lc = new LaunchpadConfig();
-        lc.chunkSize = globals.chunkSize;
-        data.setLaunchpadConfig(lc);
+    private boolean isStationContextNeedToBeChanged(LaunchpadCommParamsYaml lcpy) {
+        return lcpy!=null && (lcpy.reAssignedStationId!=null || lcpy.assignedStationId!=null);
     }
 
-    private Command[] checkStationId(String stationId, String sessionId, String remoteAddress) {
+    private void addLaunchpadInfo(LaunchpadCommParamsYaml lcpy) {
+        LaunchpadCommParamsYaml.LaunchpadCommContext lcc = new LaunchpadCommParamsYaml.LaunchpadCommContext();
+        lcc.chunkSize = globals.chunkSize;
+        lcpy.launchpadCommContext = lcc;
+    }
+
+    @SuppressWarnings("UnnecessaryReturnStatement")
+    private void checkStationId(String stationId, String sessionId, String remoteAddress, LaunchpadCommParamsYaml lcpy) {
         if (StringUtils.isBlank(stationId)) {
             log.warn("#442.045 StringUtils.isBlank(stationId), return RequestStationId()");
-            return commandProcessor.process(new Protocol.RequestStationId());
+            lcpy.assignedStationId = launchpadCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
+            return;
         }
+
         final Station station = stationsRepository.findByIdForUpdate(Long.parseLong(stationId));
         if (station == null) {
             log.warn("#442.046 station == null, return ReAssignStationId() with new stationId and new sessionId");
-            return reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
+            lcpy.reAssignedStationId = reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
+            return;
         }
         StationStatus ss;
         try {
@@ -274,13 +284,14 @@ public class ServerService {
             log.error("#442.065 Error parsing current status of station:\n{}", station.status);
             log.error("#442.066 Error ", e);
             // skip any command from this station
-            return Protocol.NOP_ARRAY;
+            return;
         }
         if (StringUtils.isBlank(sessionId)) {
             log.debug("#442.070 StringUtils.isBlank(sessionId), return ReAssignStationId() with new sessionId");
             // the same station but with different and expired sessionId
             // so we can continue to use this stationId with new sessionId
-            return assignNewSessionId(station, ss);
+            lcpy.reAssignedStationId = assignNewSessionId(station, ss);
+            return;
         }
         if (!ss.sessionId.equals(sessionId)) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
@@ -288,24 +299,27 @@ public class ServerService {
                 // the same station but with different and expired sessionId
                 // so we can continue to use this stationId with new sessionId
                 // we won't use station's sessionIf to be sure that sessionId has valid format
-                return assignNewSessionId(station, ss);
+                lcpy.reAssignedStationId = assignNewSessionId(station, ss);
+                return;
             } else {
                 log.debug("#442.072 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignStationId() with new stationId and new sessionId");
                 // different stations with the same stationId
                 // there is other active station with valid sessionId
-                return reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
+                lcpy.reAssignedStationId = reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
+                return;
             }
         }
         else {
             // see logs in method
-            return updateSession(station, ss);
+            updateSession(station, ss);
         }
     }
 
     /**
      * session is Ok, so we need to update session's timestamp periodically
      */
-    private Command[] updateSession(Station station, StationStatus ss) {
+    @SuppressWarnings("UnnecessaryReturnStatement")
+    private void updateSession(Station station, StationStatus ss) {
         final long millis = System.currentTimeMillis();
         final long diff = millis - ss.sessionCreatedOn;
         if (diff > SESSION_UPDATE_TIMEOUT) {
@@ -329,25 +343,25 @@ public class ServerService {
             Station s = stationCache.findById(station.id);
             log.debug("#442.086 old station.version: {}, in cache station.version: {}, station.status:\n{},\n", station.version, s.version, s.status);
             // the same stationId but new sessionId
-            return null;
+            return;
         }
         else {
             // the same stationId, the same sessionId, session isn't expired
-            return null;
+            return;
         }
     }
 
-    private Command[] assignNewSessionId(Station station, StationStatus ss) {
+    private LaunchpadCommParamsYaml.ReAssignStationId assignNewSessionId(Station station, StationStatus ss) {
         ss.sessionId = StationTopLevelService.createNewSessionId();
         ss.sessionCreatedOn = System.currentTimeMillis();
         station.status = StationStatusUtils.toString(ss);
         station.updatedOn = ss.sessionCreatedOn;
         stationCache.save(station);
         // the same stationId but new sessionId
-        return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
+        return new LaunchpadCommParamsYaml.ReAssignStationId(station.getId(), ss.sessionId);
     }
 
-    private Command[] reassignStationId(String remoteAddress, String description) {
+    private LaunchpadCommParamsYaml.ReAssignStationId reassignStationId(String remoteAddress, String description) {
         Station s = new Station();
         s.setIp(remoteAddress);
         s.setDescription(description);
@@ -361,15 +375,15 @@ public class ServerService {
         s.status = StationStatusUtils.toString(ss);
         s.updatedOn = ss.sessionCreatedOn;
         stationCache.save(s);
-        return new Command[]{new Protocol.ReAssignStationId(s.getId(), sessionId)};
+        return new LaunchpadCommParamsYaml.ReAssignStationId(s.getId(), sessionId);
     }
 
-    private static Protocol.WorkbookStatus.SimpleStatus to(Workbook workbook) {
-        return new Protocol.WorkbookStatus.SimpleStatus(workbook.getId(), EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
+    private static LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus to(Workbook workbook) {
+        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(workbook.getId(), EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
     }
 
-    private static Protocol.WorkbookStatus.SimpleStatus toSimpleStatus(Long workbookId, Integer execSate) {
-        return new Protocol.WorkbookStatus.SimpleStatus(workbookId, EnumsApi.WorkbookExecState.toState(execSate));
+    private static LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus toSimpleStatus(Long workbookId, Integer execSate) {
+        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(workbookId, EnumsApi.WorkbookExecState.toState(execSate));
     }
 
 }

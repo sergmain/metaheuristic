@@ -27,8 +27,6 @@ public class TestCommands {
         switch (type) {
             case Nop:
                 return new Protocol.Nop();
-            case ReportStation:
-                return new Protocol.ReportStation();
             case RequestStationId:
                 return new Protocol.RequestStationId();
             case AssignedStationId:

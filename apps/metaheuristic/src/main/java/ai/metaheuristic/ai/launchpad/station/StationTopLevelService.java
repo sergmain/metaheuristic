@@ -17,13 +17,13 @@
 package ai.metaheuristic.ai.launchpad.station;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.data.StationData;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -120,8 +120,8 @@ public class StationTopLevelService {
 
     private static final ConcurrentHashMap<Long, Object> syncMap = new ConcurrentHashMap<>(50, 0.75f, 10);
 
-    public void storeStationStatus(Protocol.ReportStationStatus command) {
-        final Long stationId = Long.valueOf(command.getStationId());
+    public void storeStationStatus(String stationIdAsStr, StationCommParamsYaml.ReportStationStatus status) {
+        final Long stationId = Long.valueOf(stationIdAsStr);
         final Object obj = syncMap.computeIfAbsent(stationId, o -> new Object());
         log.debug("Before entering in sync block, storeStationStatus()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -133,10 +133,10 @@ public class StationTopLevelService {
                     throw new IllegalStateException("Station wasn't found for stationId: " + stationId);
                 }
                 StationStatus ss = StationStatusUtils.to(station.status);
-                if (isStationStatusDifferent(command.status, ss)) {
-                    ss.env = command.status.env;
-                    ss.gitStatusInfo = command.status.gitStatusInfo;
-                    ss.schedule = command.status.schedule;
+                if (isStationStatusDifferent(status, ss)) {
+                    ss.env = status.env;
+                    ss.gitStatusInfo = status.gitStatusInfo;
+                    ss.schedule = status.schedule;
 
                     // Do not include updating of sessionId
                     // ss.sessionId = command.status.sessionId;
@@ -144,11 +144,11 @@ public class StationTopLevelService {
                     // Do not include updating of sessionCreatedOn!
                     // ss.sessionCreatedOn = command.status.sessionCreatedOn;
 
-                    ss.ip = command.status.ip;
-                    ss.host = command.status.host;
-                    ss.errors = command.status.errors;
-                    ss.logDownloadable = command.status.logDownloadable;
-                    ss.taskParamsVersion = command.status.taskParamsVersion;
+                    ss.ip = status.ip;
+                    ss.host = status.host;
+                    ss.errors = status.errors;
+                    ss.logDownloadable = status.logDownloadable;
+                    ss.taskParamsVersion = status.taskParamsVersion;
 
                     station.status = StationStatusUtils.toString(ss);
                     station.updatedOn = System.currentTimeMillis();
@@ -174,7 +174,7 @@ public class StationTopLevelService {
         log.debug("After leaving sync block");
     }
 
-    public static boolean isStationStatusDifferent(StationStatus status, StationStatus ss) {
+    public static boolean isStationStatusDifferent(StationCommParamsYaml.ReportStationStatus status, StationStatus ss) {
         return
         !Objects.equals(ss.env, status.env) ||
         !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||
@@ -187,7 +187,7 @@ public class StationTopLevelService {
     }
 
     // TODO Need to re-write this method
-    public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
+    public void reconcileStationTasks(String stationIdAsStr, List<StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus> statuses) {
         final long stationId = Long.parseLong(stationIdAsStr);
         List<Object[]> tasks = taskRepository.findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(stationId);
         for (Object[] obj : tasks) {
@@ -195,7 +195,7 @@ public class StationTopLevelService {
             Long assignedOn = obj[1]!=null ? ((Number)obj[1]).longValue() : null;
 
             boolean isFound = false;
-            for (Protocol.StationTaskStatus.SimpleStatus status : statuses) {
+            for (StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus status : statuses) {
                 if (status.taskId ==taskId) {
                     isFound = true;
                 }

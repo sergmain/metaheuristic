@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
@@ -118,7 +119,7 @@ public class TaskPersistencer {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public Task storeExecResult(SimpleTaskExecResult result, Consumer<Task> action) {
+    public Task storeExecResult(StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, Consumer<Task> action) {
         SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
         SnippetApiData.SnippetExecResult actualSnippet = snippetExec.generalExec!=null ? snippetExec.generalExec : snippetExec.exec;
         if (!actualSnippet.isOk) {
@@ -190,7 +191,7 @@ public class TaskPersistencer {
         });
     }
 
-    private Task prepareAndSaveTask(SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
+    private Task prepareAndSaveTask(StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
         return TaskFunctions.getWithSync(result.taskId, () -> {
             TaskImpl task = taskRepository.findByIdForUpdate(result.taskId);
             if (task==null) {

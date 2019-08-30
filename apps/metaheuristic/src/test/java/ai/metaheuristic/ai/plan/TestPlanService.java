@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.plan;
 
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;

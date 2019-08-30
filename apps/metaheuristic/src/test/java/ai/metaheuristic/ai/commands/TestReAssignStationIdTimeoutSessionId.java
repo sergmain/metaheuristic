@@ -16,11 +16,11 @@
 
 package ai.metaheuristic.ai.commands;
 
-import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +62,7 @@ public class TestReAssignStationIdTimeoutSessionId {
     @Before
     public void before() {
 
-        ExchangeData d = serverService.processRequest(new ExchangeData(), "127.0.0.1");
+        ExchangeData d = serverService.processRequest(new StationCommParamsYaml(), "127.0.0.1");
 
         assertNotNull(d);
         assertNotNull(d.getAssignedStationId());

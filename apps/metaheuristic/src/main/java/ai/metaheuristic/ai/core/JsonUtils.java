@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.core;
 
-import ai.metaheuristic.ai.comm.ExchangeData;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -37,14 +36,4 @@ public class JsonUtils {
         return mapper;
     }
 
-    public static ExchangeData getExchangeData(String json) throws IOException {
-        //noinspection UnnecessaryLocalVariable
-        ExchangeData data = mapper.readValue(json, ExchangeData.class);
-        return data;
-    }
-
-    public static String toJson(ExchangeData data) throws IOException {
-        String json = mapper.writeValueAsString(data);
-        return json;
-    }
 }
