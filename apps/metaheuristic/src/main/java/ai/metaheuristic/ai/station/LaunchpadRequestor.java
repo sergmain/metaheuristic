@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.*;
@@ -51,7 +50,6 @@ import java.util.stream.Collectors;
  */
 
 @Slf4j
-@RequiredArgsConstructor
 public class LaunchpadRequestor {
 
     private final String launchpadUrl;
@@ -69,14 +67,22 @@ public class LaunchpadRequestor {
     private LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad;
     private String serverRestUrl;
 
-    @PostConstruct
-    public void init() {
+    public LaunchpadRequestor(String launchpadUrl, Globals globals, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService, CurrentExecState currentExecState, LaunchpadLookupExtendedService launchpadLookupExtendedService, StationCommandProcessor stationCommandProcessor) {
+        this.launchpadUrl = launchpadUrl;
+        this.globals = globals;
+        this.stationTaskService = stationTaskService;
+        this.stationService = stationService;
+        this.metadataService = metadataService;
+        this.currentExecState = currentExecState;
+        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
+        this.stationCommandProcessor = stationCommandProcessor;
+
         this.restTemplate = new RestTemplate();
         this.launchpad = this.launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
         if (launchpad == null) {
             throw new IllegalStateException("#775.010 Can'r find launchpad config for url " + launchpadUrl);
         }
-        serverRestUrl = launchpadUrl + Consts.REST_V1_URL + Consts.SERVER_REST_URL;
+        serverRestUrl = launchpadUrl + Consts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
         nextRequest = new StationCommParamsYaml();
     }
 

@@ -76,11 +76,15 @@ public class StationCommParamsYamlV1 implements BaseParams {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class RequestStationIdV1 {
         public boolean keep = true;
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class CheckForMissingOutputResourcesV1 {
         public boolean keep = true;
     }
@@ -122,6 +126,8 @@ public class StationCommParamsYamlV1 implements BaseParams {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class ReportTaskProcessingResultV1 {
 
         @Data
@@ -152,6 +158,8 @@ public class StationCommParamsYamlV1 implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ResendTaskOutputResourceResultV1 {
 
         @Data
@@ -163,10 +171,6 @@ public class StationCommParamsYamlV1 implements BaseParams {
         }
 
         public List<ResendTaskOutputResourceResultV1.SimpleStatus> statuses;
-
-        public ResendTaskOutputResourceResultV1(List<ResendTaskOutputResourceResultV1.SimpleStatus> statuses) {
-            this.statuses = statuses;
-        }
     }
 
     public final int version=1;

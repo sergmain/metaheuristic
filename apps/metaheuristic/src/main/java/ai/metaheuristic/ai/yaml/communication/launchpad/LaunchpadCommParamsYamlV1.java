@@ -62,6 +62,8 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
     public ResendTaskOutputResourceV1 resendTaskOutputResource;
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class AssignedTaskV1 {
         public String params;
         public Long taskId;
@@ -118,6 +120,9 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
         public List<Long> taskIds;
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class LaunchpadCommContextV1 {
         public Long chunkSize;
     }
