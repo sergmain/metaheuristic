@@ -76,11 +76,15 @@ public class StationCommParamsYaml implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class RequestStationId {
         public boolean keep = true;
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class CheckForMissingOutputResources {
         public boolean keep = true;
     }
@@ -89,10 +93,11 @@ public class StationCommParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class RequestTask {
-        private boolean isAcceptOnlySigned;
+        public boolean acceptOnlySigned;
     }
 
     @Data
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class ReportStationStatus {
         public EnvYaml env;
@@ -151,6 +156,7 @@ public class StationCommParamsYaml implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
     public static class ResendTaskOutputResourceResult {
 
         @Data

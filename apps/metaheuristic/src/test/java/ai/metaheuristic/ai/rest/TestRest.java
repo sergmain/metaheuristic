@@ -17,8 +17,12 @@
 package ai.metaheuristic.ai.rest;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.core.JsonUtils;
+import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -141,19 +145,21 @@ public class TestRest {
     @Test
     @WithUserDetails("data_rest")
     public void testSimpleCommunicationWithServer() throws Exception {
-        ExchangeData dataRequest = new ExchangeData(new Protocol.Nop());
-        String jsonRequest = JsonUtils.toJson(dataRequest);
-        MvcResult result = mockMvc.perform(post("/rest/v1/srv/qwe321").contentType(Consts.APPLICATION_JSON_UTF8)
-                .content(jsonRequest))
+        final StationCommParamsYaml stationComm = new StationCommParamsYaml();
+        final String stationYaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
+
+        MvcResult result = mockMvc.perform(post("/rest/v1/srv-v2/qwe321").contentType(Consts.APPLICATION_JSON_UTF8)
+                .content(stationYaml))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
 
-        String json = result.getResponse().getContentAsString();
-        System.out.println("json = " + json);
-        ExchangeData data = JsonUtils.getExchangeData(json);
+        String launchpadYaml = result.getResponse().getContentAsString();
+        System.out.println("launchpadYaml = " + launchpadYaml);
 
-        Assert.assertNotNull(data);
-        Assert.assertTrue(data.isSuccess());
+        LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadYaml);
+
+        Assert.assertNotNull(d);
+        Assert.assertTrue(d.isSuccess());
 
     }
 }

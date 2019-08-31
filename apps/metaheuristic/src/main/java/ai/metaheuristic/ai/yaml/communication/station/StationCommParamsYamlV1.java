@@ -34,6 +34,8 @@ import java.util.List;
  * Date: 8/29/2019
  * Time: 6:00 PM
  */
+@Data
+@NoArgsConstructor
 public class StationCommParamsYamlV1 implements BaseParams {
 
     @Override
@@ -65,10 +67,12 @@ public class StationCommParamsYamlV1 implements BaseParams {
     public CheckForMissingOutputResourcesV1 checkForMissingOutputResources;
     public ResendTaskOutputResourceResultV1 resendTaskOutputResourceResult;
 
-
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class StationCommContextV1 {
-        private String stationId;
-        private String sessionId;
+        public String stationId;
+        public String sessionId;
     }
 
     @Data
@@ -82,11 +86,15 @@ public class StationCommParamsYamlV1 implements BaseParams {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class RequestTaskV1 {
-        private boolean isAcceptOnlySigned;
+        public boolean acceptOnlySigned;
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ReportStationStatusV1 {
         public EnvYaml env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
@@ -119,16 +127,18 @@ public class StationCommParamsYamlV1 implements BaseParams {
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
-        public class SimpleTaskExecResult {
+        public static class SimpleTaskExecResult {
             public long taskId;
             public String result;
             public String metrics;
         }
 
-        private List<StationCommParamsYamlV1.ReportTaskProcessingResultV1.SimpleTaskExecResult> results = new ArrayList<>();
+        public List<ReportTaskProcessingResultV1.SimpleTaskExecResult> results = new ArrayList<>();
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class ReportStationTaskStatusV1 {
 
         @Data
@@ -138,7 +148,7 @@ public class StationCommParamsYamlV1 implements BaseParams {
             public long taskId;
         }
 
-        List<StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus> statuses;
+        public List<ReportStationTaskStatusV1.SimpleStatus> statuses;
     }
 
     @Data
@@ -152,24 +162,11 @@ public class StationCommParamsYamlV1 implements BaseParams {
             public Enums.ResendTaskOutputResourceStatus status;
         }
 
-        List<StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses;
+        public List<ResendTaskOutputResourceResultV1.SimpleStatus> statuses;
 
-        public ResendTaskOutputResourceResultV1(List<StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses) {
+        public ResendTaskOutputResourceResultV1(List<ResendTaskOutputResourceResultV1.SimpleStatus> statuses) {
             this.statuses = statuses;
         }
-    }
-
-    @JsonIgnore
-    private String launchpadUrl;
-
-    @Transient
-    public String getLaunchpadUrl() {
-        return launchpadUrl;
-    }
-
-    @Transient
-    public void setLaunchpadUrl(String launchpadUrl) {
-        this.launchpadUrl = launchpadUrl;
     }
 
     public final int version=1;

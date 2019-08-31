@@ -315,7 +315,7 @@ public class WorkbookService {
     }
 
     // TODO 2019.08.27 is it good to synchronize whole method?
-    //  but it's working
+    //  but it's working actually
     public synchronized LaunchpadCommParamsYaml.AssignedTask getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long workbookId) {
 
         final Station station = stationCache.findById(stationId);

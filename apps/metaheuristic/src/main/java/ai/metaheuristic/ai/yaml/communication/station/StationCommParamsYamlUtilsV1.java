@@ -21,6 +21,9 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+
 /**
  * @author Serge
  * Date: 8/29/2019
@@ -39,12 +42,59 @@ public class StationCommParamsYamlUtilsV1
     }
 
     @Override
-    public StationCommParamsYaml upgradeTo(StationCommParamsYamlV1 yaml, Long ... vars) {
+    public StationCommParamsYaml upgradeTo(StationCommParamsYamlV1 v1, Long ... vars) {
         StationCommParamsYaml t = new StationCommParamsYaml();
 
-        // right now we don't need to convert Graph because if has only one version of structure
-        // so just copying of graph field is Ok
-        BeanUtils.copyProperties(yaml, t);
+        if (v1.stationCommContext!=null) {
+            t.stationCommContext = new StationCommParamsYaml.StationCommContext();
+            BeanUtils.copyProperties(v1.stationCommContext, t.stationCommContext);
+        }
+        if (v1.requestStationId!=null) {
+            t.requestStationId = new StationCommParamsYaml.RequestStationId(true);
+        }
+        if (v1.reportStationStatus!=null) {
+            t.reportStationStatus = new StationCommParamsYaml.ReportStationStatus();
+            BeanUtils.copyProperties(v1.reportStationStatus, t.reportStationStatus);
+        }
+        if (v1.reportStationTaskStatus!=null) {
+            t.reportStationTaskStatus = new StationCommParamsYaml.ReportStationTaskStatus();
+            t.reportStationTaskStatus.statuses =
+                    v1.reportStationTaskStatus.statuses!=null
+                            ? v1.reportStationTaskStatus.statuses
+                            .stream()
+                            .map(o->new StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus(o.taskId))
+                            .collect(Collectors.toList())
+                            : new ArrayList<>();
+        }
+        if (v1.requestTask!=null) {
+            t.requestTask = new StationCommParamsYaml.RequestTask();
+            t.requestTask.acceptOnlySigned = v1.requestTask.acceptOnlySigned;
+        }
+        if (v1.reportTaskProcessingResult!=null) {
+            t.reportTaskProcessingResult = new StationCommParamsYaml.ReportTaskProcessingResult();
+            t.reportTaskProcessingResult.results =
+                    v1.reportTaskProcessingResult.results!=null
+                            ? v1.reportTaskProcessingResult.results
+                            .stream()
+                            .map(o->new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(o.taskId, o.result, o.metrics))
+                            .collect(Collectors.toList())
+                            : new ArrayList<>();
+        }
+        if (v1.checkForMissingOutputResources!=null) {
+            t.checkForMissingOutputResources = new StationCommParamsYaml.CheckForMissingOutputResources(true);
+        }
+        if (v1.resendTaskOutputResourceResult!=null) {
+            t.resendTaskOutputResourceResult = new StationCommParamsYaml.ResendTaskOutputResourceResult();
+            t.resendTaskOutputResourceResult.statuses =
+                    v1.resendTaskOutputResourceResult.statuses!=null
+                            ? v1.resendTaskOutputResourceResult.statuses
+                            .stream()
+                            .map(o->new StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(o.taskId, o.status))
+                            .collect(Collectors.toList())
+                            : new ArrayList<>();
+        }
+
+        BeanUtils.copyProperties(v1, t);
         return t;
     }
 

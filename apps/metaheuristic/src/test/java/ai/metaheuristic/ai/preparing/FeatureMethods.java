@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
-import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -116,18 +116,17 @@ public abstract class FeatureMethods extends PreparingPlan {
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
-        WorkbookService.TasksAndAssignToStationResult sequences = workbookService.getTaskAndAssignToStation(
+        LaunchpadCommParamsYaml.AssignedTask task = workbookService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getWorkbookId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 
-        assertNotNull(sequences);
-        assertNotNull(sequences.getSimpleTask());
-        return sequences.getSimpleTask();
+        assertNotNull(task);
+        return task;
     }
 
     protected void finishCurrentWithError(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
-        List<SimpleTaskExecResult> results = new ArrayList<>();
+        List<StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
         List<Task> tasks = taskRepository.findByStationIdAndResultReceivedIsFalse(station.getId());
         if (expectedSeqs!=0) {
             assertEquals(expectedSeqs, tasks.size());
@@ -137,7 +136,8 @@ public abstract class FeatureMethods extends PreparingPlan {
             SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec(snippetExecResult, null, null, null);
             String yaml = SnippetExecUtils.toString(snippetExec);
 
-            SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
+            StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult sser =
+                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(sser);
         }
 
@@ -146,7 +146,7 @@ public abstract class FeatureMethods extends PreparingPlan {
 
     protected void finishCurrentWithOk(int expectedTasks) {
         // lets report about sequences that all finished with error (errorCode!=0)
-        List<SimpleTaskExecResult> results = new ArrayList<>();
+        List<StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
         List<Task> tasks = taskRepository.findByStationIdAndResultReceivedIsFalse(station.getId());
         if (expectedTasks!=0) {
             assertEquals(expectedTasks, tasks.size());
@@ -156,7 +156,8 @@ public abstract class FeatureMethods extends PreparingPlan {
             snippetExec.setExec( new SnippetApiData.SnippetExecResult("output-of-a-snippet", true, 0, "This is sample console output. fit"));
             String yaml = SnippetExecUtils.toString(snippetExec);
 
-            SimpleTaskExecResult ster = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
+            StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult ster =
+                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(ster);
         }
 

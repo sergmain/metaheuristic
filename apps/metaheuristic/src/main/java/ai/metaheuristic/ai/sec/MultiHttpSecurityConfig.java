@@ -92,7 +92,7 @@ public class MultiHttpSecurityConfig {
                         .and()
                         .authorizeRequests()
                         .antMatchers("/rest/login").permitAll()
-                        .antMatchers("/rest/v1/srv/**/**", "/rest/v1/payload/**/**", "/rest/v1/upload/**/**").hasAuthority("ROLE_SERVER_REST_ACCESS")
+                        .antMatchers("/rest/v1/srv/**/**", "/rest/v1/srv-v2/**/**", "/rest/v1/payload/**/**", "/rest/v1/upload/**/**").hasAuthority("ROLE_SERVER_REST_ACCESS")
                         .antMatchers("/rest/**/**").authenticated()
                         .and()
                         .antMatcher("/rest/**/**").httpBasic().realmName(REST_REALM)

@@ -29,6 +29,7 @@ import java.util.List;
  * Date: 8/29/2019
  * Time: 6:00 PM
  */
+@Data
 public class LaunchpadCommParamsYaml implements BaseParams {
 
     @Override

@@ -117,6 +117,7 @@ public class TestAccessForAllEndPoints {
 
     private static final AccessUrl[] SERVER_REST_URLS = new AccessUrl[]{
             new AccessUrl("/rest/v1/srv/1", AccessMethod.POST),
+            new AccessUrl("/rest/v1/srv-v2/1", AccessMethod.POST),
             new AccessUrl("/rest/v1/payload/resource/1/1", AccessMethod.GET),
             new AccessUrl("/rest/v1/upload/1", AccessMethod.POST),
             new AccessUrl("/rest/v1/payload/snippet-checksum/1", AccessMethod.POST),
@@ -126,15 +127,15 @@ public class TestAccessForAllEndPoints {
     // test anonymous access
 
     @Test
-    public void testAnonymousAccess() throws Exception {
-        checkRestAccess(SERVER_REST_URLS);
-        checkAccess(ATLAS_URLS);
-        checkRestAccess(ATLAS_REST_URLS);
-        checkAccess(ACCOUNT_URLS);
-        checkRestAccess(ACCOUNT_REST_URLS);
+    public void testAnonymousAccessRestriction() throws Exception {
+        checkRestAccessRestriction(SERVER_REST_URLS);
+        checkAccessRestriction(ATLAS_URLS);
+        checkRestAccessRestriction(ATLAS_REST_URLS);
+        checkAccessRestriction(ACCOUNT_URLS);
+        checkRestAccessRestriction(ACCOUNT_REST_URLS);
     }
 
-    public void checkRestAccess(AccessUrl[] accountRestUrls) throws Exception {
+    public void checkRestAccessRestriction(AccessUrl[] accountRestUrls) throws Exception {
         for (AccessUrl accessUrl : accountRestUrls) {
             System.out.println("accessUrl: " + accessUrl);
             ResultActions resultActions;
@@ -151,7 +152,7 @@ public class TestAccessForAllEndPoints {
         }
     }
 
-    public void checkAccess(AccessUrl[] accountUrls) throws Exception {
+    public void checkAccessRestriction(AccessUrl[] accountUrls) throws Exception {
         for (AccessUrl accessUrl : accountUrls) {
             System.out.println("accessUrl: " + accessUrl);
             if (accessUrl.accessMethod== AccessMethod.GET) {

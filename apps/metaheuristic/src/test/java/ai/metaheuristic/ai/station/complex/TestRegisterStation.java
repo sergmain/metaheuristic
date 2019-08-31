@@ -17,12 +17,15 @@
 package ai.metaheuristic.ai.station.complex;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.core.JsonUtils;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
@@ -44,7 +47,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -103,9 +105,8 @@ public class TestRegisterStation {
     @WithUserDetails("data_rest")
     public void testRestPayload_asRest() throws Exception {
 
-        ExchangeData data = new ExchangeData();
-
-        ExchangeData ed = requestServer(data);
+        StationCommParamsYaml stationComm = new StationCommParamsYaml();
+        LaunchpadCommParamsYaml ed = requestServer(stationComm);
 
         assertNotNull(ed.getAssignedStationId());
         assertNotNull(ed.getAssignedStationId().getAssignedStationId());
@@ -118,13 +119,13 @@ public class TestRegisterStation {
         stationIds.add(stationId);
         sessionId = ed.getAssignedStationId().getAssignedSessionId();
 
+        stationComm = new StationCommParamsYaml();
         // init stationId and sessionId must be first operation. Otherwise, commands won't be inited correctly.
-        data.initRequestToLaunchpad(stationIdAsStr, sessionId);
+        stationComm.stationCommContext = new StationCommParamsYaml.StationCommContext(stationIdAsStr, sessionId);
 
-        final Protocol.StationTaskStatus stationTaskStatus = new Protocol.StationTaskStatus(new ArrayList<>());
-        data.setCommand(stationTaskStatus);
+        stationComm.reportStationTaskStatus = new StationCommParamsYaml.ReportStationTaskStatus(new ArrayList<>());
 
-        final StationStatus ss = new StationStatus(
+        final StationCommParamsYaml.ReportStationStatus ss = new StationCommParamsYaml.ReportStationStatus(
                 new EnvYaml(),
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.installed, "Git 1.0.0", null),
                 "0:00 - 23:59",
@@ -132,13 +133,13 @@ public class TestRegisterStation {
                 System.currentTimeMillis(),
                 "[unknown]", "[unknown]", null, true,
                 1);
-        final Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(ss);
 
-        data.setCommand(reportStationStatus);
-        data.setCommand(new Protocol.RequestTask(false));
-        data.setCommand(new Protocol.CheckForMissingOutputResources());
+        stationComm.reportStationStatus = ss;
 
-        ed = requestServer(data);
+        stationComm.requestTask = new StationCommParamsYaml.RequestTask(false);
+        stationComm.checkForMissingOutputResources = new StationCommParamsYaml.CheckForMissingOutputResources();
+
+        ed = requestServer(stationComm);
         if (ed.getAssignedStationId()!=null) {
             // collect for deletion
             stationIds.add(Long.valueOf(ed.getAssignedStationId().getAssignedStationId()));
@@ -155,33 +156,36 @@ public class TestRegisterStation {
         int i=0;
     }
 
-    public ExchangeData requestServer(ExchangeData data) throws Exception {
-        final String url = "/rest/v1/srv/"+ UUID.randomUUID().toString();
+    public LaunchpadCommParamsYaml requestServer(StationCommParamsYaml data) throws Exception {
+        final String stationYaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(data);
+
+        final String url = "/rest/v1/srv-v2/"+ UUID.randomUUID().toString();
         MvcResult result = mockMvc
-                .perform(buildPostRequest(data, url))
+                .perform(buildPostRequest(stationYaml, url))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
         System.out.println(content);
 
-        return JsonUtils.getExchangeData(content);
+        LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(content);
+        return d;
     }
 
-    public MockHttpServletRequestBuilder buildPostRequest(ExchangeData data, String url) throws IOException {
+    public MockHttpServletRequestBuilder buildPostRequest(String data, String url) {
         return MockMvcRequestBuilders
                 .post(url)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtils.toJson(data));
+                .content(data);
     }
 
     @Test
     @WithUserDetails("data")
     public void testRestPayload_asUser() throws Exception {
-        ExchangeData data = new ExchangeData();
+        final String stationYaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(new StationCommParamsYaml());
 
-        final String url = "/rest/v1/srv/"+ UUID.randomUUID().toString();
-        mockMvc.perform(buildPostRequest(data, url))
+        final String url = "/rest/v1/srv-v2/"+ UUID.randomUUID().toString();
+        mockMvc.perform(buildPostRequest(stationYaml, url))
                 .andExpect(status().isForbidden());
 
     }

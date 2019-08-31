@@ -16,10 +16,13 @@
 
 package ai.metaheuristic.ai.commands;
 
-import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -53,7 +56,11 @@ public class TestRequestStationId {
 
     @Before
     public void before() {
-        ExchangeData d = serverService.processRequest(new ExchangeData(), "127.0.0.1");
+        StationCommParamsYaml stationComm = new StationCommParamsYaml();
+
+        String launchpadResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+
+        LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
 
         assertNotNull(d);
         assertNotNull(d.getAssignedStationId());
@@ -79,9 +86,12 @@ public class TestRequestStationId {
 
     @Test
     public void testRequestStationId() {
-        ExchangeData data = new ExchangeData();
+        StationCommParamsYaml stationComm = new StationCommParamsYaml();
 
-        ExchangeData d = serverService.processRequest(data, "127.0.0.1");
+        String launchpadResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+
+        LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
+
 
         assertNotNull(d);
         assertNotNull(d.getAssignedStationId());
@@ -100,12 +110,12 @@ public class TestRequestStationId {
 
     @Test
     public void testEmptySessionId() {
-        final ExchangeData data = new ExchangeData();
+        StationCommParamsYaml stationComm = new StationCommParamsYaml();
+        stationComm.stationCommContext = new StationCommParamsYaml.StationCommContext(stationId.toString(), null);
 
-        data.initRequestToLaunchpad(stationId.toString(), null);
+        String launchpadResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
 
-        ExchangeData d = serverService.processRequest(data, "127.0.0.1");
-
+        LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
         assertNotNull(d);
         assertNotNull(d.getReAssignedStationId());
         assertNotNull(d.getReAssignedStationId().getReAssignedStationId());

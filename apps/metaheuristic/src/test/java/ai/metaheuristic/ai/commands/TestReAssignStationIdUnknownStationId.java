@@ -16,10 +16,13 @@
 
 package ai.metaheuristic.ai.commands;
 
-import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -72,15 +75,19 @@ public class TestReAssignStationIdUnknownStationId {
             throw new IllegalStateException("Can't find id which isn't belong to any station");
         }
 
-        ExchangeData d = serverService.processRequest(new ExchangeData(), "127.0.0.1");
+        StationCommParamsYaml stationComm = new StationCommParamsYaml();
 
-        assertNotNull(d);
-        assertNotNull(d.getAssignedStationId());
-        assertNotNull(d.getAssignedStationId().getAssignedStationId());
-        assertNotNull(d.getAssignedStationId().getAssignedSessionId());
+        String launchpadResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
 
-        stationIdBefore = Long.valueOf(d.getAssignedStationId().getAssignedStationId());
-        sessionIdBefore = d.getAssignedStationId().getAssignedSessionId();
+        LaunchpadCommParamsYaml launchpadComm = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
+
+        assertNotNull(launchpadComm);
+        assertNotNull(launchpadComm.getAssignedStationId());
+        assertNotNull(launchpadComm.getAssignedStationId().getAssignedStationId());
+        assertNotNull(launchpadComm.getAssignedStationId().getAssignedSessionId());
+
+        stationIdBefore = Long.valueOf(launchpadComm.getAssignedStationId().getAssignedStationId());
+        sessionIdBefore = launchpadComm.getAssignedStationId().getAssignedSessionId();
 
         assertTrue(sessionIdBefore.length()>5);
 
@@ -105,10 +112,13 @@ public class TestReAssignStationIdUnknownStationId {
 
         // in this scenario we test that station has got a new re-assigned stationId
 
-        final ExchangeData data = new ExchangeData();
-        data.initRequestToLaunchpad(unknownStationId.toString(), sessionIdBefore.substring(0, 4));
+        StationCommParamsYaml stationComm = new StationCommParamsYaml();
+        stationComm.stationCommContext = new StationCommParamsYaml.StationCommContext(unknownStationId.toString(), sessionIdBefore.substring(0, 4));
 
-        ExchangeData d = serverService.processRequest(data, "127.0.0.1");
+
+        String launchpadResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+
+        LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
 
         assertNotNull(d);
         assertNotNull(d.getReAssignedStationId());
