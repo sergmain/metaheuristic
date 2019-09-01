@@ -121,7 +121,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                                         .add("code", task.snippetCode)
                                         .build(), StandardCharsets.UTF_8)
                                 .connectTimeout(5000)
-                                .socketTimeout(5000);
+                                .socketTimeout(20000);
 
                         RestUtils.addHeaders(request);
 
@@ -166,7 +166,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
                         final Request request = Request.Get(builder.build())
                                 .connectTimeout(5000)
-                                .socketTimeout(5000);
+                                .socketTimeout(20000);
 
                         RestUtils.addHeaders(request);
 
