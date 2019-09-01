@@ -33,7 +33,6 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.PostConstruct;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -270,13 +269,26 @@ public class LaunchpadRequestor {
                 processLaunchpadCommParamsYaml(scpy, launchpadUrl, launchpadYaml);
                 Monitoring.log("##018", Enums.Monitor.MEMORY);
             } catch (HttpClientErrorException e) {
-                if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                switch(e.getStatusCode()) {
+                    case UNAUTHORIZED:
+                    case FORBIDDEN:
+                    case NOT_FOUND:
+                        log.error("#775.070 Error {} accessing url {}, securityEnabled: {}", e.getStatusCode().value(), serverRestUrl, launchpad.launchpadLookup.securityEnabled);
+                        break;
+                    default:
+                        throw e;
+                }
+/*
+                if (e.getStatusCode() == UNAUTHORIZED) {
                     log.error("#775.070 Error 401 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
-                } else if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
+                } else if (e.getStatusCode() == FORBIDDEN) {
                     log.error("#775.080 Error 403 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
+                } else if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                    log.error("#775.085 Error 404 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
                 } else {
                     throw e;
                 }
+*/
             } catch (ResourceAccessException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof SocketException) {

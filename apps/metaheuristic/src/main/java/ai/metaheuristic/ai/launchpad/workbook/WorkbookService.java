@@ -68,6 +68,7 @@ import java.util.stream.Collectors;
 @Profile("launchpad")
 @Slf4j
 @RequiredArgsConstructor
+@SuppressWarnings("UnusedReturnValue")
 public class WorkbookService {
 
     private final Globals globals;
@@ -163,22 +164,37 @@ public class WorkbookService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public void toProduced(Long workbookId) {
-        toState(workbookId, EnumsApi.WorkbookExecState.PRODUCED);
+    public Void toState(Long workbookId, EnumsApi.WorkbookExecState state) {
+        return workbookSyncService.getWithSync(workbookId, workbook -> {
+            if (workbook.execState!=state.code) {
+                workbook.setExecState(state.code);
+                workbookCache.save(workbook);
+            }
+            return null;
+        });
     }
 
-    public void toState(Long workbookId, EnumsApi.WorkbookExecState state) {
-        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
-        if (workbook==null) {
-            String es = "#705.082 Can't change exec state to "+state+" for workbook #" + workbookId;
-            log.error(es);
-            throw new IllegalStateException(es);
-        }
-        if (workbook.execState==state.code) {
-            return;
-        }
-        workbook.setExecState(state.code);
-        workbookCache.save(workbook);
+    private Void toStateWithCompletion(Long workbookId, EnumsApi.WorkbookExecState state) {
+        return workbookSyncService.getWithSync(workbookId, workbook -> {
+            if (workbook.execState!=state.code) {
+                workbook.setCompletedOn(System.currentTimeMillis());
+                workbook.setExecState(state.code);
+                workbookCache.save(workbook);
+            }
+            return null;
+        });
+    }
+
+    public void toStopped(Long workbookId) {
+        toState(workbookId, EnumsApi.WorkbookExecState.STOPPED);
+    }
+
+    public void toStarted(Long workbookId) {
+        toState(workbookId, EnumsApi.WorkbookExecState.STARTED);
+    }
+
+    public void toProduced(Long workbookId) {
+        toState(workbookId, EnumsApi.WorkbookExecState.PRODUCED);
     }
 
     public void toFinished(Long workbookId) {
@@ -195,21 +211,6 @@ public class WorkbookService {
 
     public void toError(Long workbookId) {
         toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.ERROR);
-    }
-
-    public void toStateWithCompletion(Long workbookId, EnumsApi.WorkbookExecState state) {
-        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
-        if (workbook==null) {
-            String es = "#705.080 Can't change exec state to "+state+" for workbook #" + workbookId;
-            log.error(es);
-            throw new IllegalStateException(es);
-        }
-        if (workbook.execState==state.code) {
-            return;
-        }
-        workbook.setCompletedOn(System.currentTimeMillis());
-        workbook.setExecState(state.code);
-        workbookCache.save(workbook);
     }
 
     public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml params) {
@@ -238,35 +239,23 @@ public class WorkbookService {
         return result;
     }
 
-    public void toStopped(long workbookId) {
-        WorkbookImpl wb = workbookRepository.findByIdForUpdate(workbookId);
-        if (wb==null) {
-            return;
-        }
-        wb.setExecState(EnumsApi.WorkbookExecState.STOPPED.code);
-        workbookCache.save(wb);
-    }
-
-    public void changeValidStatus(Long workbookId, boolean status) {
-        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
-        if (workbook==null) {
-            return;
-        }
-        workbook.setValid(status);
-        workbookCache.save(workbook);
+    public Void changeValidStatus(Long workbookId, boolean status) {
+        return workbookSyncService.getWithSync(workbookId, workbook -> {
+            workbook.setValid(status);
+            workbookCache.save(workbook);
+            return null;
+        });
     }
 
     public EnumsApi.PlanProducingStatus toProducing(Long workbookId) {
-        WorkbookImpl wb = workbookRepository.findByIdForUpdate(workbookId);
-        if (wb==null) {
-            return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
-        }
-        if (wb.execState==EnumsApi.WorkbookExecState.PRODUCING.code) {
+        return workbookSyncService.getWithSync(workbookId, workbook -> {
+            if (workbook.execState == EnumsApi.WorkbookExecState.PRODUCING.code) {
+                return EnumsApi.PlanProducingStatus.OK;
+            }
+            workbook.setExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
+            workbookCache.save(workbook);
             return EnumsApi.PlanProducingStatus.OK;
-        }
-        wb.setExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
-        workbookCache.save(wb);
-        return EnumsApi.PlanProducingStatus.OK;
+        });
     }
 
     public PlanApiData.WorkbookResult getWorkbookExtended(Long workbookId) {
@@ -283,9 +272,7 @@ public class WorkbookService {
         }
 
         if (!plan.getId().equals(workbook.getPlanId())) {
-            workbook = workbookRepository.findByIdForUpdate(workbookId);
-            workbook.setValid(false);
-            workbookRepository.save(workbook);
+            changeValidStatus(workbookId, false);
             return new PlanApiData.WorkbookResult("#705.120 planId doesn't match to workbook.planId, planId: " + workbook.getPlanId()+", workbook.planId: " + workbook.getPlanId());
         }
 
@@ -344,6 +331,7 @@ public class WorkbookService {
         }
 
         List<Long> workbookIds;
+        // find task in specific workbook ( i.e. workbookId==null)?
         if (workbookId==null) {
             workbookIds = workbookRepository.findByExecStateOrderByCreatedOnAsc(EnumsApi.WorkbookExecState.STARTED.code);
         }
@@ -388,11 +376,11 @@ public class WorkbookService {
         if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
             return null;
         }
-        WorkbookImpl workbook = workbookCache.findById(workbookId);
+        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
         if (workbook==null) {
             return null;
         }
-        List<WorkbookParamsYaml.TaskVertex> vertices = findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
+        List<WorkbookParamsYaml.TaskVertex> vertices = findAllForAssigning(workbook);
 
         int page = 0;
         Task resultTask = null;

@@ -88,7 +88,12 @@ public class PlanService {
 
     public void toStarted(Workbook workbook) {
         PlanImpl plan = planCache.findById(workbook.getPlanId());
-        workbookService.toState(workbook.getId(), plan == null ? EnumsApi.WorkbookExecState.ERROR : EnumsApi.WorkbookExecState.STARTED);
+        if (plan == null) {
+            workbookService.toError(workbook.getId());
+        }
+        else {
+            workbookService.toStarted(workbook.getId());
+        }
     }
 
     // TODO 2019.05.19 add reporting of producing of tasks
@@ -188,9 +193,7 @@ public class PlanService {
         }
 
         if (workbook.execState!=execState.code) {
-            workbook.setExecState(execState.code);
-            workbookCache.save(workbook);
-
+            workbookService.toState(workbook.id, execState);
             setLockedTo(plan.getId(), true);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
