@@ -81,74 +81,83 @@ public class WorkbookSchedulerService {
      */
     public void updateWorkbookStatus(WorkbookImpl workbook, boolean needReconciliation) {
 
-        final long countUnfinishedTasks = workbookGraphService.getCountUnfinishedTasks(workbook);
+        long countUnfinishedTasks = workbookGraphService.getCountUnfinishedTasks(workbook);
         if (countUnfinishedTasks==0) {
-            log.info("Workbook #{} was finished", workbook.getId());
-            workbookService.toFinished(workbook.getId());
+            // workaround for situation when states in graph and db are different
+            reconsileStates(workbook);
+            countUnfinishedTasks = workbookGraphService.getCountUnfinishedTasks(workbook);
+            if (countUnfinishedTasks==0) {
+                log.info("Workbook #{} was finished", workbook.getId());
+                workbookService.toFinished(workbook.getId());
+            }
         }
         else {
             if (needReconciliation) {
-                List<Object[]> list = taskRepository.findAllExecStateByWorkbookId(workbook.getId());
-                final Long workbookId = workbook.id;
-
-                // Reconcile states in db and in graph
-                List<WorkbookParamsYaml.TaskVertex> vertices = workbookGraphService.findAll(workbook);
-                Map<Long, Integer> states = new HashMap<>(list.size()+1);
-                for (Object[] o : list) {
-                    Long taskId = (Long) o[0];
-                    Integer execState = (Integer) o[1];
-                    states.put(taskId, execState);
-                }
-                ConcurrentHashMap<Long, Integer> taskStates = new ConcurrentHashMap<>();
-                AtomicBoolean isNullState = new AtomicBoolean(false);
-                vertices.stream().parallel().forEach(tv -> {
-                    Integer state = states.get(tv.taskId);
-                    if (state==null) {
-                        isNullState.set(true);
-                    }
-                    else if (tv.execState.value!=state) {
-                        log.info("#705.054 Found different states for task #"+tv.taskId+", " +
-                                "db: "+ EnumsApi.TaskExecState.from(state)+", " +
-                                "graph: "+tv.execState);
-                        taskStates.put(tv.taskId, state);
-                    }
-                });
-
-                if (isNullState.get()) {
-                    log.info("#705.052 Found non-created task, graph consistency is failed");
-                    workbookService.toError(workbook.getId());
-                }
-                else {
-                    workbookService.updateTaskExecStates(workbook, taskStates);
-                }
-
-                // fix actual state of tasks (can be as a result of OptimisticLockingException)
-                // fix IN_PROCESSING state
-                // find and reset all hanging up tasks
-                states.entrySet().stream()
-                        .filter(e-> EnumsApi.TaskExecState.IN_PROGRESS.value==e.getValue())
-                        .forEach(e->{
-                            Long taskId = e.getKey();
-                            TaskImpl task = taskRepository.findById(taskId).orElse(null);
-                            if (task != null) {
-                                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-
-                                // did this task hang up at station?
-                                if (task.assignedOn!=null && tpy.taskYaml.timeoutBeforeTerminate != null && tpy.taskYaml.timeoutBeforeTerminate!=0L) {
-                                    final long multiplyBy2 = tpy.taskYaml.timeoutBeforeTerminate * 2 * 1000;
-                                    final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
-                                    long timeout = multiplyBy2 > oneHourToMills ? oneHourToMills : multiplyBy2;
-                                    if ((System.currentTimeMillis() - task.assignedOn) > timeout) {
-                                        log.info("Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
-                                        workbookService.resetTask(task.id);
-                                    }
-                                }
-                                else if (task.resultReceived && task.isCompleted) {
-                                    workbookService.updateTaskExecStateByWorkbookId(workbookId, task.id, EnumsApi.TaskExecState.OK.value);
-                                }
-                            }
-                        });
+                reconsileStates(workbook);
             }
         }
+    }
+
+    public void reconsileStates(WorkbookImpl workbook) {
+        List<Object[]> list = taskRepository.findAllExecStateByWorkbookId(workbook.getId());
+        final Long workbookId = workbook.id;
+
+        // Reconcile states in db and in graph
+        List<WorkbookParamsYaml.TaskVertex> vertices = workbookGraphService.findAll(workbook);
+        Map<Long, Integer> states = new HashMap<>(list.size()+1);
+        for (Object[] o : list) {
+            Long taskId = (Long) o[0];
+            Integer execState = (Integer) o[1];
+            states.put(taskId, execState);
+        }
+        ConcurrentHashMap<Long, Integer> taskStates = new ConcurrentHashMap<>();
+        AtomicBoolean isNullState = new AtomicBoolean(false);
+        vertices.stream().parallel().forEach(tv -> {
+            Integer state = states.get(tv.taskId);
+            if (state==null) {
+                isNullState.set(true);
+            }
+            else if (tv.execState.value!=state) {
+                log.info("#705.054 Found different states for task #"+tv.taskId+", " +
+                        "db: "+ EnumsApi.TaskExecState.from(state)+", " +
+                        "graph: "+tv.execState);
+                taskStates.put(tv.taskId, state);
+            }
+        });
+
+        if (isNullState.get()) {
+            log.info("#705.052 Found non-created task, graph consistency is failed");
+            workbookService.toError(workbook.getId());
+        }
+        else {
+            workbookService.updateTaskExecStates(workbook, taskStates);
+        }
+
+        // fix actual state of tasks (can be as a result of OptimisticLockingException)
+        // fix IN_PROCESSING state
+        // find and reset all hanging up tasks
+        states.entrySet().stream()
+                .filter(e-> EnumsApi.TaskExecState.IN_PROGRESS.value==e.getValue())
+                .forEach(e->{
+                    Long taskId = e.getKey();
+                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
+                    if (task != null) {
+                        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+
+                        // did this task hang up at station?
+                        if (task.assignedOn!=null && tpy.taskYaml.timeoutBeforeTerminate != null && tpy.taskYaml.timeoutBeforeTerminate!=0L) {
+                            final long multiplyBy2 = tpy.taskYaml.timeoutBeforeTerminate * 2 * 1000;
+                            final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
+                            long timeout = multiplyBy2 > oneHourToMills ? oneHourToMills : multiplyBy2;
+                            if ((System.currentTimeMillis() - task.assignedOn) > timeout) {
+                                log.info("Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
+                                workbookService.resetTask(task.id);
+                            }
+                        }
+                        else if (task.resultReceived && task.isCompleted) {
+                            workbookService.updateTaskExecStateByWorkbookId(workbookId, task.id, EnumsApi.TaskExecState.OK.value);
+                        }
+                    }
+                });
     }
 }
