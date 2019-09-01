@@ -155,14 +155,14 @@ class WorkbookGraphService {
                         .filter(o -> taskStates.containsKey(o.taskId))
                         .collect(Collectors.toList());
 
-                // Don't combine streams, a side-effect could be occurred
-                tvs.forEach(t -> {
-                    t.execState = EnumsApi.TaskExecState.from(taskStates.get(t.taskId));
-                    if (t.execState == EnumsApi.TaskExecState.ERROR || t.execState == EnumsApi.TaskExecState.BROKEN) {
-                        setStateForAllChildrenTasksInternal(graph, t.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.BROKEN);
+                // Don't join streams, a side-effect could be occurred
+                tvs.forEach(taskVertex -> {
+                    taskVertex.execState = EnumsApi.TaskExecState.from(taskStates.get(taskVertex.taskId));
+                    if (taskVertex.execState == EnumsApi.TaskExecState.ERROR || taskVertex.execState == EnumsApi.TaskExecState.BROKEN) {
+                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.BROKEN);
                     }
-                    else if (t.execState == EnumsApi.TaskExecState.OK) {
-                        setStateForAllChildrenTasksInternal(graph, t.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.NONE);
+                    else if (taskVertex.execState == EnumsApi.TaskExecState.OK) {
+                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.NONE);
                     }
                 });
             });

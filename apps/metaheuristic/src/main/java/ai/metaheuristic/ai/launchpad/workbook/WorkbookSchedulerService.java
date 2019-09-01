@@ -59,7 +59,7 @@ public class WorkbookSchedulerService {
     public void updateWorkbookStatuses(boolean needReconciliation) {
         List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
         for (WorkbookImpl workbook : workbooks) {
-            updateWorkbookStatus(workbook, needReconciliation);
+            updateWorkbookStatus(workbook.id, needReconciliation);
         }
 
         List<Long> workbooksIds = workbookRepository.findIdsByExecState(EnumsApi.WorkbookExecState.EXPORTING_TO_ATLAS.code);
@@ -75,43 +75,44 @@ public class WorkbookSchedulerService {
 
     /**
      *
-     * @param workbook WorkbookImpl much be real object from db, not from cache
+     * @param workbookId Workbook Id
      * @param needReconciliation
      * @return WorkbookImpl updated workbook
      */
-    public void updateWorkbookStatus(WorkbookImpl workbook, boolean needReconciliation) {
+    public void updateWorkbookStatus(Long workbookId, boolean needReconciliation) {
 
-        long countUnfinishedTasks = workbookGraphService.getCountUnfinishedTasks(workbook);
+        long countUnfinishedTasks = workbookService.getCountUnfinishedTasks(workbookId);
         if (countUnfinishedTasks==0) {
             // workaround for situation when states in graph and db are different
-            reconsileStates(workbook);
-            countUnfinishedTasks = workbookGraphService.getCountUnfinishedTasks(workbook);
+            reconcileStates(workbookId);
+            countUnfinishedTasks = workbookService.getCountUnfinishedTasks(workbookId);
             if (countUnfinishedTasks==0) {
-                log.info("Workbook #{} was finished", workbook.getId());
-                workbookService.toFinished(workbook.getId());
+                log.info("Workbook #{} was finished", workbookId);
+                workbookService.toFinished(workbookId);
             }
         }
         else {
             if (needReconciliation) {
-                reconsileStates(workbook);
+                reconcileStates(workbookId);
             }
         }
     }
 
-    public void reconsileStates(WorkbookImpl workbook) {
-        List<Object[]> list = taskRepository.findAllExecStateByWorkbookId(workbook.getId());
-        final Long workbookId = workbook.id;
+    public void reconcileStates(Long workbookId) {
+        List<Object[]> list = taskRepository.findAllExecStateByWorkbookId(workbookId);
 
         // Reconcile states in db and in graph
-        List<WorkbookParamsYaml.TaskVertex> vertices = workbookGraphService.findAll(workbook);
         Map<Long, Integer> states = new HashMap<>(list.size()+1);
         for (Object[] o : list) {
             Long taskId = (Long) o[0];
             Integer execState = (Integer) o[1];
             states.put(taskId, execState);
         }
+
         ConcurrentHashMap<Long, Integer> taskStates = new ConcurrentHashMap<>();
         AtomicBoolean isNullState = new AtomicBoolean(false);
+
+        List<WorkbookParamsYaml.TaskVertex> vertices = workbookService.findAllVertices(workbookId);
         vertices.stream().parallel().forEach(tv -> {
             Integer state = states.get(tv.taskId);
             if (state==null) {
@@ -127,10 +128,10 @@ public class WorkbookSchedulerService {
 
         if (isNullState.get()) {
             log.info("#705.052 Found non-created task, graph consistency is failed");
-            workbookService.toError(workbook.getId());
+            workbookService.toError(workbookId);
         }
         else {
-            workbookService.updateTaskExecStates(workbook, taskStates);
+            workbookService.updateTaskExecStates(workbookId, taskStates);
         }
 
         // fix actual state of tasks (can be as a result of OptimisticLockingException)

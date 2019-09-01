@@ -189,7 +189,7 @@ public class TestPlanService extends PreparingPlan {
             Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
             assertNotNull(loopTask);
             storeExecResult(loopSimpleTask);
-            workbookSchedulerService.updateWorkbookStatus( workbookRepository.findByIdForUpdate(workbook.id), true);
+            workbookSchedulerService.updateWorkbookStatus( workbook.id, true);
             workbook = workbookCache.findById(workbook.id);
 
             final long count = workbookService.getCountUnfinishedTasks(workbook);

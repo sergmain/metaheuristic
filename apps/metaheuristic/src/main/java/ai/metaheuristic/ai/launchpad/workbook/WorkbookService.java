@@ -174,6 +174,18 @@ public class WorkbookService {
         });
     }
 
+    public long getCountUnfinishedTasks(WorkbookImpl workbook) {
+        return getCountUnfinishedTasks(workbook.id);
+    }
+
+    public Long getCountUnfinishedTasks(Long workbookId) {
+        return workbookSyncService.getWithSync(workbookId, workbookGraphService::getCountUnfinishedTasks);
+    }
+
+    public List<WorkbookParamsYaml.TaskVertex> findAllVertices(Long workbookId) {
+        return workbookSyncService.getWithSync(workbookId, workbookGraphService::findAll);
+    }
+
     private Void toStateWithCompletion(Long workbookId, EnumsApi.WorkbookExecState state) {
         return workbookSyncService.getWithSync(workbookId, workbook -> {
             if (workbook.execState!=state.code) {
@@ -498,10 +510,6 @@ public class WorkbookService {
         return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findDescendants(workbook, taskId));
     }
 
-    public long getCountUnfinishedTasks(WorkbookImpl workbook) {
-        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.getCountUnfinishedTasks(workbook));
-    }
-
     public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(WorkbookImpl workbook) {
         return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAllForAssigning(workbook));
     }
@@ -538,11 +546,11 @@ public class WorkbookService {
         return workbookSyncService.getWithSync(workbookId, (workbook) -> workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, taskId));
     }
 
-    public WorkbookOperationStatusWithTaskList updateTaskExecStates(WorkbookImpl wb, ConcurrentHashMap<Long, Integer> taskStates) {
+    public WorkbookOperationStatusWithTaskList updateTaskExecStates(Long workbookId, ConcurrentHashMap<Long, Integer> taskStates) {
         if (taskStates==null || taskStates.isEmpty()) {
             return new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
         }
-        return workbookSyncService.getWithSync(wb.getId(), (workbook) -> {
+        return workbookSyncService.getWithSync(workbookId, (workbook) -> {
             final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecStates(workbook, taskStates);
             updateTasksStateInDb(status);
             return status;
