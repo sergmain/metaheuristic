@@ -18,6 +18,7 @@
 	"batch.Id": "Id",
 	"batch.Is Batch Consistent?": "Is Batch Consistent?",
 	"batch.Plan Code": "Plan Code",
+	"batch.File name": "File name",
 	"batch.Status": "Status",
 	"batch.Upload files and start processing": "Upload files and start processing",
 	"batch.delete-dialog.Cancel": "Cancel",

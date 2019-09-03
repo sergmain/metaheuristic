@@ -18,6 +18,7 @@
 	"batch.Id": "id",
 	"batch.Is Batch Consistent?": "Пакет консистен?",
 	"batch.Plan Code": "Код Плана",
+	"batch.File name": "Имя файла",
 	"batch.Status": "Статус",
 	"batch.Upload files and start processing": "Загрузить файлы и начать процеcс",
 	"batch.delete-dialog.Cancel": "Отмена",
