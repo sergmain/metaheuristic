@@ -39,6 +39,7 @@ public class StationData {
         public Station station;
         public boolean active;
         public boolean blacklisted;
+        public String blacklistReason;
         public long lastSeen;
         public String ip;
         public String host;

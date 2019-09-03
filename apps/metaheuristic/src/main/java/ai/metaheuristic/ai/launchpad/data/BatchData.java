@@ -50,6 +50,7 @@ public final class BatchData {
         public String execStateStr;
         public int execState;
         public boolean ok;
+        public String uploadedFileName;
     }
 
     @Data

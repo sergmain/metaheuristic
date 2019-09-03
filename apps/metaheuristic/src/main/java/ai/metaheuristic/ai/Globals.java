@@ -15,11 +15,13 @@
  */
 package ai.metaheuristic.ai;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -151,6 +153,8 @@ public class Globals {
 
     public Long chunkSize = null;
 
+    public EnumsApi.OS os = EnumsApi.OS.unknown;
+
     // TODO 2019-07-28 need to handle this case
     //  https://stackoverflow.com/questions/37436927/utf-8-encoding-of-application-properties-attributes-in-spring-boot
 
@@ -270,6 +274,8 @@ public class Globals {
                 }
             }
         }
+        initOperationSystem();
+
         logGlobals();
         logSystemEnvs();
     }
@@ -290,6 +296,18 @@ public class Globals {
             return Long.parseLong(str.substring(0, str.length()-1)) * sizes.get(ch);
         }
         return Long.parseLong(str);
+    }
+
+    private void initOperationSystem() {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            os = EnumsApi.OS.windows;
+        }
+        else if (SystemUtils.IS_OS_LINUX) {
+            os = EnumsApi.OS.linux;
+        }
+        else if (SystemUtils.IS_OS_MAC_OSX) {
+            os = EnumsApi.OS.macos;
+        }
     }
 
     private void checkOwnership(File file) {
@@ -336,6 +354,7 @@ public class Globals {
 
     private void logGlobals() {
         log.info("Current globals:");
+        log.info("'\tOS: {}", os);
         log.info("'\tthreadNumber: {}", threadNumber);
         log.info("'\tbranding: {}", branding);
         log.info("'\tisUnitTesting: {}", isUnitTesting);

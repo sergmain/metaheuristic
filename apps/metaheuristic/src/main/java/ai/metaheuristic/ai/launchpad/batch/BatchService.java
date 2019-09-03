@@ -222,6 +222,7 @@ public class BatchService {
 
     List<BatchData.ProcessResourceItem> getBatches(Page<Long> batchIds) {
         List<BatchData.ProcessResourceItem> items = new ArrayList<>();
+        List<Object[]> batchInfos = binaryDataService.getFilenamesForBatchIds(batchIds.getContent());
         for (Long batchId : batchIds) {
             Batch batch;
             final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
@@ -260,7 +261,8 @@ public class BatchService {
                     }
                 }
                 String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
-                items.add(new BatchData.ProcessResourceItem(batch, planCode, execStateStr, batch.execState, ok));
+                String filename = batchInfos.stream().filter(o->o[0].equals(batchId)).map(o->(String)o[1]).findFirst().orElse("[unknown]");
+                items.add(new BatchData.ProcessResourceItem(batch, planCode, execStateStr, batch.execState, ok, filename));
             }
         }
         return items;

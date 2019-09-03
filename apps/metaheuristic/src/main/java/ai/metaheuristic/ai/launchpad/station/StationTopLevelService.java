@@ -80,9 +80,11 @@ public class StationTopLevelService {
             }
             StationStatus status = StationStatusUtils.to(station.status);
 
+            String blacklistReason = stationBlacklisted(status);
+
             ss.add(new StationData.StationStatus(
                     station, System.currentTimeMillis() - station.updatedOn < STATION_TIMEOUT,
-                    status.taskParamsVersion < TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
+                    blacklistReason!=null, blacklistReason,
                     station.updatedOn,
                     (StringUtils.isNotBlank(status.ip) ? status.ip : "[unknown]"),
                     (StringUtils.isNotBlank(status.host) ? status.host : "[unknown]")
@@ -90,6 +92,16 @@ public class StationTopLevelService {
         }
         result.items =  new SliceImpl<>(ss, pageable, ids.hasNext());
         return result;
+    }
+
+    private String stationBlacklisted(StationStatus status) {
+        if (status.taskParamsVersion < TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
+            return "Station's taskParamsVersion is too old, need to upgrade";
+        }
+        if (status.taskParamsVersion > TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
+            return "Launchpad is too old and can't communicate to this station, need to upgrade";
+        }
+        return null;
     }
 
     public StationData.StationResult getStation(Long id) {
@@ -149,6 +161,7 @@ public class StationTopLevelService {
                     ss.errors = status.errors;
                     ss.logDownloadable = status.logDownloadable;
                     ss.taskParamsVersion = status.taskParamsVersion;
+                    ss.os = (status.os==null ? EnumsApi.OS.unknown : status.os);
 
                     station.status = StationStatusUtils.toString(ss);
                     station.updatedOn = System.currentTimeMillis();
@@ -183,7 +196,8 @@ public class StationTopLevelService {
         !Objects.equals(ss.host, status.host) ||
         !Objects.equals(ss.errors, status.errors) ||
         ss.logDownloadable!=status.logDownloadable ||
-        ss.taskParamsVersion!=status.taskParamsVersion;
+        ss.taskParamsVersion!=status.taskParamsVersion||
+        ss.os!=status.os;
     }
 
     // TODO Need to re-write this method

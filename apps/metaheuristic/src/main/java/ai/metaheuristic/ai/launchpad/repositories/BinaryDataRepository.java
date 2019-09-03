@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.repositories;
 
+import ai.metaheuristic.ai.launchpad.beans.AtlasTask;
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Blob;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -46,12 +48,17 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
             "b.code, b.poolCode, b.params, b.filename ) " +
             "from BinaryDataImpl b where b.poolCode in :poolCodes and " +
             "b.refId=:refId and b.refType='workbook'")
-    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes, Long refId);
+    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPoolForWorkbook(List<String> poolCodes, Long refId);
+
+    @Transactional(readOnly = true)
+    @Query(value="select b.refId, b.filename from BinaryDataImpl b " +
+            "where b.refType='batch' and b.refId in :ids ")
+    List<Object[]> getFilenamesForBatchIds(Collection<Long> ids);
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
             "b.code, b.poolCode, b.params, b.filename ) " +
             "from BinaryDataImpl b where b.poolCode in :poolCodes")
-    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes);
+    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPoolForWorkbook(List<String> poolCodes);
 
     List<BinaryDataImpl> findAllByPoolCode(String poolCode);
 

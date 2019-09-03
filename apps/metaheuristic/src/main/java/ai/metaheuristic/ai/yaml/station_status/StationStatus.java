@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.yaml.station_status;
 
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -49,6 +50,7 @@ public class StationStatus {
     public List<String> errors = null;
     public boolean logDownloadable;
     public int taskParamsVersion;
+    public EnumsApi.OS os;
 
     public void addError(String error) {
         if (errors==null) {

@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -132,7 +133,7 @@ public class TestRegisterStation {
                 sessionId,
                 System.currentTimeMillis(),
                 "[unknown]", "[unknown]", null, true,
-                1);
+                1, EnumsApi.OS.unknown);
 
         stationComm.reportStationStatus = ss;
 

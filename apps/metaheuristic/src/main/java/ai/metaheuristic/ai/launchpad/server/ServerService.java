@@ -370,7 +370,7 @@ public class ServerService {
         StationStatus ss = new StationStatus(null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, false, 1);
+                "[unknown]", "[unknown]", null, false, 1, EnumsApi.OS.unknown);
 
         s.status = StationStatusUtils.toString(ss);
         s.updatedOn = ss.sessionCreatedOn;

@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -142,7 +143,7 @@ public class LaunchpadCommandProcessor {
     }
 
     // processing on launchpad side
-    public LaunchpadCommParamsYaml.AssignedStationId getNewStationId(@SuppressWarnings("unused") StationCommParamsYaml.RequestStationId request) {
+    public LaunchpadCommParamsYaml.AssignedStationId getNewStationId(StationCommParamsYaml.RequestStationId request) {
         if (request==null) {
             return null;
         }
@@ -151,7 +152,7 @@ public class LaunchpadCommandProcessor {
         StationStatus ss = new StationStatus(null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
-                1);
+                1, EnumsApi.OS.unknown);
 
         st.status = StationStatusUtils.toString(ss);
         stationCache.save(st);

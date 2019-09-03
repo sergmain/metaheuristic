@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.yaml.communication.station;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
@@ -116,6 +117,8 @@ public class StationCommParamsYaml implements BaseParams {
         public List<String> errors = null;
         public boolean logDownloadable;
         public int taskParamsVersion;
+
+        public EnumsApi.OS os;
 
         public void addError(String error) {
             if (errors==null) {
