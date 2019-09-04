@@ -20,7 +20,6 @@ import lombok.ToString;
 
 public class EnumsApi {
 
-    // http://lopica.sourceforge.net/os.html - old but it's ok
     public enum OS { unknown, any, windows, linux, macos }
 
     public enum BinaryDataRefType {

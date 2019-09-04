@@ -219,6 +219,7 @@ public class ServerService {
                         .map(o -> ServerService.toSimpleStatus((Long)o[0], (Integer)o[1]))
                         .collect(Collectors.toList()));
     }
+
     public String processRequest(String data, String remoteAddress) {
         LaunchpadCommParamsYaml lcpy = new LaunchpadCommParamsYaml();
         StationCommParamsYaml scpy = StationCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
