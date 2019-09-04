@@ -383,7 +383,7 @@ public class ExperimentService {
 
         List<Long> ids = etfs.stream().mapToLong(ExperimentTaskFeature::getTaskId).boxed().collect(Collectors.toList());
 
-        List<TaskImpl> tasks = taskRepository.findTasksByIds(ids);
+        List<TaskImpl> tasks = ids.isEmpty() ? List.of() : taskRepository.findTasksByIds(ids);
         List<TaskWIthType> list = new ArrayList<>();
         for (TaskImpl task : tasks) {
             ExperimentTaskFeature tf = etfs.stream().filter(o->o.taskId.equals(task.id)).findFirst().orElse(null);

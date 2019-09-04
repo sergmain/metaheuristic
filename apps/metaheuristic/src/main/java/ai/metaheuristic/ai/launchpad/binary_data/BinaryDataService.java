@@ -307,6 +307,9 @@ public class BinaryDataService {
 
     @Transactional(readOnly = true)
     public List<Object[]> getFilenamesForBatchIds(List<Long> batchIds) {
+        if (batchIds.isEmpty()) {
+            return List.of();
+        }
         return binaryDataRepository.getFilenamesForBatchIds(batchIds);
     }
 }
