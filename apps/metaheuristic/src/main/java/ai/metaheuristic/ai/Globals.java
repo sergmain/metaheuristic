@@ -48,7 +48,7 @@ public class Globals {
 
     // Globals' globals
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.thread-number'), 1, 8, 4) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.thread-number'), 1, 16, 4) }")
     public int threadNumber;
 
     @Value("${mh.is-testing:#{false}}")

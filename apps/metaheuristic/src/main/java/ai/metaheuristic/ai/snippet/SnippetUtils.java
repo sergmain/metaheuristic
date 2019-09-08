@@ -14,25 +14,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api;
+package ai.metaheuristic.ai.snippet;
+
+import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.Meta;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * @author Serge
- * Date: 7/5/2019
- * Time: 1:45 AM
+ * Date: 9/4/2019
+ * Time: 4:13 PM
  */
-public class ConstsApi {
-
-    // snippets' metas
-    public static final String META_MH_SNIPPET_PARAMS_AS_FILE_META = "mh.snippet-params-as-file";
-
-    // extension for scripting file which will be executed as snippet
-    public static final String META_MH_SNIPPET_PARAMS_FILE_EXT_META = "mh.snippet-params-file-ext";
-
-    public static final String META_MH_TASK_PARAMS_VERSION = "mh.task-params-version";
-
-    public static final String META_MH_SNIPPET_SUPPORTED_OS = "mh.snippet-supported-os";
-
-    @Deprecated
-    public static final String META_TASK_PARAMS_VERSION = "task-params-version";
+public class SnippetUtils {
 }

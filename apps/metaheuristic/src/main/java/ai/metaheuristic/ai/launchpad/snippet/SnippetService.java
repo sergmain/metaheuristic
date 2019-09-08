@@ -27,10 +27,10 @@ import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -58,7 +58,7 @@ public class SnippetService {
 
     public boolean isSnippetVersionOk(int requiredVersion, SnippetDefForPlan snDef) {
         SnippetApiData.SnippetConfig sc = getSnippetConfig(snDef);
-        return sc != null && (sc.skipParams || requiredVersion <= sc.getTaskParamsVersion());
+        return sc != null && (sc.skipParams || requiredVersion <= SnippetCoreUtils.getTaskParamsVersion(sc.metas));
     }
 
     public static void sortExperimentSnippets(List<Snippet> snippets) {
@@ -193,7 +193,7 @@ public class SnippetService {
         for (SnippetApiData.SnippetConfig snippetConfig : snippetConfigList.snippets) {
             SnippetApiData.SnippetConfigStatus status = null;
             try {
-                status = SnippetUtils.validate(snippetConfig);
+                status = SnippetCoreUtils.validate(snippetConfig);
                 if (!status.isOk) {
                     log.error(status.error);
                     continue;
@@ -217,7 +217,7 @@ public class SnippetService {
                             break;
                         case station:
                         case git:
-                            String s = SnippetUtils.getDataForChecksumWhenGitSourcing(snippetConfig);
+                            String s = SnippetCoreUtils.getDataForChecksumWhenGitSourcing(snippetConfig);
                             sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(s.getBytes()));
                             break;
                     }

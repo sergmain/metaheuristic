@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.yaml;
 
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -113,7 +113,7 @@ public class TestYamlParser {
             assertNotNull(config.getSnippets());
             assertEquals(1, config.getSnippets().size());
             SnippetApiData.SnippetConfig snippet = config.getSnippets().get(0);
-            SnippetApiData.SnippetConfigStatus status = SnippetUtils.validate(snippet);
+            SnippetApiData.SnippetConfigStatus status = SnippetCoreUtils.validate(snippet);
             assertFalse(status.isOk);
         }
     }

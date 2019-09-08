@@ -27,7 +27,7 @@ import java.util.Map;
 @SuppressWarnings("DeprecatedIsStillUsed")
 public class Consts {
 
-    public static final int TASK_ORDER_START_VALUE = 1;
+    public static final int PROCESS_ORDER_START_VALUE = 1;
 
     public static final String PROTOCOL_DELIMITER = "://";
     public static final String HTTP = "http://";
@@ -68,8 +68,10 @@ public class Consts {
     public static final String ENV_YAML_FILE_NAME = "env.yaml";
     public static final String LAUNCHPAD_YAML_FILE_NAME = "launchpad.yaml";
 
+    @Deprecated
     public static final String METRICS_FILE_NAME = "metrics.yaml";
-    public static final String SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "system-console.log";
+    public static final String MH_METRICS_FILE_NAME = "mh-metrics.yaml";
+    public static final String MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "mh-system-console.log";
 
     public static final String PARAMS_YAML_MASK = "params-v%d.yaml";
     public static final String TASK_YAML = "task.yaml";
@@ -100,15 +102,12 @@ public class Consts {
     public static final String ZIP_EXT = ".zip";
     public static final String RAR_EXT = ".rar";
 
-    // snippets' metas
-    public static final String META_MH_SNIPPET_PARAMS_AS_FILE_META = "mh.snippet-params-as-file";
     @Deprecated
     public static final String META_SNIPPET_PARAMS_AS_FILE_META = "snippet-params-as-file";
 
-    // extension for scripting file which will be executed as snippet
-    public static final String META_MH_SNIPPET_PARAMS_FILE_EXT_META = "mh.snippet-params-file-ext";
     @Deprecated
     public static final String META_SNIPPET_PARAMS_FILE_EXT_META = "snippet-params-file-ext";
+
     public static final String HEADER_MH_IS_LAST_CHUNK = "mh-is-last-chunk";
     public static final String HEADER_MH_CHUNK_SIZE = "mh-chunk-size";
 }

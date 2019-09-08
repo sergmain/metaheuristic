@@ -123,27 +123,5 @@ public class SnippetApiData {
         public boolean skipParams = false;
         public List<Meta> metas = new ArrayList<>();
 
-        public Meta getMeta(String ... keys) {
-            if (metas==null) {
-                return null;
-            }
-            if (keys==null || keys.length==0) {
-                return null;
-            }
-            for (Meta meta : metas) {
-                for (String key : keys) {
-                    if (meta.key.equals(key)) {
-                        return meta;
-                    }
-                }
-            }
-            return null;
-        }
-
-        @SuppressWarnings("deprecation")
-        public int getTaskParamsVersion() {
-            final Meta meta = getMeta(ConstsApi.META_MH_TASK_PARAMS_VERSION, ConstsApi.META_TASK_PARAMS_VERSION);
-            return (meta!=null) ? Integer.valueOf(meta.value) : 1;
-        }
     }
 }

@@ -332,9 +332,9 @@ public class StationTaskService {
         log.info("storeMetrics(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, taskId, snippet.getCode());
         // store metrics after predict only
         if (snippet.isMetrics()) {
-            File metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
             Metrics metrics = new Metrics();
-            if (metricsFile.exists()) {
+            File metricsFile = getMetricsFile(artifactDir);
+            if (metricsFile!=null) {
                 try {
                     String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
                     metrics.setStatus(Metrics.Status.Ok);
@@ -352,6 +352,17 @@ public class StationTaskService {
             task.setMetrics(MetricsUtils.toString(metrics));
         }
         save(task);
+    }
+
+    @SuppressWarnings("deprecation")
+    private File getMetricsFile(File artifactDir) {
+        File metricsFile = new File(artifactDir, Consts.MH_METRICS_FILE_NAME);
+        if (metricsFile.exists()) {
+            return metricsFile;
+        }
+        // let's try a file with legacy name
+        metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
+        return metricsFile.exists() ? metricsFile : null;
     }
 
     public List<StationTask> findAllByCompletedIsFalse(String launchpadUrl) {

@@ -453,7 +453,7 @@ public class PlanService {
         Monitoring.log("##025", Enums.Monitor.MEMORY);
         PlanParamsYaml planParams = plan.getPlanParamsYaml();
 
-        int idx = Consts.TASK_ORDER_START_VALUE;
+        int idx = Consts.PROCESS_ORDER_START_VALUE;
         List<Long> parentTaskIds = new ArrayList<>();
         int numberOfTasks=0;
         for (Process process : planParams.planYaml.getProcesses()) {

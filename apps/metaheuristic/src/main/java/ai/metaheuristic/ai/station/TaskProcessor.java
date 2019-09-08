@@ -29,11 +29,13 @@ import ai.metaheuristic.ai.yaml.launchpad_lookup.ExtendedTimePeriod;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -375,7 +377,7 @@ public class TaskProcessor {
         }
 
         Set<Integer> versions = Stream.of(results)
-                .map(o-> o.snippet.getTaskParamsVersion())
+                .map(o-> SnippetCoreUtils.getTaskParamsVersion(o.snippet.metas))
                 .collect(Collectors.toSet());
 
         taskParamYaml.taskYaml.workingPath = taskDir.getAbsolutePath();
@@ -414,7 +416,10 @@ public class TaskProcessor {
             StationTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, SnippetPrepareResult snippetPrepareResult,
             LaunchpadSchedule schedule) {
 
-        File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + String.format(Consts.PARAMS_YAML_MASK, snippetPrepareResult.snippet.getTaskParamsVersion()));
+        File paramFile = new File(
+                taskDir,
+                Consts.ARTIFACTS_DIR + File.separatorChar +
+                        String.format(Consts.PARAMS_YAML_MASK, SnippetCoreUtils.getTaskParamsVersion(snippetPrepareResult.snippet.metas)));
 
         List<String> cmd;
         Interpreter interpreter=null;
@@ -435,16 +440,13 @@ public class TaskProcessor {
 
         SnippetApiData.SnippetExecResult snippetExecResult;
         try {
-
             switch (snippetPrepareResult.snippet.sourcing) {
-
                 case launchpad:
                 case git:
                     if (snippetPrepareResult.snippetAssetFile==null) {
                         throw new IllegalStateException("#100.160 snippetAssetFile is null");
                     }
                     cmd.add(snippetPrepareResult.snippetAssetFile.file.getAbsolutePath());
-
                     break;
                 case station:
                     if (snippetPrepareResult.snippet.file!=null) {
@@ -458,12 +460,12 @@ public class TaskProcessor {
 
             if (!snippetPrepareResult.snippet.skipParams) {
                 if (StringUtils.isNoneBlank(snippetPrepareResult.snippet.params)) {
-                    final Meta meta = snippetPrepareResult.snippet.getMeta(
-                            Consts.META_MH_SNIPPET_PARAMS_AS_FILE_META,
+                    final Meta meta = SnippetCoreUtils.getMeta(snippetPrepareResult.snippet.metas,
+                            ConstsApi.META_MH_SNIPPET_PARAMS_AS_FILE_META,
                             Consts.META_SNIPPET_PARAMS_AS_FILE_META);
                     if (meta!=null && Boolean.parseBoolean(meta.value)) {
-                        final Meta metaExt = snippetPrepareResult.snippet.getMeta(
-                                Consts.META_MH_SNIPPET_PARAMS_FILE_EXT_META,
+                        final Meta metaExt = SnippetCoreUtils.getMeta(snippetPrepareResult.snippet.metas,
+                                ConstsApi.META_MH_SNIPPET_PARAMS_FILE_EXT_META,
                                 Consts.META_SNIPPET_PARAMS_FILE_EXT_META);
                         String ext = (metaExt!=null && metaExt.value!=null && !metaExt.value.isBlank())
                                 ? metaExt.value : ".txt";
@@ -479,7 +481,7 @@ public class TaskProcessor {
                 cmd.add(paramFile.getAbsolutePath());
             }
 
-            File consoleLogFile = new File(systemDir, Consts.SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
+            File consoleLogFile = new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
             // Exec snippet
             snippetExecResult = execProcessService.execCommand(

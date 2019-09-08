@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
@@ -45,6 +46,7 @@ import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
@@ -392,7 +394,8 @@ public class WorkbookService {
         if (workbook==null) {
             return null;
         }
-        List<WorkbookParamsYaml.TaskVertex> vertices = findAllForAssigning(workbook);
+        final List<WorkbookParamsYaml.TaskVertex> vertices = findAllForAssigning(workbook);
+        final StationStatus stationStatus = StationStatusUtils.to(station.status);
 
         int page = 0;
         Task resultTask = null;
@@ -412,7 +415,6 @@ public class WorkbookService {
                     throw new RuntimeException("#705.200 Error", e);
                 }
 
-                StationStatus stationStatus = StationStatusUtils.to(station.status);
                 if (taskParamYaml.taskYaml.snippet.sourcing== EnumsApi.SnippetSourcing.git &&
                         stationStatus.gitStatusInfo.status!= Enums.GitStatus.installed) {
                     log.warn("#705.210 Can't assign task #{} to station #{} because this station doesn't correctly installed git, git status info: {}",
@@ -425,12 +427,22 @@ public class WorkbookService {
                 if (taskParamYaml.taskYaml.snippet.env!=null) {
                     String interpreter = stationStatus.env.getEnvs().get(taskParamYaml.taskYaml.snippet.env);
                     if (interpreter == null) {
-                        log.warn("#705.210 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
+                        log.warn("#705.213 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
                                 station.getId(), task.getId(), taskParamYaml.taskYaml.snippet.env
                         );
                         longHolder.value = System.currentTimeMillis();
                         continue;
                     }
+                }
+
+                final List<EnumsApi.OS> supportedOS = getSupportedOS(taskParamYaml);
+                if (stationStatus.os!=null && !supportedOS.isEmpty() && !supportedOS.contains(stationStatus.os)) {
+                    log.info("#705.217 Can't assign task #{} to station #{}, " +
+                                    "because this station doesn't support required OS version. station: {}, snippet: {}",
+                            station.getId(), task.getId(), stationStatus.os, supportedOS
+                    );
+                    longHolder.value = System.currentTimeMillis();
+                    continue;
                 }
 
                 if (isAcceptOnlySigned) {
@@ -470,6 +482,13 @@ public class WorkbookService {
         updateTaskExecStateByWorkbookId(workbookId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
 
         return assignedTask;
+    }
+
+    private List<EnumsApi.OS> getSupportedOS(TaskParamsYaml taskParamYaml) {
+        if (taskParamYaml.taskYaml.snippet!=null) {
+            return SnippetCoreUtils.getSupportedOS(taskParamYaml.taskYaml.snippet.metas);
+        }
+        return List.of();
     }
 
     private List<Task> getAllByStationIdIsNullAndWorkbookIdAndIdIn(Long workbookId, List<WorkbookParamsYaml.TaskVertex> vertices, int page) {
