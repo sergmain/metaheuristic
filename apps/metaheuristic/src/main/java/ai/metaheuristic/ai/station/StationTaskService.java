@@ -185,8 +185,11 @@ public class StationTaskService {
                 log.error("#713.080 StationTask wasn't found for Id {}", taskId);
                 return;
             }
-            task.setDelivered(true);
+            if (task.delivered) {
+                return;
+            }
 
+            task.setDelivered(true);
             // if snippet has finished with an error,
             // then we don't have to set isCompleted any more
             // because we've already marked this task as completed
