@@ -68,7 +68,7 @@ public class SnippetCoreUtils {
 
 
     public static List<EnumsApi.OS> getSupportedOS(List<Meta> metas) {
-        final Meta meta = getMeta(metas, ConstsApi.META_MH_SNIPPET_SUPPORTED_OS);
+        final Meta meta = MetaUtils.getMeta(metas, ConstsApi.META_MH_SNIPPET_SUPPORTED_OS);
         if (meta != null && meta.value!=null && !meta.value.isBlank()) {
             try {
                 StringTokenizer st = new StringTokenizer(meta.value, ", ");
@@ -80,33 +80,16 @@ public class SnippetCoreUtils {
                 return oss;
             }
             catch (IllegalArgumentException e) {
-                log.error("#309.001 Error parsing metadata with supported OS: " + meta, e);
+                log.error("#311.001 Error parsing metadata with supported OS: " + meta, e);
                 return List.of();
             }
         }
         return List.of();
     }
 
-    public static Meta getMeta(List<Meta> metas, String... keys) {
-        if (metas==null) {
-            return null;
-        }
-        if (keys==null || keys.length==0) {
-            return null;
-        }
-        for (Meta meta : metas) {
-            for (String key : keys) {
-                if (meta.key.equals(key)) {
-                    return meta;
-                }
-            }
-        }
-        return null;
-    }
-
     @SuppressWarnings("deprecation")
     public static int getTaskParamsVersion(List<Meta> metas) {
-        final Meta meta = getMeta(metas, ConstsApi.META_MH_TASK_PARAMS_VERSION, ConstsApi.META_TASK_PARAMS_VERSION);
+        final Meta meta = MetaUtils.getMeta(metas, ConstsApi.META_MH_TASK_PARAMS_VERSION, ConstsApi.META_TASK_PARAMS_VERSION);
         return (meta!=null) ? Integer.parseInt(meta.value) : 1;
     }
 }

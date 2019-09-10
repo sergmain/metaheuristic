@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchParams;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
+import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
@@ -39,6 +40,7 @@ import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
@@ -48,6 +50,7 @@ import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -713,16 +716,17 @@ public class BatchService {
         return filename;
     }
 
+    @SuppressWarnings("deprecation")
     private String getActualExtension(Long planId) {
-        Plan plan = planCache.findById(planId);
+        PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
             return (StringUtils.isNotBlank(globals.defaultResultFileExtension)
                     ? globals.defaultResultFileExtension
                     : ".bin");
         }
 
-        PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
-        Meta meta = planParams.planYaml.getMeta(Consts.RESULT_FILE_EXTENSION);
+        PlanParamsYaml planParams = plan.getPlanParamsYaml();
+        final Meta meta = MetaUtils.getMeta(planParams.planYaml.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION, Consts.RESULT_FILE_EXTENSION);
 
         return meta != null && StringUtils.isNotBlank(meta.getValue())
                 ? meta.getValue()

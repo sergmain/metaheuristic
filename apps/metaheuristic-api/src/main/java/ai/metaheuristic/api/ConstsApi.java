@@ -23,7 +23,16 @@ package ai.metaheuristic.api;
  */
 public class ConstsApi {
 
-    // snippets' metas
+    public static final String ARTIFACTS_DIR = "artifacts";
+
+    // === plan's meta
+    //
+    public static final String META_MH_RESULT_FILE_EXTENSION = "mh.result-file-extension";
+
+
+    // === snippets' metas
+
+    //
     public static final String META_MH_SNIPPET_PARAMS_AS_FILE_META = "mh.snippet-params-as-file";
 
     // extension for scripting file which will be executed as snippet
@@ -31,8 +40,11 @@ public class ConstsApi {
 
     public static final String META_MH_TASK_PARAMS_VERSION = "mh.task-params-version";
 
-    public static final String META_MH_SNIPPET_SUPPORTED_OS = "mh.snippet-supported-os";
-
+    // legacy meta
     @Deprecated
     public static final String META_TASK_PARAMS_VERSION = "task-params-version";
+
+
+    public static final String META_MH_SNIPPET_SUPPORTED_OS = "mh.snippet-supported-os";
+
 }

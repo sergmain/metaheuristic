@@ -35,6 +35,7 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
@@ -196,7 +197,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
+            File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
             if (artifactDir == null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
@@ -371,7 +372,7 @@ public class TaskProcessor {
 
     private boolean prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml, SnippetPrepareResult[] results) {
 
-        File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
+        File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
         if (artifactDir == null) {
             return false;
         }
@@ -418,7 +419,7 @@ public class TaskProcessor {
 
         File paramFile = new File(
                 taskDir,
-                Consts.ARTIFACTS_DIR + File.separatorChar +
+                ConstsApi.ARTIFACTS_DIR + File.separatorChar +
                         String.format(Consts.PARAMS_YAML_MASK, SnippetCoreUtils.getTaskParamsVersion(snippetPrepareResult.snippet.metas)));
 
         List<String> cmd;
@@ -460,17 +461,17 @@ public class TaskProcessor {
 
             if (!snippetPrepareResult.snippet.skipParams) {
                 if (StringUtils.isNoneBlank(snippetPrepareResult.snippet.params)) {
-                    final Meta meta = SnippetCoreUtils.getMeta(snippetPrepareResult.snippet.metas,
+                    final Meta meta = MetaUtils.getMeta(snippetPrepareResult.snippet.metas,
                             ConstsApi.META_MH_SNIPPET_PARAMS_AS_FILE_META,
                             Consts.META_SNIPPET_PARAMS_AS_FILE_META);
                     if (meta!=null && Boolean.parseBoolean(meta.value)) {
-                        final Meta metaExt = SnippetCoreUtils.getMeta(snippetPrepareResult.snippet.metas,
+                        final Meta metaExt = MetaUtils.getMeta(snippetPrepareResult.snippet.metas,
                                 ConstsApi.META_MH_SNIPPET_PARAMS_FILE_EXT_META,
                                 Consts.META_SNIPPET_PARAMS_FILE_EXT_META);
                         String ext = (metaExt!=null && metaExt.value!=null && !metaExt.value.isBlank())
                                 ? metaExt.value : ".txt";
 
-                        File execFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + toFilename(snippetPrepareResult.snippet.code) + ext);
+                        File execFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + toFilename(snippetPrepareResult.snippet.code) + ext);
                         FileUtils.writeStringToFile(execFile, snippetPrepareResult.snippet.params, StandardCharsets.UTF_8 );
                         cmd.add( execFile.getAbsolutePath() );
                     }

@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +43,7 @@ public class Consts {
     public static final String PAYLOAD_REST_URL = "/payload";
     public static final String UPLOAD_REST_URL = "/upload";
 
-    public static final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(), MediaType.APPLICATION_JSON.getSubtype(), Charset.forName("utf8"));
+    public static final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(), MediaType.APPLICATION_JSON.getSubtype(), StandardCharsets.UTF_8);
 
     public static final String SEED = "seed";
     public static final String EPOCH = "epoch";
@@ -62,7 +63,6 @@ public class Consts {
     public static final String RESOURCES_DIR = "resources";
     public static final String TASK_DIR = "task";
     public static final String ENV_HOT_DEPLOY_DIR = "env-hot-deploy";
-    public static final String ARTIFACTS_DIR = "artifacts";
 
     public static final String METADATA_YAML_FILE_NAME = "metadata.yaml";
     public static final String ENV_YAML_FILE_NAME = "env.yaml";
@@ -84,7 +84,6 @@ public class Consts {
     public static final String MODEL_ATTR_ERROR_MESSAGE = "errorMessage";
     public static final String MODEL_ATTR_INFO_MESSAGES = "infoMessages";
 
-    public static final String RESULT_FILE_EXTENSION = "result-file-extension";
     public static final String UNKNOWN_INFO = "[unknown]";
 
 
@@ -95,6 +94,7 @@ public class Consts {
     public static final String EXPERIMENTS_CACHE = "experiments";
     public static final String PLANS_CACHE = "plans";
     public static final String SNIPPETS_CACHE = "snippets";
+
     public static final String MAIN_DOCUMENT_POOL_CODE_FOR_BATCH = "mainDocument";
 
     public static final String YAML_EXT = ".yaml";
@@ -102,9 +102,15 @@ public class Consts {
     public static final String ZIP_EXT = ".zip";
     public static final String RAR_EXT = ".rar";
 
+    // legacy meta
+    @Deprecated
+    public static final String RESULT_FILE_EXTENSION = "result-file-extension";
+
+    // legacy meta
     @Deprecated
     public static final String META_SNIPPET_PARAMS_AS_FILE_META = "snippet-params-as-file";
 
+    // legacy meta
     @Deprecated
     public static final String META_SNIPPET_PARAMS_FILE_EXT_META = "snippet-params-file-ext";
 

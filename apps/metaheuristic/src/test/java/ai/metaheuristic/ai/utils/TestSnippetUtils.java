@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.commons.utils.SnippetCoreUtils;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -41,21 +41,21 @@ public class TestSnippetUtils {
         snippet.metas.add(new Meta("key1", "value1", null));
 
         Meta m;
-        m = SnippetCoreUtils.getMeta(snippet.metas, "key1");
+        m = MetaUtils.getMeta(snippet.metas, "key1");
         assertEquals("value1", m.getValue());
 
-        m = SnippetCoreUtils.getMeta(snippet.metas, "key2", "key1");
+        m = MetaUtils.getMeta(snippet.metas, "key2", "key1");
         assertEquals("value1", m.getValue());
 
-        m = SnippetCoreUtils.getMeta(snippet.metas, "key2", "key3");
+        m = MetaUtils.getMeta(snippet.metas, "key2", "key3");
         assertNull(m);
 
-        m = SnippetCoreUtils.getMeta(snippet.metas);
+        m = MetaUtils.getMeta(snippet.metas);
         assertNull(m);
 
         snippet.metas = null;
 
-        m = SnippetCoreUtils.getMeta(snippet.metas);
+        m = MetaUtils.getMeta(snippet.metas);
         assertNull(m);
     }
 

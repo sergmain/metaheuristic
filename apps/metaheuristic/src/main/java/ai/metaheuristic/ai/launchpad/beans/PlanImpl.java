@@ -56,6 +56,13 @@ public class PlanImpl implements Serializable, Plan {
     @JsonIgnore
     private PlanParamsYaml ppy = null;
 
+    // for controlling of SnakeYaml
+    @SuppressWarnings("unused")
+    @Transient
+    private PlanParamsYaml getPpy(){
+        return ppy;
+    }
+
     @JsonIgnore
     public PlanParamsYaml getPlanParamsYaml() {
         if (ppy ==null) {
