@@ -20,6 +20,8 @@ url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/33/191/1
 
 ---- bug-604
 поднять версию ангулара до последней в релизе 7.х (переходить на 8.х не надо)
+IN_PROGRESS
+IN_PROGRESS
 
 ---- bug-605
 Создание Плана не работает - параметр planYaml not found
