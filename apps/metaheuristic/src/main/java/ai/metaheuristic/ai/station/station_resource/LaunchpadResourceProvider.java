@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.station.station_resource;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.LaunchpadLookupExtendedService;
@@ -26,6 +25,7 @@ import ai.metaheuristic.ai.station.tasks.DownloadResourceTask;
 import ai.metaheuristic.ai.station.tasks.UploadResourceTask;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.extern.slf4j.Slf4j;
@@ -95,7 +95,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
             StationTask task, String outputResourceCode, DataStorageParams dataStorageParams) {
 
         //noinspection UnnecessaryLocalVariable
-        File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + outputResourceCode);
+        File resultDataFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputResourceCode);
         return resultDataFile;
     }
 

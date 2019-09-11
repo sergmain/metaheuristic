@@ -11,4 +11,5 @@ export interface Batch {
     execStateStr: string;
     execState: number;
     ok: boolean;
+    uploadedFileName: string;
 }

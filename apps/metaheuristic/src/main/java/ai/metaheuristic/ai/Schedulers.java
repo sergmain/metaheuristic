@@ -15,13 +15,16 @@
  */
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.comm.CommandProcessor;
-import ai.metaheuristic.ai.launchpad.LaunchpadService;
+import ai.metaheuristic.ai.launchpad.ArtifactCleanerAtLaunchpad;
+import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
+import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
 import ai.metaheuristic.ai.station.*;
 import ai.metaheuristic.ai.station.actors.DownloadResourceActor;
 import ai.metaheuristic.ai.station.actors.DownloadSnippetActor;
 import ai.metaheuristic.ai.station.actors.UploadResourceActor;
 import ai.metaheuristic.ai.station.env.EnvService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
@@ -40,15 +43,14 @@ public class Schedulers {
     @EnableScheduling
     @Slf4j
     @Profile("launchpad")
+    @RequiredArgsConstructor
     public static class LaunchpadSchedulers {
 
         private final Globals globals;
-        private final LaunchpadService launchpadService;
-
-        public LaunchpadSchedulers(Globals globals, LaunchpadService launchpadService) {
-            this.globals = globals;
-            this.launchpadService = launchpadService;
-        }
+        private final WorkbookSchedulerService workbookSchedulerService;
+        private final PlanService planService;
+        private final ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad;
+        private final ExperimentService experimentService;
 
         // Launchpad schedulers
 
@@ -69,10 +71,10 @@ public class Schedulers {
             log.info("Invoke WorkbookService.updateWorkbookStatuses()");
             boolean needReconciliation = false;
             try {
-                if ((System.currentTimeMillis()- prevReconciliationTime)>TIMEOUT_BETWEEN_RECONCILIATION) {
+                if ((System.currentTimeMillis()- prevReconciliationTime) > TIMEOUT_BETWEEN_RECONCILIATION) {
                     needReconciliation = true;
                 }
-                launchpadService.getWorkbookSchedulerService().updateWorkbookStatuses(needReconciliation);
+                workbookSchedulerService.updateWorkbookStatuses(needReconciliation);
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("!!! need to investigate. Error while updateWorkbookStatuses()",e);
             } catch (Throwable th) {
@@ -94,10 +96,10 @@ public class Schedulers {
                 return;
             }
             log.info("Invoke PlanService.producingWorkbooks()");
-            launchpadService.getPlanService().createAllTasks();
+            planService.createAllTasks();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.artifact-cleaner'), 30, 300, 30)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.artifact-cleaner'), 30, 300, 60)*1000 }")
         public void artifactCleanerAtLaunchpad() {
             if (globals.isUnitTesting) {
                 return;
@@ -106,7 +108,7 @@ public class Schedulers {
                 return;
             }
             log.info("Invoke PlanService.producingWorkbooks()");
-            launchpadService.getArtifactCleanerAtLaunchpad().fixedDelay();
+            artifactCleanerAtLaunchpad.fixedDelay();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.exteriment-finisher'), 5, 300, 10)*1000 }")
@@ -118,7 +120,7 @@ public class Schedulers {
                 return;
             }
             log.info("Invoke PlanService.producingWorkbooks()");
-            launchpadService.getExperimentService().experimentFinisher();
+            experimentService.experimentFinisher();
         }
 
         @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
@@ -156,11 +158,12 @@ public class Schedulers {
         private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
         private final CurrentExecState currentExecState;
         private final EnvService envService;
+        private final StationCommandProcessor stationCommandProcessor;
 
         private final RoundRobinForLaunchpad roundRobin;
         private final Map<String, LaunchpadRequestor> launchpadRequestorMap = new HashMap<>();
 
-        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, CommandProcessor commandProcessor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, CurrentExecState currentExecState, EnvService envService) {
+        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, CurrentExecState currentExecState, EnvService envService, StationCommandProcessor stationCommandProcessor) {
             this.globals = globals;
             this.taskAssigner = taskAssigner;
             this.taskProcessor = taskProcessor;
@@ -169,6 +172,7 @@ public class Schedulers {
             this.uploadResourceActor = uploadResourceActor;
             this.artifactCleaner = artifactCleaner;
             this.envService = envService;
+            this.stationCommandProcessor = stationCommandProcessor;
 
             if (launchpadLookupExtendedService.lookupExtendedMap==null) {
                 throw new IllegalStateException("launchpad.yaml wasn't configured");
@@ -181,8 +185,8 @@ public class Schedulers {
             for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpadLookupExtendedService.lookupExtendedMap.entrySet()) {
                 final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = entry.getValue();
                 final LaunchpadRequestor requestor = new LaunchpadRequestor(launchpad.launchpadLookup.url, globals,
-                        commandProcessor, stationTaskService, stationService, this.metadataService, this
-                        .currentExecState, this.launchpadLookupExtendedService);
+                        stationTaskService, stationService, this.metadataService, this.currentExecState,
+                        this.launchpadLookupExtendedService, this.stationCommandProcessor);
 
                 launchpadRequestorMap.put(launchpad.launchpadLookup.url, requestor);
             }

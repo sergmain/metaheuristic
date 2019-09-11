@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.resource;
 
-import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +38,7 @@ public class ResourceUtils {
     }
 
     public static AssetFile prepareArtifactFile(File rootDir, String id, String resourceFilename) {
-        return prepareAssetFile(rootDir, id, resourceFilename, Consts.ARTIFACTS_DIR);
+        return prepareAssetFile(rootDir, id, resourceFilename, ConstsApi.ARTIFACTS_DIR);
     }
 
     private static AssetFile prepareAssetFile(File rootDir, String id, String resourceFilename, String assetDirname ) {

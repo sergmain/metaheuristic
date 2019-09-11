@@ -13,17 +13,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.launchpad.experiment.task;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package ai.metaheuristic.ai.snippet;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class SimpleTaskExecResult {
-    public long taskId;
-    public String result;
-    public String metrics;
+import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.Meta;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
+
+/**
+ * @author Serge
+ * Date: 9/4/2019
+ * Time: 4:13 PM
+ */
+public class SnippetUtils {
 }

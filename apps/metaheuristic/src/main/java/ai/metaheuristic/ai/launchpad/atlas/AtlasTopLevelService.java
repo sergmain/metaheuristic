@@ -72,6 +72,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
@@ -380,15 +381,24 @@ public class AtlasTopLevelService {
     }
 
     public OperationStatusRest atlasDeleteCommit(Long id) {
-        Atlas atlas = atlasRepository.findById(id).orElse(null);
-        if (atlas == null) {
+        Long atlasId = atlasRepository.findIdById(id);
+        if (atlasId == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.220 experiment wasn't found in atlas, id: " + id);
         }
-        atlasTaskRepository.deleteByAtlasId(id);
+        final AtomicBoolean isFound = new AtomicBoolean();
+        do {
+            isFound.set(false);
+            atlasTaskRepository.findAllAsTaskSimple(PageRequest.of(0, 10), atlasId)
+                    .forEach(atlasTaskId -> {
+                        isFound.set(true);
+                        atlasTaskRepository.deleteById(atlasTaskId);
+                    });
+        } while (isFound.get());
         atlasRepository.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
+
 
     public AtlasData.PlotData getPlotData(Long atlasId, Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
         Atlas atlas = atlasRepository.findById(atlasId).orElse(null);

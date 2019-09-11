@@ -144,7 +144,7 @@ public class BinaryDataService {
         if (inputResourcePoolCode.isEmpty()) {
             return List.of();
         }
-        return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode, workbookId);
+        return binaryDataRepository.getCodeAndStorageUrlInPoolForWorkbook(inputResourcePoolCode, workbookId);
     }
 
     @Transactional(readOnly = true)
@@ -152,7 +152,7 @@ public class BinaryDataService {
         if (inputResourcePoolCode.isEmpty()) {
             return List.of();
         }
-        return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode);
+        return binaryDataRepository.getCodeAndStorageUrlInPoolForWorkbook(inputResourcePoolCode);
     }
 
     public void deleteByCodeAndDataType(String code, BinaryDataType binaryDataType) {
@@ -303,5 +303,13 @@ public class BinaryDataService {
     @Transactional(readOnly = true)
     public String getFilenameByPool1CodeAndType(String poolCode, BinaryDataType type) {
         return binaryDataRepository.findFilenameByPoolCodeAndDataType(poolCode, type.value);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Object[]> getFilenamesForBatchIds(List<Long> batchIds) {
+        if (batchIds.isEmpty()) {
+            return List.of();
+        }
+        return binaryDataRepository.getFilenamesForBatchIds(batchIds);
     }
 }

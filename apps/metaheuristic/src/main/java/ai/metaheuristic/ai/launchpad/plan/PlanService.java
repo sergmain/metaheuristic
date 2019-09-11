@@ -86,16 +86,14 @@ public class PlanService {
     private final CommonProcessValidatorService commonProcessValidatorService;
     private final SnippetRepository snippetRepository;
 
-    public WorkbookImpl toStarted(Long workbookId) {
-        WorkbookImpl wb = workbookRepository.findByIdForUpdate(workbookId);
-        if (wb==null) {
-            String es = "#701.010 Can't change exec state to PRODUCED for workbook #" + workbookId;
-            log.error(es);
-            throw new IllegalStateException(es);
+    public void toStarted(Workbook workbook) {
+        PlanImpl plan = planCache.findById(workbook.getPlanId());
+        if (plan == null) {
+            workbookService.toError(workbook.getId());
         }
-        PlanImpl plan = planCache.findById(wb.getPlanId());
-        wb.setExecState(plan == null ? EnumsApi.WorkbookExecState.ERROR.code : EnumsApi.WorkbookExecState.STARTED.code);
-        return workbookCache.save(wb);
+        else {
+            workbookService.toStarted(workbook.getId());
+        }
     }
 
     // TODO 2019.05.19 add reporting of producing of tasks
@@ -195,9 +193,7 @@ public class PlanService {
         }
 
         if (workbook.execState!=execState.code) {
-            workbook.setExecState(execState.code);
-            workbookCache.save(workbook);
-
+            workbookService.toState(workbook.id, execState);
             setLockedTo(plan.getId(), true);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -457,7 +453,7 @@ public class PlanService {
         Monitoring.log("##025", Enums.Monitor.MEMORY);
         PlanParamsYaml planParams = plan.getPlanParamsYaml();
 
-        int idx = Consts.TASK_ORDER_START_VALUE;
+        int idx = Consts.PROCESS_ORDER_START_VALUE;
         List<Long> parentTaskIds = new ArrayList<>();
         int numberOfTasks=0;
         for (Process process : planParams.planYaml.getProcesses()) {
@@ -517,10 +513,12 @@ public class PlanService {
         experimentService.resetExperimentByWorkbookId(workbookId);
         binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
         Workbook workbook = workbookCache.findById(workbookId);
-        if (workbook!=null && workbook.getPlanId()!=null) {
-            setLockedTo(workbook.getPlanId(), false);
+        if (workbook != null) {
+            if (workbook.getPlanId() != null) {
+                setLockedTo(workbook.getPlanId(), false);
+            }
+            workbookCache.deleteById(workbookId);
         }
-        workbookCache.deleteById(workbookId);
     }
 
 

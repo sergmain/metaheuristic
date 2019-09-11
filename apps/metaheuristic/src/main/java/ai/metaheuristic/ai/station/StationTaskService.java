@@ -17,8 +17,8 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.utils.DigitUtils;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metrics.Metrics;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
@@ -185,8 +185,11 @@ public class StationTaskService {
                 log.error("#713.080 StationTask wasn't found for Id {}", taskId);
                 return;
             }
-            task.setDelivered(true);
+            if (task.delivered) {
+                return;
+            }
 
+            task.setDelivered(true);
             // if snippet has finished with an error,
             // then we don't have to set isCompleted any more
             // because we've already marked this task as completed
@@ -235,6 +238,29 @@ public class StationTaskService {
                     .collect(Collectors.toList());
             return result;
         }
+    }
+
+    public StationCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult(String launchpadUrl) {
+        final List<StationTask> list = getForReporting(launchpadUrl);
+        if (list.isEmpty()) {
+            return null;
+        }
+        log.info("Number of tasks for reporting: " + list.size());
+        final StationCommParamsYaml.ReportTaskProcessingResult processingResult = new StationCommParamsYaml.ReportTaskProcessingResult();
+        for (StationTask task : list) {
+            if (task.isDelivered() && !task.isReported() ) {
+                log.warn("#775.140 This state need to be investigating: (task.isDelivered() && !task.isReported())==true");
+            }
+            // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enough?
+            if (task.isDelivered() && task.isReported() ) {
+                continue;
+            }
+            final StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
+                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), task.getMetrics());
+            processingResult.results.add(result);
+            setReportedOn(launchpadUrl, task.taskId);
+        }
+        return processingResult;
     }
 
     public void markAsFinishedWithError(String launchpadUrl, long taskId, String es) {
@@ -309,9 +335,9 @@ public class StationTaskService {
         log.info("storeMetrics(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, taskId, snippet.getCode());
         // store metrics after predict only
         if (snippet.isMetrics()) {
-            File metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
             Metrics metrics = new Metrics();
-            if (metricsFile.exists()) {
+            File metricsFile = getMetricsFile(artifactDir);
+            if (metricsFile!=null) {
                 try {
                     String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
                     metrics.setStatus(Metrics.Status.Ok);
@@ -329,6 +355,17 @@ public class StationTaskService {
             task.setMetrics(MetricsUtils.toString(metrics));
         }
         save(task);
+    }
+
+    @SuppressWarnings("deprecation")
+    private File getMetricsFile(File artifactDir) {
+        File metricsFile = new File(artifactDir, Consts.MH_METRICS_FILE_NAME);
+        if (metricsFile.exists()) {
+            return metricsFile;
+        }
+        // let's try a file with legacy name
+        metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
+        return metricsFile.exists() ? metricsFile : null;
     }
 
     public List<StationTask> findAllByCompletedIsFalse(String launchpadUrl) {
@@ -365,13 +402,13 @@ public class StationTaskService {
         return getMapForLaunchpadUrl(launchpadUrl).values().stream().filter( o -> o.finishedOn!=null);
     }
 
-    public Protocol.StationTaskStatus produceStationTaskStatus(String launchpadUrl) {
-        Protocol.StationTaskStatus status = new Protocol.StationTaskStatus(new ArrayList<>());
+    public StationCommParamsYaml.ReportStationTaskStatus produceStationTaskStatus(String launchpadUrl) {
+        List<StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus> statuses = new ArrayList<>();
         List<StationTask> list = findAll(launchpadUrl);
         for (StationTask task : list) {
-            status.getStatuses().add( new Protocol.StationTaskStatus.SimpleStatus(task.getTaskId()));
+            statuses.add( new StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus(task.getTaskId()));
         }
-        return status;
+        return new StationCommParamsYaml.ReportStationTaskStatus(statuses);
     }
 
     public void createTask(String launchpadUrl, long taskId, Long workbookId, String params) {
@@ -489,12 +526,13 @@ public class StationTaskService {
 
     public StationTask findById(String launchpadUrl, Long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
-                if (task.taskId == taskId) {
-                    return task;
-                }
-            }
-            return null;
+            return getMapForLaunchpadUrl(launchpadUrl)
+                    .entrySet()
+                    .stream()
+                    .filter(e -> e.getValue().taskId == taskId)
+                    .findFirst()
+                    .map(Map.Entry::getValue)
+                    .orElse(null);
         }
     }
 

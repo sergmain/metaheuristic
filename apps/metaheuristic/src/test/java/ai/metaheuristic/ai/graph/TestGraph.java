@@ -66,9 +66,7 @@ public class TestGraph extends PreparingPlan {
 
         assertNotNull(workbook);
 
-        OperationStatusRest osr = workbookService.addNewTasksToGraph(
-                workbookRepository.findByIdForUpdate(workbook.id), List.of(), List.of(1L)
-        );
+        OperationStatusRest osr = workbookService.addNewTasksToGraph(workbook.id, List.of(), List.of(1L));
         workbook = workbookCache.findById(workbook.id);
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
@@ -77,9 +75,7 @@ public class TestGraph extends PreparingPlan {
         assertEquals(1, count);
 
 
-        osr = workbookService.addNewTasksToGraph(
-                workbookRepository.findByIdForUpdate(workbook.id),
-                List.of(1L), List.of(2L, 3L));
+        osr = workbookService.addNewTasksToGraph(workbook.id,List.of(1L), List.of(2L, 3L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         workbook = workbookCache.findById(workbook.id);
 
@@ -97,8 +93,7 @@ public class TestGraph extends PreparingPlan {
         setExecState(workbook, 3L, EnumsApi.TaskExecState.NONE);
 
         WorkbookOperationStatusWithTaskList status =
-                workbookService.updateGraphWithSettingAllChildrenTasksAsBroken(
-                        workbookRepository.findByIdForUpdate(workbook.id),1L);
+                workbookService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook.id,1L);
         assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
         workbook = workbookCache.findById(workbook.id);
 
@@ -112,9 +107,7 @@ public class TestGraph extends PreparingPlan {
 
 
         setExecState(workbook, 1L, EnumsApi.TaskExecState.NONE);
-        workbookService.updateGraphWithResettingAllChildrenTasks(
-                workbookRepository.findByIdForUpdate(workbook.id),
-                1L);
+        workbookService.updateGraphWithResettingAllChildrenTasks(workbook.id,1L);
         workbook = workbookCache.findById(workbook.id);
 
         // there is only 'NONE' exec state

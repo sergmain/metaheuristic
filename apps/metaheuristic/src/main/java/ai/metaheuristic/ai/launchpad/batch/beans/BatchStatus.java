@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.beans.Transient;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,41 +35,99 @@ import java.util.Map;
 @AllArgsConstructor
 public class BatchStatus {
 
+    private static final String DELEMITER_1 = "--------------------------------------------------------------------\n";
+    private static final String DELEMITER_2 = "\n====================================================================\n";
+
+    @NoArgsConstructor
+    public static class StatusPart {
+
+
+        @JsonIgnore
+        private final StringBuilder sb = new StringBuilder();
+
+        public void add(String status) {
+            sb.append(status);
+        }
+
+        public void add(char c) {
+            sb.append(c);
+        }
+
+        public void add(String status, char c) {
+            sb.append(status);
+            sb.append(c);
+        }
+    }
+
     @JsonIgnore
-    private final StringBuilder sb = new StringBuilder();
+    private final StatusPart generalStatus = new StatusPart();
+    @JsonIgnore
+    private final StatusPart okStatus = new StatusPart();
+    @JsonIgnore
+    private final StatusPart progressStatus = new StatusPart();
+    @JsonIgnore
+    private final StatusPart errorStatus = new StatusPart();
+
+    @Transient
+    public StatusPart getGeneralStatus() {
+        return generalStatus;
+    }
+
+    @Transient
+    public StatusPart getOkStatus() {
+        return okStatus;
+    }
+
+    @Transient
+    public StatusPart getProgressStatus() {
+        return progressStatus;
+    }
+
+    @Transient
+    public StatusPart getErrorStatus() {
+        return errorStatus;
+    }
 
     @JsonIgnore
     public final Map<String, String> renameTo = new HashMap<>();
 
+    // must be public for yaml's marshalling
     public boolean ok = false;
-    //        public BatchParams batchParams;
-    public String status;
-
-    public void add(String status) {
-        sb.append(status);
-    }
-
-    public void add(String status, char c) {
-        sb.append(status);
-        sb.append(c);
-    }
-
-    public void setStatus(String status) {
-        sb.append(status);
-    }
+    // must be public for yaml's marshalling
+    public String status = "";
 
     public String getStatus() {
         return status;
-    }
-
-    public void add(char c) {
-        sb.append(c);
     }
 
     /**
      * Don't forget to call this method before storing in db
      */
     public void init() {
-        status = sb.toString();
+        {
+            String generalStr = getGeneralStatus().sb.toString();
+            if (!generalStr.isBlank()) {
+                status = generalStr + DELEMITER_2;
+            }
+        }
+        {
+            String progressStr = getProgressStatus().sb.toString();
+            if (!progressStr.isBlank()) {
+                status += progressStr + DELEMITER_2;
+            }
+        }
+        {
+            String okStr = getOkStatus().sb.toString();
+            if (!okStr.isBlank()) {
+                status += okStr + DELEMITER_2;
+            }
+        }
+        {
+            String errorStr = getErrorStatus().sb.toString();
+            if (!errorStr.isBlank()) {
+                status += errorStr + DELEMITER_2;
+            }
+        }
+
     }
 }

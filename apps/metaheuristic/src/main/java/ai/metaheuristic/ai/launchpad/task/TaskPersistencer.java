@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
@@ -46,7 +46,7 @@ public class TaskPersistencer {
     private final TaskRepository taskRepository;
 
     public TaskImpl setParams(Long taskId, String taskParams) {
-        return TaskFunctions.changeTaskReturnTask(taskId, () -> {
+        return TaskFunctions.getWithSync(taskId, () -> {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -58,7 +58,7 @@ public class TaskPersistencer {
                     taskRepository.save(task);
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.020 Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
+                    log.error("#307.020 !!!NEED TO INVESTIGATE. Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
                 }
             }
             return null;
@@ -66,7 +66,7 @@ public class TaskPersistencer {
     }
 
     public Enums.UploadResourceStatus setResultReceived(long taskId, boolean resultReceived) {
-        return TaskFunctions.changeTaskReturnUploadResourceStatus(taskId, () -> {
+        return TaskFunctions.getWithSync(taskId, () -> {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
                     TaskImpl task = taskRepository.findByIdForUpdate(taskId);
@@ -83,7 +83,7 @@ public class TaskPersistencer {
                     taskRepository.save(task);
                     return Enums.UploadResourceStatus.OK;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.warn("#307.040 Error set resultReceived to {} try #{}, taskId: {}, error: {}", resultReceived, i, taskId, e.toString());
+                    log.warn("#307.040 !!!NEED TO INVESTIGATE. Error set resultReceived to {} try #{}, taskId: {}, error: {}", resultReceived, i, taskId, e.toString());
                 }
             }
             return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
@@ -91,7 +91,7 @@ public class TaskPersistencer {
     }
 
     public Task resetTask(final Long taskId) {
-        return TaskFunctions.changeTaskReturnTask(taskId, () -> {
+        return TaskFunctions.getWithSync(taskId, () -> {
             log.info("Start resetting task #{}", taskId);
             TaskImpl task = taskRepository.findByIdForUpdate(taskId);
             if (task ==null) {
@@ -111,14 +111,14 @@ public class TaskPersistencer {
             task.setExecState(EnumsApi.TaskExecState.NONE.value);
             task.setResultReceived(false);
             task.setResultResourceScheduledOn(0);
-            taskRepository.save(task);
+            task = taskRepository.save(task);
 
             return task;
         });
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public Task storeExecResult(SimpleTaskExecResult result, Consumer<Task> action) {
+    public Task storeExecResult(StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, Consumer<Task> action) {
         SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
         SnippetApiData.SnippetExecResult actualSnippet = snippetExec.generalExec!=null ? snippetExec.generalExec : snippetExec.exec;
         if (!actualSnippet.isOk) {
@@ -132,7 +132,7 @@ public class TaskPersistencer {
             action.accept(t);
             return t;
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#307.060 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
+            log.error("#307.060 !!!NEED TO INVESTIGATE. Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
         }
         return null;
     }
@@ -141,7 +141,7 @@ public class TaskPersistencer {
         if (state!=EnumsApi.TaskExecState.BROKEN && state!=EnumsApi.TaskExecState.ERROR) {
             throw new IllegalStateException("#307.070 state must be EnumsApi.TaskExecState.BROKEN or EnumsApi.TaskExecState.ERROR, actual: " +state);
         }
-        TaskFunctions.changeTaskReturnTask(taskId, () -> {
+        TaskFunctions.getWithSync(taskId, () -> {
             TaskImpl task = taskRepository.findByIdForUpdate(taskId);
             if (task==null) {
                 log.warn("#307.080 Can't find Task for Id: {}", taskId);
@@ -167,7 +167,7 @@ public class TaskPersistencer {
     }
 
     public void toOkSimple(Long taskId) {
-        TaskFunctions.changeTaskReturnTask(taskId, () -> {
+        TaskFunctions.getWithSync(taskId, () -> {
             TaskImpl task = taskRepository.findByIdForUpdate(taskId);
             if (task==null) {
                 log.warn("#307.090 Can't find Task for Id: {}", taskId);
@@ -179,7 +179,7 @@ public class TaskPersistencer {
     }
 
     public void toInProgressSimple(Long taskId) {
-        TaskFunctions.changeTaskReturnTask(taskId, () -> {
+        TaskFunctions.getWithSync(taskId, () -> {
             TaskImpl task = taskRepository.findByIdForUpdate(taskId);
             if (task==null) {
                 log.warn("#307.100 Can't find Task for Id: {}", taskId);
@@ -190,8 +190,8 @@ public class TaskPersistencer {
         });
     }
 
-    private Task prepareAndSaveTask(SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
-        return TaskFunctions.changeTaskReturnTask(result.taskId, () -> {
+    private Task prepareAndSaveTask(StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
+        return TaskFunctions.getWithSync(result.taskId, () -> {
             TaskImpl task = taskRepository.findByIdForUpdate(result.taskId);
             if (task==null) {
                 log.warn("#307.110 Can't find Task for Id: {}", result.taskId);

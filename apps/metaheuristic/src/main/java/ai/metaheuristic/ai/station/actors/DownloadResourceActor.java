@@ -29,6 +29,9 @@ import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
@@ -106,7 +109,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
                 String mask = assetFile.file.getName() + ".%s.tmp";
                 File dir = assetFile.file.getParentFile();
-                Enums.FlowState flowState = Enums.FlowState.none;
+                Enums.ResourceState resourceState = Enums.ResourceState.none;
                 int idx = 0;
                 do {
                     try {
@@ -132,9 +135,28 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                             response = request.execute();
                         }
                         File partFile = new File(dir, String.format(mask, idx));
-                        response.saveContent(partFile);
+                        final HttpResponse httpResponse = response.returnResponse();
+                        try (final FileOutputStream out = new FileOutputStream(partFile)) {
+                            final HttpEntity entity = httpResponse.getEntity();
+                            if (entity != null) {
+                                entity.writeTo(out);
+                            }
+                            else {
+                                log.warn("#810.031 http entity is null");
+                            }
+                        }
+                        final Header[] headers = httpResponse.getAllHeaders();
+                        if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
+                            log.error("#810.032 error while downloading chunk of resource {}, size is different", assetFile.file.getPath());
+                            resourceState = Enums.ResourceState.transmitting_error;
+                            break;
+                        }
+                        if (DownloadUtils.isLastChunk(headers)) {
+                            resourceState = Enums.ResourceState.ok;
+                            break;
+                        }
                         if (partFile.length()==0) {
-                            flowState = Enums.FlowState.ok;
+                            resourceState = Enums.ResourceState.ok;
                             break;
                         }
                     } catch (HttpResponseException e) {
@@ -142,21 +164,21 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                             final String es = String.format("#810.035 Resource %s wasn't found on launchpad. Task #%s is finished.", task.getId(), task.getTaskId());
                             log.warn(es);
                             stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
-                            flowState = Enums.FlowState.resource_doesnt_exist;
+                            resourceState = Enums.ResourceState.resource_doesnt_exist;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
                             final String es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.getId(), task.getTaskId());
                             log.warn(es);
                             stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
-                            flowState = Enums.FlowState.unknow_error;
+                            resourceState = Enums.ResourceState.unknown_error;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
                             final String es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.getId(), task.getTaskId());
                             log.warn(es);
                             stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
-                            flowState = Enums.FlowState.unknow_error;
+                            resourceState = Enums.ResourceState.unknown_error;
                             break;
                         }
                     }
@@ -166,17 +188,25 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                     }
                     idx++;
                 } while (idx<1000);
-                if (flowState==Enums.FlowState.none) {
+                if (resourceState == Enums.ResourceState.none) {
                     log.error("#810.050  something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
                     continue;
                 }
-                else if (flowState==Enums.FlowState.unknow_error || flowState==Enums.FlowState.resource_doesnt_exist) {
+                else if (resourceState == Enums.ResourceState.unknown_error || resourceState == Enums.ResourceState.resource_doesnt_exist) {
+                    log.warn("#811.053 resource {} can't be acquired, state: {}", assetFile.file.getPath(), resourceState);
+                    continue;
+                }
+                else if (resourceState == Enums.ResourceState.transmitting_error) {
                     continue;
                 }
 
                 try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                    for (int i = 0; i < idx; i++) {
-                        FileUtils.copyFile(new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp"), fos);
+                    for (int i = 0; i <= idx; i++) {
+                        final File input = new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp");
+                        if (input.length()==0) {
+                            continue;
+                        }
+                        FileUtils.copyFile(input, fos);
                     }
                 }
 

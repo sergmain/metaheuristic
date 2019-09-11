@@ -42,7 +42,15 @@
             <td width="20">&nbsp; </td>
             <td valign="top">
                 <a class="pure-button table-nav-button-fill pure-button-primary" href="#"
+                   th:if="${experimentResult.workbook.execState!=T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).EXPORTING_TO_ATLAS_WAS_STARTED.code and
+                   experimentResult.workbook.execState!=T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).EXPORTING_TO_ATLAS.code}"
                    th:href="${'/launchpad/experiment/experiment-to-atlas/'+ experiment.id }">Export to Atlas</a>
+            </td>
+            <td width="20">&nbsp; </td>
+            <td valign="top">
+                <a class="pure-button table-nav-button-fill pure-button-primary" href="#"
+                   th:if="${experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).FINISHED.code}"
+                   th:href="${'/launchpad/experiment/task-reset-all-broken/' + experimentResult.workbook.id +'/'+ experiment.id }">Reset broken tasks</a>
             </td>
             <td width="20">&nbsp; </td>
             <td valign="top">

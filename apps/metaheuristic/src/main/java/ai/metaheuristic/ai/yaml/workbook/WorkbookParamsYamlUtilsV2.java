@@ -29,7 +29,7 @@ import org.yaml.snakeyaml.Yaml;
  * Time: 12:10 AM
  */
 public class WorkbookParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<WorkbookParamsYamlV2, WorkbookParamsYaml, Void, Void, WorkbookParamsYamlUtilsV1, WorkbookParamsYaml> {
+        extends AbstractParamsYamlUtils<WorkbookParamsYamlV2, WorkbookParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -55,7 +55,7 @@ public class WorkbookParamsYamlUtilsV2
     }
 
     @Override
-    public Void downgradeTo(WorkbookParamsYaml yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -65,7 +65,7 @@ public class WorkbookParamsYamlUtilsV2
     }
 
     @Override
-    public WorkbookParamsYamlUtilsV1 prevUtil() {
+    public Void prevUtil() {
         return null;
     }
 

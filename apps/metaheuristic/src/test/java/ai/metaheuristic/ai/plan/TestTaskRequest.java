@@ -18,14 +18,15 @@ package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.comm.ExchangeData;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -63,52 +64,44 @@ public class TestTaskRequest extends FeatureMethods {
     public void testTaskRequest() {
         produceTasks();
         toStarted();
+        String sessionId;
+        {
+            final StationCommParamsYaml stationComm = new StationCommParamsYaml();
+            stationComm.stationCommContext = new StationCommParamsYaml.StationCommContext(stationIdAsStr, null);
+            stationComm.reportStationTaskStatus = new StationCommParamsYaml.ReportStationTaskStatus(Collections.emptyList());
 
-        ExchangeData dInit = new ExchangeData();
-        dInit.setStationId(stationIdAsStr);
-        dInit.setCommand(new Protocol.StationTaskStatus(Collections.emptyList()));
-        ExchangeData d0 = serverService.processRequest(dInit, Consts.LOCALHOST_IP);
 
-        assertNotNull(d0);
-        assertNotNull(d0.getReAssignedStationId());
-        assertNotNull(d0.getReAssignedStationId().sessionId);
-        assertEquals(stationIdAsStr, d0.getReAssignedStationId().reAssignedStationId);
+            final String stationYaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
+            String launchpadResponse = serverService.processRequest(stationYaml, "127.0.0.1");
 
-        String sessionId = d0.getReAssignedStationId().sessionId;
+            LaunchpadCommParamsYaml d0 = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
 
+            assertNotNull(d0);
+            assertNotNull(d0.getReAssignedStationId());
+            assertNotNull(d0.getReAssignedStationId().sessionId);
+            assertEquals(stationIdAsStr, d0.getReAssignedStationId().reAssignedStationId);
+
+            sessionId = d0.getReAssignedStationId().sessionId;
+        }
         List<Object[]> counts = taskRepository.getCountPerOrder(workbook.getId());
         for (Object[] count : counts) {
             if (((Number)count[0]).intValue() > 1) {
                 break;
             }
-            ExchangeData data = new ExchangeData();
-            data.initRequestToLaunchpad(stationIdAsStr, sessionId);
 
-            data.setCommand(new Protocol.RequestTask(false));
+            LaunchpadCommParamsYaml.AssignedTask t = workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            assertNotNull(t);
 
+            final StationCommParamsYaml stationComm0 = new StationCommParamsYaml();
+            stationComm0.stationCommContext = new StationCommParamsYaml.StationCommContext(stationIdAsStr, sessionId);
+            stationComm0.requestTask = new StationCommParamsYaml.RequestTask(false);
 
-            Protocol.AssignedTask r = new Protocol.AssignedTask();
-            WorkbookService.TasksAndAssignToStationResult result = workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-            if (result.getSimpleTask()!=null) {
-                r.tasks = Collections.singletonList(result.getSimpleTask());
-            }
-            ExchangeData d = new ExchangeData();
-            d.setAssignedTask(r);
+            final String stationYaml0 = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm0);
+            String launchpadResponse0 = serverService.processRequest(stationYaml0, "127.0.0.1");
 
-            assertNotNull(d);
-            assertNotNull(d.getAssignedTask());
-            assertNotNull(d.getAssignedTask().tasks);
-            assertFalse(d.getAssignedTask().tasks.isEmpty());
-            Protocol.AssignedTask.Task t = d.getAssignedTask().tasks.get(0);
-
-            ExchangeData data1 = new ExchangeData();
-            data1.initRequestToLaunchpad(stationIdAsStr, sessionId);
-            data1.setCommand(new Protocol.RequestTask(false));
-
-            ExchangeData d1 = serverService.processRequest(data1, Consts.LOCALHOST_IP);
+            LaunchpadCommParamsYaml d1 = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse0);
             assertNotNull(d1);
-            assertNotNull(d1.getAssignedTask());
-            assertNull(d1.getAssignedTask().tasks);
+            assertNull(d1.getAssignedTask());
 
             finishCurrentWithOk(1);
             Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(t.taskId, true);
@@ -118,31 +111,36 @@ public class TestTaskRequest extends FeatureMethods {
             assertNotNull(task);
             assertTrue(task.isCompleted);
 
-            workbookSchedulerService.updateWorkbookStatus(
-                    workbookRepository.findByIdForUpdate(workbook.id),
-                    true);
+            workbookSchedulerService.updateWorkbookStatus(workbook.id,true);
             workbook = workbookCache.findById(workbook.id);
         }
+        {
+            final StationCommParamsYaml stationComm0 = new StationCommParamsYaml();
+            stationComm0.stationCommContext = new StationCommParamsYaml.StationCommContext(stationIdAsStr, sessionId);
+            stationComm0.requestTask = new StationCommParamsYaml.RequestTask(false);
 
-        ExchangeData data = new ExchangeData();
-        data.initRequestToLaunchpad(stationIdAsStr, sessionId);
-        data.setCommand(new Protocol.RequestTask(false));
+            final String stationYaml0 = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm0);
+            String launchpadResponse0 = serverService.processRequest(stationYaml0, Consts.LOCALHOST_IP);
 
-        ExchangeData d = serverService.processRequest(data, Consts.LOCALHOST_IP);
-        assertNotNull(d);
-        assertNotNull(d.getAssignedTask());
-        assertNotNull(d.getAssignedTask().tasks);
-        assertFalse(d.getAssignedTask().tasks.isEmpty());
+            LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse0);
 
-        ExchangeData data1 = new ExchangeData();
-        data1.initRequestToLaunchpad(stationIdAsStr, sessionId);
-        data1.setCommand(new Protocol.RequestTask(false));
+            assertNotNull(d);
+            assertNotNull(d.getAssignedTask());
+            assertNotNull(d.getAssignedTask());
+        }
+        {
+            final StationCommParamsYaml stationComm1 = new StationCommParamsYaml();
+            stationComm1.stationCommContext = new StationCommParamsYaml.StationCommContext(stationIdAsStr, sessionId);
+            stationComm1.requestTask = new StationCommParamsYaml.RequestTask(false);
 
-        ExchangeData d1 = serverService.processRequest(data1, Consts.LOCALHOST_IP);
-        assertNotNull(d1);
-        assertNotNull(d1.getAssignedTask());
-        assertNull(d1.getAssignedTask().tasks);
+            final String stationYaml1 = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm1);
+            String launchpadResponse1 = serverService.processRequest(stationYaml1, Consts.LOCALHOST_IP);
 
+            LaunchpadCommParamsYaml d1 = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse1);
+
+            assertNotNull(d1);
+            assertNull(d1.getAssignedTask());
+        }
     }
 
 }

@@ -14,22 +14,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.core.db;
+package ai.metaheuristic.ai.yaml.communication.station;
 
-import org.hibernate.dialect.H2Dialect;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
-public class ImprovedH2Dialect extends H2Dialect {
-    @Override
-    public String getDropSequenceString(String sequenceName) {
-        // Adding the "if exists" clause to avoid warnings
-        return "drop sequence if exists " + sequenceName;
-    }
+import java.util.Map;
 
-    @Override
-    public boolean dropConstraints() {
-        // We don't need to drop constraints before dropping tables, that just
-        // leads to error messages about missing tables when we don't have a
-        // schema in the database
-        return false;
-    }
+/**
+ * @author Serge
+ * Date: 8/29/2019
+ * Time: 6:00 PM
+ */
+public class StationCommParamsYamlUtils {
+
+    private static final StationCommParamsYamlUtilsV1 YAML_UTILS_V_1 = new StationCommParamsYamlUtilsV1();
+    private static final StationCommParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+
+    public static final BaseYamlUtils<StationCommParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(1, YAML_UTILS_V_1),
+            DEFAULT_UTILS
+    );
 }

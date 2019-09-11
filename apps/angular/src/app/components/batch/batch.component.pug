@@ -26,8 +26,8 @@ ct-section
                             span(*ngIf="!el.ok") {{ 'batch.isBatchConsistent.false' | translate }}
 
                     ng-container(matColumnDef="planCode") 
-                        th(mat-header-cell *matHeaderCellDef) {{ 'batch.Plan Code' | translate }}
-                        td(mat-cell *matCellDef="let el") {{el.planCode}} 
+                        th(mat-header-cell *matHeaderCellDef) <div class="no-wrap">{{ 'batch.Plan Code' | translate }}</div><div class="no-wrap">{{ 'batch.File name' | translate }}</div>
+                        td(mat-cell *matCellDef="let el") <div class="no-wrap">{{el.planCode}}</div><div class="no-wrap">{{el.uploadedFileName}}</div>
 
                     ng-container(matColumnDef="execState") 
                         th(mat-header-cell *matHeaderCellDef)  {{ 'batch.Exec State' | translate }}

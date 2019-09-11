@@ -13,30 +13,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.core;
 
-public enum ArtifactStatus {
+package ai.metaheuristic.ai.utils;
 
-    NONE(0), OK(1), ERROR(2), OBSOLETE(3);
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
-    public final int value;
+public class JsonUtils {
 
-    ArtifactStatus(int value) {
-        this.value = value;
+    private static ObjectMapper mapper;
+    static {
+        ObjectMapper m = new ObjectMapper();
+        m.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        m.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper = m;
     }
 
-    public static String byValue(int value) {
-        switch(value) {
-            case 0:
-                return NONE.toString();
-            case 1:
-                return OK.toString();
-            case 2:
-                return ERROR.toString();
-            case 3:
-                return OBSOLETE.toString();
-            default:
-                throw new IllegalStateException("unknow value: " + value);
-        }
+    public static ObjectMapper getMapper() {
+        return mapper;
     }
+
 }

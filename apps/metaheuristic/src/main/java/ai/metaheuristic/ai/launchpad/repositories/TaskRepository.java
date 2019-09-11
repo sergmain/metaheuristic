@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.TaskProgress;
-import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.api.launchpad.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -55,9 +54,9 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(value="select t from TaskImpl t where t.workbookId=:workbookId")
     Stream<Task> findAllByWorkbookIdAsStream(Long workbookId);
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Query(value="select t.id, t.workbookId from TaskImpl t")
-    Stream<Object[]> findAllAsTaskSimple(Pageable pageable);
+    List<Object[]> findAllAsTaskSimple(Pageable pageable);
 
     @Transactional(readOnly = true)
     List<Task> findByStationIdAndResultReceivedIsFalse(Long stationId);
@@ -90,6 +89,10 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Transactional(readOnly = true)
     @Query("SELECT t.id FROM TaskImpl t where t.stationId=:stationId and t.isCompleted=false")
     List<Long> findAnyActiveForStationId(Pageable limit, Long stationId);
+
+    @Transactional(readOnly = true)
+    @Query("SELECT t FROM TaskImpl t where t.workbookId=:workbookId and t.execState = :execState ")
+    List<TaskImpl> findTasksByExecState(Long workbookId, int execState);
 
     @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.stationId=:stationId and t.resultReceived=false and " +

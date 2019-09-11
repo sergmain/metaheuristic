@@ -16,13 +16,11 @@
 
 package ai.metaheuristic.ai.launchpad.server;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.Command;
-import ai.metaheuristic.ai.comm.CommandProcessor;
-import ai.metaheuristic.ai.comm.ExchangeData;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.launchpad.LaunchpadCommandProcessor;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
@@ -33,6 +31,10 @@ import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -44,21 +46,25 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.MultiValueMap;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Profile("launchpad")
@@ -66,16 +72,14 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class ServerService {
 
-    private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
-
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
     public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
     private final Globals globals;
     private final BinaryDataService binaryDataService;
-    private final CommandProcessor commandProcessor;
+    private final LaunchpadCommandProcessor launchpadCommandProcessor;
     private final StationCache stationCache;
-    private final CommandSetter commandSetter;
+    private final WorkbookRepository workbookRepository;
     private final StationsRepository stationsRepository;
 
     // return a requested resource to a station
@@ -89,10 +93,47 @@ public class ServerService {
         return deliverResource(binaryDataType, code, null, chunkSize, chunkNum);
     }
 
+    private static final ConcurrentHashMap<String, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
+    private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
+
+    @SuppressWarnings("Duplicates")
+    private static <T> T getWithSync(final EnumsApi.BinaryDataType binaryDataType, final String code, Supplier<T> function) {
+        final String key = "--" + binaryDataType + "--" + code;
+        final AtomicInteger obj;
+        try {
+            writeLock.lock();
+            obj = syncMap.computeIfAbsent(key, o -> new AtomicInteger());
+        } finally {
+            writeLock.unlock();
+        }
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            obj.incrementAndGet();
+            try {
+                return function.get();
+            } finally {
+                try {
+                    writeLock.lock();
+                    if (obj.get() == 1) {
+                        syncMap.remove(key);
+                    }
+                    obj.decrementAndGet();
+                } finally {
+                    writeLock.unlock();
+                }
+            }
+        }
+    }
+
     // return a requested resource to a station
-    public ResponseEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders, String chunkSize, int chunkNum) {
+    private ResponseEntity<AbstractResource> deliverResource(final EnumsApi.BinaryDataType binaryDataType, final String code, final HttpHeaders httpHeaders, final String chunkSize, final int chunkNum) {
+        return getWithSync(binaryDataType, code,
+                () -> getAbstractResourceResponseEntity(httpHeaders, chunkSize, chunkNum, binaryDataType, code));
+    }
+
+    private ResponseEntity<AbstractResource> getAbstractResourceResponseEntity(HttpHeaders httpHeaders, String chunkSize, int chunkNum, EnumsApi.BinaryDataType binaryDataType, String code) {
         AssetFile assetFile;
-        switch(binaryDataType) {
+        switch (binaryDataType) {
             case SNIPPET:
                 assetFile = ResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, code, null);
                 break;
@@ -105,33 +146,40 @@ public class ServerService {
                 throw new IllegalStateException("Unknown type of data: " + binaryDataType);
         }
 
-        if (assetFile==null) {
-            String es = "#442.010 resource with code "+code+" wasn't found";
+        if (assetFile == null) {
+            String es = "#442.010 resource with code " + code + " wasn't found";
             log.error(es);
             throw new BinaryDataNotFoundException(es);
         }
         try {
             binaryDataService.storeToFile(code, assetFile.file);
         } catch (BinaryDataNotFoundException e) {
-            log.error("#442.020 Error store data to temp file, data doesn't exist in db, code " + code+", file: " + assetFile.file.getPath());
+            log.error("#442.020 Error store data to temp file, data doesn't exist in db, code " + code + ", file: " + assetFile.file.getPath());
             throw e;
         }
         File f;
-        if (chunkSize==null || chunkSize.isBlank()) {
+        boolean isLastChunk;
+        if (chunkSize == null || chunkSize.isBlank()) {
             f = assetFile.file;
-        }
-        else {
+            isLastChunk = true;
+        } else {
             f = new File(DirUtils.createTempDir("chunked-file-"), "file-part.bin");
             final long size = Long.parseLong(chunkSize);
             final long offset = size * chunkNum;
             if (offset >= assetFile.file.length()) {
-                return null;
+                MultiValueMap<String, String> headers = new HttpHeaders();
+                headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, "true");
+                headers.add(Consts.HEADER_MH_CHUNK_SIZE, "0");
+                return new ResponseEntity<>(new ByteArrayResource(new byte[0]), headers, HttpStatus.OK);
             }
             final long realSize = assetFile.file.length() < offset + size ? assetFile.file.length() - offset : size;
             copyChunk(assetFile.file, f, offset, realSize);
-            long len = f.length();
+            isLastChunk = (assetFile.file.length() == (offset + realSize));
         }
-        return new ResponseEntity<>(new FileSystemResource(f.toPath()), RestUtils.getHeader(httpHeaders, f.length()), HttpStatus.OK);
+        final HttpHeaders headers = RestUtils.getHeader(httpHeaders, f.length());
+        headers.add(Consts.HEADER_MH_CHUNK_SIZE, Long.toString(f.length()));
+        headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, Boolean.toString(isLastChunk));
+        return new ResponseEntity<>(new FileSystemResource(f.toPath()), headers, HttpStatus.OK);
     }
 
     public static void copyChunk(File sourceFile, File destFile, long offset, long size) {
@@ -164,73 +212,71 @@ public class ServerService {
         }
     }
 
-    @Service
-    @Profile("launchpad")
-    public static class CommandSetter {
-        private final WorkbookRepository workbookRepository;
-
-        public CommandSetter(WorkbookRepository workbookRepository) {
-            this.workbookRepository = workbookRepository;
-        }
-
-        // TODO 2019-05-28 Transaction is read-only but method is setCommandInTransaction
-        // need to investigate why and fix it
-        @Transactional(readOnly = true)
-        public void setCommandInTransaction(ExchangeData resultData) {
-            try (Stream<Workbook> stream = workbookRepository.findAllAsStream() ) {
-                resultData.setCommand(new Protocol.WorkbookStatus(
-                        stream.map(ServerService::to).collect(Collectors.toList())));
-            }
-        }
+    private LaunchpadCommParamsYaml.WorkbookStatus getWorkbookStatuses() {
+        return new LaunchpadCommParamsYaml.WorkbookStatus(
+                workbookRepository.findAllExecStates()
+                        .stream()
+                        .map(o -> ServerService.toSimpleStatus((Long)o[0], (Integer)o[1]))
+                        .collect(Collectors.toList()));
     }
 
-    public ExchangeData processRequest(ExchangeData data, String remoteAddress) {
+    public String processRequest(String data, String remoteAddress) {
+        LaunchpadCommParamsYaml lcpy = new LaunchpadCommParamsYaml();
+        StationCommParamsYaml scpy = StationCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
+        processRequestInternal(remoteAddress, scpy, lcpy);
+        //noinspection UnnecessaryLocalVariable
+        String yaml = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.toString(lcpy);
+        return yaml;
+    }
+
+    public void processRequestInternal(String remoteAddress, StationCommParamsYaml scpy, LaunchpadCommParamsYaml lcpy) {
         try {
-            Command[] cmds = checkStationId(data.getStationId(), data.getSessionId(), remoteAddress);
-            if (cmds!=null) {
-                log.debug("Cmds after checking stationId isn't null: {}", (Object[]) cmds);
-                return new ExchangeData(cmds);
+            if (scpy.stationCommContext==null) {
+                lcpy.assignedStationId = launchpadCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
+                return;
+            }
+            checkStationId(scpy.stationCommContext.getStationId(), scpy.stationCommContext.getSessionId(), remoteAddress, lcpy);
+            if (isStationContextNeedToBeChanged(lcpy)) {
+                log.debug("isStationContextNeedToBeChanged is true, {}", lcpy);
+                return;
             }
 
-            ExchangeData resultData = new ExchangeData();
-            commandSetter.setCommandInTransaction(resultData);
+            lcpy.workbookStatus = getWorkbookStatuses();
 
-            List<Command> commands = data.getCommands();
             log.debug("Start processing commands");
-            for (Command command : commands) {
-                log.debug("\tcommand: {}", command);
-                if (data.getStationId()!=null && command instanceof Protocol.RequestStationId) {
-                    continue;
-                }
-                final Command[] process = commandProcessor.process(command);
-                log.debug("\tresult of precessing of command: {}", (Object[]) process);
-                resultData.setCommands(process);
-            }
-            addLaunchpadInfo(resultData);
-
-            return resultData;
+            launchpadCommandProcessor.process(scpy, lcpy);
+            addLaunchpadInfo(lcpy);
         } catch (Throwable th) {
-            log.error("#442.040 Error while processing client's request,ExchangeData:\n{}", data);
+            log.error("#442.040 Error while processing client's request, LaunchpadCommParamsYaml:\n{}", lcpy);
             log.error("#442.041 Error", th);
-            return new ExchangeData(Protocol.NOP, false);
+            lcpy.success = false;
+            lcpy.msg = th.getMessage();
         }
     }
 
-    private void addLaunchpadInfo(ExchangeData data) {
-        LaunchpadConfig lc = new LaunchpadConfig();
-        lc.chunkSize = globals.chunkSize;
-        data.setLaunchpadConfig(lc);
+    private boolean isStationContextNeedToBeChanged(LaunchpadCommParamsYaml lcpy) {
+        return lcpy!=null && (lcpy.reAssignedStationId!=null || lcpy.assignedStationId!=null);
     }
 
-    private Command[] checkStationId(String stationId, String sessionId, String remoteAddress) {
+    private void addLaunchpadInfo(LaunchpadCommParamsYaml lcpy) {
+        LaunchpadCommParamsYaml.LaunchpadCommContext lcc = new LaunchpadCommParamsYaml.LaunchpadCommContext();
+        lcc.chunkSize = globals.chunkSize;
+        lcpy.launchpadCommContext = lcc;
+    }
+
+    @SuppressWarnings("UnnecessaryReturnStatement")
+    private void checkStationId(String stationId, String sessionId, String remoteAddress, LaunchpadCommParamsYaml lcpy) {
         if (StringUtils.isBlank(stationId)) {
             log.warn("#442.045 StringUtils.isBlank(stationId), return RequestStationId()");
-            return commandProcessor.process(new Protocol.RequestStationId());
+            lcpy.assignedStationId = launchpadCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
+            return;
         }
+
         final Station station = stationsRepository.findByIdForUpdate(Long.parseLong(stationId));
         if (station == null) {
             log.warn("#442.046 station == null, return ReAssignStationId() with new stationId and new sessionId");
-            return reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
+            lcpy.reAssignedStationId = reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
+            return;
         }
         StationStatus ss;
         try {
@@ -239,13 +285,14 @@ public class ServerService {
             log.error("#442.065 Error parsing current status of station:\n{}", station.status);
             log.error("#442.066 Error ", e);
             // skip any command from this station
-            return Protocol.NOP_ARRAY;
+            return;
         }
         if (StringUtils.isBlank(sessionId)) {
             log.debug("#442.070 StringUtils.isBlank(sessionId), return ReAssignStationId() with new sessionId");
             // the same station but with different and expired sessionId
             // so we can continue to use this stationId with new sessionId
-            return assignNewSessionId(station, ss);
+            lcpy.reAssignedStationId = assignNewSessionId(station, ss);
+            return;
         }
         if (!ss.sessionId.equals(sessionId)) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
@@ -253,24 +300,27 @@ public class ServerService {
                 // the same station but with different and expired sessionId
                 // so we can continue to use this stationId with new sessionId
                 // we won't use station's sessionIf to be sure that sessionId has valid format
-                return assignNewSessionId(station, ss);
+                lcpy.reAssignedStationId = assignNewSessionId(station, ss);
+                return;
             } else {
                 log.debug("#442.072 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignStationId() with new stationId and new sessionId");
                 // different stations with the same stationId
                 // there is other active station with valid sessionId
-                return reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
+                lcpy.reAssignedStationId = reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
+                return;
             }
         }
         else {
             // see logs in method
-            return updateSession(station, ss);
+            updateSession(station, ss);
         }
     }
 
     /**
      * session is Ok, so we need to update session's timestamp periodically
      */
-    private Command[] updateSession(Station station, StationStatus ss) {
+    @SuppressWarnings("UnnecessaryReturnStatement")
+    private void updateSession(Station station, StationStatus ss) {
         final long millis = System.currentTimeMillis();
         final long diff = millis - ss.sessionCreatedOn;
         if (diff > SESSION_UPDATE_TIMEOUT) {
@@ -294,25 +344,25 @@ public class ServerService {
             Station s = stationCache.findById(station.id);
             log.debug("#442.086 old station.version: {}, in cache station.version: {}, station.status:\n{},\n", station.version, s.version, s.status);
             // the same stationId but new sessionId
-            return null;
+            return;
         }
         else {
             // the same stationId, the same sessionId, session isn't expired
-            return null;
+            return;
         }
     }
 
-    private Command[] assignNewSessionId(Station station, StationStatus ss) {
+    private LaunchpadCommParamsYaml.ReAssignStationId assignNewSessionId(Station station, StationStatus ss) {
         ss.sessionId = StationTopLevelService.createNewSessionId();
         ss.sessionCreatedOn = System.currentTimeMillis();
         station.status = StationStatusUtils.toString(ss);
         station.updatedOn = ss.sessionCreatedOn;
         stationCache.save(station);
         // the same stationId but new sessionId
-        return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
+        return new LaunchpadCommParamsYaml.ReAssignStationId(station.getId(), ss.sessionId);
     }
 
-    private Command[] reassignStationId(String remoteAddress, String description) {
+    private LaunchpadCommParamsYaml.ReAssignStationId reassignStationId(String remoteAddress, String description) {
         Station s = new Station();
         s.setIp(remoteAddress);
         s.setDescription(description);
@@ -321,16 +371,20 @@ public class ServerService {
         StationStatus ss = new StationStatus(null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, false, 1);
+                "[unknown]", "[unknown]", null, false, 1, EnumsApi.OS.unknown);
 
         s.status = StationStatusUtils.toString(ss);
         s.updatedOn = ss.sessionCreatedOn;
         stationCache.save(s);
-        return new Command[]{new Protocol.ReAssignStationId(s.getId(), sessionId)};
+        return new LaunchpadCommParamsYaml.ReAssignStationId(s.getId(), sessionId);
     }
 
-    private static Protocol.WorkbookStatus.SimpleStatus to(Workbook workbook) {
-        return new Protocol.WorkbookStatus.SimpleStatus(workbook.getId(), EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
+    private static LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus to(Workbook workbook) {
+        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(workbook.getId(), EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
+    }
+
+    private static LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus toSimpleStatus(Long workbookId, Integer execSate) {
+        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(workbookId, EnumsApi.WorkbookExecState.toState(execSate));
     }
 
 }

@@ -28,7 +28,7 @@
 
     <h1 class="widget-header">Workbooks</h1>
 
-    <a class="pure-button pure-button-primary" href="process-resource-add.html" th:href="@{/launchpad/batch/batch-add}">Upload files and start processing</a>
+    <a class="pure-button pure-button-primary" href="batch-add.html" th:href="@{/launchpad/batch/batch-add}">Upload files and start processing</a>
     <p></p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
@@ -37,7 +37,10 @@
             <th>#</th>
             <th>Created on</th>
             <th>Is batch consistent?</th>
-            <th>Plan code</th>
+            <th>
+                <div class="no-wrap">Plan code</div>
+                <div class="no-wrap">File name</div>
+            </th>
             <th>Exec state</th>
             <th colspan="3">&nbsp;</th>
         </tr>
@@ -52,7 +55,10 @@
                <p th:if="${r.ok}" class="info-msg" >OK</p>
                <p th:if="${!r.ok}" class="error-msg" >Error</p>
             </td>
-            <td th:text="${r.planCode}">Plan code</td>
+            <td>
+                <div th:text="${r.planCode}" class="no-wrap">Plan code</div>
+                <div th:text="${r.uploadedFileName}" class="no-wrap">File name</div>
+            </td>
             <td th:text="${r.execStateStr}">Exec state as string</td>
             <td><a class="pure-button pure-button-primary"
                    th:href="${'/launchpad/batch/batch-delete/' + r.batch.id}">Delete</a></td>

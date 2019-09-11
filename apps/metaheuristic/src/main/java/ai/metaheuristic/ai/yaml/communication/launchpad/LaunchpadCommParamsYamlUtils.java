@@ -14,13 +14,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.station;
+package ai.metaheuristic.ai.yaml.communication.launchpad;
 
-public interface StationServicesHolder {
-    StationService getStationService();
-    TaskProcessor getTaskProcessor();
-    MetadataService getMetadataService();
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
+import java.util.Map;
 
+/**
+ * @author Serge
+ * Date: 8/29/2019
+ * Time: 6:00 PM
+ */
+public class LaunchpadCommParamsYamlUtils {
 
+    private static final LaunchpadCommParamsYamlUtilsV1 YAML_UTILS_V_1 = new LaunchpadCommParamsYamlUtilsV1();
+    private static final LaunchpadCommParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+
+    public static final BaseYamlUtils<LaunchpadCommParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(1, YAML_UTILS_V_1),
+            DEFAULT_UTILS
+    );
 }

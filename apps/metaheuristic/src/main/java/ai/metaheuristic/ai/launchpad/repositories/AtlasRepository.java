@@ -35,4 +35,8 @@ public interface AtlasRepository extends CrudRepository<Atlas, Long> {
     @Query(value="select new ai.metaheuristic.ai.launchpad.atlas.AtlasSimple(" +
             "b.id, b.name, b.description, b.createdOn ) from Atlas b order by b.id desc")
     Slice<AtlasSimple> findAllAsSimple(Pageable pageable);
+
+    @Transactional(readOnly = true)
+    @Query(value="select a.id from Atlas a where a.id=:atlasId")
+    Long findIdById(Long atlasId);
 }

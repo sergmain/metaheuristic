@@ -155,14 +155,14 @@ class WorkbookGraphService {
                         .filter(o -> taskStates.containsKey(o.taskId))
                         .collect(Collectors.toList());
 
-                // Don't combine streams, a side-effect could be occurred
-                tvs.forEach(t -> {
-                    t.execState = EnumsApi.TaskExecState.from(taskStates.get(t.taskId));
-                    if (t.execState == EnumsApi.TaskExecState.ERROR || t.execState == EnumsApi.TaskExecState.BROKEN) {
-                        setStateForAllChildrenTasksInternal(graph, t.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.BROKEN);
+                // Don't join streams, a side-effect could be occurred
+                tvs.forEach(taskVertex -> {
+                    taskVertex.execState = EnumsApi.TaskExecState.from(taskStates.get(taskVertex.taskId));
+                    if (taskVertex.execState == EnumsApi.TaskExecState.ERROR || taskVertex.execState == EnumsApi.TaskExecState.BROKEN) {
+                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.BROKEN);
                     }
-                    else if (t.execState == EnumsApi.TaskExecState.OK) {
-                        setStateForAllChildrenTasksInternal(graph, t.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.NONE);
+                    else if (taskVertex.execState == EnumsApi.TaskExecState.OK) {
+                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.NONE);
                     }
                 });
             });
@@ -318,6 +318,20 @@ class WorkbookGraphService {
                 });
 
                 return vertices;
+            });
+        }
+        catch (Throwable th) {
+            log.error("#915.030 Error", th);
+            return null;
+        }
+    }
+
+    public List<WorkbookParamsYaml.TaskVertex> findAllBroken(WorkbookImpl workbook) {
+        try {
+            return readOnlyGraphListOfTaskVertex(workbook, graph -> {
+                return graph.vertexSet().stream()
+                        .filter( v -> v.execState == EnumsApi.TaskExecState.BROKEN || v.execState == EnumsApi.TaskExecState.ERROR )
+                        .collect(Collectors.toList());
             });
         }
         catch (Throwable th) {

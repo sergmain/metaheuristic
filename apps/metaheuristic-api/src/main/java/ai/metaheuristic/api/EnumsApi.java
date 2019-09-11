@@ -20,6 +20,8 @@ import lombok.ToString;
 
 public class EnumsApi {
 
+    public enum OS { unknown, any, windows, linux, macos }
+
     public enum BinaryDataRefType {
         workbook, batch
     }

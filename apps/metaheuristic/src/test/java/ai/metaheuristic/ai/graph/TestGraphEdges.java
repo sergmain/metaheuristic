@@ -63,9 +63,7 @@ public class TestGraphEdges extends PreparingPlan {
 
         assertNotNull(workbook);
 
-        OperationStatusRest osr = workbookService.addNewTasksToGraph(
-                workbookRepository.findByIdForUpdate(workbook.id), List.of(), List.of(1L)
-        );
+        OperationStatusRest osr = workbookService.addNewTasksToGraph(workbook.id, List.of(), List.of(1L));
         workbook = workbookCache.findById(workbook.id);
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
@@ -74,9 +72,7 @@ public class TestGraphEdges extends PreparingPlan {
         assertEquals(1, count);
 
 
-        osr = workbookService.addNewTasksToGraph(
-                workbookRepository.findByIdForUpdate(workbook.id),
-                List.of(1L), List.of(21L, 22L, 23L));
+        osr = workbookService.addNewTasksToGraph(workbook.id,List.of(1L), List.of(21L, 22L, 23L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         workbook = workbookCache.findById(workbook.id);
 
@@ -87,8 +83,7 @@ public class TestGraphEdges extends PreparingPlan {
         assertTrue(leafs.contains(new WorkbookParamsYaml.TaskVertex(22L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new WorkbookParamsYaml.TaskVertex(23L, EnumsApi.TaskExecState.NONE)));
 
-        osr = workbookService.addNewTasksToGraph( workbookRepository.findByIdForUpdate(workbook.id),
-                List.of(21L), List.of(311L, 312L, 313L));
+        osr = workbookService.addNewTasksToGraph( workbook.id,List.of(21L), List.of(311L, 312L, 313L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         workbook = workbookCache.findById(workbook.id);
 

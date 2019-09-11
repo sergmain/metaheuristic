@@ -98,7 +98,6 @@ public class ExperimentService {
     private final SnippetService snippetService;
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
-    private final WorkbookRepository workbookRepository;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
 
@@ -244,13 +243,6 @@ public class ExperimentService {
             if (!epy.processing.maxValueCalculated) {
                 updateMaxValueForExperimentFeatures(e.id);
             }
-/*
-            // TODO 2019-07-29 because of OOM don't export to atlas right now
-            if (!epy.processing.exportedToAtlas) {
-                atlasService.toAtlas(e.workbookId, experimentId);
-                setExportedToAtlas(experimentId);
-            }
-*/
         }
     }
 
@@ -391,7 +383,7 @@ public class ExperimentService {
 
         List<Long> ids = etfs.stream().mapToLong(ExperimentTaskFeature::getTaskId).boxed().collect(Collectors.toList());
 
-        List<TaskImpl> tasks = taskRepository.findTasksByIds(ids);
+        List<TaskImpl> tasks = ids.isEmpty() ? List.of() : taskRepository.findTasksByIds(ids);
         List<TaskWIthType> list = new ArrayList<>();
         for (TaskImpl task : tasks) {
             ExperimentTaskFeature tf = etfs.stream().filter(o->o.taskId.equals(task.id)).findFirst().orElse(null);
@@ -870,8 +862,7 @@ public class ExperimentService {
                             if (task == null) {
                                 return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
-                            final WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
-                            workbookService.addNewTasksToGraph(workbook, prevParentTaskIds, taskIds);
+                            workbookService.addNewTasksToGraph(workbookId, prevParentTaskIds, taskIds);
                         }
                         prevParentTaskIds = taskIds;
                     }

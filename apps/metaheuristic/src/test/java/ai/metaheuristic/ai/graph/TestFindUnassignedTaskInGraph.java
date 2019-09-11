@@ -65,9 +65,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
 
         assertNotNull(workbook);
 
-        OperationStatusRest osr = workbookService.addNewTasksToGraph(
-                workbookRepository.findByIdForUpdate(workbook.id), List.of(), List.of(1L)
-        );
+        OperationStatusRest osr = workbookService.addNewTasksToGraph(workbook.id, List.of(), List.of(1L));
         workbook = workbookCache.findById(workbook.id);
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
@@ -76,17 +74,11 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
         assertEquals(1, count);
 
 
-        osr = workbookService.addNewTasksToGraph(
-                workbookRepository.findByIdForUpdate(workbook.id),
-                List.of(1L), List.of(21L, 22L));
+        osr = workbookService.addNewTasksToGraph(workbook.id,List.of(1L), List.of(21L, 22L));
 
-        osr = workbookService.addNewTasksToGraph(
-                workbookRepository.findByIdForUpdate(workbook.id),
-                List.of(21L), List.of(311L, 312L, 313L));
+        osr = workbookService.addNewTasksToGraph(workbook.id,List.of(21L), List.of(311L, 312L, 313L));
 
-        osr = workbookService.addNewTasksToGraph(
-                workbookRepository.findByIdForUpdate(workbook.id),
-                List.of(22L), List.of(321L, 322L, 323L));
+        osr = workbookService.addNewTasksToGraph(workbook.id,List.of(22L), List.of(321L, 322L, 323L));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         workbook = workbookCache.findById(workbook.id);
@@ -107,7 +99,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
 
 
         Set<EnumsApi.TaskExecState> states;
-        workbookService.updateGraphWithResettingAllChildrenTasks(workbookRepository.findByIdForUpdate(workbook.id),1L);
+        workbookService.updateGraphWithResettingAllChildrenTasks(workbook.id,1L);
         workbook = workbookCache.findById(workbook.id);
 
         // there is only 'NONE' exec state

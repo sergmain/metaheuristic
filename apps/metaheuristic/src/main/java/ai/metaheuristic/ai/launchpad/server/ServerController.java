@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.launchpad.server;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
@@ -88,10 +87,16 @@ public class ServerController {
     }
 
     @PostMapping("/srv/{random-part}")
-    public ExchangeData processRequestAuth(
+    public String processRequestAuth(@SuppressWarnings("unused") @PathVariable("random-part") String randomPart,@RequestBody String data) {
+        log.debug("processRequestAuth(), globals.isSecurityEnabled: {}, data: {}", globals.isSecurityEnabled, data);
+        return "{}";
+    }
+
+    @PostMapping("/srv-v2/{random-part}")
+    public String processRequestAuth(
             HttpServletRequest request,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
-            @RequestBody ExchangeData data
+            @RequestBody String data
             ) {
         log.debug("processRequestAuth(), globals.isSecurityEnabled: {}, data: {}", globals.isSecurityEnabled, data);
         return serverService.processRequest(data, request.getRemoteAddr());
@@ -104,7 +109,7 @@ public class ServerController {
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @SuppressWarnings("unused") String stationId,
             @SuppressWarnings("unused") Long taskId,
-            String code, String chunkSize, Integer chunkNum) throws IOException {
+            String code, String chunkSize, Integer chunkNum) {
         String normalCode = new File(code).getName();
         log.debug("deliverResourceAuth(), globals.isSecurityEnabled: {}, typeAsStr: {}, code: {}, chunkSize: {}, chunkNum: {}",
                 globals.isSecurityEnabled, typeAsStr, normalCode, chunkSize, chunkNum);
@@ -117,9 +122,6 @@ public class ServerController {
             entity = serverService.deliverResource(typeAsStr, normalCode, chunkSize, chunkNum);
         } catch (BinaryDataNotFoundException e) {
             return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.GONE);
-        }
-        if (entity==null) {
-            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.OK);
         }
         return entity;
     }

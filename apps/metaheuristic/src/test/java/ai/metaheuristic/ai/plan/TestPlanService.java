@@ -16,14 +16,14 @@
 
 package ai.metaheuristic.ai.plan;
 
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
@@ -106,82 +106,72 @@ public class TestPlanService extends PreparingPlan {
 
         // ======================
 
-        WorkbookService.TasksAndAssignToStationResult assignToStation0 =
+        LaunchpadCommParamsYaml.AssignedTask simpleTask0 =
                 workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
-        Protocol.AssignedTask.Task simpleTask0 = assignToStation0.getSimpleTask();
         assertNull(simpleTask0);
 
-        workbook = planService.toStarted(workbook.getId());
+        planService.toStarted(workbook);
+        workbook = workbookCache.findById(workbook.getId());
+
         assertEquals(EnumsApi.WorkbookExecState.STARTED.code, workbook.getExecState());
         {
-            WorkbookService.TasksAndAssignToStationResult assignToStation =
+            LaunchpadCommParamsYaml.AssignedTask simpleTask =
                     workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-
-            Protocol.AssignedTask.Task simpleTask = assignToStation.getSimpleTask();
 
             assertNotNull(simpleTask);
             assertNotNull(simpleTask.getTaskId());
             Task task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
             assertNotNull(task);
-//            assertEquals(1, task.getOrder());
 
-            WorkbookService.TasksAndAssignToStationResult assignToStation2 =
+            LaunchpadCommParamsYaml.AssignedTask simpleTask2 =
                     workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-            assertNull(assignToStation2.getSimpleTask());
+            assertNull(simpleTask2);
 
             storeExecResult(simpleTask);
             workbookSchedulerService.updateWorkbookStatuses(true);
         }
         {
-            WorkbookService.TasksAndAssignToStationResult assignToStation20 =
+            LaunchpadCommParamsYaml.AssignedTask simpleTask20 =
                     workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-
-            Protocol.AssignedTask.Task simpleTask20 = assignToStation20.getSimpleTask();
 
             assertNotNull(simpleTask20);
             assertNotNull(simpleTask20.getTaskId());
             Task task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
             assertNotNull(task3);
-//            assertEquals(2, task3.getOrder());
 
-            WorkbookService.TasksAndAssignToStationResult assignToStation21 =
+            LaunchpadCommParamsYaml.AssignedTask simpleTask21 =
                     workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-            assertNull(assignToStation21.getSimpleTask());
+            assertNull(simpleTask21);
 
             storeExecResult(simpleTask20);
             workbookSchedulerService.updateWorkbookStatuses(true);
         }
         {
-            WorkbookService.TasksAndAssignToStationResult assignToStation30 =
+            LaunchpadCommParamsYaml.AssignedTask simpleTask30 =
                     workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
-            Protocol.AssignedTask.Task simpleTask30 = assignToStation30.getSimpleTask();
             assertNotNull(simpleTask30);
             assertNotNull(simpleTask30.getTaskId());
             Task task30 = taskRepository.findById(simpleTask30.getTaskId()).orElse(null);
             assertNotNull(task30);
-//            assertEquals(3, task30.getOrder());
 
-            WorkbookService.TasksAndAssignToStationResult assignToStation31 =
+            LaunchpadCommParamsYaml.AssignedTask simpleTask31 =
                     workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
-            Protocol.AssignedTask.Task simpleTask31 = assignToStation31.getSimpleTask();
             assertNull(simpleTask31);
 
             storeExecResult(simpleTask30);
             workbookSchedulerService.updateWorkbookStatuses(true);
         }
         {
-            WorkbookService.TasksAndAssignToStationResult assignToStation32 =
+            LaunchpadCommParamsYaml.AssignedTask simpleTask32 =
                     workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
-            Protocol.AssignedTask.Task simpleTask32 = assignToStation32.getSimpleTask();
             assertNotNull(simpleTask32);
             assertNotNull(simpleTask32.getTaskId());
             Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
             assertNotNull(task32);
-//            assertEquals(3, task32.getOrder());
             storeExecResult(simpleTask32);
             workbookSchedulerService.updateWorkbookStatuses(true);
         }
@@ -191,16 +181,15 @@ public class TestPlanService extends PreparingPlan {
             if (j%20==0) {
                 System.out.println("j = " + j);
             }
-            WorkbookService.TasksAndAssignToStationResult loopAssignToStation =
+            LaunchpadCommParamsYaml.AssignedTask loopSimpleTask =
                     workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
-            Protocol.AssignedTask.Task loopSimpleTask = loopAssignToStation.getSimpleTask();
             assertNotNull(loopSimpleTask);
             assertNotNull(loopSimpleTask.getTaskId());
             Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
             assertNotNull(loopTask);
             storeExecResult(loopSimpleTask);
-            workbookSchedulerService.updateWorkbookStatus( workbookRepository.findByIdForUpdate(workbook.id), true);
+            workbookSchedulerService.updateWorkbookStatus( workbook.id, true);
             workbook = workbookCache.findById(workbook.id);
 
             final long count = workbookService.getCountUnfinishedTasks(workbook);
@@ -211,12 +200,10 @@ public class TestPlanService extends PreparingPlan {
             }
         }
         assertEquals(0, prevValue);
-
-        int i=0;
     }
 
-    public void storeExecResult(Protocol.AssignedTask.Task simpleTask) {
-        SimpleTaskExecResult r = new SimpleTaskExecResult();
+    public void storeExecResult(LaunchpadCommParamsYaml.AssignedTask simpleTask) {
+        StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
         r.setTaskId(simpleTask.getTaskId());
         r.setMetrics(null);
         r.setResult(getOKExecResult());

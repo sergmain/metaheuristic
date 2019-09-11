@@ -42,7 +42,6 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -262,13 +261,9 @@ public class BatchTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
 
-        List<Long> bfis = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
-        for (Long workbookId : bfis) {
-            Workbook wb = workbookRepository.findById(workbookId).orElse(null);
-            if (wb == null) {
-                continue;
-            }
-            planService.deleteWorkbook(wb.getId());
+        List<Long> workbookIds = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
+        for (Long workbookId : workbookIds) {
+            planService.deleteWorkbook(workbookId);
         }
         batchWorkbookRepository.deleteByBatchId(batch.id);
         batchCache.deleteById(batch.id);

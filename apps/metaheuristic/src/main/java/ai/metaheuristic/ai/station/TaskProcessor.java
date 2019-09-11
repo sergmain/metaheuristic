@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.core.ExecProcessService;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.resource.AssetFile;
@@ -30,11 +29,14 @@ import ai.metaheuristic.ai.yaml.launchpad_lookup.ExtendedTimePeriod;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -92,33 +94,42 @@ public class TaskProcessor {
         List<StationTask> tasks = stationTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
 
-            log.info("Start processing task {}", task);
             if (task.launchedOn!=null && task.finishedOn!=null && taskProcessorStateService.currentTaskId==null) {
                 log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched and then finished", task.taskId);
             }
-
-            final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
-
             if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.010 Broken task. LaunchpadUrl is blank.");
+                final String es = "#100.005 task.launchpadUrl is blank for task #" + task.taskId;
+                log.warn(es);
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
                 continue;
             }
-            if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.020 Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
+
+            final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
+            if (launchpadCode==null) {
+                final String es = "#100.010 launchpadCode is null for "+task.launchpadUrl+". task #" + task.taskId;
+                log.warn(es);
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
                 continue;
             }
 
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
+            if (launchpad==null) {
+                final String es = "#100.020 Broken task #"+task.taskId+". Launchpad wasn't found for url " + task.launchpadUrl;
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
+                continue;
+            }
 
             if (launchpad.schedule.isCurrentTimeInactive()) {
+                stationTaskService.delete(task.launchpadUrl, task.taskId);
                 log.info("Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.launchpadUrl, new Date(), launchpad.schedule.asString);
                 return;
             }
 
             if (StringUtils.isBlank(task.getParams())) {
-                log.warn("#100.030 Params for task {} is blank", task.getTaskId());
+                log.warn("#100.030 Params for task #{} is blank", task.getTaskId());
                 continue;
             }
+
             EnumsApi.WorkbookExecState state = currentExecState.getState(task.launchpadUrl, task.workbookId);
             if (state== EnumsApi.WorkbookExecState.UNKNOWN) {
                 stationTaskService.delete(task.launchpadUrl, task.taskId);
@@ -132,6 +143,7 @@ public class TaskProcessor {
                 continue;
             }
 
+            log.info("Start processing task {}", task);
             File taskDir = stationTaskService.prepareTaskDir(task.launchpadUrl, task.taskId);
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
@@ -185,7 +197,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
+            File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
             if (artifactDir == null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
@@ -360,13 +372,13 @@ public class TaskProcessor {
 
     private boolean prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml, SnippetPrepareResult[] results) {
 
-        File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
+        File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
         if (artifactDir == null) {
             return false;
         }
 
         Set<Integer> versions = Stream.of(results)
-                .map(o-> o.snippet.getTaskParamsVersion())
+                .map(o-> SnippetCoreUtils.getTaskParamsVersion(o.snippet.metas))
                 .collect(Collectors.toSet());
 
         taskParamYaml.taskYaml.workingPath = taskDir.getAbsolutePath();
@@ -399,13 +411,16 @@ public class TaskProcessor {
         return count;
     }
 
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "deprecation"})
     // TODO 2019.05.02 implement unit-test for this method
     public SnippetApiData.SnippetExecResult execSnippet(
             StationTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, SnippetPrepareResult snippetPrepareResult,
             LaunchpadSchedule schedule) {
 
-        File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + String.format(Consts.PARAMS_YAML_MASK, snippetPrepareResult.snippet.getTaskParamsVersion()));
+        File paramFile = new File(
+                taskDir,
+                ConstsApi.ARTIFACTS_DIR + File.separatorChar +
+                        String.format(Consts.PARAMS_YAML_MASK, SnippetCoreUtils.getTaskParamsVersion(snippetPrepareResult.snippet.metas)));
 
         List<String> cmd;
         Interpreter interpreter=null;
@@ -426,16 +441,13 @@ public class TaskProcessor {
 
         SnippetApiData.SnippetExecResult snippetExecResult;
         try {
-
             switch (snippetPrepareResult.snippet.sourcing) {
-
                 case launchpad:
                 case git:
                     if (snippetPrepareResult.snippetAssetFile==null) {
                         throw new IllegalStateException("#100.160 snippetAssetFile is null");
                     }
                     cmd.add(snippetPrepareResult.snippetAssetFile.file.getAbsolutePath());
-
                     break;
                 case station:
                     if (snippetPrepareResult.snippet.file!=null) {
@@ -449,13 +461,17 @@ public class TaskProcessor {
 
             if (!snippetPrepareResult.snippet.skipParams) {
                 if (StringUtils.isNoneBlank(snippetPrepareResult.snippet.params)) {
-                    final Meta meta = snippetPrepareResult.snippet.getMeta(Consts.SNIPPET_PARAMS_AS_FILE_META);
+                    final Meta meta = MetaUtils.getMeta(snippetPrepareResult.snippet.metas,
+                            ConstsApi.META_MH_SNIPPET_PARAMS_AS_FILE_META,
+                            Consts.META_SNIPPET_PARAMS_AS_FILE_META);
                     if (meta!=null && Boolean.parseBoolean(meta.value)) {
-                        final Meta metaExt = snippetPrepareResult.snippet.getMeta(Consts.SNIPPET_PARAMS_FILE_EXT_META);
+                        final Meta metaExt = MetaUtils.getMeta(snippetPrepareResult.snippet.metas,
+                                ConstsApi.META_MH_SNIPPET_PARAMS_FILE_EXT_META,
+                                Consts.META_SNIPPET_PARAMS_FILE_EXT_META);
                         String ext = (metaExt!=null && metaExt.value!=null && !metaExt.value.isBlank())
                                 ? metaExt.value : ".txt";
 
-                        File execFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + toFilename(snippetPrepareResult.snippet.code) + ext);
+                        File execFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + toFilename(snippetPrepareResult.snippet.code) + ext);
                         FileUtils.writeStringToFile(execFile, snippetPrepareResult.snippet.params, StandardCharsets.UTF_8 );
                         cmd.add( execFile.getAbsolutePath() );
                     }
@@ -466,7 +482,7 @@ public class TaskProcessor {
                 cmd.add(paramFile.getAbsolutePath());
             }
 
-            File consoleLogFile = new File(systemDir, Consts.SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
+            File consoleLogFile = new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
             // Exec snippet
             snippetExecResult = execProcessService.execCommand(
@@ -525,9 +541,5 @@ public class TaskProcessor {
             log.info("Snippet asset file: {}, exist: {}", snippetPrepareResult.snippetAssetFile.file.getAbsolutePath(), snippetPrepareResult.snippetAssetFile.file.exists() );
         }
         return snippetPrepareResult;
-    }
-
-    public void processWorkbookStatus(String launchpadUrl, List<Protocol.WorkbookStatus.SimpleStatus> statuses) {
-        currentExecState.register(launchpadUrl, statuses);
     }
 }

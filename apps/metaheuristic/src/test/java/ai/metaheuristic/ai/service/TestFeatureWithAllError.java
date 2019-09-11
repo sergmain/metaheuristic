@@ -15,9 +15,8 @@
  */
 package ai.metaheuristic.ai.service;
 
-import ai.metaheuristic.ai.comm.Protocol;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,7 +24,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -46,7 +46,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToStation_mustBeNewTask()");
-        Protocol.AssignedTask.Task simpleTask = getTaskAndAssignToStation_mustBeNewTask();
+        LaunchpadCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToStation_mustBeNewTask();
         log.info("getTaskAndAssignToStation_mustBeNewTask() was finished for {}", System.currentTimeMillis() - mills);
 
         noNewTask();
@@ -63,24 +63,14 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         log.info("noNewTask() was finished for {}", System.currentTimeMillis() - mills);
 
-/*
-        mills = System.currentTimeMillis();
-        log.info("Start finishCurrentWithError()");
-        finishCurrentWithError(2);
-        log.info("finishCurrentWithError() was finished for {}", System.currentTimeMillis() - mills);
-*/
-
     }
 
     public void noNewTask() {
-        WorkbookService.TasksAndAssignToStationResult task;
-        task = workbookService.getTaskAndAssignToStation(station.getId(), false, experiment.getWorkbookId());
-        assertNotNull(task);
-        assertNull(task.getSimpleTask());
+        LaunchpadCommParamsYaml.AssignedTask task = workbookService.getTaskAndAssignToStation(station.getId(), false, experiment.getWorkbookId());
+        assertNull(task);
 
         task = workbookService.getTaskAndAssignToStation(station.getId() + 1, false, experiment.getWorkbookId());
-        assertNotNull(task);
-        assertNull(task.getSimpleTask());
+        assertNull(task);
     }
 
 }

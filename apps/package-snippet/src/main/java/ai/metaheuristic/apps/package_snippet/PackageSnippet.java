@@ -19,10 +19,10 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SecUtils;
+import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -33,7 +33,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -97,7 +98,7 @@ public class PackageSnippet implements CommandLineRunner {
         boolean isError = false;
         Set<String> set = new HashSet<>();
         for (SnippetApiData.SnippetConfig snippet : snippetConfigList.getSnippets()) {
-            final SnippetApiData.SnippetConfigStatus verify = SnippetUtils.validate(snippet);
+            final SnippetApiData.SnippetConfigStatus verify = SnippetCoreUtils.validate(snippet);
             if (!verify.isOk) {
                 System.out.println(verify.error);
                 isError=true;
@@ -130,7 +131,7 @@ public class PackageSnippet implements CommandLineRunner {
             String sum;
             if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.station ||
                     snippetConfig.sourcing==EnumsApi.SnippetSourcing.git) {
-                String s = SnippetUtils.getDataForChecksumWhenGitSourcing(snippetConfig);
+                String s = SnippetCoreUtils.getDataForChecksumWhenGitSourcing(snippetConfig);
                 sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(s.getBytes()));
             }
             else if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.launchpad) {
