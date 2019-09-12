@@ -635,6 +635,7 @@ public class AtlasTopLevelService {
         return result;
     }
 
+    // TODO 2019-09-11 need to add unit-test
     private AtlasData.ExperimentFeatureExtendedResult prepareExperimentFeatures(
             Long atlasId, AtlasParamsYamlWithCache ypywc, final ExperimentFeature experimentFeature) {
 
@@ -651,7 +652,7 @@ public class AtlasTopLevelService {
                 .collect(Collectors.toList());
 
         Slice<AtlasTaskParamsYaml> tasks = new SliceImpl<>(
-                taskWIthTypes.subList(0, taskWIthTypes.size()>Consts.PAGE_REQUEST_10_REC.getPageSize() ? Consts.PAGE_REQUEST_10_REC.getPageSize() : taskWIthTypes.size())
+                taskWIthTypes.subList(0, Math.min(taskWIthTypes.size(), Consts.PAGE_REQUEST_10_REC.getPageSize()))
                         .stream()
                         .map(id-> atlasTaskRepository.findByAtlasIdAndTaskId(atlasId, id))
                         .filter(Objects::nonNull)
