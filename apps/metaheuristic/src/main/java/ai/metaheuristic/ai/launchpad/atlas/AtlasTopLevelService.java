@@ -105,8 +105,8 @@ public class AtlasTopLevelService {
             this.key = filter.substring( 0, endIndex);
             this.idx = Integer.parseInt(filter.substring( endIndex+1));
         }
-        static ParamFilter of(String filetr) {
-            return new ParamFilter(filetr);
+        static ParamFilter of(String filter) {
+            return new ParamFilter(filter);
         }
     }
 
