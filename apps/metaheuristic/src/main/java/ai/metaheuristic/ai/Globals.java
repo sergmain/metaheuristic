@@ -63,6 +63,9 @@ public class Globals {
     @Value("${mh.branding:#{'Metaheuristic project'}}")
     public String branding;
 
+    @Value("${mh.cors-allowed-origins:#{null}}")
+    public String allowedOrigins;
+
     // Launchpad's globals
 
     @Value("${mh.launchpad.is-security-enabled:#{true}}")
@@ -179,6 +182,14 @@ public class Globals {
             }
         }
 
+        String origins = env.getProperty("MH_CORS_ALLOWED_ORIGINS");
+        if (origins!=null && !origins.isBlank()) {
+            allowedOrigins = origins;
+        }
+        if (allowedOrigins==null || allowedOrigins.isBlank()) {
+            allowedOrigins = "*";
+        }
+
         String size = env.getProperty("MH_CHUNK_SIZE");
         chunkSize = parseChunkSizeValue(size);
         if (chunkSize==null) {
@@ -193,7 +204,7 @@ public class Globals {
         String stationEnabledAsStr = env.getProperty("MH_IS_STATION_ENABLED");
         if (stationEnabledAsStr!=null && !stationEnabledAsStr.isBlank()) {
             try {
-                isStationEnabled = Boolean.valueOf(stationEnabledAsStr);
+                isStationEnabled = Boolean.parseBoolean(stationEnabledAsStr);
             } catch (Throwable th) {
                 log.error("Wrong value in env MH_IS_STATION_ENABLED, must be boolean (true/false), " +
                         "actual: " + stationEnabledAsStr+". Will be used 'false' as value.");
@@ -266,7 +277,7 @@ public class Globals {
             String sslRequiredAsStr = env.getProperty("MH_IS_SSL_REQUIRED");
             if (sslRequiredAsStr!=null && !sslRequiredAsStr.isBlank()) {
                 try {
-                    isSslRequired = Boolean.valueOf(sslRequiredAsStr);
+                    isSslRequired = Boolean.parseBoolean(sslRequiredAsStr);
                 } catch (Throwable th) {
                     log.error("Wrong value in env MH_IS_SSL_REQUIRED, must be boolean (true/false), " +
                             "actual: " + sslRequiredAsStr+". Will be used 'true' as value.");
@@ -290,7 +301,7 @@ public class Globals {
 
         final char ch = Character.toLowerCase(str.charAt(str.length() - 1));
         if (Character.isLetter(ch)) {
-            if (str.length()==1 || !sizes.keySet().contains(ch)) {
+            if (str.length()==1 || !sizes.containsKey(ch)) {
                 throw new IllegalArgumentException("Wrong value of chunkSize: " + str);
             }
             return Long.parseLong(str.substring(0, str.length()-1)) * sizes.get(ch);
@@ -356,6 +367,7 @@ public class Globals {
         log.info("Current globals:");
         log.info("'\tOS: {}", os);
         log.info("'\tthreadNumber: {}", threadNumber);
+        log.info("'\tallowedOrigins: {}", allowedOrigins);
         log.info("'\tbranding: {}", branding);
         log.info("'\tisUnitTesting: {}", isUnitTesting);
         log.info("'\tisSecurityEnabled: {}", isSecurityEnabled);
