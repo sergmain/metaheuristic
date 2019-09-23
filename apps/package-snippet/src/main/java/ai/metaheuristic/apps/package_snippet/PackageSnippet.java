@@ -141,7 +141,6 @@ public class PackageSnippet implements CommandLineRunner {
                     sum = Checksum.getChecksum(EnumsApi.Type.SHA256, fis);
                 }
                 snippetConfig.info.length = snippetFile.length();
-                snippetConfig.info.signed = true;
             }
             else {
                 throw new IllegalArgumentException();
@@ -151,9 +150,11 @@ public class PackageSnippet implements CommandLineRunner {
             if (privateKey!=null) {
                 String signature = SecUtils.getSignature(sum, privateKey);
                 snippetConfig.checksumMap.put(EnumsApi.Type.SHA256WithSignature, sum + SecUtils.SIGNATURE_DELIMITER + signature);
+                snippetConfig.info.signed = true;
             }
             else {
                 snippetConfig.checksumMap.put(EnumsApi.Type.SHA256, sum);
+                snippetConfig.info.signed = false;
             }
         }
 
