@@ -140,6 +140,8 @@ public class PackageSnippet implements CommandLineRunner {
                 try (FileInputStream fis = new FileInputStream(snippetFile)) {
                     sum = Checksum.getChecksum(EnumsApi.Type.SHA256, fis);
                 }
+                snippetConfig.info.length = snippetFile.length();
+                snippetConfig.info.signed = true;
             }
             else {
                 throw new IllegalArgumentException();
