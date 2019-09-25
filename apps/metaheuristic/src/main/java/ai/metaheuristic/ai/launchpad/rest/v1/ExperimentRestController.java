@@ -113,7 +113,6 @@ public class ExperimentRestController {
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
     public OperationStatusRest metadataDeleteCommit(@PathVariable Long experimentId, @PathVariable String key) {
-        if (true) throw new IllegalStateException("Need to change this in web(html files) and angular");
         return experimentTopLevelService.metadataDeleteCommit(experimentId, key);
     }
 

@@ -23,9 +23,6 @@ public final class Enums {
 
     public enum ResourceState {none, ok, file_too_big, resource_doesnt_exist, unknown_error, transmitting_error}
 
-
-    //    public enum StorageType {launchpad, disk, hadoop, ftp }
-
     public enum UploadResourceStatus {
         OK,
         FILENAME_IS_BLANK,
@@ -92,7 +89,7 @@ public final class Enums {
     public enum BatchExecState {
         Error(-1, "Error"),
         Unknown(0, "None"),
-        Stored(1, "Preparing"),
+        Stored(1, "Stored"),
         Preparing(2, "Preparing"),
         Processing(3, "Processing"),
         Finished(4, "Finished"),
