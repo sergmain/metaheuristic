@@ -61,6 +61,12 @@ public class WorkbookRestController {
         return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(id, pageable);
     }
 
+    /**
+     * create Workbook by planCode
+     * useful for creating Workbook from command-line with cURL
+     *
+     * @return
+     */
     @PostMapping("/plan-code-workbook-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SimpleWorkbookAddingResult workbookAddCommit(String planCode, String poolCode, String inputResourceParams) {
@@ -68,6 +74,9 @@ public class WorkbookRestController {
         return new SimpleWorkbookAddingResult(workbookResult.workbook.getId());
     }
 
+    /**
+     * Only one parameter has to be used - either poolCode or inputResourceParams
+     */
     @PostMapping("/workbook-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public PlanApiData.WorkbookResult workbookAddCommit(Long planId, String poolCode, String inputResourceParams) {

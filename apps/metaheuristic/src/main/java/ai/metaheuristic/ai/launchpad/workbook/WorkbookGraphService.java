@@ -111,11 +111,11 @@ class WorkbookGraphService {
 
     private DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> prepareGraph(WorkbookImpl workbook) throws ImportException {
         WorkbookParamsYaml wpy = workbook.getWorkbookParamsYaml();
+        DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = new DirectedAcyclicGraph<>(DefaultEdge.class);
         if (wpy.graph==null || wpy.graph.isBlank()) {
-            return null;
+            return graph;
         }
         GraphImporter<WorkbookParamsYaml.TaskVertex, DefaultEdge> importer = buildImporter();
-        DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = new DirectedAcyclicGraph<>(DefaultEdge.class);
         importer.importGraph(graph, new StringReader(wpy.graph));
         return graph;
     }

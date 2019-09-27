@@ -88,7 +88,7 @@ public class WorkbookSyncService {
         synchronized (obj) {
             obj.incrementAndGet();
             try {
-                return workbook == null ? null : function.get();
+                return function.get();
             } finally {
                 try {
                     writeLock.lock();
