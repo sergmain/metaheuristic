@@ -44,13 +44,14 @@ public class ChecksumWithSignatureService {
         status.isSignatureOk = null;
         for (Map.Entry<EnumsApi.Type, String> entry : checksum.checksums.entrySet()) {
             String sum, entrySum;
-            if (entry.getKey()== EnumsApi.Type.SHA256WithSignature) {
+            if (entry.getKey()==EnumsApi.Type.SHA256WithSignature) {
                 ChecksumWithSignature checksumWithSignature = parse(entry.getValue());
                 entrySum = checksumWithSignature.checksum;
 
                 if (isVerifySignature) {
                     status.isSignatureOk = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, publicKey);
                     if (!status.isSignatureOk) {
+                        log.warn("{}, validation was failed, checksum: {}, signature: {}, publicKey: {}", infoPrefix, checksumWithSignature.checksum, checksumWithSignature.signature, publicKey);
                         break;
                     }
                     log.info("{}, signature is Ok", infoPrefix);
@@ -58,6 +59,11 @@ public class ChecksumWithSignatureService {
                 sum = Checksum.getChecksum(EnumsApi.Type.SHA256, fis);
             }
             else {
+                if (isVerifySignature) {
+                    status.isSignatureOk = false;
+                    log.warn("{}, can't validate signature with checksum type {}", infoPrefix, entry.getKey());
+                    break;
+                }
                 sum = Checksum.getChecksum(entry.getKey(), fis);
                 entrySum = entry.getValue();
             }

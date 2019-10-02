@@ -254,14 +254,14 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 if (task.launchpad.acceptOnlySignedSnippets) {
                     CheckSumAndSignatureStatus status;
                     try (FileInputStream fis = new FileInputStream(snippetTempFile)) {
-                        status = ChecksumWithSignatureService.verifyChecksumAndSignature(checksum, "Snippet "+snippetCode, fis, true, task.launchpad.createPublicKey());
+                        status = ChecksumWithSignatureService.verifyChecksumAndSignature(checksum, "Launchpad: "+task.launchpad.url+", snippet: "+snippetCode, fis, true, task.launchpad.createPublicKey());
                     }
                     if ( status.isSignatureOk == null){
                         log.warn("#811.090 launchpad.acceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
                         continue;
                     }
                     if (Boolean.FALSE.equals(status.isSignatureOk)) {
-                        log.warn("#811.100 launchpad.acceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
+                        log.warn("#811.100 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
                         continue;
                     }
                     isOk = status.isOk;
