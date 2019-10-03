@@ -304,24 +304,24 @@ public class ServerService {
     }
 
     public String processRequest(String data, String remoteAddress) {
-        LaunchpadCommParamsYaml lcpy = new LaunchpadCommParamsYaml();
         StationCommParamsYaml scpy = StationCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
-        processRequestInternal(remoteAddress, scpy, lcpy);
+        LaunchpadCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy);
         //noinspection UnnecessaryLocalVariable
         String yaml = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.toString(lcpy);
         return yaml;
     }
 
-    public void processRequestInternal(String remoteAddress, StationCommParamsYaml scpy, LaunchpadCommParamsYaml lcpy) {
+    public LaunchpadCommParamsYaml processRequestInternal(String remoteAddress, StationCommParamsYaml scpy) {
+        LaunchpadCommParamsYaml lcpy = new LaunchpadCommParamsYaml();
         try {
             if (scpy.stationCommContext==null) {
                 lcpy.assignedStationId = launchpadCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
-                return;
+                return lcpy;
             }
             checkStationId(scpy.stationCommContext.getStationId(), scpy.stationCommContext.getSessionId(), remoteAddress, lcpy);
             if (isStationContextNeedToBeChanged(lcpy)) {
                 log.debug("isStationContextNeedToBeChanged is true, {}", lcpy);
-                return;
+                return lcpy;
             }
 
             lcpy.workbookStatus = getWorkbookStatuses();
@@ -335,6 +335,7 @@ public class ServerService {
             lcpy.success = false;
             lcpy.msg = th.getMessage();
         }
+        return lcpy;
     }
 
     private boolean isStationContextNeedToBeChanged(LaunchpadCommParamsYaml lcpy) {
