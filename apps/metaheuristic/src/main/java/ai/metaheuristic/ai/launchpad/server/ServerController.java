@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.server;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
@@ -26,6 +27,7 @@ import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
+import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -37,7 +39,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -104,7 +105,7 @@ public class ServerController {
 
     @GetMapping(value="/payload/resource/{type}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<AbstractResource> deliverResourceAuth(
-            HttpServletResponse response,
+            HttpServletRequest request,
             @PathVariable("type") String typeAsStr,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @SuppressWarnings("unused") String stationId,
@@ -114,14 +115,16 @@ public class ServerController {
         log.debug("deliverResourceAuth(), globals.isSecurityEnabled: {}, typeAsStr: {}, code: {}, chunkSize: {}, chunkNum: {}",
                 globals.isSecurityEnabled, typeAsStr, normalCode, chunkSize, chunkNum);
         if (chunkSize==null || chunkSize.isBlank() || chunkNum==null) {
-            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
         }
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            entity = serverService.deliverResource(typeAsStr, normalCode, chunkSize, chunkNum);
+            ResourceWithCleanerInfo resource = serverService.deliverResource(typeAsStr, normalCode, chunkSize, chunkNum);
+            entity = resource.entity;
+            request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {
-            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.GONE);
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
         return entity;
     }
@@ -152,8 +155,9 @@ public class ServerController {
 
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
+        File tempDir=null;
         try {
-            File tempDir = DirUtils.createTempDir("upload-resource-");
+            tempDir = DirUtils.createTempDir("upload-resource-");
             if (tempDir==null || tempDir.isFile()) {
                 final String location = System.getProperty("java.io.tmpdir");
                 return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, "#440.040 can't create temporary directory in " + location);
@@ -187,6 +191,9 @@ public class ServerController {
             final String error = "#440.060 can't store the result, Error: " + th.toString();
             log.error(error, th);
             return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
+        }
+        finally {
+            DirUtils.deleteAsync(tempDir);
         }
         Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(task.getId(), true);
         return status== Enums.UploadResourceStatus.OK

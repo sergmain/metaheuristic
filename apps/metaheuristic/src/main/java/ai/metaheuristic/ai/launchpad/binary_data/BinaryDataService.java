@@ -65,14 +65,14 @@ public class BinaryDataService {
     }
 
     @Transactional(readOnly = true)
-    public BinaryDataImpl getBinaryData(long id) {
+    public BinaryDataImpl getBinaryData(Long id) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("this method intended to be only for test cases");
         }
         return getBinaryData(id, true);
     }
 
-    private BinaryDataImpl getBinaryData(long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
+    private BinaryDataImpl getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
         try {
             BinaryDataImpl data = binaryDataRepository.findById(id).orElse(null);
             if (data==null) {
@@ -88,7 +88,7 @@ public class BinaryDataService {
     }
 
     @Transactional(readOnly = true)
-    public byte[] getDataAsBytes(long id) {
+    public byte[] getDataAsBytes(Long id) {
         try {
             BinaryData data = binaryDataRepository.findById(id).orElse(null);
             if (data==null) {
@@ -102,18 +102,18 @@ public class BinaryDataService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public boolean exist(String code) {
+        try {
+            Long id = binaryDataRepository.getIdByCode(code);
+            return (id!=null);
+        } catch (Throwable th) {
+            return false;
+        }
+    }
+
     public void storeToFile(String code, File trgFile) {
         try {
-/*
-            // TODO 2019-06-08 need to confirm that new version is working with postgres.
-            // after that this part can be deleted
-            BinaryData data = binaryDataRepository.findByCode(code);
-            if (data==null) {
-                log.warn("#087.14.01 Binary data for code {} wasn't found", code);
-                throw new BinaryDataNotFoundException("#087.14 Binary data wasn't found, code: " + code);
-            }
-            FileUtils.copyInputStreamToFile(data.getData().getBinaryStream(), trgFile);
-*/
             Blob blob = binaryDataRepository.getDataAsStreamByCode(code);
             if (blob==null) {
                 log.warn("#087.010 Binary data for code {} wasn't found", code);

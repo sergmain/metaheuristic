@@ -23,12 +23,14 @@ import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.LaunchpadCommandProcessor;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
@@ -45,8 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.AbstractResource;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -58,7 +58,6 @@ import org.springframework.util.MultiValueMap;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -81,15 +80,16 @@ public class ServerService {
     private final StationCache stationCache;
     private final WorkbookRepository workbookRepository;
     private final StationsRepository stationsRepository;
+    private final SnippetRepository snippetRepository;
 
     // return a requested resource to a station
-    public ResponseEntity<AbstractResource> deliverResource(String typeAsStr, String code, String chunkSize, int chunkNum) {
+    public ResourceWithCleanerInfo deliverResource(String typeAsStr, String code, String chunkSize, int chunkNum) {
         EnumsApi.BinaryDataType binaryDataType = EnumsApi.BinaryDataType.valueOf(typeAsStr.toUpperCase());
         return deliverResource(binaryDataType, code, chunkSize, chunkNum);
     }
 
     // return a requested resource to a station
-    public ResponseEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, String chunkSize, int chunkNum) {
+    public ResourceWithCleanerInfo deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, String chunkSize, int chunkNum) {
         return deliverResource(binaryDataType, code, null, chunkSize, chunkNum);
     }
 
@@ -126,12 +126,18 @@ public class ServerService {
     }
 
     // return a requested resource to a station
-    private ResponseEntity<AbstractResource> deliverResource(final EnumsApi.BinaryDataType binaryDataType, final String code, final HttpHeaders httpHeaders, final String chunkSize, final int chunkNum) {
+    private ResourceWithCleanerInfo deliverResource(final EnumsApi.BinaryDataType binaryDataType, final String code, final HttpHeaders httpHeaders, final String chunkSize, final int chunkNum) {
         return getWithSync(binaryDataType, code,
                 () -> getAbstractResourceResponseEntity(httpHeaders, chunkSize, chunkNum, binaryDataType, code));
     }
 
-    private ResponseEntity<AbstractResource> getAbstractResourceResponseEntity(HttpHeaders httpHeaders, String chunkSize, int chunkNum, EnumsApi.BinaryDataType binaryDataType, String code) {
+    private ResourceWithCleanerInfo getAbstractResourceResponseEntity(HttpHeaders httpHeaders, String chunkSize, int chunkNum, EnumsApi.BinaryDataType binaryDataType, String code) {
+
+        if (!binaryDataService.exist(code)) {
+            String es = "#442.005 Resource with code " + code + " wasn't found";
+            log.error(es);
+            throw new BinaryDataNotFoundException(es);
+        }
         AssetFile assetFile;
         switch (binaryDataType) {
             case SNIPPET:
@@ -143,19 +149,23 @@ public class ServerService {
                 break;
             case UNKNOWN:
             default:
-                throw new IllegalStateException("Unknown type of data: " + binaryDataType);
+                throw new IllegalStateException("#442.008 Unknown type of data: " + binaryDataType);
         }
-
-        if (assetFile == null) {
-            String es = "#442.010 resource with code " + code + " wasn't found";
+        if (assetFile.isError) {
+            String es = "#442.006 Resource with code " + code + " is broken";
             log.error(es);
             throw new BinaryDataNotFoundException(es);
         }
-        try {
-            binaryDataService.storeToFile(code, assetFile.file);
-        } catch (BinaryDataNotFoundException e) {
-            log.error("#442.020 Error store data to temp file, data doesn't exist in db, code " + code + ", file: " + assetFile.file.getPath());
-            throw e;
+
+        ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
+
+        if (!assetFile.isContent) {
+            try {
+                binaryDataService.storeToFile(code, assetFile.file);
+            } catch (BinaryDataNotFoundException e) {
+                log.error("#442.020 Error store data to temp file, data doesn't exist in db, code " + code + ", file: " + assetFile.file.getPath());
+                throw e;
+            }
         }
         File f;
         boolean isLastChunk;
@@ -164,13 +174,16 @@ public class ServerService {
             isLastChunk = true;
         } else {
             f = new File(DirUtils.createTempDir("chunked-file-"), "file-part.bin");
+            resource.toClean.add(f);
+
             final long size = Long.parseLong(chunkSize);
             final long offset = size * chunkNum;
             if (offset >= assetFile.file.length()) {
                 MultiValueMap<String, String> headers = new HttpHeaders();
                 headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, "true");
                 headers.add(Consts.HEADER_MH_CHUNK_SIZE, "0");
-                return new ResponseEntity<>(new ByteArrayResource(new byte[0]), headers, HttpStatus.OK);
+                resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, headers, HttpStatus.OK);
+                return resource;
             }
             final long realSize = assetFile.file.length() < offset + size ? assetFile.file.length() - offset : size;
             copyChunk(assetFile.file, f, offset, realSize);
@@ -179,7 +192,8 @@ public class ServerService {
         final HttpHeaders headers = RestUtils.getHeader(httpHeaders, f.length());
         headers.add(Consts.HEADER_MH_CHUNK_SIZE, Long.toString(f.length()));
         headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, Boolean.toString(isLastChunk));
-        return new ResponseEntity<>(new FileSystemResource(f.toPath()), headers, HttpStatus.OK);
+        resource.entity = new ResponseEntity<>(new FileSystemResource(f.toPath()), headers, HttpStatus.OK);
+        return resource;
     }
 
     public static void copyChunk(File sourceFile, File destFile, long offset, long size) {

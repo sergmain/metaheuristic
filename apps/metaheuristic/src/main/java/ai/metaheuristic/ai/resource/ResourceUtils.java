@@ -75,7 +75,6 @@ public class ResourceUtils {
         return assetFile;
     }
 
-    @SuppressWarnings("Duplicates")
     public static AssetFile prepareSnippetFile(File baseDir, String snippetCode, String resourceFilename) {
 
         final AssetFile assetFile = new AssetFile();

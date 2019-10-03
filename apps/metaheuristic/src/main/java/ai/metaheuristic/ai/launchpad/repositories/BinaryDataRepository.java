@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.repositories;
 
-import ai.metaheuristic.ai.launchpad.beans.AtlasTask;
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
@@ -43,6 +42,10 @@ import java.util.List;
 @Profile("launchpad")
 public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long> {
     List<BinaryData> findAllByDataType(int dataType);
+
+    @Transactional(readOnly = true)
+    @Query(value="select b.id from BinaryDataImpl b where b.code=:code")
+    Long getIdByCode(String code);
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
             "b.code, b.poolCode, b.params, b.filename ) " +

@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.ai;
 
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,6 +53,8 @@ public class Consts {
     public static final PageRequest PAGE_REQUEST_20_REC = PageRequest.of(0, 20);
 
     public static final Map<String, String> EMPTY_UNMODIFIABLE_MAP = Collections.unmodifiableMap(new HashMap<>(0));
+
+    public static final ByteArrayResource ZERO_BYTE_ARRAY_RESOURCE = new ByteArrayResource(new byte[0]);
 
     public static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 
@@ -116,4 +118,5 @@ public class Consts {
 
     public static final String HEADER_MH_IS_LAST_CHUNK = "mh-is-last-chunk";
     public static final String HEADER_MH_CHUNK_SIZE = "mh-chunk-size";
+    public static final String RESOURCES_TO_CLEAN = "toClean";
 }

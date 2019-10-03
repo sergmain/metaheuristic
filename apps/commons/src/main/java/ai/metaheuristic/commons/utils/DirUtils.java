@@ -16,13 +16,28 @@
 package ai.metaheuristic.commons.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Slf4j
 public class DirUtils {
+
+    public static void deleteAsync(final File dir) {
+        if (dir != null && dir.isDirectory()) {
+            Thread t = new Thread(() -> {
+                try {
+                    FileUtils.deleteDirectory(dir);
+                } catch (IOException e) {
+                    // it's cleaning so don't report any error
+                }
+            });
+            t.start();
+        }
+    }
 
     public static File createDir(File baseDir, String subDir) {
         File currDir = new File(baseDir, subDir);

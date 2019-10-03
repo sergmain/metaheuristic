@@ -18,6 +18,7 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.launchpad.batch.RefToPilotRepositories;
 import ai.metaheuristic.ai.launchpad.repositories.RefToLaunchpadRepositories;
+import ai.metaheuristic.ai.resource.ResourceCleanerInterceptor;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -28,6 +29,8 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * User: Serg
@@ -60,6 +63,14 @@ public class Config {
         return threadPoolTaskScheduler;
     }
 
+    @Configuration
+    public static class MhMvcConfig implements WebMvcConfigurer {
+
+        @Override
+        public void addInterceptors(InterceptorRegistry registry) {
+            registry.addInterceptor(new ResourceCleanerInterceptor());
+        }
+    }
 
 /*
     @Bean

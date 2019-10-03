@@ -54,7 +54,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
@@ -196,29 +195,29 @@ public class AtlasTopLevelService {
         zipDir.mkdir();
         if (!zipDir.exists()) {
             log.error("#422.060 Error, zip dir wasn't created, path: {}", zipDir.getAbsolutePath());
-            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         File taskDir = new File(zipDir, TASKS_DIR);
         taskDir.mkdir();
         if (!taskDir.exists()) {
             log.error("#422.070 Error, task dir wasn't created, path: {}", taskDir.getAbsolutePath());
-            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         File zipFile = new File(resultDir, S.f("export-%s.zip", atlasId));
         if (zipFile.isDirectory()) {
             log.error("#422.080 Error, path for zip file is actually directory, path: {}", zipFile.getAbsolutePath());
-            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         Atlas atlas = atlasRepository.findById(atlasId).orElse(null);
         if (atlas==null) {
-            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.NOT_FOUND);
         }
         File exportFile = new File(zipDir, EXPERIMENT_YAML_FILE);
         try {
             FileUtils.write(exportFile, atlas.params, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("#422.090 Error", e);
-            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         Set<Long> atlasTaskIds = atlasTaskRepository.findIdsByAtlasId(atlasId);
 
@@ -243,7 +242,7 @@ public class AtlasTopLevelService {
                 FileUtils.writeStringToFile(taskFile, at.params, StandardCharsets.UTF_8);
             } catch (IOException e) {
                 log.error("#422.110 Error writing task's params to file {}", taskFile.getAbsolutePath());
-                return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
 
