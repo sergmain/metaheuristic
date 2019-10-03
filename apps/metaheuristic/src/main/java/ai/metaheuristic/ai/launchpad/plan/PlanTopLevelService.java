@@ -318,8 +318,9 @@ public class PlanTopLevelService implements ApplicationEventPublisherAware {
 
         final String location = System.getProperty("java.io.tmpdir");
 
+        File tempDir=null;
         try {
-            File tempDir = DirUtils.createTempDir("mh-plan-upload-");
+            tempDir = DirUtils.createTempDir("mh-plan-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#560.350 can't create temporary directory in " + location);
@@ -342,6 +343,9 @@ public class PlanTopLevelService implements ApplicationEventPublisherAware {
             log.error("Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.370 can't load plans, Error: " + e.toString());
+        }
+        finally {
+            DirUtils.deleteAsync(tempDir);
         }
     }
 

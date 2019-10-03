@@ -20,14 +20,17 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.LaunchpadCommandProcessor;
 import ai.metaheuristic.ai.launchpad.beans.Station;
+import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
+import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
@@ -40,24 +43,27 @@ import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,6 +77,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ServerService {
 
+    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadResourceStatus.OK, null);
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
     public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
@@ -80,7 +87,8 @@ public class ServerService {
     private final StationCache stationCache;
     private final WorkbookRepository workbookRepository;
     private final StationsRepository stationsRepository;
-    private final SnippetRepository snippetRepository;
+    private final TaskRepository taskRepository;
+    private final TaskPersistencer taskPersistencer;
 
     // return a requested resource to a station
     public ResourceWithCleanerInfo deliverResource(String typeAsStr, String code, String chunkSize, int chunkNum) {
@@ -129,6 +137,67 @@ public class ServerService {
     private ResourceWithCleanerInfo deliverResource(final EnumsApi.BinaryDataType binaryDataType, final String code, final HttpHeaders httpHeaders, final String chunkSize, final int chunkNum) {
         return getWithSync(binaryDataType, code,
                 () -> getAbstractResourceResponseEntity(httpHeaders, chunkSize, chunkNum, binaryDataType, code));
+    }
+
+    public UploadResult uploadResource(MultipartFile file, Long taskId) {
+        String originFilename = file.getOriginalFilename();
+        if (StringUtils.isBlank(originFilename)) {
+            return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
+        }
+        if (taskId==null) {
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.020 taskId is null" );
+        }
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 taskId is null" );
+        }
+
+        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+
+        File tempDir=null;
+        try {
+            tempDir = DirUtils.createTempDir("upload-resource-");
+            if (tempDir==null || tempDir.isFile()) {
+                final String location = System.getProperty("java.io.tmpdir");
+                return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, "#440.040 can't create temporary directory in " + location);
+            }
+            final File resFile = new File(tempDir, "resource.");
+            log.debug("Start storing an uploaded resource data to disk, target file: {}", resFile.getPath());
+            try(OutputStream os = new FileOutputStream(resFile)) {
+                IOUtils.copy(file.getInputStream(), os, 64000);
+            }
+            try (InputStream is = new FileInputStream(resFile)) {
+                binaryDataService.save(
+                        is, resFile.length(), EnumsApi.BinaryDataType.DATA,
+                        taskParamYaml.taskYaml.outputResourceCode,
+                        taskParamYaml.taskYaml.outputResourceCode,
+                        false,
+                        null,
+                        task.workbookId, EnumsApi.BinaryDataRefType.workbook);
+            }
+        }
+        catch (BinaryDataSaveException th) {
+            final String es = "#440.045 can't store the result, unrecoverable error with data. Error: " + th.toString();
+            log.error(es, th);
+            return new UploadResult(Enums.UploadResourceStatus.UNRECOVERABLE_ERROR, es);
+        }
+        catch (PessimisticLockingFailureException th) {
+            final String es = "#440.050 can't store the result, need to try again. Error: " + th.toString();
+            log.error(es, th);
+            return new UploadResult(Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING, es);
+        }
+        catch (Throwable th) {
+            final String error = "#440.060 can't store the result, Error: " + th.toString();
+            log.error(error, th);
+            return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
+        }
+        finally {
+            DirUtils.deleteAsync(tempDir);
+        }
+        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(task.getId(), true);
+        return status== Enums.UploadResourceStatus.OK
+                ? OK_UPLOAD_RESULT
+                : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+task.getId()+"");
     }
 
     private ResourceWithCleanerInfo getAbstractResourceResponseEntity(HttpHeaders httpHeaders, String chunkSize, int chunkNum, EnumsApi.BinaryDataType binaryDataType, String code) {
@@ -198,8 +267,8 @@ public class ServerService {
 
     public static void copyChunk(File sourceFile, File destFile, long offset, long size) {
 
-        try (final FileOutputStream fos = new FileOutputStream(destFile)){
-            RandomAccessFile raf = new RandomAccessFile(sourceFile,"r");
+        try (final FileOutputStream fos = new FileOutputStream(destFile);
+             RandomAccessFile raf = new RandomAccessFile(sourceFile,"r")){
             raf.seek(offset);
             long left = size;
             int realChunkSize = (int)(size > 64000 ? 64000 : size);

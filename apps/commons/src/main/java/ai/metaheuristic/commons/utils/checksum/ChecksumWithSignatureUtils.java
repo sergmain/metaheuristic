@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.utils.checksum;
+package ai.metaheuristic.commons.utils.checksum;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -30,7 +30,7 @@ import java.security.Signature;
 import java.util.Map;
 
 @Slf4j
-public class ChecksumWithSignatureService {
+public class ChecksumWithSignatureUtils {
 
     @AllArgsConstructor
     public static class ChecksumWithSignature {
@@ -40,8 +40,6 @@ public class ChecksumWithSignatureService {
 
     public static CheckSumAndSignatureStatus verifyChecksumAndSignature(Checksum checksum, String infoPrefix, InputStream fis, boolean isVerifySignature, PublicKey publicKey ) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
-        status.isOk = true;
-        status.isSignatureOk = null;
         for (Map.Entry<EnumsApi.Type, String> entry : checksum.checksums.entrySet()) {
             String sum, entrySum;
             if (entry.getKey()==EnumsApi.Type.SHA256WithSignature) {
@@ -49,8 +47,8 @@ public class ChecksumWithSignatureService {
                 entrySum = checksumWithSignature.checksum;
 
                 if (isVerifySignature) {
-                    status.isSignatureOk = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, publicKey);
-                    if (!status.isSignatureOk) {
+                    status.signature = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, publicKey);
+                    if (status.signature== CheckSumAndSignatureStatus.Status.wrong) {
                         log.warn("{}, validation was failed, checksum: {}, signature: {}, publicKey: {}", infoPrefix, checksumWithSignature.checksum, checksumWithSignature.signature, publicKey);
                         break;
                     }
@@ -60,22 +58,23 @@ public class ChecksumWithSignatureService {
             }
             else {
                 if (isVerifySignature) {
-                    status.isSignatureOk = false;
                     log.warn("{}, can't validate signature with checksum type {}", infoPrefix, entry.getKey());
                     break;
                 }
                 sum = Checksum.getChecksum(entry.getKey(), fis);
                 entrySum = entry.getValue();
             }
+
             if (sum.equals(entrySum)) {
+                status.checksum = CheckSumAndSignatureStatus.Status.correct;
                 log.info("{}, checksum is Ok", infoPrefix);
             } else {
                 log.error("S{}, checksum is wrong, expected: {}, actual: {}", infoPrefix, entrySum, sum);
-                status.isOk = false;
+                status.checksum = CheckSumAndSignatureStatus.Status.wrong;
                 break;
             }
         }
-        if (Boolean.FALSE.equals(status.isSignatureOk)) {
+        if (status.signature== CheckSumAndSignatureStatus.Status.wrong) {
             log.error("{}, Signature is wrong", infoPrefix);
         }
         return status;
@@ -91,16 +90,15 @@ public class ChecksumWithSignatureService {
         return checksumWithSignature;
     }
 
-    public static boolean isValid(byte[] data, String signatureAsBase64, PublicKey publicKey) {
+    public static CheckSumAndSignatureStatus.Status isValid(byte[] data, String signatureAsBase64, PublicKey publicKey) {
         try {
             Signature signature = Signature.getInstance("SHA256withRSA");
             signature.initVerify(publicKey);
             signature.update(data);
             //noinspection
             final byte[] bytes = Base64.decodeBase64(signatureAsBase64);
-            //noinspection UnnecessaryLocalVariable
             boolean status = signature.verify(bytes);
-            return status;
+            return status ? CheckSumAndSignatureStatus.Status.correct : CheckSumAndSignatureStatus.Status.wrong;
         }
         catch (GeneralSecurityException e) {
             log.error("Error checking signature", e);

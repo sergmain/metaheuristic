@@ -567,8 +567,9 @@ public class ExperimentTopLevelService {
 
         final String location = System.getProperty("java.io.tmpdir");
 
+        File tempDir=null;
         try {
-            File tempDir = DirUtils.createTempDir("mh-experiment-upload-");
+            tempDir = DirUtils.createTempDir("mh-experiment-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#285.340 can't create temporary directory in " + location);
@@ -591,6 +592,9 @@ public class ExperimentTopLevelService {
             log.error("#285.350 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.360 can't load plans, Error: " + e.toString());
+        }
+        finally {
+            DirUtils.deleteAsync(tempDir);
         }
     }
 

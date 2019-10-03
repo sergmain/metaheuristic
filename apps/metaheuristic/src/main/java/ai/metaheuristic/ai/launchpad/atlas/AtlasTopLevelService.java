@@ -186,6 +186,9 @@ public class AtlasTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.050 can't load snippets, Error: " + e.toString());
         }
+        finally {
+            DirUtils.deleteAsync(resultDir);
+        }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

@@ -17,14 +17,13 @@
 package ai.metaheuristic.ai.resource;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -42,15 +41,18 @@ public class ResourceCleanerInterceptor extends HandlerInterceptorAdapter {
         if (toClean!=null) {
             try {
                 for (File file : toClean) {
+                    if (!file.exists()) {
+                        continue;
+                    }
                     if (file.isFile()) {
                         file.delete();
                     }
                     else {
-                        FileUtils.deleteDirectory(file);
+                        DirUtils.deleteAsync(file);
                     }
                 }
-            } catch (IOException e) {
-                log.error("Error while cleaning resourses", e);
+            } catch (Throwable th) {
+                log.error("Error while cleaning resourses", th);
             }
         }
     }

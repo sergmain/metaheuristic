@@ -36,6 +36,8 @@ import java.util.stream.Stream;
 @Profile("launchpad")
 public class ConsoleFormAtlasService {
 
+    // TODO 2019-10-02 if at 2019-11-02 there isn't any case for using this code, it has to be deleted
+
     private static ObjectMapper mapper;
 
     static {

@@ -13,20 +13,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.utils.checksum;
+package ai.metaheuristic.commons.utils.checksum;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.commons.utils.SecUtils;
-import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 
 import static org.junit.Assert.assertTrue;
@@ -52,9 +48,9 @@ public class TestChecksumWithSignature {
 
         String forVerifying = checksum + SecUtils.SIGNATURE_DELIMITER + signature;
 
-        ChecksumWithSignatureService.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureService.parse(forVerifying);
+        ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(forVerifying);
 
-        assertTrue(ChecksumWithSignatureService.isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, globals.launchpadPublicKey));
+        assertTrue(ChecksumWithSignatureUtils.isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, globals.launchpadPublicKey));
 */
     }
 

@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
@@ -54,14 +55,14 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.Yaml;
@@ -190,6 +191,7 @@ public class BatchTopLevelService {
         }
 
         try {
+            // tempDir will be deleted in processing thread
             File tempDir = DirUtils.createTempDir("batch-file-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
@@ -240,7 +242,13 @@ public class BatchTopLevelService {
                     log.error(es, th);
                     batchService.changeStateToError(batch.id, es);
                 }
-
+                finally {
+                    try {
+                        FileUtils.deleteDirectory(tempDir);
+                    } catch (IOException e) {
+                        // it's cleaning so don't report any error
+                    }
+                }
             }).start();
             //noinspection unused
             int i=0;
@@ -473,10 +481,14 @@ public class BatchTopLevelService {
         return new BatchData.Status(batchId, status.getStatus(), status.ok);
     }
 
-    public HttpEntity<AbstractResource> getBatchProcessingResult(Long batchId) throws IOException {
+    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId) throws IOException {
+        ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
+
         File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
         File zipDir = new File(resultDir, "zip");
         zipDir.mkdir();
+        resource.toClean.add(resultDir);
+
         BatchStatus status = batchService.prepareStatusAndData(batchId, zipDir, false, true);
 
         File statusFile = new File(zipDir, "status.txt");
@@ -488,7 +500,8 @@ public class BatchTopLevelService {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         httpHeaders.setContentDispositionFormData("attachment", RESULT_ZIP);
-        return new HttpEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()));
+        resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
+        return resource;
     }
 
 

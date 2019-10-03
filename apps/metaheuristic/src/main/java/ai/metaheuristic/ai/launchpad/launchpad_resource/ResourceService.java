@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.launchpad_resource;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.api.EnumsApi;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -31,13 +32,10 @@ import java.io.InputStream;
 @Service
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class ResourceService {
 
     private final BinaryDataService binaryDataService;
-
-    public ResourceService(BinaryDataService binaryDataService) {
-        this.binaryDataService = binaryDataService;
-    }
 
     public void storeInitialResource(File tempFile, String code, String poolCode, String filename) {
         try {

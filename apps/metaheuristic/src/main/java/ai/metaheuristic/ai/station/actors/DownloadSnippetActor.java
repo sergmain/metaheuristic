@@ -25,8 +25,8 @@ import ai.metaheuristic.ai.station.StationTaskService;
 import ai.metaheuristic.ai.station.net.HttpClientExecutor;
 import ai.metaheuristic.ai.station.tasks.DownloadSnippetTask;
 import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.utils.checksum.CheckSumAndSignatureStatus;
-import ai.metaheuristic.ai.utils.checksum.ChecksumWithSignatureService;
+import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
+import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -102,7 +102,6 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
             final String targetUrl = payloadRestUrl + "/resource/" + EnumsApi.BinaryDataType.SNIPPET;
             final String snippetChecksumUrl = payloadRestUrl + "/snippet-checksum";
-
 
             try {
                 final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +
@@ -250,23 +249,23 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     }
                 }
 
-                boolean isOk = true;
+                CheckSumAndSignatureStatus.Status isOk = CheckSumAndSignatureStatus.Status.unknown;
                 if (task.launchpad.acceptOnlySignedSnippets) {
                     CheckSumAndSignatureStatus status;
                     try (FileInputStream fis = new FileInputStream(snippetTempFile)) {
-                        status = ChecksumWithSignatureService.verifyChecksumAndSignature(checksum, "Launchpad: "+task.launchpad.url+", snippet: "+snippetCode, fis, true, task.launchpad.createPublicKey());
+                        status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "Launchpad: "+task.launchpad.url+", snippet: "+snippetCode, fis, true, task.launchpad.createPublicKey());
                     }
-                    if ( status.isSignatureOk == null){
+                    if ( status.signature == null){
                         log.warn("#811.090 launchpad.acceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
                         continue;
                     }
-                    if (Boolean.FALSE.equals(status.isSignatureOk)) {
+                    if (Boolean.FALSE.equals(status.signature)) {
                         log.warn("#811.100 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
                         continue;
                     }
-                    isOk = status.isOk;
+                    isOk = status.checksum;
                 }
-                if (isOk) {
+                if (isOk==CheckSumAndSignatureStatus.Status.correct) {
                     //noinspection ResultOfMethodCallIgnored
                     snippetTempFile.renameTo(assetFile.file);
                     preparedMap.put(snippetCode, true);

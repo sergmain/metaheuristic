@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -39,15 +40,11 @@ import java.util.List;
 @Service
 @Slf4j
 @Profile("station")
+@RequiredArgsConstructor
 public class LaunchpadResourceProvider implements ResourceProvider {
 
     private final DownloadResourceActor downloadResourceActor;
     private final UploadResourceActor uploadResourceActor;
-
-    public LaunchpadResourceProvider(DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor) {
-        this.downloadResourceActor = downloadResourceActor;
-        this.uploadResourceActor = uploadResourceActor;
-    }
 
     @Override
     public List<AssetFile> prepareForDownloadingDataFile(

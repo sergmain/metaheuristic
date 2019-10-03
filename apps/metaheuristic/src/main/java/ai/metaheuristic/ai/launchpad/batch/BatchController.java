@@ -16,7 +16,10 @@
 
 package ai.metaheuristic.ai.launchpad.batch;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
+import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +28,9 @@ import org.springframework.core.io.AbstractResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,7 +38,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
 @Controller
@@ -132,10 +137,18 @@ public class BatchController {
 
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadProcessingResult(
-            HttpServletResponse response, @PathVariable("batchId") Long batchId,
+            HttpServletRequest request, @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName) throws IOException {
 
-        return batchTopLevelService.getBatchProcessingResult(batchId);
+        final ResponseEntity<AbstractResource> entity;
+        try {
+            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId);
+            entity = resource.entity;
+            request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
+        } catch (BinaryDataNotFoundException e) {
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+        }
+        return entity;
     }
 
 }

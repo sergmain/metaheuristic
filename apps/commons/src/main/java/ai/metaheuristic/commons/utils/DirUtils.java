@@ -26,12 +26,17 @@ import java.util.Date;
 @Slf4j
 public class DirUtils {
 
-    public static void deleteAsync(final File dir) {
-        if (dir != null && dir.isDirectory()) {
+    public static void deleteAsync(final File fileOrDir) {
+        if (fileOrDir != null) {
             Thread t = new Thread(() -> {
                 try {
-                    FileUtils.deleteDirectory(dir);
-                } catch (IOException e) {
+                    if (fileOrDir.isDirectory()) {
+                        FileUtils.deleteDirectory(fileOrDir);
+                    }
+                    else {
+                        fileOrDir.delete();
+                    }
+                } catch(IOException e){
                     // it's cleaning so don't report any error
                 }
             });
@@ -54,12 +59,12 @@ public class DirUtils {
     public static File createTempDir(String prefix) {
         String tempDir = System.getProperty("java.io.tmpdir");
 
-        Date date =  new Date();
+        Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         String prefixDate = format.format(date);
         File newTempDir = null;
         for (int i = 0; i < 5; i++) {
-            newTempDir = new File(tempDir, prefix + prefixDate+"-"+System.nanoTime());
+            newTempDir = new File(tempDir, prefix + prefixDate + "-" + System.nanoTime());
             if (newTempDir.exists()) {
                 continue;
             }

@@ -23,7 +23,9 @@ import lombok.NoArgsConstructor;
 
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class LaunchpadLookupConfig {
@@ -65,8 +67,10 @@ public class LaunchpadLookupConfig {
 
         public boolean acceptOnlySignedSnippets = false;
 
+        private final Map<Integer, PublicKey> publicKeyMap = new HashMap<>();
+
         public PublicKey createPublicKey() {
-            return SecUtils.getPublicKey(publicKey);
+            return publicKeyMap.computeIfAbsent(1, o-> SecUtils.getPublicKey(this.publicKey));
         }
     }
 }

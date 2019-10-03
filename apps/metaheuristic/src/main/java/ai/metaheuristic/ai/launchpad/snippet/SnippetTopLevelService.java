@@ -91,8 +91,9 @@ public class SnippetTopLevelService {
 
         final String location = System.getProperty("java.io.tmpdir");
 
+        File tempDir = null;
         try {
-            File tempDir = DirUtils.createTempDir("snippet-upload-");
+            tempDir = DirUtils.createTempDir("snippet-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#422.04 can't create temporary directory in " + location);
@@ -123,6 +124,9 @@ public class SnippetTopLevelService {
             log.error("Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.05 can't load snippets, Error: " + e.toString());
+        }
+        finally {
+            DirUtils.deleteAsync(tempDir);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

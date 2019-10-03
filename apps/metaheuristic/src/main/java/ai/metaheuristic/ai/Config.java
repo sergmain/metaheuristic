@@ -65,7 +65,6 @@ public class Config {
 
     @Configuration
     public static class MhMvcConfig implements WebMvcConfigurer {
-
         @Override
         public void addInterceptors(InterceptorRegistry registry) {
             registry.addInterceptor(new ResourceCleanerInterceptor());

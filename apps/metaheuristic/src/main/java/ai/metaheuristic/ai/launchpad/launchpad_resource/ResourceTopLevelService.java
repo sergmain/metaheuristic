@@ -26,6 +26,8 @@ import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.ResourceData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.commons.utils.DirUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -40,17 +42,12 @@ import java.io.IOException;
 @Slf4j
 @Profile("launchpad")
 @Service
+@RequiredArgsConstructor
 public class ResourceTopLevelService {
 
     private final Globals globals;
     private final ResourceService resourceService;
     private final BinaryDataService binaryDataService;
-
-    public ResourceTopLevelService(Globals globals, BinaryDataService binaryDataService, ResourceService resourceService) {
-        this.globals = globals;
-        this.binaryDataService = binaryDataService;
-        this.resourceService = resourceService;
-    }
 
     public ResourceData.ResourcesResult getResources(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.resourceRowsLimit, pageable);
@@ -75,24 +72,28 @@ public class ResourceTopLevelService {
             }
         }
         try {
-            FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
-        } catch (IOException e) {
-            log.error("Error while storing data to temp file", e);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#172.030 can't persist uploaded file as " +
-                            tempFile.getAbsolutePath()+", error: " + e.toString());
-        }
+            try {
+                FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+            } catch (IOException e) {
+                log.error("Error while storing data to temp file", e);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        "#172.030 can't persist uploaded file as " +
+                                tempFile.getAbsolutePath()+", error: " + e.toString());
+            }
 
-        String code = StringUtils.isNotBlank(resourceCode)
-                ? resourceCode
-                : resourcePoolCode + '-' + originFilename;
+            String code = StringUtils.isNotBlank(resourceCode)
+                    ? resourceCode
+                    : resourcePoolCode + '-' + originFilename;
 
-        try {
-            resourceService.storeInitialResource(tempFile, code, resourcePoolCode, originFilename);
-        } catch (StoreNewFileException e) {
-            String es = "#172.040 An error while saving data to file, " + e.toString();
-            log.error(es, e);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+            try {
+                resourceService.storeInitialResource(tempFile, code, resourcePoolCode, originFilename);
+            } catch (StoreNewFileException e) {
+                String es = "#172.040 An error while saving data to file, " + e.toString();
+                log.error(es, e);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+            }
+        } finally {
+            DirUtils.deleteAsync(tempFile);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

@@ -13,13 +13,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.utils.checksum;
+package ai.metaheuristic.commons.utils.checksum;
 
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString
 public class CheckSumAndSignatureStatus {
-    public boolean isOk = true;
-    public Boolean isSignatureOk = null;
+
+    public enum Status {unknown, correct, wrong}
+
+    public Status checksum = Status.unknown;
+    public Status signature = Status.unknown;
 
 }
