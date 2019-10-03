@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Config file which is transferred from a Station to Launchpad
+ *
  * @author Serge
  * Date: 8/29/2019
  * Time: 6:00 PM

@@ -71,6 +71,9 @@ public class GitSourcingService {
         }
     }
 
+    // DO NOT CHANGE THIS CLASS.
+    // If you need to, then copy it to ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml
+    // before any changing
     @Data
     @ToString
     @NoArgsConstructor

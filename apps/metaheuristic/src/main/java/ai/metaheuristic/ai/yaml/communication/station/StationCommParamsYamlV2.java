@@ -37,70 +37,67 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class StationCommParamsYaml implements BaseParams {
+public class StationCommParamsYamlV2 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-/*
-        final boolean b = planYaml != null && planYaml.planCode != null && !planYaml.planCode.isBlank() &&
-                planYaml.processes != null;
-        if (!b) {
-            throw new IllegalArgumentException(
-                    "(boolean b = planYaml != null && planYaml.planCode != null && " +
-                            "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
-        }
-        for (ProcessV5 process : planYaml.processes) {
-            if (process.snippets == null || process.snippets.size() == 0) {
-                throw new IllegalArgumentException("(process.snippets==null || process.snippets.size()==0) ");
-            }
-        }
-*/
-
         return true;
     }
 
-    public StationCommContext stationCommContext;
-    public RequestStationId requestStationId;
-    public ReportStationStatus reportStationStatus;
-    public ReportStationTaskStatus reportStationTaskStatus;
-    public RequestTask requestTask;
-    public ReportTaskProcessingResult reportTaskProcessingResult;
-    public CheckForMissingOutputResources checkForMissingOutputResources;
-    public ResendTaskOutputResourceResult resendTaskOutputResourceResult;
+    public StationCommContextV2 stationCommContext;
+    public RequestStationIdV2 requestStationId;
+    public ReportStationStatusV2 reportStationStatus;
+    public ReportStationTaskStatusV2 reportStationTaskStatus;
+    public RequestTaskV2 requestTask;
+    public ReportTaskProcessingResultV2 reportTaskProcessingResult;
+    public CheckForMissingOutputResourcesV2 checkForMissingOutputResources;
+    public ResendTaskOutputResourceResultV2 resendTaskOutputResourceResult;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class StationCommContext {
+    public static class StationCommContextV2 {
         public String stationId;
         public String sessionId;
     }
 
     @Data
-    @NoArgsConstructor
     @AllArgsConstructor
-    public static class RequestStationId {
-        public boolean keep = true;
-    }
-
-    @Data
     @NoArgsConstructor
-    @AllArgsConstructor
-    public static class CheckForMissingOutputResources {
+    public static class RequestStationIdV2 {
         public boolean keep = true;
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class RequestTask {
+    public static class CheckForMissingOutputResourcesV2 {
+        public boolean keep = true;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class RequestTaskV2 {
         public boolean acceptOnlySigned;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReportStationStatus {
+    public static class ReportStationStatusV2 {
+
+        public enum SnippetState { none, signature_broken, checksum_wrong, ready, not_supported_os }
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class SnippetStatus {
+            public String code;
+            public SnippetState state;
+        }
+        public List<SnippetStatus> snippetStatuses = null;
+
         public EnvYaml env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;
@@ -129,7 +126,9 @@ public class StationCommParamsYaml implements BaseParams {
     }
 
     @Data
-    public static class ReportTaskProcessingResult {
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ReportTaskProcessingResultV2 {
 
         @Data
         @AllArgsConstructor
@@ -146,7 +145,7 @@ public class StationCommParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ReportStationTaskStatus {
+    public static class ReportStationTaskStatusV2 {
 
         @Data
         @AllArgsConstructor
@@ -160,7 +159,8 @@ public class StationCommParamsYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    public static class ResendTaskOutputResourceResult {
+    @AllArgsConstructor
+    public static class ResendTaskOutputResourceResultV2 {
 
         @Data
         @AllArgsConstructor
@@ -171,11 +171,7 @@ public class StationCommParamsYaml implements BaseParams {
         }
 
         public List<SimpleStatus> statuses;
-
-        public ResendTaskOutputResourceResult(List<SimpleStatus> statuses) {
-            this.statuses = statuses;
-        }
     }
 
-    public final int version=1;
+    public final int version=2;
 }

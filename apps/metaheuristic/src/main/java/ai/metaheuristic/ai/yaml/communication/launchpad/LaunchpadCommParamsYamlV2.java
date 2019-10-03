@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,41 +33,34 @@ import java.util.List;
  * Time: 6:00 PM
  */
 @Data
-public class LaunchpadCommParamsYamlV1 implements BaseParams {
+public class LaunchpadCommParamsYamlV2 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-/*
-        final boolean b = planYaml != null && planYaml.planCode != null && !planYaml.planCode.isBlank() &&
-                planYaml.processes != null;
-        if (!b) {
-            throw new IllegalArgumentException(
-                    "(boolean b = planYaml != null && planYaml.planCode != null && " +
-                            "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
-        }
-        for (ProcessV5 process : planYaml.processes) {
-            if (process.snippets == null || process.snippets.size() == 0) {
-                throw new IllegalArgumentException("(process.snippets==null || process.snippets.size()==0) ");
-            }
-        }
-*/
-
         return true;
     }
 
-    public LaunchpadCommContextV1 launchpadCommContext;
+    public LaunchpadCommContextV2 launchpadCommContext;
 
-    public AssignedTaskV1 assignedTask;
-    public AssignedStationIdV1 assignedStationId;
-    public ReAssignStationIdV1 reAssignedStationId;
-    public ReportResultDeliveringV1 reportResultDelivering;
-    public WorkbookStatusV1 workbookStatus;
-    public ResendTaskOutputResourceV1 resendTaskOutputResource;
+    public SnippetsV2 snippets;
+    public AssignedTaskV2 assignedTask;
+    public AssignedStationIdV2 assignedStationId;
+    public ReAssignStationIdV2 reAssignedStationId;
+    public ReportResultDeliveringV2 reportResultDelivering;
+    public WorkbookStatusV2 workbookStatus;
+    public ResendTaskOutputResourceV2 resendTaskOutputResource;
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class AssignedTaskV1 {
+    public static class SnippetsV2 {
+        public List<String> codes = new ArrayList<>();
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AssignedTaskV2 {
         public String params;
         public Long taskId;
         public Long workbookId;
@@ -75,7 +69,7 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AssignedStationIdV1 {
+    public static class AssignedStationIdV2 {
         public String assignedStationId;
         public String assignedSessionId;
     }
@@ -83,11 +77,11 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReAssignStationIdV1 {
+    public static class ReAssignStationIdV2 {
         public String reAssignedStationId;
         public String sessionId;
 
-        public ReAssignStationIdV1(Long stationId, String sessionId) {
+        public ReAssignStationIdV2(Long stationId, String sessionId) {
             this(Long.toString(stationId), sessionId);
         }
     }
@@ -95,14 +89,14 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReportResultDeliveringV1 {
+    public static class ReportResultDeliveringV2 {
         public List<Long> ids;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class WorkbookStatusV1 {
+    public static class WorkbookStatusV2 {
 
         @Data
         @AllArgsConstructor
@@ -118,19 +112,19 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ResendTaskOutputResourceV1 {
+    public static class ResendTaskOutputResourceV2 {
         public List<Long> taskIds;
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class LaunchpadCommContextV1 {
+    public static class LaunchpadCommContextV2 {
         public Long chunkSize;
     }
 
     public boolean success = true;
     public String msg;
 
-    public final int version=1;
+    public final int version=2;
 }
