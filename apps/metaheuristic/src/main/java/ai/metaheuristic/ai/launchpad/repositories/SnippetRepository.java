@@ -22,6 +22,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 @Transactional
 @Profile("launchpad")
@@ -33,4 +35,8 @@ public interface SnippetRepository extends JpaRepository<Snippet, Long> {
     @Transactional
     @Query(value="select b from Snippet b where b.code=:code")
     Snippet findByCodeForUpdate(String code);
+
+    @Transactional(readOnly = true)
+    @Query(value="select b.code from Snippet b")
+    List<String> findAllCodes();
 }

@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -56,12 +57,21 @@ public class LaunchpadCommParamsYaml implements BaseParams {
 
     public LaunchpadCommContext launchpadCommContext;
 
+    // always send info about snippets
+    public Snippets snippets = new Snippets();
     public AssignedTask assignedTask;
     public AssignedStationId assignedStationId;
     public ReAssignStationId reAssignedStationId;
     public ReportResultDelivering reportResultDelivering;
     public WorkbookStatus workbookStatus;
     public ResendTaskOutputResource resendTaskOutputResource;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Snippets {
+        public List<String> codes = new ArrayList<>();
+    }
 
     @Data
     public static class AssignedTask {
@@ -127,5 +137,5 @@ public class LaunchpadCommParamsYaml implements BaseParams {
     public boolean success = true;
     public String msg;
 
-    public final int version=1;
+    public final int version=2;
 }

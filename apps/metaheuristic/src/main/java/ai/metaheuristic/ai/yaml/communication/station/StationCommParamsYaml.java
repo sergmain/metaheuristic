@@ -59,6 +59,7 @@ public class StationCommParamsYaml implements BaseParams {
         return true;
     }
 
+    public SnippetDownloadStatus snippetDownloadStatus;
     public StationCommContext stationCommContext;
     public RequestStationId requestStationId;
     public ReportStationStatus reportStationStatus;
@@ -67,6 +68,19 @@ public class StationCommParamsYaml implements BaseParams {
     public ReportTaskProcessingResult reportTaskProcessingResult;
     public CheckForMissingOutputResources checkForMissingOutputResources;
     public ResendTaskOutputResourceResult resendTaskOutputResourceResult;
+
+    @Data
+    public static class SnippetDownloadStatus {
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class Status {
+            public Enums.SnippetState snippetState;
+            public String snippetCode;
+        }
+
+        public List<Status> statuses = new ArrayList<>();
+    }
 
     @Data
     @NoArgsConstructor
@@ -177,5 +191,5 @@ public class StationCommParamsYaml implements BaseParams {
         }
     }
 
-    public final int version=1;
+    public final int version=2;
 }

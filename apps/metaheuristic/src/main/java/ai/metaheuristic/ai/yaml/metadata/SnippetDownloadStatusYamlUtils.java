@@ -14,28 +14,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.communication.station;
+package ai.metaheuristic.ai.yaml.metadata;
 
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
 
 /**
  * @author Serge
- * Date: 8/29/2019
- * Time: 6:00 PM
+ * Date: 10/3/2019
+ * Time: 4:51 PM
  */
-public class StationCommParamsYamlUtils {
+public class SnippetDownloadStatusYamlUtils {
 
-    private static final StationCommParamsYamlUtilsV1 YAML_UTILS_V_1 = new StationCommParamsYamlUtilsV1();
-    private static final StationCommParamsYamlUtilsV2 YAML_UTILS_V_2 = new StationCommParamsYamlUtilsV2();
-    private static final StationCommParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final SnippetDownloadStatusYamlUtilsV1 YAML_UTILS_V_1 = new SnippetDownloadStatusYamlUtilsV1();
+    private static final SnippetDownloadStatusYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    public static final BaseYamlUtils<StationCommParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<SnippetDownloadStatusYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
+                    1, YAML_UTILS_V_1
             ),
             DEFAULT_UTILS
     );
+
+
 }

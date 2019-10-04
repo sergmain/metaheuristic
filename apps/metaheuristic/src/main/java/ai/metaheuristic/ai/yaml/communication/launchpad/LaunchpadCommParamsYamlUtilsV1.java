@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Time: 6:02 PM
  */
 public class LaunchpadCommParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<LaunchpadCommParamsYamlV1, LaunchpadCommParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<LaunchpadCommParamsYamlV1, LaunchpadCommParamsYamlV2, LaunchpadCommParamsYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -42,42 +42,42 @@ public class LaunchpadCommParamsYamlUtilsV1
     }
 
     @Override
-    public LaunchpadCommParamsYaml upgradeTo(LaunchpadCommParamsYamlV1 v1, Long ... vars) {
-        LaunchpadCommParamsYaml t = new LaunchpadCommParamsYaml();
+    public LaunchpadCommParamsYamlV2 upgradeTo(LaunchpadCommParamsYamlV1 v1, Long ... vars) {
+        LaunchpadCommParamsYamlV2 t = new LaunchpadCommParamsYamlV2();
 
         if( v1.launchpadCommContext!=null ) {
-            t.launchpadCommContext = new LaunchpadCommParamsYaml.LaunchpadCommContext();
+            t.launchpadCommContext = new LaunchpadCommParamsYamlV2.LaunchpadCommContextV2();
             t.launchpadCommContext.chunkSize = v1.launchpadCommContext.chunkSize;
         }
         if (v1.assignedTask!=null) {
-            t.assignedTask = new LaunchpadCommParamsYaml.AssignedTask();
+            t.assignedTask = new LaunchpadCommParamsYamlV2.AssignedTaskV2();
             BeanUtils.copyProperties(v1.assignedTask, t.assignedTask);
         }
         if (v1.assignedStationId!=null) {
-            t.assignedStationId = new LaunchpadCommParamsYaml.AssignedStationId();
+            t.assignedStationId = new LaunchpadCommParamsYamlV2.AssignedStationIdV2();
             BeanUtils.copyProperties(v1.assignedStationId, t.assignedStationId);
         }
         if (v1.reAssignedStationId!=null) {
-            t.reAssignedStationId = new LaunchpadCommParamsYaml.ReAssignStationId();
+            t.reAssignedStationId = new LaunchpadCommParamsYamlV2.ReAssignStationIdV2();
             BeanUtils.copyProperties(v1.reAssignedStationId, t.reAssignedStationId);
         }
         if (v1.reportResultDelivering!=null) {
-            t.reportResultDelivering = new LaunchpadCommParamsYaml.ReportResultDelivering();
+            t.reportResultDelivering = new LaunchpadCommParamsYamlV2.ReportResultDeliveringV2();
             t.reportResultDelivering.ids =
                     v1.reportResultDelivering.ids!=null ? new ArrayList<>(v1.reportResultDelivering.ids) : new ArrayList<>();
         }
         if (v1.workbookStatus!=null) {
-            t.workbookStatus = new LaunchpadCommParamsYaml.WorkbookStatus();
+            t.workbookStatus = new LaunchpadCommParamsYamlV2.WorkbookStatusV2();
             t.workbookStatus.statuses =
                     v1.workbookStatus.statuses!=null
                             ? v1.workbookStatus.statuses
                             .stream()
-                            .map(o->new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(o.workbookId, o.state))
+                            .map(o->new LaunchpadCommParamsYamlV2.WorkbookStatusV2.SimpleStatus(o.workbookId, o.state))
                             .collect(Collectors.toList())
                             : new ArrayList<>();
         }
         if (v1.resendTaskOutputResource!=null) {
-            t.resendTaskOutputResource = new LaunchpadCommParamsYaml.ResendTaskOutputResource();
+            t.resendTaskOutputResource = new LaunchpadCommParamsYamlV2.ResendTaskOutputResourceV2();
             t.resendTaskOutputResource.taskIds =
                     v1.resendTaskOutputResource.taskIds!=null ? new ArrayList<>(v1.resendTaskOutputResource.taskIds) : new ArrayList<>();
         }
@@ -92,8 +92,8 @@ public class LaunchpadCommParamsYamlUtilsV1
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public LaunchpadCommParamsYamlUtilsV2 nextUtil() {
+        return (LaunchpadCommParamsYamlUtilsV2)LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override

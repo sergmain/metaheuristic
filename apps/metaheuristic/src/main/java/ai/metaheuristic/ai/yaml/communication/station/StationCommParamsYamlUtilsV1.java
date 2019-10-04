@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Time: 6:02 PM
  */
 public class StationCommParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<StationCommParamsYamlV1, StationCommParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<StationCommParamsYamlV1, StationCommParamsYamlV2, StationCommParamsYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -42,54 +42,54 @@ public class StationCommParamsYamlUtilsV1
     }
 
     @Override
-    public StationCommParamsYaml upgradeTo(StationCommParamsYamlV1 v1, Long ... vars) {
-        StationCommParamsYaml t = new StationCommParamsYaml();
+    public StationCommParamsYamlV2 upgradeTo(StationCommParamsYamlV1 v1, Long ... vars) {
+        StationCommParamsYamlV2 t = new StationCommParamsYamlV2();
 
         if (v1.stationCommContext!=null) {
-            t.stationCommContext = new StationCommParamsYaml.StationCommContext();
+            t.stationCommContext = new StationCommParamsYamlV2.StationCommContextV2();
             BeanUtils.copyProperties(v1.stationCommContext, t.stationCommContext);
         }
         if (v1.requestStationId!=null) {
-            t.requestStationId = new StationCommParamsYaml.RequestStationId(true);
+            t.requestStationId = new StationCommParamsYamlV2.RequestStationIdV2(true);
         }
         if (v1.reportStationStatus!=null) {
-            t.reportStationStatus = new StationCommParamsYaml.ReportStationStatus();
+            t.reportStationStatus = new StationCommParamsYamlV2.ReportStationStatusV2();
             BeanUtils.copyProperties(v1.reportStationStatus, t.reportStationStatus);
         }
         if (v1.reportStationTaskStatus!=null) {
-            t.reportStationTaskStatus = new StationCommParamsYaml.ReportStationTaskStatus();
+            t.reportStationTaskStatus = new StationCommParamsYamlV2.ReportStationTaskStatusV2();
             t.reportStationTaskStatus.statuses =
                     v1.reportStationTaskStatus.statuses!=null
                             ? v1.reportStationTaskStatus.statuses
                             .stream()
-                            .map(o->new StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus(o.taskId))
+                            .map(o->new StationCommParamsYamlV2.ReportStationTaskStatusV2.SimpleStatus(o.taskId))
                             .collect(Collectors.toList())
                             : new ArrayList<>();
         }
         if (v1.requestTask!=null) {
-            t.requestTask = new StationCommParamsYaml.RequestTask();
+            t.requestTask = new StationCommParamsYamlV2.RequestTaskV2();
             t.requestTask.acceptOnlySigned = v1.requestTask.acceptOnlySigned;
         }
         if (v1.reportTaskProcessingResult!=null) {
-            t.reportTaskProcessingResult = new StationCommParamsYaml.ReportTaskProcessingResult();
+            t.reportTaskProcessingResult = new StationCommParamsYamlV2.ReportTaskProcessingResultV2();
             t.reportTaskProcessingResult.results =
                     v1.reportTaskProcessingResult.results!=null
                             ? v1.reportTaskProcessingResult.results
                             .stream()
-                            .map(o->new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(o.taskId, o.result, o.metrics))
+                            .map(o->new StationCommParamsYamlV2.ReportTaskProcessingResultV2.SimpleTaskExecResult(o.taskId, o.result, o.metrics))
                             .collect(Collectors.toList())
                             : new ArrayList<>();
         }
         if (v1.checkForMissingOutputResources!=null) {
-            t.checkForMissingOutputResources = new StationCommParamsYaml.CheckForMissingOutputResources(true);
+            t.checkForMissingOutputResources = new StationCommParamsYamlV2.CheckForMissingOutputResourcesV2(true);
         }
         if (v1.resendTaskOutputResourceResult!=null) {
-            t.resendTaskOutputResourceResult = new StationCommParamsYaml.ResendTaskOutputResourceResult();
+            t.resendTaskOutputResourceResult = new StationCommParamsYamlV2.ResendTaskOutputResourceResultV2();
             t.resendTaskOutputResourceResult.statuses =
                     v1.resendTaskOutputResourceResult.statuses!=null
                             ? v1.resendTaskOutputResourceResult.statuses
                             .stream()
-                            .map(o->new StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(o.taskId, o.status))
+                            .map(o->new StationCommParamsYamlV2.ResendTaskOutputResourceResultV2.SimpleStatus(o.taskId, o.status))
                             .collect(Collectors.toList())
                             : new ArrayList<>();
         }
@@ -104,8 +104,8 @@ public class StationCommParamsYamlUtilsV1
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public StationCommParamsYamlUtilsV2 nextUtil() {
+        return (StationCommParamsYamlUtilsV2)StationCommParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override

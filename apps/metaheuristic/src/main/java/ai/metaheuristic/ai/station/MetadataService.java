@@ -17,9 +17,13 @@
 package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.S;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metadata.MetadataUtils;
+import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
+import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -109,6 +113,33 @@ public class MetadataService {
             final Metadata.LaunchpadInfo launchpadInfo = getLaunchpadInfo(launchpadUrl);
             launchpadInfo.stationId = stationId;
             launchpadInfo.sessionId = sessionId;
+            updateMetadataFile();
+        }
+    }
+
+    public void setSnippetDownloadStatus(final String launchpadUrl, String snippetCode, Enums.SnippetState snippetState) {
+        if (S.b(launchpadUrl)) {
+            throw new IllegalStateException("launchpadUrl is null");
+        }
+        if (S.b(snippetCode)) {
+            throw new IllegalStateException("snippetCode is null");
+        }
+        synchronized (syncObj) {
+            String yaml = metadata.metadata.get(Consts.META_SNIPPET_DOWNLOAD_STATUS);
+            SnippetDownloadStatusYaml snippetDownloadStatusYaml =
+                    SnippetDownloadStatusYamlUtils.BASE_YAML_UTILS.to(yaml);
+            if (snippetDownloadStatusYaml==null) {
+                snippetDownloadStatusYaml = new SnippetDownloadStatusYaml();
+            }
+
+            SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(snippetCode)).findAny().orElse(null);
+            if (status == null) {
+                status = new SnippetDownloadStatusYaml.Status();
+                snippetDownloadStatusYaml.statuses.add(status);
+            }
+            status.snippetState = snippetState;
+            yaml = SnippetDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(snippetDownloadStatusYaml);
+            metadata.metadata.put(Consts.META_SNIPPET_DOWNLOAD_STATUS, yaml);
             updateMetadataFile();
         }
     }

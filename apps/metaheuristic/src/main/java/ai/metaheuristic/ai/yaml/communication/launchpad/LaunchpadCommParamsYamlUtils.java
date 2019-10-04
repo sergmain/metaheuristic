@@ -28,10 +28,14 @@ import java.util.Map;
 public class LaunchpadCommParamsYamlUtils {
 
     private static final LaunchpadCommParamsYamlUtilsV1 YAML_UTILS_V_1 = new LaunchpadCommParamsYamlUtilsV1();
-    private static final LaunchpadCommParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final LaunchpadCommParamsYamlUtilsV2 YAML_UTILS_V_2 = new LaunchpadCommParamsYamlUtilsV2();
+    private static final LaunchpadCommParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
     public static final BaseYamlUtils<LaunchpadCommParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
-            Map.of(1, YAML_UTILS_V_1),
+            Map.of(
+                    1, YAML_UTILS_V_1,
+                    2, YAML_UTILS_V_2
+            ),
             DEFAULT_UTILS
     );
 }

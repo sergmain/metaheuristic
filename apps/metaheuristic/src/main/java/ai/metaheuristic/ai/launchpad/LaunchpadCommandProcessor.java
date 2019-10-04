@@ -18,12 +18,10 @@ package ai.metaheuristic.ai.launchpad;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
@@ -36,7 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Serge
@@ -50,13 +50,14 @@ import java.util.List;
 public class LaunchpadCommandProcessor {
 
     private final StationCache stationCache;
-    private final ExperimentService experimentService;
     private final TaskService taskService;
-    private final PlanService planService;
-    private final ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad;
     private final StationTopLevelService stationTopLevelService;
     private final WorkbookService workbookService;
-    private final WorkbookSchedulerService workbookSchedulerService;
+    private final SnippetRepository snippetRepository;
+
+    public static final long SNIPPET_CODES_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
+    private List<String> snippetCodeCache = new ArrayList<>();
+    private long mills = System.currentTimeMillis();
 
     public void process(StationCommParamsYaml scpy, LaunchpadCommParamsYaml lcpy) {
         lcpy.resendTaskOutputResource = checkForMissingOutputResources(scpy);
@@ -69,6 +70,15 @@ public class LaunchpadCommandProcessor {
         processReportStationStatus(scpy);
         lcpy.assignedTask = processRequestTask(scpy);
         lcpy.assignedStationId = getNewStationId(scpy.requestStationId);
+        lcpy.snippets.codes.addAll( getSnippetCodes() );
+    }
+
+    private synchronized List<String> getSnippetCodes() {
+        if (System.currentTimeMillis() - mills > SNIPPET_CODES_TIMEOUT_REFRESH) {
+            mills = System.currentTimeMillis();
+            snippetCodeCache = snippetRepository.findAllCodes();
+        }
+        return snippetCodeCache;
     }
 
     // processing on launchpad side

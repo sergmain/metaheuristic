@@ -119,4 +119,6 @@ public class Consts {
     public static final String HEADER_MH_IS_LAST_CHUNK = "mh-is-last-chunk";
     public static final String HEADER_MH_CHUNK_SIZE = "mh-chunk-size";
     public static final String RESOURCES_TO_CLEAN = "toClean";
+
+    public static final String META_SNIPPET_DOWNLOAD_STATUS = "mh-snippet-download-status";
 }

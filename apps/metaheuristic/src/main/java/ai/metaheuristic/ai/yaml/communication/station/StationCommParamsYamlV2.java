@@ -32,7 +32,7 @@ import java.util.List;
  * Config file which is transferred from a Station to Launchpad
  *
  * @author Serge
- * Date: 8/29/2019
+ * Date: 10/03/2019
  * Time: 6:00 PM
  */
 @Data
@@ -44,6 +44,7 @@ public class StationCommParamsYamlV2 implements BaseParams {
         return true;
     }
 
+    public SnippetDownloadStatusV2 snippetDownloadStatus;
     public StationCommContextV2 stationCommContext;
     public RequestStationIdV2 requestStationId;
     public ReportStationStatusV2 reportStationStatus;
@@ -52,6 +53,19 @@ public class StationCommParamsYamlV2 implements BaseParams {
     public ReportTaskProcessingResultV2 reportTaskProcessingResult;
     public CheckForMissingOutputResourcesV2 checkForMissingOutputResources;
     public ResendTaskOutputResourceResultV2 resendTaskOutputResourceResult;
+
+    @Data
+    public static class SnippetDownloadStatusV2 {
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class Status {
+            public Enums.SnippetState snippetState;
+            public String snippetCode;
+        }
+
+        public List<Status> statuses = new ArrayList<>();
+    }
 
     @Data
     @NoArgsConstructor
@@ -87,14 +101,12 @@ public class StationCommParamsYamlV2 implements BaseParams {
     @AllArgsConstructor
     public static class ReportStationStatusV2 {
 
-        public enum SnippetState { none, signature_broken, checksum_wrong, ready, not_supported_os }
-
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SnippetStatus {
             public String code;
-            public SnippetState state;
+            public Enums.SnippetState state;
         }
         public List<SnippetStatus> snippetStatuses = null;
 
