@@ -18,6 +18,9 @@ package ai.metaheuristic.ai.yaml.metadata;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.data.BaseParams;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +30,14 @@ import java.util.List;
  * Date: 10/3/2019
  * Time: 4:51 PM
  */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class SnippetDownloadStatusYaml implements BaseParams {
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Status {
         public Enums.SnippetState snippetState;
         public String code;

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.station;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -49,6 +50,14 @@ public class StationCommandProcessor {
         processAssignedTask(launchpadUrl, launchpadYaml);
         storeStationId(launchpadUrl, launchpadYaml);
         reAssignStationId(launchpadUrl, launchpadYaml);
+        registerSnippets(scpy.snippetDownloadStatus, launchpadUrl, launchpadYaml);
+    }
+
+    private void registerSnippets(StationCommParamsYaml.SnippetDownloadStatus snippetDownloadStatus, String launchpadUrl, LaunchpadCommParamsYaml launchpadYaml) {
+        List<SnippetDownloadStatusYaml.Status> statuses = metadataService.registerNewSnippetCode(launchpadUrl, launchpadYaml.snippets.codes);
+        for (SnippetDownloadStatusYaml.Status status : statuses) {
+            snippetDownloadStatus.statuses.add(new StationCommParamsYaml.SnippetDownloadStatus.Status(status.snippetState, status.code));
+        }
     }
 
     // processing on station side

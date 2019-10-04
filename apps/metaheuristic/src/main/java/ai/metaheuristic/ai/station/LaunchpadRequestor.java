@@ -231,6 +231,8 @@ public class LaunchpadRequestor {
                 Monitoring.log("##013", Enums.Monitor.MEMORY);
                 setReportTaskProcessingResult(scpy, stationTaskService.reportTaskProcessingResult(launchpadUrl));
                 Monitoring.log("##014", Enums.Monitor.MEMORY);
+
+                scpy.snippetDownloadStatus.statuses.addAll(metadataService.getAsSnippetDownloadStatuses());
             }
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;
@@ -278,19 +280,6 @@ public class LaunchpadRequestor {
                     default:
                         throw e;
                 }
-/*
-// TODO 2019-08-31 delete this after some time if there won't be any problem with new version of code
-
-                if (e.getStatusCode() == UNAUTHORIZED) {
-                    log.error("#775.070 Error 401 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
-                } else if (e.getStatusCode() == FORBIDDEN) {
-                    log.error("#775.080 Error 403 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
-                } else if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                    log.error("#775.085 Error 404 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
-                } else {
-                    throw e;
-                }
-*/
             } catch (ResourceAccessException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof SocketException) {

@@ -59,7 +59,8 @@ public class StationCommParamsYaml implements BaseParams {
         return true;
     }
 
-    public SnippetDownloadStatus snippetDownloadStatus;
+    // always report info about snippets
+    public SnippetDownloadStatus snippetDownloadStatus = new SnippetDownloadStatus();
     public StationCommContext stationCommContext;
     public RequestStationId requestStationId;
     public ReportStationStatus reportStationStatus;
