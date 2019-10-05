@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.S;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.station.LaunchpadLookupExtendedService;
 import ai.metaheuristic.ai.station.MetadataService;
 import ai.metaheuristic.ai.station.StationTaskService;
 import ai.metaheuristic.ai.station.net.HttpClientExecutor;
@@ -69,6 +70,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
     private final Globals globals;
     private final MetadataService metadataService;
     private final StationTaskService stationTaskService;
+    private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
 
     private enum ConfigStatus {ok, error}
 
@@ -79,7 +81,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
     }
 
     @SuppressWarnings("Duplicates")
-    public void fixedDelay() {
+    public void downloadSnippets() {
         if (globals.isUnitTesting) {
             return;
         }
@@ -93,7 +95,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             final String payloadRestUrl = task.launchpad.url + Consts.REST_V1_URL + Consts.PAYLOAD_REST_URL;
 
             final SnippetDownloadStatusYaml.Status snippetDownloadStatus = metadataService.getSnippetDownloadStatuses(task.launchpad.url, snippetCode);
-            if (snippetDownloadStatus.sourcing!= EnumsApi.SnippetSourcing.launchpad) {
+            if (snippetDownloadStatus.sourcing!=EnumsApi.SnippetSourcing.launchpad) {
                 log.warn("#811.010 Snippet {} can't be downloaded because sourcing isn't 'launchpad'.", snippetCode);
                 continue;
             }
@@ -104,6 +106,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 DownloadSnippetConfigStatus downloadSnippetConfigStatus = downloadSnippetConfig(task.launchpad, payloadRestUrl, snippetCode, task.stationId);
                 if (downloadSnippetConfigStatus.status!= ConfigStatus.ok) {
                     metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.snippet_config_error);
+                    continue;
                 }
                 snippetConfig = downloadSnippetConfigStatus.snippetConfig;
             }
@@ -299,6 +302,23 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 log.error("#811.130 URISyntaxException", e);
             }
         }
+    }
+
+    public void prepareSnippetForDownloading() {
+        metadataService.getSnippetDownloadStatusYaml().statuses.forEach(o->{
+            if (o.sourcing== EnumsApi.SnippetSourcing.launchpad && o.snippetState== Enums.SnippetState.none) {
+                final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
+                        launchpadLookupExtendedService.lookupExtendedMap.get(o.launchpadUrl);
+
+                Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(o.launchpadUrl);
+
+                DownloadSnippetTask snippetTask = new DownloadSnippetTask(launchpad.config.chunkSize, o.code, null);
+                snippetTask.launchpad = launchpad.launchpadLookup;
+                snippetTask.stationId = launchpadInfo.stationId;
+                add(snippetTask);
+            }
+        });
+
     }
 
     private DownloadSnippetConfigStatus downloadSnippetConfig(

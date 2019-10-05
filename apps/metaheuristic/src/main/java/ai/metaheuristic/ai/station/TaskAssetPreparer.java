@@ -17,16 +17,14 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.actors.DownloadSnippetActor;
 import ai.metaheuristic.ai.station.tasks.DownloadSnippetTask;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
-import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +33,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Service
@@ -81,7 +80,7 @@ public class TaskAssetPreparer {
                 log.error("#951.030 Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
+            Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 
             if (EnumsApi.WorkbookExecState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.workbookId)) {
                 stationTaskService.delete(task.launchpadUrl, task.taskId);
@@ -106,41 +105,56 @@ public class TaskAssetPreparer {
             }
 
             // Start preparing data for snippet
-            File taskDir = stationTaskService.prepareTaskDir(launchpadCode, task.taskId);
-            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadCode, taskParamYaml, launchpad, taskDir);
+            File taskDir = stationTaskService.prepareTaskDir(launchpadInfo, task.taskId);
+            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadInfo, taskParamYaml, launchpad, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
-            boolean isAllLoaded = resultOfChecking.isAllLoaded;
-
 
             // start preparing snippets
-            File baseResourceDir = stationTaskService.prepareBaseResourceDir(launchpadCode);
-
+            final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
             final SnippetApiData.SnippetConfig snippetConfig = taskParamYaml.taskYaml.snippet;
-            final String code = snippetConfig.code;
-            if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.launchpad) {
-                if (metadataService.getSnippetDownloadStatuses(task.launchpadUrl, code).snippetState!= Enums.SnippetState.none) {
-                    return;
-                }
-
-                AssetFile assetFile = ResourceUtils.prepareSnippetFile(baseResourceDir, snippetConfig.getCode(), snippetConfig.file);
-                if (assetFile.isError || !assetFile.isContent) {
-                    isAllLoaded = false;
-                    DownloadSnippetTask snippetTask = new DownloadSnippetTask(
-                            launchpad.config.chunkSize, snippetConfig.getCode(), snippetConfig
-                    );
-                    snippetTask.launchpad = launchpad.launchpadLookup;
-                    snippetTask.stationId = launchpadCode.stationId;
-                    downloadSnippetActor.add(snippetTask);
-                }
+            if ( !prepareSnippet(snippetConfig, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
+                isAllReady.set(false);
+            }
+            if (taskParamYaml.taskYaml.preSnippets!=null) {
+                taskParamYaml.taskYaml.preSnippets.forEach( sc-> {
+                    if ( !prepareSnippet(sc, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
+                        isAllReady.set(false);
+                    }
+                });
+            }
+            if (taskParamYaml.taskYaml.postSnippets!=null) {
+                taskParamYaml.taskYaml.postSnippets.forEach( sc-> {
+                    if ( !prepareSnippet(sc, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
+                        isAllReady.set(false);
+                    }
+                });
             }
 
             // update the status of task if everything is prepared
-            if (isAllLoaded) {
+            if (isAllReady.get()) {
                 log.info("All assets were prepared for task #{}, launchpad: {}", task.taskId, task.launchpadUrl);
                 stationTaskService.markAsAssetPrepared(task.launchpadUrl, task.taskId, true);
             }
         }
+    }
+
+    private boolean prepareSnippet(SnippetApiData.SnippetConfig snippetConfig, String launchpadUrl, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, String stationId) {
+        if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.launchpad) {
+            final String code = snippetConfig.code;
+            final Enums.SnippetState snippetState = metadataService.getSnippetDownloadStatuses(launchpadUrl, code).snippetState;
+            if (snippetState==Enums.SnippetState.none) {
+                DownloadSnippetTask snippetTask = new DownloadSnippetTask(launchpad.config.chunkSize, snippetConfig.getCode(), snippetConfig);
+                snippetTask.launchpad = launchpad.launchpadLookup;
+                snippetTask.stationId = stationId;
+                downloadSnippetActor.add(snippetTask);
+                return true;
+            }
+            else {
+                return snippetState == Enums.SnippetState.ready;
+            }
+        }
+        return true;
     }
 }

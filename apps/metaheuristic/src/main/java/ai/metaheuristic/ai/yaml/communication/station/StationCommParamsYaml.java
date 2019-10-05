@@ -72,6 +72,7 @@ public class StationCommParamsYaml implements BaseParams {
 
     @Data
     public static class SnippetDownloadStatus {
+        
         @Data
         @AllArgsConstructor
         @NoArgsConstructor

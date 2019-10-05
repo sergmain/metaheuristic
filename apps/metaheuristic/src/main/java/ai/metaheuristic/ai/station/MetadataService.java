@@ -131,7 +131,7 @@ public class MetadataService {
         }
         SnippetDownloadStatusYaml snippetDownloadStatusYaml;
         synchronized (syncObj) {
-            snippetDownloadStatusYaml = getSnippetDownloadStatusYaml();
+            snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
             boolean isChanged = false;
             for (LaunchpadCommParamsYaml.Snippets.Info info : infos) {
                 SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream()
@@ -165,7 +165,7 @@ public class MetadataService {
             throw new IllegalStateException("snippetCode is null");
         }
         synchronized (syncObj) {
-            SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYaml();
+            SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
 
             SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(snippetCode)).findAny().orElse(null);
             if (status == null) {
@@ -194,7 +194,7 @@ public class MetadataService {
 
     public SnippetDownloadStatusYaml.Status getSnippetDownloadStatuses(String launchpadUrl, String snippetCode) {
         synchronized (syncObj) {
-            return getSnippetDownloadStatusYaml().statuses.stream()
+            return getSnippetDownloadStatusYamlInternal().statuses.stream()
                     .filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(snippetCode))
                     .findAny().orElse(null);
         }
@@ -202,14 +202,14 @@ public class MetadataService {
 
     public List<StationCommParamsYaml.SnippetDownloadStatus.Status> getAsSnippetDownloadStatuses() {
         synchronized (syncObj) {
-            return getSnippetDownloadStatusYaml().statuses.stream()
+            return getSnippetDownloadStatusYamlInternal().statuses.stream()
                     .map(o->new StationCommParamsYaml.SnippetDownloadStatus.Status(o.snippetState, o.code))
                     .collect(Collectors.toList());
         }
     }
 
     private void setSnippetDownloadStatusInternal(String launchpadUrl, String code, EnumsApi.SnippetSourcing sourcing, Enums.SnippetState snippetState) {
-        SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYaml();
+        SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
 
         SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(code)).findAny().orElse(null);
         if (status == null) {
@@ -221,7 +221,15 @@ public class MetadataService {
         metadata.metadata.put(Consts.META_SNIPPET_DOWNLOAD_STATUS, yaml);
     }
 
-    private SnippetDownloadStatusYaml getSnippetDownloadStatusYaml() {
+    public SnippetDownloadStatusYaml getSnippetDownloadStatusYaml() {
+        synchronized (syncObj) {
+            //noinspection UnnecessaryLocalVariable
+            SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
+            return snippetDownloadStatusYaml;
+        }
+    }
+
+    private SnippetDownloadStatusYaml getSnippetDownloadStatusYamlInternal() {
         String yaml = metadata.metadata.get(Consts.META_SNIPPET_DOWNLOAD_STATUS);
         SnippetDownloadStatusYaml snippetDownloadStatusYaml;
         if (S.b(yaml)) {

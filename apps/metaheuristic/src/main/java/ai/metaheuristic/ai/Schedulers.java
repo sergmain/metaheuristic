@@ -192,7 +192,7 @@ public class Schedulers {
             }
         }
 
-        @Scheduled(initialDelay = 20_000, fixedDelay = 5_000)
+        @Scheduled(initialDelay = 20_000, fixedDelay = 20_000)
         public void monitorHotDeployDir() {
             if (globals.isUnitTesting) {
                 return;
@@ -260,8 +260,20 @@ public class Schedulers {
             if (!globals.isStationEnabled) {
                 return;
             }
-            log.info("Run downloadSnippetActor.fixedDelay()");
-            downloadSnippetActor.fixedDelay();
+            log.info("Run downloadSnippetActor.downloadSnippets()");
+            downloadSnippetActor.downloadSnippets();
+        }
+
+        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.prepare-snippet-for-downloading'), 3, 20, 10)*1000 }")
+        public void prepareSnippetForDownloading() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.isStationEnabled) {
+                return;
+            }
+            log.info("Run downloadSnippetActor.prepareSnippetForDownloading()");
+            downloadSnippetActor.prepareSnippetForDownloading();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-resource'), 3, 20, 3)*1000 }")
