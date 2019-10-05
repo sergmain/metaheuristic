@@ -517,7 +517,7 @@ public class TaskProcessor {
         snippetPrepareResult.snippet = snippet;
 
         if (snippetPrepareResult.snippet.sourcing== EnumsApi.SnippetSourcing.launchpad) {
-            final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
+            final File snippetDir = stationTaskService.prepareBaseResourceDir(launchpadCode);
             snippetPrepareResult.snippetAssetFile = ResourceUtils.prepareSnippetFile(snippetDir, snippetPrepareResult.snippet.getCode(), snippetPrepareResult.snippet.file);
             // is this snippet prepared?
             if (snippetPrepareResult.snippetAssetFile.isError || !snippetPrepareResult.snippetAssetFile.isContent) {
@@ -526,7 +526,7 @@ public class TaskProcessor {
             }
         }
         else if (snippetPrepareResult.snippet.sourcing==EnumsApi.SnippetSourcing.git) {
-            final File snippetRootDir = stationTaskService.prepareSnippetDir(launchpadCode);
+            final File snippetRootDir = stationTaskService.prepareBaseResourceDir(launchpadCode);
             log.info("Root dir for snippet: " + snippetRootDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareSnippet(snippetRootDir, snippetPrepareResult.snippet);
             if (!result.ok) {

@@ -19,6 +19,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 
@@ -38,7 +39,7 @@ public class ChecksumWithSignatureUtils {
         public String signature;
     }
 
-    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(Checksum checksum, String infoPrefix, InputStream fis, boolean isVerifySignature, PublicKey publicKey ) throws IOException {
+    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(@NonNull Checksum checksum, String infoPrefix, InputStream fis, boolean isVerifySignature, PublicKey publicKey ) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
         for (Map.Entry<EnumsApi.Type, String> entry : checksum.checksums.entrySet()) {
             String sum, entrySum;

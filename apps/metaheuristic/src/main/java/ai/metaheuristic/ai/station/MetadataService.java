@@ -20,11 +20,13 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.S;
+import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metadata.MetadataUtils;
 import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
 import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -123,7 +125,7 @@ public class MetadataService {
         }
     }
 
-    public List<SnippetDownloadStatusYaml.Status> registerNewSnippetCode(String launchpadUrl, List<String> codes) {
+    public List<SnippetDownloadStatusYaml.Status> registerNewSnippetCode(String launchpadUrl, List<LaunchpadCommParamsYaml.Snippets.Info> infos) {
         if (S.b(launchpadUrl)) {
             throw new IllegalStateException("launchpadUrl is null");
         }
@@ -131,18 +133,20 @@ public class MetadataService {
         synchronized (syncObj) {
             snippetDownloadStatusYaml = getSnippetDownloadStatusYaml();
             boolean isChanged = false;
-            for (String code : codes) {
+            for (LaunchpadCommParamsYaml.Snippets.Info info : infos) {
                 SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream()
-                        .filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(code))
+                        .filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(info.code))
                         .findAny().orElse(null);
                 if (status==null) {
-                    setSnippetDownloadStatusInternal(launchpadUrl, code, Enums.SnippetState.none);
+                    setSnippetDownloadStatusInternal(launchpadUrl, info.code, info.sourcing, Enums.SnippetState.none);
                     isChanged = true;
                 }
             }
+
+            // set state to SnippetState.not_found if snippet doesn't exist on Launchpad any more
             for (SnippetDownloadStatusYaml.Status status : snippetDownloadStatusYaml.statuses) {
-                if (status.launchpadUrl.equals(launchpadUrl) && !codes.contains(status.code)) {
-                    setSnippetDownloadStatusInternal(launchpadUrl, status.code, Enums.SnippetState.not_found);
+                if (status.launchpadUrl.equals(launchpadUrl) && infos.stream().filter(i-> i.code.equals(status.code)).findAny().orElse(null)==null) {
+                    setSnippetDownloadStatusInternal(launchpadUrl, status.code, status.sourcing, Enums.SnippetState.not_found);
                     isChanged = true;
                 }
             }
@@ -153,7 +157,7 @@ public class MetadataService {
         return snippetDownloadStatusYaml.statuses;
     }
 
-    public void setSnippetDownloadStatus(final String launchpadUrl, String snippetCode, Enums.SnippetState snippetState) {
+    public boolean setSnippetState(final String launchpadUrl, String snippetCode, Enums.SnippetState snippetState) {
         if (S.b(launchpadUrl)) {
             throw new IllegalStateException("launchpadUrl is null");
         }
@@ -161,8 +165,38 @@ public class MetadataService {
             throw new IllegalStateException("snippetCode is null");
         }
         synchronized (syncObj) {
-            setSnippetDownloadStatusInternal(launchpadUrl, snippetCode, snippetState);
+            SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYaml();
+
+            SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(snippetCode)).findAny().orElse(null);
+            if (status == null) {
+                return false;
+            }
+            status.snippetState = snippetState;
+            String yaml = SnippetDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(snippetDownloadStatusYaml);
+            metadata.metadata.put(Consts.META_SNIPPET_DOWNLOAD_STATUS, yaml);
             updateMetadataFile();
+            return true;
+        }
+    }
+
+    public void setSnippetDownloadStatus(final String launchpadUrl, String snippetCode, EnumsApi.SnippetSourcing sourcing, Enums.SnippetState snippetState) {
+        if (S.b(launchpadUrl)) {
+            throw new IllegalStateException("launchpadUrl is null");
+        }
+        if (S.b(snippetCode)) {
+            throw new IllegalStateException("snippetCode is null");
+        }
+        synchronized (syncObj) {
+            setSnippetDownloadStatusInternal(launchpadUrl, snippetCode, sourcing, snippetState);
+            updateMetadataFile();
+        }
+    }
+
+    public SnippetDownloadStatusYaml.Status getSnippetDownloadStatuses(String launchpadUrl, String snippetCode) {
+        synchronized (syncObj) {
+            return getSnippetDownloadStatusYaml().statuses.stream()
+                    .filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(snippetCode))
+                    .findAny().orElse(null);
         }
     }
 
@@ -174,12 +208,12 @@ public class MetadataService {
         }
     }
 
-    private void setSnippetDownloadStatusInternal(String launchpadUrl, String snippetCode, Enums.SnippetState snippetState) {
+    private void setSnippetDownloadStatusInternal(String launchpadUrl, String code, EnumsApi.SnippetSourcing sourcing, Enums.SnippetState snippetState) {
         SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYaml();
 
-        SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(snippetCode)).findAny().orElse(null);
+        SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(code)).findAny().orElse(null);
         if (status == null) {
-            status = new SnippetDownloadStatusYaml.Status(Enums.SnippetState.none, snippetCode, launchpadUrl);
+            status = new SnippetDownloadStatusYaml.Status(Enums.SnippetState.none, code, launchpadUrl, sourcing);
             snippetDownloadStatusYaml.statuses.add(status);
         }
         status.snippetState = snippetState;

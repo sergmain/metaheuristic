@@ -598,7 +598,7 @@ public class StationTaskService {
         return taskDir;
     }
 
-    public File prepareSnippetDir(Metadata.LaunchpadInfo launchpadCode) {
+    public File prepareBaseResourceDir(Metadata.LaunchpadInfo launchpadCode) {
         final File launchpadDir = new File(globals.stationResourcesDir, launchpadCode.code);
         if (launchpadDir.exists()) {
             return launchpadDir;

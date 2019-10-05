@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.station.tasks;
 
+import ai.metaheuristic.api.data.SnippetApiData;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,10 +26,7 @@ import java.io.File;
 @AllArgsConstructor
 @EqualsAndHashCode(of = "snippetCode", callSuper = false)
 public class DownloadSnippetTask extends StationRestTask {
-    public String snippetCode;
-    public String filename;
-    public String checksum;
-    public File targetDir;
-    public long taskId;
     public Long chunkSize;
+    public String snippetCode;
+    public SnippetApiData.SnippetConfig snippetConfig;
 }

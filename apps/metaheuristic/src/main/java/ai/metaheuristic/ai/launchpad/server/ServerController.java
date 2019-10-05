@@ -20,10 +20,9 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
-import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -55,7 +54,7 @@ public class ServerController {
 
     private final Globals globals;
     private final ServerService serverService;
-    private final SnippetRepository snippetRepository;
+    private final SnippetService snippetService;
 
     @PostMapping("/registry")
     public RegistryData getRegistryData() {
@@ -116,26 +115,25 @@ public class ServerController {
         return serverService.uploadResource(file, taskId);
     }
 
-    @SuppressWarnings("unused")
     @PostMapping("/payload/snippet-checksum/{random-part}")
     public String snippetChecksumAuth(
             HttpServletResponse response,
-            String stationId,
-            String taskId,
+            @SuppressWarnings("unused") String stationId,
+            @SuppressWarnings("unused") String taskId,
             String code,
-            @PathVariable("random-part") String randomPart
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) throws IOException {
         return getSnippetChecksum(response, code);
     }
 
     private String getSnippetChecksum(HttpServletResponse response, String snippetCode) throws IOException {
-        Snippet snippet = snippetRepository.findByCode(snippetCode);
+        Snippet snippet = snippetService.findByCode(snippetCode);
         if (snippet==null) {
             log.warn("#440.100 Snippet wasn't found for code {}", snippetCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        SnippetApiData.SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
+        SnippetApiData.SnippetConfig sc = snippet.getSnippetConfig();
         log.info("Send checksum {} for snippet {}", sc.checksum, sc.getCode());
         return sc.checksum;
     }

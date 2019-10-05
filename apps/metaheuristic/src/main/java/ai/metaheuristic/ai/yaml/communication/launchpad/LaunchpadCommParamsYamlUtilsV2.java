@@ -52,7 +52,11 @@ public class LaunchpadCommParamsYamlUtilsV2 extends AbstractParamsYamlUtils<
         }
         if (v2.snippets!=null) {
             t.snippets = new LaunchpadCommParamsYaml.Snippets();
-            t.snippets.codes.addAll(v2.snippets.codes);
+            t.snippets.infos.addAll( v2.snippets.infos
+                            .stream()
+                            .map(o->new LaunchpadCommParamsYaml.Snippets.Info (o.code, o.sourcing))
+                            .collect(Collectors.toList())
+                    );
         }
         if (v2.assignedTask!=null) {
             t.assignedTask = new LaunchpadCommParamsYaml.AssignedTask();

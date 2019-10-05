@@ -234,9 +234,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
         sc.info.setLength(1000);
 
         Snippet s = new Snippet();
-        Snippet sn = snippetRepository.findByCode(snippetCode);
-        if (sn!=null) {
-            snippetCache.delete(sn.getId());
+        Long snippetId = snippetRepository.findIdByCode(snippetCode);
+        if (snippetId!=null) {
+            snippetCache.delete(snippetId);
         }
         s.setCode(snippetCode);
         s.setType(sc.type);

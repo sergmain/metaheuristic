@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.snippet;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -28,16 +29,14 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("launchpad")
 @Slf4j
+@RequiredArgsConstructor
 public class SnippetCache {
 
     private final SnippetRepository snippetRepository;
 
-    public SnippetCache(SnippetRepository snippetRepository) {
-        this.snippetRepository = snippetRepository;
-    }
-
     @CacheEvict(cacheNames = {Consts.SNIPPETS_CACHE}, key = "#result.id")
     public Snippet save(Snippet snippet) {
+        snippet.reset();
         return snippetRepository.saveAndFlush(snippet);
     }
 

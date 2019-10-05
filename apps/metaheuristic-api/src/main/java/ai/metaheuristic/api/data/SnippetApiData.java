@@ -16,13 +16,9 @@
 
 package ai.metaheuristic.api.data;
 
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,6 +88,7 @@ public class SnippetApiData {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
+    @EqualsAndHashCode(of = "code")
     public static class SnippetConfig {
 
         @Data
@@ -111,6 +108,8 @@ public class SnippetApiData {
         public String file;
         /**
          * params for command line fo invoking snippet
+         *
+         * this isn't a holder for yaml-based config
          */
         public String params;
         public String env;

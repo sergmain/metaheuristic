@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
@@ -328,8 +327,8 @@ public class PlanService {
 
     private EnumsApi.PlanValidateStatus checkRequiredVersionOfTaskParams(int planParamsVersion, Process process, SnippetDefForPlan snDef) {
         if (StringUtils.isNotBlank(snDef.code)) {
-            Snippet snippet = snippetRepository.findByCode(snDef.code);
-            if (snippet == null) {
+            Long  snippetId = snippetRepository.findIdByCode(snDef.code);
+            if (snippetId == null) {
                 log.error("#177.030 Pre-snippet wasn't found for code: {}, process: {}", snDef.code, process);
                 return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }

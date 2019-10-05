@@ -54,7 +54,7 @@ public class StationCommandProcessor {
     }
 
     private void registerSnippets(StationCommParamsYaml.SnippetDownloadStatus snippetDownloadStatus, String launchpadUrl, LaunchpadCommParamsYaml launchpadYaml) {
-        List<SnippetDownloadStatusYaml.Status> statuses = metadataService.registerNewSnippetCode(launchpadUrl, launchpadYaml.snippets.codes);
+        List<SnippetDownloadStatusYaml.Status> statuses = metadataService.registerNewSnippetCode(launchpadUrl, launchpadYaml.snippets.infos);
         for (SnippetDownloadStatusYaml.Status status : statuses) {
             snippetDownloadStatus.statuses.add(new StationCommParamsYaml.SnippetDownloadStatus.Status(status.snippetState, status.code));
         }

@@ -15,6 +15,11 @@
  */
 package ai.metaheuristic.ai.launchpad.beans;
 
+import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
+import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -41,4 +46,30 @@ public class Snippet implements Serializable {
 
     @Column(name = "PARAMS")
     public String params;
+
+    @Transient
+    @JsonIgnore
+    private SnippetApiData.SnippetConfig sc = null;
+
+    @JsonIgnore
+    public SnippetApiData.SnippetConfig getSnippetConfig() {
+        if (sc ==null) {
+            synchronized (this) {
+                if (sc==null) {
+                    //noinspection UnnecessaryLocalVariable
+                    SnippetApiData.SnippetConfig temp = SnippetConfigUtils.to(params);
+                    sc = temp;
+                    return sc;
+                }
+            }
+        }
+        return sc;
+    }
+
+    public void reset() {
+        synchronized (this) {
+            sc = null;
+        }
+    }
+
 }

@@ -25,9 +25,8 @@ import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
@@ -53,7 +52,6 @@ import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -94,7 +92,6 @@ public class ExperimentService {
     private final MetricsMaxValueCollector metricsMaxValueCollector;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
@@ -780,7 +777,7 @@ public class ExperimentService {
                         }
                         Snippet snippet = localCache.get(snippetCode);
                         if (snippet == null) {
-                            snippet = snippetRepository.findByCode(snippetCode);
+                            snippet = snippetService.findByCode(snippetCode);
                             if (snippet != null) {
                                 localCache.put(snippetCode, snippet);
                             }
@@ -827,7 +824,7 @@ public class ExperimentService {
                             epy.processing.taskFeatures.add(tef);
                         }
 
-                        yaml.taskYaml.snippet = SnippetConfigUtils.to(snippet.params);
+                        yaml.taskYaml.snippet = snippet.getSnippetConfig();
                         yaml.taskYaml.preSnippets = new ArrayList<>();
                         if (process.getPreSnippets() != null) {
                             for (SnippetDefForPlan snDef : process.getPreSnippets()) {

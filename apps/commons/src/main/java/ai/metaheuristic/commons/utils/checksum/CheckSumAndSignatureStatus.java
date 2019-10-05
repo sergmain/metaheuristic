@@ -15,11 +15,12 @@
  */
 package ai.metaheuristic.commons.utils.checksum;
 
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 
 @Data
 @ToString
+@AllArgsConstructor
+@NoArgsConstructor
 public class CheckSumAndSignatureStatus {
 
     public enum Status {unknown, correct, wrong}

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -54,9 +56,10 @@ public class LaunchpadCommandProcessor {
     private final StationTopLevelService stationTopLevelService;
     private final WorkbookService workbookService;
     private final SnippetRepository snippetRepository;
+    private final SnippetCache snippetCache;
 
-    public static final long SNIPPET_CODES_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
-    private List<String> snippetCodeCache = new ArrayList<>();
+    private static final long SNIPPET_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
+    private List<LaunchpadCommParamsYaml.Snippets.Info> snippetInfosCache = new ArrayList<>();
     private long mills = System.currentTimeMillis();
 
     public void process(StationCommParamsYaml scpy, LaunchpadCommParamsYaml lcpy) {
@@ -70,15 +73,19 @@ public class LaunchpadCommandProcessor {
         processReportStationStatus(scpy);
         lcpy.assignedTask = processRequestTask(scpy);
         lcpy.assignedStationId = getNewStationId(scpy.requestStationId);
-        lcpy.snippets.codes.addAll( getSnippetCodes() );
+        lcpy.snippets.infos.addAll( getSnippetInfos() );
     }
 
-    private synchronized List<String> getSnippetCodes() {
-        if (System.currentTimeMillis() - mills > SNIPPET_CODES_TIMEOUT_REFRESH) {
+    private synchronized List<LaunchpadCommParamsYaml.Snippets.Info> getSnippetInfos() {
+        if (System.currentTimeMillis() - mills > SNIPPET_INFOS_TIMEOUT_REFRESH) {
             mills = System.currentTimeMillis();
-            snippetCodeCache = snippetRepository.findAllCodes();
+            final List<Long> allIds = snippetRepository.findAllIds();
+            snippetInfosCache = allIds.stream()
+                    .map(snippetCache::findById)
+                    .map(s->new LaunchpadCommParamsYaml.Snippets.Info(s.code, s.getSnippetConfig().sourcing))
+                    .collect(Collectors.toList());
         }
-        return snippetCodeCache;
+        return snippetInfosCache;
     }
 
     // processing on launchpad side

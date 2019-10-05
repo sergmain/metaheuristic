@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.station;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
@@ -22,6 +23,7 @@ import ai.metaheuristic.ai.station.actors.DownloadSnippetActor;
 import ai.metaheuristic.ai.station.tasks.DownloadSnippetTask;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
+import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -65,7 +67,7 @@ public class TaskAssetPreparer {
             }
         });
 
-        // find all tasks which weren't finished and resorces aren't prepared yet
+        // find all tasks which weren't finished and resources aren't prepared yet
         List<StationTask> tasks = stationTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(false);
         if (tasks.size()>1) {
             log.warn("#951.010 There is more than one task: {}", tasks.stream().map(StationTask::getTaskId).collect(Collectors.toList()));
@@ -94,7 +96,7 @@ public class TaskAssetPreparer {
             final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
                     launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
 
-            // process only if launchpad already sent its config
+            // process only if launchpad has already sent its config
             if (launchpad.config==null) {
                 continue;
             }
@@ -103,32 +105,38 @@ public class TaskAssetPreparer {
                 continue;
             }
 
+            // Start preparing data for snippet
             File taskDir = stationTaskService.prepareTaskDir(launchpadCode, task.taskId);
-
             StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadCode, taskParamYaml, launchpad, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
             boolean isAllLoaded = resultOfChecking.isAllLoaded;
 
-            File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
-            if (taskParamYaml.taskYaml.snippet.sourcing==EnumsApi.SnippetSourcing.launchpad) {
-                AssetFile assetFile = ResourceUtils.prepareSnippetFile(snippetDir, taskParamYaml.taskYaml.snippet.getCode(), taskParamYaml.taskYaml.snippet.file);
+
+            // start preparing snippets
+            File baseResourceDir = stationTaskService.prepareBaseResourceDir(launchpadCode);
+
+            final SnippetApiData.SnippetConfig snippetConfig = taskParamYaml.taskYaml.snippet;
+            final String code = snippetConfig.code;
+            if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.launchpad) {
+                if (metadataService.getSnippetDownloadStatuses(task.launchpadUrl, code).snippetState!= Enums.SnippetState.none) {
+                    return;
+                }
+
+                AssetFile assetFile = ResourceUtils.prepareSnippetFile(baseResourceDir, snippetConfig.getCode(), snippetConfig.file);
                 if (assetFile.isError || !assetFile.isContent) {
                     isAllLoaded = false;
                     DownloadSnippetTask snippetTask = new DownloadSnippetTask(
-                            taskParamYaml.taskYaml.snippet.getCode(),
-                            taskParamYaml.taskYaml.snippet.file,
-                            taskParamYaml.taskYaml.snippet.checksum,
-                            snippetDir,
-                            task.getTaskId(),
-                            launchpad.config.chunkSize
+                            launchpad.config.chunkSize, snippetConfig.getCode(), snippetConfig
                     );
                     snippetTask.launchpad = launchpad.launchpadLookup;
                     snippetTask.stationId = launchpadCode.stationId;
                     downloadSnippetActor.add(snippetTask);
                 }
             }
+
+            // update the status of task if everything is prepared
             if (isAllLoaded) {
                 log.info("All assets were prepared for task #{}, launchpad: {}", task.taskId, task.launchpadUrl);
                 stationTaskService.markAsAssetPrepared(task.launchpadUrl, task.taskId, true);

@@ -148,7 +148,7 @@ public class Schedulers {
     public static class StationSchedulers {
 
         private final Globals globals;
-        private final TaskAssetPreparer taskAssigner;
+        private final TaskAssetPreparer taskAssetPreparer;
         private final TaskProcessor taskProcessor;
         private final DownloadSnippetActor downloadSnippetActor;
         private final DownloadResourceActor downloadResourceActor;
@@ -163,9 +163,9 @@ public class Schedulers {
         private final RoundRobinForLaunchpad roundRobin;
         private final Map<String, LaunchpadRequestor> launchpadRequestorMap = new HashMap<>();
 
-        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, CurrentExecState currentExecState, EnvService envService, StationCommandProcessor stationCommandProcessor) {
+        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, CurrentExecState currentExecState, EnvService envService, StationCommandProcessor stationCommandProcessor) {
             this.globals = globals;
-            this.taskAssigner = taskAssigner;
+            this.taskAssetPreparer = taskAssetPreparer;
             this.taskProcessor = taskProcessor;
             this.downloadSnippetActor = downloadSnippetActor;
             this.downloadResourceActor = downloadResourceActor;
@@ -225,6 +225,9 @@ public class Schedulers {
             launchpadRequestorMap.get(url).proceedWithRequest();
         }
 
+        /**
+         * Prepare assets for tasks
+         */
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('ai.metaheuristic.station.timeout.task-assigner'), 3, 20, 5)*1000 }")
         public void taskAssigner() {
             if (globals.isUnitTesting) {
@@ -234,7 +237,7 @@ public class Schedulers {
                 return;
             }
             log.info("Run taskAssigner.fixedDelay()");
-            taskAssigner.fixedDelay();
+            taskAssetPreparer.fixedDelay();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.task-processor'), 3, 20, 10)*1000 }")

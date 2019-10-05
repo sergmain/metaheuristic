@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.yaml.metadata;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -42,6 +43,7 @@ public class SnippetDownloadStatusYaml implements BaseParams {
         public Enums.SnippetState snippetState;
         public String code;
         public String launchpadUrl;
+        public EnumsApi.SnippetSourcing sourcing;
     }
 
     public List<Status> statuses = new ArrayList<>();

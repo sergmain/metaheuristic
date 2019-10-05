@@ -70,7 +70,14 @@ public class LaunchpadCommParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Snippets {
-        public List<String> codes = new ArrayList<>();
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        public static class Info {
+            public String code;
+            public EnumsApi.SnippetSourcing sourcing;
+        }
+        public List<Info> infos = new ArrayList<>();
     }
 
     @Data

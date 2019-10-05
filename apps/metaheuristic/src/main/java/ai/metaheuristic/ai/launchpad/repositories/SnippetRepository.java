@@ -32,11 +32,19 @@ public interface SnippetRepository extends JpaRepository<Snippet, Long> {
     @Transactional(readOnly = true)
     Snippet findByCode(String code);
 
+    @Transactional(readOnly = true)
+    @Query(value="select b.id from Snippet b where b.code=:code")
+    Long findIdByCode(String code);
+
+    @Transactional(readOnly = true)
+    @Query(value="select b.id from Snippet b where b.code in :codes")
+    List<Long> findIdsByCodes(List<String> codes);
+
     @Transactional
     @Query(value="select b from Snippet b where b.code=:code")
     Snippet findByCodeForUpdate(String code);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.code from Snippet b")
-    List<String> findAllCodes();
+    @Query(value="select b.id from Snippet b")
+    List<Long> findAllIds();
 }

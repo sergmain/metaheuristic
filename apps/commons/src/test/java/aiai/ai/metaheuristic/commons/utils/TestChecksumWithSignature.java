@@ -13,26 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.commons.utils.checksum;
+package aiai.ai.metaheuristic.commons.utils;
 
-import ai.metaheuristic.ai.Globals;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
-import java.security.*;
+import java.security.GeneralSecurityException;
 
-import static org.junit.Assert.assertTrue;
-
-@RunWith(SpringRunner.class)
-@SpringBootTest
 public class TestChecksumWithSignature {
-
-    @Autowired
-    public Globals globals;
 
     @Test
     public void test() throws IOException, GeneralSecurityException {

@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
@@ -83,6 +84,7 @@ public class ExperimentTopLevelService {
 
     private final Globals globals;
     private final SnippetRepository snippetRepository;
+    private final SnippetCache snippetCache;
     private final SnippetService snippetService;
     private final TaskRepository taskRepository;
     private final WorkbookCache workbookCache;
@@ -407,7 +409,7 @@ public class ExperimentTopLevelService {
                     "#285.200 experiment wasn't found, id: "+id );
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        Snippet s = snippetRepository.findByCode(snippetCode);
+        Snippet s = snippetService.findByCode(snippetCode);
         if (s==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.210 snippet wasn't found, id: "+id );

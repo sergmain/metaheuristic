@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -56,39 +57,57 @@ public class SnippetService {
     private final SnippetCache snippetCache;
     private final BinaryDataService binaryDataService;
 
+    public Snippet findByCode(String snippetCode) {
+        Long id = snippetRepository.findIdByCode(snippetCode);
+        if (id==null) {
+            return null;
+        }
+        return snippetCache.findById(id);
+    }
+
     public boolean isSnippetVersionOk(int requiredVersion, SnippetDefForPlan snDef) {
         SnippetApiData.SnippetConfig sc = getSnippetConfig(snDef);
         return sc != null && (sc.skipParams || requiredVersion <= SnippetCoreUtils.getTaskParamsVersion(sc.metas));
     }
 
     public static void sortExperimentSnippets(List<Snippet> snippets) {
-        snippets.sort((o1, o2) -> {
-                    if (o1.getType().equals(o2.getType())) {
-                        return 0;
-                    }
-                    return CommonConsts.FIT_TYPE.equals(o1.getType().toLowerCase()) ? -1 : 1;
-                }
-        );
+        snippets.sort(SnippetService::experimentSnippetComparator);
+    }
+
+    private static int experimentSnippetComparator(Snippet o1, Snippet o2) {
+        if (o1.getType().equals(o2.getType())) {
+            return 0;
+        }
+        return CommonConsts.FIT_TYPE.equals(o1.getType().toLowerCase()) ? -1 : 1;
     }
 
     public List<Snippet> getSnippetsForCodes(List<String> snippetCodes) {
-        List<Snippet> list = new ArrayList<>();
+        if (snippetCodes==null || snippetCodes.isEmpty()) {
+            return List.of();
+        }
+        //noinspection UnnecessaryLocalVariable
+        List<Snippet> list = snippetRepository.findIdsByCodes(snippetCodes).stream()
+                .map(snippetCache::findById)
+                .sorted(SnippetService::experimentSnippetComparator)
+                .collect(Collectors.toList());
+/*
         for (String snippetCode : snippetCodes) {
-            Snippet s = snippetRepository.findByCode(snippetCode);
+            Snippet s = snippetRepository.findIdsByCodes(snippetCode);
             if (s!=null) {
                 list.add(s);
             }
         }
         sortExperimentSnippets(list);
+*/
         return list;
     }
 
     public SnippetApiData.SnippetConfig getSnippetConfig(SnippetDefForPlan snippetDef) {
         SnippetApiData.SnippetConfig snippetConfig = null;
         if(StringUtils.isNotBlank(snippetDef.code)) {
-            Snippet snippet = snippetRepository.findByCode(snippetDef.code);
+            Snippet snippet = findByCode(snippetDef.code);
             if (snippet != null) {
-                snippetConfig = SnippetConfigUtils.to(snippet.params);
+                snippetConfig = snippet.getSnippetConfig();
                 if (!snippetConfig.skipParams) {
                     if (snippetConfig.params!=null && snippetDef.params!=null) {
                         snippetConfig.params = snippetConfig.params + ' ' + snippetDef.params;
@@ -98,13 +117,6 @@ public class SnippetService {
                             snippetConfig.params = snippetDef.params;
                         }
                     }
-/*
-                    // TODO 2019-07-12 to delete after 2019-07-26
-                    snippetConfig.params =
-                            snippetConfig.params!=null
-                                    ? snippetConfig.params + ' ' + snippetDef.params
-                                    : snippetDef.params;
-*/
                 }
             } else {
                 log.warn("#295.010 Can't find snippet for code {}", snippetDef.code);

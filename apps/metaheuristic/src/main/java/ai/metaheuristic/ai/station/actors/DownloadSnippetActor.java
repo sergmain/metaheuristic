@@ -18,18 +18,24 @@ package ai.metaheuristic.ai.station.actors;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.S;
 import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.station.MetadataService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.station.MetadataService;
 import ai.metaheuristic.ai.station.StationTaskService;
 import ai.metaheuristic.ai.station.net.HttpClientExecutor;
 import ai.metaheuristic.ai.station.tasks.DownloadSnippetTask;
 import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
+import ai.metaheuristic.ai.yaml.metadata.Metadata;
+import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -51,10 +57,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -67,7 +70,13 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
     private final MetadataService metadataService;
     private final StationTaskService stationTaskService;
 
-    private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
+    private enum ConfigStatus {ok, error}
+
+    @Data
+    private static class DownloadSnippetConfigStatus {
+        public SnippetApiData.SnippetConfig snippetConfig;
+        public ConfigStatus status;
+    }
 
     @SuppressWarnings("Duplicates")
     public void fixedDelay() {
@@ -80,85 +89,88 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
         DownloadSnippetTask task;
         while((task = poll())!=null) {
-            if (Boolean.TRUE.equals(preparedMap.get(task.getSnippetCode()))) {
-                continue;
-            }
             final String snippetCode = task.snippetCode;
-
-            final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpad.url);
-            final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
-            final AssetFile assetFile = ResourceUtils.prepareSnippetFile(snippetDir, task.snippetCode, task.filename);
-            if (assetFile.isError ) {
-                log.warn("#811.010 Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
-                continue;
-            }
-            if (assetFile.isContent ) {
-                log.info("Snippet was already downloaded. Snippet file: {}", assetFile.file.getPath());
-                preparedMap.put(snippetCode, true);
-                continue;
-            }
-
             final String payloadRestUrl = task.launchpad.url + Consts.REST_V1_URL + Consts.PAYLOAD_REST_URL;
 
-            final String targetUrl = payloadRestUrl + "/resource/" + EnumsApi.BinaryDataType.SNIPPET;
-            final String snippetChecksumUrl = payloadRestUrl + "/snippet-checksum";
+            final SnippetDownloadStatusYaml.Status snippetDownloadStatus = metadataService.getSnippetDownloadStatuses(task.launchpad.url, snippetCode);
+            if (snippetDownloadStatus.sourcing!= EnumsApi.SnippetSourcing.launchpad) {
+                log.warn("#811.010 Snippet {} can't be downloaded because sourcing isn't 'launchpad'.", snippetCode);
+                continue;
+            }
 
-            try {
-                final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +
-                        '-' + task.stationId +
-                        '-' + task.getTaskId() +
-                        '-' + URLEncoder.encode(task.snippetCode, StandardCharsets.UTF_8.toString());
+            // task.snippetConfig is null when we are downloading a snippet proactively, without any task
+            SnippetApiData.SnippetConfig snippetConfig = task.snippetConfig;
+            if (snippetConfig ==null) {
+                DownloadSnippetConfigStatus downloadSnippetConfigStatus = downloadSnippetConfig(task.launchpad, payloadRestUrl, snippetCode, task.stationId);
+                if (downloadSnippetConfigStatus.status!= ConfigStatus.ok) {
+                    metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.snippet_config_error);
+                }
+                snippetConfig = downloadSnippetConfigStatus.snippetConfig;
+            }
 
-                Checksum checksum=null;
-                if (task.launchpad.acceptOnlySignedSnippets) {
-                    try {
+            // check requirements of signature
+            Checksum checksum = null;
+            if (task.launchpad.acceptOnlySignedSnippets) {
+                if (S.b(snippetConfig.checksum)) {
+                    metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.signature_not_found);
+                    continue;
+                }
+                checksum = Checksum.fromJson(snippetConfig.checksum);
+                boolean isSignature = checksum.checksums.entrySet().stream().anyMatch(e -> e.getKey().isSign);
+                if (!isSignature) {
+                    metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.signature_not_found);
+                    continue;
+                }
+            }
 
-                        final Request request = Request.Post(snippetChecksumUrl + randomPartUri)
-                                .bodyForm(Form.form()
-                                        .add("stationId", task.stationId)
-                                        .add("taskId", Long.toString(task.getTaskId()))
-                                        .add("code", task.snippetCode)
-                                        .build(), StandardCharsets.UTF_8)
-                                .connectTimeout(5000)
-                                .socketTimeout(20000);
+            final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpad.url);
+            final File baseResourceDir = stationTaskService.prepareBaseResourceDir(launchpadCode);
+            final AssetFile assetFile = ResourceUtils.prepareSnippetFile(baseResourceDir, snippetCode, snippetConfig.file);
 
-                        RestUtils.addHeaders(request);
-
-                        Response response;
-                        if (task.launchpad.securityEnabled) {
-                            response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restPassword).execute(request);
-                        } else {
-                            response = request.execute();
-                        }
-                        String checksumStr = response.returnContent().asString(StandardCharsets.UTF_8);
-
-                        checksum = Checksum.fromJson(checksumStr);
-                    } catch (HttpResponseException e) {
-                        logError(snippetCode, e);
-                        continue;
-                    } catch (SocketTimeoutException e) {
-                        log.error("#811.020 SocketTimeoutException: {}", e.toString());
-                        continue;
-                    } catch (IOException e) {
-                        log.error("#811.030 IOException", e);
-                        continue;
-                    } catch (Throwable th) {
-                        log.error("#811.040 Throwable", th);
+            switch (snippetDownloadStatus.snippetState) {
+                case none:
+                    if (assetFile.isError) {
+                        metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.asset_error);
                         continue;
                     }
-                }
+                    break;
+                case ok:
+                    log.error("#811.010 Unexpected state of snippet {}, launchpad {}, will be resetted to none", snippetCode, task.launchpad.url);
+                    metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.none);
+                    break;
+                case signature_wrong:
+                case signature_not_found:
+                case checksum_wrong:
+                case not_supported_os:
+                case not_found:
+                case asset_error:
+                case download_error:
+                case snippet_config_error:
+                    log.warn("#811.010 Snippet can't be downloaded. The current status is {}", snippetDownloadStatus.snippetState);
+                    continue;
+                case ready:
+                    if (assetFile.isError || !assetFile.isContent ) {
+                        log.warn("#811.010 Snippet is broken. Set state to asset_error");
+                        metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.asset_error);
+                    }
+                    continue;
+            }
+
+            try {
 
                 File snippetTempFile = new File(assetFile.file.getAbsolutePath() + ".tmp");
 
+                final String targetUrl = payloadRestUrl + "/resource/" + EnumsApi.BinaryDataType.SNIPPET;
+
                 String mask = assetFile.file.getName() + ".%s.tmp";
                 File dir = assetFile.file.getParentFile();
-                Enums.ResourceState resourceState = Enums.ResourceState.none;
+                Enums.SnippetState resourceState = Enums.SnippetState.none;
                 int idx = 0;
                 do {
+                    final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +'-' + task.stationId;
                     try {
                         final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
                                 .addParameter("stationId", task.stationId)
-                                .addParameter("taskId", Long.toString(task.getTaskId()))
                                 .addParameter("code", task.snippetCode)
                                 .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
                                 .addParameter("chunkNum", Integer.toString(idx));
@@ -191,51 +203,52 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         final Header[] headers = httpResponse.getAllHeaders();
                         if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
                             log.error("#811.047 error while downloading chunk of snippet {}, size is different", snippetCode);
-                            resourceState = Enums.ResourceState.transmitting_error;
+                            metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.download_error);
+                            resourceState = Enums.SnippetState.download_error;
                             break;
                         }
                         if (DownloadUtils.isLastChunk(headers)) {
-                            resourceState = Enums.ResourceState.ok;
+                            resourceState = Enums.SnippetState.ok;
                             break;
                         }
                         if (partFile.length()==0) {
-                            resourceState = Enums.ResourceState.ok;
+                            resourceState = Enums.SnippetState.ok;
                             break;
                         }
                     } catch (HttpResponseException e) {
                         if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                            final String es = String.format("#811.050 Resource %s wasn't found on launchpad. Task #%s is finished.", task.snippetCode, task.getTaskId());
+                            final String es = S.f("#811.050 Snippet %s wasn't found on launchpad %s.", task.snippetCode, task.launchpad.url);
                             log.warn(es);
-                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
-                            resourceState = Enums.ResourceState.resource_doesnt_exist;
+                            metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.not_found);
+//                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            resourceState = Enums.SnippetState.not_found;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
-                            final String es = String.format("#811.060 Unknown error with a resource %s. Task #%s is finished.", task.snippetCode, task.getTaskId());
+                            final String es = S.f("#811.060 Unknown error with a snippet %s from launchpad %s.", task.snippetCode, task.launchpad.url);
                             log.warn(es);
-                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
-                            resourceState = Enums.ResourceState.unknown_error;
+                            metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.download_error);
+//                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            resourceState = Enums.SnippetState.download_error;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
-                            final String es = String.format("#811.070 Unknown error with a resource %s. Task #%s is finished.", task.snippetCode, task.getTaskId());
+                            final String es = S.f("#811.070 Unknown error with a resource %s from launchpad %s.", task.snippetCode, task.launchpad.url);
                             log.warn(es);
-                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
-                            resourceState = Enums.ResourceState.unknown_error;
+                            metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.download_error);
+//                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            resourceState = Enums.SnippetState.download_error;
                             break;
                         }
                     }
                     idx++;
                 } while (idx<1000);
-                if (resourceState == Enums.ResourceState.none) {
+                if (resourceState == Enums.SnippetState.none) {
                     log.error("#811.080 something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
                     continue;
                 }
-                else if (resourceState == Enums.ResourceState.unknown_error || resourceState == Enums.ResourceState.resource_doesnt_exist) {
+                else if (resourceState == Enums.SnippetState.download_error || resourceState == Enums.SnippetState.not_found) {
                     log.warn("#811.082 snippet {} can't be acquired, state: {}", snippetCode, resourceState);
-                    continue;
-                }
-                else if (resourceState == Enums.ResourceState.transmitting_error) {
                     continue;
                 }
 
@@ -249,26 +262,25 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     }
                 }
 
-                CheckSumAndSignatureStatus.Status isOk = CheckSumAndSignatureStatus.Status.unknown;
+                CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(CheckSumAndSignatureStatus.Status.correct, CheckSumAndSignatureStatus.Status.correct);
                 if (task.launchpad.acceptOnlySignedSnippets) {
-                    CheckSumAndSignatureStatus status;
                     try (FileInputStream fis = new FileInputStream(snippetTempFile)) {
+                        // IDEA's fck up, can't correctly predict the state of checksum
                         status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "Launchpad: "+task.launchpad.url+", snippet: "+snippetCode, fis, true, task.launchpad.createPublicKey());
                     }
-                    if ( status.signature == null){
-                        log.warn("#811.090 launchpad.acceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
-                        continue;
-                    }
-                    if (Boolean.FALSE.equals(status.signature)) {
+                    if (status.signature != CheckSumAndSignatureStatus.Status.correct) {
                         log.warn("#811.100 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
-                        continue;
+                        metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.signature_wrong);
                     }
-                    isOk = status.checksum;
+                    else if (status.checksum != CheckSumAndSignatureStatus.Status.correct) {
+                        log.warn("#811.100 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
+                        metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.checksum_wrong);
+                    }
                 }
-                if (isOk==CheckSumAndSignatureStatus.Status.correct) {
+                if (status.checksum==CheckSumAndSignatureStatus.Status.correct && status.signature==CheckSumAndSignatureStatus.Status.correct) {
                     //noinspection ResultOfMethodCallIgnored
                     snippetTempFile.renameTo(assetFile.file);
-                    preparedMap.put(snippetCode, true);
+                    metadataService.setSnippetState(task.launchpad.url, snippetCode, Enums.SnippetState.ready);
                 }
                 else {
                     //noinspection ResultOfMethodCallIgnored
@@ -287,6 +299,47 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 log.error("#811.130 URISyntaxException", e);
             }
         }
+    }
+
+    private DownloadSnippetConfigStatus downloadSnippetConfig(
+            LaunchpadLookupConfig.LaunchpadLookup launchpad, String payloadRestUrl, String snippetCode, String stationId) {
+
+        final String snippetChecksumUrl = payloadRestUrl + "/snippet-checksum";
+        final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +'-' + stationId;
+
+        final DownloadSnippetConfigStatus snippetConfigStatus = new DownloadSnippetConfigStatus();
+        snippetConfigStatus.status = ConfigStatus.error;
+        try {
+            final Request request = Request.Post(snippetChecksumUrl + randomPartUri)
+                    .bodyForm(Form.form()
+                            .add("code", snippetCode)
+                            .build(), StandardCharsets.UTF_8)
+                    .connectTimeout(5000)
+                    .socketTimeout(20000);
+
+            RestUtils.addHeaders(request);
+
+            Response response;
+            if (launchpad.securityEnabled) {
+                response = HttpClientExecutor.getExecutor(launchpad.url, launchpad.restUsername, launchpad.restPassword).execute(request);
+            } else {
+                response = request.execute();
+            }
+            String yaml = response.returnContent().asString(StandardCharsets.UTF_8);
+
+            snippetConfigStatus.snippetConfig = SnippetConfigUtils.to(yaml);
+            snippetConfigStatus.status = ConfigStatus.ok;
+
+        } catch (HttpResponseException e) {
+            logError(snippetCode, e);
+        } catch (SocketTimeoutException e) {
+            log.error("#811.020 SocketTimeoutException: {}", e.toString());
+        } catch (IOException e) {
+            log.error("#811.030 IOException", e);
+        } catch (Throwable th) {
+            log.error("#811.040 Throwable", th);
+        }
+        return snippetConfigStatus;
     }
 
     private void logError(String snippetCode, HttpResponseException e) {

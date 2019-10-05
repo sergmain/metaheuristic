@@ -52,7 +52,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String resourceCode, DataStorageParams dataStorageParams) {
 
-        // process it only if the launchpad already sent its config
+        // process it only if the launchpad has already sent its config
         if (launchpad.config != null) {
             if (launchpad.config.chunkSize==null) {
                 log.error("Launchpad {} doesn't provide chunkSize", task.launchpadUrl);
