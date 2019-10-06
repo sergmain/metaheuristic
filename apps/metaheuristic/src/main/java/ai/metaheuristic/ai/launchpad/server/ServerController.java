@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -136,6 +137,29 @@ public class ServerController {
         SnippetApiData.SnippetConfig sc = snippet.getSnippetConfig();
         log.info("Send checksum {} for snippet {}", sc.checksum, sc.getCode());
         return sc.checksum;
+    }
+
+    @PostMapping("/payload/snippet-config/{random-part}")
+    public String snippetConfig(
+            HttpServletResponse response,
+            @SuppressWarnings("unused") String stationId,
+            @SuppressWarnings("unused") String taskId,
+            String code,
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
+    ) throws IOException {
+        return getSnippetConfig(response, code);
+    }
+
+    private String getSnippetConfig(HttpServletResponse response, String snippetCode) throws IOException {
+        Snippet snippet = snippetService.findByCode(snippetCode);
+        if (snippet==null) {
+            log.warn("#440.100 Snippet wasn't found for code {}", snippetCode);
+            response.sendError(HttpServletResponse.SC_GONE);
+            return null;
+        }
+        SnippetApiData.SnippetConfig sc = snippet.getSnippetConfig();
+        log.info("Send snippet config for snippet {}", sc.getCode());
+        return SnippetConfigUtils.toString(sc);
     }
 
     /**

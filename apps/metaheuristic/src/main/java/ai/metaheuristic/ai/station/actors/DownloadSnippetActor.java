@@ -40,7 +40,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -319,17 +318,12 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 add(snippetTask);
             }
         });
-
     }
 
     private DownloadSnippetConfigStatus downloadSnippetConfig(
             LaunchpadLookupConfig.LaunchpadLookup launchpad, String payloadRestUrl, String snippetCode, String stationId) {
 
-        if (true) {
-            throw new NotImplementedException("need to implement new end-point in controller");
-        }
-
-        final String snippetChecksumUrl = payloadRestUrl + "/snippet-checksum";
+        final String snippetChecksumUrl = payloadRestUrl + "/snippet-config";
         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +'-' + stationId;
 
         final DownloadSnippetConfigStatus snippetConfigStatus = new DownloadSnippetConfigStatus();
