@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.launchpad.server.LaunchpadConfig;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
@@ -136,6 +135,7 @@ public class LaunchpadRequestor {
     }
 
     private void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String launchpadUrl, LaunchpadCommParamsYaml launchpadYaml) {
+        log.debug("#775.020 LaunchpadCommParamsYaml: {}", launchpadYaml);
         withSync(() -> {
             storeLaunchpadConfig(launchpadUrl, launchpadYaml);
             stationCommandProcessor.processLaunchpadCommParamsYaml(scpy, launchpadUrl, launchpadYaml);

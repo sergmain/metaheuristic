@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.versioning;
 
+import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import lombok.Data;
 
 import java.util.Map;
@@ -39,7 +40,7 @@ public class ParamsYamlUtilsFactory {
     public AbstractParamsYamlUtils getForVersion(int version) {
         AbstractParamsYamlUtils yamlUtils = map.get(version);
         if (yamlUtils==null) {
-            throw new IllegalArgumentException("Not supported version: " + version);
+            throw new WrongVersionOfYamlFileException("Not supported version: " + version);
         }
         return yamlUtils;
     }
