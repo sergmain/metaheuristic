@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.launchpad.server.LaunchpadConfig;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfigUtils;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
+import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -99,5 +100,16 @@ public class LaunchpadLookupExtendedService {
         }
         lookupExtendedMap = Collections.unmodifiableMap(map);
     }
+
+    public File prepareBaseResourceDir(Metadata.LaunchpadInfo launchpadCode) {
+        final File launchpadDir = new File(globals.stationResourcesDir, launchpadCode.code);
+        if (launchpadDir.exists()) {
+            return launchpadDir;
+        }
+        //noinspection unused
+        boolean status = launchpadDir.mkdirs();
+        return launchpadDir;
+    }
+
 
 }

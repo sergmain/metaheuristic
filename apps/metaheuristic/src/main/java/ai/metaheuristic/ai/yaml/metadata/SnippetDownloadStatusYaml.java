@@ -44,6 +44,7 @@ public class SnippetDownloadStatusYaml implements BaseParams {
         public String code;
         public String launchpadUrl;
         public EnumsApi.SnippetSourcing sourcing;
+        public boolean verified;
     }
 
     public List<Status> statuses = new ArrayList<>();

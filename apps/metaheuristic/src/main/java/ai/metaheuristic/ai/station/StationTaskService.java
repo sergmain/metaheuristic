@@ -598,16 +598,6 @@ public class StationTaskService {
         return taskDir;
     }
 
-    public File prepareBaseResourceDir(Metadata.LaunchpadInfo launchpadCode) {
-        final File launchpadDir = new File(globals.stationResourcesDir, launchpadCode.code);
-        if (launchpadDir.exists()) {
-            return launchpadDir;
-        }
-        //noinspection unused
-        boolean status = launchpadDir.mkdirs();
-        return launchpadDir;
-    }
-
     File prepareTaskSubDir(File taskDir, String subDir) {
         File taskSubDir = new File(taskDir, subDir);
         //noinspection ResultOfMethodCallIgnored

@@ -17,7 +17,8 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
-    public enum SnippetState { none, ok, signature_wrong, signature_not_found, checksum_wrong, ready, not_supported_os, not_found, asset_error, download_error, snippet_config_error }
+    public enum SnippetState { none, ok, signature_wrong, signature_not_found, checksum_wrong, ready, not_supported_os,
+        not_found, asset_error, download_error, snippet_config_error, io_error }
 
     public enum GitStatus {unknown, installed, not_found, error }
 

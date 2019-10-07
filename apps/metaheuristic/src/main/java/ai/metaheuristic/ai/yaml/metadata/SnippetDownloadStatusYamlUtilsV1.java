@@ -50,6 +50,7 @@ public class SnippetDownloadStatusYamlUtilsV1
             target.code = source.code;
             target.launchpadUrl = source.launchpadUrl;
             target.sourcing = source.sourcing;
+            target.verified = source.verified;
             return target;
         }).collect(Collectors.toList());
         trg.checkIntegrity();

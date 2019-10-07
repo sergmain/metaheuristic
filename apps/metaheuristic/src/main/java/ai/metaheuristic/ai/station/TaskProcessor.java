@@ -104,9 +104,9 @@ public class TaskProcessor {
                 continue;
             }
 
-            final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
-            if (launchpadCode==null) {
-                final String es = "#100.010 launchpadCode is null for "+task.launchpadUrl+". task #" + task.taskId;
+            final Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(task.launchpadUrl);
+            if (launchpadInfo==null) {
+                final String es = "#100.010 launchpadInfo is null for "+task.launchpadUrl+". task #" + task.taskId;
                 log.warn(es);
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
                 continue;
@@ -148,7 +148,7 @@ public class TaskProcessor {
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
-            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadCode, taskParamYaml, launchpad, taskDir);
+            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadInfo, taskParamYaml, launchpad, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
@@ -214,7 +214,7 @@ public class TaskProcessor {
             int idx = 0;
             SnippetPrepareResult result;
             for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
-                result = prepareSnippet(launchpadCode, preSnippetConfig);
+                result = prepareSnippet(launchpadInfo, preSnippetConfig);
                 if (result.isError) {
                     markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                     isNotReady = true;
@@ -230,7 +230,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = prepareSnippet(launchpadCode, taskParamYaml.taskYaml.getSnippet());
+            result = prepareSnippet(launchpadInfo, taskParamYaml.taskYaml.getSnippet());
             if (result.isError) {
                 markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                 continue;
@@ -241,7 +241,7 @@ public class TaskProcessor {
             }
 
             for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
-                result = prepareSnippet(launchpadCode, postSnippetConfig);
+                result = prepareSnippet(launchpadInfo, postSnippetConfig);
                 if (result.isError) {
                     markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                     isNotReady = true;
@@ -265,7 +265,7 @@ public class TaskProcessor {
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
             try {
                 taskProcessorStateService.currentTaskId = task.taskId;
-                execAllSnippets(task, launchpadCode, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, results);
+                execAllSnippets(task, launchpadInfo, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, results);
             }
             catch(ScheduleInactivePeriodException e) {
                 stationTaskService.resetTask(task.launchpadUrl, task.taskId);
@@ -289,7 +289,7 @@ public class TaskProcessor {
     }
 
     private void execAllSnippets(
-            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            StationTask task, Metadata.LaunchpadInfo launchpadInfo,
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
             File systemDir, SnippetPrepareResult[] results) {
@@ -356,7 +356,7 @@ public class TaskProcessor {
                         final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
                         ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                         generalExec = resourceProvider.processResultingFile(
-                                launchpad, task, launchpadCode,
+                                launchpad, task, launchpadInfo,
                                 new File(taskParamYaml.taskYaml.outputResourceAbsolutePath),
                                 mainSnippetConfig
 
@@ -517,7 +517,7 @@ public class TaskProcessor {
         snippetPrepareResult.snippet = snippet;
 
         if (snippetPrepareResult.snippet.sourcing== EnumsApi.SnippetSourcing.launchpad) {
-            final File snippetDir = stationTaskService.prepareBaseResourceDir(launchpadCode);
+            final File snippetDir = launchpadLookupExtendedService.prepareBaseResourceDir(launchpadCode);
             snippetPrepareResult.snippetAssetFile = ResourceUtils.prepareSnippetFile(snippetDir, snippetPrepareResult.snippet.getCode(), snippetPrepareResult.snippet.file);
             // is this snippet prepared?
             if (snippetPrepareResult.snippetAssetFile.isError || !snippetPrepareResult.snippetAssetFile.isContent) {
@@ -526,7 +526,7 @@ public class TaskProcessor {
             }
         }
         else if (snippetPrepareResult.snippet.sourcing==EnumsApi.SnippetSourcing.git) {
-            final File snippetRootDir = stationTaskService.prepareBaseResourceDir(launchpadCode);
+            final File snippetRootDir = launchpadLookupExtendedService.prepareBaseResourceDir(launchpadCode);
             log.info("Root dir for snippet: " + snippetRootDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareSnippet(snippetRootDir, snippetPrepareResult.snippet);
             if (!result.ok) {
