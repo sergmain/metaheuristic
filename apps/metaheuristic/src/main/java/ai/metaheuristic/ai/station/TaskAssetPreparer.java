@@ -96,9 +96,6 @@ public class TaskAssetPreparer {
                     launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
 
             // process only if launchpad has already sent its config
-            if (launchpad.config==null) {
-                continue;
-            }
             if (launchpad.config.chunkSize==null) {
                 log.error("#951.050 Launchpad {} doesn't provide chunkSize", task.launchpadUrl);
                 continue;

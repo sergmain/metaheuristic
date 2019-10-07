@@ -82,6 +82,11 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             final LaunchpadLookupConfig.LaunchpadLookup launchpad = task.launchpad;
             final String launchpadUrl = launchpad.url;
 
+            if (task.chunkSize==null) {
+                log.error("#811.007 (task.chunkSize==null), launchpadUrl: {}",task);
+                continue;
+            }
+
             SnippetDownloadStatusYaml.Status sdsy = metadataService.syncSnippetStatus(launchpadUrl, snippetCode);
             if (sdsy.snippetState==Enums.SnippetState.ready) {
                 continue;
@@ -285,8 +290,8 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
                         launchpadLookupExtendedService.lookupExtendedMap.get(o.launchpadUrl);
 
-                if (launchpad==null || launchpad.config==null) {
-                    log.error("#811.195 (launchpad==null || launchpad.config==null), launchpadUrl: {}", o.launchpadUrl);
+                if (launchpad==null || launchpad.config.chunkSize==null) {
+                    log.info("#811.195 (launchpad==null || launchpad.config.chunkSize==null), launchpadUrl: {}", o.launchpadUrl);
                     return;
                 }
 
