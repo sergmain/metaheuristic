@@ -25,7 +25,7 @@ public class Monitoring {
         if (monitors==null) {
             throw new IllegalStateException("monitors is null");
         }
-        if (isMemory(monitors)) {
+        if (log.isDebugEnabled() && isMemory(monitors)) {
             log.debug("{} mem free: {}, total: {}, max: {}", tag, Runtime.getRuntime().freeMemory(), Runtime.getRuntime().maxMemory(), Runtime.getRuntime().totalMemory());
         }
     }

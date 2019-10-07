@@ -195,7 +195,7 @@ public class LaunchpadRequestor {
             else {
                 setStationCommContext(scpy, new StationCommParamsYaml.StationCommContext(stationId, sessionId));
 
-                // always report about current active sequences, if we have actual stationId
+                // always report about current active tasks, if we have actual stationId
                 setReportStationTaskStatus(scpy, stationTaskService.produceStationTaskStatus(launchpadUrl));
                 setReportStationStatus(scpy, stationService.produceReportStationStatus(launchpadUrl, launchpad.schedule));
 
@@ -232,7 +232,7 @@ public class LaunchpadRequestor {
                 setReportTaskProcessingResult(scpy, stationTaskService.reportTaskProcessingResult(launchpadUrl));
                 Monitoring.log("##014", Enums.Monitor.MEMORY);
 
-                scpy.snippetDownloadStatus.statuses.addAll(metadataService.getAsSnippetDownloadStatuses());
+                scpy.snippetDownloadStatus.statuses.addAll(metadataService.getAsSnippetDownloadStatuses(launchpadUrl));
             }
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;

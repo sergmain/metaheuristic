@@ -64,8 +64,9 @@ public class LaunchpadCommandProcessor {
 
     public void process(StationCommParamsYaml scpy, LaunchpadCommParamsYaml lcpy) {
         lcpy.resendTaskOutputResource = checkForMissingOutputResources(scpy);
-        checkForMissingOutputResources(scpy);
-        processStationTaskStatus(scpy);
+        // TODO 2019-10-06 doubles, remove on 2019-11-06 if everything will be ok
+//        checkForMissingOutputResources(scpy);
+//        processStationTaskStatus(scpy);
         processStationTaskStatus(scpy);
         processResendTaskOutputResourceResult(scpy);
         processStationTaskStatus(scpy);
@@ -134,7 +135,7 @@ public class LaunchpadCommandProcessor {
             return;
         }
         checkStationId(request);
-        stationTopLevelService.storeStationStatus(request.stationCommContext.stationId, request.reportStationStatus);
+        stationTopLevelService.storeStationStatuses(request.stationCommContext.stationId, request.reportStationStatus, request.snippetDownloadStatus);
     }
 
     // processing on launchpad side

@@ -132,7 +132,7 @@ public class StationTopLevelService {
 
     private static final ConcurrentHashMap<Long, Object> syncMap = new ConcurrentHashMap<>(50, 0.75f, 10);
 
-    public void storeStationStatus(String stationIdAsStr, StationCommParamsYaml.ReportStationStatus status) {
+    public void storeStationStatuses(String stationIdAsStr, StationCommParamsYaml.ReportStationStatus status, StationCommParamsYaml.SnippetDownloadStatus snippetDownloadStatus) {
         final Long stationId = Long.valueOf(stationIdAsStr);
         final Object obj = syncMap.computeIfAbsent(stationId, o -> new Object());
         log.debug("Before entering in sync block, storeStationStatus()");
@@ -145,7 +145,8 @@ public class StationTopLevelService {
                     throw new IllegalStateException("Station wasn't found for stationId: " + stationId);
                 }
                 StationStatus ss = StationStatusUtils.to(station.status);
-                if (isStationStatusDifferent(status, ss)) {
+                boolean isUpdated = false;
+                if (isStationStatusDifferent(ss, status)) {
                     ss.env = status.env;
                     ss.gitStatusInfo = status.gitStatusInfo;
                     ss.schedule = status.schedule;
@@ -161,10 +162,14 @@ public class StationTopLevelService {
                     ss.errors = status.errors;
                     ss.logDownloadable = status.logDownloadable;
                     ss.taskParamsVersion = status.taskParamsVersion;
-                    ss.os = (status.os==null ? EnumsApi.OS.unknown : status.os);
+                    ss.os = (status.os == null ? EnumsApi.OS.unknown : status.os);
 
                     station.status = StationStatusUtils.toString(ss);
                     station.updatedOn = System.currentTimeMillis();
+                    isUpdated = true;
+                }
+
+                if (isUpdated) {
                     try {
                         log.debug("Save new station status, station: {}", station);
                         stationCache.save(station);
@@ -187,7 +192,7 @@ public class StationTopLevelService {
         log.debug("After leaving sync block");
     }
 
-    public static boolean isStationStatusDifferent(StationCommParamsYaml.ReportStationStatus status, StationStatus ss) {
+    public static boolean isStationStatusDifferent(StationStatus ss, StationCommParamsYaml.ReportStationStatus status) {
         return
         !Objects.equals(ss.env, status.env) ||
         !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||
@@ -199,6 +204,21 @@ public class StationTopLevelService {
         ss.taskParamsVersion!=status.taskParamsVersion||
         ss.os!=status.os;
     }
+
+/*
+    public static boolean isStationSnippetDownloadStatusDifferent(StationStatus ss, StationCommParamsYaml.SnippetDownloadStatus snippetDownloadStatus) {
+        return
+        !Objects.equals(ss.env, status.env) ||
+        !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||
+        !Objects.equals(ss.schedule, status.schedule) ||
+        !Objects.equals(ss.ip, status.ip) ||
+        !Objects.equals(ss.host, status.host) ||
+        !Objects.equals(ss.errors, status.errors) ||
+        ss.logDownloadable!=status.logDownloadable ||
+        ss.taskParamsVersion!=status.taskParamsVersion||
+        ss.os!=status.os;
+    }
+*/
 
     // TODO Need to re-write this method
     public void reconcileStationTasks(String stationIdAsStr, List<StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus> statuses) {

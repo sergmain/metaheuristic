@@ -151,7 +151,7 @@ public class TestRegisterStation {
         assertNotNull(s);
 
         StationStatus ss1 = StationStatusUtils.to(s.status);
-        assertFalse(StationTopLevelService.isStationStatusDifferent(ss, ss1));
+        assertFalse(StationTopLevelService.isStationStatusDifferent(ss1, ss));
 
         //noinspection unused
         int i=0;

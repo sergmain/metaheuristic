@@ -63,6 +63,8 @@ public class ServerController {
         //
     }
 
+    // left there only for compatibility
+    @Deprecated
     @PostMapping("/srv/{random-part}")
     public String processRequestAuth(@SuppressWarnings("unused") @PathVariable("random-part") String randomPart,@RequestBody String data) {
         log.debug("processRequestAuth(), globals.isSecurityEnabled: {}, data: {}", globals.isSecurityEnabled, data);

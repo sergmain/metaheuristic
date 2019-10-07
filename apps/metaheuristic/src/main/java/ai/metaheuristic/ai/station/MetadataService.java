@@ -369,9 +369,10 @@ public class MetadataService {
         }
     }
 
-    public List<StationCommParamsYaml.SnippetDownloadStatus.Status> getAsSnippetDownloadStatuses() {
+    public List<StationCommParamsYaml.SnippetDownloadStatus.Status> getAsSnippetDownloadStatuses(final String launchpadUrl) {
         synchronized (syncObj) {
             return getSnippetDownloadStatusYamlInternal().statuses.stream()
+                    .filter(o->o.launchpadUrl.equals(launchpadUrl))
                     .map(o->new StationCommParamsYaml.SnippetDownloadStatus.Status(o.snippetState, o.code))
                     .collect(Collectors.toList());
         }
