@@ -135,7 +135,7 @@ public class LaunchpadRequestor {
     }
 
     private void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String launchpadUrl, LaunchpadCommParamsYaml launchpadYaml) {
-        log.debug("#775.020 LaunchpadCommParamsYaml: {}", launchpadYaml);
+        log.debug("#775.020 LaunchpadCommParamsYaml:\n{}", launchpadYaml);
         withSync(() -> {
             storeLaunchpadConfig(launchpadUrl, launchpadYaml);
             stationCommandProcessor.processLaunchpadCommParamsYaml(scpy, launchpadUrl, launchpadYaml);
@@ -249,11 +249,11 @@ public class LaunchpadRequestor {
                 Monitoring.log("##015", Enums.Monitor.MEMORY);
 
                 log.debug("Start to request a launchpad at {}", url);
-                log.debug("ExchangeData: {}", yaml);
+                log.debug("ExchangeData:\n{}", yaml);
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
                 Monitoring.log("##016", Enums.Monitor.MEMORY);
                 String result = response.getBody();
-                log.debug("ExchangeData from launchpad: {}", result);
+                log.debug("ExchangeData from launchpad:\n{}", result);
                 if (result == null) {
                     log.warn("#775.050 Launchpad returned null as a result");
                     return;
