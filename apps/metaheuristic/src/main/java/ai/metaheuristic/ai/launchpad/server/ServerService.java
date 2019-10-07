@@ -278,6 +278,7 @@ public class ServerService {
             lcpy.reAssignedStationId = reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
             return;
         }
+
         StationStatus ss;
         try {
             ss = StationStatusUtils.to(station.status);
