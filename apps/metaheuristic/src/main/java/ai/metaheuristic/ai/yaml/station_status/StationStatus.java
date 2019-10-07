@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.station_status;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -32,6 +33,17 @@ import java.util.List;
 @AllArgsConstructor
 @ToString
 public class StationStatus {
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DownloadStatus {
+        public Enums.SnippetState snippetState;
+        public String snippetCode;
+    }
+
+    public List<DownloadStatus> downloadStatuses = new ArrayList<>();
+
     public EnvYaml env;
     public GitSourcingService.GitStatusInfo gitStatusInfo;
     public String schedule;

@@ -157,9 +157,6 @@ public class LaunchpadRequestor {
     }
 
     private void storeLaunchpadConfig(LaunchpadCommParamsYaml launchpadCommParamsYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad) {
-        if (launchpad.config==null) {
-            launchpad.config = new LaunchpadConfig();
-        }
         if (launchpadCommParamsYaml.launchpadCommContext==null) {
             return;
         }

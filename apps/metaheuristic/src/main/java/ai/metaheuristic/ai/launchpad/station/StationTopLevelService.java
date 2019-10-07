@@ -168,7 +168,14 @@ public class StationTopLevelService {
                     station.updatedOn = System.currentTimeMillis();
                     isUpdated = true;
                 }
-
+                if (isStationSnippetDownloadStatusDifferent(ss, snippetDownloadStatus)) {
+                    ss.downloadStatuses = snippetDownloadStatus.statuses.stream()
+                            .map(o->new StationStatus.DownloadStatus(o.snippetState, o.snippetCode))
+                            .collect(Collectors.toList());
+                    station.status = StationStatusUtils.toString(ss);
+                    station.updatedOn = System.currentTimeMillis();
+                    isUpdated = true;
+                }
                 if (isUpdated) {
                     try {
                         log.debug("Save new station status, station: {}", station);
@@ -205,20 +212,19 @@ public class StationTopLevelService {
         ss.os!=status.os;
     }
 
-/*
-    public static boolean isStationSnippetDownloadStatusDifferent(StationStatus ss, StationCommParamsYaml.SnippetDownloadStatus snippetDownloadStatus) {
-        return
-        !Objects.equals(ss.env, status.env) ||
-        !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||
-        !Objects.equals(ss.schedule, status.schedule) ||
-        !Objects.equals(ss.ip, status.ip) ||
-        !Objects.equals(ss.host, status.host) ||
-        !Objects.equals(ss.errors, status.errors) ||
-        ss.logDownloadable!=status.logDownloadable ||
-        ss.taskParamsVersion!=status.taskParamsVersion||
-        ss.os!=status.os;
+    public static boolean isStationSnippetDownloadStatusDifferent(StationStatus ss, StationCommParamsYaml.SnippetDownloadStatus status) {
+        if (ss.downloadStatuses.size()!=status.statuses.size()) {
+            return true;
+        }
+        for (StationStatus.DownloadStatus downloadStatus : ss.downloadStatuses) {
+            for (StationCommParamsYaml.SnippetDownloadStatus.Status sds : status.statuses) {
+                if (downloadStatus.snippetCode.equals(sds.snippetCode) && !downloadStatus.snippetState.equals(sds.snippetState)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
-*/
 
     // TODO Need to re-write this method
     public void reconcileStationTasks(String stationIdAsStr, List<StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus> statuses) {

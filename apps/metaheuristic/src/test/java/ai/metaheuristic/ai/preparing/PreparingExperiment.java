@@ -45,6 +45,7 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -120,7 +121,7 @@ public abstract class PreparingExperiment {
             envYaml.getEnvs().put("env-snippet-03:1.1", "python.exe" );
             envYaml.getEnvs().put("env-snippet-04:1.1", "python.exe" );
             envYaml.getEnvs().put("env-snippet-05:1.1", "python.exe" );
-            StationStatus ss = new StationStatus(envYaml,
+            StationStatus ss = new StationStatus(new ArrayList<>(), envYaml,
                     new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                     ""+ UUID.randomUUID().toString(), System.currentTimeMillis(),
                     "[unknown]", "[unknown]", null, false,

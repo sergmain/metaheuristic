@@ -167,7 +167,7 @@ public class LaunchpadCommandProcessor {
         }
         String sessionId = StationTopLevelService.createNewSessionId();
         final Station st = new Station();
-        StationStatus ss = new StationStatus(null,
+        StationStatus ss = new StationStatus(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
                 1, EnumsApi.OS.unknown);

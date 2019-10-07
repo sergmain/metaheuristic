@@ -64,6 +64,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -452,7 +453,7 @@ public class ServerService {
         s.setDescription(description);
 
         String sessionId = StationTopLevelService.createNewSessionId();
-        StationStatus ss = new StationStatus(null,
+        StationStatus ss = new StationStatus(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
                 "[unknown]", "[unknown]", null, false, 1, EnumsApi.OS.unknown);

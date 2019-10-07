@@ -52,7 +52,7 @@ public class LaunchpadLookupExtendedService {
     public static class LaunchpadLookupExtended {
         public LaunchpadLookupConfig.LaunchpadLookup launchpadLookup;
         public LaunchpadSchedule schedule;
-        public LaunchpadConfig config;
+        public final LaunchpadConfig config = new LaunchpadConfig();
     }
 
     @PostConstruct
