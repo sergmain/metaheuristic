@@ -169,8 +169,12 @@ public class MetadataService {
         StationSnippetService.DownloadedSnippetConfigStatus downloadedSnippetConfigStatus =
                 stationSnippetService.downloadSnippetConfig(simpleCache.launchpad.launchpadLookup, simpleCache.payloadRestUrl, snippetCode, simpleCache.launchpadInfo.stationId);
 
-        if (downloadedSnippetConfigStatus.status!= StationSnippetService.ConfigStatus.ok) {
+        if (downloadedSnippetConfigStatus.status==StationSnippetService.ConfigStatus.error) {
             setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.snippet_config_error);
+            return;
+        }
+        if (downloadedSnippetConfigStatus.status==StationSnippetService.ConfigStatus.not_found) {
+            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.not_found);
             return;
         }
         SnippetApiData.SnippetConfig snippetConfig = downloadedSnippetConfigStatus.snippetConfig;

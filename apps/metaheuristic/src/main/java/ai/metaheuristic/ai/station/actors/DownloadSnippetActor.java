@@ -108,8 +108,12 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             SnippetApiData.SnippetConfig snippetConfig = task.snippetConfig;
             if (snippetConfig ==null) {
                 StationSnippetService.DownloadedSnippetConfigStatus downloadedSnippetConfigStatus = stationSnippetService.downloadSnippetConfig(launchpad, payloadRestUrl, snippetCode, task.stationId);
-                if (downloadedSnippetConfigStatus.status!= StationSnippetService.ConfigStatus.ok) {
+                if (downloadedSnippetConfigStatus.status == StationSnippetService.ConfigStatus.error) {
                     metadataService.setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.snippet_config_error);
+                    continue;
+                }
+                if (downloadedSnippetConfigStatus.status == StationSnippetService.ConfigStatus.not_found) {
+                    metadataService.setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.not_found);
                     continue;
                 }
                 snippetConfig = downloadedSnippetConfigStatus.snippetConfig;
@@ -285,7 +289,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
     }
 
     public void prepareSnippetForDownloading() {
-        metadataService.getSnippetDownloadStatusYaml().statuses.forEach(o->{
+        metadataService.getSnippetDownloadStatusYaml().statuses.forEach(o -> {
             if (o.sourcing==EnumsApi.SnippetSourcing.launchpad && (o.snippetState==Enums.SnippetState.none || !o.verified)) {
                 final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
                         launchpadLookupExtendedService.lookupExtendedMap.get(o.launchpadUrl);

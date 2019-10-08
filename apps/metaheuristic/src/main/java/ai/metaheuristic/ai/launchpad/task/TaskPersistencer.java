@@ -147,7 +147,7 @@ public class TaskPersistencer {
                 log.warn("#307.080 Can't find Task for Id: {}", taskId);
                 return null;
             }
-            task.setExecState(EnumsApi.TaskExecState.BROKEN.value);
+            task.setExecState(state.value);
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
 
@@ -199,7 +199,7 @@ public class TaskPersistencer {
             }
             task.setExecState(state.value);
 
-            if (state== EnumsApi.TaskExecState.ERROR) {
+            if (state==EnumsApi.TaskExecState.ERROR || state==EnumsApi.TaskExecState.BROKEN ) {
                 task.setCompleted(true);
                 task.setCompletedOn(System.currentTimeMillis());
             }

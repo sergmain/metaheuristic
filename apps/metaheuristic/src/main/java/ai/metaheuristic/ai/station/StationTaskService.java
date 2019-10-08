@@ -278,14 +278,14 @@ public class StationTaskService {
             log.info("markAsFinished({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("#713.110 StationTask wasn't found for Id " + taskId);
+                log.error("#713.110 StationTask wasn't found for Id #" + taskId);
             } else {
                 if (task.getLaunchedOn()==null) {
-                    log.info("\t713.113 task #{} doesn't have the launchedOn as inited", taskId);
+                    log.info("#713.113 task #{} doesn't have the launchedOn as inited", taskId);
                     task.setLaunchedOn(System.currentTimeMillis());
                 }
                 if (!snippetExec.allSnippetsAreOk()) {
-                    log.info("\t713.115 task #{} finished with an error, set completed to true", taskId);
+                    log.info("#713.115 task #{} was finished with an error, set completed to true", taskId);
                     // there are some problems with this task. mark it as completed
                     task.setCompleted(true);
                 }

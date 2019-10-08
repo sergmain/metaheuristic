@@ -132,12 +132,12 @@ public class ServerController {
     private String getSnippetChecksum(HttpServletResponse response, String snippetCode) throws IOException {
         Snippet snippet = snippetService.findByCode(snippetCode);
         if (snippet==null) {
-            log.warn("#440.100 Snippet wasn't found for code {}", snippetCode);
+            log.warn("#440.100 Snippet {} wasn't", snippetCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
         SnippetApiData.SnippetConfig sc = snippet.getSnippetConfig();
-        log.info("Send checksum {} for snippet {}", sc.checksum, sc.getCode());
+        log.info("#440.120 Send checksum {} for snippet {}", sc.checksum, sc.getCode());
         return sc.checksum;
     }
 
@@ -155,7 +155,7 @@ public class ServerController {
     private String getSnippetConfig(HttpServletResponse response, String snippetCode) throws IOException {
         Snippet snippet = snippetService.findByCode(snippetCode);
         if (snippet==null) {
-            log.warn("#440.100 Snippet wasn't found for code {}", snippetCode);
+            log.warn("#440.140 Snippet {} wasn't found", snippetCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }

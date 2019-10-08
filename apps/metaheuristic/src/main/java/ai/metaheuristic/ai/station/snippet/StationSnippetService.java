@@ -48,7 +48,7 @@ import java.util.UUID;
 @Service
 public class StationSnippetService {
 
-    public enum ConfigStatus {ok, error}
+    public enum ConfigStatus {ok, error, not_found}
 
     @Data
     public static class DownloadedSnippetConfigStatus {
@@ -87,6 +87,7 @@ public class StationSnippetService {
 
         } catch (HttpResponseException e) {
             if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
+                snippetConfigStatus.status = ConfigStatus.not_found;
                 log.warn("#811.200 Snippet with code {} wasn't found", snippetCode);
             }
             else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {

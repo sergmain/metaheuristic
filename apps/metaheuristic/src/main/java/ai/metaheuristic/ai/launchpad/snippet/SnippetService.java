@@ -236,7 +236,7 @@ public class SnippetService {
                 }
 
                 Snippet snippet = snippetRepository.findByCodeForUpdate(snippetConfig.code);
-                // there is snippet with the same name:version
+                // there is snippet with the same code
                 if (snippet!=null) {
                     SnippetApiData.SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
 
@@ -267,8 +267,9 @@ public class SnippetService {
                 }
             }
             catch(Throwable th) {
-                status = new SnippetApiData.SnippetConfigStatus(false,
-                        "#295.050 Error "+th.getClass().getName()+" while processing snippet '"+snippetConfig.code+"': "+th.getMessage());
+                final String es = "#295.050 Error " + th.getClass().getName() + " while processing snippet '" + snippetConfig.code + "': " + th.toString();
+                log.error(es, th);
+                status = new SnippetApiData.SnippetConfigStatus(false, es);
             }
             finally {
                 statuses.add(status!=null
