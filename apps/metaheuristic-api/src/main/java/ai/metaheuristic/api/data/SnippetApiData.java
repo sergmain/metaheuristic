@@ -95,10 +95,14 @@ public class SnippetApiData {
         @SneakyThrows
         public SnippetConfig clone() {
             final SnippetConfig clone = (SnippetConfig) super.clone();
-            clone.checksumMap = new HashMap<>(this.checksumMap);
-            clone.metas = new ArrayList<>();
-            for (Meta meta : this.metas) {
-                clone.metas.add( new Meta(meta.key, meta.value, meta.ext));
+            if (this.checksumMap!=null) {
+                clone.checksumMap = new HashMap<>(this.checksumMap);
+            }
+            if (this.metas!=null) {
+                clone.metas = new ArrayList<>();
+                for (Meta meta : this.metas) {
+                    clone.metas.add(new Meta(meta.key, meta.value, meta.ext));
+                }
             }
             return clone;
         }

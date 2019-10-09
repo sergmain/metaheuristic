@@ -109,6 +109,8 @@ public class SnippetService {
             if (snippet != null) {
                 snippetConfig = snippet.getSnippetConfig(true);
                 if (!snippetConfig.skipParams) {
+                    // TODO 2019-10-09 need to handle a case when field 'params'
+                    //  contains actual code (mh.snippet-params-as-file==true)
                     if (snippetConfig.params!=null && snippetDef.params!=null) {
                         snippetConfig.params = snippetConfig.params + ' ' + snippetDef.params;
                     }

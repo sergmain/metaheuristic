@@ -76,4 +76,38 @@ public class TestSnippetConfigClone {
         assertEquals("key1", sc1.metas.get(0).getKey());
         assertEquals("value1", sc1.metas.get(0).getValue());
     }
+
+    @Test
+    public void testNull() {
+        SnippetApiData.SnippetConfig sc = new SnippetApiData.SnippetConfig();
+        sc.code = "sc.code";
+        sc.type = "sc.type";
+        sc.file = "sc.file";
+        sc.params = "sc.params";
+        sc.env = "sc.env";
+        sc.sourcing = EnumsApi.SnippetSourcing.launchpad;
+        sc.metrics = true;
+        sc.checksumMap = null;
+        sc.info = null;
+        sc.checksum = "sc.checksum";
+        sc.git = null;
+        sc.skipParams = true;
+        sc.metas = null;
+
+        SnippetApiData.SnippetConfig sc1 = sc.clone();
+
+        assertEquals(sc1.code, "sc.code");
+        assertEquals(sc1.type, "sc.type");
+        assertEquals(sc1.file, "sc.file");
+        assertEquals(sc1.params, "sc.params");
+        assertEquals(sc1.env, "sc.env");
+        assertEquals(sc1.sourcing, EnumsApi.SnippetSourcing.launchpad);
+        assertTrue(sc1.metrics);
+        assertNull(sc1.checksumMap);
+        assertNull(sc1.info);
+        assertEquals(sc1.checksum, "sc.checksum");
+        assertNull(sc1.git);
+        assertTrue(sc1.skipParams);
+        assertNull(sc1.metas);
+    }
 }
