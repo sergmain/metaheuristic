@@ -20,11 +20,12 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * @author Serge
@@ -43,14 +44,17 @@ public class TestSnippetConfigClone {
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.SnippetSourcing.launchpad;
         sc.metrics = true;
-        sc.checksumMap = Map.of(EnumsApi.Type.SHA256, "qwe321");
+        sc.checksumMap = new HashMap<>(Map.of(EnumsApi.Type.SHA256, "qwe321"));
         sc.info = new SnippetApiData.SnippetConfig.SnippetInfo(true, 42);
         sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;
-        sc.metas = List.of( new Meta("key1", "value1", "ext1" ));
+        sc.metas = new ArrayList<>(List.of( new Meta("key1", "value1", "ext1" )));
 
         SnippetApiData.SnippetConfig sc1 = sc.clone();
+
+        sc.checksumMap.put(EnumsApi.Type.SHA256WithSignature, "321qwe");
+        sc.metas.add(new Meta("key2", "value2", "ext2" ));
 
         assertEquals(sc1.code, "sc.code");
         assertEquals(sc1.type, "sc.type");
@@ -58,19 +62,18 @@ public class TestSnippetConfigClone {
         assertEquals(sc1.params, "sc.params");
         assertEquals(sc1.env, "sc.env");
         assertEquals(sc1.sourcing, EnumsApi.SnippetSourcing.launchpad);
-        assertEquals(sc1.metrics, true);
+        assertTrue(sc1.metrics);
         assertEquals(1, sc1.checksumMap.size());
         assertNotNull(sc1.checksumMap.get(EnumsApi.Type.SHA256));
         assertEquals(sc1.info.length, 42);
-        assertEquals(sc1.info.signed, true);
+        assertTrue(sc1.info.signed);
         assertEquals(sc1.checksum, "sc.checksum");
         assertEquals(sc1.git.repo, "repo");
         assertEquals(sc1.git.branch, "branch");
         assertEquals(sc1.git.commit, "commit");
-        assertEquals(sc1.skipParams, true);
+        assertTrue(sc1.skipParams);
         assertEquals(1, sc1.metas.size());
         assertEquals("key1", sc1.metas.get(0).getKey());
         assertEquals("value1", sc1.metas.get(0).getValue());
-
     }
 }

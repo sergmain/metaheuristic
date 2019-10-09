@@ -21,6 +21,7 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -93,7 +94,13 @@ public class SnippetApiData {
 
         @SneakyThrows
         public SnippetConfig clone() {
-            return (SnippetConfig) super.clone();
+            final SnippetConfig clone = (SnippetConfig) super.clone();
+            clone.checksumMap = new HashMap<>(this.checksumMap);
+            clone.metas = new ArrayList<>();
+            for (Meta meta : this.metas) {
+                clone.metas.add( new Meta(meta.key, meta.value, meta.ext));
+            }
+            return clone;
         }
 
         @Data
