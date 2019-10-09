@@ -27,10 +27,7 @@ import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.*;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.*;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -290,7 +287,12 @@ public class LaunchpadRequestor {
                 }
             } catch (RestClientException e) {
                 log.error("#775.110 Error accessing url: {}, error: {}", url, e.getMessage());
-                if (e.getMessage() == null || !e.getMessage().contains("503")) {
+                //noinspection StatementWithEmptyBody
+                if (e instanceof HttpServerErrorException.GatewayTimeout ||
+                    e instanceof HttpServerErrorException.ServiceUnavailable) {
+                    //
+                }
+                else {
                     log.error("#775.120 Stacktrace", e);
                 }
             }
