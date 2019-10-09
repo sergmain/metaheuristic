@@ -89,9 +89,16 @@ public class SnippetApiData {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class SnippetConfig {
+    public static class SnippetConfig implements Cloneable {
+
+        @SneakyThrows
+        public SnippetConfig clone() {
+            return (SnippetConfig) super.clone();
+        }
 
         @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
         public static class SnippetInfo {
             public boolean signed;
             /**

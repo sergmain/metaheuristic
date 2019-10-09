@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
@@ -824,7 +823,7 @@ public class ExperimentService {
                             epy.processing.taskFeatures.add(tef);
                         }
 
-                        yaml.taskYaml.snippet = snippet.getSnippetConfig();
+                        yaml.taskYaml.snippet = snippet.getSnippetConfig(true);
                         yaml.taskYaml.preSnippets = new ArrayList<>();
                         if (process.getPreSnippets() != null) {
                             for (SnippetDefForPlan snDef : process.getPreSnippets()) {

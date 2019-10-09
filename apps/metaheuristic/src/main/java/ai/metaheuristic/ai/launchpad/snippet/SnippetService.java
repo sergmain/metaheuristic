@@ -107,7 +107,7 @@ public class SnippetService {
         if(StringUtils.isNotBlank(snippetDef.code)) {
             Snippet snippet = findByCode(snippetDef.code);
             if (snippet != null) {
-                snippetConfig = snippet.getSnippetConfig();
+                snippetConfig = snippet.getSnippetConfig(true);
                 if (!snippetConfig.skipParams) {
                     if (snippetConfig.params!=null && snippetDef.params!=null) {
                         snippetConfig.params = snippetConfig.params + ' ' + snippetDef.params;

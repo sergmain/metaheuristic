@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.api.sourcing;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Serge
@@ -24,6 +26,8 @@ import lombok.Data;
  * Time: 12:05 AM
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class GitInfo {
     public String repo;
     // right now it'll be always as origin

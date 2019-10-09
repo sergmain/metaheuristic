@@ -136,7 +136,7 @@ public class ServerController {
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        SnippetApiData.SnippetConfig sc = snippet.getSnippetConfig();
+        SnippetApiData.SnippetConfig sc = snippet.getSnippetConfig(false);
         log.info("#440.120 Send checksum {} for snippet {}", sc.checksum, sc.getCode());
         return sc.checksum;
     }
@@ -159,7 +159,7 @@ public class ServerController {
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        SnippetApiData.SnippetConfig sc = snippet.getSnippetConfig();
+        SnippetApiData.SnippetConfig sc = snippet.getSnippetConfig(false);
         log.info("Send snippet config for snippet {}", sc.getCode());
         return SnippetConfigUtils.toString(sc);
     }

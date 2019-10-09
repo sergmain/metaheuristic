@@ -83,7 +83,7 @@ public class LaunchpadCommandProcessor {
             final List<Long> allIds = snippetRepository.findAllIds();
             snippetInfosCache = allIds.stream()
                     .map(snippetCache::findById)
-                    .map(s->new LaunchpadCommParamsYaml.Snippets.Info(s.code, s.getSnippetConfig().sourcing))
+                    .map(s->new LaunchpadCommParamsYaml.Snippets.Info(s.code, s.getSnippetConfig(false).sourcing))
                     .collect(Collectors.toList());
         }
         return snippetInfosCache;

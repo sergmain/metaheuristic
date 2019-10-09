@@ -15,9 +15,7 @@
  */
 package ai.metaheuristic.ai.launchpad.beans;
 
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -52,8 +50,8 @@ public class Snippet implements Serializable {
     private SnippetApiData.SnippetConfig sc = null;
 
     @JsonIgnore
-    public SnippetApiData.SnippetConfig getSnippetConfig() {
-        if (sc ==null) {
+    public SnippetApiData.SnippetConfig getSnippetConfig(boolean isClone) {
+        if (sc==null) {
             synchronized (this) {
                 if (sc==null) {
                     //noinspection UnnecessaryLocalVariable
@@ -63,7 +61,7 @@ public class Snippet implements Serializable {
                 }
             }
         }
-        return sc;
+        return isClone ? sc.clone() : sc;
     }
 
     public void reset() {
