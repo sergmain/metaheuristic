@@ -65,7 +65,7 @@
             <th><div class="no-wrap">IP</div><div class="no-wrap">Host name</div></th>
             <th>Description</th>
             <th>Status of station</th>
-            <th><div class="no-wrap">Is active</div><div class="no-wrap">Is blacklisted</div><div class="no-wrap">Reason</div></th>
+            <th><div class="no-wrap">Is active?</div><div class="no-wrap">Snippets' problems?</div><div class="no-wrap">Is blacklisted?</div><div class="no-wrap">Reason</div></th>
             <th>Last seen</th>
             <th colspan="2">&nbsp;</th>
         </tr>
@@ -78,6 +78,7 @@
             <td><pre style="display: none;" id="station-status" th:if="${r.station.status}!=null" th:text="${r.station.status}">Status of station </pre></td>
             <td>
                 <div th:text="${r.active ? 'Yes' : 'No'}" class="no-wrap">Is active</div>
+                <div th:text="${r.snippetProblem ? 'Yes' : 'No'}" class="no-wrap">Is any problem with Snippets</div>
                 <div th:text="${r.blacklisted ? 'Yes' : 'No'}" class="no-wrap">Is blacklisted</div>
                 <div th:text="${r.blacklistReason}" class="no-wrap">Reason</div>
             </td>

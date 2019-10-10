@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.station;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.data.StationData;
@@ -82,8 +83,12 @@ public class StationTopLevelService {
 
             String blacklistReason = stationBlacklisted(status);
 
+            boolean isSnippetProblem = status.downloadStatuses.stream()
+                    .anyMatch(s->s.snippetState!=Enums.SnippetState.none && s.snippetState!=Enums.SnippetState.ready && s.snippetState!=Enums.SnippetState.ok);
+
             ss.add(new StationData.StationStatus(
                     station, System.currentTimeMillis() - station.updatedOn < STATION_TIMEOUT,
+                    isSnippetProblem,
                     blacklistReason!=null, blacklistReason,
                     station.updatedOn,
                     (StringUtils.isNotBlank(status.ip) ? status.ip : "[unknown]"),
