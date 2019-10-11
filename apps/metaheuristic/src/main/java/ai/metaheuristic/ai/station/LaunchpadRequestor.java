@@ -258,7 +258,7 @@ public class LaunchpadRequestor {
                 LaunchpadCommParamsYaml launchpadYaml = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
 
                 if (!launchpadYaml.success) {
-                    log.error("#775.060 Something wrong at the launchpad side. Check the launchpad's logs for more info.");
+                    log.error("#775.060 Something wrong at the launchpad {}. Check the launchpad's logs for more info.", launchpadUrl );
                     return;
                 }
                 Monitoring.log("##017", Enums.Monitor.MEMORY);
@@ -287,10 +287,16 @@ public class LaunchpadRequestor {
                 }
             } catch (RestClientException e) {
                 log.error("#775.110 Error accessing url: {}, error: {}", url, e.getMessage());
+
+                // short info for all 5xx errors
                 //noinspection StatementWithEmptyBody
-                if (e instanceof HttpServerErrorException.GatewayTimeout ||
-                    e instanceof HttpServerErrorException.ServiceUnavailable) {
+                if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException)e).getRawStatusCode()>=500 & ((HttpStatusCodeException)e).getRawStatusCode()<600 ) {
+/*
+                if (e. instanceof HttpServerErrorException.GatewayTimeout ||
+                        e instanceof HttpServerErrorException.BadGateway ||
+                        e instanceof HttpServerErrorException.ServiceUnavailable) {
                     //
+*/
                 }
                 else {
                     log.error("#775.120 Stacktrace", e);
