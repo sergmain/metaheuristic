@@ -27,8 +27,8 @@ import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlU
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -150,7 +150,7 @@ public class TestRegisterStation {
         Station s = stationsRepository.findById(stationId).orElse(null);
         assertNotNull(s);
 
-        StationStatus ss1 = StationStatusUtils.to(s.status);
+        StationStatusYaml ss1 = StationStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
         assertFalse(StationTopLevelService.isStationStatusDifferent(ss1, ss));
 
         //noinspection unused

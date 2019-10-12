@@ -16,12 +16,18 @@
 
 package ai.metaheuristic.ai.yaml;
 
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Serge
@@ -33,7 +39,52 @@ public class TestStationStatus {
     @Test
     public void test() throws IOException {
         try (InputStream is = TestStationStatus.class.getResourceAsStream("/yaml/station/station-status-01.yaml")) {
-            StationStatus ss = StationStatusUtils.to(is);
+            String yaml = IOUtils.toString(is, StandardCharsets.UTF_8);
+            StationStatusYaml ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(yaml);
+
+/*
+env:
+  disk: [
+  ]
+  envs:
+    python-3: C:\Anaconda3\envs\python-3.7\python.exe
+    java-11: C:\jdk-11.0.2\bin\java.exe -jar
+  mirrors:
+    https://bitbucket.org/buzovskaya/jcons.git: \\192.168.10.9\disk-s\jcons-git-mirror
+    https://bitbucket.org/buzovskaya/ric411.git: \\192.168.10.9\disk-s\ric411-git-mirror
+gitStatusInfo:
+  status: installed
+  version: 2.21.0.windows.1
+schedule: |
+  workingDay: 0:00-23:59
+  weekend: 0:00-23:59
+sessionCreatedOn: 1558588131596
+sessionId: e7af5f04-7123-487d-a7af-39224ee9c6fa-b42407fd-b953-454e-82e9-7384a0c34669
+*/
+
+            assertNotNull(ss.gitStatusInfo);
+            assertEquals(Enums.GitStatus.installed, ss.gitStatusInfo.status);
+            assertEquals("2.21.0.windows.1", ss.gitStatusInfo.version);
+            assertEquals("workingDay: 0:00-23:59\nweekend: 0:00-23:59\n", ss.schedule);
+            assertEquals(1558588131596L, ss.sessionCreatedOn);
+            assertEquals("e7af5f04-7123-487d-a7af-39224ee9c6fa-b42407fd-b953-454e-82e9-7384a0c34669", ss.sessionId);
+
+            assertNotNull(ss.env);
+            assertEquals(2, ss.env.envs.size());
+            assertNotNull(ss.env.envs.get("python-3"));
+            assertNotNull(ss.env.envs.get("java-11"));
+            assertEquals("C:\\Anaconda3\\envs\\python-3.7\\python.exe", ss.env.envs.get("python-3"));
+            assertEquals("C:\\jdk-11.0.2\\bin\\java.exe -jar", ss.env.envs.get("java-11"));
+
+            assertEquals(2, ss.env.mirrors.size());
+            assertNotNull(ss.env.mirrors.get("https://bitbucket.org/buzovskaya/ric411.git"));
+            assertNotNull(ss.env.mirrors.get("https://bitbucket.org/buzovskaya/jcons.git"));
+            assertEquals("\\\\192.168.10.9\\disk-s\\jcons-git-mirror",
+                    ss.env.mirrors.get("https://bitbucket.org/buzovskaya/jcons.git"));
+            assertEquals("\\\\192.168.10.9\\disk-s\\ric411-git-mirror",
+                    ss.env.mirrors.get("https://bitbucket.org/buzovskaya/ric411.git"));
+
+
         }
     }
 }

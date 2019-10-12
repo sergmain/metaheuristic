@@ -16,9 +16,13 @@
 
 package ai.metaheuristic.ai.yaml.env;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class DiskStorage {
     public String code;
     public String path;

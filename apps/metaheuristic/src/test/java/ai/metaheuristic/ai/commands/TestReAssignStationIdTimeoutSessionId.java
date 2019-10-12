@@ -24,8 +24,8 @@ import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -88,17 +88,17 @@ public class TestReAssignStationIdTimeoutSessionId {
         Station s = stationsRepository.findByIdForUpdate(stationId);
         assertNotNull(s);
 
-        StationStatus ss = StationStatusUtils.to(s.status);
+        StationStatusYaml ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
         assertNotEquals(0L, ss.sessionCreatedOn);
         assertEquals(sessionIdBefore, ss.sessionId);
 
         ss.sessionCreatedOn -= (ServerService.SESSION_TTL + 100000);
         sessionCreatedOn = ss.sessionCreatedOn;
-        s.status = StationStatusUtils.toString(ss);
+        s.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
 
         Station s1 = stationCache.save(s);
 
-        StationStatus ss1 = StationStatusUtils.to(s1.status);
+        StationStatusYaml ss1 = StationStatusYamlUtils.BASE_YAML_UTILS.to(s1.status);
         assertEquals(ss.sessionCreatedOn, ss1.sessionCreatedOn);
     }
 
@@ -132,7 +132,7 @@ public class TestReAssignStationIdTimeoutSessionId {
         Station s = stationCache.findById(stationIdBefore);
 
         assertNotNull(s);
-        StationStatus ss = StationStatusUtils.to(s.status);
+        StationStatusYaml ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
         assertNotEquals(0L, ss.sessionCreatedOn);
         assertNotEquals(sessionCreatedOn, ss.sessionCreatedOn);
         assertEquals(sessionIdBefore, ss.sessionId);

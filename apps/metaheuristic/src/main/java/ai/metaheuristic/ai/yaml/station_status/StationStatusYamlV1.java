@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,24 +33,27 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class StationStatus {
+public class StationStatusYamlV1 implements BaseParams {
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class DownloadStatus {
+    public static class DownloadStatusV1 {
         public Enums.SnippetState snippetState;
         public String snippetCode;
     }
 
-    public List<DownloadStatus> downloadStatuses = new ArrayList<>();
+    public List<DownloadStatusV1> downloadStatuses = new ArrayList<>();
 
     public EnvYaml env;
     public GitSourcingService.GitStatusInfo gitStatusInfo;
     public String schedule;
     public String sessionId;
-
-//    public String stationUUID;
 
     // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
     // it'll work but in some cases behaviour can be different
@@ -64,10 +68,5 @@ public class StationStatus {
     public int taskParamsVersion;
     public EnumsApi.OS os;
 
-    public void addError(String error) {
-        if (errors==null) {
-            errors = new ArrayList<>();
-        }
-        errors.add(error);
-    }
+    public final int version = 1;
 }

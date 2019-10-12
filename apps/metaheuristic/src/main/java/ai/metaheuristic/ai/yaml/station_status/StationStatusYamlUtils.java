@@ -15,32 +15,27 @@
  */
 package ai.metaheuristic.ai.yaml.station_status;
 
+import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
+import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYamlUtilsV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Map;
 
-public class StationStatusUtils {
+public class StationStatusYamlUtils {
 
-    private static Yaml getYaml() {
-        return YamlUtils.init(StationStatus.class);
-    }
+    private static final StationStatusYamlUtilsV1 YAML_UTILS_V_1 = new StationStatusYamlUtilsV1();
+    private static final StationStatusYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    public static String toString(StationStatus config) {
-        return YamlUtils.toString(config, getYaml());
-    }
+    public static final BaseYamlUtils<StationStatusYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, YAML_UTILS_V_1
+            ),
+            DEFAULT_UTILS
+    );
 
-    public static StationStatus to(String s) {
-        return (StationStatus) YamlUtils.to(s, getYaml());
-    }
-
-    public static StationStatus to(InputStream is) {
-        return (StationStatus) YamlUtils.to(is, getYaml());
-    }
-
-    public static StationStatus to(File file) {
-        return (StationStatus) YamlUtils.to(file, getYaml());
-    }
 
 }

@@ -30,8 +30,8 @@ import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
@@ -121,12 +121,12 @@ public abstract class PreparingExperiment {
             envYaml.getEnvs().put("env-snippet-03:1.1", "python.exe" );
             envYaml.getEnvs().put("env-snippet-04:1.1", "python.exe" );
             envYaml.getEnvs().put("env-snippet-05:1.1", "python.exe" );
-            StationStatus ss = new StationStatus(new ArrayList<>(), envYaml,
+            StationStatusYaml ss = new StationStatusYaml(new ArrayList<>(), envYaml,
                     new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                     ""+ UUID.randomUUID().toString(), System.currentTimeMillis(),
                     "[unknown]", "[unknown]", null, false,
                     TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown);
-            station.setStatus(StationStatusUtils.toString(ss));
+            station.setStatus(StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss));
 
             station.setDescription("Test station. Must be deleted automatically");
             stationCache.save(station);

@@ -40,8 +40,8 @@ import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.Workbook;
@@ -363,9 +363,9 @@ public class ServerService {
             lcpy.reAssignedStationId = reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
             return;
         }
-        StationStatus ss;
+        StationStatusYaml ss;
         try {
-            ss = StationStatusUtils.to(station.status);
+            ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
         } catch (Throwable e) {
             log.error("#442.065 Error parsing current status of station:\n{}", station.status);
             log.error("#442.066 Error ", e);
@@ -405,7 +405,7 @@ public class ServerService {
      * session is Ok, so we need to update session's timestamp periodically
      */
     @SuppressWarnings("UnnecessaryReturnStatement")
-    private void updateSession(Station station, StationStatus ss) {
+    private void updateSession(Station station, StationStatusYaml ss) {
         final long millis = System.currentTimeMillis();
         final long diff = millis - ss.sessionCreatedOn;
         if (diff > SESSION_UPDATE_TIMEOUT) {
@@ -418,7 +418,7 @@ public class ServerService {
             // so we just need to refresh sessionId timestamp
             ss.sessionCreatedOn = millis;
             station.updatedOn = millis;
-            station.status = StationStatusUtils.toString(ss);
+            station.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
             try {
                 stationCache.save(station);
             } catch (ObjectOptimisticLockingFailureException e) {
@@ -437,10 +437,10 @@ public class ServerService {
         }
     }
 
-    private LaunchpadCommParamsYaml.ReAssignStationId assignNewSessionId(Station station, StationStatus ss) {
+    private LaunchpadCommParamsYaml.ReAssignStationId assignNewSessionId(Station station, StationStatusYaml ss) {
         ss.sessionId = StationTopLevelService.createNewSessionId();
         ss.sessionCreatedOn = System.currentTimeMillis();
-        station.status = StationStatusUtils.toString(ss);
+        station.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
         station.updatedOn = ss.sessionCreatedOn;
         stationCache.save(station);
         // the same stationId but new sessionId
@@ -453,12 +453,12 @@ public class ServerService {
         s.setDescription(description);
 
         String sessionId = StationTopLevelService.createNewSessionId();
-        StationStatus ss = new StationStatus(new ArrayList<>(), null,
+        StationStatusYaml ss = new StationStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
                 "[unknown]", "[unknown]", null, false, 1, EnumsApi.OS.unknown);
 
-        s.status = StationStatusUtils.toString(ss);
+        s.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
         s.updatedOn = ss.sessionCreatedOn;
         stationCache.save(s);
         return new LaunchpadCommParamsYaml.ReAssignStationId(s.getId(), sessionId);

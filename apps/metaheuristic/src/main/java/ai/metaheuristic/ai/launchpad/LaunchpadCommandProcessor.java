@@ -27,8 +27,8 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -167,12 +167,12 @@ public class LaunchpadCommandProcessor {
         }
         String sessionId = StationTopLevelService.createNewSessionId();
         final Station st = new Station();
-        StationStatus ss = new StationStatus(new ArrayList<>(), null,
+        StationStatusYaml ss = new StationStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
                 1, EnumsApi.OS.unknown);
 
-        st.status = StationStatusUtils.toString(ss);
+        st.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
         stationCache.save(st);
 
         // TODO 2019.05.19 why do we send stationId as a String?

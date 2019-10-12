@@ -34,8 +34,8 @@ import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -323,9 +323,9 @@ public class WorkbookService {
             log.error("#705.140 Station wasn't found for id: {}", stationId);
             return null;
         }
-        StationStatus ss;
+        StationStatusYaml ss;
         try {
-            ss = StationStatusUtils.to(station.status);
+            ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
         } catch (Throwable e) {
             log.error("#705.150 Error parsing current status of station:\n{}", station.status);
             log.error("#705.151 Error ", e);
@@ -394,7 +394,7 @@ public class WorkbookService {
             return null;
         }
         final List<WorkbookParamsYaml.TaskVertex> vertices = findAllForAssigning(workbook);
-        final StationStatus stationStatus = StationStatusUtils.to(station.status);
+        final StationStatusYaml stationStatus = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
 
         int page = 0;
         Task resultTask = null;

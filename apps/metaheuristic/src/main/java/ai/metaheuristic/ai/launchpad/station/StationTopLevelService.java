@@ -25,8 +25,8 @@ import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -79,7 +79,7 @@ public class StationTopLevelService {
             if (station==null) {
                 continue;
             }
-            StationStatus status = StationStatusUtils.to(station.status);
+            StationStatusYaml status = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
 
             String blacklistReason = stationBlacklisted(status);
 
@@ -99,7 +99,7 @@ public class StationTopLevelService {
         return result;
     }
 
-    private String stationBlacklisted(StationStatus status) {
+    private String stationBlacklisted(StationStatusYaml status) {
         if (status.taskParamsVersion < TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
             return "Station's taskParamsVersion is too old, need to upgrade";
         }
@@ -149,7 +149,7 @@ public class StationTopLevelService {
                     // we throw ISE cos all checks have to be made early
                     throw new IllegalStateException("Station wasn't found for stationId: " + stationId);
                 }
-                StationStatus ss = StationStatusUtils.to(station.status);
+                StationStatusYaml ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
                 boolean isUpdated = false;
                 if (isStationStatusDifferent(ss, status)) {
                     ss.env = status.env;
@@ -169,15 +169,15 @@ public class StationTopLevelService {
                     ss.taskParamsVersion = status.taskParamsVersion;
                     ss.os = (status.os == null ? EnumsApi.OS.unknown : status.os);
 
-                    station.status = StationStatusUtils.toString(ss);
+                    station.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
                     station.updatedOn = System.currentTimeMillis();
                     isUpdated = true;
                 }
                 if (isStationSnippetDownloadStatusDifferent(ss, snippetDownloadStatus)) {
                     ss.downloadStatuses = snippetDownloadStatus.statuses.stream()
-                            .map(o->new StationStatus.DownloadStatus(o.snippetState, o.snippetCode))
+                            .map(o->new StationStatusYaml.DownloadStatus(o.snippetState, o.snippetCode))
                             .collect(Collectors.toList());
-                    station.status = StationStatusUtils.toString(ss);
+                    station.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
                     station.updatedOn = System.currentTimeMillis();
                     isUpdated = true;
                 }
@@ -204,7 +204,7 @@ public class StationTopLevelService {
         log.debug("After leaving sync block");
     }
 
-    public static boolean isStationStatusDifferent(StationStatus ss, StationCommParamsYaml.ReportStationStatus status) {
+    public static boolean isStationStatusDifferent(StationStatusYaml ss, StationCommParamsYaml.ReportStationStatus status) {
         return
         !Objects.equals(ss.env, status.env) ||
         !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||
@@ -217,11 +217,11 @@ public class StationTopLevelService {
         ss.os!=status.os;
     }
 
-    public static boolean isStationSnippetDownloadStatusDifferent(StationStatus ss, StationCommParamsYaml.SnippetDownloadStatus status) {
+    public static boolean isStationSnippetDownloadStatusDifferent(StationStatusYaml ss, StationCommParamsYaml.SnippetDownloadStatus status) {
         if (ss.downloadStatuses.size()!=status.statuses.size()) {
             return true;
         }
-        for (StationStatus.DownloadStatus downloadStatus : ss.downloadStatuses) {
+        for (StationStatusYaml.DownloadStatus downloadStatus : ss.downloadStatuses) {
             for (StationCommParamsYaml.SnippetDownloadStatus.Status sds : status.statuses) {
                 if (downloadStatus.snippetCode.equals(sds.snippetCode) && !downloadStatus.snippetState.equals(sds.snippetState)) {
                     return true;
