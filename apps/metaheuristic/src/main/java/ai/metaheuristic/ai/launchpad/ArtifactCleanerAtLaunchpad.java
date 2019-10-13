@@ -34,8 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class ArtifactCleanerAtLaunchpad {
 
-    private static final int NUM_RECORD_FOR_DELETING = 20;
-
     private final WorkbookRepository workbookRepository;
     private final TaskRepository taskRepository;
     private final BinaryDataRepository binaryDataRepository;
@@ -66,12 +64,9 @@ public class ArtifactCleanerAtLaunchpad {
             return;
         }
 
-        for (int i = 0; i < (ids.size() / NUM_RECORD_FOR_DELETING + 1); i++) {
-            final int fromIndex = i * NUM_RECORD_FOR_DELETING;
-            List<Long> subList = ids.subList(fromIndex, (int) Math.min(ids.size(), fromIndex + NUM_RECORD_FOR_DELETING));
-            if (!subList.isEmpty()) {
-                binaryDataRepository.deleteByIds(subList);
-            }
+        // lets delete no more than 1000 record per call of ai.metaheuristic.ai.launchpad.ArtifactCleanerAtLaunchpad.deleteOrphanData()
+        for (int i = 0; i < Math.min(ids.size(), 1000); i++) {
+            binaryDataRepository.deleteById(ids.get(i));
         }
     }
 
