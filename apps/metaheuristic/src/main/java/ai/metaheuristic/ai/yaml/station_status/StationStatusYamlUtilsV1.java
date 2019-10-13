@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.yaml.station_status;
 import ai.metaheuristic.ai.S;
 import ai.metaheuristic.ai.yaml.env.DiskStorage;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -53,17 +52,22 @@ public class StationStatusYamlUtilsV1
         }
         if (src.env!=null) {
             trg.env = new EnvYaml();
-            final Map<String, String> envMap = src.env.envs.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, HashMap::new));
-            trg.env.envs.putAll(envMap);
+            if (!src.env.envs.isEmpty()) {
+                final Map<String, String> envMap = src.env.envs.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, HashMap::new));
+                trg.env.envs.putAll(envMap);
+            }
 
-            trg.env.disk.addAll(src.env.disk.stream()
-                    .map( d -> new DiskStorage (d.code, d.path))
-                    .collect(Collectors.toList()));
-
-            final Map<String, String> mirrorMap = src.env.mirrors.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, HashMap::new));
-            trg.env.mirrors.putAll(mirrorMap);
+            if (!src.env.disk.isEmpty()) {
+                trg.env.disk.addAll(src.env.disk.stream()
+                        .map(d -> new DiskStorage(d.code, d.path))
+                        .collect(Collectors.toList()));
+            }
+            if (!src.env.mirrors.isEmpty()) {
+                final Map<String, String> mirrorMap = src.env.mirrors.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, HashMap::new));
+                trg.env.mirrors.putAll(mirrorMap);
+            }
         }
         BeanUtils.copyProperties(src, trg, "downloadStatuses", "errors");
         trg.checkIntegrity();

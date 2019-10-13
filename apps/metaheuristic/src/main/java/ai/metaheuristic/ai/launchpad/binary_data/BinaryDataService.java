@@ -131,7 +131,7 @@ public class BinaryDataService {
         }
     }
 
-    public void deleteByRefId(long workbookId, BinaryDataRefType refType) {
+    public void deleteByRefId(Long workbookId, BinaryDataRefType refType) {
         binaryDataRepository.deleteByRefIdAndRefType(workbookId, refType.toString());
     }
 

@@ -41,6 +41,15 @@ import java.util.List;
 @Repository
 @Profile("launchpad")
 public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long> {
+
+    @Transactional(readOnly = true)
+    @Query(nativeQuery = true, value = "select d.id from mh_data d where d.ref_type='batch' and d.REF_ID not in (select z.id from mh_batch z)")
+    List<Long> findAllOrphanBatchData();
+
+    @Transactional(readOnly = true)
+    @Query(nativeQuery = true, value = "select d.id from mh_data d where d.ref_type='workbook' and d.REF_ID not in (select z.id from aiai.mh_workbook z)")
+    List<Long> findAllOrphanWorkbookData();
+
     List<BinaryData> findAllByDataType(int dataType);
 
     @Transactional(readOnly = true)
@@ -86,13 +95,17 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     Page<BinaryDataImpl> findAll(Pageable pageable);
 
     @Transactional
+    @Query("delete FROM BinaryDataImpl where id in :ids ")
+    void deleteByIds(List<Long> ids);
+
+    @Transactional
     void deleteAllByDataType(int dataType);
 
     @Transactional
     void deleteByCodeAndDataType(String code, int dataType);
 
     @Transactional
-    void deleteByRefIdAndRefType(long refId, String refType);
+    void deleteByRefIdAndRefType(Long refId, String refType);
 
     @Transactional
     void deleteByPoolCodeAndDataType(String poolCode, int dataType);

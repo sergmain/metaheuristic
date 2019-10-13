@@ -624,7 +624,7 @@ public class ExperimentService {
 
     public void resetExperimentByWorkbookId(Long workbookId) {
 
-        Experiment e = experimentRepository.findIdByWorkbookIdForUpdate(workbookId);
+        Experiment e = experimentRepository.findByWorkbookIdForUpdate(workbookId);
         if (e==null) {
             return;
         }

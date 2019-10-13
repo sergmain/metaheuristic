@@ -63,6 +63,10 @@ public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
     Slice<Workbook> findByPlanId(Pageable pageable, Long planId);
 
     @Transactional(readOnly = true)
+    @Query(value="select e.id from WorkbookImpl e where e.planId=:planId")
+    List<Long> findIdsByPlanId(Long planId);
+
+    @Transactional(readOnly = true)
     Slice<Workbook> findByPlanIdOrderByCreatedOnDesc(Pageable pageable, Long planId);
 
     @Transactional(readOnly = true)

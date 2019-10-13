@@ -513,8 +513,20 @@ public class PlanService {
         binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
         Workbook workbook = workbookCache.findById(workbookId);
         if (workbook != null) {
-            if (workbook.getPlanId() != null) {
-                setLockedTo(workbook.getPlanId(), false);
+            // unlock plan if this is the last workbook in the plan
+            List<Long> ids = workbookRepository.findIdsByPlanId(workbook.getPlanId());
+            if (ids.size()==1) {
+                if (ids.get(0).equals(workbookId)) {
+                    if (workbook.getPlanId() != null) {
+                        setLockedTo(workbook.getPlanId(), false);
+                    }
+                }
+                else {
+                    log.warn("#701.300 unexpected state, workbookId: {}, ids: {}, ", workbookId, ids);
+                }
+            }
+            else if (ids.isEmpty()) {
+                log.warn("#701.310 unexpected state, workbookId: {}, ids is empty", workbookId);
             }
             workbookCache.deleteById(workbookId);
         }
