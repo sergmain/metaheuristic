@@ -264,7 +264,7 @@ public class Schedulers {
             downloadSnippetActor.downloadSnippets();
         }
 
-        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.prepare-snippet-for-downloading'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.prepare-snippet-for-downloading'), 3, 20, 10)*1000 }")
         public void prepareSnippetForDownloading() {
             if (globals.isUnitTesting) {
                 return;

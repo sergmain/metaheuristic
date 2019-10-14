@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.launchpad.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchParams;
@@ -44,14 +43,14 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -62,10 +61,10 @@ import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 
 /**
  * @author Serge
@@ -154,7 +153,7 @@ public class BatchService {
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
-                updateStatus(batchId, false);
+                updateStatus(batchId);
                 Batch b = batchCache.findById(batchId);
                 if (b == null) {
                     log.warn("#990.050 batch wasn't found {}", batchId);
@@ -270,18 +269,19 @@ public class BatchService {
         return items;
     }
 
-    public BatchStatus updateStatus(Long batchId, boolean fullConsole) {
+    // TODO 2019-10-13 change synchronization to use AtomicInteger
+    public BatchStatus updateStatus(Long batchId) {
         final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
-                return updateStatusInternal(batchId, fullConsole);
+                return updateStatusInternal(batchId);
             }
             catch(NeedRetryAfterCacheCleanException e) {
                 log.warn("#990.097 NeedRetryAfterCacheCleanException was caught");
             }
             try {
-                return updateStatusInternal(batchId, fullConsole);
+                return updateStatusInternal(batchId);
             }
             catch(NeedRetryAfterCacheCleanException e) {
                 final BatchStatus status = new BatchStatus();
@@ -292,7 +292,7 @@ public class BatchService {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private BatchStatus updateStatusInternal(Long batchId, boolean fullConsole)  {
+    private BatchStatus updateStatusInternal(Long batchId)  {
         Batch b=null;
         try {
             b = batchCache.findById(batchId);
@@ -309,7 +309,7 @@ public class BatchService {
                 return batchParams.batchStatus;
             }
 
-            BatchStatus batchStatus = prepareStatus(batchId, fullConsole);
+            BatchStatus batchStatus = prepareStatusAndData(batchId, (PrepareZipData prepareZipData, File file) -> true, null);
 
             b = batchCache.findById(batchId);
             if (b == null) {
@@ -339,144 +339,6 @@ public class BatchService {
         finally {
             batchMap.remove(batchId);
         }
-    }
-
-    @SuppressWarnings("Duplicates")
-    private BatchStatus prepareStatus(Long batchId, boolean fullConsole) {
-        final BatchStatus bs = new BatchStatus();
-
-        List<Long> ids = batchWorkbookRepository.findWorkbookIdsByBatchId(batchId);
-        if (ids.isEmpty()) {
-            bs.getGeneralStatus().add("#990.130 Batch is empty, there isn't any task, batchId: " + batchId, '\n');
-            bs.ok = true;
-            return bs;
-        }
-
-        boolean isOk = true;
-        for (Long workbookId : ids) {
-            WorkbookImpl wb = workbookCache.findById(workbookId);
-            if (wb == null) {
-                String msg = "#990.140 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
-                bs.getGeneralStatus().add(msg, '\n');
-                log.warn(msg);
-                isOk = false;
-                continue;
-            }
-            String mainDocumentPoolCode = getMainDocumentPoolCode(wb);
-
-            final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode);
-            if (fullMainDocument == null) {
-                String msg = "#990.150 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
-                        "batchId: " + batchId + ", workbookId: " + workbookId;
-                log.warn(msg);
-                bs.getGeneralStatus().add(msg, '\n');
-                isOk = false;
-                continue;
-            }
-            String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
-
-            List<WorkbookParamsYaml.TaskVertex> taskVertices;
-            try {
-                taskVertices = workbookService.findLeafs(wb);
-            } catch (ObjectOptimisticLockingFailureException e) {
-                String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
-                log.warn(msg);
-                bs.getGeneralStatus().add(msg,'\n');
-                isOk = false;
-                continue;
-            }
-            if (taskVertices.isEmpty()) {
-                String msg = "#990.170 " + mainDocument + ", Can't find any task for batchId: " + batchId;
-                log.info(msg);
-                bs.getGeneralStatus().add(msg,'\n');
-                isOk = false;
-                continue;
-            }
-            if (taskVertices.size() > 1) {
-                String msg = "#990.180 " + mainDocument + ", Can't download file because there are more than one task " +
-                        "at the final state, batchId: " + batchId + ", workbookId: " + wb.getId();
-                log.info(msg);
-                bs.getGeneralStatus().add(msg,'\n');
-                isOk = false;
-                continue;
-            }
-            final Task task = taskRepository.findById(taskVertices.get(0).taskId).orElse(null);
-            if (task==null) {
-                String msg = "#990.183 " + mainDocument + ", Can't find task #" + taskVertices.get(0).taskId;
-                log.info(msg);
-                bs.getGeneralStatus().add(msg,'\n');
-                isOk = false;
-                continue;
-            }
-
-            EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
-            SnippetApiData.SnippetExec snippetExec;
-            try {
-                snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
-            } catch (YAMLException e) {
-                bs.getGeneralStatus().add("#990.190 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                        ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                        "taskId: " + task.getId(),'\n');
-                isOk = false;
-                continue;
-            }
-            Station s = null;
-            if (task.getStationId()!=null) {
-                s = stationCache.findById(task.getStationId());
-            }
-            final String stationIpAndHost = getStationIpAndHost(s);
-            switch (execState) {
-                case NONE:
-                case IN_PROGRESS:
-                    bs.getProgressStatus().add("#990.200 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                                    ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                                    "taskId: " + task.getId() + ", stationId: " + task.getStationId() +
-                                    ", " + stationIpAndHost
-                            ,'\n');
-                    isOk = true;
-                    continue;
-                case ERROR:
-                case BROKEN:
-                    bs.getErrorStatus().add(getStatusForError(batchId, wb, mainDocument, task, snippetExec, stationIpAndHost));
-                    isOk = true;
-                    continue;
-                case OK:
-                    if (fullConsole) {
-                        bs.getOkStatus().add("#990.220 " + mainDocument + ", Task completed without any error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                                "taskId: " + task.getId() + "\n" +
-                                "stationId: " + task.getStationId() + "\n" +
-                                stationIpAndHost + "\n" +
-                                "isOk: " + snippetExec.exec.isOk + "\n" +
-                                "exitCode: " + snippetExec.exec.exitCode + "\n" +
-                                "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
-                    }
-                    isOk = true;
-                    // !!! Don't change to continue;
-                    break;
-            }
-
-            if (wb.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
-                bs.getProgressStatus().add("#990.230 " + mainDocument + ", Task hasn't completed yet, " +
-                                "batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                                "taskId: " + task.getId() + ", " +
-                                "stationId: " + task.getStationId() + ", " + stationIpAndHost
-                        ,'\n');
-                isOk = true;
-                continue;
-            }
-
-            if (!fullConsole) {
-                String msg = "#990.240 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", workbookId: " + workbookId +
-                        ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
-                bs.getOkStatus().add(msg,'\n');
-                isOk = true;
-            }
-        }
-
-        bs.ok = isOk;
-        bs.init();
-
-        return bs;
     }
 
     private String getStatusForError(Long batchId, Workbook wb, String mainDocument, Task task, SnippetApiData.SnippetExec snippetExec, String stationIpAndHost) {
@@ -520,13 +382,19 @@ public class BatchService {
                 "console:\n" + (StringUtils.isNotBlank(execResult.console) ? execResult.console : "<output to console is blank>") + "\n\n";
     }
 
-    public BatchStatus prepareStatusAndData(Long batchId, File zipDir, boolean fullConsole, boolean storeToDisk) {
+    @Data
+    @AllArgsConstructor
+    public static class PrepareZipData {
+        public BatchStatus bs;
+        public Task task;
+        public File zipDir;
+        public String mainDocument;
+        public Long batchId;
+        public Long workbookId;
+    }
+
+    public BatchStatus prepareStatusAndData(Long batchId, BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir) {
         final BatchStatus bs = new BatchStatus();
-        if (zipDir == null) {
-            bs.getGeneralStatus().add("#990.268 zipDir is null", '\n');
-            bs.ok = false;
-            return bs;
-        }
 
         Batch batch = batchCache.findById(batchId);
         if (batch == null) {
@@ -563,10 +431,18 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
+            final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
 
             List<WorkbookParamsYaml.TaskVertex> taskVertices;
-            taskVertices = workbookService.findLeafs(wb);
+            try {
+                taskVertices = workbookService.findLeafs(wb);
+            } catch (ObjectOptimisticLockingFailureException e) {
+                String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
+                log.warn(msg);
+                bs.getGeneralStatus().add(msg,'\n');
+                isOk = false;
+                continue;
+            }
             if (taskVertices.isEmpty()) {
                 String msg = "#990.290 " + mainDocument + ", Can't find any task for batchId: " + batchId;
                 log.info(msg);
@@ -619,39 +495,13 @@ public class BatchService {
                     continue;
                 case ERROR:
                 case BROKEN:
-                    bs.getErrorStatus().add("#990.330 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                            "taskId: " + task.getId() + "\n" +
-                            "stationId: " + task.getStationId() + "\n" +
-                            stationIpAndHost + "\n" +
-                            "isOk: " + snippetExec.exec.isOk + "\n" +
-                            "exitCode: " + snippetExec.exec.exitCode + "\n" +
-                            "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
+                    bs.getErrorStatus().add(getStatusForError(batchId, wb, mainDocument, task, snippetExec, stationIpAndHost));
                     isOk = true;
                     continue;
                 case OK:
-                    if (fullConsole) {
-                        bs.getOkStatus().add("#990.340 " + mainDocument + ", Task completed without any error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                                "taskId: " + task.getId() + "\n" +
-                                "stationId: " + task.getStationId() + "\n" +
-                                stationIpAndHost + "\n" +
-                                "isOk: " + snippetExec.exec.isOk + "\n" +
-                                "exitCode: " + snippetExec.exec.exitCode + "\n" +
-                                "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
-                    }
                     isOk = true;
                     // !!! Don't change to continue;
                     break;
-            }
-
-            final TaskParamsYaml taskParamYaml;
-            try {
-                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            } catch (YAMLException e) {
-                bs.getErrorStatus().add("#990.350 " + mainDocument + ", Task has broken data in params, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                        ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                        "taskId: " + task.getId(), '\n');
-                isOk = false;
-                continue;
             }
 
             if (wb.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
@@ -664,40 +514,16 @@ public class BatchService {
                 continue;
             }
 
-            File tempFile;
-            try {
-                tempFile = File.createTempFile("doc-", ".xml", zipDir);
-            } catch (IOException e) {
-                String msg = "#990.370 Error create a temp file in "+zipDir.getAbsolutePath();
-                log.error(msg);
-                bs.getGeneralStatus().add(msg,'\n');
-                isOk = false;
+            PrepareZipData prepareZipData = new PrepareZipData(bs, task, zipDir, mainDocument, batchId, workbookId);
+            isOk = prepareZip.apply(prepareZipData, zipDir);
+            if (!isOk) {
                 continue;
             }
 
-            // all documents are sored in zip folder
-            bs.renameTo.put("zip/" + tempFile.getName(), "zip/" + mainDocument);
-
-            if (storeToDisk) {
-                try {
-                    binaryDataService.storeToFile(taskParamYaml.taskYaml.outputResourceCode, tempFile);
-                } catch (BinaryDataNotFoundException e) {
-                    String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.taskYaml.outputResourceCode +
-                            ", file: " + tempFile.getPath();
-                    log.error(msg);
-                    bs.getGeneralStatus().add(msg,'\n');
-                    isOk = false;
-                    continue;
-                }
-            }
-
-            if (!fullConsole) {
-                String msg = "#990.380 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", workbookId: " + workbookId +
-                        ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
-                bs.getOkStatus().add(msg,'\n');
-                isOk = true;
-            }
-
+            String msg = "#990.380 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", workbookId: " + workbookId +
+                    ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
+            bs.getOkStatus().add(msg,'\n');
+            isOk = true;
         }
 
         bs.ok = isOk;

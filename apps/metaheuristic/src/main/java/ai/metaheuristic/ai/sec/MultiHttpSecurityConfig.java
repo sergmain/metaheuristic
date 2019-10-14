@@ -60,6 +60,8 @@ public class MultiHttpSecurityConfig {
         return new BCryptPasswordEncoder(10);
     }
 
+    // https://github.com/spring-guides/gs-rest-service-cors/blob/master/complete/src/test/java/hello/GreetingIntegrationTests.java
+    // TODO 2019-10-13 need to investigate how to use CORS with restTemplate
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

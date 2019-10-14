@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.yaml.launchpad_lookup;
 
 import ai.metaheuristic.ai.S;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.*;
@@ -31,6 +32,7 @@ import java.util.Date;
 import java.util.List;
 
 @Slf4j
+@ToString(of = "asString")
 public class LaunchpadSchedule {
 
     private final List<LocalDate> holidays = new ArrayList<>();

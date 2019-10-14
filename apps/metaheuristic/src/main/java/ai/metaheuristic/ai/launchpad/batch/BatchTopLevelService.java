@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
+import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
@@ -31,7 +32,6 @@ import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
@@ -42,11 +42,13 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -111,7 +113,6 @@ public class BatchTopLevelService {
     private final BatchService batchService;
     private final BatchCache batchCache;
     private final PlanRepository planRepository;
-    private final WorkbookRepository workbookRepository;
     private final WorkbookService workbookService;
     private final BatchWorkbookRepository batchWorkbookRepository;
 
@@ -477,7 +478,7 @@ public class BatchTopLevelService {
             log.warn(es);
             return new BatchData.Status(es);
         }
-        BatchStatus status = batchService.updateStatus(batchId, false);
+        BatchStatus status = batchService.updateStatus(batchId);
         return new BatchData.Status(batchId, status.getStatus(), status.ok);
     }
 
@@ -485,11 +486,12 @@ public class BatchTopLevelService {
         ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
 
         File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
-        File zipDir = new File(resultDir, "zip");
-        zipDir.mkdir();
         resource.toClean.add(resultDir);
 
-        BatchStatus status = batchService.prepareStatusAndData(batchId, zipDir, false, true);
+        File zipDir = new File(resultDir, "zip");
+        zipDir.mkdir();
+
+        BatchStatus status = batchService.prepareStatusAndData(batchId, this::prepareZip, zipDir);
 
         File statusFile = new File(zipDir, "status.txt");
         FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);
@@ -502,6 +504,45 @@ public class BatchTopLevelService {
         httpHeaders.setContentDispositionFormData("attachment", RESULT_ZIP);
         resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
         return resource;
+    }
+
+    private boolean prepareZip(BatchService.PrepareZipData prepareZipData, File zipDir ) {
+        final TaskParamsYaml taskParamYaml;
+        try {
+            taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(prepareZipData.task.getParams());
+        } catch (YAMLException e) {
+            prepareZipData.bs.getErrorStatus().add(
+                    "#990.350 " + prepareZipData.mainDocument + ", " +
+                            "Task has broken data in params, status: " + EnumsApi.TaskExecState.from(prepareZipData.task.getExecState()) +
+                            ", batchId:" + prepareZipData.batchId +
+                            ", workbookId: " + prepareZipData.workbookId + ", " +
+                            "taskId: " + prepareZipData.task.getId(), '\n');
+            return false;
+        }
+
+        File tempFile;
+        try {
+            tempFile = File.createTempFile("doc-", ".xml", zipDir);
+        } catch (IOException e) {
+            String msg = "#990.370 Error create a temp file in "+zipDir.getAbsolutePath();
+            log.error(msg);
+            prepareZipData.bs.getGeneralStatus().add(msg,'\n');
+            return false;
+        }
+
+        // all documents are sored in zip folder
+        prepareZipData.bs.renameTo.put("zip/" + tempFile.getName(), "zip/" + prepareZipData.mainDocument);
+
+        try {
+            binaryDataService.storeToFile(taskParamYaml.taskYaml.outputResourceCode, tempFile);
+        } catch (BinaryDataNotFoundException e) {
+            String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.taskYaml.outputResourceCode +
+                    ", file: " + tempFile.getPath();
+            log.error(msg);
+            prepareZipData.bs.getGeneralStatus().add(msg,'\n');
+            return false;
+        }
+        return true;
     }
 
 
