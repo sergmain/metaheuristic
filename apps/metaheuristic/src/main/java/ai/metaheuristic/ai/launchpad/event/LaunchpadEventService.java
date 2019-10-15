@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.yaml.event.LaunchpadEventYaml;
 import ai.metaheuristic.ai.yaml.event.LaunchpadEventYamlUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
+@Profile("launchpad")
 public class LaunchpadEventService {
 
     private final LaunchpadEventRepository launchpadEventRepository;
