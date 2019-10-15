@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.S;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
@@ -153,6 +154,9 @@ public class TaskPersistencer {
                 log.warn("#307.080 Can't find Task for Id: {}", taskId);
                 return null;
             }
+            if (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.snippetExecResults)) {
+                return task;
+            }
             task.setExecState(state.value);
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
@@ -210,8 +214,10 @@ public class TaskPersistencer {
             if (state==EnumsApi.TaskExecState.ERROR || state==EnumsApi.TaskExecState.BROKEN ) {
                 task.setCompleted(true);
                 task.setCompletedOn(System.currentTimeMillis());
+                task.setResultReceived(true);
             }
             else {
+                task.setResultResourceScheduledOn(System.currentTimeMillis());
                 TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                 final DataStorageParams dataStorageParams = yaml.taskYaml.resourceStorageUrls.get(yaml.taskYaml.outputResourceCode);
 
@@ -220,10 +226,8 @@ public class TaskPersistencer {
                     task.setCompletedOn(System.currentTimeMillis());
                 }
             }
-
             task.setSnippetExecResults(result.getResult());
             task.setMetrics(result.getMetrics());
-            task.setResultResourceScheduledOn(System.currentTimeMillis());
             task = taskRepository.save(task);
 
             return task;

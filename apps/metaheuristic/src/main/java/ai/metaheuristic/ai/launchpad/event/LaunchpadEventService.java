@@ -45,8 +45,8 @@ public class LaunchpadEventService {
     public void publishBatchEvent(
             Enums.LaunchpadEventType event, String filename,
             Long size, Long batchId, Long workbookId, LaunchpadContext launchpadContext) {
-        if (event==Enums.LaunchpadEventType.BATCH_PROCESSING_STARTED && (batchId==null || launchpadContext==null)) {
-            throw new IllegalStateException("Error (event==Enums.LaunchpadEventType.BATCH_PROCESSING_STARTED && (batchId==null || launchpadContext==null))");
+        if (event==Enums.LaunchpadEventType.BATCH_CREATED && (batchId==null || launchpadContext==null)) {
+            throw new IllegalStateException("Error (event==Enums.LaunchpadEventType.BATCH_CREATED && (batchId==null || launchpadContext==null))");
         }
         LaunchpadEventYaml.BatchEventData batchEventData = new LaunchpadEventYaml.BatchEventData();
         batchEventData.filename = filename;
