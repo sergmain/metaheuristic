@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
+import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -82,6 +83,7 @@ public class WorkbookService {
     private final WorkbookCache workbookCache;
     private final WorkbookGraphService workbookGraphService;
     private final WorkbookSyncService workbookSyncService;
+    private final LaunchpadEventService launchpadEventService;
 
     public static class WorkbookDeletionEvent extends ApplicationEvent {
         public long workbookId;
@@ -479,6 +481,7 @@ public class WorkbookService {
 
         taskRepository.save((TaskImpl)resultTask);
         updateTaskExecStateByWorkbookId(workbookId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
+        launchpadEventService.publishTaskEvent(Enums.LaunchpadEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), workbookId);
 
         return assignedTask;
     }
@@ -498,17 +501,18 @@ public class WorkbookService {
         return taskRepository.findForAssigning(workbookId, idsForSearch);
     }
 
+    public final Consumer<Task> actionUpdateTaskExecState = t -> {
+        if (t!=null) {
+            updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
+        }
+    };
+
     public List<Long> storeAllConsoleResults(List<StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results) {
-        final Consumer<Task> action = t -> {
-            if (t!=null) {
-                updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
-            }
-        };
 
         List<Long> ids = new ArrayList<>();
         for (StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result : results) {
             ids.add(result.taskId);
-            taskPersistencer.storeExecResult(result, action);
+            taskPersistencer.storeExecResult(result, actionUpdateTaskExecState);
         }
         return ids;
     }

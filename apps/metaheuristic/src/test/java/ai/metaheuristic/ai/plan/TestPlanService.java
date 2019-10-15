@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.plan;
 
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
@@ -26,9 +25,9 @@ import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.process.ProcessV2;
 import org.junit.After;
@@ -40,7 +39,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
 
@@ -208,14 +206,7 @@ public class TestPlanService extends PreparingPlan {
         r.setMetrics(null);
         r.setResult(getOKExecResult());
 
-        final Consumer<Task> action = t -> {
-            if (t!=null) {
-                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(t.getWorkbookId());
-                workbookService.updateTaskExecStateByWorkbookId(workbook.id, t.getId(), t.getExecState());
-            }
-        };
-
-        taskPersistencer.storeExecResult(r, action);
+        taskPersistencer.storeExecResult(r, workbookService.actionUpdateTaskExecState);
         taskPersistencer.setResultReceived(simpleTask.getTaskId(), true);
     }
 

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
+import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -44,6 +45,7 @@ public class TaskPersistencer {
 
     private static final int NUMBER_OF_TRY = 2;
     private final TaskRepository taskRepository;
+    private final LaunchpadEventService launchpadEventService;
 
     public TaskImpl setParams(Long taskId, String taskParams) {
         return TaskFunctions.getWithSync(taskId, () -> {
@@ -128,7 +130,11 @@ public class TaskPersistencer {
                     StringUtils.isNotBlank(actualSnippet.console) ? actualSnippet.console : "<console output is empty>");
         }
         try {
-            Task t = prepareAndSaveTask(result, snippetExec.allSnippetsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR);
+            EnumsApi.TaskExecState state = snippetExec.allSnippetsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
+            Task t = prepareAndSaveTask(result, state);
+            launchpadEventService.publishTaskEvent(
+                    state==EnumsApi.TaskExecState.OK ? Enums.LaunchpadEventType.TASK_FINISHED : Enums.LaunchpadEventType.TASK_ERROR,
+                    null, result.taskId, t.getWorkbookId());
             action.accept(t);
             return t;
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -162,6 +168,8 @@ public class TaskPersistencer {
             task.setResultReceived(true);
 
             task = taskRepository.save(task);
+            launchpadEventService.publishTaskEvent(Enums.LaunchpadEventType.TASK_ERROR,null, task.id, task.getWorkbookId());
+
             return task;
         });
     }

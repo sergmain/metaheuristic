@@ -40,7 +40,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -64,7 +63,7 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @Profile("launchpad")
 @Service
 @RequiredArgsConstructor
-public class PlanTopLevelService implements ApplicationEventPublisherAware {
+public class PlanTopLevelService {
 
     private final Globals globals;
     private final PlanCache planCache;
@@ -72,12 +71,7 @@ public class PlanTopLevelService implements ApplicationEventPublisherAware {
     private final PlanRepository planRepository;
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
-
-    private ApplicationEventPublisher publisher;
-
-    public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
-        this.publisher = publisher;
-    }
+    private final ApplicationEventPublisher publisher;
 
     public PlanApiData.WorkbookResult addWorkbook(Long planId, String poolCode, String inputResourceParams) {
         final PlanImpl plan = planCache.findById(planId);
@@ -89,7 +83,7 @@ public class PlanTopLevelService implements ApplicationEventPublisherAware {
         return getAddWorkbookInternal(poolCode, inputResourceParams, plan);
     }
 
-    public PlanApiData.WorkbookResult getAddWorkbookInternal(String poolCode, String inputResourceParams, PlanImpl plan) {
+    private PlanApiData.WorkbookResult getAddWorkbookInternal(String poolCode, String inputResourceParams, PlanImpl plan) {
         if (plan == null) {
             return new PlanApiData.WorkbookResult("#560.060 plan wasn't found.");
         }
@@ -349,15 +343,7 @@ public class PlanTopLevelService implements ApplicationEventPublisherAware {
         }
     }
 
-    private List<String> toErrorMessages(List<PlanApiData.PlanStatus> statuses) {
-        return statuses.stream().filter(o->!o.isOk).map(o->o.error).collect(Collectors.toList());
-    }
-
-    private boolean isError(List<PlanApiData.PlanStatus > statuses) {
-        return statuses.stream().filter(o->!o.isOk).findFirst().orElse(null)!=null;
-    }
-
-    public static WorkbookParamsYaml asWorkbookParamsYaml(String poolCode) {
+    private static WorkbookParamsYaml asWorkbookParamsYaml(String poolCode) {
         WorkbookParamsYaml wpy = new WorkbookParamsYaml();
         wpy.workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o->new ArrayList<>()).add(poolCode);
         return wpy;

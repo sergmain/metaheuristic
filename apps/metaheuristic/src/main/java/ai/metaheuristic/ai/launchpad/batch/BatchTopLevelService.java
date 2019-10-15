@@ -19,15 +19,18 @@ package ai.metaheuristic.ai.launchpad.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.S;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchWorkbook;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
+import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
@@ -115,6 +118,7 @@ public class BatchTopLevelService {
     private final PlanRepository planRepository;
     private final WorkbookService workbookService;
     private final BatchWorkbookRepository batchWorkbookRepository;
+    private final LaunchpadEventService launchpadEventService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -168,16 +172,16 @@ public class BatchTopLevelService {
         return plans;
     }
 
-    public OperationStatusRest batchUploadFromFile(final MultipartFile file, Long planId) {
+    public OperationStatusRest batchUploadFromFile(final MultipartFile file, Long planId, final LaunchpadContext launchpadContext) {
 
         String tempFilename = file.getOriginalFilename();
-        if (tempFilename == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.040 name of uploaded file is null");
-        }
-        if (tempFilename.isBlank()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.042 name of uploaded file is null");
+        if (S.b(tempFilename)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.040 name of uploaded file is null or blank");
         }
         final String originFilename = tempFilename.toLowerCase();
+
+        launchpadEventService.publishBatchEvent(Enums.LaunchpadEventType.BATCH_FILE_UPLOADED, originFilename, file.getSize(), null, null, launchpadContext );
+
         PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
@@ -206,6 +210,8 @@ public class BatchTopLevelService {
 
             final Batch b = batchCache.save(new Batch(planId, Enums.BatchExecState.Stored));
 
+            launchpadEventService.publishBatchEvent(Enums.LaunchpadEventType.BATCH_CREATED, null, null, b.id, null, launchpadContext );
+
             try(InputStream is = new FileInputStream(dataFile)) {
                 String code = ResourceUtils.toResourceCode(originFilename);
                 binaryDataService.save(
@@ -214,6 +220,7 @@ public class BatchTopLevelService {
             }
 
             final Batch batch = batchService.changeStateToPreparing(b.id);
+            // TODO 2019-10-14 when batch is null tempDir won't be deleted
             if (batch==null) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.080 can't find batch with id " + b.id);
             }
@@ -306,7 +313,7 @@ public class BatchTopLevelService {
                             String actualFileName = mapping.get(file.getName());
                             createAndProcessTask(batch, Stream.of(new FileWithMapping(file, actualFileName)), file);
                         }
-                    } catch (StoreNewFileWithRedirectException e) {
+                    } catch (BatchResourceProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;
                     } catch (Throwable th) {
                         String es = "#995.130 An error while saving data to file, " + th.toString();
@@ -395,31 +402,7 @@ public class BatchTopLevelService {
             }
 
             resourceService.storeInitialResource(fileWithMapping.file, code, poolCode, originFilename);
-
-                }
-        );
-/*
-        // TODO this is original version without stream. if stream works, delete this block of code
-        for (FileWithMapping fileWithMapping : dataFiles) {
-            String originFilename = fileWithMapping.originName!=null ? fileWithMapping.originName : fileWithMapping.file.getName();
-            if (EXCLUDE_EXT.contains(StrUtils.getExtension(originFilename))) {
-                continue;
-            }
-            final String code = ResourceUtils.toResourceCode(fileWithMapping.file.getName());
-
-            String poolCode;
-            if (fileWithMapping.file.equals(mainDocFile)) {
-                poolCode = mainPoolCode;
-                isMainDocPresent = true;
-            }
-            else {
-                poolCode = attachPoolCode;
-                attachments.add(code);
-            }
-
-            resourceService.storeInitialResource(fileWithMapping.file, code, poolCode, originFilename);
-        }
-*/
+        });
 
         if (!isMainDocPresent.get()) {
             throw new BatchResourceProcessingException("#995.180 main document wasn't found");

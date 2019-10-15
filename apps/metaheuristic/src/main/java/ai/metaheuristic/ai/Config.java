@@ -16,9 +16,10 @@
 
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.launchpad.batch.RefToPilotRepositories;
+import ai.metaheuristic.ai.launchpad.batch.RefToBatchRepositories;
 import ai.metaheuristic.ai.launchpad.repositories.RefToLaunchpadRepositories;
 import ai.metaheuristic.ai.resource.ResourceCleanerInterceptor;
+import lombok.RequiredArgsConstructor;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -27,10 +28,17 @@ import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.AsyncConfigurer;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * User: Serg
@@ -40,21 +48,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @EnableCaching
 @EnableTransactionManagement
-@EnableJpaRepositories(basePackageClasses = {RefToLaunchpadRepositories.class, RefToPilotRepositories.class} )
+@EnableJpaRepositories(basePackageClasses = {RefToLaunchpadRepositories.class, RefToBatchRepositories.class} )
+@RequiredArgsConstructor
 public class Config {
 
     private final Globals globals;
-
-    public Config(Globals globals) {
-        this.globals = globals;
-    }
 
     @Bean
     public LayoutDialect layoutDialect() {
         return new LayoutDialect();
     }
-
-    // https://medium.com/@joeclever/using-multiple-datasources-with-spring-boot-and-spring-data-6430b00c02e7
 
     @Bean
     public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
@@ -70,6 +73,26 @@ public class Config {
             registry.addInterceptor(new ResourceCleanerInterceptor());
         }
     }
+
+    @Configuration
+    @EnableAsync
+    public static class SpringAsyncConfig implements AsyncConfigurer {
+        @Override
+        public Executor getAsyncExecutor() {
+            ThreadPoolExecutor executor =  (ThreadPoolExecutor) Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors()/2));
+            return new ConcurrentTaskExecutor(executor);
+        }
+    }
+
+/*
+    @Bean(name = "applicationEventMulticaster")
+    public ApplicationEventMulticaster simpleApplicationEventMulticaster() {
+        SimpleApplicationEventMulticaster eventMulticaster = new SimpleApplicationEventMulticaster();
+        eventMulticaster.setTaskExecutor(new SimpleAsyncTaskExecutor());
+        return eventMulticaster;
+    }
+*/
+
 
 /*
     @Bean
@@ -101,14 +124,10 @@ public class Config {
     }
 */
 
-    @Bean(name = "applicationEventMulticaster")
-    public ApplicationEventMulticaster simpleApplicationEventMulticaster() {
-        SimpleApplicationEventMulticaster eventMulticaster = new SimpleApplicationEventMulticaster();
-        eventMulticaster.setTaskExecutor(new SimpleAsyncTaskExecutor());
-        return eventMulticaster;
-    }
+/*
+    // https://medium.com/@joeclever/using-multiple-datasources-with-spring-boot-and-spring-data-6430b00c02e7
 
-    /*
+
     @Configuration
     @EnableTransactionManagement
     @EnableJpaRepositories(basePackageClasses = { RefToLaunchpadRepositories.class })

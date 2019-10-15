@@ -18,10 +18,12 @@ package ai.metaheuristic.ai.launchpad.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
@@ -32,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -46,17 +49,12 @@ import java.io.IOException;
 @Slf4j
 @Profile("launchpad")
 @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
+@RequiredArgsConstructor
 public class BatchController {
 
     private static final String REDIRECT_BATCH_BATCHES = "redirect:/launchpad/batch/batches";
 
-    private final BatchService batchService;
     private final BatchTopLevelService batchTopLevelService;
-
-    public BatchController(BatchService batchService, BatchTopLevelService batchTopLevelService) {
-        this.batchService = batchService;
-        this.batchTopLevelService = batchTopLevelService;
-    }
 
     @GetMapping("/index")
     public String index() {
@@ -92,8 +90,8 @@ public class BatchController {
     }
 
     @PostMapping(value = "/batch-upload-from-file")
-    public String uploadFile(final MultipartFile file, Long planId, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest r = batchTopLevelService.batchUploadFromFile(file, planId);
+    public String uploadFile(final MultipartFile file, Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        OperationStatusRest r = batchTopLevelService.batchUploadFromFile(file, planId, new LaunchpadContext(authentication));
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
@@ -146,6 +144,7 @@ public class BatchController {
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {
+            // TODO 2019-10-13 in case of this exception resources won't be cleaned, need to re-write
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
         return entity;

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
@@ -33,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -71,8 +73,8 @@ public class BatchRestController {
     }
 
     @PostMapping(value = "/batch-upload-from-file")
-    public OperationStatusRest uploadFile(final MultipartFile file, Long planId) {
-        return batchTopLevelService.batchUploadFromFile(file, planId);
+    public OperationStatusRest uploadFile(final MultipartFile file, Long planId, Authentication authentication) {
+        return batchTopLevelService.batchUploadFromFile(file, planId, new LaunchpadContext(authentication));
     }
 
     @GetMapping(value= "/batch-status/{batchId}" )

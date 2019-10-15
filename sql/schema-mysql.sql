@@ -1,3 +1,5 @@
+-- names of tables must be in lower case!
+
 create table mh_launchpad_address
 (
   ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -194,3 +196,13 @@ CREATE TABLE mh_batch_workbook
 
 CREATE INDEX mh_batch_workbook_batch_id_idx
     ON mh_batch_workbook (BATCH_ID);
+
+CREATE TABLE mh_event
+(
+    ID              INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         NUMERIC(5, 0)  NOT NULL,
+    CREATED_ON      bigint         NOT NULL,
+    EVENT           VARCHAR(50)    not null,
+    PARAMS          MEDIUMTEXT     not null
+);
+

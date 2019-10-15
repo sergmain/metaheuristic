@@ -13,7 +13,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.launchpad.batch;
 
-public interface RefToPilotRepositories {
+package ai.metaheuristic.ai.launchpad;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.springframework.security.core.Authentication;
+
+import java.util.UUID;
+
+/**
+ * @author Serge
+ * Date: 10/14/2019
+ * Time: 11:37 PM
+ */
+@Data
+@AllArgsConstructor
+public class LaunchpadContext {
+    public final String contextId = UUID.randomUUID().toString();
+    public Authentication authentication;
 }

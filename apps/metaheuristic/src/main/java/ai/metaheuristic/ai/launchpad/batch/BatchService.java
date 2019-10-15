@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
+import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -92,6 +93,7 @@ public class BatchService {
     private final BinaryDataService binaryDataService;
     private final TaskRepository taskRepository;
     private final StationCache stationCache;
+    private final LaunchpadEventService launchpadEventService;
 
     private static final ConcurrentHashMap<Long, Object> batchMap = new ConcurrentHashMap<>(100, 0.75f, 10);
 
@@ -143,6 +145,7 @@ public class BatchService {
                 return batchCache.save(b);
             }
             finally {
+                launchpadEventService.publishBatchEvent(Enums.LaunchpadEventType.BATCH_PROCESSING_STARTED, null, null, batchId, null, null );
                 batchMap.remove(batchId);
             }
         }
@@ -172,6 +175,7 @@ public class BatchService {
                 return batchCache.save(b);
             }
             finally {
+                launchpadEventService.publishBatchEvent(Enums.LaunchpadEventType.BATCH_PROCESSING_FINISHED, null, null, batchId, null, null );
                 batchMap.remove(batchId);
             }
         }
@@ -204,6 +208,7 @@ public class BatchService {
                 return b;
             }
             finally {
+                launchpadEventService.publishBatchEvent(Enums.LaunchpadEventType.BATCH_FINISHED_WITH_ERROR, null, null, batchId, null, null );
                 batchMap.remove(batchId);
             }
         }
