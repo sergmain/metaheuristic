@@ -560,12 +560,12 @@ public class StationTaskService {
             final String path = getTaskPath(taskId);
 
             final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.code);
-            final File systemDir = new File(launchpadDir, path);
+            final File taskDir = new File(launchpadDir, path);
             try {
-                if (systemDir.exists()) {
-                    FileUtils.deleteDirectory(systemDir);
+                if (taskDir.exists()) {
+                    FileUtils.deleteDirectory(taskDir);
                     // IDK is that a bug or a side-effect. so delete one more time
-                    FileUtils.deleteDirectory(systemDir);
+//                    FileUtils.deleteDirectory(taskDir);
                 }
                 Map<Long, StationTask> mapTask = getMapForLaunchpadUrl(launchpadUrl);
                 log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));

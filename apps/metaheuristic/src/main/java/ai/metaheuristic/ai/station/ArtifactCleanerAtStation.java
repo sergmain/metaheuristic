@@ -15,26 +15,22 @@
  */
 package ai.metaheuristic.ai.station;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.EnumsApi;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.Files;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Slf4j
 @Profile("station")
+@RequiredArgsConstructor
 public class ArtifactCleanerAtStation {
 
     private final StationTaskService stationTaskService;
@@ -43,41 +39,33 @@ public class ArtifactCleanerAtStation {
     private final MetadataService metadataService;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
 
-    public ArtifactCleanerAtStation(StationTaskService stationTaskService, CurrentExecState currentExecState, Globals globals, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService) {
-        this.stationTaskService = stationTaskService;
-        this.currentExecState = currentExecState;
-        this.globals = globals;
-        this.metadataService = metadataService;
-        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
-    }
-
     public void fixedDelay() {
         for (String launchpadUrl : launchpadLookupExtendedService.lookupExtendedMap.keySet()) {
             if (!globals.isStationEnabled || !currentExecState.isInited(launchpadUrl)) {
-                // don't delete anything until station will receive the list of actual workbooks
+                // don't delete anything until the station has received the list of actual workbooks
                 continue;
             }
 
             Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
+            final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.code);
+            if (!launchpadDir.exists()) {
+                launchpadDir.mkdir();
+            }
 
             List<StationTask> all = stationTaskService.findAll(launchpadUrl);
-//            log.debug("Number tasks for deleting obsolete: {} ", all.size());
             for (StationTask task : all) {
                 if (currentExecState.isState(launchpadUrl, task.workbookId, EnumsApi.WorkbookExecState.DOESNT_EXIST)) {
                     log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), launchpadUrl);
                     stationTaskService.delete(launchpadUrl, task.getTaskId());
                     continue;
                 }
-                if (task.clean && task.completed) {
-                    log.info("Delete task with clean==true, id {}, url {}", task.getTaskId(), launchpadUrl);
+                if (task.clean && task.delivered && task.completed) {
+                    log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), launchpadUrl);
                     stationTaskService.delete(launchpadUrl, task.getTaskId());
                 }
             }
 
-            final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.code);
-            if (!launchpadDir.exists()) {
-                launchpadDir.mkdir();
-            }
+/*
             synchronized (StationSyncHolder.stationGlobalSync) {
                 try {
                     final AtomicBoolean isEmpty = new AtomicBoolean(true);
@@ -91,7 +79,7 @@ public class ArtifactCleanerAtStation {
                                     if (!taskYaml.exists()) {
                                         FileUtils.deleteDirectory(t.toFile());
                                         // IDK is that bug or side-effect. so delete one more time
-                                        FileUtils.deleteDirectory(t.toFile());
+                                        // FileUtils.deleteDirectory(t.toFile());
                                     }
                                 } catch (IOException e) {
                                     log.error("#090.01 Error while deleting path {}, this isn't fatal error.", t);
@@ -107,6 +95,7 @@ public class ArtifactCleanerAtStation {
                     log.error("#090.07 Error while cleaning up broken tasks", e);
                 }
             }
+*/
         }
     }
 }
