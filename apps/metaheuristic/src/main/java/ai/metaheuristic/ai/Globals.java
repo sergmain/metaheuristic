@@ -57,14 +57,14 @@ public class Globals {
     @Value("${mh.system-owner:#{null}}")
     public String systemOwner;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file' )) }")
-    public File logFile;
-
     @Value("${mh.branding:#{'Metaheuristic project'}}")
     public String branding;
 
     @Value("${mh.cors-allowed-origins:#{null}}")
     public String allowedOrigins;
+
+    @Value("${mh.is-event-enabled:#{false}}")
+    public boolean isEventEnabled = false;
 
     // Launchpad's globals
 
@@ -130,6 +130,9 @@ public class Globals {
 
 
     // Station's globals
+
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.logging.file' )) }")
+    public File logFile;
 
     @Value("${mh.station.enabled:#{false}}")
     public boolean isStationEnabled = false;

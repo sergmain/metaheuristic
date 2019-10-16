@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.metadata;
 
-import ai.metaheuristic.ai.S;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.yaml.snakeyaml.Yaml;

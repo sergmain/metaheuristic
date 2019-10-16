@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.S;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
@@ -180,7 +180,7 @@ public class BatchTopLevelService {
         }
         final String originFilename = tempFilename.toLowerCase();
 
-        launchpadEventService.publishBatchEvent(Enums.LaunchpadEventType.BATCH_FILE_UPLOADED, originFilename, file.getSize(), null, null, launchpadContext );
+        launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, originFilename, file.getSize(), null, null, launchpadContext );
 
         PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
@@ -210,7 +210,7 @@ public class BatchTopLevelService {
 
             final Batch b = batchCache.save(new Batch(planId, Enums.BatchExecState.Stored));
 
-            launchpadEventService.publishBatchEvent(Enums.LaunchpadEventType.BATCH_CREATED, null, null, b.id, null, launchpadContext );
+            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, null, null, b.id, null, launchpadContext );
 
             try(InputStream is = new FileInputStream(dataFile)) {
                 String code = ResourceUtils.toResourceCode(originFilename);

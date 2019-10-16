@@ -481,7 +481,7 @@ public class WorkbookService {
 
         taskRepository.save((TaskImpl)resultTask);
         updateTaskExecStateByWorkbookId(workbookId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
-        launchpadEventService.publishTaskEvent(Enums.LaunchpadEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), workbookId);
+        launchpadEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), workbookId);
 
         return assignedTask;
     }

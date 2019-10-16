@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.atlas;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.S;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.launchpad.beans.Atlas;
 import ai.metaheuristic.ai.launchpad.beans.AtlasTask;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;

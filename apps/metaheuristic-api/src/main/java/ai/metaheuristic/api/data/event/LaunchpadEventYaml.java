@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.event;
+package ai.metaheuristic.api.data.event;
 
-import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
 
@@ -26,15 +26,15 @@ import lombok.Data;
  * Time: 5:36 PM
  */
 @Data
-public class LaunchpadEventYamlV1 implements BaseParams {
+public class LaunchpadEventYaml implements BaseParams {
     public final int version = 1;
 
     public long createdOn;
-    public Enums.LaunchpadEventType event;
+    public EnumsApi.LaunchpadEventType event;
     public String contextId;
 
-    public BatchEventDataV1 batchData;
-    public TaskEventDataV1 taskData;
+    public BatchEventData batchData;
+    public TaskEventData taskData;
 
     @Override
     public boolean checkIntegrity() {
@@ -42,7 +42,7 @@ public class LaunchpadEventYamlV1 implements BaseParams {
     }
 
     @Data
-    public static class BatchEventDataV1 {
+    public static class BatchEventData {
         public Long size;
         public String filename;
         public String username;
@@ -51,10 +51,9 @@ public class LaunchpadEventYamlV1 implements BaseParams {
     }
 
     @Data
-    public static class TaskEventDataV1 {
+    public static class TaskEventData {
         public Long stationId;
         public Long taskId;
         public Long workbookId;
-        public Long batchId;
     }
 }

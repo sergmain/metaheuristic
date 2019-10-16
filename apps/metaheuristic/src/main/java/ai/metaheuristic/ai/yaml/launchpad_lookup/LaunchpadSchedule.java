@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.launchpad_lookup;
 
-import ai.metaheuristic.ai.S;
+import ai.metaheuristic.commons.S;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

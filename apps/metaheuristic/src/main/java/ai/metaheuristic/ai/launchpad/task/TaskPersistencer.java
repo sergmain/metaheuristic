@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.S;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
@@ -134,7 +134,7 @@ public class TaskPersistencer {
             EnumsApi.TaskExecState state = snippetExec.allSnippetsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
             Task t = prepareAndSaveTask(result, state);
             launchpadEventService.publishTaskEvent(
-                    state==EnumsApi.TaskExecState.OK ? Enums.LaunchpadEventType.TASK_FINISHED : Enums.LaunchpadEventType.TASK_ERROR,
+                    state==EnumsApi.TaskExecState.OK ? EnumsApi.LaunchpadEventType.TASK_FINISHED : EnumsApi.LaunchpadEventType.TASK_ERROR,
                     null, result.taskId, t.getWorkbookId());
             action.accept(t);
             return t;
@@ -172,7 +172,7 @@ public class TaskPersistencer {
             task.setResultReceived(true);
 
             task = taskRepository.save(task);
-            launchpadEventService.publishTaskEvent(Enums.LaunchpadEventType.TASK_ERROR,null, task.id, task.getWorkbookId());
+            launchpadEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ERROR,null, task.id, task.getWorkbookId());
 
             return task;
         });

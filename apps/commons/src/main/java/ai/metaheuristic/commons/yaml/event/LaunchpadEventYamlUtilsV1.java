@@ -14,9 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.event;
+package ai.metaheuristic.commons.yaml.event;
 
-import ai.metaheuristic.ai.S;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
+import ai.metaheuristic.api.data.event.LaunchpadEventYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.yaml.snakeyaml.Yaml;

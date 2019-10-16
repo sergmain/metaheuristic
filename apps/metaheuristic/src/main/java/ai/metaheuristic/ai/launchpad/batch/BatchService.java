@@ -145,7 +145,7 @@ public class BatchService {
                 return batchCache.save(b);
             }
             finally {
-                launchpadEventService.publishBatchEvent(Enums.LaunchpadEventType.BATCH_PROCESSING_STARTED, null, null, batchId, null, null );
+                launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_STARTED, null, null, batchId, null, null );
                 batchMap.remove(batchId);
             }
         }
@@ -175,7 +175,7 @@ public class BatchService {
                 return batchCache.save(b);
             }
             finally {
-                launchpadEventService.publishBatchEvent(Enums.LaunchpadEventType.BATCH_PROCESSING_FINISHED, null, null, batchId, null, null );
+                launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_FINISHED, null, null, batchId, null, null );
                 batchMap.remove(batchId);
             }
         }
@@ -208,7 +208,7 @@ public class BatchService {
                 return b;
             }
             finally {
-                launchpadEventService.publishBatchEvent(Enums.LaunchpadEventType.BATCH_FINISHED_WITH_ERROR, null, null, batchId, null, null );
+                launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FINISHED_WITH_ERROR, null, null, batchId, null, null );
                 batchMap.remove(batchId);
             }
         }

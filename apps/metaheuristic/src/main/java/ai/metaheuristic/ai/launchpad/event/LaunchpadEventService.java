@@ -16,12 +16,13 @@
 
 package ai.metaheuristic.ai.launchpad.event;
 
-import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.LaunchpadEvent;
 import ai.metaheuristic.ai.launchpad.repositories.LaunchpadEventRepository;
-import ai.metaheuristic.ai.yaml.event.LaunchpadEventYaml;
-import ai.metaheuristic.ai.yaml.event.LaunchpadEventYamlUtils;
+import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
+import ai.metaheuristic.commons.yaml.event.LaunchpadEventYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -39,13 +40,17 @@ import org.springframework.stereotype.Service;
 @Profile("launchpad")
 public class LaunchpadEventService {
 
+    private final Globals globals;
     private final LaunchpadEventRepository launchpadEventRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public void publishBatchEvent(
-            Enums.LaunchpadEventType event, String filename,
+            EnumsApi.LaunchpadEventType event, String filename,
             Long size, Long batchId, Long workbookId, LaunchpadContext launchpadContext) {
-        if (event==Enums.LaunchpadEventType.BATCH_CREATED && (batchId==null || launchpadContext==null)) {
+        if (!globals.isEventEnabled) {
+            return;
+        }
+        if (event== EnumsApi.LaunchpadEventType.BATCH_CREATED && (batchId==null || launchpadContext==null)) {
             throw new IllegalStateException("Error (event==Enums.LaunchpadEventType.BATCH_CREATED && (batchId==null || launchpadContext==null))");
         }
         LaunchpadEventYaml.BatchEventData batchEventData = new LaunchpadEventYaml.BatchEventData();
@@ -61,7 +66,10 @@ public class LaunchpadEventService {
         applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, contextId, batchEventData));
     }
 
-    public void publishTaskEvent(Enums.LaunchpadEventType event, Long stationId, Long taskId, Long workbookId) {
+    public void publishTaskEvent(EnumsApi.LaunchpadEventType event, Long stationId, Long taskId, Long workbookId) {
+        if (!globals.isEventEnabled) {
+            return;
+        }
         LaunchpadEventYaml.TaskEventData taskEventData = new LaunchpadEventYaml.TaskEventData();
         taskEventData.stationId = stationId;
         taskEventData.taskId = taskId;
@@ -72,6 +80,9 @@ public class LaunchpadEventService {
     @Async
     @EventListener
     public void handleAsync(LaunchpadApplicationEvent event) {
+        if (!globals.isEventEnabled) {
+            return;
+        }
         LaunchpadEvent le = new LaunchpadEvent();
         le.createdOn = event.launchpadEventYaml.createdOn;
         le.event = event.launchpadEventYaml.event.toString();

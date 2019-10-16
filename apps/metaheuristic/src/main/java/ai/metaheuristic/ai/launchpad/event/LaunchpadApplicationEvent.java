@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.event;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.yaml.event.LaunchpadEventYaml;
+import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.Data;
 
 /**
@@ -34,7 +34,7 @@ public class LaunchpadApplicationEvent {
         this.launchpadEventYaml = launchpadEventYaml;
     }
 
-    public LaunchpadApplicationEvent(Enums.LaunchpadEventType event, String contextId, LaunchpadEventYaml.BatchEventData batchEventData) {
+    public LaunchpadApplicationEvent(EnumsApi.LaunchpadEventType event, String contextId, LaunchpadEventYaml.BatchEventData batchEventData) {
         LaunchpadEventYaml launchpadEventYaml = new LaunchpadEventYaml();
         launchpadEventYaml.createdOn = System.currentTimeMillis();
         launchpadEventYaml.event = event;
@@ -43,7 +43,7 @@ public class LaunchpadApplicationEvent {
         this.launchpadEventYaml = launchpadEventYaml;
     }
 
-    public LaunchpadApplicationEvent(Enums.LaunchpadEventType event, LaunchpadEventYaml.TaskEventData taskEventData) {
+    public LaunchpadApplicationEvent(EnumsApi.LaunchpadEventType event, LaunchpadEventYaml.TaskEventData taskEventData) {
         LaunchpadEventYaml launchpadEventYaml = new LaunchpadEventYaml();
         launchpadEventYaml.createdOn = System.currentTimeMillis();
         launchpadEventYaml.event = event;

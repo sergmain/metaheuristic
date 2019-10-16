@@ -17,12 +17,6 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
-    public enum LaunchpadEventType {
-        BATCH_FILE_UPLOADED, BATCH_CREATED, BATCH_WORKBOOK_CREATED, BATCH_PROCESSING_STARTED, BATCH_PROCESSING_FINISHED, BATCH_FINISHED_WITH_ERROR,
-        TASK_ASSIGNED, TASK_FINISHED, TASK_ERROR
-
-    }
-
     public enum SnippetState {
         none, ok, ready,
         signature_wrong, signature_not_found, checksum_wrong, not_supported_os,

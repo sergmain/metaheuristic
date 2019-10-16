@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.station;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.S;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.snippet.StationSnippetService;

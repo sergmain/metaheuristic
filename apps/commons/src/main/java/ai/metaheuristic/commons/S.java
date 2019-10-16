@@ -14,28 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.event;
+package ai.metaheuristic.commons;
 
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
-
-import java.util.Map;
+import java.util.Locale;
 
 /**
  * @author Serge
- * Date: 10/3/2019
- * Time: 4:51 PM
+ * Date: 5/3/2019
+ * Time: 1:50 PM
  */
-public class LaunchpadEventYamlUtils {
+public final class S {
 
-    private static final LaunchpadEventYamlUtilsV1 YAML_UTILS_V_1 = new LaunchpadEventYamlUtilsV1();
-    private static final LaunchpadEventYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    public static String f(String format, Object... args) {
+        return String.format(format, args);
+    }
 
-    public static final BaseYamlUtils<LaunchpadEventYamlUtilsV1> BASE_YAML_UTILS = new BaseYamlUtils<>(
-            Map.of(
-                    1, YAML_UTILS_V_1
-            ),
-            DEFAULT_UTILS
-    );
+    public static String f(Locale l, String format, Object... args) {
+        return String.format(l, format, args);
+    }
 
-
+    public static boolean b(String s) {
+        return s==null || s.isBlank();
+    }
 }

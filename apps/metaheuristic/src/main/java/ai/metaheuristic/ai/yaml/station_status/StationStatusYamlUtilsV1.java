@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.station_status;
 
-import ai.metaheuristic.ai.S;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.yaml.env.DiskStorage;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.commons.yaml.YamlUtils;
