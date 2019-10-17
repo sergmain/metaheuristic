@@ -64,14 +64,6 @@
             <version>1.4.199</version>
         </dependency>
 
-
-        <dependency>
-            <!-- Apache 2.0 -->
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>${joda-time.version}</version>
-        </dependency>
-
         <dependency>
             <!--Apache-2.0-->
             <groupId>nz.net.ultraq.thymeleaf</groupId>

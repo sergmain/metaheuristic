@@ -20,12 +20,14 @@ import ai.metaheuristic.commons.S;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.*;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -102,7 +104,7 @@ public class LaunchpadSchedule {
             }
 
             if (config.dayMask!=null) {
-                DateTimeFormatter fmt = DateTimeFormat.forPattern(config.dayMask);
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern(config.dayMask);
 
                 toLocalDate(fmt, config.holiday, holidays);
                 toLocalDate(fmt, config.exceptionWorkingDay, exceptionWorkingDays);
@@ -144,7 +146,7 @@ public class LaunchpadSchedule {
     }
 
     public boolean isActive(final LocalDateTime time) {
-        final LocalDateTime curr = time.withSecondOfMinute(0).withMillisOfSecond(0);
+        final LocalDateTime curr = time.withSecond(0).withNano(0);
 
         if (holidays.contains(curr.toLocalDate())) {
             return weekendIsActive(curr.toLocalTime());
@@ -153,7 +155,7 @@ public class LaunchpadSchedule {
             return workingDaysActive(curr.toLocalTime());
         }
         TimePeriods periods;
-        int i = curr.get(DateTimeFieldType.dayOfWeek());
+        int i = curr.get(ChronoField.DAY_OF_WEEK);
         switch(i) {
             case 1:
                 periods = monday;

@@ -21,10 +21,6 @@ import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.TimePeriods;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.Data;
-import org.joda.time.LocalDateTime;
-import org.joda.time.LocalTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
 
@@ -33,14 +29,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 
 import static org.junit.Assert.*;
 
 public class TestTimeParsing {
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormat.forPattern("HH:mm");
 
     @Data
     public static class SimpleYamlHolder {
@@ -100,7 +97,7 @@ public class TestTimeParsing {
         assertEquals(Calendar.SATURDAY, c.get(Calendar.DAY_OF_WEEK));
 
         LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
-        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         assertFalse(schedule.isActive(LocalDateTime.parse( "14/01/2019 13:05", fmt)));
         assertTrue(schedule.isActive(LocalDateTime.parse( "15/01/2019 13:05", fmt)));
         assertTrue(schedule.isActive(LocalDateTime.parse( "16/01/2019 13:05", fmt)));
@@ -141,7 +138,7 @@ public class TestTimeParsing {
         assertEquals(Calendar.SATURDAY, c.get(Calendar.DAY_OF_WEEK));
 
         LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
-        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         assertFalse(schedule.isActive(LocalDateTime.parse( "05/08/2019 13:05", fmt)));
         assertTrue(schedule.isActive(LocalDateTime.parse( "06/08/2019 13:05", fmt)));
@@ -173,7 +170,7 @@ public class TestTimeParsing {
         assertNull(period.exceptionWorkingDay);
 
         LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
-        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         assertFalse(schedule.isActive(LocalDateTime.parse( "14/01/2019 13:05", fmt)));
         assertFalse(schedule.isActive(LocalDateTime.parse( "15/01/2019 13:05", fmt)));
         assertFalse(schedule.isActive(LocalDateTime.parse( "16/01/2019 13:05", fmt)));
@@ -200,14 +197,14 @@ public class TestTimeParsing {
         assertNull(period.exceptionWorkingDay);
 
         LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
-        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         assertTrue(schedule.isActive(LocalDateTime.parse( "14/01/2019 23:59", fmt)));
 
-        DateTimeFormatter fmt1 = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss");
+        DateTimeFormatter fmt1 = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         LocalDateTime time = LocalDateTime.parse("14/01/2019 23:59:29", fmt1);
         assertTrue(schedule.isActive(time));
 
-        DateTimeFormatter fmt2 = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        DateTimeFormatter fmt2 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
         time = LocalDateTime.parse("2019-05-10 23:59:19.138", fmt2);
         assertTrue(schedule.isActive(time));
     }
@@ -229,7 +226,7 @@ public class TestTimeParsing {
         assertNull(period.exceptionWorkingDay);
 
         LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
-        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss.SSS");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss.SSS");
         assertFalse(schedule.isActive(LocalDateTime.parse( "27/04/2019 23:59:59.138", fmt)));
         assertTrue(schedule.isActive(LocalDateTime.parse( "27/04/2019 00:01:00.000", fmt)));
 
@@ -243,21 +240,21 @@ public class TestTimeParsing {
         assertEquals(2, periods.periods.size());
 
         TimePeriods.TimePeriod tp1 = periods.periods.get(0);
-        assertTrue(tp1.start.isEqual(LocalTime.parse("0:00", FORMATTER)));
-        assertTrue(tp1.end.isEqual(LocalTime.parse("8:45", FORMATTER)));
+        assertEquals(0, tp1.start.compareTo(TimePeriods.parseTime("0:00")));
+        assertEquals(0, tp1.end.compareTo(TimePeriods.parseTime("8:45")));
 
         TimePeriods.TimePeriod tp2 = periods.periods.get(1);
-        assertTrue(tp2.start.isEqual(LocalTime.parse("19:00", FORMATTER)));
-        assertTrue(tp2.end.isEqual(LocalTime.parse("23:59", FORMATTER)));
+        assertEquals(0, tp2.start.compareTo(TimePeriods.parseTime("19:00")));
+        assertEquals(0, tp2.end.compareTo(TimePeriods.parseTime("23:59")));
 
 
-        assertTrue(periods.isActive(LocalTime.parse("0:0", FORMATTER)));
-        assertTrue(periods.isActive(LocalTime.parse("00:00", FORMATTER)));
-        assertTrue(periods.isActive(LocalTime.parse("08:45", FORMATTER)));
-        assertTrue(periods.isActive(LocalTime.parse("19:00", FORMATTER)));
-        assertTrue(periods.isActive(LocalTime.parse("23:59", FORMATTER)));
+        assertTrue(periods.isActive(TimePeriods.parseTime("0:0")));
+        assertTrue(periods.isActive(TimePeriods.parseTime("00:00")));
+        assertTrue(periods.isActive(TimePeriods.parseTime("08:45")));
+        assertTrue(periods.isActive(TimePeriods.parseTime("19:00")));
+        assertTrue(periods.isActive(TimePeriods.parseTime("23:59")));
 
-        assertFalse(periods.isActive(LocalTime.parse("12:00", FORMATTER)));
+        assertFalse(periods.isActive(TimePeriods.parseTime("12:00")));
 
     }
 
@@ -267,24 +264,24 @@ public class TestTimeParsing {
         assertEquals(1, periods.periods.size());
 
         TimePeriods.TimePeriod tp1 = periods.periods.get(0);
-        assertTrue(tp1.start.isEqual(LocalTime.parse("0:00", FORMATTER)));
-        assertTrue(tp1.end.isEqual(LocalTime.parse("23:59", FORMATTER)));
+        assertEquals(0, tp1.start.compareTo(TimePeriods.parseTime("0:00")));
+        assertEquals(0, tp1.end.compareTo(TimePeriods.parseTime("23:59")));
 
-        assertTrue(periods.isActive(LocalTime.parse("0:0", FORMATTER)));
-        assertTrue(periods.isActive(LocalTime.parse("00:00", FORMATTER)));
-        assertTrue(periods.isActive(LocalTime.parse("08:45", FORMATTER)));
-        assertTrue(periods.isActive(LocalTime.parse("19:00", FORMATTER)));
-        assertTrue(periods.isActive(LocalTime.parse("23:59", FORMATTER)));
+        assertTrue(periods.isActive(TimePeriods.parseTime("0:0")));
+        assertTrue(periods.isActive(TimePeriods.parseTime("00:00")));
+        assertTrue(periods.isActive(TimePeriods.parseTime("08:45")));
+        assertTrue(periods.isActive(TimePeriods.parseTime("19:00")));
+        assertTrue(periods.isActive(TimePeriods.parseTime("23:59")));
     }
 
     @Test
     public void testTimeParsing() {
-        LocalTime lt1 = LocalTime.parse("0:00", FORMATTER);
-        LocalTime lt2 = LocalTime.parse("8:45", FORMATTER);
-        LocalTime lt3 = LocalTime.parse("19:00", FORMATTER);
-        LocalTime lt4 = LocalTime.parse("23:59", FORMATTER);
+        LocalTime lt1 = TimePeriods.parseTime("0:00");
+        LocalTime lt2 = TimePeriods.parseTime("8:45");
+        LocalTime lt3 = TimePeriods.parseTime("19:00");
+        LocalTime lt4 = TimePeriods.parseTime("23:59");
 
-        LocalTime curr = LocalTime.parse("22:00", FORMATTER);
+        LocalTime curr = TimePeriods.parseTime("22:00");
         System.out.println("" + curr);
 
         System.out.println(curr.isAfter(lt1) );
@@ -299,10 +296,10 @@ public class TestTimeParsing {
         System.out.println(curr.isBefore(lt4) );
         System.out.println();
 
-        LocalTime curr1 = LocalTime.parse("23:59", FORMATTER);
+        LocalTime curr1 = TimePeriods.parseTime("23:59");
         System.out.println("" + curr1);
 
-        System.out.println(curr1.isEqual(lt4) );
+        System.out.println(curr1.compareTo(lt4)==0 );
         System.out.println();
 
         System.out.println(curr1.isAfter(lt1) );

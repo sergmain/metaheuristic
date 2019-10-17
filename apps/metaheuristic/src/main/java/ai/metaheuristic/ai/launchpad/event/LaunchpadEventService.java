@@ -20,15 +20,19 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.LaunchpadEvent;
 import ai.metaheuristic.ai.launchpad.repositories.LaunchpadEventRepository;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
 import ai.metaheuristic.commons.yaml.event.LaunchpadEventYamlUtils;
-import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 /**
  * @author Serge
@@ -84,9 +88,17 @@ public class LaunchpadEventService {
             return;
         }
         LaunchpadEvent le = new LaunchpadEvent();
+        le.period = getPeriod(event.launchpadEventYaml.createdOn);
         le.createdOn = event.launchpadEventYaml.createdOn;
         le.event = event.launchpadEventYaml.event.toString();
         le.params = LaunchpadEventYamlUtils.BASE_YAML_UTILS.toString(event.launchpadEventYaml);
         launchpadEventRepository.save(le);
+    }
+
+    private static int getPeriod(long createdOn) {
+        LocalDate date = Instant.ofEpochMilli(createdOn)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+        return date.getYear() * 100 + date.getMonthValue();
     }
 }

@@ -43,6 +43,9 @@ public class LaunchpadEvent implements Serializable {
     @Column(name="CREATED_ON")
     public long createdOn;
 
+    @Column(name="PERIOD")
+    public int period;
+
     @Column(name = "EVENT")
     public String event;
 

@@ -15,14 +15,14 @@
  */
 package ai.metaheuristic.ai.yaml.launchpad_lookup;
 
+import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.LocalTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -41,11 +41,12 @@ public class TimePeriods {
     public final List<TimePeriod> periods = new ArrayList<>();
     public String asString = ""; // for ALWAYS_ACTIVE
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormat.forPattern("HH:mm");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
-    public static final TimePeriods ALWAYS_ACTIVE = new TimePeriods(new TimePeriod( LocalTime.parse("0:00", FORMATTER),  LocalTime.parse("23:59", FORMATTER)));
+    public static final TimePeriods ALWAYS_ACTIVE = new TimePeriods(
+            new TimePeriod( parseTime("0:0"),  parseTime("23:59")));
 
-    public TimePeriods(TimePeriod period) {
+    private TimePeriods(TimePeriod period) {
         periods.add( period );
     }
 
@@ -55,8 +56,26 @@ public class TimePeriods {
             throw new IllegalArgumentException("Wrong format of string for parsing: " + s+". Must be in format [HH:mm - HH:mm] (without brackets)");
         }
         //noinspection UnnecessaryLocalVariable
-        TimePeriod period = new TimePeriod( LocalTime.parse(s.substring(0, idx).trim(), FORMATTER),  LocalTime.parse(s.substring(idx+1).trim(), FORMATTER));
+        TimePeriod period = new TimePeriod(parseTime(s.substring(0, idx).trim()), parseTime(s.substring(idx+1).trim()));
         return period;
+    }
+
+    public static LocalTime parseTime(String timeAsStr) {
+        return LocalTime.parse(fix(timeAsStr), TIME_FORMATTER);
+    }
+
+    private static String fix(String t) {
+        if (S.b(t) || t.length()<3) {
+            throw new IllegalStateException("Wrong time string: " + t);
+        }
+        String s = null;
+        if (t.charAt(1) == ':') {
+            s = "0" + t;
+        }
+        if (t.charAt(t.length()-2)==':') {
+            s = s + '0';
+        }
+        return s==null ? t : s;
     }
 
     public static TimePeriods from(String s) {
@@ -74,7 +93,7 @@ public class TimePeriods {
     }
 
     private boolean isActive(LocalTime curr, TimePeriods.TimePeriod period) {
-        return curr.isEqual(period.start) || curr.isEqual(period.end) || ( curr.isAfter(period.start) && curr.isBefore(period.end));
+        return curr.compareTo(period.start)==0 || curr.compareTo(period.end)==0 || ( curr.isAfter(period.start) && curr.isBefore(period.end));
     }
 
     public boolean isActive(LocalTime curr) {

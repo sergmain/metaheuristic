@@ -199,10 +199,14 @@ CREATE INDEX mh_batch_workbook_batch_id_idx
 
 CREATE TABLE mh_event
 (
-    ID              INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         NUMERIC(5, 0)  NOT NULL,
-    CREATED_ON      bigint         NOT NULL,
-    EVENT           VARCHAR(50)    not null,
-    PARAMS          MEDIUMTEXT     not null
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    CREATED_ON      BIGINT UNSIGNED NOT NULL,
+    PERIOD          INT UNSIGNED    not null ,
+    EVENT           VARCHAR(50)     not null,
+    PARAMS          MEDIUMTEXT      not null
 );
+
+CREATE INDEX mh_event_period_idx
+    ON mh_event (PERIOD);
 
