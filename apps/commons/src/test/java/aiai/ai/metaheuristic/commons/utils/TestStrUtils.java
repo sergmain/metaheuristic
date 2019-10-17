@@ -26,7 +26,14 @@ public class TestStrUtils {
 
     @Test
     public void testMatching() {
-        assertTrue(StrUtils.isSnippetCodeOk("1234567890-abc_xyz:1.0"));
-        assertFalse(StrUtils.isSnippetCodeOk("1234567890-?#$%abc_xyz:1.0"));
+        assertTrue(StrUtils.isCodeOk("1234567890-abc_xyz:1.0"));
+
+        assertTrue(StrUtils.isCodeOk("aaa.txt"));
+        assertTrue(StrUtils.isCodeOk("aaa."));
+
+        assertFalse(StrUtils.isCodeOk("1234567890-?#$%abc_xyz:1.0"));
+        assertFalse(StrUtils.isCodeOk("aaa bbb.txt"));
+        assertFalse(StrUtils.isCodeOk("aaa,bbb.txt"));
+        assertFalse(StrUtils.isCodeOk("aaaäöü.txt"));
     }
 }

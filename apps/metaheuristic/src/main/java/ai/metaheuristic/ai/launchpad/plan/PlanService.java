@@ -45,6 +45,8 @@ import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -254,13 +256,14 @@ public class PlanService {
                 }
             }
             lastProcess = process;
-            if (StringUtils.containsWhitespace(process.code) || StringUtils.contains(process.code, ',') ){
+            if (S.b(process.code) || !StrUtils.isCodeOk(process.code)){
+                log.error("Error while validating plan {}", planYaml);
                 return EnumsApi.PlanValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
-            if (StringUtils.containsWhitespace(process.inputResourceCode) || StringUtils.contains(process.inputResourceCode, ',') ){
+            if (process.inputResourceCode!=null && !StrUtils.isCodeOk(process.inputResourceCode)){
                 return EnumsApi.PlanValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
-            if (StringUtils.containsWhitespace(process.outputResourceCode) || StringUtils.contains(process.outputResourceCode, ',') ){
+            if (process.outputResourceCode!=null && !StrUtils.isCodeOk(process.outputResourceCode)){
                 return EnumsApi.PlanValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
             ProcessValidator processValidator;

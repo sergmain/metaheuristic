@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.commons.utils;
 
+import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -25,17 +26,17 @@ import java.util.regex.Pattern;
 public class StrUtils {
 
     private static final String COPY_NUMBER_PREFIX = "Copy #";
-    public static final String ALLOWED_CHARS_SNIPPET_CODE_REGEXP = "^[A-Za-z0-9.:_-]*$";
+    public static final String ALLOWED_CHARS_IN_CODE_REGEXP = "^[A-Za-z0-9.:_-]*$";
 
 
-    private static final Pattern snippetCodePattern = Pattern.compile(ALLOWED_CHARS_SNIPPET_CODE_REGEXP);
+    private static final Pattern codePattern = Pattern.compile(ALLOWED_CHARS_IN_CODE_REGEXP);
 
-    public static boolean isSnippetCodeOk(String code) {
-        Matcher m = snippetCodePattern.matcher(code);
+    public static boolean isCodeOk(String code) {
+        Matcher m = codePattern.matcher(code);
         return m.matches();
     }
 
-    public static String normalizeSnippetCode(String code) {
+    public static String normalizeCode(String code) {
         return StringUtils.replaceEach(code, new String[]{":", ".", " "}, new String[]{"-", "_", "_"});
     }
 

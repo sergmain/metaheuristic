@@ -39,8 +39,8 @@ public class SnippetCoreUtils {
         if (snippetConfig.code ==null || snippetConfig.code.isBlank() || snippetConfig.type ==null || snippetConfig.type.isBlank()) {
             return new SnippetApiData.SnippetConfigStatus(false, "#401.15 A field is null or empty: " + snippetConfig.toString());
         }
-        if (!StrUtils.isSnippetCodeOk(snippetConfig.code)) {
-            return new SnippetApiData.SnippetConfigStatus(false, "#401.20 Snippet code has wrong chars: "+ snippetConfig.code +", allowed only: " + StrUtils.ALLOWED_CHARS_SNIPPET_CODE_REGEXP);
+        if (!StrUtils.isCodeOk(snippetConfig.code)) {
+            return new SnippetApiData.SnippetConfigStatus(false, "#401.20 Snippet code has wrong chars: "+ snippetConfig.code +", allowed only: " + StrUtils.ALLOWED_CHARS_IN_CODE_REGEXP);
         }
         if (snippetConfig.sourcing ==null) {
             return new SnippetApiData.SnippetConfigStatus(false, "#401.25 Field 'sourcing' is absent");

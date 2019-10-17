@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.launchpad.process.Process;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,7 @@ public class PlanParamsYaml implements BaseParams {
     }
 
     @Data
+    @ToString
     public static class PlanYaml {
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
