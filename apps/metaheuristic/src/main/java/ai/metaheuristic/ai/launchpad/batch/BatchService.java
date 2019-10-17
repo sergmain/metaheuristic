@@ -142,10 +142,10 @@ public class BatchService {
                     return b;
                 }
                 b.execState = Enums.BatchExecState.Processing.code;
+                launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_STARTED, null, null, batchId, null, null );
                 return batchCache.save(b);
             }
             finally {
-                launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_STARTED, null, null, batchId, null, null );
                 batchMap.remove(batchId);
             }
         }
