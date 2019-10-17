@@ -296,13 +296,13 @@ public class BinaryDataService {
     }
 
     @Transactional(readOnly = true)
-    public List<Long> getByPoolCodeAndType(String poolCode, BinaryDataType type) {
-        return binaryDataRepository.findIdsByPoolCodeAndDataType(poolCode, type.value);
+    public String getFilenameByPool1CodeAndType(String poolCode, BinaryDataType type) {
+        return binaryDataRepository.findFilenameByPoolCodeAndDataType(poolCode, type.value);
     }
 
     @Transactional(readOnly = true)
-    public String getFilenameByPool1CodeAndType(String poolCode, BinaryDataType type) {
-        return binaryDataRepository.findFilenameByPoolCodeAndDataType(poolCode, type.value);
+    public String findFilenameByBatchId(Long batchId) {
+        return binaryDataRepository.findFilenameByBatchId(batchId);
     }
 
     @Transactional(readOnly = true)

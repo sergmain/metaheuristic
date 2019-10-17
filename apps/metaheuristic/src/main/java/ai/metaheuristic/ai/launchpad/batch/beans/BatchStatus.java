@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.batch.beans;
 
+import ai.metaheuristic.ai.Consts;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -90,6 +91,9 @@ public class BatchStatus {
 
     @JsonIgnore
     public final Map<String, String> renameTo = new HashMap<>();
+
+    @JsonIgnore
+    public String originArchiveName = Consts.RESULT_ZIP;
 
     // must be public for yaml's marshalling
     public boolean ok = false;

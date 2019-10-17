@@ -119,4 +119,5 @@ public class Consts {
     public static final String RESOURCES_TO_CLEAN = "toClean";
 
     public static final String META_SNIPPET_DOWNLOAD_STATUS = "mh-snippet-download-status";
+    public static final String RESULT_ZIP = "result.zip";
 }

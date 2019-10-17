@@ -64,16 +64,14 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.*;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -99,7 +97,6 @@ import java.util.stream.Stream;
 public class BatchTopLevelService {
 
     private static final String ATTACHMENTS_POOL_CODE = "attachments";
-    private static final String RESULT_ZIP = "result.zip";
 
     private static final String CONFIG_FILE = "config.yaml";
     private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[/\\\\A-Za-z0-9._-]*$";
@@ -478,13 +475,17 @@ public class BatchTopLevelService {
 
         File statusFile = new File(zipDir, "status.txt");
         FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);
-        File zipFile = new File(resultDir, RESULT_ZIP);
+        File zipFile = new File(resultDir, Consts.RESULT_ZIP);
         ZipUtils.createZip(zipDir, zipFile, status.renameTo);
 
 
+        String filename = StrUtils.getName(status.originArchiveName) + Consts.ZIP_EXT;
+
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        httpHeaders.setContentDispositionFormData("attachment", RESULT_ZIP);
+        // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
+        httpHeaders.setContentDisposition(ContentDisposition.parse(
+                "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
         resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
         return resource;
     }

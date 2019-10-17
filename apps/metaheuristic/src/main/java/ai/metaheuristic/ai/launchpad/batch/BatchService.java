@@ -48,6 +48,7 @@ import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.AllArgsConstructor;
@@ -408,6 +409,8 @@ public class BatchService {
             return bs;
         }
 
+        bs.originArchiveName = getUploadedFilename(batchId);
+
         List<Long> ids = batchWorkbookRepository.findWorkbookIdsByBatchId(batchId);
         if (ids.isEmpty()) {
             bs.getGeneralStatus().add("#990.250 Batch is empty, there isn't any task, batchId: " + batchId, '\n');
@@ -542,6 +545,15 @@ public class BatchService {
         if (StringUtils.isBlank(filename)) {
             log.error("#990.390 Filename is blank for poolCode: {}, data type: {}", mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
             return null;
+        }
+        return filename;
+    }
+
+    private String getUploadedFilename(Long batchId) {
+        final String filename = binaryDataService.findFilenameByBatchId(batchId);
+        if (S.b(filename)) {
+            log.error("#990.392 Filename is blank for batchId: {}, will be used default name - result.zip", batchId);
+            return Consts.RESULT_ZIP;
         }
         return filename;
     }

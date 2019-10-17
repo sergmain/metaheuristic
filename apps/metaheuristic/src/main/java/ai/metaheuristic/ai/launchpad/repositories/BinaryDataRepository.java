@@ -80,6 +80,9 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     @Query(value="select b.filename from BinaryDataImpl b where b.poolCode=:poolCode and b.dataType=:dataType ")
     String findFilenameByPoolCodeAndDataType(String poolCode, int dataType);
 
+    @Query(value="select b.filename from BinaryDataImpl b where b.refType='batch' and b.refId=:batchId ")
+    String findFilenameByBatchId(Long batchId);
+
     @Transactional(readOnly = true)
     BinaryDataImpl findByCode(String code);
 
