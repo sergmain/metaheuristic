@@ -18,10 +18,12 @@ package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.LaunchpadEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * @author Serge
@@ -29,7 +31,14 @@ import org.springframework.transaction.annotation.Transactional;
  * Time: 8:20 PM
  */
 @Repository
-@Transactional(propagation = Propagation.REQUIRES_NEW)
 @Profile("launchpad")
 public interface LaunchpadEventRepository extends CrudRepository<LaunchpadEvent, Long> {
+
+    @Transactional(readOnly = true)
+    @Query(value="select e.id from LaunchpadEvent e where e.period=:period")
+    List<Long> findIdByPeriod(int period);
+
+    @Transactional(readOnly = true)
+    @Query(value="select e from LaunchpadEvent e where e.id in :ids ")
+    List<LaunchpadEvent> findByIds(List<Long> ids);
 }

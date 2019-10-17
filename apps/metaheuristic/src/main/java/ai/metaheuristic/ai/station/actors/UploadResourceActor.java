@@ -113,7 +113,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
 
                 Request request = Request.Post(uri)
                         .connectTimeout(5000)
-                        .socketTimeout(5000)
+                        .socketTimeout(20000)
                         .body(entity);
 
                 log.info("Start uploading resource to rest-server, {}", randonPart);

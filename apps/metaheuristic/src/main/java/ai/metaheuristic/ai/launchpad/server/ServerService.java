@@ -243,8 +243,9 @@ public class ServerService {
             f = assetFile.file;
             isLastChunk = true;
         } else {
-            f = new File(DirUtils.createTempDir("chunked-file-"), "file-part.bin");
-            resource.toClean.add(f);
+            File tempDir = DirUtils.createTempDir("chunked-file-");
+            f = new File(tempDir, "file-part.bin");
+            resource.toClean.add(tempDir);
 
             final long size = Long.parseLong(chunkSize);
             final long offset = size * chunkNum;

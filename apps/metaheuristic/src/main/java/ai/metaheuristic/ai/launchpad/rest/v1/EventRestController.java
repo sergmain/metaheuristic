@@ -16,13 +16,22 @@
 
 package ai.metaheuristic.ai.launchpad.rest.v1;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
+import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.AbstractResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 /**
  * @author Serge
@@ -37,5 +46,26 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('BILLING')")
 public class EventRestController {
+
+    private final LaunchpadEventService launchpadEventService;
+
+    @GetMapping(value="/events-for-period/{period}/events.zip", produces = "application/zip")
+    public ResponseEntity<AbstractResource> getEventsForPeriod(HttpServletRequest request, @PathVariable int period) throws IOException {
+        if (period<201900 || period>210000) {
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
+        }
+
+        final ResponseEntity<AbstractResource> entity;
+        try {
+            ResourceWithCleanerInfo resource = launchpadEventService.getEventsForPeriod(period);
+            entity = resource.entity;
+            if (resource.toClean!=null) {
+                request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
+            }
+        } catch (BinaryDataNotFoundException e) {
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+        }
+        return entity;
+    }
 
 }
