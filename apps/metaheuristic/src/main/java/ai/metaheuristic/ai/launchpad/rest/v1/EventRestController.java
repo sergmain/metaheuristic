@@ -14,29 +14,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.event;
+package ai.metaheuristic.ai.launchpad.rest.v1;
 
-import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
-
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author Serge
- * Date: 10/3/2019
- * Time: 4:51 PM
+ * Date: 10/16/2019
+ * Time: 3:57 PM
  */
-public class LaunchpadEventYamlUtils {
-
-    private static final LaunchpadEventYamlUtilsV1 YAML_UTILS_V_1 = new LaunchpadEventYamlUtilsV1();
-    private static final LaunchpadEventYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
-
-    public static final BaseYamlUtils<LaunchpadEventYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
-            Map.of(
-                    1, YAML_UTILS_V_1
-            ),
-            DEFAULT_UTILS
-    );
-
+@RestController
+@RequestMapping("/rest/v1/event")
+@Slf4j
+@Profile("launchpad")
+@CrossOrigin
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('BILLING')")
+public class EventRestController {
 
 }

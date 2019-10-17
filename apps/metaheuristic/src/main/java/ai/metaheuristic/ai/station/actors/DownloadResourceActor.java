@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.station.tasks.DownloadResourceTask;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.CommonConsts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -87,7 +88,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
             log.info("Start processing the download task {}", task);
             try {
-                final String payloadRestUrl = task.launchpad.url + Consts.REST_V1_URL + Consts.PAYLOAD_REST_URL + "/resource/" + EnumsApi.BinaryDataType.DATA;
+                final String payloadRestUrl = task.launchpad.url + CommonConsts.REST_V1_URL + Consts.PAYLOAD_REST_URL + "/resource/" + EnumsApi.BinaryDataType.DATA;
                 final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.stationId+ '-' + task.taskId + '-' + URLEncoder.encode(task.getId(), StandardCharsets.UTF_8.toString());
 
                 File parentDir = assetFile.file.getParentFile();

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.station;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
@@ -160,7 +161,7 @@ public class MetadataService {
             final Metadata.LaunchpadInfo launchpadInfo = launchpadUrlAsCode(launchpadUrl);
             return new SimpleCache(
                     launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl),
-                    launchpadUrl + Consts.REST_V1_URL + Consts.PAYLOAD_REST_URL,
+                    launchpadUrl + CommonConsts.REST_V1_URL + Consts.PAYLOAD_REST_URL,
                     launchpadInfo,
                     launchpadLookupExtendedService.prepareBaseResourceDir(launchpadInfo)
             );

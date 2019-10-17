@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
+import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.*;
@@ -77,7 +78,7 @@ public class LaunchpadRequestor {
         if (launchpad == null) {
             throw new IllegalStateException("#775.010 Can'r find launchpad config for url " + launchpadUrl);
         }
-        serverRestUrl = launchpadUrl + Consts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
+        serverRestUrl = launchpadUrl + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
         nextRequest = new StationCommParamsYaml();
     }
 

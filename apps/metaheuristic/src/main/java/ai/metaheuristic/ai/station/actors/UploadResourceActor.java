@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.station.StationTaskService;
 import ai.metaheuristic.ai.station.net.HttpClientExecutor;
 import ai.metaheuristic.ai.station.tasks.UploadResourceTask;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
+import ai.metaheuristic.commons.CommonConsts;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.RequiredArgsConstructor;
@@ -98,7 +99,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             }
             Enums.UploadResourceStatus status = null;
             try {
-                final String uploadRestUrl  = task.launchpad.url + Consts.REST_V1_URL + Consts.UPLOAD_REST_URL;
+                final String uploadRestUrl  = task.launchpad.url + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
                 String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.stationId + '-' + task.taskId;
                 final String uri = uploadRestUrl + randonPart;
 
