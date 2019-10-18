@@ -50,10 +50,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -288,7 +285,7 @@ public class MetadataService {
                 SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream()
                         .filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(info.code))
                         .findAny().orElse(null);
-                if (status==null) {
+                if (status==null || status.snippetState==Enums.SnippetState.not_found) {
                     setSnippetDownloadStatusInternal(launchpadUrl, info.code, info.sourcing, Enums.SnippetState.none);
                     isChanged = true;
                 }
@@ -416,6 +413,7 @@ public class MetadataService {
                 snippetDownloadStatusYaml = new SnippetDownloadStatusYaml();
             }
         }
+        snippetDownloadStatusYaml.statuses.sort(Comparator.comparingInt(c -> c.sourcing.value));
         return snippetDownloadStatusYaml;
     }
 

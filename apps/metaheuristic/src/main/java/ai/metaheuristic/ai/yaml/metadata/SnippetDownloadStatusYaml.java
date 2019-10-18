@@ -51,6 +51,6 @@ public class SnippetDownloadStatusYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        return false;
+        return true;
     }
 }

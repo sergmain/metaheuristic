@@ -514,7 +514,7 @@ public class BatchTopLevelService {
             return false;
         }
 
-        // all documents are sored in zip folder
+        // all documents are sorted in zip folder
         prepareZipData.bs.renameTo.put("zip/" + tempFile.getName(), "zip/" + prepareZipData.mainDocument);
 
         try {
