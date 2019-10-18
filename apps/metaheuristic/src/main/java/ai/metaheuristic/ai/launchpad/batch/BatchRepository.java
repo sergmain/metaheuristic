@@ -22,7 +22,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("launchpad")
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public interface BatchRepository extends JpaRepository<Batch, Long> {
+
+    @Query(value="select b from Batch b where b.id=:id")
+    Batch findByIdForUpdate(Long id);
 
     @Transactional(readOnly = true)
     @Query("select b.id from Batch b order by b.createdOn desc")
