@@ -1,5 +1,4 @@
 // helper functions
-// TODO move them to my-scripts.js
 
 let /*{boolean}*/ isDebug = false;
 

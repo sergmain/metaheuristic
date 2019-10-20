@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.Globals;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -76,15 +75,12 @@ public class MultiHttpSecurityConfig {
 
     @Configuration
     @Order(1)
-    public class RestAuthSecurityConfig extends WebSecurityConfigurerAdapter {
+    @RequiredArgsConstructor
+    public static class RestAuthSecurityConfig extends WebSecurityConfigurerAdapter {
 
-        static final String REST_REALM = "REST realm";
+        private static final String REST_REALM = "REST realm";
 
         private final Globals globals;
-
-        public RestAuthSecurityConfig(Globals globals) {
-            this.globals = globals;
-        }
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
@@ -125,16 +121,11 @@ public class MultiHttpSecurityConfig {
 
     @Configuration
     @Order
+    @RequiredArgsConstructor
     public static class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
-        final CsrfTokenRepository csrfTokenRepository;
+        private final CsrfTokenRepository csrfTokenRepository;
         private final Globals globals;
-
-        @Autowired
-        public SpringSecurityConfig(CsrfTokenRepository csrfTokenRepository, Globals globals) {
-            this.csrfTokenRepository = csrfTokenRepository;
-            this.globals = globals;
-        }
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
