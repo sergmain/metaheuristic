@@ -47,7 +47,7 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     List<Long> findAllOrphanBatchData();
 
     @Transactional(readOnly = true)
-    @Query(nativeQuery = true, value = "select d.id from mh_data d where d.ref_type='workbook' and d.REF_ID not in (select z.id from aiai.mh_workbook z)")
+    @Query(nativeQuery = true, value = "select d.id from mh_data d where d.ref_type='workbook' and d.REF_ID not in (select z.id from mh_workbook z)")
     List<Long> findAllOrphanWorkbookData();
 
     List<BinaryData> findAllByDataType(int dataType);

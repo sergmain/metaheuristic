@@ -207,7 +207,7 @@ public class Schedulers {
         /**
          * this scheduler is being run at the station side
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('ai.metaheuristic.station.timeout.request-launchpad'), 3, 20, 6)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.request-launchpad'), 3, 20, 6)*1000 }")
         public void launchRequester() {
             if (globals.isUnitTesting) {
                 return;
@@ -228,7 +228,7 @@ public class Schedulers {
         /**
          * Prepare assets for tasks
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('ai.metaheuristic.station.timeout.task-assigner'), 3, 20, 5)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.task-assigner'), 3, 20, 5)*1000 }")
         public void taskAssigner() {
             if (globals.isUnitTesting) {
                 return;
@@ -240,7 +240,7 @@ public class Schedulers {
             taskAssetPreparer.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.task-processor'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.task-processor'), 3, 20, 10)*1000 }")
         public void taskProcessor() {
             if (globals.isUnitTesting) {
                 return;
@@ -252,7 +252,7 @@ public class Schedulers {
             taskProcessor.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-snippet'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.download-snippet'), 3, 20, 10)*1000 }")
         public void downloadSnippetActor() {
             if (globals.isUnitTesting) {
                 return;
@@ -264,7 +264,7 @@ public class Schedulers {
             downloadSnippetActor.downloadSnippets();
         }
 
-        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.prepare-snippet-for-downloading'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.prepare-snippet-for-downloading'), 3, 20, 10)*1000 }")
         public void prepareSnippetForDownloading() {
             if (globals.isUnitTesting) {
                 return;
@@ -276,7 +276,7 @@ public class Schedulers {
             downloadSnippetActor.prepareSnippetForDownloading();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-resource'), 3, 20, 3)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.download-resource'), 3, 20, 3)*1000 }")
         public void downloadResourceActor() {
             if (globals.isUnitTesting) {
                 return;
@@ -288,7 +288,7 @@ public class Schedulers {
             downloadResourceActor.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.upload-result-resource'), 3, 20, 3)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.upload-result-resource'), 3, 20, 3)*1000 }")
         public void uploadResourceActor() {
             if (globals.isUnitTesting) {
                 return;
@@ -300,7 +300,7 @@ public class Schedulers {
             uploadResourceActor.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.artifact-cleaner'), 10, 60, 30)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.artifact-cleaner'), 10, 60, 30)*1000 }")
         public void artifactCleaner() {
             if (globals.isUnitTesting) {
                 return;

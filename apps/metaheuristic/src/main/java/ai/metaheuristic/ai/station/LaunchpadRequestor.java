@@ -289,15 +289,9 @@ public class LaunchpadRequestor {
             } catch (RestClientException e) {
                 log.error("#775.110 Error accessing url: {}, error: {}", url, e.getMessage());
 
-                // short info for all 5xx errors
                 //noinspection StatementWithEmptyBody
                 if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException)e).getRawStatusCode()>=500 & ((HttpStatusCodeException)e).getRawStatusCode()<600 ) {
-/*
-                if (e. instanceof HttpServerErrorException.GatewayTimeout ||
-                        e instanceof HttpServerErrorException.BadGateway ||
-                        e instanceof HttpServerErrorException.ServiceUnavailable) {
-                    //
-*/
+                    // short info for all 5xx errors
                 }
                 else {
                     log.error("#775.120 Stacktrace", e);
