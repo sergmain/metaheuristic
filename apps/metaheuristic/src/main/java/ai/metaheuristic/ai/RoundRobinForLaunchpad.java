@@ -20,16 +20,16 @@ import ai.metaheuristic.ai.station.LaunchpadLookupExtendedService;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class RoundRobinForLaunchpad {
 
-    public Map<String, AtomicBoolean> urls = new HashMap<>();
+    private final Map<String, AtomicBoolean> urls;
 
     public RoundRobinForLaunchpad(Map<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> launchpads) {
+        Map<String, AtomicBoolean> map = new HashMap<>();
         for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpads.entrySet()) {
             LaunchpadLookupConfig.LaunchpadLookup launchpadLookup = entry.getValue().launchpadLookup;
             if (launchpadLookup.disabled) {
@@ -37,8 +37,13 @@ public class RoundRobinForLaunchpad {
                 continue;
             }
             log.info("launchpad {} was added to round-robin", launchpadLookup.url);
-            this.urls.putIfAbsent(launchpadLookup.url, new AtomicBoolean(true));
+            map.putIfAbsent(launchpadLookup.url, new AtomicBoolean(true));
         }
+        urls = Collections.unmodifiableMap(map);
+    }
+
+    public Set<String> getActiveLaunchpads() {
+        return urls.keySet();
     }
 
     public String next() {

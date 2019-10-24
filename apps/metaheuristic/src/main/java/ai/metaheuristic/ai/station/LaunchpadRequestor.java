@@ -228,6 +228,7 @@ public class LaunchpadRequestor {
                 if (currentExecState.isInited(launchpadUrl)) {
                     Monitoring.log("##011", Enums.Monitor.MEMORY);
                     final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
+//                    boolean stationProcessingAnyTask = stationService.isStationProcessingAnyTask();
                     Monitoring.log("##012", Enums.Monitor.MEMORY);
                     if (b && !launchpad.schedule.isCurrentTimeInactive()) {
                         setRequestTask(scpy, new StationCommParamsYaml.RequestTask(launchpad.launchpadLookup.acceptOnlySignedSnippets));

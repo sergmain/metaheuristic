@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
 import ai.metaheuristic.ai.station.tasks.UploadResourceTask;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Slf4j
@@ -114,6 +116,30 @@ public class StationService {
         }
     }
 
+    // check only active Launchpad
+    public boolean isStationProcessingAnyTask() {
+        for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpadLookupExtendedService.lookupExtendedMap.entrySet()) {
+            String launchpadUrl = entry.getKey();
+            LaunchpadLookupConfig.LaunchpadLookup launchpadLookup = entry.getValue().launchpadLookup;
+            if (launchpadLookup.disabled) {
+                continue;
+            }
+
+            final String stationId = metadataService.getStationId(launchpadUrl);
+            final String sessionId = metadataService.getSessionId(launchpadUrl);
+
+            if (stationId == null || sessionId==null) {
+                return false;
+            }
+
+            final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
+            if (!b) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(String launchpadUrl, long taskId) {
         if (launchpadUrl==null) {
             throw new IllegalStateException("#747.010 launchpadUrl is null");
@@ -125,21 +151,6 @@ public class StationService {
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
         File taskDir = stationTaskService.prepareTaskDir(metadataService.launchpadUrlAsCode(launchpadUrl), taskId);
 
-/*
-        // TODO 2019.06.21 if everything will work fine, delete this commented part
-        File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + String.format(Consts.PARAMS_YAML_MASK, snippetPrepareResult.snippet.getTaskParamsVersion()));
-        if (!paramFile.isFile() || !paramFile.exists()) {
-            return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
-        }
-        String params;
-        try {
-            params = FileUtils.readFileToString(paramFile, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            log.error("#747.13 Error reading param file "+ paramFile.getPath(), e);
-            return Enums.ResendTaskOutputResourceStatus.TASK_PARAM_FILE_NOT_FOUND;
-        }
-        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
-*/
         final DataStorageParams dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
         ResourceProvider resourceProvider;
         try {

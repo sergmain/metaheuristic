@@ -97,7 +97,7 @@ public class TaskAssetPreparer {
 
             // process only if launchpad has already sent its config
             if (launchpad.config.chunkSize==null) {
-                log.error("#951.050 Launchpad {} doesn't provide chunkSize", task.launchpadUrl);
+                log.warn("#951.050 Launchpad {} doesn't provide chunkSize", task.launchpadUrl);
                 continue;
             }
 

@@ -151,7 +151,7 @@ public class MetadataService {
     private void syncSnippetStatusInternal(String launchpadUrl, String snippetCode) {
         SnippetDownloadStatusYaml.Status status = getSnippetDownloadStatuses(launchpadUrl, snippetCode);
 
-        if (status.sourcing != EnumsApi.SnippetSourcing.launchpad || status.verified) {
+        if (status==null || status.sourcing != EnumsApi.SnippetSourcing.launchpad || status.verified) {
             return;
         }
         SimpleCache simpleCache = simpleCacheMap.computeIfAbsent(launchpadUrl, o->{
@@ -172,7 +172,7 @@ public class MetadataService {
             return;
         }
         if (downloadedSnippetConfigStatus.status==StationSnippetService.ConfigStatus.not_found) {
-            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.not_found);
+            removeSnippet(launchpadUrl, snippetCode);
             return;
         }
         SnippetApiData.SnippetConfig snippetConfig = downloadedSnippetConfigStatus.snippetConfig;
@@ -324,6 +324,26 @@ public class MetadataService {
             String yaml = SnippetDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(snippetDownloadStatusYaml);
             metadata.metadata.put(Consts.META_SNIPPET_DOWNLOAD_STATUS, yaml);
             updateMetadataFile();
+            return true;
+        }
+    }
+
+    public boolean removeSnippet(final String launchpadUrl, String snippetCode) {
+        if (S.b(launchpadUrl)) {
+            throw new IllegalStateException("launchpadUrl is null");
+        }
+        if (S.b(snippetCode)) {
+            throw new IllegalStateException("snippetCode is null");
+        }
+        synchronized (syncObj) {
+            SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
+            List<SnippetDownloadStatusYaml.Status> statuses = snippetDownloadStatusYaml.statuses.stream().filter(o->!(o.launchpadUrl.equals(launchpadUrl) && o.code.equals(snippetCode))).collect(Collectors.toList());
+            if (statuses.size()!=snippetDownloadStatusYaml.statuses.size()) {
+                snippetDownloadStatusYaml.statuses = statuses;
+                String yaml = SnippetDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(snippetDownloadStatusYaml);
+                metadata.metadata.put(Consts.META_SNIPPET_DOWNLOAD_STATUS, yaml);
+                updateMetadataFile();
+            }
             return true;
         }
     }

@@ -84,7 +84,10 @@ public class StationTopLevelService {
             String blacklistReason = stationBlacklisted(status);
 
             boolean isSnippetProblem = status.downloadStatuses.stream()
-                    .anyMatch(s->s.snippetState!=Enums.SnippetState.none && s.snippetState!=Enums.SnippetState.ready && s.snippetState!=Enums.SnippetState.ok);
+                    .anyMatch(s->s.snippetState!=Enums.SnippetState.none &&
+                            s.snippetState!=Enums.SnippetState.ready &&
+                            s.snippetState!=Enums.SnippetState.not_found &&
+                            s.snippetState!=Enums.SnippetState.ok);
 
             ss.add(new StationData.StationStatus(
                     station, System.currentTimeMillis() - station.updatedOn < STATION_TIMEOUT,

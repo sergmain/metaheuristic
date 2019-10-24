@@ -46,6 +46,7 @@ public class LaunchpadLookupExtendedService {
 
     private final Globals globals;
 
+    // Collections.unmodifiableMap
     public Map<String, LaunchpadLookupExtended> lookupExtendedMap = null;
 
     @Data

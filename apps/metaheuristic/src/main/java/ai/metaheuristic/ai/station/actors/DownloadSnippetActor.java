@@ -88,8 +88,9 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 continue;
             }
 
+            // it could be null if this snippet was deleted
             SnippetDownloadStatusYaml.Status sdsy = metadataService.syncSnippetStatus(launchpadUrl, snippetCode);
-            if (sdsy.snippetState==Enums.SnippetState.ready) {
+            if (sdsy==null || sdsy.snippetState==Enums.SnippetState.ready) {
                 continue;
             }
 
@@ -144,11 +145,18 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 case signature_not_found:
                 case checksum_wrong:
                 case not_supported_os:
-                case not_found:
                 case asset_error:
                 case download_error:
-                case snippet_config_error:
                     log.warn("#811.030 Snippet {} can't be downloaded from {}. The current status is {}", snippetCode, launchpadUrl, snippetDownloadStatus.snippetState);
+                    continue;
+                case snippet_config_error:
+                    log.warn("#811.030 Config for snippet {} wasn't downloaded from {}, State will be reseted to none", snippetCode, launchpadUrl);
+                    // reset to none for trying again
+                    metadataService.setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.none);
+                    continue;
+                case not_found:
+                    log.warn("#811.033 Config for snippet {} wasn't found on {}, State will be reseted to none", snippetCode, launchpadUrl);
+                    metadataService.setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.none);
                     continue;
                 case ready:
                     if (assetFile.isError || !assetFile.isContent ) {
@@ -222,7 +230,6 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                             final String es = S.f("#811.070 Snippet %s wasn't found on launchpad %s.", task.snippetCode, launchpadUrl);
                             log.warn(es);
                             metadataService.setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.not_found);
-//                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
                             resourceState = Enums.SnippetState.not_found;
                             break;
                         }
@@ -230,7 +237,6 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                             final String es = S.f("#811.080 Unknown error with a snippet %s from launchpad %s.", task.snippetCode, launchpadUrl);
                             log.warn(es);
                             metadataService.setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.download_error);
-//                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
                             resourceState = Enums.SnippetState.download_error;
                             break;
                         }
@@ -238,7 +244,6 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                             final String es = S.f("#811.090 Unknown error with a resource %s from launchpad %s.", task.snippetCode, launchpadUrl);
                             log.warn(es);
                             metadataService.setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.download_error);
-//                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
                             resourceState = Enums.SnippetState.download_error;
                             break;
                         }

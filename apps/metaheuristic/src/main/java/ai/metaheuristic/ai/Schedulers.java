@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 
@@ -216,13 +217,23 @@ public class Schedulers {
                 return;
             }
 
+/*
             String url = roundRobin.next();
             if (url==null) {
                 log.info("Can't find any enabled launchpad");
                 return;
             }
-            log.info("Run launchpadRequestor.fixedDelay() for url {}", url);
-            launchpadRequestorMap.get(url).proceedWithRequest();
+*/
+            Set<String> launchpads = roundRobin.getActiveLaunchpads();
+            if (launchpads.isEmpty()) {
+                log.info("Can't find any enabled launchpad");
+                return;
+            }
+
+            for (String launchpad : launchpads) {
+                log.info("Run launchpadRequestor.fixedDelay() for url {}", launchpad);
+                launchpadRequestorMap.get(launchpad).proceedWithRequest();
+            }
         }
 
         /**

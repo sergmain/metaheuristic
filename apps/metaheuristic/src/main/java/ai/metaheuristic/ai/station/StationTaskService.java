@@ -317,6 +317,7 @@ public class StationTaskService {
             if (stationId == null) {
                 return false;
             }
+            // TODO 2019-10-24 need to optimize
             List<StationTask> tasks = findAllByCompletedIsFalse(launchpadUrl);
             for (StationTask task : tasks) {
                 // we don't need new task because workbook for this task is active
@@ -384,12 +385,12 @@ public class StationTaskService {
         return map.computeIfAbsent(launchpadUrl, m -> new HashMap<>());
     }
 
-    public List<StationTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(boolean status) {
+    public List<StationTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(boolean assetsPreparedStatus) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             List<StationTask> list = new ArrayList<>();
             for (String launchpadUrl : map.keySet()) {
                 for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
-                    if (!task.completed && task.finishedOn == null && task.assetsPrepared==status) {
+                    if (!task.completed && task.finishedOn == null && task.assetsPrepared==assetsPreparedStatus) {
                         list.add(task);
                     }
                 }
