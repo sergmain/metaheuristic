@@ -27,17 +27,24 @@ import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.client.HttpClient;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.*;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static org.apache.http.client.config.RequestConfig.custom;
 
 /**
  * User: Serg
@@ -58,6 +65,7 @@ public class LaunchpadRequestor {
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
     private final StationCommandProcessor stationCommandProcessor;
 
+    private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = getHttpRequestFactory();
     private RestTemplate restTemplate;
 
     private LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad;
@@ -73,13 +81,35 @@ public class LaunchpadRequestor {
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
         this.stationCommandProcessor = stationCommandProcessor;
 
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = new RestTemplate(REQUEST_FACTORY);
         this.launchpad = this.launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
         if (launchpad == null) {
             throw new IllegalStateException("#775.010 Can'r find launchpad config for url " + launchpadUrl);
         }
         serverRestUrl = launchpadUrl + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
         nextRequest = new StationCommParamsYaml();
+    }
+
+    private static HttpComponentsClientHttpRequestFactory getHttpRequestFactory() {
+        // https://github.com/spring-projects/spring-boot/issues/11379
+        // https://issues.apache.org/jira/browse/HTTPCLIENT-1892
+        // https://github.com/spring-projects/spring-framework/issues/21238
+
+        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout((int) Duration.ofSeconds(5).toMillis()).build();
+
+        final HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+        clientBuilder.setDefaultSocketConfig(socketConfig);
+        clientBuilder.useSystemProperties();
+        clientBuilder.setDefaultRequestConfig(custom().setConnectTimeout((int) Duration.ofSeconds(5).toMillis())
+                .setSocketTimeout((int) Duration.ofSeconds(5).toMillis())
+                .build());
+        final HttpClient httpClient = clientBuilder.build();
+
+        final HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(
+                httpClient);
+        requestFactory.setConnectTimeout((int) Duration.ofSeconds(5).toMillis());
+        requestFactory.setReadTimeout((int) Duration.ofSeconds(5).toMillis());
+        return requestFactory;
     }
 
     private long lastRequestForMissingResources = 0;
