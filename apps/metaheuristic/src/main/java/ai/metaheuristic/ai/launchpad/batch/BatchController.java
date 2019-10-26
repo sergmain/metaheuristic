@@ -63,10 +63,12 @@ public class BatchController {
 
     @GetMapping("/batches")
     public String batches(
+            HttpServletRequest request,
             Model model,
             @PageableDefault(size = 20) Pageable pageable,
             @ModelAttribute("errorMessage") final String errorMessage,
             @ModelAttribute("infoMessages") final String infoMessages ) {
+        String host = request.getServerName();
         BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);

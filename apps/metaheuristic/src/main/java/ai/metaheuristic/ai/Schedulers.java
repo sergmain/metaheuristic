@@ -232,7 +232,11 @@ public class Schedulers {
 
             for (String launchpad : launchpads) {
                 log.info("Run launchpadRequestor.fixedDelay() for url {}", launchpad);
-                launchpadRequestorMap.get(launchpad).proceedWithRequest();
+                try {
+                    launchpadRequestorMap.get(launchpad).proceedWithRequest();
+                } catch (Throwable th) {
+                    log.error("StationSchedulers.launchRequester()", th);
+                }
             }
         }
 
