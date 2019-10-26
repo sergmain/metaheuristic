@@ -21,12 +21,13 @@ import ai.metaheuristic.ai.launchpad.repositories.RefToLaunchpadRepositories;
 import ai.metaheuristic.ai.resource.ResourceCleanerInterceptor;
 import lombok.RequiredArgsConstructor;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
+import org.apache.catalina.connector.Connector;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.server.ConfigurableWebServerFactory;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.event.ApplicationEventMulticaster;
-import org.springframework.context.event.SimpleApplicationEventMulticaster;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -57,6 +58,28 @@ public class Config {
     @Bean
     public LayoutDialect layoutDialect() {
         return new LayoutDialect();
+    }
+
+
+    @Value("${ajp.port#{0}}")
+    private int ajpPort;
+
+    @Value("${ajp.enabled:#{false}}")
+    private boolean ajpEnabled;
+
+    // https://careydevelopment.us/2017/06/19/run-spring-boot-apache-web-server-front-end/
+    @Bean
+    public ConfigurableWebServerFactory servletContainer() {
+        TomcatServletWebServerFactory tomcat = new TomcatServletWebServerFactory();
+        if (ajpEnabled) {
+            Connector ajpConnector = new Connector("AJP/1.3");
+            ajpConnector.setPort(ajpPort);
+            ajpConnector.setSecure(false);
+            ajpConnector.setScheme("http");
+            ajpConnector.setAllowTrace(false);
+            tomcat.addAdditionalTomcatConnectors(ajpConnector);
+        }
+        return tomcat;
     }
 
     @Bean
