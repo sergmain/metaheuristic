@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -212,6 +213,17 @@ public class Globals {
                 log.error("Wrong value in env MH_IS_STATION_ENABLED, must be boolean (true/false), " +
                         "actual: " + stationEnabledAsStr+". Will be used 'false' as value.");
                 isStationEnabled = false;
+            }
+        }
+
+        String eventEnabledAsStr = env.getProperty("MH_IS_EVENT_ENABLED");
+        if (!S.b(eventEnabledAsStr)) {
+            try {
+                isEventEnabled = Boolean.parseBoolean(eventEnabledAsStr);
+            } catch (Throwable th) {
+                log.error("Wrong value in env MH_IS_EVENT_ENABLED, must be boolean (true/false), " +
+                        "actual: " + eventEnabledAsStr+". Will be used 'false' as value.");
+                isEventEnabled = false;
             }
         }
 
