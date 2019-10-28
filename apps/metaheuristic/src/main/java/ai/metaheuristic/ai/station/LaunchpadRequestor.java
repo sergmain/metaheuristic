@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.client.HttpClient;
 import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -309,9 +310,12 @@ public class LaunchpadRequestor {
             } catch (ResourceAccessException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof SocketException) {
-                    log.error("#775.090 Connection error: url: {}, err: {}", url, cause.toString());
+                    log.error("#775.090 Connection error: url: {}, err: {}", url, cause.getMessage());
                 }
                 else if (cause instanceof UnknownHostException) {
+                    log.error("#775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                }
+                else if (cause instanceof ConnectTimeoutException) {
                     log.error("#775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else {
