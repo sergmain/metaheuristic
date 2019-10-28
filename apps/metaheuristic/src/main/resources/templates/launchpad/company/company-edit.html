@@ -9,7 +9,7 @@
 
         <!--/*@thymesVar id="company" type="ai.metaheuristic.ai.launchpad.beans.Company"*/-->
         <form class="pure-form pure-form-stacked" th:object="${company}" method="post" action="#" th:method="POST"
-              th:action="@{/launchpad/company/company-edit-commit}" accept-charset="UTF-8" id="account-form"
+              th:action="@{/launchpad/company/company-edit-commit}" accept-charset="UTF-8" id="company-form"
               name="f">
             <input type="hidden" th:name="id" th:field="${company.id}"/>
             <fieldset>

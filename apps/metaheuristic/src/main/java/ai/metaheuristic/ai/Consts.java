@@ -87,6 +87,7 @@ public class Consts {
     public static final String UNKNOWN_INFO = "[unknown]";
 
 
+    public static final String COMPANIES_CACHE = "companies";
     public static final String ACCOUNTS_CACHE = "accounts";
     public static final String WORKBOOK_CACHE = "workbooks";
     public static final String STATIONS_CACHE = "stations";
