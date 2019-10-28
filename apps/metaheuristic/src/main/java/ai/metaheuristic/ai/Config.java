@@ -61,7 +61,7 @@ public class Config {
     }
 
 
-    @Value("${ajp.port#{0}}")
+    @Value("${ajp.port:#{0}}")
     private int ajpPort;
 
     @Value("${ajp.enabled:#{false}}")

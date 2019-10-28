@@ -57,12 +57,6 @@ public class ServerController {
     private final ServerService serverService;
     private final SnippetService snippetService;
 
-    @PostMapping("/registry")
-    public RegistryData getRegistryData() {
-        return null;
-        //
-    }
-
     // left there only for compatibility
     @Deprecated
     @PostMapping("/srv/{random-part}")
