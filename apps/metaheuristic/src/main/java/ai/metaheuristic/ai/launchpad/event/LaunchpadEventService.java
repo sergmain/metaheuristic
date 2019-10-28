@@ -81,7 +81,8 @@ public class LaunchpadEventService {
         batchEventData.workbookId = workbookId;
         String contextId = null;
         if (launchpadContext!=null) {
-            batchEventData.username = launchpadContext.authentication.getName();
+            batchEventData.companyId = launchpadContext.getCompanyId();
+            batchEventData.username = launchpadContext.getUsername();
             contextId = launchpadContext.contextId;
         }
         applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, contextId, batchEventData));

@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.ai.launchpad.experiment;
 
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
+import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.plan.PlanController;
 import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
@@ -32,6 +34,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -60,6 +63,7 @@ public class ExperimentController {
     private final WorkbookCache workbookCache;
     private final ExperimentCache experimentCache;
     private final PlanTopLevelService planTopLevelService;
+    private final LaunchpadContextService launchpadContextService;
 
     @GetMapping("/experiments")
     public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable,
@@ -273,7 +277,8 @@ public class ExperimentController {
     }
 
     @PostMapping("/experiment-delete-commit")
-    public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
+    public String deleteCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage",
@@ -283,7 +288,7 @@ public class ExperimentController {
         if (experiment.workbookId!=null) {
             Workbook wb = workbookCache.findById(experiment.workbookId);
             if (wb != null) {
-                OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(experiment.workbookId);
+                OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(experiment.workbookId, context);
                 if (operationStatusRest.isErrorMessages()) {
                     redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
                     return REDIRECT_LAUNCHPAD_EXPERIMENTS;

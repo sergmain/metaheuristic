@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
@@ -154,7 +155,7 @@ public class PlanService {
 
     private void setValidTo(Plan plan, boolean valid) {
         synchronized (syncObj) {
-            Plan p = planRepository.findByIdForUpdate(plan.getId());
+            Plan p = planRepository.findByIdForUpdate(plan.getId(), plan.getCompanyId());
             if (p!=null && p.isValid()!=valid) {
                 p.setValid(valid);
                 saveInternal(p);
@@ -162,9 +163,9 @@ public class PlanService {
         }
     }
 
-    public void setLockedTo(Long planId, boolean locked) {
+    public void setLockedTo(Long planId, Long companyId, boolean locked) {
         synchronized (syncObj) {
-            Plan p = planRepository.findByIdForUpdate(planId);
+            Plan p = planRepository.findByIdForUpdate(planId, companyId);
             if (p!=null && p.isLocked()!=locked) {
                 p.setLocked(locked);
                 saveInternal(p);
@@ -195,7 +196,7 @@ public class PlanService {
 
         if (workbook.execState!=execState.code) {
             workbookService.toState(workbook.id, execState);
-            setLockedTo(plan.getId(), true);
+            setLockedTo(plan.getId(), plan.getCompanyId(), true);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -511,7 +512,7 @@ public class PlanService {
 
     // ========= Workbook specific =============
 
-    public void deleteWorkbook(Long workbookId) {
+    public void deleteWorkbook(Long workbookId, LaunchpadContext context) {
         experimentService.resetExperimentByWorkbookId(workbookId);
         binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
         Workbook workbook = workbookCache.findById(workbookId);
@@ -521,7 +522,7 @@ public class PlanService {
             if (ids.size()==1) {
                 if (ids.get(0).equals(workbookId)) {
                     if (workbook.getPlanId() != null) {
-                        setLockedTo(workbook.getPlanId(), false);
+                        setLockedTo(workbook.getPlanId(), context.getCompanyId(), false);
                     }
                 }
                 else {

@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.batch.beans;
+package ai.metaheuristic.ai.launchpad.batch.data;
 
 import ai.metaheuristic.ai.Consts;
 import com.fasterxml.jackson.annotation.JsonIgnore;

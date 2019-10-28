@@ -24,6 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -37,7 +38,8 @@ import java.util.StringTokenizer;
 @Table(name = "MH_ACCOUNT")
 @Data
 @EqualsAndHashCode(of = {"username", "password", "token"})
-public class Account implements UserDetails {
+public class Account implements UserDetails, Serializable {
+    private static final long serialVersionUID = -8421154458012537028L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,13 +52,10 @@ public class Account implements UserDetails {
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
-    /**
-     * as UUID
-     */
-    private String username;
-    /**
-     * as UUID with BCrypt
-     */
+    @NotNull
+    public String username;
+
+    @NotNull
     private String password;
 
     @Transient

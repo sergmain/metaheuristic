@@ -14,33 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.batch.beans;
-
-import ai.metaheuristic.api.EnumsApi;
-import lombok.Data;
-
-import java.util.List;
+package ai.metaheuristic.ai.exceptions;
 
 /**
  * @author Serge
- * Date: 5/29/2019
- * Time: 11:38 PM
+ * Date: 10/28/2019
+ * Time: 3:42 PM
  */
-@Data
-public class BatchParams {
-
-    @Data
-    public static class TaskStatus {
-        public long taskId;
-        public long stationId;
-        public String ip;
-        public String host;
-        public String execResults;
-        public EnumsApi.TaskExecState state;
+public class BadExecutionContextException extends RuntimeException {
+    public BadExecutionContextException() {
     }
 
-    public BatchStatus batchStatus;
-    public List<TaskStatus> taskStatuses;
-    public boolean ok = false;
+    public BadExecutionContextException(String message) {
+        super(message);
+    }
 
+    public BadExecutionContextException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public BadExecutionContextException(Throwable cause) {
+        super(cause);
+    }
 }

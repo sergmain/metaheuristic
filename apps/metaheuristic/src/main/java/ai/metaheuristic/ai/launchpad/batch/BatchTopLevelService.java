@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
-import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
+import ai.metaheuristic.ai.launchpad.batch.data.BatchStatus;
 import ai.metaheuristic.ai.launchpad.beans.BatchWorkbook;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
@@ -131,9 +131,9 @@ public class BatchTopLevelService {
         return m.matches();
     }
 
-    public BatchData.BatchesResult getBatches(Pageable pageable) {
+    public BatchData.BatchesResult getBatches(Pageable pageable, LaunchpadContext context) {
         pageable = ControllerUtils.fixPageSize(20, pageable);
-        Page<Long> batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable);
+        Page<Long> batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable, context.getCompanyId());
 
         long total = batchIds.getTotalElements();
 
@@ -146,9 +146,9 @@ public class BatchTopLevelService {
         return result;
     }
 
-    public BatchData.PlansForBatchResult getPlansForBatchResult() {
+    public BatchData.PlansForBatchResult getPlansForBatchResult(LaunchpadContext context) {
         final BatchData.PlansForBatchResult plans = new BatchData.PlansForBatchResult();
-        plans.items = planRepository.findAllAsPlan().stream().filter(o->{
+        plans.items = planRepository.findAllAsPlan(context.getCompanyId()).stream().filter(o->{
             if (!o.isValid()) {
                 return false;
             }
@@ -170,6 +170,13 @@ public class BatchTopLevelService {
     }
 
     public OperationStatusRest batchUploadFromFile(final MultipartFile file, Long planId, final LaunchpadContext launchpadContext) {
+        PlanImpl plan = planCache.findById(planId);
+        if (plan == null || !plan.companyId.equals(launchpadContext.getCompanyId())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
+        }
+        if (!plan.companyId.equals(launchpadContext.getCompanyId())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.051 plan wasn't found, planId: " + planId);
+        }
 
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
@@ -179,14 +186,9 @@ public class BatchTopLevelService {
 
         launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, originFilename, file.getSize(), null, null, launchpadContext );
 
-        PlanImpl plan = planCache.findById(planId);
-        if (plan == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
-        }
-
-        // validate the plan
         // TODO 2019-07-06 Do we need to validate plan here in case that there is another check
-        // in ai.metaheuristic.ai.launchpad.batch.process_resource.BatchTopLevelService.createAndProcessTask
+        //  2019-10-28 it's working so left it as is until there will be found an issue with this
+        // validate the plan
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.060 validation of plan was failed, status: " + planValidation.status);
@@ -265,10 +267,10 @@ public class BatchTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest processResourceDeleteCommit(Long batchId) {
+    public OperationStatusRest processResourceDeleteCommit(Long batchId, LaunchpadContext context) {
 
         Batch batch = batchCache.findById(batchId);
-        if (batch == null) {
+        if (batch == null || !batch.companyId.equals(context.getCompanyId())) {
             final String es = "#995.250 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
@@ -276,7 +278,7 @@ public class BatchTopLevelService {
 
         List<Long> workbookIds = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
         for (Long workbookId : workbookIds) {
-            planService.deleteWorkbook(workbookId);
+            planService.deleteWorkbook(workbookId, context);
         }
         batchWorkbookRepository.deleteByBatchId(batch.id);
         batchCache.deleteById(batch.id);
@@ -321,7 +323,7 @@ public class BatchTopLevelService {
 
 
         if (isEmpty.get()) {
-            batchService.changeStateToFinished(batch.id);
+            batchService.changeStateToFinished(batch);
         }
 
     }
@@ -451,18 +453,24 @@ public class BatchTopLevelService {
         }
     }
 
-    public BatchData.Status getProcessingResourceStatus(Long batchId) {
+    public BatchData.Status getProcessingResourceStatus(Long batchId, LaunchpadContext context) {
         Batch batch = batchCache.findById(batchId);
-        if (batch == null) {
+        if (batch == null || !batch.companyId.equals(context.getCompanyId())) {
             final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return new BatchData.Status(es);
         }
-        BatchStatus status = batchService.updateStatus(batchId);
+        BatchStatus status = batchService.updateStatus(batch);
         return new BatchData.Status(batchId, status.getStatus(), status.ok);
     }
 
-    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId) throws IOException {
+    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, LaunchpadContext context) throws IOException {
+        Batch batch = batchCache.findById(batchId);
+        if (batch == null || !batch.companyId.equals(context.getCompanyId())) {
+            final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
+            log.warn(es);
+            return null;
+        }
         ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
 
         File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");

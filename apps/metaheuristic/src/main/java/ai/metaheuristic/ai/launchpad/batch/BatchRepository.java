@@ -31,10 +31,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public interface BatchRepository extends JpaRepository<Batch, Long> {
 
-    @Query(value="select b from Batch b where b.id=:id")
-    Batch findByIdForUpdate(Long id);
+    @Query(value="select b from Batch b where b.id=:id and b.companyId=:companyId")
+    Batch findByIdForUpdate(Long id, Long companyId);
 
     @Transactional(readOnly = true)
-    @Query("select b.id from Batch b order by b.createdOn desc")
-    Page<Long> findAllByOrderByCreatedOnDesc(Pageable pageable);
+    @Query("select b.id from Batch b where b.companyId=:companyId order by b.createdOn desc")
+    Page<Long> findAllByOrderByCreatedOnDesc(Pageable pageable, Long companyId);
 }

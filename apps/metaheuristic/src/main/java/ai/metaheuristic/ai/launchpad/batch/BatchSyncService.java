@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * @author Serge
@@ -43,7 +42,7 @@ public class BatchSyncService {
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
     @SuppressWarnings("Duplicates")
-    <T> T getWithSync(Long batchId, Function<Batch, T> function) {
+    <T> T getWithSync(Long batchId, ExecContext execContext, Function<Batch, T> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();
@@ -55,7 +54,7 @@ public class BatchSyncService {
         synchronized (obj) {
             obj.incrementAndGet();
             try {
-                Batch batch = batchRepository.findByIdForUpdate(batchId);
+                Batch batch = batchRepository.findByIdForUpdate(batchId, execContext.account.companyId);
                 return batch == null ? null : function.apply(batch);
             } finally {
                 try {
@@ -72,7 +71,7 @@ public class BatchSyncService {
     }
 
     @SuppressWarnings("Duplicates")
-    <T> T getWithSyncReadOnly(Batch batch, Supplier<T> function) {
+    <T> T getWithSyncReadOnly(Batch batch, ExecContext execContext, Function<ExecContext, T> function) {
         if (batch==null) {
             return null;
         }
@@ -87,7 +86,7 @@ public class BatchSyncService {
         synchronized (obj) {
             obj.incrementAndGet();
             try {
-                return function.get();
+                return function.apply(execContext);
             } finally {
                 try {
                     writeLock.lock();

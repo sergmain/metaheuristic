@@ -19,10 +19,12 @@ package ai.metaheuristic.ai.launchpad.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
+import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.launchpad.Plan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -55,6 +57,7 @@ public class BatchController {
     private static final String REDIRECT_BATCH_BATCHES = "redirect:/launchpad/batch/batches";
 
     private final BatchTopLevelService batchTopLevelService;
+    private final LaunchpadContextService launchpadContextService;
 
     @GetMapping("/index")
     public String index() {
@@ -63,29 +66,32 @@ public class BatchController {
 
     @GetMapping("/batches")
     public String batches(
-            HttpServletRequest request,
             Model model,
             @PageableDefault(size = 20) Pageable pageable,
             @ModelAttribute("errorMessage") final String errorMessage,
-            @ModelAttribute("infoMessages") final String infoMessages ) {
-        String host = request.getServerName();
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable);
+            @ModelAttribute("infoMessages") final String infoMessages,
+            Authentication authentication
+            ) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         return "launchpad/batch/batches";
     }
 
     @PostMapping("/batches-part")
-    public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable) {
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable);
+    public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         return "launchpad/batch/batches :: table";
     }
 
     @GetMapping(value = "/batch-add")
-    public String batchAdd(Model model) {
-        BatchData.PlansForBatchResult plans = batchTopLevelService.getPlansForBatchResult();
+    public String batchAdd(Model model, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        BatchData.PlansForBatchResult plans = batchTopLevelService.getPlansForBatchResult(context);
         ControllerUtils.addMessagesToModel(model, plans);
         model.addAttribute("result", plans);
         return "launchpad/batch/batch-add";
@@ -93,7 +99,8 @@ public class BatchController {
 
     @PostMapping(value = "/batch-upload-from-file")
     public String uploadFile(final MultipartFile file, Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        OperationStatusRest r = batchTopLevelService.batchUploadFromFile(file, planId, new LaunchpadContext(authentication));
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        OperationStatusRest r = batchTopLevelService.batchUploadFromFile(file, planId, context);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
@@ -102,8 +109,9 @@ public class BatchController {
 
     @GetMapping(value= "/batch-status/{batchId}" )
     public String getProcessingResourceStatus(
-            Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes) {
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId);
+            Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
             return REDIRECT_BATCH_BATCHES;
@@ -127,8 +135,9 @@ public class BatchController {
     }
 
     @PostMapping("/batch-delete-commit")
-    public String processResourceDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId);
+    public String processResourceDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, context);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
@@ -138,11 +147,15 @@ public class BatchController {
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request, @PathVariable("batchId") Long batchId,
-            @SuppressWarnings("unused") @PathVariable("fileName") String fileName) throws IOException {
+            @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) throws IOException {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId);
+            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context);
+            if (resource==null) {
+                return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+            }
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

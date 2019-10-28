@@ -48,6 +48,7 @@ public class LaunchpadEventYaml implements BaseParams {
         public String username;
         public Long batchId;
         public Long workbookId;
+        public Long companyId;
     }
 
     @Data

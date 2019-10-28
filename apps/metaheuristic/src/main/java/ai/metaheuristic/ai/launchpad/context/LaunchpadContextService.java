@@ -14,17 +14,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.account;
+package ai.metaheuristic.ai.launchpad.context;
 
+import ai.metaheuristic.ai.exceptions.BadExecutionContextException;
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.Account;
+import ai.metaheuristic.ai.launchpad.beans.Company;
+import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.authentication.BadCredentialsException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
@@ -34,27 +34,26 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
-public class AccountLookupService {
+@Slf4j
+public class LaunchpadContextService {
 
 //    @Autowired
 //    @Qualifier("userDetailsService")
     private final UserDetailsService userDetailsService;
+    private final CompanyCache companyCache;
 
-    public Account getAccount(Authentication authentication) {
+    public LaunchpadContext getContext(Authentication authentication) {
         String username = (String) authentication.getPrincipal();
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        if (userDetails==null) {
-            throw new UsernameNotFoundException("user not found: " + authentication.getPrincipal());
-        }
-        if (!(authentication.getCredentials()).equals(userDetails.getPassword())) {
-            throw new BadCredentialsException("Bad credential");
-        }
-
-        String username = (String) authentication.getPrincipal();
-        Account account = accountCache.findByUsername(username);
+        Account account = (Account)userDetailsService.loadUserByUsername(username);
         if (account==null) {
-            throw new UsernameNotFoundException("user not found: " + authentication.getPrincipal());
+            throw new BadExecutionContextException("user not found: " + username);
         }
-        return account;
+        Company company = companyCache.findById(account.companyId);
+        if (company==null) {
+            throw new BadExecutionContextException("company not found not found for user: " + username);
+        }
+        //noinspection UnnecessaryLocalVariable
+        LaunchpadContext context = new LaunchpadContext(account, company);
+        return context;
     }
 }

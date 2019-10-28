@@ -14,38 +14,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.beans;
+package ai.metaheuristic.ai.launchpad.batch.data;
 
+import ai.metaheuristic.api.EnumsApi;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 
-import javax.persistence.*;
-import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Serge
- * Date: 10/27/2019
- * Time: 7:10 PM
+ * Date: 5/29/2019
+ * Time: 11:38 PM
  */
-@Entity
-@Table(name = "MH_COMPANY")
 @Data
-@NoArgsConstructor
-@ToString(exclude = "params")
-public class Company implements Serializable {
-    private static final long serialVersionUID = -159889135750827404L;
+public class BatchParams {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    @Data
+    public static class TaskStatus {
+        public long taskId;
+        public long stationId;
+        public String ip;
+        public String host;
+        public String execResults;
+        public EnumsApi.TaskExecState state;
+    }
 
-    @Version
-    private Integer version;
-
-    public String params;
-
-    public String name;
-
+    public BatchStatus batchStatus;
+    public List<TaskStatus> taskStatuses;
+    public boolean ok = false;
 
 }

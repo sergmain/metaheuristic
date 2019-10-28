@@ -34,8 +34,8 @@ import java.util.List;
 @Profile("launchpad")
 public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
 
-    @Query(value="select p from PlanImpl p where p.id=:id")
-    Plan findByIdForUpdate(Long id);
+    @Query(value="select p from PlanImpl p where p.id=:id and p.companyId=:companyId")
+    Plan findByIdForUpdate(Long id, Long companyId);
 
     @Transactional(readOnly = true)
     Page<PlanImpl> findAll(Pageable pageable);
@@ -45,8 +45,8 @@ public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
     List<Long> findAllAsIds();
 
     @Transactional(readOnly = true)
-    @Query(value="select p from PlanImpl p")
-    List<Plan> findAllAsPlan();
+    @Query(value="select p from PlanImpl p where p.companyId=:companyId")
+    List<Plan> findAllAsPlan(Long companyId);
 
     @Transactional(readOnly = true)
     Slice<Plan> findAllByOrderByIdDesc(Pageable pageable);

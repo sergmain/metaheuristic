@@ -54,6 +54,7 @@ public class LaunchpadEventYamlUtilsV1
             trg.batchData.username = src.batchData.username;
             trg.batchData.size = src.batchData.size;
             trg.batchData.filename = src.batchData.filename;
+            trg.batchData.companyId = src.batchData.companyId;
         }
         if (src.taskData!=null) {
             trg.taskData = new LaunchpadEventYaml.TaskEventData();

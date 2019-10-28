@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.pilot;
 
-import ai.metaheuristic.ai.launchpad.batch.beans.BatchParams;
+import ai.metaheuristic.ai.launchpad.batch.data.BatchParams;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.Yaml;
 

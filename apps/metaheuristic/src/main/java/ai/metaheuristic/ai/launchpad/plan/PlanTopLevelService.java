@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
@@ -361,7 +362,7 @@ public class PlanTopLevelService {
         return status;
     }
 
-    public OperationStatusRest deleteWorkbookById(Long workbookId) {
+    public OperationStatusRest deleteWorkbookById(Long workbookId, LaunchpadContext context) {
         if (workbookId==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 workbookId is null");
         }
@@ -369,8 +370,12 @@ public class PlanTopLevelService {
         if (wb==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 Workbook wasn't found, workbookId: " + workbookId );
         }
+        Plan plan = planCache.findById(wb.getPlanId());
+        if (plan==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Workbook wasn't found, workbookId: " + workbookId );
+        }
         publisher.publishEvent( new WorkbookService.WorkbookDeletionEvent(this, workbookId) );
-        planService.deleteWorkbook(workbookId);
+        planService.deleteWorkbook(workbookId, context);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

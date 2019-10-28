@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
+import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -56,49 +57,54 @@ import java.io.IOException;
 public class BatchRestController {
 
     private final BatchTopLevelService batchTopLevelService;
+    private final LaunchpadContextService launchpadContextService;
 
     @GetMapping("/batches")
-    public BatchData.BatchesResult batches(@PageableDefault(size = 20) Pageable pageable) {
-        return batchTopLevelService.getBatches(pageable);
+    public BatchData.BatchesResult batches(@PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return batchTopLevelService.getBatches(pageable, context);
     }
 
     @PostMapping("/batches-part")
-    public BatchData.BatchesResult batchesPart(@PageableDefault(size = 20) Pageable pageable) {
-        return batchTopLevelService.getBatches(pageable);
+    public BatchData.BatchesResult batchesPart(@PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return batchTopLevelService.getBatches(pageable, context);
     }
 
     @GetMapping(value = "/batch-add")
-    public BatchData.PlansForBatchResult batchAdd() {
-        return batchTopLevelService.getPlansForBatchResult();
+    public BatchData.PlansForBatchResult batchAdd(Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return batchTopLevelService.getPlansForBatchResult(context);
     }
 
     @PostMapping(value = "/batch-upload-from-file")
     public OperationStatusRest uploadFile(final MultipartFile file, Long planId, Authentication authentication) {
-        return batchTopLevelService.batchUploadFromFile(file, planId, new LaunchpadContext(authentication));
+        return batchTopLevelService.batchUploadFromFile(file, planId, launchpadContextService.getContext(authentication));
     }
 
     @GetMapping(value= "/batch-status/{batchId}" )
-    public BatchData.Status getProcessingResourceStatus(@PathVariable("batchId") Long batchId) {
-        return batchTopLevelService.getProcessingResourceStatus(batchId);
+    public BatchData.Status getProcessingResourceStatus(@PathVariable("batchId") Long batchId, Authentication authentication) {
+        return batchTopLevelService.getProcessingResourceStatus(batchId, launchpadContextService.getContext(authentication));
     }
 
     @GetMapping("/batch-delete/{batchId}")
-    public BatchData.Status processResourceDelete(@PathVariable Long batchId) {
-        return batchTopLevelService.getProcessingResourceStatus(batchId);
+    public BatchData.Status processResourceDelete(@PathVariable Long batchId, Authentication authentication) {
+        return batchTopLevelService.getProcessingResourceStatus(batchId, launchpadContextService.getContext(authentication));
     }
 
     @PostMapping("/batch-delete-commit")
-    public OperationStatusRest processResourceDeleteCommit(Long batchId) {
-        return batchTopLevelService.processResourceDeleteCommit(batchId);
+    public OperationStatusRest processResourceDeleteCommit(Long batchId, Authentication authentication) {
+        return batchTopLevelService.processResourceDeleteCommit(batchId, launchpadContextService.getContext(authentication));
     }
 
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request, @PathVariable("batchId") Long batchId,
-            @SuppressWarnings("unused") @PathVariable("fileName") String fileName) throws IOException {
+            @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) throws IOException {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId);
+            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

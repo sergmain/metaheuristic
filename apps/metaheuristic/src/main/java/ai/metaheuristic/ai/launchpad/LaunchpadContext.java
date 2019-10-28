@@ -16,8 +16,11 @@
 
 package ai.metaheuristic.ai.launchpad;
 
+import ai.metaheuristic.ai.launchpad.beans.Account;
+import ai.metaheuristic.ai.launchpad.beans.Company;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NonNull;
 import org.springframework.security.core.Authentication;
 
 import java.util.UUID;
@@ -31,5 +34,17 @@ import java.util.UUID;
 @AllArgsConstructor
 public class LaunchpadContext {
     public final String contextId = UUID.randomUUID().toString();
-    public Authentication authentication;
+
+    @NonNull
+    public final Account account;
+
+    @NonNull
+    public final Company company;
+
+    public String getUsername() {
+        return account.username;
+    }
+    public Long getCompanyId() {
+        return account.companyId;
+    }
 }
