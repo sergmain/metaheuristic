@@ -441,12 +441,15 @@ public class StationTaskService {
 
             File launchpadDir = new File(globals.stationTaskDir, metadataService.launchpadUrlAsCode(launchpadUrl).code);
             String path = getTaskPath(taskId);
-            File systemDir = new File(launchpadDir, path);
-            File taskYamlFile = new File(systemDir, Consts.TASK_YAML);
+            File taskDir = new File(launchpadDir, path);
             try {
-                deleteOrRenameTaskDir(systemDir, taskYamlFile);
+                if (taskDir.exists()) {
+//                deleteOrRenameTaskDir(taskDir, taskYamlFile);
+                    FileUtils.deleteDirectory(taskDir);
+                }
                 //noinspection ResultOfMethodCallIgnored
-                systemDir.mkdirs();
+                taskDir.mkdirs();
+                File taskYamlFile = new File(taskDir, Consts.TASK_YAML);
                 FileUtils.write(taskYamlFile, StationTaskUtils.toString(task), Charsets.UTF_8, false);
             } catch (Throwable th) {
                 String es = "#713.160 Error";
@@ -456,22 +459,25 @@ public class StationTaskService {
         }
     }
 
-    public static boolean deleteOrRenameTaskDir(File systemDir, File taskYamlFile) throws IOException {
-        if (systemDir.exists()) {
-            log.warn("#713.170 task's directory already exists, {}", systemDir.getPath());
+    public static boolean deleteOrRenameTaskDir(File taskDir, File taskYamlFile) throws IOException {
+        if (taskDir.exists()) {
+            log.warn("#713.170 task's directory already exists, {}", taskDir.getPath());
             if (taskYamlFile.exists()) {
                 File temp = new File(taskYamlFile.getParentFile(), Consts.TASK_YAML+".temp" );
                 FileUtils.moveFile(taskYamlFile, temp);
                 if (taskYamlFile.exists()) {
                     log.error("#713.180 File task.yaml still exists");
                 }
+                else {
+                    return true;
+                }
             }
-            File tempDir = new File(systemDir.getParentFile(), systemDir.getName() + ".temp");
+            File tempDir = new File(taskDir.getParentFile(), taskDir.getName() + ".temp");
             //noinspection ResultOfMethodCallIgnored
-            systemDir.renameTo(tempDir);
+            taskDir.renameTo(tempDir);
             FileUtils.deleteDirectory(tempDir);
-            if (systemDir.exists()) {
-                log.error("#713.190 an't delete or more task's dir {}", systemDir.getPath());
+            if (taskDir.exists()) {
+                log.error("#713.190 can't delete or move task's dir {}", taskDir.getPath());
                 return false;
             }
         }
