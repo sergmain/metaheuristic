@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.beans;
 import lombok.Data;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -40,6 +41,7 @@ public class LaunchpadEvent implements Serializable {
     @Version
     private Integer version;
 
+    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 

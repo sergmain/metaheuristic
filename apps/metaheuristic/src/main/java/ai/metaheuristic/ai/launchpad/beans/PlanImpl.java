@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Entity
@@ -37,6 +38,7 @@ public class PlanImpl implements Serializable, Plan {
     @Version
     private Integer version;
 
+    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 

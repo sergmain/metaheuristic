@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.beans;
 import lombok.Data;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Entity
@@ -34,6 +35,7 @@ public class Atlas implements Serializable {
     @Version
     public Integer version;
 
+    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 

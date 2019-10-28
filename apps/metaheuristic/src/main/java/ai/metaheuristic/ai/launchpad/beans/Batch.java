@@ -22,6 +22,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Entity
@@ -39,12 +40,15 @@ public class Batch implements Serializable {
     @Version
     private Integer version;
 
+    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
+    @NotNull
     @Column(name = "ACCOUNT_ID")
     public Long accountId;
 
+    @NotNull
     @Column(name = "PLAN_ID")
     public Long planId;
 
