@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.batch;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
+import ai.metaheuristic.ai.launchpad.beans.Batch;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;

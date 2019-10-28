@@ -48,7 +48,7 @@
         <dependency>
             <groupId>ai.metaheuristic</groupId>
             <artifactId>commons</artifactId>
-            <version>1.9.0</version>
+            <version>3.0.0</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>

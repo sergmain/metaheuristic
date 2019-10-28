@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.data;
 
-import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
+import ai.metaheuristic.ai.launchpad.beans.Batch;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.launchpad.Plan;
 import lombok.AllArgsConstructor;

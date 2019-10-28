@@ -45,6 +45,9 @@ public class Account implements UserDetails {
     @Version
     private Integer version;
 
+    @Column(name = "COMPANY_ID")
+    public Long companyId;
+
     /**
      * as UUID
      */

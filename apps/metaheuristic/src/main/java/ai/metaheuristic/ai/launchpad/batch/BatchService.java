@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
-import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
+import ai.metaheuristic.ai.launchpad.beans.Batch;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchParams;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;

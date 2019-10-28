@@ -40,6 +40,9 @@ public class LaunchpadEvent implements Serializable {
     @Version
     private Integer version;
 
+    @Column(name = "COMPANY_ID")
+    public Long companyId;
+
     @Column(name="CREATED_ON")
     public long createdOn;
 

@@ -16,11 +16,10 @@
 
 package ai.metaheuristic.ai.launchpad.batch;
 
-import ai.metaheuristic.ai.launchpad.batch.beans.BatchWorkbook;
+import ai.metaheuristic.ai.launchpad.beans.BatchWorkbook;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;

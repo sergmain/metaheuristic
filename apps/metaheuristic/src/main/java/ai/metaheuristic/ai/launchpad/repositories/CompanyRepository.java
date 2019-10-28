@@ -14,44 +14,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.launchpad;
+package ai.metaheuristic.ai.launchpad.repositories;
+
+import ai.metaheuristic.ai.launchpad.beans.Company;
+import org.springframework.data.repository.CrudRepository;
 
 /**
  * @author Serge
- * Date: 5/9/2019
- * Time: 3:27 PM
+ * Date: 10/27/2019
+ * Time: 7:13 PM
  */
-public interface Plan {
-    Long getId();
-
-    Long getCompanyId();
-
-    Integer getVersion();
-
-    String getCode();
-
-    long getCreatedOn();
-
-    String getParams();
-
-    boolean isLocked();
-
-    boolean isValid();
-
-    void setId(Long id);
-
-    void setCompanyId(Long companyId);
-
-    void setVersion(Integer version);
-
-    void setCode(String code);
-
-    void setCreatedOn(long createdOn);
-
-    void setParams(String params);
-
-    void setLocked(boolean locked);
-
-    void setValid(boolean valid);
-
+public interface CompanyRepository extends CrudRepository<Company, Long> {
 }

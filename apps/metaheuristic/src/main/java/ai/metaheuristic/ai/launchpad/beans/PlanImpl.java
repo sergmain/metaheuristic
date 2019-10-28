@@ -37,6 +37,9 @@ public class PlanImpl implements Serializable, Plan {
     @Version
     private Integer version;
 
+    @Column(name = "COMPANY_ID")
+    public Long companyId;
+
     @Column(name = "CODE")
     public String code;
 

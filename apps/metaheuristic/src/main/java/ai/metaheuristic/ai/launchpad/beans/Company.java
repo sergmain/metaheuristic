@@ -14,9 +14,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.batch.beans;
+package ai.metaheuristic.ai.launchpad.beans;
 
-import ai.metaheuristic.ai.Enums;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -24,13 +23,18 @@ import lombok.ToString;
 import javax.persistence.*;
 import java.io.Serializable;
 
+/**
+ * @author Serge
+ * Date: 10/27/2019
+ * Time: 7:10 PM
+ */
 @Entity
-@Table(name = "MH_BATCH")
+@Table(name = "MH_COMPANY")
 @Data
 @NoArgsConstructor
 @ToString(exclude = "params")
-public class Batch implements Serializable {
-    private static final long serialVersionUID = -3509391644278818781L;
+public class Company  implements Serializable {
+    private static final long serialVersionUID = -159889135750827404L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,21 +43,9 @@ public class Batch implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "PLAN_ID")
-    public Long planId;
-
-    @Column(name="CREATED_ON")
-    private long createdOn;
-
-    @Column(name = "EXEC_STATE")
-    public int execState;
-
-    @Column(name = "PARAMS")
     public String params;
 
-    public Batch(Long planId, Enums.BatchExecState state) {
-        this.planId = planId;
-        this.createdOn = System.currentTimeMillis();
-        this.execState=state.code;
-    }
+    public String name;
+
+
 }

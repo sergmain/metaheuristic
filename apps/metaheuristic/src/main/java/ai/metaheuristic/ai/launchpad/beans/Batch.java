@@ -16,41 +16,50 @@
 
 package ai.metaheuristic.ai.launchpad.beans;
 
+import ai.metaheuristic.ai.Enums;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "MH_ATLAS")
+@Table(name = "MH_BATCH")
 @Data
-public class Atlas implements Serializable {
-    private static final long serialVersionUID = -1225513309547283331L;
+@NoArgsConstructor
+@ToString(exclude = "params")
+public class Batch implements Serializable {
+    private static final long serialVersionUID = -3509391644278818781L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
     @Version
-    public Integer version;
+    private Integer version;
 
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
-    // even thought db field is 'experiment'  bean's field will be params
-    @Column(name = "EXPERIMENT")
-    public String params;
+    @Column(name = "ACCOUNT_ID")
+    public Long accountId;
 
-    @Column(name = "NAME")
-    public String name;
-
-    @Column(name = "DESCRIPTION")
-    public String description;
-
-    @Column(name = "CODE")
-    public String code;
+    @Column(name = "PLAN_ID")
+    public Long planId;
 
     @Column(name="CREATED_ON")
-    public long createdOn;
+    private long createdOn;
 
+    @Column(name = "EXEC_STATE")
+    public int execState;
+
+    @Column(name = "PARAMS")
+    public String params;
+
+    public Batch(Long planId, Enums.BatchExecState state) {
+        this.planId = planId;
+        this.createdOn = System.currentTimeMillis();
+        this.execState=state.code;
+    }
 }

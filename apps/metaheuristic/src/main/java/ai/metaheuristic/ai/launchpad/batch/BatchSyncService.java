@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.batch;
 
-import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
+import ai.metaheuristic.ai.launchpad.beans.Batch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
