@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.ai.launchpad.company;
 
+import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Company;
+import ai.metaheuristic.ai.launchpad.data.AccountData;
 import ai.metaheuristic.ai.launchpad.data.CompanyData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -47,6 +49,7 @@ import java.util.ArrayList;
 public class CompanyController {
 
     private final CompanyTopLevelService companyTopLevelService;
+    private final CompanyAccountTopLevelService companyAccountTopLevelService;
 
     @GetMapping("/companies")
     public String companies(Model model,
@@ -84,7 +87,7 @@ public class CompanyController {
     }
 
     @GetMapping(value = "/company-edit/{id}")
-    public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes){
+    public String editCompany(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes){
         CompanyData.CompanyResult companyResult = companyTopLevelService.getCompany(id);
         if (companyResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", companyResult.errorMessages);
@@ -105,6 +108,104 @@ public class CompanyController {
         }
         return "redirect:/launchpad/company/companies";
     }
+
+    // === accounts for companies =====================
+
+    @GetMapping("/company-accounts/{companyId}")
+    public String accounts(Model model,
+                           @ModelAttribute("result") AccountData.AccountsResult result,
+                           @PageableDefault(size = 5) Pageable pageable, @PathVariable Long companyId,
+                               @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
+                           @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
+        AccountData.AccountsResult accounts = companyAccountTopLevelService.getAccounts(pageable, companyId);
+        ControllerUtils.addMessagesToModel(model, accounts);
+        model.addAttribute("result", accounts);
+        model.addAttribute("companyId", companyId);
+        return "launchpad/company/company-accounts";
+    }
+
+    // for AJAX
+    @PostMapping("/company-accounts-part/{companyId}")
+    public String getAccountsViaAJAX(Model model, @PageableDefault(size=5) Pageable pageable, @PathVariable Long companyId)  {
+        AccountData.AccountsResult accounts = companyAccountTopLevelService.getAccounts(pageable, companyId);
+        model.addAttribute("result", accounts);
+        model.addAttribute("companyId", companyId);
+        return "launchpad/company/company-accounts :: table";
+    }
+
+    @GetMapping(value = "/company-account-add/{companyId}")
+    public String add(Model model, @ModelAttribute("account") Account account, @PathVariable Long companyId) {
+        model.addAttribute("companyId", companyId);
+        return "launchpad/company/company-account-add";
+    }
+
+    @PostMapping("/company-account-add-commit/{companyId}")
+    public String addFormCommit(Model model, Account account, @PathVariable Long companyId) {
+        account.companyId = companyId;
+        OperationStatusRest operationStatusRest = companyAccountTopLevelService.addAccount(account, companyId);
+        if (operationStatusRest.isErrorMessages()) {
+            model.addAttribute("errorMessage", operationStatusRest.errorMessages);
+            model.addAttribute("companyId", companyId);
+            return "launchpad/company/company-account-add";
+        }
+        return "redirect:/launchpad/company/company-accounts/" + companyId;
+    }
+
+    @GetMapping(value = "/company-account-edit/{companyId}/{id}")
+    public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @PathVariable Long companyId){
+        AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(id, companyId);
+        if (accountResult.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+            return "redirect:/launchpad/company/company-accounts/" + companyId;
+        }
+        accountResult.account.setPassword(null);
+        accountResult.account.setPassword2(null);
+        model.addAttribute("account", accountResult.account);
+        model.addAttribute("companyId", companyId);
+        return "launchpad/company/company-account-edit";
+    }
+
+    @PostMapping("/company-account-edit-commit/{companyId}")
+    public String editFormCommit(Long id, String publicName, boolean enabled,
+                                 final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
+        OperationStatusRest operationStatusRest = companyAccountTopLevelService.editFormCommit(id, publicName, enabled, companyId);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+        }
+        if (operationStatusRest.isInfoMessages()) {
+            redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
+        }
+        return "redirect:/launchpad/company/company-accounts/" + companyId;
+    }
+
+    @GetMapping(value = "/company-account-password-edit/{companyId}/{id}")
+    public String passwordEdit(@PathVariable Long id, Model model,
+                               final RedirectAttributes redirectAttributes, @PathVariable Long companyId){
+        AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(id, companyId);
+        if (accountResult.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+            return "redirect:/launchpad/company/company-accounts/" + companyId;
+        }
+        accountResult.account.setPassword(null);
+        accountResult.account.setPassword2(null);
+        model.addAttribute("account", accountResult.account);
+        model.addAttribute("companyId", companyId);
+        return "launchpad/company/company-account-password-edit";
+    }
+
+    @PostMapping("/company-account-password-edit-commit/{companyId}")
+    public String passwordEditFormCommit(Long id, String password, String password2,
+                                         final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
+        OperationStatusRest operationStatusRest = companyAccountTopLevelService.passwordEditFormCommit(id, password, password2, companyId);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+        }
+        if (operationStatusRest.isInfoMessages()) {
+            redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
+        }
+        return "redirect:/launchpad/company/company-accounts/" + companyId;
+    }
+
 }
 
 

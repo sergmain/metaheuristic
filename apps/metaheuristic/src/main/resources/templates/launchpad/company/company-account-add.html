@@ -1,0 +1,47 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
+     layout:decorate="~{layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">New account</h1>
+
+        <!--/*@thymesVar id="account" type="ai.metaheuristic.ai.launchpad.beans.Account"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${account}" method="post" action="#" th:method="POST" th:action="@{/launchpad/account/account-add-commit}" accept-charset="UTF-8" id="account-form" name="f">
+            <input type="hidden" th:field="*{id}"/>
+            <input type="hidden" th:field="*{version}"/>
+            <fieldset>
+
+                <label for="text">Username</label>
+                <input name="text" id="text" type="text" placeholder="text"  th:field="*{username}">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="password">Password</label>
+                <input name="password" id="password" type="password" placeholder="text"  th:field="*{password}">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="password2">Password again</label>
+                <input name="password2" id="password2" type="password" placeholder="text"  th:field="*{password2}">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="publicName">Public name</label>
+                <input name="publicName" id="publicName" type="text" placeholder="text"  th:field="*{publicName}">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <table>
+                    <tr>
+                        <td>
+                            <button type="submit" class="pure-button pure-button-primary">Create account</button>
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td>
+                            <a class="pure-button pure-button-primary" href="accounts.html" th:href="${'/launchpad/account/accounts'}">Cancel</a>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+    </div>
+</div>
