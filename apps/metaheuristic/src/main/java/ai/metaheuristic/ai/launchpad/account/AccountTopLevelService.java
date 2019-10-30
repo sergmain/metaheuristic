@@ -19,10 +19,10 @@ package ai.metaheuristic.ai.launchpad.account;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.data.AccountData;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -33,7 +33,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,7 +41,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AccountTopLevelService {
 
-    private static final Set<String> POSSIBLE_ROLES = Set.of("ROLE_ADMIN","ROLE_MANAGER","ROLE_OPERATOR","ROLE_BILLING","ROLE_DATA");
+    private static final Set<String> POSSIBLE_ROLES = Set.of("ROLE_SERVER_REST_ACCESS", "ROLE_ADMIN","ROLE_MANAGER","ROLE_OPERATOR","ROLE_BILLING","ROLE_DATA");
 
     private final AccountRepository accountRepository;
     private final AccountCache accountCache;
