@@ -77,9 +77,7 @@ public class ArtifactCleanerAtStation {
                                 try {
                                     File taskYaml = new File(t.toFile(), Consts.TASK_YAML);
                                     if (!taskYaml.exists()) {
-                                        FileUtils.deleteDirectory(t.toFile());
-                                        // IDK is that bug or side-effect. so delete one more time
-                                        // FileUtils.deleteDirectory(t.toFile());
+                                        StationTaskService.deleteDir(t.toFile(), "delete in ArtifactCleanerAtStation.fixedDelay()");
                                     }
                                 } catch (IOException e) {
                                     log.error("#090.01 Error while deleting path {}, this isn't fatal error.", t);

@@ -31,7 +31,7 @@ public class AssetFile {
     @Override
     public String toString() {
         return "AssetFile{" +
-                "file=" + file.getPath() +
+                "file=" + (file!=null ? file.getPath()  : "null") +
                 ", fileLength=" + fileLength +
                 ", isError=" + isError +
                 ", isContent=" + isContent +

@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.yaml.station_task.StationTaskUtils;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
@@ -109,13 +110,15 @@ public class StationTaskService {
                                     catch (YAMLException e) {
                                         String es = "#713.020 yaml Error: " + e.getMessage();
                                         log.warn(es, e);
-                                        deleteDirForTasks(currDir, "Delete not valid dir of task " + s);
+                                        deleteDir(currDir, "Delete not valid dir of task " + s);
                                     }
                                 }
                                 else {
-                                    deleteDirForTasks(currDir, "Delete not valid dir of task " + s);
+                                    deleteDir(currDir, "Delete not valid dir of task " + s);
                                 }
                             });
+/*
+                            // TODO 2019-10-29 because of unknown errors with deleted dirs, this will be disabled
                             if (isEmpty.get()) {
                                 if (taskGroupDir.exists()) {
                                     log.info("Start deleting empty dir " + taskGroupDir.getPath());
@@ -123,8 +126,8 @@ public class StationTaskService {
                                         log.warn("Unable to delete directory {}", taskGroupDir.getPath());
                                     }
                                 }
-
                             }
+*/
                         }
                         catch (IOException e) {
                             String es = "#713.030 Error";
@@ -148,16 +151,19 @@ public class StationTaskService {
         int i=0;
     }
 
-    public void deleteDirForTasks(File f, String info) {
-        log.info(info);
+    public static void deleteDir(@NonNull File f, @NonNull String info) {
+        log.warn(info+", file: " + f.getAbsolutePath());
         try {
             if (f.exists()) {
                 FileUtils.deleteDirectory(f);
             }
             // IDK is that bug or side-effect. so delete one more time
+            // TODO 2019-10-29 because of unknown errors with deleted dirs, this will be disabled
+/*
             if (f.exists()) {
                 FileUtils.deleteDirectory(f);
             }
+*/
         } catch (IOException e) {
             log.warn("#713.060 Error while deleting dir {}, error: {}", f.getPath(), e.toString());
         }
@@ -443,13 +449,18 @@ public class StationTaskService {
             String path = getTaskPath(taskId);
             File taskDir = new File(launchpadDir, path);
             try {
+                //noinspection StatementWithEmptyBody
                 if (taskDir.exists()) {
 //                deleteOrRenameTaskDir(taskDir, taskYamlFile);
-                    FileUtils.deleteDirectory(taskDir);
+//                    FileUtils.deleteDirectory(taskDir);
+                }
+                else {
+                    taskDir.mkdirs();
                 }
                 //noinspection ResultOfMethodCallIgnored
                 taskDir.mkdirs();
                 File taskYamlFile = new File(taskDir, Consts.TASK_YAML);
+//                deleteYamlTaskFile(taskYamlFile);
                 FileUtils.write(taskYamlFile, StationTaskUtils.toString(task), Charsets.UTF_8, false);
             } catch (Throwable th) {
                 String es = "#713.160 Error";
@@ -475,7 +486,7 @@ public class StationTaskService {
             File tempDir = new File(taskDir.getParentFile(), taskDir.getName() + ".temp");
             //noinspection ResultOfMethodCallIgnored
             taskDir.renameTo(tempDir);
-            FileUtils.deleteDirectory(tempDir);
+            deleteDir(tempDir, "delete dir in deleteOrRenameTaskDir()");
             if (taskDir.exists()) {
                 log.error("#713.190 can't delete or move task's dir {}", taskDir.getPath());
                 return false;
@@ -570,9 +581,7 @@ public class StationTaskService {
             final File taskDir = new File(launchpadDir, path);
             try {
                 if (taskDir.exists()) {
-                    FileUtils.deleteDirectory(taskDir);
-                    // IDK is that a bug or a side-effect. so delete one more time
-//                    FileUtils.deleteDirectory(taskDir);
+                    deleteDir(taskDir, "delete dir in StationTaskService.delete()");
                 }
                 Map<Long, StationTask> mapTask = getMapForLaunchpadUrl(launchpadUrl);
                 log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
