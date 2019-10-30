@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.account;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.data.AccountData;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
@@ -32,6 +33,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,14 +50,14 @@ public class AccountTopLevelService {
     private final PasswordEncoder passwordEncoder;
     private final Globals globals;
 
-    public AccountData.AccountsResult getAccounts(Pageable pageable)  {
+    public AccountData.AccountsResult getAccounts(Pageable pageable, LaunchpadContext context)  {
         pageable = ControllerUtils.fixPageSize(globals.accountRowsLimit, pageable);
         AccountData.AccountsResult result = new AccountData.AccountsResult();
-        result.accounts = accountRepository.findAll(pageable);
+        result.accounts = accountRepository.findAll(pageable, context.getCompanyId());
         return result;
     }
 
-    public OperationStatusRest addAccount(Account account) {
+    public OperationStatusRest addAccount(Account account, LaunchpadContext context) {
         if (StringUtils.isBlank(account.getUsername()) || StringUtils.isBlank(account.getPassword()) || StringUtils.isBlank(account.getPassword2()) || StringUtils.isBlank(account.getPublicName())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.010 Username, password, and public name must be not null");
@@ -75,6 +77,7 @@ public class AccountTopLevelService {
                     String.format("#237.040 Username '%s' was already used", account.getUsername()));
         }
 
+        account.setCompanyId(context.getCompanyId());
         account.setPassword(passwordEncoder.encode(account.getPassword()));
         account.setCreatedOn(System.currentTimeMillis());
         account.setRoles("ROLE_OPERATOR");
@@ -87,18 +90,18 @@ public class AccountTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public AccountData.AccountResult getAccount(Long id){
+    public AccountData.AccountResult getAccount(Long id, LaunchpadContext context){
         Account account = accountRepository.findById(id).orElse(null);
-        if (account == null) {
+        if (account == null || !Objects.equals(account.companyId, context.getCompanyId())) {
             return new AccountData.AccountResult("#237.050 account wasn't found, accountId: " + id);
         }
         account.setPassword(null);
         return new AccountData.AccountResult(account);
     }
 
-    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled) {
+    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, LaunchpadContext context) {
         Account a = accountRepository.findByIdForUpdate(accountId);
-        if (a == null) {
+        if (a == null || !Objects.equals(a.companyId, context.getCompanyId())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.060 account wasn't found, accountId: " + accountId);
         }
         a.setEnabled(enabled);
@@ -107,7 +110,7 @@ public class AccountTopLevelService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", null);
     }
 
-    public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2) {
+    public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, LaunchpadContext context) {
         if (StringUtils.isBlank(password) || StringUtils.isBlank(password2)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.080 Both passwords must be not null");
         }
@@ -116,7 +119,7 @@ public class AccountTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.090 Both passwords must be equal");
         }
         Account a = accountRepository.findByIdForUpdate(accountId);
-        if (a == null) {
+        if (a == null || !Objects.equals(a.companyId, context.getCompanyId())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.100 account wasn't found, accountId: " + accountId);
         }
         a.setPassword(passwordEncoder.encode(password));
@@ -126,9 +129,9 @@ public class AccountTopLevelService {
     }
 
 
-    public OperationStatusRest roleFormCommit(Long accountId, String roles) {
+    public OperationStatusRest roleFormCommit(Long accountId, String roles, LaunchpadContext context) {
         Account account = accountRepository.findByIdForUpdate(accountId);
-        if (account == null) {
+        if (account == null || !Objects.equals(account.companyId, context.getCompanyId())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.110 account wasn't found, accountId: " + accountId);
         }
         String str = Arrays.stream(StringUtils.split(roles, ','))

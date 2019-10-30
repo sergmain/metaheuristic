@@ -16,8 +16,10 @@
 
 package ai.metaheuristic.ai.launchpad.rest.v1;
 
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.account.AccountTopLevelService;
 import ai.metaheuristic.ai.launchpad.beans.Account;
+import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.data.AccountData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @SuppressWarnings("Duplicates")
@@ -39,35 +42,42 @@ import org.springframework.web.bind.annotation.*;
 public class AccountRestController {
 
     private final AccountTopLevelService accountTopLevelService;
+    private final LaunchpadContextService launchpadContextService;
 
     @GetMapping("/accounts")
-    public AccountData.AccountsResult accounts(@PageableDefault(size = 5) Pageable pageable) {
-        return accountTopLevelService.getAccounts(pageable);
+    public AccountData.AccountsResult accounts(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return accountTopLevelService.getAccounts(pageable, context);
     }
 
     @PostMapping("/account-add-commit")
-    public OperationStatusRest addFormCommit(@RequestBody Account account) {
-        return accountTopLevelService.addAccount(account);
+    public OperationStatusRest addFormCommit(@RequestBody Account account, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return accountTopLevelService.addAccount(account, context);
     }
 
     @GetMapping(value = "/account/{id}")
-    public AccountData.AccountResult getAccount(@PathVariable Long id) {
-        return accountTopLevelService.getAccount(id);
+    public AccountData.AccountResult getAccount(@PathVariable Long id, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return accountTopLevelService.getAccount(id, context);
     }
 
     @PostMapping("/account-edit-commit")
-    public OperationStatusRest editFormCommit(Long id, String publicName, boolean enabled) {
-        return accountTopLevelService.editFormCommit(id, publicName, enabled);
+    public OperationStatusRest editFormCommit(Long id, String publicName, boolean enabled, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return accountTopLevelService.editFormCommit(id, publicName, enabled, context);
     }
 
     @PostMapping("/account-role-commit")
-    public OperationStatusRest roleFormCommit(Long accountId, String roles) {
-        return accountTopLevelService.roleFormCommit(accountId, roles);
+    public OperationStatusRest roleFormCommit(Long accountId, String roles, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return accountTopLevelService.roleFormCommit(accountId, roles, context);
     }
 
     @PostMapping("/account-password-edit-commit")
-    public OperationStatusRest passwordEditFormCommit(Long id, String password, String password2) {
-        return accountTopLevelService.passwordEditFormCommit(id, password, password2);
+    public OperationStatusRest passwordEditFormCommit(Long id, String password, String password2, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return accountTopLevelService.passwordEditFormCommit(id, password, password2, context);
     }
 
 }

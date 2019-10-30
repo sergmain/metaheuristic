@@ -47,4 +47,6 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
     @Transactional(readOnly = true)
     Page<Account> findAll(Pageable pageable);
 
+    @Query(value="select a from Account a where a.companyId=:companyId")
+    Page<Account> findAll(Pageable pageable, Long companyId);
 }
