@@ -1,0 +1,40 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
+     layout:decorate="~{layout-launchpad}"
+>
+    <h1 class="widget-header">Account roles</h1>
+
+    <!--/*@thymesVar id="account" type="ai.metaheuristic.ai.launchpad.beans.Account"*/-->
+    <span class="pure-form-message" th:text="${'Username: ' +  account.username}"></span>
+    <br />
+    <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+        <thead>
+        <tr th:align="center">
+            <th>Is active?</th>
+            <th>Role name</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <!--/*@thymesVar id="result" type="cons411.ref_srv.web.data.AccountData.RoleList"*/-->
+        <tr th:each="r, i : ${roles}">
+            <td>
+                <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
+                      th:action="@{/launchpad/company/company-account-edit-roles-commit/{companyId}(companyId=${companyId})}" accept-charset="UTF-8"
+                      th:id="${'form-change-role-' + i.index}" name="f">
+                    <input type="hidden" th:name="roleId" th:value="${i.index}"/>
+                    <input type="hidden" th:name="accountId" th:value="${account.id}"/>
+                    <input name="checkbox" id="checkbox" type="checkbox" placeholder="checkbox" th:checked="${account.hasRole(r)}"
+                           th:onclick="'document.getElementById(\'form-change-role-'+${i.index}+'\').submit();'">
+                </form>
+            </td>
+
+            <td th:text="${r}">role</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p></p>
+    <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/company/company-accounts/' + companyId}">To account</a>
+    </form>
+</div>

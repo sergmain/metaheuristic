@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -31,10 +32,10 @@ import org.springframework.transaction.annotation.Transactional;
  * Time: 15:41
  */
 @Repository
-@Transactional
 @Profile("launchpad")
 public interface AccountRepository extends CrudRepository<Account, Long> {
 
+    @Transactional(propagation= Propagation.SUPPORTS)
     @Query(value="select a from Account a where a.id=:id")
     Account findByIdForUpdate(Long id);
 

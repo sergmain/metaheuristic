@@ -21,14 +21,14 @@
                 xhr.setRequestHeader(header, token);
             });
             // is this the right usage?
-            $.post('/launchpad/account/accounts-part', table);
+            $.post('/launchpad/company/company-accounts-part/' + [[${companyId}]] , table);
         });
 
     </script>
 
     <h1 class="widget-header">Accounts</h1>
 
-    <a class="pure-button pure-button-primary" href="account-add.html" th:href="@{/launchpad/account/account-add}">Add new account</a>
+    <a class="pure-button pure-button-primary" href="company-account-add.html" th:href="${'/launchpad/company/company-account-add/'+companyId}">Add new account</a>
     <p></p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
@@ -38,8 +38,9 @@
             <th>Is enabled</th>
             <th>Login</th>
             <th>Public name</th>
+            <th>Roles</th>
             <th>Created on</th>
-            <th colspan="2">&nbsp;</th>
+            <th colspan="3">&nbsp;</th>
         </tr>
         </thead>
 
@@ -50,9 +51,11 @@
             <td th:text="${r.enabled} ? 'Yes' : 'No'">Is enabled</td>
             <td th:text="${r.username}">Login</td>
             <td th:text="${r.publicName}">publicName</td>
-            <td th:text="${#dates.formatISO(r.createdOn)}">CreatedOn</td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/account/account-edit/' + r.id}">Edit</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/account/account-password-edit/' + r.id}">Change password</a></td>
+            <td th:text="${r.roles}">Roles</td>
+            <td th:text="${#dates.format(r.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-account-edit/' + companyId + '/' + r.id}">Edit</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-account-password-edit/' + companyId + '/' + r.id}">Password</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-account-edit-roles/' + companyId + '/' + r.id}">Roles</a></td>
             <!--<td><a class="pure-button pure-button-primary" th:href="${'/launchpad/account/account-delete/' + r.id}">Delete</a></td>-->
         </tr>
         <tr>
@@ -62,17 +65,17 @@
                         <li class="table-nav-padding">
                             <span th:if='${result.accounts.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.accounts.first}'
-                               th:href="@{/launchpad/account/accounts-part(page=0,size=${result.accounts.pageable.pageSize})}">« First</a>
+                               th:href="@{/launchpad/company/company-accounts-part/{companyId}(page=0,size=${result.accounts.pageable.pageSize},companyId=${companyId})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.accounts.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.accounts.hasPrevious()}'
-                               th:href="@{/launchpad/account/accounts-part(page=${result.accounts.pageable.pageNumber - 1},size=${result.accounts.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/launchpad/company/company-accounts-part/{companyId}(page=${result.accounts.pageable.pageNumber - 1},size=${result.accounts.pageable.pageSize},companyId=${companyId})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.accounts.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.accounts.hasNext()}'
-                               th:href='@{/launchpad/account/accounts-part(page=${result.accounts.pageable.pageNumber + 1},size=${result.accounts.pageable.pageSize})}' title='Go to next page'>→</a>
+                               th:href='@{/launchpad/company/company-accounts-part/{companyId}(page=${result.accounts.pageable.pageNumber + 1},size=${result.accounts.pageable.pageSize},companyId=${companyId})}' title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>
@@ -81,6 +84,6 @@
         </tbody>
     </table>
 
-    <a class="pure-button pure-button-primary" href="accounts.html" th:href="${'/launchpad/account/accounts'}">To companies</a>
+    <a class="pure-button pure-button-primary" href="companies.html" th:href="${'/launchpad/company/companies'}">To companies</a>
 
 </div>

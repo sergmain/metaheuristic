@@ -16,23 +16,24 @@
 
 package ai.metaheuristic.ai.launchpad.account;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.data.AccountData;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -45,24 +46,27 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AccountService {
 
-    private static final Set<String> POSSIBLE_ROLES = Set.of("ROLE_SERVER_REST_ACCESS", "ROLE_ADMIN","ROLE_MANAGER","ROLE_OPERATOR","ROLE_BILLING","ROLE_DATA");
+    public static final List<String> POSSIBLE_ROLES = List.of("ROLE_SERVER_REST_ACCESS", "ROLE_ADMIN","ROLE_MANAGER","ROLE_OPERATOR","ROLE_BILLING","ROLE_DATA");
 
     private final AccountRepository accountRepository;
     private final AccountCache accountCache;
     private final PasswordEncoder passwordEncoder;
-    private final Globals globals;
 
     public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyId)  {
-        pageable = ControllerUtils.fixPageSize(globals.accountRowsLimit, pageable);
         AccountData.AccountsResult result = new AccountData.AccountsResult();
         result.accounts = accountRepository.findAll(pageable, companyId);
         return result;
     }
 
     public OperationStatusRest addAccount(Account account, Long companyId) {
-        if (StringUtils.isBlank(account.getUsername()) || StringUtils.isBlank(account.getPassword()) || StringUtils.isBlank(account.getPassword2()) || StringUtils.isBlank(account.getPublicName())) {
+
+        if (StringUtils.isBlank(account.getUsername()) ||
+                StringUtils.isBlank(account.getRoles()) ||
+                StringUtils.isBlank(account.getPassword()) ||
+                StringUtils.isBlank(account.getPassword2()) ||
+                StringUtils.isBlank(account.getPublicName())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#237.010 Username, password, and public name must be not null");
+                    "#237.010 Username, roles, password, and public name must be not null");
         }
         if (account.getUsername().indexOf('=')!=-1 ) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -81,7 +85,6 @@ public class AccountService {
 
         account.setPassword(passwordEncoder.encode(account.getPassword()));
         account.setCreatedOn(System.currentTimeMillis());
-        account.setRoles("ROLE_OPERATOR");
         account.setAccountNonExpired(true);
         account.setAccountNonLocked(true);
         account.setCredentialsNonExpired(true);
@@ -97,8 +100,9 @@ public class AccountService {
         if (account == null || !Objects.equals(account.companyId, companyId)) {
             return new AccountData.AccountResult("#237.050 account wasn't found, accountId: " + id);
         }
-        account.setPassword(null);
-        return new AccountData.AccountResult(account);
+        Account acc = (Account) account.clone();
+        acc.setPassword(null);
+        return new AccountData.AccountResult(acc);
     }
 
     public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, Long companyId) {
@@ -130,7 +134,7 @@ public class AccountService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", null);
     }
 
-
+    // this method is using with angular's rest
     public OperationStatusRest roleFormCommit(Long accountId, String roles, Long companyId) {
         Account account = accountRepository.findByIdForUpdate(accountId);
         if (account == null || !Objects.equals(account.companyId, companyId)) {
@@ -142,8 +146,28 @@ public class AccountService {
                 .collect(Collectors.joining(", "));
 
         account.setRoles(str);
-        accountRepository.save(account);
+        accountCache.save(account);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", null);
+    }
+
+    // this method is using with company-accounts
+    public OperationStatusRest storeRolesForUserById(Long accountId, int roleId, boolean checkbox, Long companyId) {
+        Account account = accountRepository.findByIdForUpdate(accountId);
+        if (account == null || !Objects.equals(account.companyId, companyId)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.110 account wasn't found, accountId: " + accountId);
+        }
+        String role = AccountService.POSSIBLE_ROLES.get(roleId);
+        boolean isAccountContainsRole = account.hasRole(role);
+        if (isAccountContainsRole && !checkbox){
+            account.getRolesAsList().remove(role);
+        } else if (!isAccountContainsRole && checkbox) {
+            account.getRolesAsList().add(role);
+        }
+
+        String roles = String.join(",", account.getRolesAsList());
+        account.setRoles(roles);
+        accountCache.save(account);
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Roles was changed successfully", null);
     }
 
 }

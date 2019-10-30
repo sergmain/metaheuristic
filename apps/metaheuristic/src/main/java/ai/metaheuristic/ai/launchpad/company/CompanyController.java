@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.company;
 
+import ai.metaheuristic.ai.launchpad.account.AccountService;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.data.AccountData;
@@ -204,6 +205,41 @@ public class CompanyController {
             redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
         }
         return "redirect:/launchpad/company/company-accounts/" + companyId;
+    }
+
+    @GetMapping(value = "/company-account-edit-roles/{companyId}/{id}")
+    public String editRoles(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
+        AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(id, companyId);
+        if (accountResult.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+            return "redirect:/launchpad/company/company-accounts/"+companyId;
+        }
+        accountResult.account.setPassword(null);
+        accountResult.account.setPassword2(null);
+        model.addAttribute("account", accountResult.account);
+        model.addAttribute("roles", AccountService.POSSIBLE_ROLES);
+        model.addAttribute("companyId", companyId);
+        return "launchpad/company/company-account-edit-roles";
+    }
+
+    @PostMapping("/company-account-edit-roles-commit/{companyId}")
+    public String rolesEditFormCommit(
+            Long accountId, Integer roleId, @RequestParam(required = false, defaultValue = "false") boolean checkbox,
+                                      final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
+        AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(accountId, companyId);
+        if (accountResult.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+            return "redirect:/launchpad/company/company-accounts/"+companyId;
+        }
+
+        OperationStatusRest operationStatusRest = companyAccountTopLevelService.storeRolesForUserById(accountId, roleId, checkbox, companyId);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+        }
+        if (operationStatusRest.isInfoMessages()) {
+            redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
+        }
+        return "redirect:/launchpad/company/company-account-edit-roles/"+companyId + "/" + accountId;
     }
 
 }

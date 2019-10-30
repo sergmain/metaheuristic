@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.ai.launchpad.company;
 
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.account.AccountService;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.data.AccountData;
+import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,12 +35,16 @@ import org.springframework.stereotype.Service;
 public class CompanyAccountTopLevelService {
 
     private final AccountService accountService;
+    private final Globals globals;
 
     public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyId)  {
+//        pageable = ControllerUtils.fixPageSize(globals.accountRowsLimit, pageable);
+        pageable = ControllerUtils.fixPageSize(50, pageable);
         return accountService.getAccounts(pageable, companyId);
     }
 
     public OperationStatusRest addAccount(Account account, Long companyId) {
+        account.setRoles("ROLE_ADMIN");
         return accountService.addAccount(account, companyId);
     }
 
@@ -57,4 +63,10 @@ public class CompanyAccountTopLevelService {
     public OperationStatusRest roleFormCommit(Long accountId, String roles, Long companyId) {
         return accountService.roleFormCommit(accountId, roles, companyId);
     }
+
+    public OperationStatusRest storeRolesForUserById(Long accountId, int roleId, boolean checkbox, Long companyId) {
+        return accountService.storeRolesForUserById(accountId, roleId, checkbox, companyId);
+    }
+
+
 }

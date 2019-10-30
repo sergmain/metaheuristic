@@ -16,14 +16,15 @@
 
 package ai.metaheuristic.ai.launchpad.beans;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +38,9 @@ import java.util.StringTokenizer;
 @Entity
 @Table(name = "MH_ACCOUNT")
 @Data
-@EqualsAndHashCode(of = {"username", "password", "token"})
-public class Account implements UserDetails, Serializable {
-    private static final long serialVersionUID = -8421154458012537028L;
+//@EqualsAndHashCode(of = {"username", "password", "token"})
+public class Account implements UserDetails, Serializable, Cloneable {
+    private static final long serialVersionUID = 708692073045562337L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,45 +49,41 @@ public class Account implements UserDetails, Serializable {
     @Version
     private Integer version;
 
-    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
-    @NotNull
+    @Column(name = "USERNAME")
     public String username;
 
-    @NotNull
-    private String password;
+    @Column(name = "PASSWORD")
+    public String password;
 
-    @Transient
-    private String password2;
+    @Column(name="IS_ACC_NOT_EXPIRED")
+    public boolean accountNonExpired;
 
-    @Column(name="is_acc_not_expired")
-    private boolean accountNonExpired;
+    @Column(name="IS_NOT_LOCKED")
+    public boolean accountNonLocked;
 
-    @Column(name="is_not_locked")
-    private boolean accountNonLocked;
+    @Column(name="IS_CRED_NOT_EXPIRED")
+    public boolean credentialsNonExpired;
 
-    @Column(name="is_cred_not_expired")
-    private boolean credentialsNonExpired;
-
-    @Column(name="is_enabled")
-    private boolean enabled;
+    @Column(name="IS_ENABLED")
+    public boolean enabled;
 
     @Column(name="PUBLIC_NAME")
-    private String publicName;
+    public String publicName;
 
-    private String mailAddress;
-    private long phone;
+    @Column(name="mail_address")
+    public String mailAddress;
 
-    //TODO add checks on max length
-    private String phoneAsStr;
+    @Column(name="PHONE")
+    public long phone;
 
     /**
      * won't delete this field for backward compatibility
      */
     @Deprecated
-    private String token = "";
+    public String token = "";
 
     // for backward compatibility, token must be not-null in db
     public String getToken() {
@@ -94,20 +91,74 @@ public class Account implements UserDetails, Serializable {
     }
 
     @Column(name="created_on")
-    private long createdOn;
+    public long createdOn;
 
-    private String roles;
+    public String roles;
 
-    public List<? extends GrantedAuthority> getAuthorities(){
-        List<GrantedAuthority> authList = new ArrayList<>();
-        StringTokenizer st = new StringTokenizer(roles, ",");
-        while (st.hasMoreTokens()) {
-            authList.add(new SimpleGrantedAuthority(st.nextToken().trim()));
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    public Object clone()  {
+        Account a = new Account();
+        BeanUtils.copyProperties(this, a);
+        return a;
+    }
+
+    @Transient
+    @JsonIgnore
+    private String password2;
+
+    //TODO add checks on max length
+    @Transient
+    @JsonIgnore
+    private String phoneAsStr;
+
+    @Transient
+    @JsonIgnore
+    private List<String> rolesAsList = null;
+
+    @Transient
+    @JsonIgnore
+    private List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+
+    public List<? extends GrantedAuthority> getAuthorities() {
+        initRoles();
+        return grantedAuthorities;
+    }
+
+    @Transient
+    @JsonIgnore
+    public boolean hasRole(String role) {
+        initRoles();
+        return rolesAsList.contains(role);
+    }
+
+    @Transient
+    @JsonIgnore
+    public List<String> getRolesAsList() {
+        initRoles();
+        return rolesAsList;
+    }
+
+    private void initRoles() {
+        if (rolesAsList==null) {
+            synchronized (this) {
+                if (rolesAsList==null) {
+                    List<String> list = new ArrayList<>();
+                    if (roles!=null) {
+                        StringTokenizer st = new StringTokenizer(roles, ",");
+                        while (st.hasMoreTokens()) {
+                            String role = st.nextToken().trim();
+                            list.add(role);
+                            grantedAuthorities.add(new SimpleGrantedAuthority(role));
+                        }
+                    }
+                    rolesAsList = list;
+                }
+            }
         }
-        return authList;
     }
 
     public String getLogin() {
         return username;
     }
+
 }

@@ -36,7 +36,7 @@
         <tr th:align="center">
             <th>#</th>
             <th>Name</th>
-            <th colspan="1">&nbsp;</th>
+            <th colspan="2">&nbsp;</th>
         </tr>
         </thead>
 
@@ -46,6 +46,7 @@
             <td th:text="${r.id}">#Id</td>
             <td th:text="${r.name}">Name</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-edit/' + r.id}">Edit</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-accounts/' + r.id}">Accounts</a></td>
 <!--            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-delete/' + r.id}">Delete</a></td>-->
         </tr>
         <tr>
