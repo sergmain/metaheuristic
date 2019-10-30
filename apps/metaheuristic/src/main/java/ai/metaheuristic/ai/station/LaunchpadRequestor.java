@@ -36,6 +36,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.*;
 
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -316,7 +317,10 @@ public class LaunchpadRequestor {
                     log.error("#775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof ConnectTimeoutException) {
-                    log.error("#775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("#775.093 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                }
+                else if (cause instanceof SocketTimeoutException) {
+                    log.error("#775.093 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else {
                     log.error("#775.100 Error, url: " + url, e);
