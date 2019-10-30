@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.workbook;
 
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -51,11 +52,11 @@ public class WorkbookTopLevelService {
     private final WorkbookService workbookService;
     private final PlanCache planCache;
 
-    public PlanApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDesc(Long id, Pageable pageable) {
-        return workbookService.getWorkbooksOrderByCreatedOnDescResult(id, pageable);
+    public PlanApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDesc(Long planId, Pageable pageable, LaunchpadContext context) {
+        return workbookService.getWorkbooksOrderByCreatedOnDescResult(planId, pageable, context);
     }
 
-    public PlanApiData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam) {
+    public PlanApiData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam, LaunchpadContext context) {
         final PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(planId, PlanUtils.parseToWorkbookParamsYaml(inputResourceParam));
         return new PlanApiData.TaskProducingResult(
                 result.getStatus()== EnumsApi.TaskProducingStatus.OK

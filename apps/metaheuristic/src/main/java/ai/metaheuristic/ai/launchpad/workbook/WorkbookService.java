@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.workbook;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
@@ -296,11 +297,12 @@ public class WorkbookService {
         return result;
     }
 
-    public PlanApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDescResult(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
+    public PlanApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDescResult(
+            @PathVariable Long planId, @PageableDefault(size = 5) Pageable pageable, LaunchpadContext context) {
         pageable = ControllerUtils.fixPageSize(globals.workbookRowsLimit, pageable);
         PlanApiData.WorkbooksResult result = new PlanApiData.WorkbooksResult();
-        result.instances = workbookRepository.findByPlanIdOrderByCreatedOnDesc(pageable, id);
-        result.currentPlanId = id;
+        result.instances = workbookRepository.findByPlanIdOrderByCreatedOnDesc(pageable, planId);
+        result.currentPlanId = planId;
 
         for (Workbook workbook : result.instances) {
             WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(workbook.getParams());

@@ -35,6 +35,7 @@ import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -54,6 +55,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -74,65 +76,25 @@ public class PlanTopLevelService {
     private final WorkbookCache workbookCache;
     private final ApplicationEventPublisher publisher;
 
-    public PlanApiData.WorkbookResult addWorkbook(Long planId, String poolCode, String inputResourceParams) {
+    public PlanApiData.WorkbookResult addWorkbook(Long planId, String poolCode, String inputResourceParams, LaunchpadContext context) {
         final PlanImpl plan = planCache.findById(planId);
-        return getAddWorkbookInternal(poolCode, inputResourceParams, plan);
+        OperationStatusRest status = checkPlan(plan, context);
+        if (status!=null) {
+            return new PlanApiData.WorkbookResult("#560.010 access denied: " + status.getErrorMessagesAsStr());
+        }
+        return planService.getAddWorkbookInternal(poolCode, inputResourceParams, plan);
     }
 
-    public PlanApiData.WorkbookResult addWorkbook(String planCode, String poolCode, String inputResourceParams) {
+    public PlanApiData.WorkbookResult addWorkbook(String planCode, String poolCode, String inputResourceParams, LaunchpadContext context) {
         final PlanImpl plan = planRepository.findByCode(planCode);
-        return getAddWorkbookInternal(poolCode, inputResourceParams, plan);
+        OperationStatusRest status = checkPlan(plan, context);
+        if (status!=null) {
+            return new PlanApiData.WorkbookResult("#560.011 access denied: " + status.getErrorMessagesAsStr());
+        }
+        return planService.getAddWorkbookInternal(poolCode, inputResourceParams, plan);
     }
 
-    private PlanApiData.WorkbookResult getAddWorkbookInternal(String poolCode, String inputResourceParams, PlanImpl plan) {
-        if (plan == null) {
-            return new PlanApiData.WorkbookResult("#560.060 plan wasn't found.");
-        }
-        if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams)) {
-            return new PlanApiData.WorkbookResult("#560.063 both inputResourcePoolCode of Workbook and inputResourceParams are empty");
-        }
-
-        if (StringUtils.isNotBlank(poolCode) && StringUtils.isNotBlank(inputResourceParams)) {
-            return new PlanApiData.WorkbookResult("#560.065 both inputResourcePoolCode of Workbook and inputResourceParams aren't empty");
-        }
-
-        // validate the plan
-        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
-        if (planValidation.status != EnumsApi.PlanValidateStatus.OK) {
-            PlanApiData.WorkbookResult r = new PlanApiData.WorkbookResult();
-            r.errorMessages = planValidation.errorMessages;
-            return r;
-        }
-
-        WorkbookParamsYaml wpy = StringUtils.isNotBlank(inputResourceParams)
-                ? PlanUtils.parseToWorkbookParamsYaml(inputResourceParams)
-                : asWorkbookParamsYaml(poolCode);
-        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(plan.getId(), wpy);
-        if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
-            return new PlanApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
-        }
-
-        PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook.getId());
-        if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
-            workbookService.changeValidStatus(producingResult.workbook.getId(), false);
-            return new PlanApiData.WorkbookResult("#560.077 plan producing was failed, status: " + countTasks.planProducingStatus);
-        }
-
-        if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
-            workbookService.changeValidStatus(producingResult.workbook.getId(), false);
-            return new PlanApiData.WorkbookResult("#560.081 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
-                    "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook + ", tasks in this workbook:  " + countTasks.numberOfTasks);
-        }
-
-        PlanApiData.WorkbookResult result = new PlanApiData.WorkbookResult(plan);
-        result.workbook = producingResult.workbook;
-
-        workbookService.changeValidStatus(producingResult.workbook.getId(), true);
-
-        return result;
-    }
-
-    public PlanApiData.PlansResult getPlans(Pageable pageable, boolean isArchive) {
+    public PlanApiData.PlansResult getPlans(Pageable pageable, boolean isArchive, LaunchpadContext context) {
         pageable = ControllerUtils.fixPageSize(globals.planRowsLimit, pageable);
         List<Plan> plans = planRepository.findAllByOrderByIdDesc();
         AtomicInteger count = new AtomicInteger();
@@ -167,20 +129,20 @@ public class PlanTopLevelService {
         return plansResultRest;
     }
 
-    public PlanApiData.PlanResult getPlan(Long id) {
-        final PlanImpl plan = planCache.findById(id);
+    public PlanApiData.PlanResult getPlan(Long planId, LaunchpadContext context) {
+        final PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
             return new PlanApiData.PlanResult(
-                    "#560.050 plan wasn't found, planId: " + id,
+                    "#560.050 plan wasn't found, planId: " + planId,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
         return new PlanApiData.PlanResult(plan, plan.getParams());
     }
 
-    public PlanApiData.PlanResult validatePlan(Long id) {
-        final PlanImpl plan = planCache.findById(id);
+    public PlanApiData.PlanResult validatePlan(Long planId, LaunchpadContext context) {
+        final PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
-            return new PlanApiData.PlanResult("#560.070 plan wasn't found, planId: " + id,
+            return new PlanApiData.PlanResult("#560.070 plan wasn't found, planId: " + planId,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
 
@@ -193,7 +155,7 @@ public class PlanTopLevelService {
     }
 
     @SuppressWarnings("Duplicates")
-    public PlanApiData.PlanResult addPlan(String planYamlAsStr) {
+    public PlanApiData.PlanResult addPlan(String planYamlAsStr, LaunchpadContext context) {
         if (StringUtils.isBlank(planYamlAsStr)) {
             return new PlanApiData.PlanResult("#560.090 plan yaml is empty");
         }
@@ -215,6 +177,7 @@ public class PlanTopLevelService {
         }
 
         PlanImpl plan = new PlanImpl();
+        plan.companyId = context.getCompanyId();
         plan.createdOn = System.currentTimeMillis();
         plan.code = ppy.planYaml.planCode;
         // we have to preserve a format of planParamsYaml for compatibility with old snippets
@@ -230,7 +193,7 @@ public class PlanTopLevelService {
     }
 
     @SuppressWarnings("Duplicates")
-    public PlanApiData.PlanResult updatePlan(Long planId, String planYamlAsStr) {
+    public PlanApiData.PlanResult updatePlan(Long planId, String planYamlAsStr, LaunchpadContext context) {
         PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
             return new PlanApiData.PlanResult(
@@ -267,13 +230,13 @@ public class PlanTopLevelService {
         return result;
     }
 
-    public OperationStatusRest deletePlanById(Long id) {
-        Plan plan = planCache.findById(id);
+    public OperationStatusRest deletePlanById(Long planId, LaunchpadContext context) {
+        Plan plan = planCache.findById(planId);
         if (plan == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.250 plan wasn't found, planId: " + id);
+                    "#560.250 plan wasn't found, planId: " + planId);
         }
-        planCache.deleteById(id);
+        planCache.deleteById(planId);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -294,7 +257,7 @@ public class PlanTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest uploadPlan(MultipartFile file) {
+    public OperationStatusRest uploadPlan(MultipartFile file, LaunchpadContext context) {
 
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
@@ -327,7 +290,7 @@ public class PlanTopLevelService {
             }
             log.debug("Start loading plan into db");
             String yaml = FileUtils.readFileToString(planFile, StandardCharsets.UTF_8);
-            PlanApiData.PlanResult result = addPlan(yaml);
+            PlanApiData.PlanResult result = addPlan(yaml, context);
 
             if (result.isErrorMessages()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages, result.infoMessages);
@@ -352,17 +315,31 @@ public class PlanTopLevelService {
 
     // ========= Workbook specific =============
 
-    public OperationStatusRest changeWorkbookExecState(String state, Long workbookId) {
+    public OperationStatusRest changeWorkbookExecState(String state, Long workbookId, LaunchpadContext context) {
         EnumsApi.WorkbookExecState execState = EnumsApi.WorkbookExecState.valueOf(state.toUpperCase());
         if (execState== EnumsApi.WorkbookExecState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
         }
-        //noinspection UnnecessaryLocalVariable
-        OperationStatusRest status = planService.workbookTargetExecState(workbookId, execState);
+        OperationStatusRest status = checkWorkbook(workbookId, context);
+        if (status != null) {
+            return status;
+        }
+        status = planService.workbookTargetExecState(workbookId, execState);
         return status;
     }
 
     public OperationStatusRest deleteWorkbookById(Long workbookId, LaunchpadContext context) {
+        OperationStatusRest status = checkWorkbook(workbookId, context);
+        if (status != null) {
+            return status;
+        }
+        publisher.publishEvent( new WorkbookService.WorkbookDeletionEvent(this, workbookId) );
+        planService.deleteWorkbook(workbookId, context);
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    private OperationStatusRest checkWorkbook(Long workbookId, LaunchpadContext context) {
         if (workbookId==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 workbookId is null");
         }
@@ -370,13 +347,20 @@ public class PlanTopLevelService {
         if (wb==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 Workbook wasn't found, workbookId: " + workbookId );
         }
-        Plan plan = planCache.findById(wb.getPlanId());
-        if (plan==null) {
+        PlanImpl plan = planCache.findById(wb.getPlanId());
+        if (plan == null || !plan.companyId.equals(context.getCompanyId())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Workbook wasn't found, workbookId: " + workbookId );
         }
-        publisher.publishEvent( new WorkbookService.WorkbookDeletionEvent(this, workbookId) );
-        planService.deleteWorkbook(workbookId, context);
+        return null;
+    }
 
-        return OperationStatusRest.OPERATION_STATUS_OK;
+    private OperationStatusRest checkPlan(Plan plan, LaunchpadContext context) {
+        if (plan==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 plan is null");
+        }
+        if (!Objects.equals(plan.getCompanyId(), context.getCompanyId())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Access to plan is denied, planId: " + plan.getId() );
+        }
+        return null;
     }
 }

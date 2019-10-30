@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.batch;
 
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -42,7 +43,7 @@ public class BatchSyncService {
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
     @SuppressWarnings("Duplicates")
-    <T> T getWithSync(Long batchId, ExecContext execContext, Function<Batch, T> function) {
+    <T> T getWithSync(Long batchId, LaunchpadContext execContext, Function<Batch, T> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();
@@ -71,7 +72,7 @@ public class BatchSyncService {
     }
 
     @SuppressWarnings("Duplicates")
-    <T> T getWithSyncReadOnly(Batch batch, ExecContext execContext, Function<ExecContext, T> function) {
+    <T> T getWithSyncReadOnly(Batch batch, LaunchpadContext execContext, Function<LaunchpadContext, T> function) {
         if (batch==null) {
             return null;
         }

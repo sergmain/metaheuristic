@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.launchpad.Plan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -122,8 +121,9 @@ public class BatchController {
     }
 
     @GetMapping("/batch-delete/{batchId}")
-    public String processResourceDelete(Model model, @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId);
+    public String processResourceDelete(Model model, @PathVariable Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
             return REDIRECT_BATCH_BATCHES;

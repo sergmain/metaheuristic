@@ -55,10 +55,10 @@ public class WorkbookRestController {
         public Long workbookId;
     }
 
-    @GetMapping("/workbooks/{id}")
+    @GetMapping("/workbooks/{planId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
-    public PlanApiData.WorkbooksResult workbooks(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
-        return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(id, pageable);
+    public PlanApiData.WorkbooksResult workbooks(@PathVariable Long planId, @PageableDefault(size = 5) Pageable pageable) {
+        return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(planId, pageable);
     }
 
     /**

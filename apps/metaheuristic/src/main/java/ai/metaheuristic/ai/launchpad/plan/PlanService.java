@@ -51,6 +51,7 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
@@ -121,6 +122,51 @@ public class PlanService {
         if (!workbooks.isEmpty()) {
             log.info("#701.040 Producing of tasks was finished");
         }
+    }
+
+    public PlanApiData.WorkbookResult getAddWorkbookInternal(String poolCode, String inputResourceParams, @NonNull PlanImpl plan) {
+        if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams)) {
+            return new PlanApiData.WorkbookResult("#560.063 both inputResourcePoolCode of Workbook and inputResourceParams are empty");
+        }
+
+        if (StringUtils.isNotBlank(poolCode) && StringUtils.isNotBlank(inputResourceParams)) {
+            return new PlanApiData.WorkbookResult("#560.065 both inputResourcePoolCode of Workbook and inputResourceParams aren't empty");
+        }
+
+        // validate the plan
+        PlanApiData.PlanValidation planValidation = validateInternal(plan);
+        if (planValidation.status != EnumsApi.PlanValidateStatus.OK) {
+            PlanApiData.WorkbookResult r = new PlanApiData.WorkbookResult();
+            r.errorMessages = planValidation.errorMessages;
+            return r;
+        }
+
+        WorkbookParamsYaml wpy = StringUtils.isNotBlank(inputResourceParams)
+                ? PlanUtils.parseToWorkbookParamsYaml(inputResourceParams)
+                : asWorkbookParamsYaml(poolCode);
+        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(plan.getId(), wpy);
+        if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
+            return new PlanApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
+        }
+
+        PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook.getId());
+        if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
+            workbookService.changeValidStatus(producingResult.workbook.getId(), false);
+            return new PlanApiData.WorkbookResult("#560.077 plan producing was failed, status: " + countTasks.planProducingStatus);
+        }
+
+        if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
+            workbookService.changeValidStatus(producingResult.workbook.getId(), false);
+            return new PlanApiData.WorkbookResult("#560.081 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
+                    "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook + ", tasks in this workbook:  " + countTasks.numberOfTasks);
+        }
+
+        PlanApiData.WorkbookResult result = new PlanApiData.WorkbookResult(plan);
+        result.workbook = producingResult.workbook;
+
+        workbookService.changeValidStatus(producingResult.workbook.getId(), true);
+
+        return result;
     }
 
     public PlanApiData.PlanValidation validateInternal(PlanImpl plan) {
