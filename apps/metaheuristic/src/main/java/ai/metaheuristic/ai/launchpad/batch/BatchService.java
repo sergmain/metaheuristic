@@ -19,22 +19,24 @@ package ai.metaheuristic.ai.launchpad.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
+import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchParams;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatus;
-import ai.metaheuristic.ai.launchpad.beans.Batch;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
+import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.yaml.pilot.BatchParamsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
@@ -42,7 +44,9 @@ import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
@@ -60,13 +64,22 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 /**
  * @author Serge
@@ -82,9 +95,13 @@ public class BatchService {
 
     private static final String PLAN_NOT_FOUND = "Plan wasn't found";
     private static final String IP_HOST = "IP: %s, host: %s";
+    private static final Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml", ".yml");
+    private static final String ATTACHMENTS_POOL_CODE = "attachments";
+    private static final String CONFIG_FILE = "config.yaml";
 
     private final Globals globals;
     private final PlanCache planCache;
+    private final PlanService planService;
     private final BatchCache batchCache;
     private final BatchRepository batchRepository;
     private final WorkbookRepository workbookRepository;
@@ -95,8 +112,175 @@ public class BatchService {
     private final TaskRepository taskRepository;
     private final StationCache stationCache;
     private final LaunchpadEventService launchpadEventService;
+    private final ResourceService resourceService;
 
     private static final ConcurrentHashMap<Long, Object> batchMap = new ConcurrentHashMap<>(100, 0.75f, 10);
+
+    public void loadFilesFromDirAfterZip(Batch batch, File srcDir, final Map<String, String> mapping) throws IOException {
+
+        final AtomicBoolean isEmpty = new AtomicBoolean(true);
+        Files.list(srcDir.toPath())
+                .filter(o -> {
+                    File f = o.toFile();
+                    return !EXCLUDE_EXT.contains(StrUtils.getExtension(f.getName()));
+                })
+                .forEach( dataFilePath ->  {
+                    isEmpty.set(false);
+                    File file = dataFilePath.toFile();
+                    try {
+                        if (file.isDirectory()) {
+                            final File mainDocFile = getMainDocumentFileFromConfig(file, mapping);
+                            final Stream<BatchTopLevelService.FileWithMapping> files = Files.list(dataFilePath)
+                                    .filter(o -> o.toFile().isFile())
+                                    .map(f -> {
+                                        final String currFileName = file.getName() + File.separatorChar + f.toFile().getName();
+                                        final String actualFileName = mapping.get(currFileName);
+                                        return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
+                                    });
+                            createAndProcessTask(batch, files, mainDocFile);
+                        } else {
+                            String actualFileName = mapping.get(file.getName());
+                            createAndProcessTask(batch, Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), file);
+                        }
+                    } catch (BatchResourceProcessingException | StoreNewFileWithRedirectException e) {
+                        throw e;
+                    } catch (Throwable th) {
+                        String es = "#995.130 An error while saving data to file, " + th.toString();
+                        log.error(es, th);
+                        throw new BatchResourceProcessingException(es);
+                    }
+                });
+
+
+        if (isEmpty.get()) {
+            changeStateToFinished(batch);
+        }
+
+    }
+    private File getMainDocumentFileFromConfig(File srcDir, Map<String, String> mapping) throws IOException {
+        File configFile = new File(srcDir, CONFIG_FILE);
+        if (!configFile.exists()) {
+            throw new BatchResourceProcessingException("#995.140 config.yaml file wasn't found in path " + srcDir.getPath());
+        }
+
+        if (!configFile.isFile()) {
+            throw new BatchResourceProcessingException("#995.150 config.yaml must be a file, not a directory");
+        }
+        Yaml yaml = new Yaml();
+
+        String mainDocumentTemp;
+        try (InputStream is = new FileInputStream(configFile)) {
+            Map<String, Object> config = yaml.load(is);
+            mainDocumentTemp = config.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH).toString();
+        }
+
+        if (StringUtils.isBlank(mainDocumentTemp)) {
+            throw new BatchResourceProcessingException("#995.160 config.yaml must contain non-empty field '" + Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH + "' ");
+        }
+
+        Map.Entry<String, String> entry =
+                mapping.entrySet()
+                        .stream()
+                        .filter(e -> e.getValue().equals(srcDir.getName() + '/' + mainDocumentTemp))
+                        .findFirst().orElse(null);
+
+        String mainDocument = entry!=null ? new File(entry.getKey()).getName() : mainDocumentTemp;
+
+        final File mainDocFile = new File(srcDir, mainDocument);
+        if (!mainDocFile.exists()) {
+            throw new BatchResourceProcessingException("#995.170 main document file "+mainDocument+" wasn't found in path " + srcDir.getPath());
+        }
+        return mainDocFile;
+    }
+
+    private static WorkbookParamsYaml initWorkbookParamsYaml(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
+        WorkbookParamsYaml yaml = new WorkbookParamsYaml();
+        yaml.workbookYaml.preservePoolNames = true;
+        yaml.workbookYaml.poolCodes.computeIfAbsent(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, o-> new ArrayList<>()).add(mainPoolCode);
+        if (attachmentCodes.isEmpty()) {
+            return yaml;
+        }
+        yaml.workbookYaml.poolCodes.computeIfAbsent(ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
+        return yaml;
+    }
+
+    private void createAndProcessTask(Batch batch, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile) {
+
+        Long planId = batch.planId;
+        long nanoTime = System.nanoTime();
+        List<String> attachments = new ArrayList<>();
+        String mainPoolCode = String.format("%d-%s-%d", planId, Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
+        String attachPoolCode = String.format("%d-%s-%d", planId, ATTACHMENTS_POOL_CODE, nanoTime);
+        final AtomicBoolean isMainDocPresent = new AtomicBoolean(false);
+        dataFiles.forEach( fileWithMapping -> {
+            String originFilename = fileWithMapping.originName!=null ? fileWithMapping.originName : fileWithMapping.file.getName();
+            if (EXCLUDE_EXT.contains(StrUtils.getExtension(originFilename))) {
+                return;
+            }
+            final String code = ResourceUtils.toResourceCode(fileWithMapping.file.getName());
+
+            String poolCode;
+            if (fileWithMapping.file.equals(mainDocFile)) {
+                poolCode = mainPoolCode;
+                isMainDocPresent.set(true);
+            }
+            else {
+                poolCode = attachPoolCode;
+                attachments.add(code);
+            }
+
+            resourceService.storeInitialResource(fileWithMapping.file, code, poolCode, originFilename);
+        });
+
+        if (!isMainDocPresent.get()) {
+            throw new BatchResourceProcessingException("#995.180 main document wasn't found");
+        }
+
+        final WorkbookParamsYaml params = initWorkbookParamsYaml(mainPoolCode, attachPoolCode, attachments);
+        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(planId, params);
+        if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
+            throw new BatchResourceProcessingException("#995.190 Error creating workbook: " + producingResult.planProducingStatus);
+        }
+        BatchWorkbook bw = new BatchWorkbook();
+        bw.batchId=batch.id;
+        bw.workbookId=producingResult.workbook.getId();
+        batchWorkbookRepository.save(bw);
+
+        PlanImpl plan = planCache.findById(planId);
+        if (plan == null) {
+            throw new BatchResourceProcessingException("#995.200 plan wasn't found, planId: " + planId);
+        }
+
+        PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook.getId());
+        if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
+            workbookService.changeValidStatus(bw.workbookId, false);
+            throw new BatchResourceProcessingException("#995.220 validation of plan was failed, status: " + countTasks.planValidateStatus);
+        }
+
+        if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
+            workbookService.changeValidStatus(producingResult.workbook.getId(), false);
+            throw new BatchResourceProcessingException(
+                    "#995.220 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
+                            "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook +", tasks in this workbook:  " + countTasks.numberOfTasks);
+        }
+        workbookService.changeValidStatus(producingResult.workbook.getId(), true);
+
+        // start producing new tasks
+        OperationStatusRest operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.PRODUCING);
+
+        if (operationStatus.isErrorMessages()) {
+            throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
+        }
+        planService.createAllTasks();
+
+
+        changeStateToProcessing(batch.id);
+        operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.STARTED);
+
+        if (operationStatus.isErrorMessages()) {
+            throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
+        }
+    }
 
     public Batch changeStateToPreparing(Long batchId) {
         final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
@@ -125,7 +309,7 @@ public class BatchService {
         }
     }
 
-    public Batch changeStateToProcessing(Long batchId) {
+    private Batch changeStateToProcessing(Long batchId) {
         final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {

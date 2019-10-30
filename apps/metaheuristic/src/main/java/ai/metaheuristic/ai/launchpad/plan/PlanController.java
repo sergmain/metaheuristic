@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.plan;
 
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
+import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -26,6 +28,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -45,13 +48,15 @@ public class PlanController {
     public static final String REDIRECT_LAUNCHPAD_PLAN_PLANS = "redirect:/launchpad/plan/plans";
 
     private final PlanTopLevelService planTopLevelService;
+    private final LaunchpadContextService launchpadContextService;
 
     @GetMapping("/plans")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public String plans(Model model, @PageableDefault(size = 5) Pageable pageable,
                         @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
-                        @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
-        PlanApiData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable, false);
+                        @ModelAttribute("errorMessage") final ArrayList<String> errorMessage, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        PlanApiData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable, false, context);
         ControllerUtils.addMessagesToModel(model, plansResultRest);
         model.addAttribute("result", plansResultRest);
         return "launchpad/plan/plans";
@@ -60,8 +65,9 @@ public class PlanController {
     // for AJAX
     @PostMapping("/plans-part")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public String plansPart(Model model, @PageableDefault(size = 10) Pageable pageable) {
-        PlanApiData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable, false);
+    public String plansPart(Model model, @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        PlanApiData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable, false, context);
         model.addAttribute("result", plansResultRest);
         return "launchpad/plan/plans :: table";
     }
@@ -75,8 +81,9 @@ public class PlanController {
 
     @GetMapping(value = "/plan-edit/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id);
+    public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id, context);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
@@ -88,8 +95,9 @@ public class PlanController {
 
     @GetMapping(value = "/plan-validate/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        PlanApiData.PlanResult planResultRest = planTopLevelService.validatePlan(id);
+    public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.validatePlan(id, context);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
@@ -104,8 +112,9 @@ public class PlanController {
 
     @PostMapping(value = "/plan-upload-from-file")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String uploadPlan(final MultipartFile file, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = planTopLevelService.uploadPlan(file);
+    public String uploadPlan(final MultipartFile file, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        OperationStatusRest operationStatusRest = planTopLevelService.uploadPlan(file, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
@@ -114,8 +123,9 @@ public class PlanController {
 
     @PostMapping("/plan-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String addFormCommit(String planYamlAsStr, final RedirectAttributes redirectAttributes) {
-        PlanApiData.PlanResult planResultRest = planTopLevelService.addPlan(planYamlAsStr);
+    public String addFormCommit(String planYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.addPlan(planYamlAsStr, context);
         if (planResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
         }
@@ -127,8 +137,9 @@ public class PlanController {
 
     @PostMapping("/plan-edit-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String editFormCommit(Model model, Long planId, String planYamlAsStr, final RedirectAttributes redirectAttributes) {
-        PlanApiData.PlanResult planResultRest = planTopLevelService.updatePlan(planId, planYamlAsStr);
+    public String editFormCommit(Model model, Long planId, String planYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.updatePlan(planId, planYamlAsStr, context);
         if (planResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", planResultRest.errorMessages);
             return "redirect:/launchpad/plan/plan-edit/"+planResultRest.plan.getId();
@@ -142,8 +153,9 @@ public class PlanController {
 
     @GetMapping("/plan-delete/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id);
+    public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id, context);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
@@ -155,8 +167,9 @@ public class PlanController {
 
     @PostMapping("/plan-delete-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = planTopLevelService.deletePlanById(id);
+    public String deleteCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        OperationStatusRest operationStatusRest = planTopLevelService.deletePlanById(id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#560.40 plan wasn't found, id: "+id) );
         }
@@ -165,8 +178,9 @@ public class PlanController {
 
     @GetMapping("/plan-archive/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public String archive(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id);
+    public String archive(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id, context);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
@@ -178,8 +192,9 @@ public class PlanController {
 
     @PostMapping("/plan-archive-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String archiveCommit(Long id, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = planTopLevelService.archivePlanById(id);
+    public String archiveCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        OperationStatusRest operationStatusRest = planTopLevelService.archivePlanById(id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#560.40 plan wasn't found, id: "+id) );
         }

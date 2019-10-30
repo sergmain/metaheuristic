@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AccountTopLevelService {
 
-    private static final Set<String> POSSIBLE_ROLES = Set.of("ROLE_ADMIN","ROLE_MANAGER","ROLE_OPERATOR","ROLE_BILLING","ROLE_DATA");
+    private static final Set<String> POSSIBLE_ROLES = Set.of("ROLE_SERVER_REST_ACCESS", "ROLE_ADMIN","ROLE_MANAGER","ROLE_OPERATOR","ROLE_BILLING","ROLE_DATA");
 
     private final AccountRepository accountRepository;
     private final AccountCache accountCache;

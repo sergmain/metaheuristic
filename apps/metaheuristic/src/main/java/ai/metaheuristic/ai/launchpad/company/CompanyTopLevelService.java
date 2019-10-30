@@ -27,12 +27,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Profile("launchpad")
 @Service
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('MASTER_ADMIN')")
 public class CompanyTopLevelService {
 
     public static final int ROWS_IN_TABLE = 50;
@@ -62,7 +64,6 @@ public class CompanyTopLevelService {
         if (company == null) {
             return new CompanyData.CompanyResult("#237.050 company wasn't found, companyId: " + companyId);
         }
-        company.setName(null);
         return new CompanyData.CompanyResult(company);
     }
 

@@ -77,7 +77,7 @@ public class WorkbookController {
     public String workbookAdd(@ModelAttribute("result") PlanApiData.PlanResult result,
                               @PathVariable Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(planId);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(planId, context);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
@@ -103,7 +103,7 @@ public class WorkbookController {
     public String workbookDelete(Model model, @PathVariable Long planId, @PathVariable Long workbookId,
                                  final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanApiData.WorkbookResult result = workbookTopLevelService.getWorkbookExtendedForDeletion(workbookId);
+        PlanApiData.WorkbookResult result = workbookTopLevelService.getWorkbookExtendedForDeletion(workbookId, context);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;

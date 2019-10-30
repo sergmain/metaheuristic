@@ -95,6 +95,7 @@ public class CustomUserDetails implements UserDetailsService {
             // fake Id, I hope it won't make any collision with the real accounts
             // need to think of better solution for virtual accounts
             account.setId( Integer.MAX_VALUE -5L );
+            account.setCompanyId( Integer.MAX_VALUE -5L );
             account.setUsername(globals.launchpadMasterUsername);
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
@@ -102,7 +103,7 @@ public class CustomUserDetails implements UserDetailsService {
             account.setEnabled(true);
             account.setPassword(globals.launchpadMasterPassword);
 
-            account.setRoles("ROLE_ADMIN, ROLE_MANAGER, ROLE_SERVER_REST_ACCESS");
+            account.setRoles("ROLE_MASTER_ADMIN");
             return account;
         }
 

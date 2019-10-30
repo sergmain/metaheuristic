@@ -167,6 +167,9 @@ public class Globals {
 
     @PostConstruct
     public void init() {
+        if (!isSecurityEnabled) {
+            throw new IllegalStateException("mh.launchpad.is-security-enabled==false isn't supported any more\nNeed to change to true and set up login/password");
+        }
         String publicKeyAsStr = env.getProperty("MH_PUBLIC_KEY");
         if (publicKeyAsStr!=null && !publicKeyAsStr.isBlank()) {
             launchpadPublicKeyStr = publicKeyAsStr;

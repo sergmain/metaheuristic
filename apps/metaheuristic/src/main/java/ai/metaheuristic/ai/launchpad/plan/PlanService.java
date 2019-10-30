@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
@@ -72,6 +73,7 @@ import static ai.metaheuristic.api.EnumsApi.PlanValidateStatus.PROCESS_VALIDATOR
 @RequiredArgsConstructor
 public class PlanService {
 
+    private final Globals globals;
     private final BinaryDataService binaryDataService;
 
     private final ExperimentProcessService experimentProcessService;
@@ -149,7 +151,7 @@ public class PlanService {
             return new PlanApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
         }
 
-        PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook.getId());
+        PlanApiData.TaskProducingResultComplex countTasks = produceTasks(false, plan, producingResult.workbook.getId());
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             workbookService.changeValidStatus(producingResult.workbook.getId(), false);
             return new PlanApiData.WorkbookResult("#560.077 plan producing was failed, status: " + countTasks.planProducingStatus);
@@ -167,6 +169,12 @@ public class PlanService {
         workbookService.changeValidStatus(producingResult.workbook.getId(), true);
 
         return result;
+    }
+
+    private static WorkbookParamsYaml asWorkbookParamsYaml(String poolCode) {
+        WorkbookParamsYaml wpy = new WorkbookParamsYaml();
+        wpy.workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o->new ArrayList<>()).add(poolCode);
+        return wpy;
     }
 
     public PlanApiData.PlanValidation validateInternal(PlanImpl plan) {

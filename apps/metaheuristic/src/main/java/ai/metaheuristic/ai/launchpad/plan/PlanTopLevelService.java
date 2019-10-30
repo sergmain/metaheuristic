@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.plan;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
@@ -29,13 +28,10 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -53,7 +49,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -240,11 +235,11 @@ public class PlanTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest archivePlanById(Long id) {
+    public OperationStatusRest archivePlanById(Long id, LaunchpadContext context) {
         PlanImpl plan = planCache.findById(id);
-        if (plan == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.270 plan wasn't found, planId: " + id);
+        OperationStatusRest status = checkPlan(plan, context);
+        if (status!=null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 plan wasn't found, planId: " + id+", " + status.getErrorMessagesAsStr());
         }
         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.params);
         if (ppy.internalParams==null) {
@@ -307,12 +302,6 @@ public class PlanTopLevelService {
         }
     }
 
-    private static WorkbookParamsYaml asWorkbookParamsYaml(String poolCode) {
-        WorkbookParamsYaml wpy = new WorkbookParamsYaml();
-        wpy.workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o->new ArrayList<>()).add(poolCode);
-        return wpy;
-    }
-
     // ========= Workbook specific =============
 
     public OperationStatusRest changeWorkbookExecState(String state, Long workbookId, LaunchpadContext context) {
@@ -320,7 +309,7 @@ public class PlanTopLevelService {
         if (execState== EnumsApi.WorkbookExecState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
         }
-        OperationStatusRest status = checkWorkbook(workbookId, context);
+        OperationStatusRest status = workbookService.checkWorkbook(workbookId, context);
         if (status != null) {
             return status;
         }
@@ -329,7 +318,7 @@ public class PlanTopLevelService {
     }
 
     public OperationStatusRest deleteWorkbookById(Long workbookId, LaunchpadContext context) {
-        OperationStatusRest status = checkWorkbook(workbookId, context);
+        OperationStatusRest status = workbookService.checkWorkbook(workbookId, context);
         if (status != null) {
             return status;
         }
@@ -337,21 +326,6 @@ public class PlanTopLevelService {
         planService.deleteWorkbook(workbookId, context);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    private OperationStatusRest checkWorkbook(Long workbookId, LaunchpadContext context) {
-        if (workbookId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 workbookId is null");
-        }
-        Workbook wb = workbookCache.findById(workbookId);
-        if (wb==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 Workbook wasn't found, workbookId: " + workbookId );
-        }
-        PlanImpl plan = planCache.findById(wb.getPlanId());
-        if (plan == null || !plan.companyId.equals(context.getCompanyId())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Workbook wasn't found, workbookId: " + workbookId );
-        }
-        return null;
     }
 
     private OperationStatusRest checkPlan(Plan plan, LaunchpadContext context) {

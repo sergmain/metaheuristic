@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
@@ -647,7 +648,7 @@ public class ExperimentTopLevelService {
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Exporting of experiment was successfully started", null);
     }
 
-    public OperationStatusRest bindExperimentToPlanWithResource(String experimentCode, String resourcePoolCode) {
+    public OperationStatusRest bindExperimentToPlanWithResource(String experimentCode, String resourcePoolCode, LaunchpadContext context) {
         if (resourcePoolCode==null || resourcePoolCode.isBlank()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.480 resource pool code is blank");
         }
@@ -666,7 +667,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.510 can't find a plan with experiment code: " + experimentCode);
         }
-        PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(p.id, resourcePoolCode, null);
+        PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(p.id, resourcePoolCode, null, context);
         if (workbookResultRest.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, workbookResultRest.errorMessages, workbookResultRest.infoMessages);
         }

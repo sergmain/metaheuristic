@@ -43,7 +43,7 @@ import java.util.ArrayList;
 @RequestMapping("/launchpad/company")
 @Profile("launchpad")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN')")
+@PreAuthorize("hasAnyRole('MASTER_ADMIN')")
 public class CompanyController {
 
     private final CompanyTopLevelService companyTopLevelService;

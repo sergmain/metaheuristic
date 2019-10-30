@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.rest.v1;
 
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
+import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -28,6 +30,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -47,6 +50,7 @@ public class WorkbookRestController {
 
     private final PlanTopLevelService planTopLevelService;
     private final WorkbookTopLevelService workbookTopLevelService;
+    private final LaunchpadContextService launchpadContextService;
 
     @Data
     @NoArgsConstructor
@@ -57,8 +61,10 @@ public class WorkbookRestController {
 
     @GetMapping("/workbooks/{planId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
-    public PlanApiData.WorkbooksResult workbooks(@PathVariable Long planId, @PageableDefault(size = 5) Pageable pageable) {
-        return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(planId, pageable);
+    public PlanApiData.WorkbooksResult workbooks(@PathVariable Long planId,
+                                                 @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(planId, pageable, context);
     }
 
     /**
@@ -69,8 +75,9 @@ public class WorkbookRestController {
      */
     @PostMapping("/plan-code-workbook-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SimpleWorkbookAddingResult workbookAddCommit(String planCode, String poolCode, String inputResourceParams) {
-        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planCode, poolCode, inputResourceParams);
+    public SimpleWorkbookAddingResult workbookAddCommit(String planCode, String poolCode, String inputResourceParams, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planCode, poolCode, inputResourceParams, context);
         return new SimpleWorkbookAddingResult(workbookResult.workbook.getId());
     }
 
@@ -79,16 +86,20 @@ public class WorkbookRestController {
      */
     @PostMapping("/workbook-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public PlanApiData.WorkbookResult workbookAddCommit(Long planId, String poolCode, String inputResourceParams) {
+    public PlanApiData.WorkbookResult workbookAddCommit(
+            Long planId, String poolCode, String inputResourceParams, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
         //noinspection UnnecessaryLocalVariable
-        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams);
+        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams, context);
         return workbookResult;
     }
 
     @PostMapping("/workbook-create")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public PlanApiData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam) {
-        return workbookTopLevelService.createWorkbook(planId, inputResourceParam);
+    public PlanApiData.TaskProducingResult createWorkbook(
+            Long planId, String inputResourceParam, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return workbookTopLevelService.createWorkbook(planId, inputResourceParam, context);
     }
 
     @GetMapping(value = "/workbook/{planId}/{workbookId}")
@@ -100,14 +111,18 @@ public class WorkbookRestController {
     @SuppressWarnings("unused")
     @PostMapping("/workbook-delete-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public OperationStatusRest workbookDeleteCommit(Long planId, Long workbookId) {
-        return planTopLevelService.deleteWorkbookById(workbookId);
+    public OperationStatusRest workbookDeleteCommit(Long planId, Long workbookId, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return planTopLevelService.deleteWorkbookById(workbookId, context);
     }
 
     @GetMapping("/workbook-target-exec-state/{planId}/{state}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public OperationStatusRest workbookTargetExecState(@SuppressWarnings("unused") @PathVariable Long planId, @PathVariable String state, @PathVariable Long id) {
-        return planTopLevelService.changeWorkbookExecState(state, id);
+    public OperationStatusRest workbookTargetExecState(
+            @SuppressWarnings("unused") @PathVariable Long planId, @PathVariable String state,
+            @PathVariable Long id, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return planTopLevelService.changeWorkbookExecState(state, id, context);
     }
 
 }

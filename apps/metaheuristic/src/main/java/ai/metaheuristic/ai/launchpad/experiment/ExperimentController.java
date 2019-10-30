@@ -171,8 +171,10 @@ public class ExperimentController {
     }
 
     @GetMapping("/workbook-target-exec-state/{experimentId}/{state}/{id}")
-    public String workbookTargetExecState(@PathVariable Long experimentId, @PathVariable String state, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = planTopLevelService.changeWorkbookExecState(state, id);
+    public String workbookTargetExecState(@PathVariable Long experimentId, @PathVariable String state,
+                                          @PathVariable Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        OperationStatusRest operationStatusRest = planTopLevelService.changeWorkbookExecState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
             return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
@@ -336,8 +338,10 @@ public class ExperimentController {
     }
 
     @PostMapping("/bind-experiment-to-plan-with-resource")
-    public String bindExperimentToPlanWithResource(Long experimentId, String experimentCode, String resourcePoolCode, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = experimentTopLevelService.bindExperimentToPlanWithResource(experimentCode, resourcePoolCode);
+    public String bindExperimentToPlanWithResource(Long experimentId, String experimentCode, String resourcePoolCode,
+                                                   final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        OperationStatusRest status = experimentTopLevelService.bindExperimentToPlanWithResource(experimentCode, resourcePoolCode, context);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }

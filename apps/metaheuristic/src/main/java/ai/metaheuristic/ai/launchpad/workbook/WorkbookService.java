@@ -616,4 +616,19 @@ public class WorkbookService {
                 throw new IllegalStateException("Right now it must be initialized somewhere else. state: " + state);
         }
     }
+
+    public OperationStatusRest checkWorkbook(Long workbookId, LaunchpadContext context) {
+        if (workbookId==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 workbookId is null");
+        }
+        Workbook wb = workbookCache.findById(workbookId);
+        if (wb==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 Workbook wasn't found, workbookId: " + workbookId );
+        }
+        PlanImpl plan = planCache.findById(wb.getPlanId());
+        if (plan == null || !plan.companyId.equals(context.getCompanyId())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Workbook wasn't found, workbookId: " + workbookId );
+        }
+        return null;
+    }
 }

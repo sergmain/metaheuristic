@@ -85,38 +85,23 @@ public class MultiHttpSecurityConfig {
         @Override
         protected void configure(HttpSecurity http) throws Exception {
 
-            if (globals.isSecurityEnabled) {
+            http
+                    .antMatcher("/rest/**/**").cors()
+                    .and()
+                    .antMatcher("/rest/**/**").sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    .and()
+                    .authorizeRequests()
+                    .antMatchers("/rest/login").permitAll()
+                    .antMatchers("/rest/**/**").authenticated()
+                    .and()
+                    .antMatcher("/rest/**/**").httpBasic().realmName(REST_REALM)
+                    .and()
+                    .antMatcher("/rest/**/**").csrf().disable().headers().cacheControl();
 
-                http
-                        .antMatcher("/rest/**/**").cors()
-                        .and()
-                        .antMatcher("/rest/**/**").sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                        .and()
-                        .authorizeRequests()
-                        .antMatchers("/rest/login").permitAll()
-                        .antMatchers("/rest/v1/srv/**/**", "/rest/v1/srv-v2/**/**", "/rest/v1/payload/**/**", "/rest/v1/upload/**/**").hasAuthority("ROLE_SERVER_REST_ACCESS")
-                        .antMatchers("/rest/**/**").authenticated()
-                        .and()
-                        .antMatcher("/rest/**/**").httpBasic().realmName(REST_REALM)
-                        .and()
-                        .antMatcher("/rest/**/**").csrf().disable().headers().cacheControl();
-            }
-            else {
-                http
-                        .antMatcher("/rest/**/**").cors()
-                        .and()
-                        .antMatcher("/rest/**/**").sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                        .and()
-                        .antMatcher("/rest/**/**").authorizeRequests().anyRequest().anonymous()
-                        .and()
-                        .antMatcher("/rest/**/**").csrf().disable().headers().cacheControl();
-
-            }
             if (globals.isSslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }
         }
-
     }
 
     @Configuration
@@ -160,6 +145,5 @@ public class MultiHttpSecurityConfig {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }
         }
-
     }
 }
