@@ -51,4 +51,11 @@ alter table mh_event
 update mh_event
 set COMPANY_ID = 2;
 
+alter table mh_account drop column TOKEN;
+
+alter table mh_account
+    add     SECRET_KEY      varchar(25);
+
+alter table mh_account
+    add     TWO_FA      BOOLEAN not null default false;
 

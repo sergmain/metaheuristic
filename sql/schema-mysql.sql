@@ -11,7 +11,7 @@ CREATE TABLE mh_company
 insert into mh_company
 (id, version, name, params)
 VALUES
-(1, 0, 'main company', '');
+(1, 0, 'master company', '');
 
 create table mh_account
 (
@@ -19,7 +19,6 @@ create table mh_account
     VERSION         INT UNSIGNED    NOT NULL,
     COMPANY_ID      INT UNSIGNED,
     USERNAME varchar(30) not null,
-    TOKEN varchar(50),
     PASSWORD varchar(100) not null,
     ROLES varchar(100),
     PUBLIC_NAME varchar(100),
@@ -33,7 +32,9 @@ create table mh_account
     PHONE varchar(100) ,
     PHONE_AS_STR varchar(100) ,
 
-    CREATED_ON bigint not null
+    CREATED_ON  bigint not null,
+    SECRET_KEY  varchar(25),
+    TWO_FA      BOOLEAN not null default false
 );
 
 CREATE INDEX mh_account_company_id_idx

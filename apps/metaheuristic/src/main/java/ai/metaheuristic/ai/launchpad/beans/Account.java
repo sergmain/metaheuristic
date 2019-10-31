@@ -38,7 +38,7 @@ import java.util.StringTokenizer;
 @Entity
 @Table(name = "MH_ACCOUNT")
 @Data
-//@EqualsAndHashCode(of = {"username", "password", "token"})
+@EqualsAndHashCode(of = {"username", "password"})
 public class Account implements UserDetails, Serializable, Cloneable {
     private static final long serialVersionUID = 708692073045562337L;
 
@@ -79,21 +79,16 @@ public class Account implements UserDetails, Serializable, Cloneable {
     @Column(name="PHONE")
     public long phone;
 
-    /**
-     * won't delete this field for backward compatibility
-     */
-    @Deprecated
-    public String token = "";
-
-    // for backward compatibility, token must be not-null in db
-    public String getToken() {
-        return "";
-    }
-
     @Column(name="created_on")
     public long createdOn;
 
     public String roles;
+
+    @Column(name="SECRET_KEY")
+    public String secretKey;
+
+    @Column(name="TWO_FA")
+    public boolean twoFA;
 
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     public Object clone()  {

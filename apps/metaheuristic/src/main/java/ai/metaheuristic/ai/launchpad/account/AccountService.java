@@ -164,7 +164,7 @@ public class AccountService {
             account.getRolesAsList().add(role);
         }
 
-        String roles = String.join(",", account.getRolesAsList());
+        String roles = String.join(", ", account.getRolesAsList());
         account.setRoles(roles);
         accountCache.save(account);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Roles was changed successfully", null);

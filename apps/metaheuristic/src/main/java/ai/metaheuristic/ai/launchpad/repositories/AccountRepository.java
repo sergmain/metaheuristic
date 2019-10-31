@@ -32,10 +32,10 @@ import org.springframework.transaction.annotation.Transactional;
  * Time: 15:41
  */
 @Repository
+@Transactional
 @Profile("launchpad")
 public interface AccountRepository extends CrudRepository<Account, Long> {
 
-    @Transactional(propagation= Propagation.SUPPORTS)
     @Query(value="select a from Account a where a.id=:id")
     Account findByIdForUpdate(Long id);
 
@@ -48,6 +48,7 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
     @Transactional(readOnly = true)
     Page<Account> findAll(Pageable pageable);
 
+    @Transactional(readOnly = true)
     @Query(value="select a from Account a where a.companyId=:companyId")
     Page<Account> findAll(Pageable pageable, Long companyId);
 }

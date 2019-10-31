@@ -41,7 +41,7 @@ public class CustomUserDetails implements UserDetailsService {
 
     private final Globals globals;
     private final AccountCache accountService;
-    public final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     @Data
     public static class ComplexUsername {
@@ -103,7 +103,7 @@ public class CustomUserDetails implements UserDetailsService {
             account.setEnabled(true);
             account.setPassword(globals.launchpadMasterPassword);
 
-            account.setRoles("ROLE_MASTER_ADMIN");
+            account.setRoles(SecConsts.ROLE_MASTER_ADMIN);
             return account;
         }
 

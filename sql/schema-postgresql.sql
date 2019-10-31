@@ -12,7 +12,6 @@ create table MH_ACCOUNT
   ID  bigserial not null PRIMARY KEY,
   VERSION bigint NOT NULL,
   USERNAME varchar(30) not null,
-  TOKEN varchar(50) not null,
   PASSWORD varchar(100) not null,
   ROLES varchar(100),
   PUBLIC_NAME varchar(100),
