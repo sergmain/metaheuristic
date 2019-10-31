@@ -61,8 +61,10 @@ public class Batch implements Serializable {
     @Column(name = "PARAMS")
     public String params;
 
-    public Batch(Long planId, Enums.BatchExecState state) {
+    public Batch(Long planId, Enums.BatchExecState state, Long accountId, Long companyId ) {
         this.planId = planId;
+        this.accountId = accountId;
+        this.companyId = companyId;
         this.createdOn = System.currentTimeMillis();
         this.execState=state.code;
     }

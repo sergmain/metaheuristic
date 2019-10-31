@@ -44,6 +44,9 @@ public class LaunchpadContext {
     public String getUsername() {
         return account.username;
     }
+    public Long getAccountId() {
+        return account.id;
+    }
     public Long getCompanyId() {
         return account.companyId;
     }

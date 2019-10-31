@@ -51,7 +51,7 @@ import javax.validation.constraints.Size;
 @RequiredArgsConstructor
 public class TwoFactorAuthController {
 
-    static final String ISSUER = "Metaheuristic";
+    private static final String ISSUER = "Metaheuristic";
 
     private final GoogleAuthenticator googleAuthenticator;
     private final LaunchpadContextService launchpadContextService;

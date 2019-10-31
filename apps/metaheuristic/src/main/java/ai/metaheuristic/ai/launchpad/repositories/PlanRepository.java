@@ -49,13 +49,12 @@ public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
     List<Plan> findAllAsPlan(Long companyId);
 
     @Transactional(readOnly = true)
-    Slice<Plan> findAllByOrderByIdDesc(Pageable pageable);
-
-    @Transactional(readOnly = true)
-    List<Plan> findAllByOrderByIdDesc();
+    @Query(value="select p from PlanImpl p where p.companyId=:companyId order by p.id desc ")
+    List<Plan> findAllByOrderByIdDesc(Long companyId);
 
     @Transactional(readOnly = true)
     PlanImpl findByCode(String code);
+
 }
 
 

@@ -148,12 +148,12 @@ public class BatchTopLevelService {
         return plans;
     }
 
-    public OperationStatusRest batchUploadFromFile(final MultipartFile file, Long planId, final LaunchpadContext launchpadContext) {
+    public OperationStatusRest batchUploadFromFile(final MultipartFile file, Long planId, final LaunchpadContext context) {
         PlanImpl plan = planCache.findById(planId);
-        if (plan == null || !plan.companyId.equals(launchpadContext.getCompanyId())) {
+        if (plan == null || !plan.companyId.equals(context.getCompanyId())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
         }
-        if (!plan.companyId.equals(launchpadContext.getCompanyId())) {
+        if (!plan.companyId.equals(context.getCompanyId())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.051 plan wasn't found, planId: " + planId);
         }
 
@@ -163,7 +163,7 @@ public class BatchTopLevelService {
         }
         final String originFilename = tempFilename.toLowerCase();
 
-        launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, originFilename, file.getSize(), null, null, launchpadContext );
+        launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
 
         // TODO 2019-07-06 Do we need to validate plan here in case that there is another check
         //  2019-10-28 it's working so left it as is until there will be found an issue with this
@@ -186,9 +186,9 @@ public class BatchTopLevelService {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
 
-            final Batch b = batchCache.save(new Batch(planId, Enums.BatchExecState.Stored));
+            final Batch b = batchCache.save(new Batch(planId, Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId()));
 
-            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, null, null, b.id, null, launchpadContext );
+            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), null, null, b.id, null, context );
 
             try(InputStream is = new FileInputStream(dataFile)) {
                 String code = ResourceUtils.toResourceCode(originFilename);

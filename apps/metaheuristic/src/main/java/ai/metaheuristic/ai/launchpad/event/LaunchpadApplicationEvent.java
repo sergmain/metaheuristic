@@ -30,11 +30,14 @@ import lombok.Data;
 public class LaunchpadApplicationEvent {
 
     public final LaunchpadEventYaml launchpadEventYaml;
+    public Long companyId;
 
-    public LaunchpadApplicationEvent(EnumsApi.LaunchpadEventType event, String contextId, LaunchpadEventYaml.BatchEventData batchEventData) {
+    public LaunchpadApplicationEvent(EnumsApi.LaunchpadEventType event, Long companyId, String contextId, LaunchpadEventYaml.BatchEventData batchEventData) {
+        this.companyId = companyId;
         LaunchpadEventYaml launchpadEventYaml = new LaunchpadEventYaml();
         launchpadEventYaml.createdOn = System.currentTimeMillis();
         launchpadEventYaml.event = event;
+        launchpadEventYaml.contextId = contextId;
         launchpadEventYaml.contextId = contextId;
         launchpadEventYaml.batchData = batchEventData;
         this.launchpadEventYaml = launchpadEventYaml;

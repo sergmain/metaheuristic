@@ -27,23 +27,31 @@ alter table mh_plan
 update mh_plan
 set COMPANY_ID = 2;
 
+alter table mh_plan modify COMPANY_ID int unsigned not null;
+
 alter table mh_atlas
     add     COMPANY_ID      INT UNSIGNED;
 
 update mh_atlas
 set COMPANY_ID = 2;
 
+alter table mh_atlas modify COMPANY_ID int unsigned not null;
+
 alter table mh_batch
     add     COMPANY_ID      INT UNSIGNED;
 
 update mh_batch
 set COMPANY_ID = 2;
 
+alter table mh_batch modify COMPANY_ID int unsigned not null;
+
 alter table mh_batch
     add     ACCOUNT_ID      INT UNSIGNED;
 
 update mh_batch
 set ACCOUNT_ID = (select min(id) from MH_ACCOUNT);
+
+alter table mh_batch modify ACCOUNT_ID int unsigned not null;
 
 alter table mh_event
     add     COMPANY_ID      INT UNSIGNED;

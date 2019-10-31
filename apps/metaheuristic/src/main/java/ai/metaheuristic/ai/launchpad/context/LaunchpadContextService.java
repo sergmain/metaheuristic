@@ -43,14 +43,13 @@ public class LaunchpadContextService {
     private final CompanyCache companyCache;
 
     public LaunchpadContext getContext(Authentication authentication) {
-        String username = (String) authentication.getPrincipal();
-        Account account = (Account)userDetailsService.loadUserByUsername(username);
+        Account account = (Account)authentication.getPrincipal();
         if (account==null) {
-            throw new BadExecutionContextException("user not found: " + username);
+            throw new BadExecutionContextException("principal is null");
         }
         Company company = companyCache.findById(account.companyId);
         if (company==null) {
-            throw new BadExecutionContextException("company not found not found for user: " + username);
+            throw new BadExecutionContextException("company not found not found for user: " + account.username);
         }
         //noinspection UnnecessaryLocalVariable
         LaunchpadContext context = new LaunchpadContext(account, company);

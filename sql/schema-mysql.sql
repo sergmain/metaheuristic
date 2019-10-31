@@ -17,7 +17,7 @@ create table mh_account
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    COMPANY_ID      INT UNSIGNED,
+    COMPANY_ID      INT UNSIGNED    not null,
     USERNAME varchar(30) not null,
     PASSWORD varchar(100) not null,
     ROLES varchar(100),
@@ -132,6 +132,7 @@ CREATE TABLE mh_snippet
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
+    COMPANY_ID      INT UNSIGNED    not null,
     SNIPPET_CODE    VARCHAR(100)  not null,
     SNIPPET_TYPE      VARCHAR(50) not null,
     PARAMS        MEDIUMTEXT not null
@@ -144,7 +145,7 @@ CREATE TABLE mh_plan
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    COMPANY_ID      INT UNSIGNED,
+    COMPANY_ID      INT UNSIGNED    not null,
     CODE      varchar(50)  NOT NULL,
     CREATED_ON    bigint NOT NULL,
     PARAMS        TEXT not null,
@@ -169,7 +170,7 @@ CREATE TABLE mh_atlas
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    COMPANY_ID      INT UNSIGNED,
+    COMPANY_ID      INT UNSIGNED    not null,
     NAME          VARCHAR(50)   NOT NULL,
     DESCRIPTION   VARCHAR(250)  NOT NULL,
     CODE          VARCHAR(50)   NOT NULL,
@@ -196,7 +197,7 @@ create table mh_batch
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    COMPANY_ID      INT UNSIGNED,
+    COMPANY_ID      INT UNSIGNED    not null,
     ACCOUNT_ID      INT UNSIGNED,
     PLAN_ID          NUMERIC(10, 0) NOT NULL,
     DATA_ID          NUMERIC(10, 0),
@@ -220,6 +221,7 @@ CREATE TABLE mh_event
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
+    -- company_id can be null
     COMPANY_ID      INT UNSIGNED,
     CREATED_ON      BIGINT UNSIGNED NOT NULL,
     PERIOD          INT UNSIGNED    not null ,

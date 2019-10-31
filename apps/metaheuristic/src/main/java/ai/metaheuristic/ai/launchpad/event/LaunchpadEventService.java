@@ -66,7 +66,7 @@ public class LaunchpadEventService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public void publishBatchEvent(
-            EnumsApi.LaunchpadEventType event, String filename,
+            EnumsApi.LaunchpadEventType event, Long companyId, String filename,
             Long size, Long batchId, Long workbookId, LaunchpadContext launchpadContext) {
         if (!globals.isEventEnabled) {
             return;
@@ -85,7 +85,7 @@ public class LaunchpadEventService {
             batchEventData.username = launchpadContext.getUsername();
             contextId = launchpadContext.contextId;
         }
-        applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, contextId, batchEventData));
+        applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, companyId, contextId, batchEventData));
     }
 
     public void publishTaskEvent(EnumsApi.LaunchpadEventType event, Long stationId, Long taskId, Long workbookId) {
@@ -106,6 +106,7 @@ public class LaunchpadEventService {
             return;
         }
         LaunchpadEvent le = new LaunchpadEvent();
+        le.companyId = event.companyId;
         le.period = getPeriod(event.launchpadEventYaml.createdOn);
         le.createdOn = event.launchpadEventYaml.createdOn;
         le.event = event.launchpadEventYaml.event.toString();

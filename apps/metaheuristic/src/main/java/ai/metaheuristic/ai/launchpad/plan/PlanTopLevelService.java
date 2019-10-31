@@ -91,7 +91,7 @@ public class PlanTopLevelService {
 
     public PlanApiData.PlansResult getPlans(Pageable pageable, boolean isArchive, LaunchpadContext context) {
         pageable = ControllerUtils.fixPageSize(globals.planRowsLimit, pageable);
-        List<Plan> plans = planRepository.findAllByOrderByIdDesc();
+        List<Plan> plans = planRepository.findAllByOrderByIdDesc(context.getCompanyId());
         AtomicInteger count = new AtomicInteger();
 
         List<Plan> activePlans = plans.stream()
