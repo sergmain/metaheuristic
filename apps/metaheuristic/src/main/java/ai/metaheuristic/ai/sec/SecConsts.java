@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.sec;
 
+import java.util.List;
+
 /**
  * @author Serge
  * Date: 10/30/2019
@@ -23,4 +25,8 @@ package ai.metaheuristic.ai.sec;
  */
 public class SecConsts {
     public static final String ROLE_MASTER_ADMIN = "ROLE_MASTER_ADMIN";
+    public static final String ROLE_SERVER_REST_ACCESS = "ROLE_SERVER_REST_ACCESS";
+
+    public static final List<String> POSSIBLE_ROLES = List.of("ROLE_ADMIN","ROLE_MANAGER","ROLE_OPERATOR","ROLE_BILLING","ROLE_DATA");
+    public static final List<String> REST_ROLE = List.of(ROLE_SERVER_REST_ACCESS);
 }

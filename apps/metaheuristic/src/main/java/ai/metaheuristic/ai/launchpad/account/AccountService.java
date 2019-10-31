@@ -16,18 +16,17 @@
 
 package ai.metaheuristic.ai.launchpad.account;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.data.AccountData;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
+import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -45,8 +44,6 @@ import java.util.stream.Collectors;
 @Profile("launchpad")
 @RequiredArgsConstructor
 public class AccountService {
-
-    public static final List<String> POSSIBLE_ROLES = List.of("ROLE_SERVER_REST_ACCESS", "ROLE_ADMIN","ROLE_MANAGER","ROLE_OPERATOR","ROLE_BILLING","ROLE_DATA");
 
     private final AccountRepository accountRepository;
     private final AccountCache accountCache;
@@ -142,7 +139,7 @@ public class AccountService {
         }
         String str = Arrays.stream(StringUtils.split(roles, ','))
                 .map(String::strip)
-                .filter(POSSIBLE_ROLES::contains)
+                .filter(SecConsts.POSSIBLE_ROLES::contains)
                 .collect(Collectors.joining(", "));
 
         account.setRoles(str);
@@ -156,12 +153,18 @@ public class AccountService {
         if (account == null || !Objects.equals(account.companyId, companyId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.110 account wasn't found, accountId: " + accountId);
         }
-        String role = AccountService.POSSIBLE_ROLES.get(roleId);
+        List<String> possibleRoles = Consts.ID_1.equals(companyId) ? SecConsts.REST_ROLE : SecConsts.POSSIBLE_ROLES;
+
+        String role = possibleRoles.get(roleId);
         boolean isAccountContainsRole = account.hasRole(role);
         if (isAccountContainsRole && !checkbox){
             account.getRolesAsList().remove(role);
         } else if (!isAccountContainsRole && checkbox) {
             account.getRolesAsList().add(role);
+        }
+
+        if (!Consts.ID_1.equals(account.getCompanyId())) {
+            account.getRolesAsList().remove(SecConsts.ROLE_SERVER_REST_ACCESS);
         }
 
         String roles = String.join(", ", account.getRolesAsList());

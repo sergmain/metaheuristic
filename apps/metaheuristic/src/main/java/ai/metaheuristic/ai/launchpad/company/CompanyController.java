@@ -16,11 +16,12 @@
 
 package ai.metaheuristic.ai.launchpad.company;
 
-import ai.metaheuristic.ai.launchpad.account.AccountService;
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.data.AccountData;
 import ai.metaheuristic.ai.launchpad.data.CompanyData;
+import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -217,7 +218,7 @@ public class CompanyController {
         accountResult.account.setPassword(null);
         accountResult.account.setPassword2(null);
         model.addAttribute("account", accountResult.account);
-        model.addAttribute("roles", AccountService.POSSIBLE_ROLES);
+        model.addAttribute("roles", Consts.ID_1.equals(companyId) ? SecConsts.REST_ROLE : SecConsts.POSSIBLE_ROLES);
         model.addAttribute("companyId", companyId);
         return "launchpad/company/company-account-edit-roles";
     }

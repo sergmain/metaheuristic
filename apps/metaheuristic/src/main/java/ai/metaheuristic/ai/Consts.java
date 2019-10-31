@@ -121,4 +121,5 @@ public class Consts {
 
     public static final String META_SNIPPET_DOWNLOAD_STATUS = "mh-snippet-download-status";
     public static final String RESULT_ZIP = "result.zip";
+    public static final Long ID_1 = 1L;
 }

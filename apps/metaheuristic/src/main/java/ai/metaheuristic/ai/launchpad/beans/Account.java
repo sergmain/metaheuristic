@@ -133,6 +133,17 @@ public class Account implements UserDetails, Serializable, Cloneable {
         return rolesAsList;
     }
 
+    @Transient
+    @JsonIgnore
+    public void storeNewRole(String role) {
+        synchronized (this) {
+            this.phoneAsStr = role;
+            rolesAsList = null;
+            grantedAuthorities.clear();
+            initRoles();
+        }
+    }
+
     private void initRoles() {
         if (rolesAsList==null) {
             synchronized (this) {

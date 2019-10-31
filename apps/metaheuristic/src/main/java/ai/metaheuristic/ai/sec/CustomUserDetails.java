@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.sec;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.account.AccountCache;
 import ai.metaheuristic.ai.launchpad.beans.Account;
@@ -26,7 +27,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -41,7 +41,6 @@ public class CustomUserDetails implements UserDetailsService {
 
     private final Globals globals;
     private final AccountCache accountService;
-    private final PasswordEncoder passwordEncoder;
 
     @Data
     public static class ComplexUsername {
@@ -95,7 +94,9 @@ public class CustomUserDetails implements UserDetailsService {
             // fake Id, I hope it won't make any collision with the real accounts
             // need to think of better solution for virtual accounts
             account.setId( Integer.MAX_VALUE -5L );
-            account.setCompanyId( Integer.MAX_VALUE -5L );
+
+            // master admin will belong to companyID==1
+            account.setCompanyId( 1L );
             account.setUsername(globals.launchpadMasterUsername);
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
@@ -111,6 +112,14 @@ public class CustomUserDetails implements UserDetailsService {
         if (account == null) {
             throw new UsernameNotFoundException("Username not found");
         }
+
+        // fix role, the role ROLE_SERVER_REST_ACCESS can't be assigned to any user whose company isn't the master company with id==1
+        if (!Consts.ID_1.equals(account.getCompanyId()) && account.getRolesAsList().contains(SecConsts.ROLE_SERVER_REST_ACCESS)) {
+            account.getRolesAsList().remove(SecConsts.ROLE_SERVER_REST_ACCESS);
+            String roles = String.join(", ", account.getRolesAsList());
+            account.storeNewRole(roles);
+        }
+
         return account;
     }
 }
