@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Profile("launchpad")
 public class LaunchpadContextService {
 
 //    @Autowired

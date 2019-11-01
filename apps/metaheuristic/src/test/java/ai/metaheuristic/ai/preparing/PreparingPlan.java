@@ -17,12 +17,14 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
@@ -85,6 +87,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
     @Autowired
     public TaskPersistencer taskPersistencer;
 
+    @Autowired
+    public CompanyRepository companyRepository;
+
     public PlanImpl plan = null;
     public PlanParamsYamlV2 planParamsYaml = null;
     public Snippet s1 = null;
@@ -95,6 +100,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public WorkbookImpl workbook = null;
 
     public WorkbookParamsYaml workbookParamsYaml;
+
+    public Company company;
 
     public abstract String getPlanYamlAsString();
 
@@ -182,6 +189,14 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public void beforePreparingPlan() {
         assertTrue(globals.isUnitTesting);
 
+        company = new Company();
+        company.name = "Test company #2";
+        companyRepository.save(company);
+        assertNotNull(company.id);
+
+        // id==1L must be assigned only to master company
+        assertNotEquals(Consts.ID_1, company.id);
+
         s1 = createSnippet("snippet-01:1.1");
         s2 = createSnippet("snippet-02:1.1");
         s3 = createSnippet("snippet-03:1.1");
@@ -194,6 +209,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         String params = getPlanYamlAsString();
         plan.setParams(params);
         plan.setCreatedOn(System.currentTimeMillis());
+        plan.companyId = company.id;
 
 
         Plan tempPlan = planRepository.findByCode(plan.getCode());
@@ -248,11 +264,18 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
     @After
     public void afterPreparingPlan() {
-        if (plan!=null) {
+        if (plan!=null && plan.getId()!=null) {
             try {
                 planCache.deleteById(plan.getId());
             } catch (Throwable th) {
                 log.error("Error while planCache.deleteById()", th);
+            }
+        }
+        if (company!=null && company.id!=null) {
+            try {
+                companyRepository.deleteById(company.id);
+            } catch (Throwable th) {
+                log.error("Error while companyRepository.deleteById()", th);
             }
         }
         deleteSnippet(s1);

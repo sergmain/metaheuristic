@@ -470,31 +470,6 @@ public class StationTaskService {
         }
     }
 
-    public static boolean deleteOrRenameTaskDir(File taskDir, File taskYamlFile) throws IOException {
-        if (taskDir.exists()) {
-            log.warn("#713.170 task's directory already exists, {}", taskDir.getPath());
-            if (taskYamlFile.exists()) {
-                File temp = new File(taskYamlFile.getParentFile(), Consts.TASK_YAML+".temp" );
-                FileUtils.moveFile(taskYamlFile, temp);
-                if (taskYamlFile.exists()) {
-                    log.error("#713.180 File task.yaml still exists");
-                }
-                else {
-                    return true;
-                }
-            }
-            File tempDir = new File(taskDir.getParentFile(), taskDir.getName() + ".temp");
-            //noinspection ResultOfMethodCallIgnored
-            taskDir.renameTo(tempDir);
-            deleteDir(tempDir, "delete dir in deleteOrRenameTaskDir()");
-            if (taskDir.exists()) {
-                log.error("#713.190 can't delete or move task's dir {}", taskDir.getPath());
-                return false;
-            }
-        }
-        return true;
-    }
-
     public StationTask resetTask(String launchpadUrl, Long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             StationTask task = findById(launchpadUrl, taskId);
