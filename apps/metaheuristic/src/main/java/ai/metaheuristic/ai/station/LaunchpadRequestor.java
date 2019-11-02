@@ -35,6 +35,7 @@ import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.*;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -321,6 +322,9 @@ public class LaunchpadRequestor {
                 }
                 else if (cause instanceof SocketTimeoutException) {
                     log.error("#775.093 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                }
+                else if (cause instanceof SSLPeerUnverifiedException) {
+                    log.error("#775.093 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else {
                     log.error("#775.100 Error, url: " + url, e);

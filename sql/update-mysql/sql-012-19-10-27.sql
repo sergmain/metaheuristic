@@ -49,7 +49,7 @@ alter table mh_batch
     add     ACCOUNT_ID      INT UNSIGNED;
 
 update mh_batch
-set ACCOUNT_ID = (select min(id) from MH_ACCOUNT);
+set ACCOUNT_ID = (select min(id) from mh_account );
 
 alter table mh_batch modify ACCOUNT_ID int unsigned not null;
 
