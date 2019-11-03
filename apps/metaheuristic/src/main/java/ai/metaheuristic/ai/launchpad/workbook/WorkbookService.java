@@ -138,6 +138,8 @@ public class WorkbookService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#705.010 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
+
+        // TODO 2019-11-03 need to investigate why without this call nothing is working
         Task t = taskPersistencer.resetTask(task.id);
         if (t==null) {
             WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithSettingAllChildrenTasksAsBroken(task.getWorkbookId(), task.id);

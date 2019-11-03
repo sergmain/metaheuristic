@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.station.actors.DownloadSnippetActor;
 import ai.metaheuristic.ai.station.tasks.DownloadSnippetTask;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
+import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
@@ -140,7 +141,11 @@ public class TaskAssetPreparer {
     private boolean prepareSnippet(SnippetApiData.SnippetConfig snippetConfig, String launchpadUrl, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, String stationId) {
         if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.launchpad) {
             final String code = snippetConfig.code;
-            final Enums.SnippetState snippetState = metadataService.getSnippetDownloadStatuses(launchpadUrl, code).snippetState;
+            final SnippetDownloadStatusYaml.Status snippetDownloadStatuses = metadataService.getSnippetDownloadStatuses(launchpadUrl, code);
+            if (snippetDownloadStatuses==null) {
+                return false;
+            }
+            final Enums.SnippetState snippetState = snippetDownloadStatuses.snippetState;
             if (snippetState==Enums.SnippetState.none) {
                 DownloadSnippetTask snippetTask = new DownloadSnippetTask(launchpad.config.chunkSize, snippetConfig.getCode(), snippetConfig);
                 snippetTask.launchpad = launchpad.launchpadLookup;
