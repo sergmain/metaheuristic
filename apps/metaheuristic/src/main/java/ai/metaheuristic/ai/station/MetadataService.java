@@ -32,10 +32,10 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataUtils;
 import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
 import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -106,7 +106,7 @@ public class MetadataService {
         int i=0;
     }
 
-    public ChecksumState prepareChecksum(String snippetCode, String launchpadUrl, SnippetApiData.SnippetConfig snippetConfig) {
+    public ChecksumState prepareChecksum(String snippetCode, String launchpadUrl, SnippetConfigYaml snippetConfig) {
         ChecksumState checksumState = new ChecksumState();
         // check requirements of signature
         if (S.b(snippetConfig.checksum)) {
@@ -175,7 +175,7 @@ public class MetadataService {
             removeSnippet(launchpadUrl, snippetCode);
             return;
         }
-        SnippetApiData.SnippetConfig snippetConfig = downloadedSnippetConfigStatus.snippetConfig;
+        SnippetConfigYaml snippetConfig = downloadedSnippetConfigStatus.snippetConfig;
 
         ChecksumState checksumState = prepareChecksum(snippetCode, launchpadUrl, snippetConfig);
         if (!checksumState.signatureIsOk) {

@@ -22,8 +22,8 @@ import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
-import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -130,7 +130,7 @@ public class ServerController {
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        SnippetApiData.SnippetConfig sc = snippet.getSnippetConfig(false);
+        SnippetConfigYaml sc = snippet.getSnippetConfig(false);
         log.info("#440.120 Send checksum {} for snippet {}", sc.checksum, sc.getCode());
         return sc.checksum;
     }
@@ -153,9 +153,9 @@ public class ServerController {
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        SnippetApiData.SnippetConfig sc = snippet.getSnippetConfig(false);
+        SnippetConfigYaml sc = snippet.getSnippetConfig(false);
         log.info("Send snippet config for snippet {}", sc.getCode());
-        return SnippetConfigUtils.toString(sc);
+        return SnippetConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
     }
 
     /**

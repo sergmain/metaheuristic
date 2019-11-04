@@ -13,30 +13,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package ai.metaheuristic.commons.yaml.snippet;
 
-package ai.metaheuristic.ai.yaml.communication.station;
-
+import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
-/**
- * @author Serge
- * Date: 8/29/2019
- * Time: 6:00 PM
- */
-public class StationCommParamsYamlUtils {
+@Slf4j
+public class SnippetConfigYamlUtils {
 
-    private static final StationCommParamsYamlUtilsV1 YAML_UTILS_V_1 = new StationCommParamsYamlUtilsV1();
-    private static final StationCommParamsYamlUtilsV2 YAML_UTILS_V_2 = new StationCommParamsYamlUtilsV2();
-    private static final StationCommParamsYamlUtilsV3 YAML_UTILS_V_3 = new StationCommParamsYamlUtilsV3();
-    private static final StationCommParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
+    private static final SnippetConfigYamlUtilsV1 YAML_UTILS_V_1 = new SnippetConfigYamlUtilsV1();
+    private static final SnippetConfigYamlUtilsV2 YAML_UTILS_V_2 = new SnippetConfigYamlUtilsV2();
+    private static final SnippetConfigYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
-    public static final BaseYamlUtils<StationCommParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<SnippetConfigYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2,
-                    3, YAML_UTILS_V_3
+                    2, YAML_UTILS_V_2
             ),
             DEFAULT_UTILS
     );

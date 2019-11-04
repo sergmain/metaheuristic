@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.station.env.EnvService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -143,7 +144,7 @@ public class GitSourcingService {
         return assetFile;
     }
 
-    public GitExecResult prepareSnippet(final File snippetRootDir, SnippetApiData.SnippetConfig snippet) {
+    public GitExecResult prepareSnippet(final File snippetRootDir, SnippetConfigYaml snippet) {
 
         log.info("#027.050 Start preparing snippet dir");
         AssetFile assetFile = prepareSnippetDir(snippetRootDir, snippet.code);
@@ -224,7 +225,7 @@ public class GitSourcingService {
         return new GitExecResult(repoDir, new SnippetApiData.SnippetExecResult(snippet.code, true, 0, "" ), true, null);
     }
 
-    public GitExecResult tryToRepairRepo(File snippetDir, SnippetApiData.SnippetConfig snippet) {
+    public GitExecResult tryToRepairRepo(File snippetDir, SnippetConfigYaml snippet) {
         File repoDir = new File(snippetDir, "git");
         GitExecResult result;
         FileUtils.deleteQuietly(repoDir);
@@ -237,7 +238,7 @@ public class GitSourcingService {
         return result;
     }
 
-    private GitExecResult execFileSystemCheck(File repoDir, SnippetApiData.SnippetConfig snippet) {
+    private GitExecResult execFileSystemCheck(File repoDir, SnippetConfigYaml snippet) {
 //git>git fsck --full
 //Checking object directories: 100% (256/256), done.
 //Checking objects: 100% (10432/10432), done.
@@ -250,14 +251,14 @@ public class GitSourcingService {
         return result;
     }
 
-    private GitExecResult execCheckoutRevision(File repoDir, SnippetApiData.SnippetConfig snippet) {
+    private GitExecResult execCheckoutRevision(File repoDir, SnippetConfigYaml snippet) {
         // git checkout sha1
         //noinspection UnnecessaryLocalVariable
         GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", snippet.git.commit),0L);
         return result;
     }
 
-    private GitExecResult execPullOrigin(File repoDir, SnippetApiData.SnippetConfig snippet) {
+    private GitExecResult execPullOrigin(File repoDir, SnippetConfigYaml snippet) {
         // pull origin master
         //noinspection UnnecessaryLocalVariable
         GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", snippet.git.branch),0L);
@@ -291,7 +292,7 @@ public class GitSourcingService {
         return execGitCmd(cmd, timeout);
     }
 
-    private GitExecResult execClone(File repoDir, SnippetApiData.SnippetConfig snippet) {
+    private GitExecResult execClone(File repoDir, SnippetConfigYaml snippet) {
         // git -C <path> clone <git-repo-url> git
 
         String mirror = envService.getEnvYaml().mirrors.get(snippet.git.repo);

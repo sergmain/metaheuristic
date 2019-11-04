@@ -37,6 +37,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -75,7 +76,7 @@ public class TaskProcessor {
 
     @Data
     public static class SnippetPrepareResult {
-        public SnippetApiData.SnippetConfig snippet;
+        public SnippetConfigYaml snippet;
         public AssetFile snippetAssetFile;
         public SnippetApiData.SnippetExecResult snippetExecResult;
         boolean isLoaded = true;
@@ -213,7 +214,7 @@ public class TaskProcessor {
             final SnippetPrepareResult[] results = new SnippetPrepareResult[ totalCountOfSnippets(taskParamYaml.taskYaml) ];
             int idx = 0;
             SnippetPrepareResult result;
-            for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
+            for (SnippetConfigYaml preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
                 result = prepareSnippet(launchpadInfo, preSnippetConfig);
                 if (result.isError) {
                     markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
@@ -240,7 +241,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
+            for (SnippetConfigYaml postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
                 result = prepareSnippet(launchpadInfo, postSnippetConfig);
                 if (result.isError) {
                     markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
@@ -299,7 +300,7 @@ public class TaskProcessor {
         int idx = 0;
         LaunchpadSchedule schedule = launchpad.schedule!=null && launchpad.schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
                 ? launchpad.schedule : null;
-        for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
+        for (SnippetConfigYaml preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
             SnippetPrepareResult result = results[idx++];
             SnippetApiData.SnippetExecResult execResult;
             if (result==null) {
@@ -327,13 +328,13 @@ public class TaskProcessor {
                 isOk = false;
             }
             if (isOk) {
-                SnippetApiData.SnippetConfig mainSnippetConfig = result.snippet;
+                SnippetConfigYaml mainSnippetConfig = result.snippet;
                 snippetExecResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result, schedule);
                 if (!snippetExecResult.isOk) {
                     isOk = false;
                 }
                 if (isOk) {
-                    for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
+                    for (SnippetConfigYaml postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
                         result = results[idx++];
                         SnippetApiData.SnippetExecResult execResult;
                         if (result==null) {
@@ -352,6 +353,7 @@ public class TaskProcessor {
                     }
                     if (isOk && snippetExecResult.isOk()) {
                         stationTaskService.storeMetrics(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
+                        stationTaskService.storeOverfitting(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
 
                         final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
                         ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
@@ -512,7 +514,7 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public SnippetPrepareResult prepareSnippet(Metadata.LaunchpadInfo launchpadCode, SnippetApiData.SnippetConfig snippet) {
+    public SnippetPrepareResult prepareSnippet(Metadata.LaunchpadInfo launchpadCode, SnippetConfigYaml snippet) {
         SnippetPrepareResult snippetPrepareResult = new SnippetPrepareResult();
         snippetPrepareResult.snippet = snippet;
 

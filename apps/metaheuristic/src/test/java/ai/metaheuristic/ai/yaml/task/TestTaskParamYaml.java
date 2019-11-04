@@ -16,9 +16,9 @@
 package ai.metaheuristic.ai.yaml.task;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -46,7 +46,7 @@ public class TestTaskParamYaml {
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.setHyperParams(map);
-        seq.setSnippet(new SnippetApiData.SnippetConfig(
+        seq.setSnippet(new SnippetApiData.SnippetConfigYaml(
                 "123:1.0",
                 CommonConsts.FIT_TYPE,
                 "file.txt",
@@ -55,7 +55,7 @@ public class TestTaskParamYaml {
                 EnumsApi.SnippetSourcing.launchpad,
                 true,
                 null,
-                new SnippetApiData.SnippetConfig.SnippetInfo(),
+                new SnippetApiData.SnippetConfigYaml.SnippetInfo(),
                 null,
                 null,
                 false
@@ -80,20 +80,20 @@ public class TestTaskParamYaml {
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.taskYaml.setHyperParams(map);
-        seq.taskYaml.setSnippet(new SnippetApiData.SnippetConfig(
+        seq.taskYaml.setSnippet(new SnippetConfigYaml(
                 "123:1.0",
                 CommonConsts.FIT_TYPE,
                 "file.txt",
                 "112233",
                 "python.exe",
                 EnumsApi.SnippetSourcing.launchpad,
-                true,
                 null,
-                new SnippetApiData.SnippetConfig.SnippetInfo(),
+                new SnippetConfigYaml.SnippetInfo(),
                 null,
                 null,
                 false,
-                new ArrayList<>()
+                new ArrayList<>(),
+                new SnippetConfigYaml.MachineLearning(true, false)
         ));
 
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(seq);

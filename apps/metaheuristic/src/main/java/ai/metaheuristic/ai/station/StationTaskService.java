@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.ai.yaml.station_task.StationTaskUtils;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -337,9 +338,34 @@ public class StationTaskService {
         }
     }
 
-    public void storeMetrics(String launchpadUrl, StationTask task, SnippetApiData.SnippetConfig snippet, File artifactDir) {
+    public void storeOverfitting(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) {
+        if (snippet.ml!=null && snippet.ml.metrics) {
+            log.info("storeOverfitting(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
+            Metrics metrics = new Metrics();
+            File metricsFile = getMetricsFile(artifactDir);
+            if (metricsFile!=null) {
+                try {
+                    String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
+                    metrics.setStatus(Metrics.Status.Ok);
+                    metrics.setMetrics(execMetrics);
+                }
+                catch (IOException e) {
+                    log.error("#713.140 Error reading metrics file {}", metricsFile.getAbsolutePath());
+                    metrics.setStatus(Metrics.Status.Error);
+                    metrics.setError(e.toString());
+                }
+            } else {
+                metrics.setStatus(Metrics.Status.NotFound);
+            }
+            task.setMetrics(MetricsUtils.toString(metrics));
+            save(task);
+        }
+
+    }
+
+    public void storeMetrics(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) {
         // store metrics after predict only
-        if (snippet.isMetrics()) {
+        if (snippet.ml!=null && snippet.ml.metrics) {
             log.info("storeMetrics(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
             Metrics metrics = new Metrics();
             File metricsFile = getMetricsFile(artifactDir);

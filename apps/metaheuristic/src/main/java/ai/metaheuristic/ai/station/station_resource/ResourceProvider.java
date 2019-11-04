@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 
 import java.io.File;
 import java.util.List;
@@ -33,7 +34,7 @@ public interface ResourceProvider {
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             File outputResourceFile,
-            SnippetApiData.SnippetConfig snippet
+            SnippetConfigYaml snippet
     );
 
     File getOutputResourceFile(

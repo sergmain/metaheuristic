@@ -15,8 +15,8 @@
  */
 package ai.metaheuristic.ai.launchpad.beans;
 
-import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
@@ -47,15 +47,15 @@ public class Snippet implements Serializable {
 
     @Transient
     @JsonIgnore
-    private SnippetApiData.SnippetConfig sc = null;
+    private SnippetConfigYaml sc = null;
 
     @JsonIgnore
-    public SnippetApiData.SnippetConfig getSnippetConfig(boolean isClone) {
+    public SnippetConfigYaml getSnippetConfig(boolean isClone) {
         if (sc==null) {
             synchronized (this) {
                 if (sc==null) {
                     //noinspection UnnecessaryLocalVariable
-                    SnippetApiData.SnippetConfig temp = SnippetConfigUtils.to(params);
+                    SnippetConfigYaml temp = SnippetConfigYamlUtils.BASE_YAML_UTILS.to(params);
                     sc = temp;
                     return sc;
                 }

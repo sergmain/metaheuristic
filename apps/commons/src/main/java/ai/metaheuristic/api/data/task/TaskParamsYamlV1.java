@@ -17,8 +17,8 @@
 package ai.metaheuristic.api.data.task;
 
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.Data;
 
 import java.util.HashMap;
@@ -33,9 +33,9 @@ import java.util.Map;
 @Data
 public class TaskParamsYamlV1 implements BaseParams {
     public Map<String, List<String>> inputResourceCodes = new HashMap<>();
-    public SnippetApiData.SnippetConfig snippet;
-    public SnippetApiData.SnippetConfig preSnippet;
-    public SnippetApiData.SnippetConfig postSnippet;
+    public SnippetConfigYaml snippet;
+    public SnippetConfigYaml preSnippet;
+    public SnippetConfigYaml postSnippet;
     public Map<String, String> hyperParams;
     public String outputResourceCode;
     public Map<String, DataStorageParams> resourceStorageUrls = new HashMap<>();

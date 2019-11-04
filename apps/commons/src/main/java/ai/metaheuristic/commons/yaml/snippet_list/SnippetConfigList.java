@@ -13,9 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.commons.yaml.snippet;
+package ai.metaheuristic.commons.yaml.snippet_list;
 
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.Data;
 
 import java.util.List;
@@ -23,6 +23,6 @@ import java.util.List;
 @Data
 public class SnippetConfigList {
 
-    public List<SnippetApiData.SnippetConfig> snippets;
+    public List<SnippetConfigYaml> snippets;
 
 }

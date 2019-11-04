@@ -36,13 +36,13 @@ import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsV2;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV2;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.process.ProcessV2;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -238,13 +238,12 @@ public abstract class PreparingPlan extends PreparingExperiment {
     }
 
     private Snippet createSnippet(String snippetCode) {
-        SnippetApiData.SnippetConfig sc = new SnippetApiData.SnippetConfig();
+        SnippetConfigYaml sc = new SnippetConfigYaml();
         sc.code = snippetCode;
         sc.type = snippetCode + "-type";
         sc.file = null;
         sc.setEnv("env-"+snippetCode);
         sc.sourcing = EnumsApi.SnippetSourcing.station;
-        sc.metrics = false;
 
         sc.info.setSigned(false);
         sc.info.setLength(1000);
@@ -256,7 +255,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         }
         s.setCode(snippetCode);
         s.setType(sc.type);
-        s.setParams(SnippetConfigUtils.toString(sc));
+        s.setParams(SnippetConfigYamlUtils.BASE_YAML_UTILS.toString(sc));
 
         snippetCache.save(s);
         return s;

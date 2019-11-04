@@ -21,8 +21,9 @@ import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigList;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -97,7 +98,7 @@ public class PackageSnippet implements CommandLineRunner {
         // Verify
         boolean isError = false;
         Set<String> set = new HashSet<>();
-        for (SnippetApiData.SnippetConfig snippet : snippetConfigList.getSnippets()) {
+        for (SnippetConfigYaml snippet : snippetConfigList.getSnippets()) {
             final SnippetApiData.SnippetConfigStatus verify = SnippetCoreUtils.validate(snippet);
             if (!verify.isOk) {
                 System.out.println(verify.error);
@@ -127,7 +128,7 @@ public class PackageSnippet implements CommandLineRunner {
         }
 
         // Process
-        for (SnippetApiData.SnippetConfig snippetConfig : snippetConfigList.getSnippets()) {
+        for (SnippetConfigYaml snippetConfig : snippetConfigList.getSnippets()) {
             String sum;
             if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.station ||
                     snippetConfig.sourcing==EnumsApi.SnippetSourcing.git) {

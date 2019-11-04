@@ -20,6 +20,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -32,7 +33,7 @@ public class SnippetCoreUtils {
 
     private static final SnippetApiData.SnippetConfigStatus SNIPPET_CONFIG_STATUS_OK = new SnippetApiData.SnippetConfigStatus(true, null);
 
-    public static SnippetApiData.SnippetConfigStatus validate(SnippetApiData.SnippetConfig snippetConfig) {
+    public static SnippetApiData.SnippetConfigStatus validate(SnippetConfigYaml snippetConfig) {
         if ((snippetConfig.file ==null || snippetConfig.file.isBlank()) && (snippetConfig.env ==null || snippetConfig.env.isBlank())) {
             return new SnippetApiData.SnippetConfigStatus(false, "#401.10 Fields 'file' and 'env' can't be null or empty both.");
         }
@@ -62,7 +63,7 @@ public class SnippetCoreUtils {
         return SNIPPET_CONFIG_STATUS_OK;
     }
 
-    public static String getDataForChecksumWhenGitSourcing(SnippetApiData.SnippetConfig snippetConfig) {
+    public static String getDataForChecksumWhenGitSourcing(SnippetConfigYaml snippetConfig) {
         return "" + snippetConfig.env+", " + snippetConfig.file +" " + snippetConfig.params;
     }
 

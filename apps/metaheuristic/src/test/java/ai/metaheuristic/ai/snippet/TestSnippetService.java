@@ -23,9 +23,9 @@ import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
@@ -78,7 +78,7 @@ public class TestSnippetService {
         SnippetDefForPlan sd = new SnippetDefForPlan();
         sd.code = TEST_SNIPPET;
         sd.params = null;
-        SnippetApiData.SnippetConfig sc = snippetService.getSnippetConfig(sd);
+        SnippetConfigYaml sc = snippetService.getSnippetConfig(sd);
 
         assertNotNull(sc.params);
         final String[] split = StringUtils.split(sc.params);
@@ -96,7 +96,7 @@ public class TestSnippetService {
         snippet = snippetRepository.findByCodeForUpdate(TEST_SNIPPET);
         if (snippet == null) {
             Snippet s = new Snippet();
-            SnippetApiData.SnippetConfig sc = new SnippetApiData.SnippetConfig();
+            SnippetConfigYaml sc = new SnippetConfigYaml();
             sc.code = TEST_SNIPPET;
             sc.type = "test";
             sc.env = "python-3";
@@ -108,7 +108,7 @@ public class TestSnippetService {
 
             s.setCode(TEST_SNIPPET);
             s.setType("test");
-            s.params = SnippetConfigUtils.toString(sc);
+            s.params = SnippetConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
 
             mills = System.currentTimeMillis();
             log.info("Start snippetRepository.save() #2");

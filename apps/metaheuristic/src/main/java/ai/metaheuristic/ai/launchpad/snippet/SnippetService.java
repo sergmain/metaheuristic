@@ -28,9 +28,10 @@ import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigList;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -66,7 +67,7 @@ public class SnippetService {
     }
 
     public boolean isSnippetVersionOk(int requiredVersion, SnippetDefForPlan snDef) {
-        SnippetApiData.SnippetConfig sc = getSnippetConfig(snDef);
+        SnippetConfigYaml sc = getSnippetConfig(snDef);
         return sc != null && (sc.skipParams || requiredVersion <= SnippetCoreUtils.getTaskParamsVersion(sc.metas));
     }
 
@@ -102,8 +103,8 @@ public class SnippetService {
         return list;
     }
 
-    public SnippetApiData.SnippetConfig getSnippetConfig(SnippetDefForPlan snippetDef) {
-        SnippetApiData.SnippetConfig snippetConfig = null;
+    public SnippetConfigYaml getSnippetConfig(SnippetDefForPlan snippetDef) {
+        SnippetConfigYaml snippetConfig = null;
         if(StringUtils.isNotBlank(snippetDef.code)) {
             Snippet snippet = findByCode(snippetDef.code);
             if (snippet != null) {
@@ -204,7 +205,7 @@ public class SnippetService {
         String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
         SnippetConfigList snippetConfigList = SnippetConfigListUtils.to(cfg);
         List<SnippetApiData.SnippetConfigStatus> statuses = new ArrayList<>();
-        for (SnippetApiData.SnippetConfig snippetConfig : snippetConfigList.snippets) {
+        for (SnippetConfigYaml snippetConfig : snippetConfigList.snippets) {
             SnippetApiData.SnippetConfigStatus status = null;
             try {
                 status = SnippetCoreUtils.validate(snippetConfig);
@@ -240,7 +241,7 @@ public class SnippetService {
                 Snippet snippet = snippetRepository.findByCodeForUpdate(snippetConfig.code);
                 // there is snippet with the same code
                 if (snippet!=null) {
-                    SnippetApiData.SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
+                    SnippetConfigYaml sc = SnippetConfigYamlUtils.BASE_YAML_UTILS.to(snippet.params);
 
                     // new snippet is to replace one which is already in db
                     if (globals.isReplaceSnapshot && snippetConfig.code.endsWith(Consts.SNAPSHOT_SUFFIX)) {
@@ -283,11 +284,11 @@ public class SnippetService {
         return statuses;
     }
 
-    private void storeSnippet(SnippetApiData.SnippetConfig snippetConfig, String sum, File file, Snippet snippet) throws IOException {
+    private void storeSnippet(SnippetConfigYaml snippetConfig, String sum, File file, Snippet snippet) throws IOException {
         setChecksum(snippetConfig, sum);
         snippet.code = snippetConfig.code;
         snippet.type = snippetConfig.type;
-        snippet.params = SnippetConfigUtils.toString(snippetConfig);
+        snippet.params = SnippetConfigYamlUtils.BASE_YAML_UTILS.toString(snippetConfig);
         snippetCache.save(snippet);
         if (file != null) {
             try (InputStream inputStream = new FileInputStream(file)) {
@@ -297,7 +298,7 @@ public class SnippetService {
         }
     }
 
-    private void setChecksum(SnippetApiData.SnippetConfig snippetConfig, String sum) {
+    private void setChecksum(SnippetConfigYaml snippetConfig, String sum) {
         if (sum==null) {
             snippetConfig.checksum = null;
             snippetConfig.info.setSigned(false);

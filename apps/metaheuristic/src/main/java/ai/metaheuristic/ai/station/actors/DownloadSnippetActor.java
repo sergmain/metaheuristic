@@ -32,9 +32,9 @@ import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -107,7 +107,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             final String payloadRestUrl = launchpadUrl + CommonConsts.REST_V1_URL + Consts.PAYLOAD_REST_URL;
 
             // task.snippetConfig is null when we are downloading a snippet proactively, without any task
-            SnippetApiData.SnippetConfig snippetConfig = task.snippetConfig;
+            SnippetConfigYaml snippetConfig = task.snippetConfig;
             if (snippetConfig ==null) {
                 StationSnippetService.DownloadedSnippetConfigStatus downloadedSnippetConfigStatus = stationSnippetService.downloadSnippetConfig(launchpad, payloadRestUrl, snippetCode, task.stationId);
                 if (downloadedSnippetConfigStatus.status == StationSnippetService.ConfigStatus.error) {

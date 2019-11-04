@@ -20,8 +20,8 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.station.net.HttpClientExecutor;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
-import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
@@ -49,7 +49,7 @@ public class StationSnippetService {
 
     @Data
     public static class DownloadedSnippetConfigStatus {
-        public SnippetApiData.SnippetConfig snippetConfig;
+        public SnippetConfigYaml snippetConfig;
         public ConfigStatus status;
     }
 
@@ -79,7 +79,7 @@ public class StationSnippetService {
             }
             String yaml = response.returnContent().asString(StandardCharsets.UTF_8);
 
-            snippetConfigStatus.snippetConfig = SnippetConfigUtils.to(yaml);
+            snippetConfigStatus.snippetConfig = SnippetConfigYamlUtils.BASE_YAML_UTILS.to(yaml);
             snippetConfigStatus.status = ConfigStatus.ok;
 
         } catch (HttpResponseException e) {

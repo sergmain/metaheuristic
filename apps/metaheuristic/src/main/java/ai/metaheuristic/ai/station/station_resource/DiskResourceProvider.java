@@ -30,6 +30,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.sourcing.DiskInfo;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -102,7 +103,7 @@ public class DiskResourceProvider implements ResourceProvider {
     public SnippetApiData.SnippetExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            File outputResourceFile, SnippetApiData.SnippetConfig snippet
+            File outputResourceFile, SnippetConfigYaml snippet
     ) {
         if (outputResourceFile.exists()) {
             log.info("The result data was already written to file {}, no need to upload to launchpad", outputResourceFile.getPath());
