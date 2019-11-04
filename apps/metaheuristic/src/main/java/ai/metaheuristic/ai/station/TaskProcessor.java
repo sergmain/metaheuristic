@@ -352,17 +352,25 @@ public class TaskProcessor {
                         }
                     }
                     if (isOk && snippetExecResult.isOk()) {
-                        stationTaskService.storeMetrics(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
-                        stationTaskService.storeOverfitting(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
+                        try {
+                            stationTaskService.storeMetrics(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
+                            stationTaskService.storeOverfitting(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
 
-                        final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
-                        ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
-                        generalExec = resourceProvider.processResultingFile(
-                                launchpad, task, launchpadInfo,
-                                new File(taskParamYaml.taskYaml.outputResourceAbsolutePath),
-                                mainSnippetConfig
+                            final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
+                            ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
+                            generalExec = resourceProvider.processResultingFile(
+                                    launchpad, task, launchpadInfo,
+                                    new File(taskParamYaml.taskYaml.outputResourceAbsolutePath),
+                                    mainSnippetConfig
 
-                        );
+                            );
+                        }
+                        catch (Throwable th) {
+                            generalExec = new SnippetApiData.SnippetExecResult(
+                                    mainSnippetConfig.code, false, -997,
+                                    "#100.132 Error storing snippet's result, error: " + th.getMessage());
+
+                        }
                     }
                 }
             }

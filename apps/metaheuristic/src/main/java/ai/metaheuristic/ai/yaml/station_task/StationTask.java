@@ -15,8 +15,12 @@
  */
 package ai.metaheuristic.ai.yaml.station_task;
 
+import ai.metaheuristic.api.data.Meta;
 import lombok.Data;
 import lombok.ToString;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @ToString
@@ -63,7 +67,9 @@ public class StationTask {
     // was resource(output resource as the result of execution of snippet) uploaded to launchpad?
     public boolean resourceUploaded;
 
-    // processing of this task was completed ( it doesn't matter with which outcome)
+    // processing of this task was completed (it doesn't matter with which outcome)
     public boolean completed;
 
+    // temporary storage for holding data - snippet's result and so on
+    public List<Meta> metas = new ArrayList<>();
 }

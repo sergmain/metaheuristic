@@ -25,8 +25,11 @@ import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.ai.yaml.station_task.StationTaskUtils;
+import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.ml.overfitting.OverfittingYaml;
+import ai.metaheuristic.commons.yaml.ml.overfitting.OverfittingYamlUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.NonNull;
@@ -338,29 +341,15 @@ public class StationTaskService {
         }
     }
 
-    public void storeOverfitting(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) {
+    public void storeOverfitting(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) throws IOException {
         if (snippet.ml!=null && snippet.ml.metrics) {
             log.info("storeOverfitting(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
-            Metrics metrics = new Metrics();
-            File metricsFile = getMetricsFile(artifactDir);
-            if (metricsFile!=null) {
-                try {
-                    String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
-                    metrics.setStatus(Metrics.Status.Ok);
-                    metrics.setMetrics(execMetrics);
-                }
-                catch (IOException e) {
-                    log.error("#713.140 Error reading metrics file {}", metricsFile.getAbsolutePath());
-                    metrics.setStatus(Metrics.Status.Error);
-                    metrics.setError(e.toString());
-                }
-            } else {
-                metrics.setStatus(Metrics.Status.NotFound);
+            OverfittingYaml overfittingYaml = getOverfitting(artifactDir);
+            if (overfittingYaml!=null) {
+                task.getMetas().add( new Meta(Consts.META_OVERFITTED, Boolean.toString(overfittingYaml.overfitting), "") );
+                save(task);
             }
-            task.setMetrics(MetricsUtils.toString(metrics));
-            save(task);
         }
-
     }
 
     public void storeMetrics(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) {
@@ -397,6 +386,16 @@ public class StationTaskService {
         // let's try a file with legacy name
         metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
         return metricsFile.exists() ? metricsFile : null;
+    }
+
+
+    private OverfittingYaml getOverfitting(File artifactDir) throws IOException {
+        File file = new File(artifactDir, Consts.MH_OVERFITTING_FILE_NAME);
+        if (file.exists() && file.isFile()) {
+            String yaml = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+            return OverfittingYamlUtils.BASE_YAML_UTILS.to(yaml);
+        }
+        return null;
     }
 
     public List<StationTask> findAllByCompletedIsFalse(String launchpadUrl) {

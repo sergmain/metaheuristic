@@ -71,6 +71,7 @@ public class Consts {
     @Deprecated
     public static final String METRICS_FILE_NAME = "metrics.yaml";
     public static final String MH_METRICS_FILE_NAME = "mh-metrics.yaml";
+    public static final String MH_PREDICTION_DATA_FILE_NAME = "mh-prediction-data.yaml";
     public static final String MH_OVERFITTING_FILE_NAME = "mh-overfitting.yaml";
     public static final String MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "mh-system-console.log";
 
@@ -118,8 +119,9 @@ public class Consts {
 
     public static final String HEADER_MH_IS_LAST_CHUNK = "mh-is-last-chunk";
     public static final String HEADER_MH_CHUNK_SIZE = "mh-chunk-size";
-    public static final String RESOURCES_TO_CLEAN = "toClean";
+    public static final String RESOURCES_TO_CLEAN = "mh-to-clean";
 
+    public static final String META_OVERFITTED = "mh-overfitted";
     public static final String META_SNIPPET_DOWNLOAD_STATUS = "mh-snippet-download-status";
     public static final String RESULT_ZIP = "result.zip";
     public static final Long ID_1 = 1L;
