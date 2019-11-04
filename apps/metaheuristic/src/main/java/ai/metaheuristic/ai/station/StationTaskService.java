@@ -255,7 +255,7 @@ public class StationTaskService {
         final StationCommParamsYaml.ReportTaskProcessingResult processingResult = new StationCommParamsYaml.ReportTaskProcessingResult();
         for (StationTask task : list) {
             if (task.isDelivered() && !task.isReported() ) {
-                log.warn("#775.140 This state need to be investigating: (task.isDelivered() && !task.isReported())==true");
+                log.warn("#775.140 This state need to be investigated: (task.isDelivered() && !task.isReported())==true");
             }
             // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enough?
             if (task.isDelivered() && task.isReported() ) {
@@ -337,11 +337,10 @@ public class StationTaskService {
         }
     }
 
-    void storeMetrics(String launchpadUrl, StationTask task, SnippetApiData.SnippetConfig snippet, File artifactDir) {
-        Long taskId = task.getTaskId();
-        log.info("storeMetrics(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, taskId, snippet.getCode());
+    public void storeMetrics(String launchpadUrl, StationTask task, SnippetApiData.SnippetConfig snippet, File artifactDir) {
         // store metrics after predict only
         if (snippet.isMetrics()) {
+            log.info("storeMetrics(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
             Metrics metrics = new Metrics();
             File metricsFile = getMetricsFile(artifactDir);
             if (metricsFile!=null) {
@@ -352,7 +351,6 @@ public class StationTaskService {
                 }
                 catch (IOException e) {
                     log.error("#713.140 Error reading metrics file {}", metricsFile.getAbsolutePath());
-                    task.setMetrics("system-error: " + e.toString());
                     metrics.setStatus(Metrics.Status.Error);
                     metrics.setError(e.toString());
                 }
@@ -360,8 +358,8 @@ public class StationTaskService {
                 metrics.setStatus(Metrics.Status.NotFound);
             }
             task.setMetrics(MetricsUtils.toString(metrics));
+            save(task);
         }
-        save(task);
     }
 
     @SuppressWarnings("deprecation")

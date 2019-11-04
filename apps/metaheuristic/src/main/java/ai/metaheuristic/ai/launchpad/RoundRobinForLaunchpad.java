@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai;
+package ai.metaheuristic.ai.launchpad;
 
 import ai.metaheuristic.ai.station.LaunchpadLookupExtendedService;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;

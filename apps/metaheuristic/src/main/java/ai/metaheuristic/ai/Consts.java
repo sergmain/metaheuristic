@@ -71,6 +71,7 @@ public class Consts {
     @Deprecated
     public static final String METRICS_FILE_NAME = "metrics.yaml";
     public static final String MH_METRICS_FILE_NAME = "mh-metrics.yaml";
+    public static final String MH_OVERFITTING_FILE_NAME = "mh-overfitting.yaml";
     public static final String MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "mh-system-console.log";
 
     public static final String PARAMS_YAML_MASK = "params-v%d.yaml";
