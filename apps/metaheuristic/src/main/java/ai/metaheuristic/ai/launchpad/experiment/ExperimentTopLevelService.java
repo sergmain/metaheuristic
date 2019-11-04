@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
@@ -85,7 +84,6 @@ public class ExperimentTopLevelService {
 
     private final Globals globals;
     private final SnippetRepository snippetRepository;
-    private final SnippetCache snippetCache;
     private final SnippetService snippetService;
     private final TaskRepository taskRepository;
     private final WorkbookCache workbookCache;
@@ -259,17 +257,20 @@ public class ExperimentTopLevelService {
                 new ExperimentApiData.ExperimentSnippetResult(
                         es.getId(), es.getVersion(), es.getCode(), es.type, experiment.id)).collect(Collectors.toList());
 
-        final List<String> types = Arrays.asList(CommonConsts.FIT_TYPE, CommonConsts.PREDICT_TYPE);
+        final List<String> types = Arrays.asList(CommonConsts.FIT_TYPE, CommonConsts.PREDICT_TYPE, CommonConsts.CHECK_OVERFITTING_TYPE);
         snippetResult.selectOptions = snippetService.getSelectOptions(snippets,
                 snippetResult.snippets.stream().map(o -> new SnippetCode(o.getId(), o.getSnippetCode())).collect(Collectors.toList()),
                 (s) -> {
                     if (!types.contains(s.type) ) {
                         return true;
                     }
-                    if (CommonConsts.FIT_TYPE.equals(s.type) && snippetService.hasFit(experimentSnippets)) {
+                    if (CommonConsts.FIT_TYPE.equals(s.type) && snippetService.hasType(experimentSnippets, CommonConsts.FIT_TYPE)) {
                         return true;
                     }
-                    else if (CommonConsts.PREDICT_TYPE.equals(s.type) && snippetService.hasPredict(experimentSnippets)) {
+                    else if (CommonConsts.PREDICT_TYPE.equals(s.type) && snippetService.hasType(experimentSnippets, CommonConsts.PREDICT_TYPE)) {
+                        return true;
+                    }
+                    else if (CommonConsts.CHECK_OVERFITTING_TYPE.equals(s.type) && snippetService.hasType(experimentSnippets, CommonConsts.CHECK_OVERFITTING_TYPE)) {
                         return true;
                     }
                     else return false;

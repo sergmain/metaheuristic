@@ -79,7 +79,31 @@ public class SnippetService {
         if (o1.getType().equals(o2.getType())) {
             return 0;
         }
-        return CommonConsts.FIT_TYPE.equals(o1.getType().toLowerCase()) ? -1 : 1;
+        if (CommonConsts.FIT_TYPE.equals(o1.getType().toLowerCase())) {
+            if (CommonConsts.PREDICT_TYPE.equals(o2.getType().toLowerCase())) {
+                return 0;
+            }
+            else {
+                return 1;
+            }
+        }
+        else if (CommonConsts.PREDICT_TYPE.equals(o1.getType().toLowerCase())) {
+            if (CommonConsts.FIT_TYPE.equals(o2.getType().toLowerCase())) {
+                return -1;
+            }
+            else {
+                return 1;
+            }
+        }
+        else if (CommonConsts.CHECK_OVERFITTING_TYPE.equals(o1.getType().toLowerCase())) {
+            if (CommonConsts.FIT_TYPE.equals(o2.getType().toLowerCase())) {
+                return -1;
+            }
+            else {
+                return 0;
+            }
+        }
+        else return 0;
     }
 
     public List<Snippet> getSnippetsForCodes(List<String> snippetCodes) {
@@ -91,15 +115,6 @@ public class SnippetService {
                 .map(snippetCache::findById)
                 .sorted(SnippetService::experimentSnippetComparator)
                 .collect(Collectors.toList());
-/*
-        for (String snippetCode : snippetCodes) {
-            Snippet s = snippetRepository.findIdsByCodes(snippetCode);
-            if (s!=null) {
-                list.add(s);
-            }
-        }
-        sortExperimentSnippets(list);
-*/
         return list;
     }
 
@@ -128,24 +143,12 @@ public class SnippetService {
         return snippetConfig;
     }
 
-    public boolean hasFit(List<Snippet> experimentSnippets) {
+    public boolean hasType(List<Snippet> experimentSnippets, String type) {
         if (experimentSnippets ==null || experimentSnippets.isEmpty()) {
             return false;
         }
         for (Snippet snippet : experimentSnippets) {
             if (CommonConsts.FIT_TYPE.equals(snippet.getType())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean hasPredict(List<Snippet> experimentSnippets) {
-        if (experimentSnippets ==null || experimentSnippets.isEmpty()) {
-            return false;
-        }
-        for (Snippet snippet : experimentSnippets) {
-            if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
                 return true;
             }
         }

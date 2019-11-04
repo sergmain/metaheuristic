@@ -342,11 +342,11 @@ public class StationTaskService {
     }
 
     public void storeOverfitting(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) throws IOException {
-        if (snippet.ml!=null && snippet.ml.metrics) {
+        if (snippet.ml!=null && snippet.ml.overfitting) {
             log.info("storeOverfitting(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
             OverfittingYaml overfittingYaml = getOverfitting(artifactDir);
             if (overfittingYaml!=null) {
-                task.getMetas().add( new Meta(Consts.META_OVERFITTED, Boolean.toString(overfittingYaml.overfitting), "") );
+                task.getMetas().add( new Meta(Consts.META_OVERFITTED, Boolean.toString(overfittingYaml.overfitting), null) );
                 save(task);
             }
         }

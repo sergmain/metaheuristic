@@ -362,7 +362,6 @@ public class TaskProcessor {
                                     launchpad, task, launchpadInfo,
                                     new File(taskParamYaml.taskYaml.outputResourceAbsolutePath),
                                     mainSnippetConfig
-
                             );
                         }
                         catch (Throwable th) {
