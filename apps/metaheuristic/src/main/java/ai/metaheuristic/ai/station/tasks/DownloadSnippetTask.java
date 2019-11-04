@@ -20,8 +20,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.File;
-
 @Data
 @AllArgsConstructor
 @EqualsAndHashCode(of = "snippetCode", callSuper = false)

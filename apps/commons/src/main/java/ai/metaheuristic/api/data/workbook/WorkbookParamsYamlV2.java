@@ -17,21 +17,25 @@
 package ai.metaheuristic.api.data.workbook;
 
 import ai.metaheuristic.api.data.BaseParams;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Data
-public class WorkbookParamsYamlV1 implements BaseParams {
+public class WorkbookParamsYamlV2 implements BaseParams {
 
-    public Map<String, List<String>> poolCodes = new HashMap<>();
+    @Data
+    public static class WorkbookYamlV2 {
+        public Map<String, List<String>> poolCodes = new HashMap<>();
 
-    public final int version = 1;
-    public boolean preservePoolNames;
+        public boolean preservePoolNames;
+    }
+
+    public final int version = 2;
+    public WorkbookYamlV2 workbookYaml = new WorkbookYamlV2();
+    public String graph;
 
     @Override
     public boolean checkIntegrity() {
