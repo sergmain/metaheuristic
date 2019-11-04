@@ -17,6 +17,7 @@
 package ai.metaheuristic.api.data.experiment;
 
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -65,6 +66,7 @@ public class ExperimentParamsYaml implements BaseParams {
 
         public String fitSnippet;
         public String predictSnippet;
+        public String checkOverfittingSnippet;
     }
 
     @Data
@@ -114,11 +116,14 @@ public class ExperimentParamsYaml implements BaseParams {
     public List<String> getSnippetCodes() {
         final List<String> snippetCodes = new ArrayList<>();
 
-        if (experimentYaml.fitSnippet != null && !experimentYaml.fitSnippet.isBlank()) {
+        if (!S.b(experimentYaml.fitSnippet)) {
             snippetCodes.add(experimentYaml.fitSnippet);
         }
-        if (experimentYaml.predictSnippet != null && !experimentYaml.predictSnippet.isBlank()) {
+        if (!S.b(experimentYaml.predictSnippet)) {
             snippetCodes.add(experimentYaml.predictSnippet);
+        }
+        if (!S.b(experimentYaml.checkOverfittingSnippet)) {
+            snippetCodes.add(experimentYaml.checkOverfittingSnippet);
         }
         return snippetCodes;
     }

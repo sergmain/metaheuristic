@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.launchpad.experiment;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
@@ -35,7 +34,9 @@ import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
 import ai.metaheuristic.ai.yaml.metrics.MetricValues;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
@@ -50,8 +51,12 @@ import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -77,6 +82,7 @@ import java.util.stream.Collectors;
 import static ai.metaheuristic.api.EnumsApi.PlanProducingStatus.TOO_MANY_TASKS_PER_PLAN_ERROR;
 import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
 
+@SuppressWarnings("DuplicatedCode")
 @Service
 @EnableTransactionManagement
 @Slf4j
@@ -220,16 +226,16 @@ public class ExperimentService {
         for (Long experimentId : experimentIds) {
             Experiment e = experimentCache.findById(experimentId);
             if (e==null) {
-                log.warn("Experiment wasn't found for id: {}", experimentId);
+                log.warn("#179.010 Experiment wasn't found for id: {}", experimentId);
                 continue;
             }
             if (e.workbookId==null) {
-                log.warn("This shouldn't be happened");
+                log.warn("#179.020 This shouldn't be happened");
                 continue;
             }
             WorkbookImpl wb = workbookCache.findById(e.workbookId);
             if (wb==null) {
-                log.info("Can't calc max values and export to atlas because workbookId is null");
+                log.info("#179.030 Can't calc max values and export to atlas because workbookId is null");
                 continue;
             }
             if (wb.execState!=EnumsApi.WorkbookExecState.FINISHED.code) {
@@ -251,8 +257,8 @@ public class ExperimentService {
             this.key = filter.substring( 0, endIndex);
             this.idx = Integer.parseInt(filter.substring( endIndex+1));
         }
-        static ParamFilter of(String filetr) {
-            return new ParamFilter(filetr);
+        static ParamFilter of(String filter) {
+            return new ParamFilter(filter);
         }
     }
     private boolean isInclude(boolean[] isOk ) {
@@ -418,7 +424,7 @@ public class ExperimentService {
             }
         }
         if (paramCleared.size()!=2) {
-            throw new IllegalStateException("#179.15 Wrong number of params for axes. Expected: 2, actual: " + paramCleared.size());
+            throw new IllegalStateException("#179.040 Wrong number of params for axes. Expected: 2, actual: " + paramCleared.size());
         }
         Map<String, Map<String, Integer>> map = getHyperParamsAsMap(experiment, false);
         data.x.addAll(map.get(paramCleared.get(0)).keySet());
@@ -528,13 +534,13 @@ public class ExperimentService {
 
     public ExperimentApiData.ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, Long featureId ) {
         if (experiment.workbookId==null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.040 workbookId is null");
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.050 workbookId is null");
         }
         WorkbookImpl workbook = workbookCache.findById(experiment.workbookId);
 
         ExperimentParamsYaml.ExperimentFeature experimentFeature = experiment.getExperimentParamsYaml().getFeature(featureId);
         if (experimentFeature == null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.050 feature wasn't found, experimentFeatureId: " + featureId);
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.060 feature wasn't found, experimentFeatureId: " + featureId);
         }
 
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
@@ -657,22 +663,31 @@ public class ExperimentService {
     @SuppressWarnings("Duplicates")
     PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
 
+    @Data
+    @AllArgsConstructor
+    private static class ExperimentSnippetItem {
+        public EnumsApi.ExperimentSnippet type;
+        public String snippetCode;
+    }
+
     public EnumsApi.PlanProducingStatus produceTasks(
             boolean isPersist, PlanParamsYaml planParams, Long workbookId, Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
             Map<String, DataStorageParams> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
         if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
-            throw new IllegalStateException("#179.190 Wrong type of process, " +
+            throw new IllegalStateException("#179.070 Wrong type of process, " +
                     "expected: "+ EnumsApi.ProcessType.EXPERIMENT+", " +
                     "actual: " + process.type);
         }
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         if (StringUtils.isBlank(epy.experimentYaml.fitSnippet)|| StringUtils.isBlank(epy.experimentYaml.predictSnippet)) {
-            throw new IllegalStateException("(StringUtils.isBlank(epy.yaml.fitSnippet)|| StringUtils.isBlank(epy.yaml.predictSnippet))" +
+            throw new IllegalStateException("#179.080 (StringUtils.isBlank(epy.yaml.fitSnippet)|| StringUtils.isBlank(epy.yaml.predictSnippet))" +
                     ", "+epy.experimentYaml.fitSnippet +", " + epy.experimentYaml.predictSnippet);
         }
-        List<String> experimentSnippets = List.of(epy.experimentYaml.fitSnippet, epy.experimentYaml.predictSnippet);
+        List<ExperimentSnippetItem> experimentSnippets =
+                List.of(new ExperimentSnippetItem(EnumsApi.ExperimentSnippet.FIT, epy.experimentYaml.fitSnippet),
+                        new ExperimentSnippetItem(EnumsApi.ExperimentSnippet.PREDICT, epy.experimentYaml.predictSnippet));
 
         final Map<String, String> map = toMap(epy.experimentYaml.getHyperParams(), epy.experimentYaml.seed);
         final int calcTotalVariants = ExperimentUtils.calcTotalVariants(map);
@@ -684,7 +699,7 @@ public class ExperimentService {
         int totalVariants = features.size() * calcTotalVariants * 2;
 
         if (totalVariants > globals.maxTasksPerWorkbook) {
-            log.error("#179.200 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
+            log.error("#179.090 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                                 "Allowed maximum number of tasks per workbook: " + globals.maxTasksPerWorkbook +", tasks in this workbook: " + totalVariants);
             return TOO_MANY_TASKS_PER_PLAN_ERROR;
         }
@@ -719,7 +734,7 @@ public class ExperimentService {
             for (ExperimentFeature feature : features) {
                 ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(feature.resourceCodes);
                 if (!numberOfVariants.status) {
-                    log.warn("#179.25 empty list of feature, feature: {}", feature);
+                    log.warn("#179.100 empty list of feature, feature: {}", feature);
                     continue;
                 }
                 List<String> inputResourceCodes = numberOfVariants.values;
@@ -728,7 +743,7 @@ public class ExperimentService {
                     TaskImpl prevTask;
                     TaskImpl task = null;
                     List<Long> prevParentTaskIds = new ArrayList<>(parentTaskIds);
-                    for (String snippetCode : experimentSnippets) {
+                    for (ExperimentSnippetItem snippetItem : experimentSnippets) {
                         if (boolHolder.get()) {
                             return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
                         }
@@ -752,10 +767,10 @@ public class ExperimentService {
                         yaml.taskYaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
 
                         yaml.taskYaml.setHyperParams(hyperParams.toSortedMap());
-                        // TODO need to implement an unit-test for a plan without metas in experiment
+                        // TODO need to implement an unit-test for a Plan without metas in experiment
                         //  and check that features are correctly defined
                         // TODO 2019-07-17 right now it doesn't work
-                        //  - you need to specify 'feature', dataset' (not sure) in metas
+                        //  - you need to specify 'feature', dataset'(not sure about 'dataset') in metas
                         yaml.taskYaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
 
@@ -774,15 +789,10 @@ public class ExperimentService {
                                     );
 
                         }
-                        Snippet snippet = localCache.get(snippetCode);
+                        final String snippetCode = snippetItem.snippetCode;
+                        Snippet snippet = getSnippet(localCache, snippetCode);
                         if (snippet == null) {
-                            snippet = snippetService.findByCode(snippetCode);
-                            if (snippet != null) {
-                                localCache.put(snippetCode, snippet);
-                            }
-                        }
-                        if (snippet == null) {
-                            log.warn("#179.27 Snippet wasn't found for code: {}", snippetCode);
+                            log.warn("#179.110 Snippet wasn't found for code: {}", snippetCode);
                             continue;
                         }
 
@@ -792,7 +802,7 @@ public class ExperimentService {
                             type = EnumsApi.ExperimentTaskType.FIT;
                         } else if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
                             if (prevTask == null) {
-                                throw new IllegalStateException("#179.29 prevTask is null");
+                                throw new IllegalStateException("#179.120 prevTask is null");
                             }
                             String modelFilename = getModelFilename(prevTask);
                             yaml.taskYaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(modelFilename);
@@ -803,7 +813,7 @@ public class ExperimentService {
                             yaml.taskYaml.resourceStorageUrls.put(modelFilename, new DataStorageParams(EnumsApi.DataSourcing.launchpad));
 //                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                         } else {
-                            throw new IllegalStateException("#179.31 Not supported type of snippet encountered, type: " + snippet.getType());
+                            throw new IllegalStateException("#179.130 Not supported type of snippet encountered, type: " + snippet.getType());
                         }
                         yaml.taskYaml.resourceStorageUrls.put(yaml.taskYaml.outputResourceCode, process.outputParams);
 
@@ -831,6 +841,17 @@ public class ExperimentService {
                             }
                         }
                         yaml.taskYaml.postSnippets = new ArrayList<>();
+                        if (snippetItem.type== EnumsApi.ExperimentSnippet.PREDICT) {
+                            Meta m = MetaUtils.getMeta(snippet.getSnippetConfig(false).metas, ConstsApi.META_MH_OVERFITTING_DETECTION_SUPPORTED);
+                            if (MetaUtils.isTrue(m) && !S.b(epy.experimentYaml.checkOverfittingSnippet)) {
+                                Snippet cos = getSnippet(localCache, epy.experimentYaml.checkOverfittingSnippet);
+                                if (snippet == null) {
+                                    log.warn("#179.140 Snippet wasn't found for code: {}", snippetCode);
+                                    continue;
+                                }
+                                yaml.taskYaml.postSnippets.add(cos.getSnippetConfig(false));
+                            }
+                        }
                         if (process.getPostSnippets()!=null) {
                             for (SnippetDefForPlan snDef : process.getPostSnippets()) {
                                 yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(snDef));
@@ -871,12 +892,12 @@ public class ExperimentService {
         }
 
         if (epy.processing.getNumberOfTask() != totalVariants && epy.processing.getNumberOfTask() != 0) {
-            log.warn("#179.33 ! Number of tasks is different. experiment.getNumberOfTask(): {}, totalVariants: {}", epy.processing.getNumberOfTask(), totalVariants);
+            log.warn("#179.150 ! Number of tasks is different. experiment.getNumberOfTask(): {}, totalVariants: {}", epy.processing.getNumberOfTask(), totalVariants);
         }
         if (isPersist) {
             Experiment experimentTemp = experimentRepository.findByIdForUpdate(experiment.getId());
             if (experimentTemp == null) {
-                log.warn("#179.36 Experiment for id {} doesn't exist anymore", experiment.getId());
+                log.warn("#179.160 Experiment for id {} doesn't exist anymore", experiment.getId());
                 return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
             }
             epy.processing.setNumberOfTask(totalVariants);
@@ -887,6 +908,17 @@ public class ExperimentService {
             experimentTemp = experimentCache.save(experimentTemp);
         }
         return EnumsApi.PlanProducingStatus.OK;
+    }
+
+    public Snippet getSnippet(Map<String, Snippet> localCache, String snippetCode) {
+        Snippet snippet = localCache.get(snippetCode);
+        if (snippet == null) {
+            snippet = snippetService.findByCode(snippetCode);
+            if (snippet != null) {
+                localCache.put(snippetCode, snippet);
+            }
+        }
+        return snippet;
     }
 
     private String getModelFilename(Task task) {
@@ -908,13 +940,10 @@ public class ExperimentService {
         final List<String> list = epy.processing.features.stream().map(o->o.checksumIdCodes).collect(Collectors.toList());
 
         final Permutation<String> permutation = new Permutation<>();
-        Monitoring.log("##040", Enums.Monitor.MEMORY);
         AtomicLong featureId = new AtomicLong(0);
         for (int i = 0; i < inputResourceCodes.size(); i++) {
-            Monitoring.log("##041", Enums.Monitor.MEMORY);
             permutation.printCombination(inputResourceCodes, i+1,
                     data -> {
-                        Monitoring.log("##042", Enums.Monitor.MEMORY);
                         final String listAsStr = String.valueOf(data);
                         final String checksumMD5;
                         try {

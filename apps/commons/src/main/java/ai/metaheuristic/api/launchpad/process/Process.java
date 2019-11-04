@@ -19,6 +19,7 @@ package ai.metaheuristic.api.launchpad.process;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.Data;
 import lombok.ToString;
 
@@ -54,14 +55,6 @@ public class Process {
     public String outputType;
 
     public Meta getMeta(String key) {
-        if (metas==null) {
-            return null;
-        }
-        for (Meta meta : metas) {
-            if (meta.key.equals(key)) {
-                return meta;
-            }
-        }
-        return null;
+        return MetaUtils.getMeta(metas, key);
     }
 }

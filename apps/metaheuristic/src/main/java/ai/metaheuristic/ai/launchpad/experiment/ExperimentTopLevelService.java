@@ -33,7 +33,9 @@ import ai.metaheuristic.ai.snippet.SnippetCode;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
@@ -46,8 +48,10 @@ import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -253,6 +257,8 @@ public class ExperimentTopLevelService {
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         final List<String> snippetCodes = epy.getSnippetCodes();
         List<Snippet> experimentSnippets = snippetService.getSnippetsForCodes(snippetCodes);
+//        addCheckOverfittingSnippet(epy, experimentSnippets);
+
         snippetResult.snippets = experimentSnippets.stream().map(es->
                 new ExperimentApiData.ExperimentSnippetResult(
                         es.getId(), es.getVersion(), es.getCode(), es.type, experiment.id)).collect(Collectors.toList());
@@ -285,6 +291,21 @@ public class ExperimentTopLevelService {
         result.simpleExperiment = asSimpleExperiment(experiment);
         result.snippetResult = snippetResult;
         return result;
+    }
+
+    private void addCheckOverfittingSnippet(ExperimentParamsYaml epy, List<Snippet> experimentSnippets) {
+        if (S.b(epy.experimentYaml.checkOverfittingSnippet)) {
+            return;
+        }
+        experimentSnippets.stream()
+                .filter(s->s.type.equals(CommonConsts.PREDICT_TYPE))
+                .findFirst()
+                .ifPresent(s-> {
+                    Meta m = MetaUtils.getMeta(s.getSnippetConfig(false).metas, ConstsApi.META_MH_OVERFITTING_DETECTION_SUPPORTED);
+                    if (MetaUtils.isTrue(m)) {
+                        experimentSnippets.add(snippetRepository.findByCode(epy.experimentYaml.checkOverfittingSnippet));
+                    }
+        });
     }
 
     public static ExperimentApiData.HyperParamData asHyperParamData(ExperimentParamsYaml.HyperParam ehp) {
@@ -424,6 +445,9 @@ public class ExperimentTopLevelService {
             case "predict":
                 epy.experimentYaml.predictSnippet = snippetCode;
                 break;
+            case "check-overfitting":
+                epy.experimentYaml.checkOverfittingSnippet = snippetCode;
+                break;
             default:
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.220 snippet has non-supported type for an experiment: "+s.getType() );
         }
@@ -504,6 +528,9 @@ public class ExperimentTopLevelService {
         }
         else if (Objects.equals(epy.experimentYaml.predictSnippet, snippetCode)) {
             epy.experimentYaml.predictSnippet = null;
+        }
+        else if (Objects.equals(epy.experimentYaml.checkOverfittingSnippet, snippetCode)) {
+            epy.experimentYaml.checkOverfittingSnippet = null;
         }
         else {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,

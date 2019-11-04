@@ -17,15 +17,20 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
+import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -41,10 +46,11 @@ public class ExperimentProcessValidator implements ProcessValidator {
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
     private final WorkbookCache workbookCache;
+    private final SnippetRepository snippetRepository;
 
     // TODO experiment has to be stateless and has its own instances
     // TODO 2019.05.02 do we need an experiment to have its own instance still?
-    // TODO 2019.07.04 current thought is that we don't need stateless experiment
+    // TODO 2019.07.04 the current thought is that we don't need stateless experiment
     //      because each experiment has its own set of hyper parameters
     // TODO 2019.08.26 an experiment will be always stateful.
     //      that means that there won't be separated description of experiment and instances of experiment
@@ -81,6 +87,23 @@ public class ExperimentProcessValidator implements ProcessValidator {
         if (StringUtils.isBlank(epy.experimentYaml.fitSnippet) || StringUtils.isBlank(epy.experimentYaml.predictSnippet)) {
             return EnumsApi.PlanValidateStatus.EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR;
         }
+        Snippet s = snippetRepository.findByCode(epy.experimentYaml.fitSnippet);
+        if (s==null) {
+            return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+        }
+
+        Snippet predictSnippet = snippetRepository.findByCode(epy.experimentYaml.fitSnippet);
+        if (predictSnippet==null) {
+            return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+        }
+        Meta m = MetaUtils.getMeta(predictSnippet.getSnippetConfig(false).metas, ConstsApi.META_MH_OVERFITTING_DETECTION_SUPPORTED);
+        if (MetaUtils.isTrue(m) && S.b(epy.experimentYaml.checkOverfittingSnippet)) {
+            return EnumsApi.PlanValidateStatus.OVERFITTING_SNIPPET_NOT_FOUND_ERROR;
+        }
+        Snippet overfittingSnippet = snippetRepository.findByCode(epy.experimentYaml.checkOverfittingSnippet);
+        if (overfittingSnippet==null) {
+            return EnumsApi.PlanValidateStatus.OVERFITTING_SNIPPET_NOT_FOUND_ERROR;
+        }
 
         if (!isFirst) {
             if (process.metas == null || process.metas.isEmpty()) {
@@ -91,12 +114,6 @@ public class ExperimentProcessValidator implements ProcessValidator {
             if (m1 == null || StringUtils.isBlank(m1.getValue())) {
                 return EnumsApi.PlanValidateStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
             }
-
-            // TODO 2019.05.02 do we need this check?
-//            Process.Meta m2 = process.getMeta("assembled-raw");
-//            if (m2 == null || StringUtils.isBlank(m2.getValue())) {
-//                return EnumsApi.PlanValidateStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
-//            }
 
             Meta m3 = process.getMeta("feature");
             if (m3 == null || StringUtils.isBlank(m3.getValue())) {

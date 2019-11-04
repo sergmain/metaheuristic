@@ -29,6 +29,10 @@ import java.util.List;
 @Slf4j
 public class MetaUtils {
 
+    public static boolean isTrue(Meta m) {
+        return m!=null && "true".equals(m.getValue());
+    }
+
     public static Meta getMeta(List<Meta> metas, String... keys) {
         if (metas==null) {
             return null;

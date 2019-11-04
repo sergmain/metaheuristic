@@ -31,6 +31,10 @@ import lombok.NoArgsConstructor;
 public class SnippetDefForPlanV5 {
     public String code;
     public String params;
+
+    // TODO 2019-11-03 instead of this field
+    //  there is meta ai.metaheuristic.api.ConstsApi.META_MH_SNIPPET_PARAMS_AS_FILE_META
+    @Deprecated(forRemoval = true)
     public boolean paramsAsFile;
 
     public SnippetDefForPlanV5(String code) {

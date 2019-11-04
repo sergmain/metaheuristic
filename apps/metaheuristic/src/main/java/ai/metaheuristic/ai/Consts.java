@@ -105,15 +105,15 @@ public class Consts {
     public static final String ZIP_EXT = ".zip";
     public static final String RAR_EXT = ".rar";
 
-    // legacy meta
+    // legacy meta, all metas moved to ai.metaheuristic.api.ConstsApi
     @Deprecated
     public static final String RESULT_FILE_EXTENSION = "result-file-extension";
 
-    // legacy meta
+    // legacy meta, all metas moved to ai.metaheuristic.api.ConstsApi
     @Deprecated
     public static final String META_SNIPPET_PARAMS_AS_FILE_META = "snippet-params-as-file";
 
-    // legacy meta
+    // legacy meta, all metas moved to ai.metaheuristic.api.ConstsApi
     @Deprecated
     public static final String META_SNIPPET_PARAMS_FILE_EXT_META = "snippet-params-file-ext";
 
@@ -123,6 +123,7 @@ public class Consts {
 
     public static final String META_OVERFITTED = "mh-overfitted";
     public static final String META_SNIPPET_DOWNLOAD_STATUS = "mh-snippet-download-status";
+
     public static final String RESULT_ZIP = "result.zip";
     public static final Long ID_1 = 1L;
 }

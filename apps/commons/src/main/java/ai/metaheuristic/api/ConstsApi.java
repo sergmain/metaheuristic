@@ -40,6 +40,8 @@ public class ConstsApi {
 
     public static final String META_MH_TASK_PARAMS_VERSION = "mh.task-params-version";
 
+    public static final String META_MH_OVERFITTING_DETECTION_SUPPORTED = "mh.overfitting-detection-supported";
+
     // legacy meta
     @Deprecated
     public static final String META_TASK_PARAMS_VERSION = "task-params-version";

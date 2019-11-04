@@ -16,10 +16,36 @@
 
 package ai.metaheuristic.api;
 
+import ai.metaheuristic.commons.CommonConsts;
 import lombok.ToString;
 
 public class EnumsApi {
 
+    public enum ExperimentSnippet {
+        FIT(CommonConsts.FIT_TYPE),
+        PREDICT(CommonConsts.PREDICT_TYPE),
+        CHECK_OVERFITTING(CommonConsts.CHECK_OVERFITTING_TYPE);
+
+        public String code;
+
+        ExperimentSnippet(String code) {
+            this.code = code;
+        }
+
+        public static ExperimentSnippet to(String code) {
+            switch (code) {
+                case CommonConsts.FIT_TYPE:
+                    return FIT;
+                case CommonConsts.PREDICT_TYPE:
+                    return PREDICT;
+                case CommonConsts.CHECK_OVERFITTING_TYPE:
+                    return CHECK_OVERFITTING;
+                default:
+                    throw new IllegalStateException("Unknown code: " + code);
+            }
+        }
+    }
+    
     public enum OS { unknown, any, windows, linux, macos }
 
     public enum BinaryDataRefType {
@@ -133,6 +159,7 @@ public class EnumsApi {
         INPUT_CODE_NOT_SPECIFIED_ERROR,
         WRONG_FORMAT_OF_SNIPPET_CODE,
         SNIPPET_NOT_FOUND_ERROR,
+        OVERFITTING_SNIPPET_NOT_FOUND_ERROR,
         VERSION_OF_SNIPPET_IS_TOO_LOW_ERROR,
         EXPERIMENT_NOT_FOUND_ERROR,
         EXPERIMENT_ALREADY_STARTED_ERROR,

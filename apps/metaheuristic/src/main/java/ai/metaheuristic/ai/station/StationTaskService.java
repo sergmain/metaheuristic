@@ -25,9 +25,13 @@ import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.ai.yaml.station_task.StationTaskUtils;
+import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.ml.overfitting.OverfittingYaml;
 import ai.metaheuristic.commons.yaml.ml.overfitting.OverfittingYamlUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
@@ -342,7 +346,8 @@ public class StationTaskService {
     }
 
     public void storeOverfitting(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) throws IOException {
-        if (snippet.ml!=null && snippet.ml.overfitting) {
+        Meta m = MetaUtils.getMeta(snippet.metas, ConstsApi.META_MH_OVERFITTING_DETECTION_SUPPORTED);
+        if (MetaUtils.isTrue(m)) {
             log.info("storeOverfitting(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
             OverfittingYaml overfittingYaml = getOverfitting(artifactDir);
             if (overfittingYaml!=null) {

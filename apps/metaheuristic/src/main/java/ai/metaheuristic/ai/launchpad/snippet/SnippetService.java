@@ -84,20 +84,20 @@ public class SnippetService {
                 return 0;
             }
             else {
-                return 1;
+                return -1;
             }
         }
         else if (CommonConsts.PREDICT_TYPE.equals(o1.getType().toLowerCase())) {
             if (CommonConsts.FIT_TYPE.equals(o2.getType().toLowerCase())) {
-                return -1;
+                return 1;
             }
             else {
-                return 1;
+                return -1;
             }
         }
         else if (CommonConsts.CHECK_OVERFITTING_TYPE.equals(o1.getType().toLowerCase())) {
             if (CommonConsts.FIT_TYPE.equals(o2.getType().toLowerCase())) {
-                return -1;
+                return 1;
             }
             else {
                 return 0;
@@ -148,7 +148,7 @@ public class SnippetService {
             return false;
         }
         for (Snippet snippet : experimentSnippets) {
-            if (CommonConsts.FIT_TYPE.equals(snippet.getType())) {
+            if (type.equals(snippet.getType())) {
                 return true;
             }
         }
