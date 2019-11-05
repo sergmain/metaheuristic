@@ -82,6 +82,9 @@ public class StationTaskService {
             Files.list(globals.stationTaskDir.toPath()).forEach(top -> {
                 try {
                     String launchpadUrl = metadataService.findHostByCode(top.toFile().getName());
+                    if (launchpadUrl==null) {
+                        return;
+                    }
                     Files.list(top).forEach(p -> {
                         final File taskGroupDir = p.toFile();
                         if (!taskGroupDir.isDirectory()) {
