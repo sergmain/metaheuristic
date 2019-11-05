@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -155,12 +156,8 @@ public class SnippetService {
         return false;
     }
 
-    public interface SnippetFilter {
-        boolean filter(Snippet snippet);
-    }
-
     public List<SimpleSelectOption> getSelectOptions(Iterable<Snippet> snippets, List<SnippetCode> snippetCodes,
-                                                     SnippetFilter snippetFilter) {
+                                                     Function<Snippet, Boolean> skip) {
         List<SimpleSelectOption> selectOptions = new ArrayList<>();
         for (Snippet snippet : snippets) {
             boolean isExist=false;
@@ -171,7 +168,7 @@ public class SnippetService {
                 }
             }
             if (!isExist) {
-                if (snippetFilter.filter(snippet)) {
+                if (skip.apply(snippet)) {
                     continue;
                 }
                 selectOptions.add( new SimpleSelectOption(snippet.getCode(), String.format("Type: %s; Code: %s", snippet.getType(), snippet.getCode())));

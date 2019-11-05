@@ -122,7 +122,7 @@ public class ExperimentParamsYaml implements BaseParams {
         if (!S.b(experimentYaml.predictSnippet)) {
             snippetCodes.add(experimentYaml.predictSnippet);
         }
-        if (!S.b(experimentYaml.checkOverfittingSnippet)) {
+        if (!S.b(experimentYaml.predictSnippet) && !S.b(experimentYaml.checkOverfittingSnippet)) {
             snippetCodes.add(experimentYaml.checkOverfittingSnippet);
         }
         return snippetCodes;

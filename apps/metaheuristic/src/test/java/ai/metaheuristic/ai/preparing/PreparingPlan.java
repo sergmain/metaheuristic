@@ -212,7 +212,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         plan.companyId = company.id;
 
 
-        Plan tempPlan = planRepository.findByCode(plan.getCode());
+        Plan tempPlan = planRepository.findByCodeAndCompanyId(plan.getCode(), company.id);
         if (tempPlan!=null) {
             planCache.deleteById(tempPlan.getId());
         }

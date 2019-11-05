@@ -37,13 +37,6 @@ public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
     Plan findByIdForUpdate(Long id, Long companyId);
 
     @Transactional(readOnly = true)
-    Page<PlanImpl> findAll(Pageable pageable);
-
-    @Transactional(readOnly = true)
-    @Query(value="select p.id from PlanImpl p")
-    List<Long> findAllAsIds();
-
-    @Transactional(readOnly = true)
     @Query(value="select p from PlanImpl p where p.companyId=:companyId")
     List<Plan> findAllAsPlan(Long companyId);
 
@@ -52,7 +45,14 @@ public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
     List<Plan> findAllByOrderByIdDesc(Long companyId);
 
     @Transactional(readOnly = true)
-    PlanImpl findByCode(String code);
+    PlanImpl findByCodeAndCompanyId(String code, Long companyId);
+
+
+    // for Experiment, that's why we don't use companyId in this query
+    @Transactional(readOnly = true)
+    @Query(value="select p.id from PlanImpl p")
+    List<Long> findAllAsIds();
+
 
 }
 

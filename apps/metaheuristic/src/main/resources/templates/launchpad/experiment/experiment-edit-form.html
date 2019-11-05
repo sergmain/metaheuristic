@@ -116,7 +116,8 @@
             <tr th:each="s : ${snippetResult.snippets}">
                 <td th:text="${s.type}">Snippet type</td>
                 <td th:text="${s.getSnippetCode()}">Snippet code</td>
-                <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment/experiment-snippet-delete-commit/' + simpleExperiment.id+'/'+ s.snippetCode}">Delete</a></td>
+                <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment/experiment-snippet-delete-by-type-commit/' + simpleExperiment.id+'/'+ s.type}">Delete</a></td>
+<!--                <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment/experiment-snippet-delete-commit/' + simpleExperiment.id+'/'+ s.snippetCode}">Delete</a></td>-->
             </tr>
             </tbody>
         </table>

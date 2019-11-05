@@ -33,6 +33,10 @@ public class MetaUtils {
         return m!=null && "true".equals(m.getValue());
     }
 
+    public static boolean isFalse(Meta m) {
+        return !isTrue(m);
+    }
+
     public static Meta getMeta(List<Meta> metas, String... keys) {
         if (metas==null) {
             return null;

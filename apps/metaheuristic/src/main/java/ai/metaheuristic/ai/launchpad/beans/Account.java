@@ -77,7 +77,7 @@ public class Account implements UserDetails, Serializable, Cloneable {
     public String mailAddress;
 
     @Column(name="PHONE")
-    public long phone;
+    public String phone;
 
     @Column(name="created_on")
     public long createdOn;

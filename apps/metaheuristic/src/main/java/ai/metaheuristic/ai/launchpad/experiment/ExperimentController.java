@@ -265,6 +265,15 @@ public class ExperimentController {
         return "redirect:/launchpad/experiment/experiment-edit/" + experimentId;
     }
 
+    @GetMapping("/experiment-snippet-delete-by-type-commit/{experimentId}/{snippetType}")
+    public String snippetDeleteByTypeCommit(@PathVariable Long experimentId, @PathVariable String snippetType, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = experimentTopLevelService.snippetDeleteByTypeCommit(experimentId, snippetType);
+        if (status.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+        }
+        return "redirect:/launchpad/experiment/experiment-edit/" + experimentId;
+    }
+
     @GetMapping("/experiment-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         ExperimentApiData.ExperimentResult result = experimentTopLevelService.getExperimentWithoutProcessing(id);

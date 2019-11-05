@@ -81,7 +81,7 @@ public class PlanTopLevelService {
     }
 
     public PlanApiData.WorkbookResult addWorkbook(String planCode, String poolCode, String inputResourceParams, LaunchpadContext context) {
-        final PlanImpl plan = planRepository.findByCode(planCode);
+        final PlanImpl plan = planRepository.findByCodeAndCompanyId(planCode, context.getCompanyId());
         OperationStatusRest status = checkPlan(plan, context);
         if (status!=null) {
             return new PlanApiData.WorkbookResult("#560.011 access denied: " + status.getErrorMessagesAsStr());
@@ -166,7 +166,7 @@ public class PlanTopLevelService {
         if (StringUtils.isBlank(code)) {
             return new PlanApiData.PlanResult("#560.130 the code of plan is empty");
         }
-        Plan f = planRepository.findByCode(code);
+        Plan f = planRepository.findByCodeAndCompanyId(code, context.getCompanyId());
         if (f!=null) {
             return new PlanApiData.PlanResult("#560.150 the plan with such code already exists, code: " + code);
         }
@@ -208,7 +208,7 @@ public class PlanTopLevelService {
         if (StringUtils.isBlank(code)) {
             return new PlanApiData.PlanResult("#560.210 plan is empty");
         }
-        Plan p = planRepository.findByCode(code);
+        Plan p = planRepository.findByCodeAndCompanyId(code, context.getCompanyId());
         if (p!=null && !p.getId().equals(plan.getId())) {
             return new PlanApiData.PlanResult("#560.230 plan with such code already exists, code: " + code);
         }
