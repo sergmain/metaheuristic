@@ -16,14 +16,12 @@
 
 package ai.metaheuristic.api.data;
 
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.sourcing.GitInfo;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Serge
