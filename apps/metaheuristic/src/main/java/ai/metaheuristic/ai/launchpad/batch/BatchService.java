@@ -245,6 +245,7 @@ public class BatchService {
         bw.batchId=batch.id;
         bw.workbookId=producingResult.workbook.getId();
         batchWorkbookRepository.save(bw);
+        launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_WORKBOOK_CREATED, null, null, null, batch.id, bw.workbookId, null );
 
         PlanImpl plan = planCache.findById(planId);
         if (plan == null) {

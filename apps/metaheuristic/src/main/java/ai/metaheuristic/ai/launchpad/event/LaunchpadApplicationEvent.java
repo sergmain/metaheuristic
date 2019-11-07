@@ -18,7 +18,10 @@ package ai.metaheuristic.ai.launchpad.event;
 
 import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.CommonConsts;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 /**
  * @author Serge
@@ -34,7 +37,7 @@ public class LaunchpadApplicationEvent {
     public LaunchpadApplicationEvent(EnumsApi.LaunchpadEventType event, Long companyId, String contextId, LaunchpadEventYaml.BatchEventData batchEventData) {
         this.companyId = companyId;
         LaunchpadEventYaml launchpadEventYaml = new LaunchpadEventYaml();
-        launchpadEventYaml.createdOn = System.currentTimeMillis();
+        launchpadEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
         launchpadEventYaml.event = event;
         launchpadEventYaml.contextId = contextId;
         launchpadEventYaml.contextId = contextId;
@@ -44,7 +47,7 @@ public class LaunchpadApplicationEvent {
 
     public LaunchpadApplicationEvent(EnumsApi.LaunchpadEventType event, LaunchpadEventYaml.TaskEventData taskEventData) {
         LaunchpadEventYaml launchpadEventYaml = new LaunchpadEventYaml();
-        launchpadEventYaml.createdOn = System.currentTimeMillis();
+        launchpadEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
         launchpadEventYaml.event = event;
         launchpadEventYaml.taskData = taskEventData;
         this.launchpadEventYaml = launchpadEventYaml;

@@ -198,7 +198,7 @@ public class BatchTopLevelService {
             }
 
             final Batch batch = batchService.changeStateToPreparing(b.id);
-            // TODO 2019-10-14 when batch is null tempDir won't be deleted
+            // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed
             if (batch==null) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.080 can't find batch with id " + b.id);
             }

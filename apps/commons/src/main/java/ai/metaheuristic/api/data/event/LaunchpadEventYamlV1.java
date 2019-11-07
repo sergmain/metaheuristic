@@ -29,7 +29,8 @@ import lombok.Data;
 public class LaunchpadEventYamlV1 implements BaseParams {
     public final int version = 1;
 
-    public long createdOn;
+    // representation of LocalDateTime
+    public String createdOn;
     public EnumsApi.LaunchpadEventType event;
     public String contextId;
 

@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.commons;
 
+import java.time.format.DateTimeFormatter;
+
 public class CommonConsts {
 
     public static final String FIT_TYPE = "fit";
@@ -23,4 +25,5 @@ public class CommonConsts {
     public static final String CHECK_OVERFITTING_TYPE = "check-overfitting";
 
     public static final String REST_V1_URL = "/rest/v1";
+    public final static DateTimeFormatter EVENT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 }

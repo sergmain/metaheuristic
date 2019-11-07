@@ -35,8 +35,8 @@ import java.util.List;
 public interface LaunchpadEventRepository extends CrudRepository<LaunchpadEvent, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select e.id from LaunchpadEvent e where e.period=:period")
-    List<Long> findIdByPeriod(int period);
+    @Query(value="select e.id from LaunchpadEvent e where e.period in :periods")
+    List<Long> findIdByPeriod(List<Integer> periods);
 
     @Transactional(readOnly = true)
     @Query(value="select e from LaunchpadEvent e where e.id in :ids ")

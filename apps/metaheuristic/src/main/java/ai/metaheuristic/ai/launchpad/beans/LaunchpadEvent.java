@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.launchpad.beans;
 import lombok.Data;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -44,8 +43,10 @@ public class LaunchpadEvent implements Serializable {
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
+    // it was left for back-ward compatibility
+    @Deprecated
     @Column(name="CREATED_ON")
-    public long createdOn;
+    public long createdOn=0;
 
     @Column(name="PERIOD")
     public int period;

@@ -45,11 +45,11 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static ai.metaheuristic.commons.CommonConsts.EVENT_DATE_TIME_FORMATTER;
 
 /**
  * @author Serge
@@ -107,18 +107,14 @@ public class LaunchpadEventService {
         }
         LaunchpadEvent le = new LaunchpadEvent();
         le.companyId = event.companyId;
-        le.period = getPeriod(event.launchpadEventYaml.createdOn);
-        le.createdOn = event.launchpadEventYaml.createdOn;
+        le.period = getPeriod( LocalDateTime.parse( event.launchpadEventYaml.createdOn, EVENT_DATE_TIME_FORMATTER) );
         le.event = event.launchpadEventYaml.event.toString();
         le.params = LaunchpadEventYamlUtils.BASE_YAML_UTILS.toString(event.launchpadEventYaml);
         launchpadEventRepository.save(le);
     }
 
-    private static int getPeriod(long createdOn) {
-        LocalDate date = Instant.ofEpochMilli(createdOn)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate();
-        return date.getYear() * 100 + date.getMonthValue();
+    private static int getPeriod(LocalDateTime createdOn) {
+        return createdOn.getYear() * 100 + createdOn.getMonthValue();
     }
 
     private static final int PAGE_SIZE = 1000;
@@ -127,10 +123,10 @@ public class LaunchpadEventService {
         public List<String> events;
     }
 
-    public ResourceWithCleanerInfo getEventsForPeriod(int period) throws IOException {
+    public ResourceWithCleanerInfo getEventsForPeriod(List<Integer> periods) throws IOException {
         ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
 
-        List<Long> ids = launchpadEventRepository.findIdByPeriod(period);
+        List<Long> ids = launchpadEventRepository.findIdByPeriod(periods);
         if (ids.isEmpty()) {
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.OK);
             return resource;
@@ -143,7 +139,7 @@ public class LaunchpadEventService {
         Yaml yaml = YamlUtils.init(ListOfEvents.class);
 
         for (int i = 0; i < ids.size() / PAGE_SIZE + 1; i++) {
-            File f = new File(filesDir, "event-file-"+i+".txt");
+            File f = new File(filesDir, "event-file-"+i+".yaml");
             int fromIndex = i * PAGE_SIZE;
             List<Long> subList = ids.subList(fromIndex, Math.min(ids.size(), fromIndex + PAGE_SIZE));
             List<LaunchpadEvent> events = launchpadEventRepository.findByIds(subList);

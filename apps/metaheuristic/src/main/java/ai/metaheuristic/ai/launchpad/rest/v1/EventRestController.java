@@ -32,6 +32,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Serge
@@ -49,15 +51,23 @@ public class EventRestController {
 
     private final LaunchpadEventService launchpadEventService;
 
-    @GetMapping(value="/events-for-period/{period}/events.zip", produces = "application/zip")
-    public ResponseEntity<AbstractResource> getEventsForPeriod(HttpServletRequest request, @PathVariable int period) throws IOException {
-        if (period<201900 || period>210000) {
+    @GetMapping(value="/events-for-period/{periods}/events.zip", produces = "application/zip")
+    public ResponseEntity<AbstractResource> getEventsForPeriod(HttpServletRequest request, @PathVariable String[] periods) throws IOException {
+        List<Integer> list = new ArrayList<>();
+        for (String s : periods) {
+            int period = Integer.parseInt(s);
+            list.add(period);
+            if (period<201900 || period>210000) {
+                return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
+            }
+        }
+        if (list.isEmpty()) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
         }
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = launchpadEventService.getEventsForPeriod(period);
+            ResourceWithCleanerInfo resource = launchpadEventService.getEventsForPeriod(list);
             entity = resource.entity;
             if (resource.toClean!=null) {
                 request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
