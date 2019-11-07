@@ -20,10 +20,12 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.LaunchpadEvent;
+import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
 import ai.metaheuristic.ai.launchpad.repositories.LaunchpadEventRepository;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.CompanyData;
 import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -63,6 +65,7 @@ public class LaunchpadEventService {
 
     private final Globals globals;
     private final LaunchpadEventRepository launchpadEventRepository;
+    private final CompanyRepository companyRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public void publishBatchEvent(
@@ -150,6 +153,17 @@ public class LaunchpadEventService {
             }
             FileUtils.write(f, yaml.dumpAsMap(listOfEvents), StandardCharsets.UTF_8);
         }
+
+
+        CompanyData.CompanyList companyList = new CompanyData.CompanyList();
+        companyRepository.findAll()
+                .forEach(c-> companyList.companies.add(new CompanyData.CompanyShortData(c.id, c.name)));
+
+        File companyYamlFile = new File(filesDir, "companies.yaml");
+        Yaml companyYaml = YamlUtils.init(ListOfEvents.class);
+        FileUtils.write(companyYamlFile, companyYaml.dumpAsMap(companyList), StandardCharsets.UTF_8);
+
+
         File zipFile = new File(tempDir, "events.zip");
         ZipUtils.createZip(filesDir, zipFile);
 

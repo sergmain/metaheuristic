@@ -78,6 +78,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
@@ -212,6 +213,7 @@ public class BatchService {
         String mainPoolCode = String.format("%d-%s-%d", planId, Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
         String attachPoolCode = String.format("%d-%s-%d", planId, ATTACHMENTS_POOL_CODE, nanoTime);
         final AtomicBoolean isMainDocPresent = new AtomicBoolean(false);
+        AtomicReference<String> mainDocFilename = new AtomicReference<>();
         dataFiles.forEach( fileWithMapping -> {
             String originFilename = fileWithMapping.originName!=null ? fileWithMapping.originName : fileWithMapping.file.getName();
             if (EXCLUDE_EXT.contains(StrUtils.getExtension(originFilename))) {
@@ -223,6 +225,7 @@ public class BatchService {
             if (fileWithMapping.file.equals(mainDocFile)) {
                 poolCode = mainPoolCode;
                 isMainDocPresent.set(true);
+                mainDocFilename.set(fileWithMapping.originName);
             }
             else {
                 poolCode = attachPoolCode;
@@ -245,7 +248,7 @@ public class BatchService {
         bw.batchId=batch.id;
         bw.workbookId=producingResult.workbook.getId();
         batchWorkbookRepository.save(bw);
-        launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_WORKBOOK_CREATED, null, null, null, batch.id, bw.workbookId, null );
+        launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_WORKBOOK_CREATED, null, mainDocFilename.get(), null, batch.id, bw.workbookId, null );
 
         PlanImpl plan = planCache.findById(planId);
         if (plan == null) {

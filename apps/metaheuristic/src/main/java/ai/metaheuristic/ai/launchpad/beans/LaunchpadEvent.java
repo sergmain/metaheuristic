@@ -43,7 +43,7 @@ public class LaunchpadEvent implements Serializable {
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
-    // it was left for back-ward compatibility
+    // it was left for backward compatibility
     @Deprecated
     @Column(name="CREATED_ON")
     public long createdOn=0;
