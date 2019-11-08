@@ -32,6 +32,7 @@ import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.event.LaunchpadEventYamlUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -58,6 +59,7 @@ import static ai.metaheuristic.commons.CommonConsts.EVENT_DATE_TIME_FORMATTER;
  * Date: 10/14/2019
  * Time: 5:34 PM
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Profile("launchpad")
@@ -131,7 +133,8 @@ public class LaunchpadEventService {
 
         List<Long> ids = launchpadEventRepository.findIdByPeriod(periods);
         if (ids.isEmpty()) {
-            resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.OK);
+            log.warn("#456.010 list of period is empty");
+            resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
             return resource;
         }
 
@@ -154,7 +157,6 @@ public class LaunchpadEventService {
             FileUtils.write(f, yaml.dumpAsMap(listOfEvents), StandardCharsets.UTF_8);
         }
 
-
         CompanyData.CompanyList companyList = new CompanyData.CompanyList();
         companyRepository.findAll()
                 .forEach(c-> companyList.companies.add(new CompanyData.CompanyShortData(c.id, c.name)));
@@ -171,6 +173,7 @@ public class LaunchpadEventService {
 //        headers.add(Consts.HEADER_MH_CHUNK_SIZE, Long.toString(f.length()));
 //        headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, Boolean.toString(isLastChunk));
 
+        log.warn("#456.020 size of zip archive with billing events is " + zipFile.length());
         resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile.toPath()), headers, HttpStatus.OK);
         return resource;
     }

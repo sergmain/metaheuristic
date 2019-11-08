@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -53,6 +54,7 @@ public class EventRestController {
 
     @GetMapping(value="/events-for-period/{periods}/events.zip", produces = "application/zip")
     public ResponseEntity<AbstractResource> getEventsForPeriod(HttpServletRequest request, @PathVariable String[] periods) throws IOException {
+        log.warn("#457.010 Requested billing periods: " + Arrays.toString(periods));
         List<Integer> list = new ArrayList<>();
         for (String s : periods) {
             int period = Integer.parseInt(s);
