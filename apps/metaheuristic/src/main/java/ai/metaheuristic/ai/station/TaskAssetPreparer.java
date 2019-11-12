@@ -97,7 +97,7 @@ public class TaskAssetPreparer {
                     launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
 
             // process only if launchpad has already sent its config
-            if (launchpad.config.chunkSize==null) {
+            if (launchpad.context.chunkSize==null) {
                 log.warn("#951.050 Launchpad {} doesn't provide chunkSize", task.launchpadUrl);
                 continue;
             }
@@ -147,7 +147,7 @@ public class TaskAssetPreparer {
             }
             final Enums.SnippetState snippetState = snippetDownloadStatuses.snippetState;
             if (snippetState==Enums.SnippetState.none) {
-                DownloadSnippetTask snippetTask = new DownloadSnippetTask(launchpad.config.chunkSize, snippetConfig.getCode(), snippetConfig);
+                DownloadSnippetTask snippetTask = new DownloadSnippetTask(launchpad.context.chunkSize, snippetConfig.getCode(), snippetConfig);
                 snippetTask.launchpad = launchpad.launchpadLookup;
                 snippetTask.stationId = stationId;
                 downloadSnippetActor.add(snippetTask);

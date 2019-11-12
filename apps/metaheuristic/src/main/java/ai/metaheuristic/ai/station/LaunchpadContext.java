@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.server;
+package ai.metaheuristic.ai.station;
 
 import lombok.Data;
 
@@ -24,7 +24,12 @@ import lombok.Data;
  * Time: 12:45 AM
  */
 @Data
-public class LaunchpadConfig {
+public class LaunchpadContext {
+
+    // this was the version of StationCommParamsYaml when the maxVersionOfStation was added to code;
+    // Never change it value
+    public static final int MIN_STATION_COMM_PARAMS = 3;
 
     public Long chunkSize;
+    public Integer maxVersionOfStation;
 }

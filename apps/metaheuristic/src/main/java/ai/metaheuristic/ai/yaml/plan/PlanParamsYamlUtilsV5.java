@@ -64,6 +64,7 @@ public class PlanParamsYamlUtilsV5
             pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new SnippetDefForPlan(d.code, d.params,d.paramsAsFile)).collect(Collectors.toList()) : null;
             pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new SnippetDefForPlan(d.code, d.params,d.paramsAsFile)).collect(Collectors.toList()) : null;
             pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new SnippetDefForPlan(d.code, d.params,d.paramsAsFile)).collect(Collectors.toList()) : null;
+            pr.metas = o.metas;
             return pr;
         }).collect(Collectors.toList());
         p.planYaml.planCode = pV5.planYaml.planCode;

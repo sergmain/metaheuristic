@@ -54,8 +54,8 @@ public class LaunchpadResourceProvider implements ResourceProvider {
             String resourceCode, DataStorageParams dataStorageParams) {
 
         // process it only if the launchpad has already sent its config
-        if (launchpad.config.chunkSize != null) {
-            DownloadResourceTask resourceTask = new DownloadResourceTask(resourceCode, task.getTaskId(), taskDir, launchpad.config.chunkSize);
+        if (launchpad.context.chunkSize != null) {
+            DownloadResourceTask resourceTask = new DownloadResourceTask(resourceCode, task.getTaskId(), taskDir, launchpad.context.chunkSize);
             resourceTask.launchpad = launchpad.launchpadLookup;
             resourceTask.stationId = launchpadCode.stationId;
             downloadResourceActor.add(resourceTask);

@@ -168,13 +168,13 @@ public class LaunchpadRequestor {
     private void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String launchpadUrl, LaunchpadCommParamsYaml launchpadYaml) {
         log.debug("#775.020 LaunchpadCommParamsYaml:\n{}", launchpadYaml);
         withSync(() -> {
-            storeLaunchpadConfig(launchpadUrl, launchpadYaml);
+            storeLaunchpadContext(launchpadUrl, launchpadYaml);
             stationCommandProcessor.processLaunchpadCommParamsYaml(scpy, launchpadUrl, launchpadYaml);
             return null;
         });
     }
 
-    private void storeLaunchpadConfig(String launchpadUrl, LaunchpadCommParamsYaml launchpadCommParamsYaml) {
+    private void storeLaunchpadContext(String launchpadUrl, LaunchpadCommParamsYaml launchpadCommParamsYaml) {
         if (launchpadCommParamsYaml==null || launchpadCommParamsYaml.launchpadCommContext==null) {
             return;
         }
@@ -184,14 +184,17 @@ public class LaunchpadRequestor {
         if (launchpad==null) {
             return;
         }
-        storeLaunchpadConfig(launchpadCommParamsYaml, launchpad);
+        storeLaunchpadContext(launchpadCommParamsYaml, launchpad);
     }
 
-    private void storeLaunchpadConfig(LaunchpadCommParamsYaml launchpadCommParamsYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad) {
+    private void storeLaunchpadContext(LaunchpadCommParamsYaml launchpadCommParamsYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad) {
         if (launchpadCommParamsYaml.launchpadCommContext==null) {
             return;
         }
-        launchpad.config.chunkSize = launchpadCommParamsYaml.launchpadCommContext.chunkSize;
+        launchpad.context.chunkSize = launchpadCommParamsYaml.launchpadCommContext.chunkSize;
+        launchpad.context.maxVersionOfStation = launchpadCommParamsYaml.launchpadCommContext.stationCommVersion!=null
+            ? launchpadCommParamsYaml.launchpadCommContext.stationCommVersion
+            : 3;
     }
 
     private StationCommParamsYaml swap() {

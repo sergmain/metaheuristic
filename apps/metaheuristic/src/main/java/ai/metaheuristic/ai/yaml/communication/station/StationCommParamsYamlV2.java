@@ -39,6 +39,8 @@ import java.util.List;
 @NoArgsConstructor
 public class StationCommParamsYamlV2 implements BaseParams {
 
+    public final int version=2;
+
     @Override
     public boolean checkIntegrity() {
         return true;
@@ -184,6 +186,4 @@ public class StationCommParamsYamlV2 implements BaseParams {
 
         public List<SimpleStatus> statuses;
     }
-
-    public final int version=2;
 }

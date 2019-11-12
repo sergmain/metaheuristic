@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.plan;
 
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -26,10 +28,14 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class TestPlanYamlYaml {
+
+    @Test
+    public void testVersion() {
+        assertEquals( new PlanParamsYaml().version, PlanParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+    }
 
     @Test
     public void testYaml() {

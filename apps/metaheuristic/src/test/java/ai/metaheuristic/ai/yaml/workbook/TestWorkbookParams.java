@@ -14,23 +14,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data;
+package ai.metaheuristic.ai.yaml.workbook;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Serge
- * Date: 5/15/2019
- * Time: 7:12 PM
+ * Date: 11/12/2019
+ * Time: 3:33 PM
  */
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class Meta {
-    // !!! DO NOT CHANGE THAT CLASS UNDER ANY CIRCUMSTANCES !!!
-    public String key;
-    public String value;
-    public String ext;
+public class TestWorkbookParams {
+
+    @Test
+    public void testVersion() {
+        assertEquals( new WorkbookParamsYaml().version, WorkbookParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+    }
 }

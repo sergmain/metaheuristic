@@ -300,14 +300,14 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
                         launchpadLookupExtendedService.lookupExtendedMap.get(o.launchpadUrl);
 
-                if (launchpad==null || launchpad.config.chunkSize==null) {
+                if (launchpad==null || launchpad.context.chunkSize==null) {
                     log.info("#811.195 (launchpad==null || launchpad.config.chunkSize==null), launchpadUrl: {}", o.launchpadUrl);
                     return;
                 }
 
                 Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(o.launchpadUrl);
 
-                DownloadSnippetTask snippetTask = new DownloadSnippetTask(launchpad.config.chunkSize, o.code, null);
+                DownloadSnippetTask snippetTask = new DownloadSnippetTask(launchpad.context.chunkSize, o.code, null);
                 snippetTask.launchpad = launchpad.launchpadLookup;
                 snippetTask.stationId = launchpadInfo.stationId;
                 add(snippetTask);

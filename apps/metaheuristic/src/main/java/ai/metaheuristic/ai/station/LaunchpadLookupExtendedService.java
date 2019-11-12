@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.server.LaunchpadConfig;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfigUtils;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
@@ -53,7 +52,7 @@ public class LaunchpadLookupExtendedService {
     public static class LaunchpadLookupExtended {
         public LaunchpadLookupConfig.LaunchpadLookup launchpadLookup;
         public LaunchpadSchedule schedule;
-        public final LaunchpadConfig config = new LaunchpadConfig();
+        public final LaunchpadContext context = new LaunchpadContext();
     }
 
     @PostConstruct

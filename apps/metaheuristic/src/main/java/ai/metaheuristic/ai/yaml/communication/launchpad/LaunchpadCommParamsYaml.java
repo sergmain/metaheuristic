@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.communication.launchpad;
 
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
@@ -34,6 +35,8 @@ import java.util.List;
  */
 @Data
 public class LaunchpadCommParamsYaml implements BaseParams {
+
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
@@ -139,10 +142,10 @@ public class LaunchpadCommParamsYaml implements BaseParams {
 
     public static class LaunchpadCommContext {
         public Long chunkSize;
+        // Station's version for communicating with launchpad
+        public Integer stationCommVersion;
     }
 
     public boolean success = true;
     public String msg;
-
-    public final int version=2;
 }

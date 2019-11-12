@@ -15,6 +15,8 @@
  */
 package ai.metaheuristic.ai.yaml.task;
 
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
@@ -28,11 +30,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 //@RunWith(SpringRunner.class)
 //@SpringBootTest
 public class TestTaskParamYaml {
+
+    @Test
+    public void testVersion() {
+        assertEquals( new TaskParamsYaml().version, TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+    }
 
     @Test
     public void testSequenceYaml_v1() {

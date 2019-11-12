@@ -82,6 +82,9 @@ public class ServerService {
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
     public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
+    // Station's version for communicating with launchpad
+    private static final int STATION_COMM_VERSION = new StationCommParamsYaml().version;
+
     private final Globals globals;
     private final BinaryDataService binaryDataService;
     private final LaunchpadCommandProcessor launchpadCommandProcessor;
@@ -330,7 +333,7 @@ public class ServerService {
 
             log.debug("Start processing commands");
             launchpadCommandProcessor.process(scpy, lcpy);
-            addLaunchpadInfo(lcpy);
+            setLaunchpadCommContext(lcpy);
         } catch (Throwable th) {
             log.error("#442.040 Error while processing client's request, LaunchpadCommParamsYaml:\n{}", lcpy);
             log.error("#442.041 Error", th);
@@ -344,9 +347,10 @@ public class ServerService {
         return lcpy!=null && (lcpy.reAssignedStationId!=null || lcpy.assignedStationId!=null);
     }
 
-    private void addLaunchpadInfo(LaunchpadCommParamsYaml lcpy) {
+    private void setLaunchpadCommContext(LaunchpadCommParamsYaml lcpy) {
         LaunchpadCommParamsYaml.LaunchpadCommContext lcc = new LaunchpadCommParamsYaml.LaunchpadCommContext();
         lcc.chunkSize = globals.chunkSize;
+        lcc.stationCommVersion = STATION_COMM_VERSION;
         lcpy.launchpadCommContext = lcc;
     }
 
