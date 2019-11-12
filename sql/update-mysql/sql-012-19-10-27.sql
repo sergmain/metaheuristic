@@ -3,7 +3,7 @@ CREATE TABLE mh_company
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
     NAME            VARCHAR(50)   NOT NULL,
-    PARAMS          MEDIUMTEXT not null
+    PARAMS          MEDIUMTEXT null
 );
 
 alter table mh_account

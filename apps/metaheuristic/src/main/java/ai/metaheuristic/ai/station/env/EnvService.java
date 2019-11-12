@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static ai.metaheuristic.ai.Consts.YAML_EXT;
@@ -120,16 +121,16 @@ public class EnvService {
             try {
                 AtomicBoolean changed = new AtomicBoolean(false);
                 Files.list(globals.stationEnvHotDeployDir.toPath())
-                        .filter(o -> {
-                            File f = o.toFile();
+                        .map(Path::toFile)
+                        .filter(o -> o.isFile())
+                        .filter(f -> {
                             String ext = StrUtils.getExtension(f.getName());
                             if (ext==null) {
                                 return false;
                             }
                             return StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT);
                         })
-                        .forEach(dataFile -> {
-                            File file = dataFile.toFile();
+                        .forEach(file -> {
                             try {
                                 if (file.isFile()) {
                                     try (InputStream is = new FileInputStream(file)) {
