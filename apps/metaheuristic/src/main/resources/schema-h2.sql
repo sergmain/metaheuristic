@@ -40,7 +40,9 @@ create table mh_account
     PHONE               varchar(100),
     PHONE_AS_STR        varchar(100),
 
-    CREATED_ON          bigint        not null
+    CREATED_ON          bigint        not null,
+    SECRET_KEY          varchar(25),
+    TWO_FA              BOOLEAN not null default false
 );
 
 CREATE TABLE mh_station
