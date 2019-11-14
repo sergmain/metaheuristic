@@ -70,7 +70,7 @@ public class EnvService {
             try {
                 FileUtils.copyFile(globals.defaultEnvYamlFile, envYamlFile);
             } catch (IOException e) {
-                log.error("Error", e);
+                log.error("#747.035 Error", e);
                 throw new IllegalStateException("#747.040 Error while copying "+ globals.defaultEnvYamlFile.getAbsolutePath()+" to " + envYamlFile.getAbsolutePath(), e);
             }
         }
@@ -78,7 +78,7 @@ public class EnvService {
         try {
             env = FileUtils.readFileToString(envYamlFile, Charsets.UTF_8);
         } catch (IOException e) {
-            log.error("Error", e);
+            log.error("#747.045 Error", e);
             throw new IllegalStateException("#747.050 Error while reading file: " + envYamlFile.getAbsolutePath(), e);
         }
 
@@ -112,7 +112,9 @@ public class EnvService {
         if (!globals.isStationEnabled) {
             return;
         }
-
+        if (!globals.stationEnvHotDeploySupported) {
+            return;
+        }
         synchronized (this) {
             if (!globals.stationEnvHotDeployDir.exists()) {
                 //noinspection ResultOfMethodCallIgnored
@@ -122,7 +124,7 @@ public class EnvService {
                 AtomicBoolean changed = new AtomicBoolean(false);
                 Files.list(globals.stationEnvHotDeployDir.toPath())
                         .map(Path::toFile)
-                        .filter(o -> o.isFile())
+                        .filter(File::isFile)
                         .filter(f -> {
                             String ext = StrUtils.getExtension(f.getName());
                             if (ext==null) {

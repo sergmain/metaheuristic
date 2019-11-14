@@ -86,7 +86,7 @@ public class StationService {
             status.ip = inetAddress.getHostAddress();
             status.host = inetAddress.getHostName();
         } catch (UnknownHostException e) {
-            log.error("Error", e);
+            log.error("#749.010 Error", e);
             status.addError(ExceptionUtils.getStackTrace(e));
         }
 
@@ -141,7 +141,7 @@ public class StationService {
 
     public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(String launchpadUrl, long taskId) {
         if (launchpadUrl==null) {
-            throw new IllegalStateException("#747.010 launchpadUrl is null");
+            throw new IllegalStateException("#749.020 launchpadUrl is null");
         }
         StationTask task = stationTaskService.findById(launchpadUrl, taskId);
         if (task==null) {
@@ -155,7 +155,7 @@ public class StationService {
         try {
             resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
         } catch (ResourceProviderException e) {
-            log.error("#747.020 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.taskYaml.outputResourceCode);
+            log.error("#749.030 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.taskYaml.outputResourceCode);
             return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
         }
         if (resourceProvider instanceof DiskResourceProvider) {
@@ -166,9 +166,9 @@ public class StationService {
 
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
-            log.warn("#747.030 Resource wasn't found. Considering that this task is broken, {}", assetFile);
+            log.warn("#749.040 Resource wasn't found. Considering that this task is broken, {}", assetFile);
             stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId,
-                    "#747.030 Resource wasn't found. Considering that this task is broken");
+                    "#749.050 Resource wasn't found. Considering that this task is broken");
             stationTaskService.setCompleted(task.launchpadUrl, task.taskId);
             return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
         }
@@ -197,7 +197,7 @@ public class StationService {
                 for (String resourceCode : value) {
                     final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(resourceCode);
                     if (params==null) {
-                        final String es = "#747.040 resource code: " + resourceCode + ", inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml);
+                        final String es = "#749.060 resource code: " + resourceCode + ", inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml);
                         log.error(es);
                         throw new BreakFromForEachException(es);
                     }
@@ -220,7 +220,7 @@ public class StationService {
             return result;
         }
         catch (ResourceProviderException e) {
-            log.error("#747.050 Error", e);
+            log.error("#749.070 Error", e);
             stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
             result.isError = true;
             return result;
@@ -249,7 +249,7 @@ public class StationService {
                     taskDir, launchpad, task, taskParamYaml.taskYaml.outputResourceCode, dataStorageParams);
             return outputResourceFile;
         } catch (ResourceProviderException e) {
-            final String msg = "#747.060 Error: " + e.toString();
+            final String msg = "#749.080 Error: " + e.toString();
             log.error(msg, e);
             stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, msg);
             return null;

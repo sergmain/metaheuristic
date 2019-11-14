@@ -147,6 +147,9 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.default-env-yaml-file' )) }")
     public File defaultEnvYamlFile;
 
+    @Value("${mh.station.env-hot-deploy-supported:#{false}}")
+    public boolean stationEnvHotDeploySupported = false;
+
 
     // some fields
     public File launchpadTempDir;
