@@ -85,20 +85,20 @@ public class StationSnippetService {
         } catch (HttpResponseException e) {
             if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
                 snippetConfigStatus.status = ConfigStatus.not_found;
-                log.warn("#811.200 Snippet with code {} wasn't found", snippetCode);
+                log.warn("#813.200 Snippet with code {} wasn't found", snippetCode);
             }
             else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-                log.warn("#811.210 Snippet with id {} is broken and need to be recreated", snippetCode);
+                log.warn("#813.210 Snippet with id {} is broken and need to be recreated", snippetCode);
             }
             else {
-                log.error("#811.220 HttpResponseException", e);
+                log.error("#813.220 HttpResponseException", e);
             }
         } catch (SocketTimeoutException e) {
-            log.error("#811.170 SocketTimeoutException: {}, snippet: {}, launchpad: {}", e.toString(), snippetCode, launchpad.url);
+            log.error("#813.170 SocketTimeoutException: {}, snippet: {}, launchpad: {}", e.toString(), snippetCode, launchpad.url);
         } catch (IOException e) {
-            log.error(S.f("#811.180 IOException, snippet: %s, launchpad: %s",snippetCode, launchpad.url), e);
+            log.error(S.f("#813.180 IOException, snippet: %s, launchpad: %s",snippetCode, launchpad.url), e);
         } catch (Throwable th) {
-            log.error(S.f("#811.190 Throwable, snippet: %s, launchpad: %s",snippetCode, launchpad.url), th);
+            log.error(S.f("#813.190 Throwable, snippet: %s, launchpad: %s",snippetCode, launchpad.url), th);
         }
         return snippetConfigStatus;
     }

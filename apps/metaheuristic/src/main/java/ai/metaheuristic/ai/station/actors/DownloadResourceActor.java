@@ -194,7 +194,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                     continue;
                 }
                 else if (resourceState == Enums.ResourceState.unknown_error || resourceState == Enums.ResourceState.resource_doesnt_exist) {
-                    log.warn("#811.053 resource {} can't be acquired, state: {}", assetFile.file.getPath(), resourceState);
+                    log.warn("#810.053 resource {} can't be acquired, state: {}", assetFile.file.getPath(), resourceState);
                     continue;
                 }
                 else if (resourceState == Enums.ResourceState.transmitting_error) {

@@ -188,7 +188,7 @@ public class BatchTopLevelService {
 
             final Batch b = batchCache.save(new Batch(planId, Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId()));
 
-            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), null, null, b.id, null, context );
+            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), plan.getCode(), null, b.id, null, context );
 
             try(InputStream is = new FileInputStream(dataFile)) {
                 String code = ResourceUtils.toResourceCode(originFilename);

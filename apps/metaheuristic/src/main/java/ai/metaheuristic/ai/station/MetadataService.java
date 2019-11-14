@@ -86,11 +86,16 @@ public class MetadataService {
     public void init() {
       final File metadataFile = new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME);
         if (metadataFile.exists()) {
-            try (FileInputStream fis = new FileInputStream(metadataFile)) {
-                metadata = MetadataUtils.to(fis);
+            String yaml = null;
+            try {
+                yaml = FileUtils.readFileToString(metadataFile, StandardCharsets.UTF_8);
+                metadata = MetadataUtils.to(yaml);
+            } catch (org.yaml.snakeyaml.reader.ReaderException e) {
+                log.error("#815.010 Bad data in " + metadataFile.getAbsolutePath()+"\nYaml:\n" + yaml);
+                throw new IllegalStateException("#815.015 Error while loading file: " + metadataFile.getPath(), e);
             } catch (IOException e) {
-                log.error("Error", e);
-                throw new IllegalStateException("Error while loading file: " + metadataFile.getPath(), e);
+                log.error("#815.020 Error", e);
+                throw new IllegalStateException("#815.025 Error while loading file: " + metadataFile.getPath(), e);
             }
         }
         if (metadata==null) {
@@ -202,7 +207,7 @@ public class MetadataService {
                 }
             }
         } catch (Throwable th) {
-            log.error(S.f("Error verifying snippet %s from %s", snippetCode, launchpadUrl), th);
+            log.error(S.f("#815.030 Error verifying snippet %s from %s", snippetCode, launchpadUrl), th);
             setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.io_error);
         }
     }
@@ -214,11 +219,11 @@ public class MetadataService {
                 status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "Launchpad: "+ launchpadUrl +", snippet: "+snippetCode, fis, true, launchpad.createPublicKey());
             }
             if (status.signature != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#811.120 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
+                log.warn("#815.040 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
                 setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.signature_wrong);
             }
             else if (status.checksum != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#811.130 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
+                log.warn("#815.050 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
                 setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.checksum_wrong);
             }
         }
@@ -258,10 +263,10 @@ public class MetadataService {
 
     public void setStationIdAndSessionId(final String launchpadUrl, String stationId, String sessionId) {
         if (StringUtils.isBlank(launchpadUrl)) {
-            throw new IllegalStateException("launchpadUrl is null");
+            throw new IllegalStateException("#815.060 launchpadUrl is null");
         }
         if (StringUtils.isBlank(stationId)) {
-            throw new IllegalStateException("StationId is null");
+            throw new IllegalStateException("#815.070 StationId is null");
         }
         synchronized (syncObj) {
             final Metadata.LaunchpadInfo launchpadInfo = getLaunchpadInfo(launchpadUrl);
@@ -275,7 +280,7 @@ public class MetadataService {
 
     public List<SnippetDownloadStatusYaml.Status> registerNewSnippetCode(String launchpadUrl, List<LaunchpadCommParamsYaml.Snippets.Info> infos) {
         if (S.b(launchpadUrl)) {
-            throw new IllegalStateException("launchpadUrl is null");
+            throw new IllegalStateException("#815.080 launchpadUrl is null");
         }
         SnippetDownloadStatusYaml snippetDownloadStatusYaml;
         synchronized (syncObj) {
@@ -307,10 +312,10 @@ public class MetadataService {
 
     public boolean setSnippetState(final String launchpadUrl, String snippetCode, Enums.SnippetState snippetState) {
         if (S.b(launchpadUrl)) {
-            throw new IllegalStateException("launchpadUrl is null");
+            throw new IllegalStateException("#815.090 launchpadUrl is null");
         }
         if (S.b(snippetCode)) {
-            throw new IllegalStateException("snippetCode is null");
+            throw new IllegalStateException("#815.100 snippetCode is null");
         }
         synchronized (syncObj) {
             SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
@@ -330,10 +335,10 @@ public class MetadataService {
 
     public boolean removeSnippet(final String launchpadUrl, String snippetCode) {
         if (S.b(launchpadUrl)) {
-            throw new IllegalStateException("launchpadUrl is null");
+            throw new IllegalStateException("#815.110 launchpadUrl is null");
         }
         if (S.b(snippetCode)) {
-            throw new IllegalStateException("snippetCode is null");
+            throw new IllegalStateException("#815.120 snippetCode is null");
         }
         synchronized (syncObj) {
             SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
@@ -350,10 +355,10 @@ public class MetadataService {
 
     public boolean setVerifiedStatus(final String launchpadUrl, String snippetCode, boolean verified) {
         if (S.b(launchpadUrl)) {
-            throw new IllegalStateException("launchpadUrl is null");
+            throw new IllegalStateException("#815.130 launchpadUrl is null");
         }
         if (S.b(snippetCode)) {
-            throw new IllegalStateException("snippetCode is null");
+            throw new IllegalStateException("#815.140 snippetCode is null");
         }
         synchronized (syncObj) {
             SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
@@ -372,10 +377,10 @@ public class MetadataService {
 
     public void setSnippetDownloadStatus(final String launchpadUrl, String snippetCode, EnumsApi.SnippetSourcing sourcing, Enums.SnippetState snippetState) {
         if (S.b(launchpadUrl)) {
-            throw new IllegalStateException("launchpadUrl is null");
+            throw new IllegalStateException("#815.150 launchpadUrl is null");
         }
         if (S.b(snippetCode)) {
-            throw new IllegalStateException("snippetCode is null");
+            throw new IllegalStateException("#815.160 snippetCode is null");
         }
         synchronized (syncObj) {
             setSnippetDownloadStatusInternal(launchpadUrl, snippetCode, sourcing, snippetState);
@@ -445,10 +450,10 @@ public class MetadataService {
 
     public void setSessionId(final String launchpadUrl, String sessionId) {
         if (StringUtils.isBlank(launchpadUrl)) {
-            throw new IllegalStateException("launchpadUrl is null");
+            throw new IllegalStateException("#815.170 launchpadUrl is null");
         }
         if (StringUtils.isBlank(sessionId)) {
-            throw new IllegalStateException("sessionId is null");
+            throw new IllegalStateException("#815.180 sessionId is null");
         }
         synchronized (syncObj) {
             getLaunchpadInfo(launchpadUrl).stationId = sessionId;
@@ -465,7 +470,7 @@ public class MetadataService {
     private void updateMetadataFile() {
         final File metadataFile =  new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME);
         if (metadataFile.exists()) {
-            log.trace("Metadata file exists. Make backup");
+            log.trace("#815.190 Metadata file exists. Make backup");
             File yamlFileBak = new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME + ".bak");
             //noinspection ResultOfMethodCallIgnored
             yamlFileBak.delete();
@@ -476,10 +481,15 @@ public class MetadataService {
         }
 
         try {
-            FileUtils.write(metadataFile, MetadataUtils.toString(metadata), StandardCharsets.UTF_8, false);
+            String data = MetadataUtils.toString(metadata);
+            FileUtils.write(metadataFile, data, StandardCharsets.UTF_8, false);
+            String check = FileUtils.readFileToString(metadataFile, StandardCharsets.UTF_8);
+            if (!check.equals(data)) {
+                log.warn("#815.200 Metadata was persisted with an error, content is different, size - expected: {}, actual: {}", data.length(), check.length());
+            }
         } catch (IOException e) {
-            log.error("Error", e);
-            throw new IllegalStateException("Error while writing to file: " + metadataFile.getPath(), e);
+            log.error("#815.210 Error", e);
+            throw new IllegalStateException("#815.220 Error while writing to file: " + metadataFile.getPath(), e);
         }
     }
 
