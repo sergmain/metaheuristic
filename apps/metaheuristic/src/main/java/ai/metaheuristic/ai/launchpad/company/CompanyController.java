@@ -218,7 +218,7 @@ public class CompanyController {
         accountResult.account.setPassword(null);
         accountResult.account.setPassword2(null);
         model.addAttribute("account", accountResult.account);
-        model.addAttribute("roles", Consts.ID_1.equals(companyId) ? SecConsts.REST_ROLE : SecConsts.POSSIBLE_ROLES);
+        model.addAttribute("roles", Consts.ID_1.equals(companyId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES);
         model.addAttribute("companyId", companyId);
         return "launchpad/company/company-account-edit-roles";
     }
