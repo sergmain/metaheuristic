@@ -38,13 +38,13 @@ public class CompanyAccountTopLevelService {
     private final Globals globals;
 
     public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyId)  {
-//        pageable = ControllerUtils.fixPageSize(globals.accountRowsLimit, pageable);
         pageable = ControllerUtils.fixPageSize(50, pageable);
         return accountService.getAccounts(pageable, companyId);
     }
 
     public OperationStatusRest addAccount(Account account, Long companyId) {
-        account.setRoles("ROLE_ADMIN");
+        // don't set any role when account is created
+        account.setRoles("");
         return accountService.addAccount(account, companyId);
     }
 

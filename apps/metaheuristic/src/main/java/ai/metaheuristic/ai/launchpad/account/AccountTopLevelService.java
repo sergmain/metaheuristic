@@ -43,6 +43,8 @@ public class AccountTopLevelService {
     }
 
     public OperationStatusRest addAccount(Account account, LaunchpadContext context) {
+        // company's admin can create only operator via AccountController
+        // a fine-grained access is setting via CompanyController
         account.setRoles("ROLE_OPERATOR");
         return accountService.addAccount(account, context.getCompanyId());
     }

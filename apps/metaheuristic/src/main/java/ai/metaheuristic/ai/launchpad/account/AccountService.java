@@ -153,7 +153,7 @@ public class AccountService {
         if (account == null || !Objects.equals(account.companyId, companyId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.110 account wasn't found, accountId: " + accountId);
         }
-        List<String> possibleRoles = Consts.ID_1.equals(companyId) ? SecConsts.REST_ROLE : SecConsts.POSSIBLE_ROLES;
+        List<String> possibleRoles = Consts.ID_1.equals(companyId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES;
 
         String role = possibleRoles.get(roleId);
         boolean isAccountContainsRole = account.hasRole(role);
