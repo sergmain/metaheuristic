@@ -33,32 +33,32 @@ import java.util.List;
  * Communication file which is transferred from a Station to Launchpad
  *
  * @author Serge
- * Date: 10/03/2019
+ * Date: 11/13/2019
  * Time: 6:00 PM
  */
 @Data
 @NoArgsConstructor
-public class StationCommParamsYamlV3 implements BaseParams {
+public class StationCommParamsYamlV4 implements BaseParams {
 
-    public final int version=3;
+    public final int version=4;
 
     @Override
     public boolean checkIntegrity() {
         return true;
     }
 
-    public SnippetDownloadStatusV3 snippetDownloadStatus;
-    public StationCommContextV3 stationCommContext;
-    public RequestStationIdV3 requestStationId;
-    public ReportStationStatusV3 reportStationStatus;
-    public ReportStationTaskStatusV3 reportStationTaskStatus;
-    public RequestTaskV3 requestTask;
-    public ReportTaskProcessingResultV3 reportTaskProcessingResult;
-    public CheckForMissingOutputResourcesV3 checkForMissingOutputResources;
-    public ResendTaskOutputResourceResultV3 resendTaskOutputResourceResult;
+    public SnippetDownloadStatusV4 snippetDownloadStatus;
+    public StationCommContextV4 stationCommContext;
+    public RequestStationIdV4 requestStationId;
+    public ReportStationStatusV4 reportStationStatus;
+    public ReportStationTaskStatusV4 reportStationTaskStatus;
+    public RequestTaskV4 requestTask;
+    public ReportTaskProcessingResultV4 reportTaskProcessingResult;
+    public CheckForMissingOutputResourcesV4 checkForMissingOutputResources;
+    public ResendTaskOutputResourceResultV4 resendTaskOutputResourceResult;
 
     @Data
-    public static class SnippetDownloadStatusV3 {
+    public static class SnippetDownloadStatusV4 {
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
@@ -73,7 +73,7 @@ public class StationCommParamsYamlV3 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class StationCommContextV3 {
+    public static class StationCommContextV4 {
         public String stationId;
         public String sessionId;
     }
@@ -81,28 +81,28 @@ public class StationCommParamsYamlV3 implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class RequestStationIdV3 {
+    public static class RequestStationIdV4 {
         public boolean keep = true;
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class CheckForMissingOutputResourcesV3 {
+    public static class CheckForMissingOutputResourcesV4 {
         public boolean keep = true;
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class RequestTaskV3 {
+    public static class RequestTaskV4 {
         public boolean acceptOnlySigned;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReportStationStatusV3 {
+    public static class ReportStationStatusV4 {
 
         @Data
         @AllArgsConstructor
@@ -144,7 +144,16 @@ public class StationCommParamsYamlV3 implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ReportTaskProcessingResultV3 {
+    public static class ReportTaskProcessingResultV4 {
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class MachineLearningTaskResult {
+            public String metrics;
+            public String predicted;
+            public boolean overfitted;
+        }
 
         @Data
         @AllArgsConstructor
@@ -152,8 +161,7 @@ public class StationCommParamsYamlV3 implements BaseParams {
         public static class SimpleTaskExecResult {
             public long taskId;
             public String result;
-            public String metrics;
-            public List<Meta> metas = new ArrayList<>();
+            public MachineLearningTaskResult ml;
         }
 
         public List<SimpleTaskExecResult> results = new ArrayList<>();
@@ -162,7 +170,7 @@ public class StationCommParamsYamlV3 implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ReportStationTaskStatusV3 {
+    public static class ReportStationTaskStatusV4 {
 
         @Data
         @AllArgsConstructor
@@ -177,7 +185,7 @@ public class StationCommParamsYamlV3 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ResendTaskOutputResourceResultV3 {
+    public static class ResendTaskOutputResourceResultV4 {
 
         @Data
         @AllArgsConstructor

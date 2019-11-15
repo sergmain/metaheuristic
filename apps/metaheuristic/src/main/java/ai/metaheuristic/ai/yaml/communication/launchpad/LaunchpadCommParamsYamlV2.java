@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Config file which is transferred from a Launchpad to a Station
+ * Communication file which is transferred from a Launchpad to a Station
  *
  * @author Serge
  * Date: 10/03/2019

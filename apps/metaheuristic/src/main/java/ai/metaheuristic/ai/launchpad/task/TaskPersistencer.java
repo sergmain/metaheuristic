@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.api.data.task_ml.TaskMachineLearningYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
@@ -29,6 +30,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -227,7 +229,14 @@ public class TaskPersistencer {
                 }
             }
             task.setSnippetExecResults(result.getResult());
-            task.setMetrics(result.getMetrics());
+            if (result.ml!=null) {
+                TaskMachineLearningYaml tmly = new TaskMachineLearningYaml(result.ml.metrics, , );
+                TaskMachineLearningYamlUtils.BASE_YAML_UTILS.toString()
+                task.setMetrics(result.getMetrics());
+            }
+            else {
+                task.setMetrics(null);
+            }
             task = taskRepository.save(task);
 
             return task;

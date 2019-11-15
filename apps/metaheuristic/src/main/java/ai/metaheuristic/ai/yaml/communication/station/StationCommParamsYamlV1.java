@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Config file which is transferred from a Station to Launchpad
+ * Communication file which is transferred from a Station to Launchpad
  *
  * @author Serge
  * Date: 8/29/2019
@@ -107,8 +107,8 @@ public class StationCommParamsYamlV1 implements BaseParams {
         public String sessionId;
 
         // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
-        // it'll work but in some cases behaviour can be different
-        // need to change it to UTC, Coordinated Universal Time
+        //  it'll work but in some cases behaviour can be different
+        //  need to change it to UTC, Coordinated Universal Time
         public long sessionCreatedOn;
         public String ip;
         public String host;

@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * Config file which is transferred from a Launchpad to a Station
+ * Communication file which is transferred from a Launchpad to a Station
  *
  * @author Serge
  * Date: 8/29/2019

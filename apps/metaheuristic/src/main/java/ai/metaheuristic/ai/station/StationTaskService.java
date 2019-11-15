@@ -270,8 +270,12 @@ public class StationTaskService {
             if (task.isDelivered() && task.isReported() ) {
                 continue;
             }
+            StationCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult ml = null;
+            if (task.getMetrics()!=null) {
+                ml = new StationCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult(task.getMetrics(), null, false);
+            }
             final StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
-                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), task.getMetrics());
+                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), ml);
             processingResult.results.add(result);
             setReportedOn(launchpadUrl, task.taskId);
         }
