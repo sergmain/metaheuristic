@@ -49,6 +49,7 @@ public class LaunchpadCommParamsYamlUtilsV2 extends AbstractParamsYamlUtils<
         if( v2.launchpadCommContext!=null ) {
             t.launchpadCommContext = new LaunchpadCommParamsYaml.LaunchpadCommContext();
             t.launchpadCommContext.chunkSize = v2.launchpadCommContext.chunkSize;
+            t.launchpadCommContext.stationCommVersion = v2.launchpadCommContext.stationCommVersion;
         }
         if (v2.snippets!=null) {
             t.snippets = new LaunchpadCommParamsYaml.Snippets();

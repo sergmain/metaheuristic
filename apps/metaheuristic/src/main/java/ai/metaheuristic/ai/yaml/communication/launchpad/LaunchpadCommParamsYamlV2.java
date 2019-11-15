@@ -126,6 +126,8 @@ public class LaunchpadCommParamsYamlV2 implements BaseParams {
     @NoArgsConstructor
     public static class LaunchpadCommContextV2 {
         public Long chunkSize;
+        // Station's version for communicating with launchpad
+        public Integer stationCommVersion;
     }
 
     public boolean success = true;
