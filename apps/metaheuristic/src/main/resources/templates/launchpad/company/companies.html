@@ -48,7 +48,8 @@
             <td th:text="${r.name}">Name</td>
             <td><a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-edit/' + r.id}">Edit</a></td>
             <td><a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-accounts/' + r.id}">Accounts</a></td>
-            <td><a sec:authorize="hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')" class="pure-button pure-button-primary" th:href="${'/launchpad/company/batch/company-batches/' + r.id}">Batches</a></td>
+            <td><a sec:authorize="hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')"
+                   th:if='${r.id!=1}' class="pure-button pure-button-primary" th:href="${'/launchpad/company/batch/company-batches/' + r.id}">Batches</a></td>
         </tr>
         <tr>
             <td colspan="8">
