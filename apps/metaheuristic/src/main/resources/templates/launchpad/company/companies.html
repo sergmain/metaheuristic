@@ -46,9 +46,9 @@
         <tr th:each="r : ${result.companies}">
             <td th:text="${r.id}">#Id</td>
             <td th:text="${r.name}">Name</td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-edit/' + r.id}">Edit</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-accounts/' + r.id}">Accounts</a></td>
-            <td sec:authorize="hasAnyRole('MASTER_OPERATOR')"><a class="pure-button pure-button-primary" th:href="${'/launchpad/company/batch/company-batches/' + r.id}">Batches</a></td>
+            <td><a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-edit/' + r.id}">Edit</a></td>
+            <td><a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-accounts/' + r.id}">Accounts</a></td>
+            <td><a sec:authorize="hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')" class="pure-button pure-button-primary" th:href="${'/launchpad/company/batch/company-batches/' + r.id}">Batches</a></td>
         </tr>
         <tr>
             <td colspan="8">

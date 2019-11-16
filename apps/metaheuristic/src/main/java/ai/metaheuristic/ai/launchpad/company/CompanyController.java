@@ -47,12 +47,12 @@ import java.util.ArrayList;
 @RequestMapping("/launchpad/company")
 @Profile("launchpad")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('MASTER_ADMIN')")
 public class CompanyController {
 
     private final CompanyTopLevelService companyTopLevelService;
     private final CompanyAccountTopLevelService companyAccountTopLevelService;
 
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT')")
     @GetMapping("/companies")
     public String companies(Model model,
                            @PageableDefault(size = CompanyTopLevelService.ROWS_IN_TABLE) Pageable pageable,
@@ -67,6 +67,7 @@ public class CompanyController {
 
     // for AJAX
     @PostMapping("/companies-part")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public String getCompaniesViaAJAX(Model model, @PageableDefault(size=CompanyTopLevelService.ROWS_IN_TABLE) Pageable pageable )  {
         CompanyData.CompaniesResult companies = companyTopLevelService.getCompanies(pageable);
         model.addAttribute("result", companies);
@@ -74,11 +75,13 @@ public class CompanyController {
     }
 
     @GetMapping(value = "/company-add")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String add(@ModelAttribute("company") Company company) {
         return "launchpad/company/company-add";
     }
 
     @PostMapping("/company-add-commit")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String addFormCommit(Model model, Company company) {
         OperationStatusRest operationStatusRest = companyTopLevelService.addCompany(company);
         if (operationStatusRest.isErrorMessages()) {
@@ -89,6 +92,7 @@ public class CompanyController {
     }
 
     @GetMapping(value = "/company-edit/{id}")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String editCompany(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes){
         CompanyData.CompanyResult companyResult = companyTopLevelService.getCompany(id);
         if (companyResult.isErrorMessages()) {
@@ -100,6 +104,7 @@ public class CompanyController {
     }
 
     @PostMapping("/company-edit-commit")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String editFormCommit(Long id, String name, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = companyTopLevelService.editFormCommit(id, name);
         if (operationStatusRest.isErrorMessages()) {
@@ -114,6 +119,7 @@ public class CompanyController {
     // === accounts for companies =====================
 
     @GetMapping("/company-accounts/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String accounts(Model model,
                            @ModelAttribute("result") AccountData.AccountsResult result,
                            @PageableDefault(size = 5) Pageable pageable, @PathVariable Long companyId,
@@ -128,6 +134,7 @@ public class CompanyController {
 
     // for AJAX
     @PostMapping("/company-accounts-part/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String getAccountsViaAJAX(Model model, @PageableDefault(size=5) Pageable pageable, @PathVariable Long companyId)  {
         AccountData.AccountsResult accounts = companyAccountTopLevelService.getAccounts(pageable, companyId);
         model.addAttribute("result", accounts);
@@ -136,12 +143,14 @@ public class CompanyController {
     }
 
     @GetMapping(value = "/company-account-add/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String add(Model model, @ModelAttribute("account") Account account, @PathVariable Long companyId) {
         model.addAttribute("companyId", companyId);
         return "launchpad/company/company-account-add";
     }
 
     @PostMapping("/company-account-add-commit/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String addFormCommit(Model model, Account account, @PathVariable Long companyId) {
         account.companyId = companyId;
         OperationStatusRest operationStatusRest = companyAccountTopLevelService.addAccount(account, companyId);
@@ -154,6 +163,7 @@ public class CompanyController {
     }
 
     @GetMapping(value = "/company-account-edit/{companyId}/{id}")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @PathVariable Long companyId){
         AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(id, companyId);
         if (accountResult.isErrorMessages()) {
@@ -168,6 +178,7 @@ public class CompanyController {
     }
 
     @PostMapping("/company-account-edit-commit/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String editFormCommit(Long id, String publicName, boolean enabled,
                                  final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
         OperationStatusRest operationStatusRest = companyAccountTopLevelService.editFormCommit(id, publicName, enabled, companyId);
@@ -181,6 +192,7 @@ public class CompanyController {
     }
 
     @GetMapping(value = "/company-account-password-edit/{companyId}/{id}")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String passwordEdit(@PathVariable Long id, Model model,
                                final RedirectAttributes redirectAttributes, @PathVariable Long companyId){
         AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(id, companyId);
@@ -196,6 +208,7 @@ public class CompanyController {
     }
 
     @PostMapping("/company-account-password-edit-commit/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String passwordEditFormCommit(Long id, String password, String password2,
                                          final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
         OperationStatusRest operationStatusRest = companyAccountTopLevelService.passwordEditFormCommit(id, password, password2, companyId);
@@ -209,6 +222,7 @@ public class CompanyController {
     }
 
     @GetMapping(value = "/company-account-edit-roles/{companyId}/{id}")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String editRoles(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
         AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(id, companyId);
         if (accountResult.isErrorMessages()) {
@@ -224,6 +238,7 @@ public class CompanyController {
     }
 
     @PostMapping("/company-account-edit-roles-commit/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String rolesEditFormCommit(
             Long accountId, Integer roleId, @RequestParam(required = false, defaultValue = "false") boolean checkbox,
                                       final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {

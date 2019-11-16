@@ -95,7 +95,7 @@ public class CustomUserDetails implements UserDetailsService {
             // need to think of better solution for virtual accounts
             account.setId( Integer.MAX_VALUE -5L );
 
-            // master admin will belong to companyID==1
+            // master admin will belong to companyId==1
             account.setCompanyId( 1L );
             account.setUsername(globals.launchpadMasterUsername);
             account.setAccountNonExpired(true);

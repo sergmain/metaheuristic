@@ -358,6 +358,37 @@ public class BatchTopLevelService {
         return resource;
     }
 
+    public ResourceWithCleanerInfo getBatchOriginFile(Long batchId) throws IOException {
+        Batch batch = batchCache.findById(batchId);
+        if (batch == null) {
+            final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
+            log.warn(es);
+            return null;
+        }
+        ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
+
+        File resultDir = DirUtils.createTempDir("prepare-origin-file-");
+        resource.toClean.add(resultDir);
+
+        String originFilename = batchService.getUploadedFilename(batchId);
+        File tempFile = File.createTempFile("batch-origin-file-", ".bin", resultDir);
+
+        try {
+            binaryDataService.storeBatchOriginFileToFile(batchId, tempFile);
+        } catch (BinaryDataNotFoundException e) {
+            String msg = "#990.375 Error store data to temp file, data doesn't exist in db, batchId " + batchId +
+                    ", file: " + tempFile.getPath();
+            log.error(msg);
+            return null;
+        }
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        httpHeaders.setContentDisposition(ContentDisposition.parse("filename*=UTF-8''" + URLEncoder.encode(originFilename, StandardCharsets.UTF_8.toString())));
+        resource.entity = new ResponseEntity<>(new FileSystemResource(tempFile), RestUtils.getHeader(httpHeaders, tempFile.length()), HttpStatus.OK);
+        return resource;
+    }
+
     private boolean prepareZip(BatchService.PrepareZipData prepareZipData, File zipDir ) {
         final TaskParamsYaml taskParamYaml;
         try {

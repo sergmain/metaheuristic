@@ -131,6 +131,25 @@ public class BinaryDataService {
         }
     }
 
+    public void storeBatchOriginFileToFile(Long batchId, File trgFile) {
+        try {
+            Blob blob = binaryDataRepository.getDataAsStreamForBatchAndRefId(batchId);
+            if (blob==null) {
+                log.warn("#087.010 Binary data for batchId {} wasn't found", batchId);
+                throw new BinaryDataNotFoundException("#087.010 Binary data wasn't found, batchId: " + batchId);
+            }
+            try (InputStream is = blob.getBinaryStream()) {
+                FileUtils.copyInputStreamToFile(is, trgFile);
+            }
+        } catch (BinaryDataNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            String es = "#087.020 Error while storing binary data";
+            log.error(es, e);
+            throw new IllegalStateException(es, e);
+        }
+    }
+
     public void deleteByRefId(Long workbookId, BinaryDataRefType refType) {
         binaryDataRepository.deleteByRefIdAndRefType(workbookId, refType.toString());
     }

@@ -171,4 +171,28 @@ public class BatchForOperatorController {
         return entity;
     }
 
+    @SuppressWarnings("TryWithIdenticalCatches")
+    @GetMapping(value= "/company-batch-download-origin-file/{companyId}/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public HttpEntity<AbstractResource> downloadOrignFile(
+            HttpServletRequest request,
+            @PathVariable Long companyId,
+            @PathVariable("batchId") Long batchId,
+            @SuppressWarnings("unused") @PathVariable("fileName") String fileName) {
+        final ResponseEntity<AbstractResource> entity;
+        try {
+            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchOriginFile(batchId);
+            if (resource==null) {
+                return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+            }
+            entity = resource.entity;
+            request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
+        } catch (BinaryDataNotFoundException e) {
+            // TODO 2019-10-13 in case of this exception resources won't be cleaned, need to re-write
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+        } catch (Throwable e) {
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+        }
+        return entity;
+    }
+
 }
