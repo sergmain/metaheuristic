@@ -48,6 +48,6 @@ public class LaunchpadContext {
         return account.id;
     }
     public Long getCompanyId() {
-        return account.companyId;
+        return company.id;
     }
 }
