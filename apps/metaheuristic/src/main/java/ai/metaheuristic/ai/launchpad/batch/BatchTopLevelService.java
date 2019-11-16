@@ -218,7 +218,7 @@ public class BatchTopLevelService {
             log.info("The file {} was successfully stored to disk", originFilename);
             new Thread(() -> {
                 try {
-                    if (originFilename.endsWith(".zip")) {
+                    if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
 
                         log.debug("Start unzipping archive");
                         Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
