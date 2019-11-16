@@ -60,10 +60,6 @@ public class CompanyAccountTopLevelService {
         return accountService.passwordEditFormCommit(accountId, password, password2, companyId);
     }
 
-    public OperationStatusRest roleFormCommit(Long accountId, String roles, Long companyId) {
-        return accountService.roleFormCommit(accountId, roles, companyId);
-    }
-
     public OperationStatusRest storeRolesForUserById(Long accountId, int roleId, boolean checkbox, Long companyId) {
         return accountService.storeRolesForUserById(accountId, roleId, checkbox, companyId);
     }

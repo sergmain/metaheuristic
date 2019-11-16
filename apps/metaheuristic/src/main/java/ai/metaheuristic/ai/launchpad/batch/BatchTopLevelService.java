@@ -51,6 +51,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
@@ -70,6 +71,8 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.ai.Consts.*;
 
 /**
  * @author Serge
@@ -110,9 +113,19 @@ public class BatchTopLevelService {
         return m.matches();
     }
 
-    public BatchData.BatchesResult getBatches(Pageable pageable, LaunchpadContext context) {
+    public BatchData.BatchesResult getBatches(Pageable pageable, LaunchpadContext context, boolean includeDeleted) {
+        return getBatches(pageable, context.getCompanyId(), includeDeleted);
+    }
+
+    public BatchData.BatchesResult getBatches(Pageable pageable, Long companyId, boolean includeDeleted) {
         pageable = ControllerUtils.fixPageSize(20, pageable);
-        Page<Long> batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable, context.getCompanyId());
+        Page<Long> batchIds;
+        if (includeDeleted) {
+            batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable, companyId);
+        }
+        else {
+            batchIds = batchRepository.findAllExcludeDeletedByOrderByCreatedOnDesc(pageable, companyId);
+        }
 
         long total = batchIds.getTotalElements();
 
@@ -126,8 +139,12 @@ public class BatchTopLevelService {
     }
 
     public BatchData.PlansForBatchResult getPlansForBatchResult(LaunchpadContext context) {
+        return getPlansForBatchResult(context.getCompanyId());
+    }
+
+    public BatchData.PlansForBatchResult getPlansForBatchResult(Long companyId) {
         final BatchData.PlansForBatchResult plans = new BatchData.PlansForBatchResult();
-        plans.items = planRepository.findAllAsPlan(context.getCompanyId()).stream().filter(o->{
+        plans.items = planRepository.findAllAsPlan(companyId).stream().filter(o->{
             if (!o.isValid()) {
                 return false;
             }
@@ -163,6 +180,16 @@ public class BatchTopLevelService {
         }
         final String originFilename = tempFilename.toLowerCase();
 
+        String ext = StrUtils.getExtension(originFilename);
+        if (ext==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#995.043 file without extension, bad filename: " + originFilename);
+        }
+        if (!StringUtils.equalsAny(ext.toLowerCase(), ZIP_EXT, XML_EXT)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
+        }
+
         launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
 
         // TODO 2019-07-06 Do we need to validate plan here in case that there is another check
@@ -179,7 +206,6 @@ public class BatchTopLevelService {
             if (tempDir==null || tempDir.isFile()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
             }
-            String ext = StrUtils.getExtension(originFilename);
             final File dataFile = File.createTempFile("uploaded-file-", ext, tempDir);
             log.debug("Start storing an uploaded file to disk");
             try(OutputStream os = new FileOutputStream(dataFile)) {
@@ -206,7 +232,7 @@ public class BatchTopLevelService {
             log.info("The file {} was successfully stored to disk", originFilename);
             new Thread(() -> {
                 try {
-                    if (originFilename.endsWith(".zip")) {
+                    if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
 
                         log.debug("Start unzipping archive");
                         Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
@@ -232,7 +258,7 @@ public class BatchTopLevelService {
                     try {
                         FileUtils.deleteDirectory(tempDir);
                     } catch (IOException e) {
-                        // it's cleaning so don't report any error
+                        log.warn("Error deleting dir: {}", e.getMessage());
                     }
                 }
             }).start();
@@ -246,28 +272,44 @@ public class BatchTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest processResourceDeleteCommit(Long batchId, LaunchpadContext context) {
+    public OperationStatusRest processResourceDeleteCommit(Long batchId, LaunchpadContext context, boolean isVirtualDeletion) {
+        return processResourceDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
+    }
+
+    public OperationStatusRest processResourceDeleteCommit(Long batchId, Long companyId, boolean isVirtualDeletion) {
 
         Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(context.getCompanyId())) {
+        if (batch == null || !batch.companyId.equals(companyId)) {
             final String es = "#995.250 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
-
-        List<Long> workbookIds = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
-        for (Long workbookId : workbookIds) {
-            planService.deleteWorkbook(workbookId, context);
+        if (isVirtualDeletion) {
+            if (!batch.deleted) {
+                Batch b = batchRepository.findByIdForUpdate(batch.id, batch.companyId);
+                b.deleted = true;
+                batchCache.save(b);
+            }
         }
-        batchWorkbookRepository.deleteByBatchId(batch.id);
-        batchCache.deleteById(batch.id);
-
+        else {
+            List<Long> workbookIds = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
+            for (Long workbookId : workbookIds) {
+                planService.deleteWorkbook(workbookId, companyId);
+            }
+            batchWorkbookRepository.deleteByBatchId(batch.id);
+            batchCache.deleteById(batch.id);
+        }
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
     }
 
-    public BatchData.Status getProcessingResourceStatus(Long batchId, LaunchpadContext context) {
+    public BatchData.Status getProcessingResourceStatus(Long batchId, LaunchpadContext context, boolean includeDeleted) {
+        return getProcessingResourceStatus(batchId, context.getCompanyId(), includeDeleted);
+    }
+
+    public BatchData.Status getProcessingResourceStatus(Long batchId, Long companyId, boolean includeDeleted) {
         Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(context.getCompanyId())) {
+        if (batch == null || !batch.companyId.equals(companyId) ||
+                (!includeDeleted && batch.deleted)) {
             final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return new BatchData.Status(es);
@@ -276,9 +318,14 @@ public class BatchTopLevelService {
         return new BatchData.Status(batchId, status.getStatus(), status.ok);
     }
 
-    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, LaunchpadContext context) throws IOException {
+    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, LaunchpadContext context, boolean includeDeleted) throws IOException {
+        return getBatchProcessingResult(batchId, context.getCompanyId(), includeDeleted);
+    }
+
+    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, Long companyId, boolean includeDeleted) throws IOException {
         Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(context.getCompanyId())) {
+        if (batch == null || !batch.companyId.equals(companyId) ||
+                (!includeDeleted && batch.deleted)) {
             final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return null;
@@ -289,6 +336,7 @@ public class BatchTopLevelService {
         resource.toClean.add(resultDir);
 
         File zipDir = new File(resultDir, "zip");
+        //noinspection ResultOfMethodCallIgnored
         zipDir.mkdir();
 
         BatchStatus status = batchService.prepareStatusAndData(batchId, this::prepareZip, zipDir);
@@ -307,6 +355,37 @@ public class BatchTopLevelService {
         httpHeaders.setContentDisposition(ContentDisposition.parse(
                 "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
         resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
+        return resource;
+    }
+
+    public ResourceWithCleanerInfo getBatchOriginFile(Long batchId) throws IOException {
+        Batch batch = batchCache.findById(batchId);
+        if (batch == null) {
+            final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
+            log.warn(es);
+            return null;
+        }
+        ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
+
+        File resultDir = DirUtils.createTempDir("prepare-origin-file-");
+        resource.toClean.add(resultDir);
+
+        String originFilename = batchService.getUploadedFilename(batchId);
+        File tempFile = File.createTempFile("batch-origin-file-", ".bin", resultDir);
+
+        try {
+            binaryDataService.storeBatchOriginFileToFile(batchId, tempFile);
+        } catch (BinaryDataNotFoundException e) {
+            String msg = "#990.375 Error store data to temp file, data doesn't exist in db, batchId " + batchId +
+                    ", file: " + tempFile.getPath();
+            log.error(msg);
+            return null;
+        }
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        httpHeaders.setContentDisposition(ContentDisposition.parse("filename*=UTF-8''" + URLEncoder.encode(originFilename, StandardCharsets.UTF_8.toString())));
+        resource.entity = new ResponseEntity<>(new FileSystemResource(tempFile), RestUtils.getHeader(httpHeaders, tempFile.length()), HttpStatus.OK);
         return resource;
     }
 

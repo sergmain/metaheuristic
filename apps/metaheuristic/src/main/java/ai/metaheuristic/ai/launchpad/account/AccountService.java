@@ -58,7 +58,6 @@ public class AccountService {
     public OperationStatusRest addAccount(Account account, Long companyId) {
 
         if (StringUtils.isBlank(account.getUsername()) ||
-                StringUtils.isBlank(account.getRoles()) ||
                 StringUtils.isBlank(account.getPassword()) ||
                 StringUtils.isBlank(account.getPassword2()) ||
                 StringUtils.isBlank(account.getPublicName())) {

@@ -35,7 +35,7 @@
                 th:attr="class=${#httpServletRequest.requestURI=='/launchpad/account/accounts'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/account/accounts.html" th:href="@{/launchpad/account/accounts}">Accounts</a>
         </li>
-        <li sec:authorize="hasAnyRole('MASTER_ADMIN')"
+        <li sec:authorize="hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT')"
                 th:attr="class=${#httpServletRequest.requestURI=='/launchpad/company/companies'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/company/companies.html" th:href="@{/launchpad/company/companies}">Company</a>
         </li>

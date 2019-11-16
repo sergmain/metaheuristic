@@ -61,6 +61,9 @@ public class Batch implements Serializable {
     @Column(name = "PARAMS")
     public String params;
 
+    @Column(name = "IS_DELETED")
+    public boolean deleted;
+
     public Batch(Long planId, Enums.BatchExecState state, Long accountId, Long companyId ) {
         this.planId = planId;
         this.accountId = accountId;

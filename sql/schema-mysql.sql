@@ -199,11 +199,12 @@ create table mh_batch
     VERSION         INT UNSIGNED    NOT NULL,
     COMPANY_ID      INT UNSIGNED    not null,
     ACCOUNT_ID      INT UNSIGNED,
-    PLAN_ID          NUMERIC(10, 0) NOT NULL,
-    DATA_ID          NUMERIC(10, 0),
-    CREATED_ON       bigint         NOT NULL,
-    EXEC_STATE  tinyint(1) not null default 0,
-    PARAMS          MEDIUMTEXT
+    PLAN_ID         NUMERIC(10, 0) NOT NULL,
+    DATA_ID         NUMERIC(10, 0),
+    CREATED_ON      bigint         NOT NULL,
+    EXEC_STATE      tinyint(1) not null default 0,
+    PARAMS          MEDIUMTEXT,
+    IS_DELETED      BOOLEAN not null default false
 );
 
 CREATE TABLE mh_batch_workbook

@@ -90,6 +90,10 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     @Query(value="select b.data from BinaryDataImpl b where b.code=:code")
     Blob getDataAsStreamByCode(String code);
 
+    @Transactional(readOnly = true)
+    @Query(value="select b.data from BinaryDataImpl b where b.refType='batch' and b.refId=:batchId ")
+    Blob getDataAsStreamForBatchAndRefId(Long batchId);
+
     @Transactional
     @Query(value="select b from BinaryDataImpl b where b.code=:code")
     BinaryDataImpl findByCodeForUpdate(String code);

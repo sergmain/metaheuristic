@@ -566,7 +566,7 @@ public class PlanService {
 
     // ========= Workbook specific =============
 
-    public void deleteWorkbook(Long workbookId, LaunchpadContext context) {
+    public void deleteWorkbook(Long workbookId, Long companyId) {
         experimentService.resetExperimentByWorkbookId(workbookId);
         binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
         Workbook workbook = workbookCache.findById(workbookId);
@@ -576,7 +576,7 @@ public class PlanService {
             if (ids.size()==1) {
                 if (ids.get(0).equals(workbookId)) {
                     if (workbook.getPlanId() != null) {
-                        setLockedTo(workbook.getPlanId(), context.getCompanyId(), false);
+                        setLockedTo(workbook.getPlanId(), companyId, false);
                     }
                 }
                 else {

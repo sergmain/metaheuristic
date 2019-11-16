@@ -45,6 +45,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
+@SuppressWarnings("DuplicatedCode")
 @Controller
 @RequestMapping("/launchpad/batch")
 @Slf4j
@@ -72,7 +73,7 @@ public class BatchController {
             Authentication authentication
             ) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         return "launchpad/batch/batches";
@@ -81,7 +82,7 @@ public class BatchController {
     @PostMapping("/batches-part")
     public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         return "launchpad/batch/batches :: table";
@@ -94,6 +95,30 @@ public class BatchController {
         ControllerUtils.addMessagesToModel(model, plans);
         model.addAttribute("result", plans);
         return "launchpad/batch/batch-add";
+    }
+
+    @GetMapping("/batch-delete/{batchId}")
+    public String processResourceDelete(Model model, @PathVariable Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context, false);
+        if (status.isErrorMessages()) {
+            redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
+            return REDIRECT_BATCH_BATCHES;
+        }
+        model.addAttribute("batchId", batchId);
+        model.addAttribute("console", status.console);
+        model.addAttribute("isOk", status.ok);
+        return "launchpad/batch/batch-delete";
+    }
+
+    @PostMapping("/batch-delete-commit")
+    public String processResourceDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, context, true);
+        if (r.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
+        }
+        return REDIRECT_BATCH_BATCHES;
     }
 
     @PostMapping(value = "/batch-upload-from-file")
@@ -110,7 +135,7 @@ public class BatchController {
     public String getProcessingResourceStatus(
             Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context);
+        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context, false);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
             return REDIRECT_BATCH_BATCHES;
@@ -118,30 +143,6 @@ public class BatchController {
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.console);
         return "launchpad/batch/batch-status";
-    }
-
-    @GetMapping("/batch-delete/{batchId}")
-    public String processResourceDelete(Model model, @PathVariable Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context);
-        if (status.isErrorMessages()) {
-            redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
-            return REDIRECT_BATCH_BATCHES;
-        }
-        model.addAttribute("batchId", batchId);
-        model.addAttribute("console", status.console);
-        model.addAttribute("isOk", status.ok);
-        return "launchpad/batch/batch-delete";
-    }
-
-    @PostMapping("/batch-delete-commit")
-    public String processResourceDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
-        OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, context);
-        if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
-        }
-        return REDIRECT_BATCH_BATCHES;
     }
 
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -152,7 +153,7 @@ public class BatchController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context);
+            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context, false);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }

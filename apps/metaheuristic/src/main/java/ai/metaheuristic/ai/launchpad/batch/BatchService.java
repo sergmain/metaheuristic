@@ -724,7 +724,7 @@ public class BatchService {
         return filename;
     }
 
-    private String getUploadedFilename(Long batchId) {
+    public String getUploadedFilename(Long batchId) {
         final String filename = binaryDataService.findFilenameByBatchId(batchId);
         if (S.b(filename)) {
             log.error("#990.392 Filename is blank for batchId: {}, will be used default name - result.zip", batchId);
