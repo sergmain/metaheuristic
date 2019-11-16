@@ -51,6 +51,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
@@ -70,6 +71,8 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.ai.Consts.*;
 
 /**
  * @author Serge
@@ -163,6 +166,16 @@ public class BatchTopLevelService {
         }
         final String originFilename = tempFilename.toLowerCase();
 
+        String ext = StrUtils.getExtension(originFilename);
+        if (ext==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#995.043 file without extension, bad filename: " + originFilename);
+        }
+        if (!StringUtils.equalsAny(ext.toLowerCase(), ZIP_EXT, XML_EXT)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
+        }
+
         launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
 
         // TODO 2019-07-06 Do we need to validate plan here in case that there is another check
@@ -179,7 +192,6 @@ public class BatchTopLevelService {
             if (tempDir==null || tempDir.isFile()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
             }
-            String ext = StrUtils.getExtension(originFilename);
             final File dataFile = File.createTempFile("uploaded-file-", ext, tempDir);
             log.debug("Start storing an uploaded file to disk");
             try(OutputStream os = new FileOutputStream(dataFile)) {
