@@ -14,11 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.batch;
+package ai.metaheuristic.ai.launchpad.company;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
+import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
@@ -47,113 +48,117 @@ import java.io.IOException;
 
 @SuppressWarnings("DuplicatedCode")
 @Controller
-@RequestMapping("/launchpad/batch")
+@RequestMapping("/launchpad/company/batch")
 @Slf4j
 @Profile("launchpad")
-@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
+@PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
 @RequiredArgsConstructor
-public class BatchController {
-
-    private static final String REDIRECT_BATCH_BATCHES = "redirect:/launchpad/batch/batches";
+public class BatchForOperatorController {
 
     private final BatchTopLevelService batchTopLevelService;
     private final LaunchpadContextService launchpadContextService;
 
-    @GetMapping("/index")
-    public String index() {
-        return "launchpad/batch/index";
-    }
-
-    @GetMapping("/batches")
+    @GetMapping("/company-batches/{companyId}")
     public String batches(
             Model model,
             @PageableDefault(size = 20) Pageable pageable,
             @ModelAttribute("errorMessage") final String errorMessage,
             @ModelAttribute("infoMessages") final String infoMessages,
-            Authentication authentication
+            @PathVariable Long companyId
             ) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyId, true);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
-        return "launchpad/batch/batches";
+        model.addAttribute("companyId", companyId);
+        return "launchpad/company/batch/company-batches";
     }
 
-    @PostMapping("/batches-part")
-    public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false);
+    @PostMapping("/company-batches-part/{companyId}")
+    public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, @PathVariable Long companyId) {
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyId, true);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
-        return "launchpad/batch/batches :: table";
+        model.addAttribute("companyId", companyId);
+        return "launchpad/company/batch/company-batches :: table";
     }
 
-    @GetMapping(value = "/batch-add")
-    public String batchAdd(Model model, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.PlansForBatchResult plans = batchTopLevelService.getPlansForBatchResult(context);
+    @GetMapping(value = "/company-batch-add/{companyId}")
+    public String batchAdd(Model model, @PathVariable Long companyId) {
+        BatchData.PlansForBatchResult plans = batchTopLevelService.getPlansForBatchResult(companyId);
         ControllerUtils.addMessagesToModel(model, plans);
         model.addAttribute("result", plans);
-        return "launchpad/batch/batch-add";
+        model.addAttribute("companyId", companyId);
+        return "launchpad/company/batch/company-batch-add";
     }
 
-    @GetMapping("/batch-delete/{batchId}")
-    public String processResourceDelete(Model model, @PathVariable Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context, false);
+    @GetMapping("/company-batch-delete/{companyId}/{batchId}")
+    public String processResourceDelete(
+            Model model,
+            @PathVariable Long companyId,
+            @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
+        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyId, true);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
-            return REDIRECT_BATCH_BATCHES;
+            return "redirect:/launchpad/company/batch/company-batches/" + companyId;
         }
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.console);
         model.addAttribute("isOk", status.ok);
-        return "launchpad/batch/batch-delete";
+        model.addAttribute("companyId", companyId);
+        return "launchpad/company/batch/company-batch-delete";
     }
 
-    @PostMapping("/batch-delete-commit")
-    public String processResourceDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
-        OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, context, true);
+    @PostMapping("/company-batch-delete-commit/{companyId}")
+    public String processResourceDeleteCommit(
+            Long batchId,
+            @PathVariable Long companyId,
+            final RedirectAttributes redirectAttributes) {
+        OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, companyId, false);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
-        return REDIRECT_BATCH_BATCHES;
+        return "redirect:/launchpad/company/batch/company-batches/" + companyId;
     }
 
-    @PostMapping(value = "/batch-upload-from-file")
-    public String uploadFile(final MultipartFile file, Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+    @PostMapping(value = "/company-batch-upload-from-file/{companyId}")
+    public String uploadFile(
+            final MultipartFile file,
+            @PathVariable Long companyId,
+            Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        // create context with putting current user to specific company
+        LaunchpadContext context = launchpadContextService.getContext(authentication, companyId);
         OperationStatusRest r = batchTopLevelService.batchUploadFromFile(file, planId, context);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
-        return REDIRECT_BATCH_BATCHES;
+        return "redirect:/launchpad/company/batch/company-batches/" + companyId;
     }
 
-    @GetMapping(value= "/batch-status/{batchId}" )
+    @GetMapping(value= "/company-batch-status/{companyId}/{batchId}" )
     public String getProcessingResourceStatus(
-            Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context, false);
+            Model model,
+            @PathVariable Long companyId,
+            @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes) {
+        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyId, true);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
-            return REDIRECT_BATCH_BATCHES;
+            return "redirect:/launchpad/company/batch/company-batches/" + companyId;
         }
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.console);
-        return "launchpad/batch/batch-status";
+        model.addAttribute("companyId", companyId);
+        return "launchpad/company/batch/company-batch-status";
     }
 
-    @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value= "/company-batch-download-result/{companyId}/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadProcessingResult(
-            HttpServletRequest request, @PathVariable("batchId") Long batchId,
-            @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) throws IOException {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
-
+            HttpServletRequest request,
+            @PathVariable Long companyId,
+            @PathVariable("batchId") Long batchId,
+            @SuppressWarnings("unused") @PathVariable("fileName") String fileName) throws IOException {
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context, false);
+            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, companyId, true);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }

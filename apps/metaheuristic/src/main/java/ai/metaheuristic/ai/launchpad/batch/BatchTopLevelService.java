@@ -113,9 +113,19 @@ public class BatchTopLevelService {
         return m.matches();
     }
 
-    public BatchData.BatchesResult getBatches(Pageable pageable, LaunchpadContext context) {
+    public BatchData.BatchesResult getBatches(Pageable pageable, LaunchpadContext context, boolean includeDeleted) {
+        return getBatches(pageable, context.getCompanyId(), includeDeleted);
+    }
+
+    public BatchData.BatchesResult getBatches(Pageable pageable, Long companyId, boolean includeDeleted) {
         pageable = ControllerUtils.fixPageSize(20, pageable);
-        Page<Long> batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable, context.getCompanyId());
+        Page<Long> batchIds;
+        if (includeDeleted) {
+            batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable, companyId);
+        }
+        else {
+            batchIds = batchRepository.findAllExcludeDeletedByOrderByCreatedOnDesc(pageable, companyId);
+        }
 
         long total = batchIds.getTotalElements();
 
@@ -129,8 +139,12 @@ public class BatchTopLevelService {
     }
 
     public BatchData.PlansForBatchResult getPlansForBatchResult(LaunchpadContext context) {
+        return getPlansForBatchResult(context.getCompanyId());
+    }
+
+    public BatchData.PlansForBatchResult getPlansForBatchResult(Long companyId) {
         final BatchData.PlansForBatchResult plans = new BatchData.PlansForBatchResult();
-        plans.items = planRepository.findAllAsPlan(context.getCompanyId()).stream().filter(o->{
+        plans.items = planRepository.findAllAsPlan(companyId).stream().filter(o->{
             if (!o.isValid()) {
                 return false;
             }
@@ -244,7 +258,7 @@ public class BatchTopLevelService {
                     try {
                         FileUtils.deleteDirectory(tempDir);
                     } catch (IOException e) {
-                        // it's cleaning so don't report any error
+                        log.warn("Error deleting dir: {}", e.getMessage());
                     }
                 }
             }).start();
@@ -258,28 +272,44 @@ public class BatchTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest processResourceDeleteCommit(Long batchId, LaunchpadContext context) {
+    public OperationStatusRest processResourceDeleteCommit(Long batchId, LaunchpadContext context, boolean isVirtualDeletion) {
+        return processResourceDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
+    }
+
+    public OperationStatusRest processResourceDeleteCommit(Long batchId, Long companyId, boolean isVirtualDeletion) {
 
         Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(context.getCompanyId())) {
+        if (batch == null || !batch.companyId.equals(companyId)) {
             final String es = "#995.250 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
-
-        List<Long> workbookIds = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
-        for (Long workbookId : workbookIds) {
-            planService.deleteWorkbook(workbookId, context);
+        if (isVirtualDeletion) {
+            if (!batch.deleted) {
+                Batch b = batchRepository.findByIdForUpdate(batch.id, batch.companyId);
+                b.deleted = true;
+                batchCache.save(b);
+            }
         }
-        batchWorkbookRepository.deleteByBatchId(batch.id);
-        batchCache.deleteById(batch.id);
-
+        else {
+            List<Long> workbookIds = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
+            for (Long workbookId : workbookIds) {
+                planService.deleteWorkbook(workbookId, companyId);
+            }
+            batchWorkbookRepository.deleteByBatchId(batch.id);
+            batchCache.deleteById(batch.id);
+        }
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
     }
 
-    public BatchData.Status getProcessingResourceStatus(Long batchId, LaunchpadContext context) {
+    public BatchData.Status getProcessingResourceStatus(Long batchId, LaunchpadContext context, boolean includeDeleted) {
+        return getProcessingResourceStatus(batchId, context.getCompanyId(), includeDeleted);
+    }
+
+    public BatchData.Status getProcessingResourceStatus(Long batchId, Long companyId, boolean includeDeleted) {
         Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(context.getCompanyId())) {
+        if (batch == null || !batch.companyId.equals(companyId) ||
+                (!includeDeleted && batch.deleted)) {
             final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return new BatchData.Status(es);
@@ -288,9 +318,14 @@ public class BatchTopLevelService {
         return new BatchData.Status(batchId, status.getStatus(), status.ok);
     }
 
-    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, LaunchpadContext context) throws IOException {
+    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, LaunchpadContext context, boolean includeDeleted) throws IOException {
+        return getBatchProcessingResult(batchId, context.getCompanyId(), includeDeleted);
+    }
+
+    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, Long companyId, boolean includeDeleted) throws IOException {
         Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(context.getCompanyId())) {
+        if (batch == null || !batch.companyId.equals(companyId) ||
+                (!includeDeleted && batch.deleted)) {
             final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return null;
@@ -301,6 +336,7 @@ public class BatchTopLevelService {
         resource.toClean.add(resultDir);
 
         File zipDir = new File(resultDir, "zip");
+        //noinspection ResultOfMethodCallIgnored
         zipDir.mkdir();
 
         BatchStatus status = batchService.prepareStatusAndData(batchId, this::prepareZip, zipDir);

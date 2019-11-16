@@ -62,19 +62,29 @@ public class BatchRestController {
     @GetMapping("/batches")
     public BatchData.BatchesResult batches(@PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return batchTopLevelService.getBatches(pageable, context);
+        return batchTopLevelService.getBatches(pageable, context, false);
     }
 
     @PostMapping("/batches-part")
     public BatchData.BatchesResult batchesPart(@PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return batchTopLevelService.getBatches(pageable, context);
+        return batchTopLevelService.getBatches(pageable, context, false);
     }
 
     @GetMapping(value = "/batch-add")
     public BatchData.PlansForBatchResult batchAdd(Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return batchTopLevelService.getPlansForBatchResult(context);
+    }
+
+    @GetMapping("/batch-delete/{batchId}")
+    public BatchData.Status processResourceDelete(@PathVariable Long batchId, Authentication authentication) {
+        return batchTopLevelService.getProcessingResourceStatus(batchId, launchpadContextService.getContext(authentication), false);
+    }
+
+    @PostMapping("/batch-delete-commit")
+    public OperationStatusRest processResourceDeleteCommit(Long batchId, Authentication authentication) {
+        return batchTopLevelService.processResourceDeleteCommit(batchId, launchpadContextService.getContext(authentication), true);
     }
 
     @PostMapping(value = "/batch-upload-from-file")
@@ -84,17 +94,7 @@ public class BatchRestController {
 
     @GetMapping(value= "/batch-status/{batchId}" )
     public BatchData.Status getProcessingResourceStatus(@PathVariable("batchId") Long batchId, Authentication authentication) {
-        return batchTopLevelService.getProcessingResourceStatus(batchId, launchpadContextService.getContext(authentication));
-    }
-
-    @GetMapping("/batch-delete/{batchId}")
-    public BatchData.Status processResourceDelete(@PathVariable Long batchId, Authentication authentication) {
-        return batchTopLevelService.getProcessingResourceStatus(batchId, launchpadContextService.getContext(authentication));
-    }
-
-    @PostMapping("/batch-delete-commit")
-    public OperationStatusRest processResourceDeleteCommit(Long batchId, Authentication authentication) {
-        return batchTopLevelService.processResourceDeleteCommit(batchId, launchpadContextService.getContext(authentication));
+        return batchTopLevelService.getProcessingResourceStatus(batchId, launchpadContextService.getContext(authentication), false);
     }
 
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -104,7 +104,7 @@ public class BatchRestController {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context);
+            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context, false);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

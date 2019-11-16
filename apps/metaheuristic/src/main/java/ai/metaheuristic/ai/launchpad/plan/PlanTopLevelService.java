@@ -323,7 +323,7 @@ public class PlanTopLevelService {
             return status;
         }
         publisher.publishEvent( new WorkbookService.WorkbookDeletionEvent(this, workbookId) );
-        planService.deleteWorkbook(workbookId, context);
+        planService.deleteWorkbook(workbookId, context.getCompanyId());
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

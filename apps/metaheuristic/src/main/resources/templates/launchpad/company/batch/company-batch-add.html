@@ -7,8 +7,9 @@
         <h1 class="widget-header">Upload file for processing</h1>
 
         <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.BatchData$PlansForBatchResult"*/-->
+        <!--/*@thymesVar id="companyId" type="java.lang.Long"*/-->
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-              th:action="@{/launchpad/batch/batch-upload-from-file}"
+              th:action="@{/launchpad/company/batch/company-batch-upload-from-file/{companyId}(companyId=${companyId})}"
         >
             <fieldset>
 
@@ -35,7 +36,7 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="batches.html" th:href="${'/launchpad/batch/batches'}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="company-batches.html" th:href="${'/launchpad/company/batch/company-batches/'+companyId}">Cancel</a>
                         </td>
                     </tr>
                 </table>
