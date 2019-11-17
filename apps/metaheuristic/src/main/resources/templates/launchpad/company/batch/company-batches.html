@@ -1,4 +1,5 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      layout:decorate="~{layout-batch}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
@@ -29,7 +30,7 @@
 
     <h1 class="widget-header">Workbooks</h1>
 
-    <a class="pure-button pure-button-primary" href="company-batch-add.html" th:href="${'/launchpad/company/batch/company-batch-add/'+companyId}">Upload files and start processing</a>
+    <a sec:authorize="hasAnyRole('MASTER_OPERATOR')" class="pure-button pure-button-primary" href="company-batch-add.html" th:href="${'/launchpad/company/batch/company-batch-add/'+companyId}">Upload files and start processing</a>
     <p></p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
@@ -63,7 +64,7 @@
                 <div th:text="${r.uploadedFileName}" class="no-wrap">File name</div>
             </td>
             <td th:text="${r.execStateStr}">Exec state as string</td>
-            <td><a th:if='${r.batch.deleted}' class="pure-button pure-button-primary"
+            <td><a sec:authorize="hasAnyRole('MASTER_OPERATOR')" th:if='${r.batch.deleted}' class="pure-button pure-button-primary"
                    th:href="${'/launchpad/company/batch/company-batch-delete/'+companyId + '/' + r.batch.id}">Delete</a></td>
 
             <td>
