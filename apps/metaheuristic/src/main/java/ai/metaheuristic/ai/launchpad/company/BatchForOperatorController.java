@@ -51,7 +51,6 @@ import java.io.IOException;
 @RequestMapping("/launchpad/company/batch")
 @Slf4j
 @Profile("launchpad")
-@PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
 @RequiredArgsConstructor
 public class BatchForOperatorController {
 
@@ -59,6 +58,7 @@ public class BatchForOperatorController {
     private final LaunchpadContextService launchpadContextService;
 
     @GetMapping("/company-batches/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public String batches(
             Model model,
             @PageableDefault(size = 20) Pageable pageable,
@@ -74,6 +74,7 @@ public class BatchForOperatorController {
     }
 
     @PostMapping("/company-batches-part/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, @PathVariable Long companyId) {
         BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyId, true);
         ControllerUtils.addMessagesToModel(model, batchesResult);
@@ -83,6 +84,7 @@ public class BatchForOperatorController {
     }
 
     @GetMapping(value = "/company-batch-add/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String batchAdd(Model model, @PathVariable Long companyId) {
         BatchData.PlansForBatchResult plans = batchTopLevelService.getPlansForBatchResult(companyId);
         ControllerUtils.addMessagesToModel(model, plans);
@@ -92,6 +94,7 @@ public class BatchForOperatorController {
     }
 
     @GetMapping("/company-batch-delete/{companyId}/{batchId}")
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String processResourceDelete(
             Model model,
             @PathVariable Long companyId,
@@ -109,6 +112,7 @@ public class BatchForOperatorController {
     }
 
     @PostMapping("/company-batch-delete-commit/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String processResourceDeleteCommit(
             Long batchId,
             @PathVariable Long companyId,
@@ -121,6 +125,7 @@ public class BatchForOperatorController {
     }
 
     @PostMapping(value = "/company-batch-upload-from-file/{companyId}")
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String uploadFile(
             final MultipartFile file,
             @PathVariable Long companyId,
@@ -135,6 +140,7 @@ public class BatchForOperatorController {
     }
 
     @GetMapping(value= "/company-batch-status/{companyId}/{batchId}" )
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public String getProcessingResourceStatus(
             Model model,
             @PathVariable Long companyId,
@@ -151,6 +157,7 @@ public class BatchForOperatorController {
     }
 
     @GetMapping(value= "/company-batch-download-result/{companyId}/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request,
             @PathVariable Long companyId,
@@ -173,6 +180,7 @@ public class BatchForOperatorController {
 
     @SuppressWarnings("TryWithIdenticalCatches")
     @GetMapping(value= "/company-batch-download-origin-file/{companyId}/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public HttpEntity<AbstractResource> downloadOrignFile(
             HttpServletRequest request,
             @PathVariable Long companyId,
@@ -194,5 +202,4 @@ public class BatchForOperatorController {
         }
         return entity;
     }
-
 }
