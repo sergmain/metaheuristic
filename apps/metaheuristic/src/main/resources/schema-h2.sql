@@ -208,7 +208,8 @@ create table mh_batch
     DATA_ID    NUMERIC(10, 0),
     CREATED_ON bigint         NOT NULL,
     EXEC_STATE tinyint(1)     not null default 0,
-    PARAMS     MEDIUMTEXT
+    PARAMS     MEDIUMTEXT,
+    IS_DELETED BOOLEAN not null default false
 );
 
 CREATE TABLE mh_batch_workbook
