@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
@@ -58,15 +59,17 @@ metrics: |
 overfitted: false
 version: 1
 
-* */
-                    TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to((String)o[1]);
+*/
 
-                    MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to((String)o[1]) );
+                    if (S.b((String)o[1])) {
+                        return null;
+                    }
+                    TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to((String)o[1]);
+                    MetricValues metricValues = MetricsUtils.getValues( tmly.metrics );
                     if (metricValues==null) {
                         return null;
                     }
                     String metricKey=null;
-                    //noinspection LoopStatementThatDoesntLoop
                     for (Map.Entry<String, BigDecimal> entry : metricValues.values.entrySet()) {
                         metricKey = entry.getKey();
                         break;

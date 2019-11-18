@@ -32,6 +32,8 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -565,6 +567,14 @@ public class ExperimentService {
 
         List<Task> tasks = findByIsCompletedIsTrueAndFeatureId(experiment.getExperimentParamsYaml(), experimentFeature.id);
         for (Task seq : tasks) {
+/*
+            if (S.b((String)o[1])) {
+                return null;
+            }
+            TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to((String)o[1]);
+            MetricValues metricValues = MetricsUtils.getValues( tmly.metrics );
+*/
+
             MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.getMetrics()) );
             if (metricValues==null) {
                 continue;

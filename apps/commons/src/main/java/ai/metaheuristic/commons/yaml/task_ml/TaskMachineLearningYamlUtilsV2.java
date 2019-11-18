@@ -35,7 +35,7 @@ public class TaskMachineLearningYamlUtilsV2
     }
 
     public Yaml getYaml() {
-        return YamlUtils.init(TaskMachineLearningYamlV1.class);
+        return YamlUtils.init(TaskMachineLearningYamlV2.class);
     }
 
     @Override
