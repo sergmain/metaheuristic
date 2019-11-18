@@ -354,6 +354,7 @@ public class TaskProcessor {
                     if (isOk && snippetExecResult.isOk()) {
                         try {
                             stationTaskService.storeMetrics(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
+                            stationTaskService.storePredictedData(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
                             stationTaskService.storeOverfitting(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
 
                             final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);

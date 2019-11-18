@@ -17,8 +17,6 @@
 package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.api.data.task_ml.TaskMachineLearningYaml;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
@@ -29,8 +27,14 @@ import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task_extended_result.TaskExtendedResultYaml;
+import ai.metaheuristic.commons.yaml.task_extended_result.TaskExtendedResultYamlUtils;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
 import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -230,12 +234,19 @@ public class TaskPersistencer {
             }
             task.setSnippetExecResults(result.getResult());
             if (result.ml!=null) {
-                TaskMachineLearningYaml tmly = new TaskMachineLearningYaml(result.ml.metrics, , );
-                TaskMachineLearningYamlUtils.BASE_YAML_UTILS.toString()
-                task.setMetrics(result.getMetrics());
+                Metrics m = MetricsUtils.to(result.ml.metrics);
+                TaskMachineLearningYaml.Metrics metrics = new TaskMachineLearningYaml.Metrics(m.status, m.error, m.metrics);
+                TaskMachineLearningYaml tmly = new TaskMachineLearningYaml(metrics, result.ml.overfitted);
+                String s = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.toString(tmly);
+                task.setMetrics(s);
+
+                TaskExtendedResultYaml tery = new TaskExtendedResultYaml(result.ml.predicted);
+                String extendedResult = TaskExtendedResultYamlUtils.BASE_YAML_UTILS.toString(tery);
+                task.setExtendedResult(extendedResult);
             }
             else {
                 task.setMetrics(null);
+                task.setExtendedResult(null);
             }
             task = taskRepository.save(task);
 

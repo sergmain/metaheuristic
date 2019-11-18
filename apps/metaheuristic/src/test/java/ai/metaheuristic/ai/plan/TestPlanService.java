@@ -203,7 +203,7 @@ public class TestPlanService extends PreparingPlan {
     public void storeExecResult(LaunchpadCommParamsYaml.AssignedTask simpleTask) {
         StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
         r.setTaskId(simpleTask.getTaskId());
-        r.setMetrics(null);
+        r.setMl(null);
         r.setResult(getOKExecResult());
 
         taskPersistencer.storeExecResult(r, workbookService.actionUpdateTaskExecState);

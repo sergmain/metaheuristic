@@ -15,9 +15,10 @@
  */
 package ai.metaheuristic.ai.yaml;
 
-import ai.metaheuristic.ai.yaml.metrics.MetricValues;
-import ai.metaheuristic.ai.yaml.metrics.Metrics;
-import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -35,7 +36,7 @@ public class TestMetricsYaml {
     private void internalTestValueYaml(String s) {
         Metrics metrics = new Metrics();
         metrics.setMetrics(s);
-        metrics.setStatus(Metrics.Status.Ok);
+        metrics.setStatus(EnumsApi.MetricsStatus.Ok);
 
         MetricValues values = MetricsUtils.getValues(metrics);
 

@@ -13,14 +13,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.yaml.metrics;
 
-import lombok.Data;
+package ai.metaheuristic.commons.yaml.task_extended_result;
 
-import java.math.BigDecimal;
-import java.util.LinkedHashMap;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
-@Data
-public class MetricValues {
-    public LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
+import java.util.Map;
+
+/**
+ * @author Serge
+ * Date: 10/3/2019
+ * Time: 4:51 PM
+ */
+public class TaskExtendedResultYamlUtils {
+
+    private static final TaskExtendedResultYamlUtilsV1 YAML_UTILS_V_1 = new TaskExtendedResultYamlUtilsV1();
+    private static final TaskExtendedResultYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+
+    public static final BaseYamlUtils<TaskExtendedResultYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, YAML_UTILS_V_1
+            ),
+            DEFAULT_UTILS
+    );
+
+
 }

@@ -13,27 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package ai.metaheuristic.commons.yaml.task_ml.metrics;
 
-package ai.metaheuristic.api.data.task_ml;
-
-import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
 
-/**
- * @author Serge
- * Date: 10/14/2019
- * Time: 5:36 PM
- */
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+
 @Data
-public class TaskMachineLearningYaml implements BaseParams {
-    public final int version = 1;
-
-    public String metrics;
-    public String predicted;
-    public boolean overfitted;
-
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
+public class MetricValues {
+    public LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
 }

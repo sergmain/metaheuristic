@@ -18,8 +18,6 @@ package ai.metaheuristic.commons.yaml.task_ml;
 
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -28,12 +26,12 @@ import org.yaml.snakeyaml.Yaml;
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class TaskMachineLearningYamlUtilsV1
-        extends AbstractParamsYamlUtils<TaskMachineLearningYamlV1, TaskMachineLearningYamlV2, TaskMachineLearningYamlUtilsV2, Void, Void, Void> {
+public class TaskMachineLearningYamlUtilsV2
+        extends AbstractParamsYamlUtils<TaskMachineLearningYamlV2, TaskMachineLearningYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     public Yaml getYaml() {
@@ -41,13 +39,11 @@ public class TaskMachineLearningYamlUtilsV1
     }
 
     @Override
-    public TaskMachineLearningYamlV2 upgradeTo(TaskMachineLearningYamlV1 src, Long ... vars) {
+    public TaskMachineLearningYaml upgradeTo(TaskMachineLearningYamlV2 src, Long ... vars) {
         src.checkIntegrity();
-        TaskMachineLearningYamlV2 trg = new TaskMachineLearningYamlV2();
-        Metrics m = MetricsUtils.to(src.metrics);
-
-        trg.metrics = new TaskMachineLearningYamlV2.MetricsV2(m.status, m.error, m.metrics);
-        trg.overfitted = false;
+        TaskMachineLearningYaml trg = new TaskMachineLearningYaml();
+        trg.metrics = new TaskMachineLearningYaml.Metrics(src.metrics.status, src.metrics.error, src.metrics.metrics);
+        trg.overfitted = src.overfitted;
         trg.checkIntegrity();
         return trg;
     }
@@ -58,8 +54,8 @@ public class TaskMachineLearningYamlUtilsV1
     }
 
     @Override
-    public TaskMachineLearningYamlUtilsV2 nextUtil() {
-        return (TaskMachineLearningYamlUtilsV2) TaskMachineLearningYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -68,16 +64,16 @@ public class TaskMachineLearningYamlUtilsV1
     }
 
     @Override
-    public String toString(TaskMachineLearningYamlV1 yaml) {
+    public String toString(TaskMachineLearningYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
-    public TaskMachineLearningYamlV1 to(String s) {
+    public TaskMachineLearningYamlV2 to(String s) {
         if (S.b(s)) {
             return null;
         }
         //noinspection UnnecessaryLocalVariable
-        final TaskMachineLearningYamlV1 p = getYaml().load(s);
+        final TaskMachineLearningYamlV2 p = getYaml().load(s);
         return p;
     }
 

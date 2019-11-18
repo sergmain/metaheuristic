@@ -278,7 +278,7 @@ public class SnippetService {
                 statuses.add(status!=null
                         ? status
                         : new SnippetApiData.SnippetConfigStatus(false,
-                        "#295.060 Status of snippet "+snippetConfig.code+" is unknown, this status needs to be investigated"));
+                        "#295.060 MetricsStatus of snippet "+snippetConfig.code+" is unknown, this status needs to be investigated"));
             }
         }
         return statuses;

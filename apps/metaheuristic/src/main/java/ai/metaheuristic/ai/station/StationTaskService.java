@@ -20,8 +20,9 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.utils.DigitUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
-import ai.metaheuristic.ai.yaml.metrics.Metrics;
-import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.ai.yaml.station_task.StationTaskUtils;
@@ -29,6 +30,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.ml.overfitting.OverfittingYaml;
 import ai.metaheuristic.commons.yaml.ml.overfitting.OverfittingYamlUtils;
@@ -271,8 +273,10 @@ public class StationTaskService {
                 continue;
             }
             StationCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult ml = null;
-            if (task.getMetrics()!=null) {
-                ml = new StationCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult(task.getMetrics(), null, false);
+            Meta predictedData = MetaUtils.getMeta(task.metas, Consts.META_PREDICTED_DATA);
+            if (task.getMetrics()!=null || predictedData!=null) {
+                ml = new StationCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult(
+                        task.getMetrics(), predictedData.getValue(), MetaUtils.isTrue(task.metas, Consts.META_OVERFITTED));
             }
             final StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
                     new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), ml);
@@ -350,14 +354,28 @@ public class StationTaskService {
         }
     }
 
-    public void storeOverfitting(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) throws IOException {
+    public void storePredictedData(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) throws IOException {
         Meta m = MetaUtils.getMeta(snippet.metas, ConstsApi.META_MH_OVERFITTING_DETECTION_SUPPORTED);
         if (MetaUtils.isTrue(m)) {
             log.info("storeOverfitting(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
-            OverfittingYaml overfittingYaml = getOverfitting(artifactDir);
-            if (overfittingYaml!=null) {
-                task.getMetas().add( new Meta(Consts.META_OVERFITTED, Boolean.toString(overfittingYaml.overfitting), null) );
+            String data = getPredictedData(artifactDir);
+            if (data!=null) {
+                task.getMetas().add( new Meta(Consts.META_PREDICTED_DATA, data, null) );
                 save(task);
+            }
+        }
+    }
+
+    public void storeOverfitting(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) throws IOException {
+        if (snippet.type.equals(CommonConsts.CHECK_OVERFITTING_TYPE)) {
+           log.info("storeOverfitting(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
+            OverfittingYaml overfittingYaml = getOverfitting(artifactDir);
+            if (overfittingYaml != null) {
+                task.getMetas().add(new Meta(Consts.META_OVERFITTED, Boolean.toString(overfittingYaml.overfitting), null));
+                save(task);
+            }
+            else {
+                log.error("#713.137 file with testing of overfitting wasn't found, task #{}, artifact dir: {}", task.taskId, artifactDir.getAbsolutePath());
             }
         }
     }
@@ -371,16 +389,16 @@ public class StationTaskService {
             if (metricsFile!=null) {
                 try {
                     String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
-                    metrics.setStatus(Metrics.Status.Ok);
+                    metrics.setStatus(EnumsApi.MetricsStatus.Ok);
                     metrics.setMetrics(execMetrics);
                 }
                 catch (IOException e) {
                     log.error("#713.140 Error reading metrics file {}", metricsFile.getAbsolutePath());
-                    metrics.setStatus(Metrics.Status.Error);
+                    metrics.setStatus(EnumsApi.MetricsStatus.Error);
                     metrics.setError(e.toString());
                 }
             } else {
-                metrics.setStatus(Metrics.Status.NotFound);
+                metrics.setStatus(EnumsApi.MetricsStatus.NotFound);
             }
             task.setMetrics(MetricsUtils.toString(metrics));
             save(task);
@@ -398,6 +416,15 @@ public class StationTaskService {
         return metricsFile.exists() ? metricsFile : null;
     }
 
+
+    private String getPredictedData(File artifactDir) throws IOException {
+        File file = new File(artifactDir, Consts.MH_PREDICTION_DATA_FILE_NAME);
+        if (file.exists() && file.isFile()) {
+            String data = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+            return data;
+        }
+        return null;
+    }
 
     private OverfittingYaml getOverfitting(File artifactDir) throws IOException {
         File file = new File(artifactDir, Consts.MH_OVERFITTING_FILE_NAME);

@@ -16,28 +16,37 @@
 
 package ai.metaheuristic.commons.yaml.task_ml;
 
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
-
-import java.util.Map;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseParams;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Serge
- * Date: 10/3/2019
- * Time: 4:51 PM
+ * Date: 10/14/2019
+ * Time: 5:36 PM
  */
-public class TaskMachineLearningYamlUtils {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class TaskMachineLearningYaml implements BaseParams {
+    public final int version = 2;
 
-    private static final TaskMachineLearningYamlUtilsV1 YAML_UTILS_V_1 = new TaskMachineLearningYamlUtilsV1();
-    private static final TaskMachineLearningYamlUtilsV2 YAML_UTILS_V_2 = new TaskMachineLearningYamlUtilsV2();
-    private static final TaskMachineLearningYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Metrics {
+        public EnumsApi.MetricsStatus status;
+        public String error;
+        public String metrics;
+    }
 
-    public static final BaseYamlUtils<TaskMachineLearningYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
-            Map.of(
-                    1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
-            ),
-            DEFAULT_UTILS
-    );
+    public TaskMachineLearningYaml.Metrics metrics;
+    public boolean overfitted;
 
-
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
 }

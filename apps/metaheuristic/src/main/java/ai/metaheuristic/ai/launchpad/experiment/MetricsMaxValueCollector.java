@@ -17,9 +17,11 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.yaml.metrics.MetricValues;
-import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -48,6 +50,17 @@ public class MetricsMaxValueCollector {
         //noinspection UnnecessaryLocalVariable
         double value = list.stream()
                 .map(o -> {
+/*
+metrics: |
+  metrics: "values:\r\n  sum: 33\r\n  sum_6: 63\r\n  sum_7: 75\r\n  sum_8: 90\r\n  sum_9:\
+    \ 101\r\n"
+  status: Ok
+overfitted: false
+version: 1
+
+* */
+                    TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to((String)o[1]);
+
                     MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to((String)o[1]) );
                     if (metricValues==null) {
                         return null;

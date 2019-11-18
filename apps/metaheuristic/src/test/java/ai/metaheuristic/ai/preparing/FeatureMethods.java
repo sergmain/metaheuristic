@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
@@ -137,7 +136,9 @@ public abstract class FeatureMethods extends PreparingPlan {
             String yaml = SnippetExecUtils.toString(snippetExec);
 
             StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult sser =
-                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
+                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);
+            // TODO 2019-11-17 left it here for info. delete when code will be merged in master
+            // new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(sser);
         }
 
@@ -157,7 +158,7 @@ public abstract class FeatureMethods extends PreparingPlan {
             String yaml = SnippetExecUtils.toString(snippetExec);
 
             StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult ster =
-                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
+                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);
             results.add(ster);
         }
 

@@ -122,6 +122,7 @@ public class Consts {
     public static final String HEADER_MH_CHUNK_SIZE = "mh-chunk-size";
     public static final String RESOURCES_TO_CLEAN = "mh-to-clean";
 
+    public static final String META_PREDICTED_DATA = "mh-predicted-data";
     public static final String META_OVERFITTED = "mh-overfitted";
     public static final String META_SNIPPET_DOWNLOAD_STATUS = "mh-snippet-download-status";
 

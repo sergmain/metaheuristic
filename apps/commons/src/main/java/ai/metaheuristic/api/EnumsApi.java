@@ -343,4 +343,6 @@ public class EnumsApi {
         TASK_ASSIGNED, TASK_FINISHED, TASK_ERROR
 
     }
+
+    public enum MetricsStatus { NotFound, Ok, Error }
 }

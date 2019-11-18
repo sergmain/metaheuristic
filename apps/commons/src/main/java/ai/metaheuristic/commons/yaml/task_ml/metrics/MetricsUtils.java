@@ -13,8 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.yaml.metrics;
+package ai.metaheuristic.commons.yaml.task_ml.metrics;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
@@ -25,7 +26,7 @@ import java.io.InputStream;
 @Slf4j
 public class MetricsUtils {
 
-    public static final Metrics EMPTY_METRICS = new Metrics(Metrics.Status.NotFound, null, null);
+    public static final Metrics EMPTY_METRICS = new Metrics(EnumsApi.MetricsStatus.NotFound, null, null);
 
     private static Yaml getYaml() {
         return YamlUtils.init(Metrics.class);
@@ -52,7 +53,7 @@ public class MetricsUtils {
     }
 
     public static MetricValues getValues(Metrics metrics) {
-        if (metrics==null || metrics.getStatus()!= Metrics.Status.Ok) {
+        if (metrics==null || metrics.getStatus()!= EnumsApi.MetricsStatus.Ok) {
             return null;
         }
         //noinspection UnnecessaryLocalVariable

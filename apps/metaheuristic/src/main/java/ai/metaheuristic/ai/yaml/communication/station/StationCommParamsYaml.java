@@ -39,7 +39,7 @@ import java.util.List;
 @NoArgsConstructor
 public class StationCommParamsYaml implements BaseParams {
 
-    public final int version=3;
+    public final int version=4;
 
     @Override
     public boolean checkIntegrity() {

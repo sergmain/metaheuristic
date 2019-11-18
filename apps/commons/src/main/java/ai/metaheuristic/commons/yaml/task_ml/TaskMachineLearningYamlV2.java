@@ -13,19 +13,40 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.yaml.metrics;
 
+package ai.metaheuristic.commons.yaml.task_ml;
+
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * @author Serge
+ * Date: 10/14/2019
+ * Time: 5:36 PM
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Metrics {
-    public enum Status { NotFound, Ok, Error }
+public class TaskMachineLearningYamlV2 implements BaseParams {
+    public final int version = 2;
 
-    public Status status;
-    public String error;
-    public String metrics;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MetricsV2 {
+        public EnumsApi.MetricsStatus status;
+        public String error;
+        public String metrics;
+    }
+
+    public MetricsV2 metrics;
+    public boolean overfitted;
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
 }

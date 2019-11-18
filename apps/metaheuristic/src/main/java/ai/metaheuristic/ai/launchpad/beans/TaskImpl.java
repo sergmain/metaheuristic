@@ -62,13 +62,16 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "METRICS")
     public String metrics;
 
+    @Column(name = "EXTENDED_RESULT")
+    public String extendedResult;
+
     @Column(name = "WORKBOOK_ID")
     public long workbookId;
 
     @Column(name = "EXEC_STATE")
     public int execState;
 
-    // FILE_PROCESSING or EXPERIMENT
+    // FILE_PROCESSING(1), EXPERIMENT(2);
     @Column(name = "PROCESS_TYPE")
     public int processType;
 
