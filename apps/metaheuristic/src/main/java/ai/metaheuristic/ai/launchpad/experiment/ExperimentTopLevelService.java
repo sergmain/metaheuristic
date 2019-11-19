@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.experiment;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.*;
@@ -527,9 +526,9 @@ public class ExperimentTopLevelService {
         params.add(param);
     }
 
-    public OperationStatusRest snippetDeleteCommit(Long experimentId, String snippetCode) {
-        if (snippetCode==null || snippetCode.isBlank()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.245 snippetCode is blank");
+    public OperationStatusRest snippetDeleteCommit(Long experimentId, String snippetType) {
+        if (snippetType==null || snippetType.isBlank()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.245 snippetType is blank");
         }
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment == null) {
@@ -538,19 +537,19 @@ public class ExperimentTopLevelService {
         }
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        if (Objects.equals(epy.experimentYaml.fitSnippet, snippetCode)) {
+        if (Objects.equals(epy.experimentYaml.fitSnippet, snippetType)) {
             epy.experimentYaml.fitSnippet = null;
         }
-        else if (Objects.equals(epy.experimentYaml.predictSnippet, snippetCode)) {
+        else if (Objects.equals(epy.experimentYaml.predictSnippet, snippetType)) {
             epy.experimentYaml.predictSnippet = null;
             epy.experimentYaml.checkOverfittingSnippet = null;
         }
-        else if (Objects.equals(epy.experimentYaml.checkOverfittingSnippet, snippetCode)) {
+        else if (Objects.equals(epy.experimentYaml.checkOverfittingSnippet, snippetType)) {
             epy.experimentYaml.checkOverfittingSnippet = null;
         }
         else {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.252 Can't find a snippet with the code: "+snippetCode );
+                    "#285.252 Can't find a snippet with the type: "+snippetType );
         }
         experiment.updateParams(epy);
         experimentCache.save(experiment);
