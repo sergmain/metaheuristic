@@ -453,12 +453,15 @@ public class ExperimentService {
         String metricKey = null;
         for (Task task : selected) {
 
-            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(task.getMetrics()) );
+            if (S.b((task.getMetrics()))) {
+                continue;
+            }
+            TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to(task.getMetrics());
+            MetricValues metricValues = MetricsUtils.getValues( tmly.metrics );
             if (metricValues==null) {
                 continue;
             }
             if (metricKey==null) {
-                //noinspection LoopStatementThatDoesntLoop
                 for (Map.Entry<String, BigDecimal> entry : metricValues.values.entrySet()) {
                     metricKey = entry.getKey();
                     break;
@@ -567,15 +570,11 @@ public class ExperimentService {
 
         List<Task> tasks = findByIsCompletedIsTrueAndFeatureId(experiment.getExperimentParamsYaml(), experimentFeature.id);
         for (Task seq : tasks) {
-/*
-            if (S.b((String)o[1])) {
-                return null;
+            if (S.b((seq.getMetrics()))) {
+                continue;
             }
-            TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to((String)o[1]);
+            TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to(seq.getMetrics());
             MetricValues metricValues = MetricsUtils.getValues( tmly.metrics );
-*/
-
-            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.getMetrics()) );
             if (metricValues==null) {
                 continue;
             }

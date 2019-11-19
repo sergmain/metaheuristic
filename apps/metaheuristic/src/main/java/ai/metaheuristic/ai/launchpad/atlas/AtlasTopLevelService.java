@@ -32,6 +32,8 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.atlas.AtlasTaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -522,12 +524,15 @@ public class AtlasTopLevelService {
         String metricKey = null;
         for (AtlasTaskParamsYaml task : selected) {
 
-            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(task.metrics) );
+            if (S.b((task.metrics))) {
+                continue;
+            }
+            TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to(task.metrics);
+            MetricValues metricValues = MetricsUtils.getValues( tmly.metrics );
             if (metricValues==null) {
                 continue;
             }
             if (metricKey==null) {
-                //noinspection LoopStatementThatDoesntLoop
                 for (Map.Entry<String, BigDecimal> entry : metricValues.values.entrySet()) {
                     metricKey = entry.getKey();
                     break;
@@ -683,7 +688,11 @@ public class AtlasTopLevelService {
         tasks.stream()
                 .filter(o->taskToTaskType.containsKey(o.taskId) && o.execState > 1)
                 .forEach( o-> {
-                    MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(o.metrics) );
+                    if (S.b((o.metrics))) {
+                        return;
+                    }
+                    TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to(o.metrics);
+                    MetricValues metricValues = MetricsUtils.getValues( tmly.metrics );
                     if (metricValues==null) {
                         return;
                     }
