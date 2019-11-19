@@ -36,8 +36,11 @@ import java.nio.file.Path;
 import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.security.PublicKey;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -62,7 +65,7 @@ public class Globals {
     public String branding;
 
     @Value("${mh.cors-allowed-origins:#{null}}")
-    public String allowedOrigins;
+    public String allowedOriginsStr;
 
     @Value("${mh.is-event-enabled:#{false}}")
     public boolean isEventEnabled = false;
@@ -164,6 +167,7 @@ public class Globals {
     public Long chunkSize = null;
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
+    public List<String> allowedOrigins;
 
     // TODO 2019-07-28 need to handle this case
     //  https://stackoverflow.com/questions/37436927/utf-8-encoding-of-application-properties-attributes-in-spring-boot
@@ -193,11 +197,20 @@ public class Globals {
         }
 
         String origins = env.getProperty("MH_CORS_ALLOWED_ORIGINS");
-        if (origins!=null && !origins.isBlank()) {
-            allowedOrigins = origins;
+        if (!S.b(origins)) {
+            allowedOriginsStr = origins;
         }
-        if (allowedOrigins==null || allowedOrigins.isBlank()) {
-            allowedOrigins = "*";
+        if (S.b(allowedOriginsStr)) {
+            allowedOriginsStr = "*";
+        }
+        else {
+            allowedOrigins = Arrays.stream(StringUtils.split(allowedOriginsStr, ','))
+                    .map(String::strip)
+                    .filter(String::isBlank)
+                    .collect(Collectors.toList());
+        }
+        if (allowedOrigins.isEmpty()) {
+            allowedOrigins = List.of("*");
         }
 
         String size = env.getProperty("MH_CHUNK_SIZE");
@@ -388,7 +401,7 @@ public class Globals {
         log.info("Current globals:");
         log.info("'\tOS: {}", os);
         log.info("'\tthreadNumber: {}", threadNumber);
-        log.info("'\tallowedOrigins: {}", allowedOrigins);
+        log.info("'\tallowedOrigins: {}", allowedOriginsStr);
         log.info("'\tbranding: {}", branding);
         log.info("'\tisUnitTesting: {}", isUnitTesting);
         log.info("'\tisSecurityEnabled: {}", isSecurityEnabled);
