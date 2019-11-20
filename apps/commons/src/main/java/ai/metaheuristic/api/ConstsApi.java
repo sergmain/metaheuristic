@@ -24,6 +24,7 @@ package ai.metaheuristic.api;
 public class ConstsApi {
 
     public static final String ARTIFACTS_DIR = "artifacts";
+    public static final String MH_ENV_FILE = "mh-env.yaml";
 
     // === plan's meta
     //

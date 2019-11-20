@@ -210,6 +210,11 @@ public class TaskProcessor {
                 continue;
             }
 
+            String status = stationTaskService.prepareEnvironment(artifactDir);
+            if (status!=null) {
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, status);
+            }
+
             boolean isNotReady = false;
             final SnippetPrepareResult[] results = new SnippetPrepareResult[ totalCountOfSnippets(taskParamYaml.taskYaml) ];
             int idx = 0;

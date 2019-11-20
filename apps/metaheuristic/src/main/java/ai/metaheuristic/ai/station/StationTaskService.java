@@ -17,25 +17,29 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.station.env.EnvService;
 import ai.metaheuristic.ai.utils.DigitUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.ai.yaml.station_task.StationTaskUtils;
 import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +47,7 @@ import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import javax.annotation.PostConstruct;
@@ -67,6 +72,7 @@ public class StationTaskService {
     private final Globals globals;
     private final CurrentExecState currentExecState;
     private final MetadataService metadataService;
+    private final EnvService envService;
 
     private final Map<String, Map<Long, StationTask>> map = new ConcurrentHashMap<>();
 
@@ -660,4 +666,34 @@ public class StationTaskService {
         return taskSubDir;
     }
 
+    @Data
+    @AllArgsConstructor
+    public static class EnvYamlShort {
+        public final Map<String, String> envs;
+    }
+
+    private static Yaml getYamlForEnvYamlShort() {
+        return YamlUtils.init(EnvYamlShort.class);
+    }
+
+    private static String envYamlShortToString(EnvYamlShort envYamlShort) {
+        return YamlUtils.toString(envYamlShort, getYamlForEnvYamlShort());
+    }
+
+    public String prepareEnvironment(File artifactDir) {
+        File envFile = new File(artifactDir, ConstsApi.MH_ENV_FILE);
+        if (envFile.isDirectory()) {
+            return "#713.220 path "+ artifactDir.getAbsolutePath()+" is dir, can't continue processing";
+        }
+        EnvYamlShort envYaml = new EnvYamlShort(envService.getEnvYaml().envs);
+        final String newEnv = envYamlShortToString(envYaml);
+
+        try {
+            FileUtils.writeStringToFile(envFile, newEnv, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            return "#713.223 error creating "+ConstsApi.MH_ENV_FILE+", error: " + e.getMessage();
+        }
+
+        return null;
+    }
 }
