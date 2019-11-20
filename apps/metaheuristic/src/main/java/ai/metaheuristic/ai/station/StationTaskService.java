@@ -276,7 +276,7 @@ public class StationTaskService {
             Meta predictedData = MetaUtils.getMeta(task.metas, Consts.META_PREDICTED_DATA);
             if (task.getMetrics()!=null || predictedData!=null) {
                 ml = new StationCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult(
-                        task.getMetrics(), predictedData.getValue(), EnumsApi.Fitting.valueOf(MetaUtils.getValue(task.metas, Consts.META_FITTED)));
+                        task.getMetrics(), predictedData.getValue(), EnumsApi.Fitting.of(MetaUtils.getValue(task.metas, Consts.META_FITTED)));
             }
             final StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
                     new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), ml);

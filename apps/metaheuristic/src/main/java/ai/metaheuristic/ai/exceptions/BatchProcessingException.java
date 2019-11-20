@@ -18,16 +18,22 @@ package ai.metaheuristic.ai.exceptions;
 
 /**
  * @author Serge
- * Date: 5/3/2019
- * Time: 1:57 PM
+ * Date: 11/19/2019
+ * Time: 7:45 PM
  */
-public class BatchResourceProcessingException extends BatchProcessingException {
+public class BatchProcessingException  extends RuntimeException {
+    public BatchProcessingException() {
+    }
 
-    public BatchResourceProcessingException(String message) {
+    public BatchProcessingException(String message) {
         super(message);
     }
 
-    public BatchResourceProcessingException(String message, Throwable cause) {
+    public BatchProcessingException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public BatchProcessingException(Throwable cause) {
+        super(cause);
     }
 }

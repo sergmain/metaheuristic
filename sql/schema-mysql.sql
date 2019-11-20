@@ -132,7 +132,6 @@ CREATE TABLE mh_snippet
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    COMPANY_ID      INT UNSIGNED    not null,
     SNIPPET_CODE    VARCHAR(100)  not null,
     SNIPPET_TYPE      VARCHAR(50) not null,
     PARAMS        MEDIUMTEXT not null

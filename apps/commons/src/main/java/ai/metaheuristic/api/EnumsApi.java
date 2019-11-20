@@ -17,11 +17,22 @@
 package ai.metaheuristic.api;
 
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.S;
 import lombok.ToString;
 
 public class EnumsApi {
 
-    public enum Fitting { UNDERFITTING, NORMAL, OVERFITTING}
+    public enum Fitting {
+
+        UNDERFITTING, NORMAL, OVERFITTING;
+
+        public static Fitting of(String s) {
+            if (S.b(s)) {
+                return null;
+            }
+            return valueOf(s);
+        }
+    }
 
     public enum ExperimentSnippet {
         FIT(CommonConsts.FIT_TYPE),

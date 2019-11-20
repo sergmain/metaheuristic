@@ -19,9 +19,7 @@ package ai.metaheuristic.ai.launchpad.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
-import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
-import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchParams;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatus;
 import ai.metaheuristic.ai.launchpad.beans.*;
@@ -59,6 +57,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -71,6 +70,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -143,7 +143,7 @@ public class BatchService {
                             String actualFileName = mapping.get(file.getName());
                             createAndProcessTask(batch, Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), file);
                         }
-                    } catch (BatchResourceProcessingException | StoreNewFileWithRedirectException e) {
+                    } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;
                     } catch (Throwable th) {
                         String es = "#995.130 An error while saving data to file, " + th.toString();
@@ -158,7 +158,8 @@ public class BatchService {
         }
 
     }
-    private File getMainDocumentFileFromConfig(File srcDir, Map<String, String> mapping) throws IOException {
+
+    public static File getMainDocumentFileFromConfig(File srcDir, Map<String, String> mapping) throws IOException {
         File configFile = new File(srcDir, CONFIG_FILE);
         if (!configFile.exists()) {
             throw new BatchResourceProcessingException("#995.140 config.yaml file wasn't found in path " + srcDir.getPath());
@@ -167,17 +168,7 @@ public class BatchService {
         if (!configFile.isFile()) {
             throw new BatchResourceProcessingException("#995.150 config.yaml must be a file, not a directory");
         }
-        Yaml yaml = new Yaml();
-
-        String mainDocumentTemp;
-        try (InputStream is = new FileInputStream(configFile)) {
-            Map<String, Object> config = yaml.load(is);
-            mainDocumentTemp = config.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH).toString();
-        }
-
-        if (StringUtils.isBlank(mainDocumentTemp)) {
-            throw new BatchResourceProcessingException("#995.160 config.yaml must contain non-empty field '" + Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH + "' ");
-        }
+        String mainDocumentTemp = getMainDocument(configFile);
 
         Map.Entry<String, String> entry =
                 mapping.entrySet()
@@ -192,6 +183,37 @@ public class BatchService {
             throw new BatchResourceProcessingException("#995.170 main document file "+mainDocument+" wasn't found in path " + srcDir.getPath());
         }
         return mainDocFile;
+    }
+
+    public static String getMainDocument(File configFile) throws IOException {
+        try (InputStream is = new FileInputStream(configFile)) {
+            return getMainDocument(is);
+        }
+    }
+
+    public static String getMainDocument(InputStream is) {
+        String s;
+        try {
+            s = IOUtils.toString(is, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new BatchConfigYamlException("#995.153 Can't read config.yaml file, bad content, Error: " + e.getMessage());
+        }
+        if (!s.contains("mainDocument:")) {
+            throw new BatchConfigYamlException("#995.154 Wrong format of config.yaml file, mainDocument field wasn't found");
+        }
+
+        // let's try to fix customer's error
+        if (s.charAt("mainDocument:".length())!=' ') {
+            s = s.replace("mainDocument:", "mainDocument: ");
+        }
+
+        Yaml yaml = new Yaml();
+        Map<String, Object> config = yaml.load(s);
+        String mainDocumentTemp = config.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH).toString();
+        if (StringUtils.isBlank(mainDocumentTemp)) {
+            throw new BatchResourceProcessingException("#995.160 config.yaml must contain non-empty field '" + Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH + "' ");
+        }
+        return mainDocumentTemp;
     }
 
     private static WorkbookParamsYaml initWorkbookParamsYaml(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {

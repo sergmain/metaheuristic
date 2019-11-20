@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatus;
@@ -249,8 +250,13 @@ public class BatchTopLevelService {
                     log.error(es, e);
                     batchService.changeStateToError(batch.id, es);
                 }
+                catch(BatchProcessingException e) {
+                    final String es = "#995.105 General error of processing batch.\nError: " + e.getMessage();
+                    log.error(es, e);
+                    batchService.changeStateToError(batch.id, es);
+                }
                 catch(Throwable th) {
-                    final String es = "#995.110 General processing error. Error: " + th.getMessage() + ", class: " + th.getClass();
+                    final String es = "#995.110 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
                     log.error(es, th);
                     batchService.changeStateToError(batch.id, es);
                 }
