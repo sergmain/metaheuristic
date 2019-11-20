@@ -58,9 +58,14 @@ public class TestExperimentUtils {
         es2.setCode("snippet-2:1");
         es2.setType(CommonConsts.FIT_TYPE);
 
-        List<Snippet>experimentSnippets = Arrays.asList( es1, es2 );
+        Snippet es3 = new Snippet();
+        es3.setCode("snippet-3:1");
+        es3.setType(CommonConsts.CHECK_FITTING_TYPE);
+
+        List<Snippet>experimentSnippets = Arrays.asList( es1, es2, es3 );
         SnippetService.sortExperimentSnippets(experimentSnippets);
         assertEquals(CommonConsts.FIT_TYPE, experimentSnippets.get(0).getType());
         assertEquals(CommonConsts.PREDICT_TYPE, experimentSnippets.get(1).getType());
+        assertEquals(CommonConsts.CHECK_FITTING_TYPE, experimentSnippets.get(2).getType());
     }
 }

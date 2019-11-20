@@ -203,12 +203,11 @@ public class Globals {
         if (S.b(allowedOriginsStr)) {
             allowedOriginsStr = "*";
         }
-        else {
-            allowedOrigins = Arrays.stream(StringUtils.split(allowedOriginsStr, ','))
-                    .map(String::strip)
-                    .filter(String::isBlank)
-                    .collect(Collectors.toList());
-        }
+        allowedOrigins = Arrays.stream(StringUtils.split(allowedOriginsStr, ','))
+                .map(String::strip)
+                .filter(String::isBlank)
+                .collect(Collectors.toList());
+
         if (allowedOrigins.isEmpty()) {
             allowedOrigins = List.of("*");
         }
