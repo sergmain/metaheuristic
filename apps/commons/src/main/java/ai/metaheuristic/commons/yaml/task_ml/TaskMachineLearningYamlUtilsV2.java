@@ -43,7 +43,7 @@ public class TaskMachineLearningYamlUtilsV2
         src.checkIntegrity();
         TaskMachineLearningYaml trg = new TaskMachineLearningYaml();
         trg.metrics = new TaskMachineLearningYaml.Metrics(src.metrics.status, src.metrics.error, src.metrics.metrics);
-        trg.overfitted = src.overfitted;
+        trg.fitting = src.fitting;
         trg.checkIntegrity();
         return trg;
     }

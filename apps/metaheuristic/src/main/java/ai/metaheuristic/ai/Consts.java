@@ -72,7 +72,7 @@ public class Consts {
     public static final String METRICS_FILE_NAME = "metrics.yaml";
     public static final String MH_METRICS_FILE_NAME = "mh-metrics.yaml";
     public static final String MH_PREDICTION_DATA_FILE_NAME = "mh-prediction-data.yaml";
-    public static final String MH_OVERFITTING_FILE_NAME = "mh-overfitting.yaml";
+    public static final String MH_FITTING_FILE_NAME = "mh-fitting.yaml";
     public static final String MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "mh-system-console.log";
 
     public static final String PARAMS_YAML_MASK = "params-v%d.yaml";
@@ -123,7 +123,7 @@ public class Consts {
     public static final String RESOURCES_TO_CLEAN = "mh-to-clean";
 
     public static final String META_PREDICTED_DATA = "mh-predicted-data";
-    public static final String META_OVERFITTED = "mh-overfitted";
+    public static final String META_FITTED = "mh-fitted";
     public static final String META_SNIPPET_DOWNLOAD_STATUS = "mh-snippet-download-status";
 
     public static final String RESULT_ZIP = "result.zip";

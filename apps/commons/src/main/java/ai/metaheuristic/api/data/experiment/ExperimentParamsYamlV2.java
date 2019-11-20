@@ -63,7 +63,7 @@ public class ExperimentParamsYamlV2 implements BaseParams {
 
         public String fitSnippet;
         public String predictSnippet;
-        public String checkOverfittingSnippet;
+        public String checkFittingSnippet;
     }
 
     @Data

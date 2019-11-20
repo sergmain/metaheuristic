@@ -77,7 +77,7 @@ public class SnippetConfigYaml implements Cloneable, BaseParams {
     @NoArgsConstructor
     public static class MachineLearning {
         public boolean metrics = false;
-        public boolean overfitting = false;
+        public boolean fitting = false;
     }
 
     /**

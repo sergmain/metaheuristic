@@ -86,7 +86,7 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @RequiredArgsConstructor
 public class ExperimentTopLevelService {
 
-    private final List<String> experimentSnippetTypes = Arrays.asList(CommonConsts.FIT_TYPE, CommonConsts.PREDICT_TYPE, CommonConsts.CHECK_OVERFITTING_TYPE);
+    private final List<String> experimentSnippetTypes = Arrays.asList(CommonConsts.FIT_TYPE, CommonConsts.PREDICT_TYPE, CommonConsts.CHECK_FITTING_TYPE);
 
     private final Globals globals;
     private final SnippetRepository snippetRepository;
@@ -247,7 +247,6 @@ public class ExperimentTopLevelService {
         return result;
     }
 
-    @SuppressWarnings("RedundantIfStatement")
     public ExperimentApiData.ExperimentsEditResult editExperiment(@PathVariable Long id) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
@@ -277,15 +276,15 @@ public class ExperimentTopLevelService {
                     else if (CommonConsts.PREDICT_TYPE.equals(s.type) && snippetService.hasType(experimentSnippets, CommonConsts.PREDICT_TYPE)) {
                         return true;
                     }
-                    else if (CommonConsts.CHECK_OVERFITTING_TYPE.equals(s.type)) {
-                        if (snippetService.hasType(experimentSnippets, CommonConsts.CHECK_OVERFITTING_TYPE)) {
+                    else if (CommonConsts.CHECK_FITTING_TYPE.equals(s.type)) {
+                        if (snippetService.hasType(experimentSnippets, CommonConsts.CHECK_FITTING_TYPE)) {
                             return true;
                         }
                         for (Snippet snippet : experimentSnippets) {
                             if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
-                                final Meta meta = MetaUtils.getMeta(snippet.getSnippetConfig(false).metas, ConstsApi.META_MH_OVERFITTING_DETECTION_SUPPORTED);
+                                final Meta meta = MetaUtils.getMeta(snippet.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
                                 if (MetaUtils.isTrue(meta)) {
-                                    // don't include this Snippet because 'predict' snippet doesn't support overfitting detection
+                                    // don't include this Snippet because 'predict' snippet doesn't support fitting detection
                                     return false;
                                 }
                             }
@@ -307,17 +306,17 @@ public class ExperimentTopLevelService {
         return result;
     }
 
-    private void addCheckOverfittingSnippet(ExperimentParamsYaml epy, List<Snippet> experimentSnippets) {
-        if (S.b(epy.experimentYaml.checkOverfittingSnippet)) {
+    private void addCheckFittingSnippet(ExperimentParamsYaml epy, List<Snippet> experimentSnippets) {
+        if (S.b(epy.experimentYaml.checkFittingSnippet)) {
             return;
         }
         experimentSnippets.stream()
                 .filter(s->s.type.equals(CommonConsts.PREDICT_TYPE))
                 .findFirst()
                 .ifPresent(s-> {
-                    Meta m = MetaUtils.getMeta(s.getSnippetConfig(false).metas, ConstsApi.META_MH_OVERFITTING_DETECTION_SUPPORTED);
+                    Meta m = MetaUtils.getMeta(s.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
                     if (MetaUtils.isTrue(m)) {
-                        experimentSnippets.add(snippetRepository.findByCode(epy.experimentYaml.checkOverfittingSnippet));
+                        experimentSnippets.add(snippetRepository.findByCode(epy.experimentYaml.checkFittingSnippet));
                     }
         });
     }
@@ -459,8 +458,8 @@ public class ExperimentTopLevelService {
             case "predict":
                 epy.experimentYaml.predictSnippet = snippetCode;
                 break;
-            case "check-overfitting":
-                epy.experimentYaml.checkOverfittingSnippet = snippetCode;
+            case "check-fitting":
+                epy.experimentYaml.checkFittingSnippet = snippetCode;
                 break;
             default:
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.220 snippet has non-supported type for an experiment: "+s.getType() );
@@ -542,10 +541,10 @@ public class ExperimentTopLevelService {
         }
         else if (Objects.equals(epy.experimentYaml.predictSnippet, snippetType)) {
             epy.experimentYaml.predictSnippet = null;
-            epy.experimentYaml.checkOverfittingSnippet = null;
+            epy.experimentYaml.checkFittingSnippet = null;
         }
-        else if (Objects.equals(epy.experimentYaml.checkOverfittingSnippet, snippetType)) {
-            epy.experimentYaml.checkOverfittingSnippet = null;
+        else if (Objects.equals(epy.experimentYaml.checkFittingSnippet, snippetType)) {
+            epy.experimentYaml.checkFittingSnippet = null;
         }
         else {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -573,10 +572,10 @@ public class ExperimentTopLevelService {
                 break;
             case CommonConsts.PREDICT_TYPE:
                 epy.experimentYaml.predictSnippet = null;
-                epy.experimentYaml.checkOverfittingSnippet = null;
+                epy.experimentYaml.checkFittingSnippet = null;
                 break;
-            case CommonConsts.CHECK_OVERFITTING_TYPE:
-                epy.experimentYaml.checkOverfittingSnippet = null;
+            case CommonConsts.CHECK_FITTING_TYPE:
+                epy.experimentYaml.checkFittingSnippet = null;
                 break;
             default:
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,

@@ -96,7 +96,7 @@ public class SnippetService {
                 return -1;
             }
         }
-        else if (CommonConsts.CHECK_OVERFITTING_TYPE.equals(o1.getType().toLowerCase())) {
+        else if (CommonConsts.CHECK_FITTING_TYPE.equals(o1.getType().toLowerCase())) {
             if (CommonConsts.FIT_TYPE.equals(o2.getType().toLowerCase())) {
                 return 1;
             }

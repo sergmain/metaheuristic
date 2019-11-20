@@ -43,7 +43,7 @@ public class TaskMachineLearningYamlV2 implements BaseParams {
     }
 
     public MetricsV2 metrics;
-    public boolean overfitted;
+    public EnumsApi.Fitting fitting;
 
     @Override
     public boolean checkIntegrity() {

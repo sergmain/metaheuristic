@@ -41,6 +41,11 @@ public class MetaUtils {
         return isTrue(getMeta(metas, keys));
     }
 
+    public static String getValue(List<Meta> metas, String... keys) {
+        Meta m = getMeta(metas, keys);
+        return m!=null ? m.getValue() : null;
+    }
+
     public static Meta getMeta(List<Meta> metas, String... keys) {
         if (metas==null) {
             return null;

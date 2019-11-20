@@ -56,7 +56,7 @@ metrics: |
   metrics: "values:\r\n  sum: 33\r\n  sum_6: 63\r\n  sum_7: 75\r\n  sum_8: 90\r\n  sum_9:\
     \ 101\r\n"
   status: Ok
-overfitted: false
+fitted: 'UNDERFITTED'
 version: 1
 
 */

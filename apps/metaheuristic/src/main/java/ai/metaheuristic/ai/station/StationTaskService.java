@@ -32,8 +32,8 @@ import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.yaml.ml.overfitting.OverfittingYaml;
-import ai.metaheuristic.commons.yaml.ml.overfitting.OverfittingYamlUtils;
+import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
+import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.NonNull;
@@ -276,7 +276,7 @@ public class StationTaskService {
             Meta predictedData = MetaUtils.getMeta(task.metas, Consts.META_PREDICTED_DATA);
             if (task.getMetrics()!=null || predictedData!=null) {
                 ml = new StationCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult(
-                        task.getMetrics(), predictedData.getValue(), MetaUtils.isTrue(task.metas, Consts.META_OVERFITTED));
+                        task.getMetrics(), predictedData.getValue(), EnumsApi.Fitting.valueOf(MetaUtils.getValue(task.metas, Consts.META_FITTED)));
             }
             final StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
                     new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), ml);
@@ -355,9 +355,9 @@ public class StationTaskService {
     }
 
     public void storePredictedData(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) throws IOException {
-        Meta m = MetaUtils.getMeta(snippet.metas, ConstsApi.META_MH_OVERFITTING_DETECTION_SUPPORTED);
+        Meta m = MetaUtils.getMeta(snippet.metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
         if (MetaUtils.isTrue(m)) {
-            log.info("storeOverfitting(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
+            log.info("storePredictedData(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
             String data = getPredictedData(artifactDir);
             if (data!=null) {
                 task.getMetas().add( new Meta(Consts.META_PREDICTED_DATA, data, null) );
@@ -366,16 +366,16 @@ public class StationTaskService {
         }
     }
 
-    public void storeOverfitting(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) throws IOException {
-        if (snippet.type.equals(CommonConsts.CHECK_OVERFITTING_TYPE)) {
-           log.info("storeOverfitting(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
-            OverfittingYaml overfittingYaml = getOverfitting(artifactDir);
-            if (overfittingYaml != null) {
-                task.getMetas().add(new Meta(Consts.META_OVERFITTED, Boolean.toString(overfittingYaml.overfitting), null));
+    public void storeFittingCheck(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) throws IOException {
+        if (snippet.type.equals(CommonConsts.CHECK_FITTING_TYPE)) {
+           log.info("storeFittingCheck(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
+            FittingYaml fittingYaml = getFittingCheck(artifactDir);
+            if (fittingYaml != null) {
+                task.getMetas().add(new Meta(Consts.META_FITTED, fittingYaml.fitting.toString(), null));
                 save(task);
             }
             else {
-                log.error("#713.137 file with testing of overfitting wasn't found, task #{}, artifact dir: {}", task.taskId, artifactDir.getAbsolutePath());
+                log.error("#713.137 file with testing of fitting wasn't found, task #{}, artifact dir: {}", task.taskId, artifactDir.getAbsolutePath());
             }
         }
     }
@@ -426,11 +426,11 @@ public class StationTaskService {
         return null;
     }
 
-    private OverfittingYaml getOverfitting(File artifactDir) throws IOException {
-        File file = new File(artifactDir, Consts.MH_OVERFITTING_FILE_NAME);
+    private FittingYaml getFittingCheck(File artifactDir) throws IOException {
+        File file = new File(artifactDir, Consts.MH_FITTING_FILE_NAME);
         if (file.exists() && file.isFile()) {
             String yaml = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-            return OverfittingYamlUtils.BASE_YAML_UTILS.to(yaml);
+            return FittingYamlUtils.BASE_YAML_UTILS.to(yaml);
         }
         return null;
     }

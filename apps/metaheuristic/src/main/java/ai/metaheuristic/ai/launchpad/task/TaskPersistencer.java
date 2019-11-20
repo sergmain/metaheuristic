@@ -236,7 +236,7 @@ public class TaskPersistencer {
             if (result.ml!=null) {
                 Metrics m = MetricsUtils.to(result.ml.metrics);
                 TaskMachineLearningYaml.Metrics metrics = new TaskMachineLearningYaml.Metrics(m.status, m.error, m.metrics);
-                TaskMachineLearningYaml tmly = new TaskMachineLearningYaml(metrics, result.ml.overfitted);
+                TaskMachineLearningYaml tmly = new TaskMachineLearningYaml(metrics, result.ml.fitting);
                 String s = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.toString(tmly);
                 task.setMetrics(s);
 

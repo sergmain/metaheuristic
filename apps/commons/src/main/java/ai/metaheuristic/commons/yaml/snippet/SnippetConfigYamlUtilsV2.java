@@ -58,7 +58,7 @@ public class SnippetConfigYamlUtilsV2
             trg.metas = new ArrayList<>(src.metas);
         }
         if (src.ml!=null) {
-            trg.ml = new SnippetConfigYaml.MachineLearning(src.ml.metrics, src.ml.overfitting);
+            trg.ml = new SnippetConfigYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
         }
         trg.checkIntegrity();
         return trg;

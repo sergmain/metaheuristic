@@ -66,7 +66,7 @@ public class ExperimentParamsYaml implements BaseParams {
 
         public String fitSnippet;
         public String predictSnippet;
-        public String checkOverfittingSnippet;
+        public String checkFittingSnippet;
     }
 
     @Data
@@ -122,8 +122,8 @@ public class ExperimentParamsYaml implements BaseParams {
         if (!S.b(experimentYaml.predictSnippet)) {
             snippetCodes.add(experimentYaml.predictSnippet);
         }
-        if (!S.b(experimentYaml.predictSnippet) && !S.b(experimentYaml.checkOverfittingSnippet)) {
-            snippetCodes.add(experimentYaml.checkOverfittingSnippet);
+        if (!S.b(experimentYaml.predictSnippet) && !S.b(experimentYaml.checkFittingSnippet)) {
+            snippetCodes.add(experimentYaml.checkFittingSnippet);
         }
         return snippetCodes;
     }

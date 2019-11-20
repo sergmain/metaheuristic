@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.task_ml;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
@@ -47,7 +48,7 @@ public class TaskMachineLearningYamlUtilsV1
         Metrics m = MetricsUtils.to(src.metrics);
 
         trg.metrics = new TaskMachineLearningYamlV2.MetricsV2(m.status, m.error, m.metrics);
-        trg.overfitted = false;
+        trg.fitting = EnumsApi.Fitting.NORMAL;
         trg.checkIntegrity();
         return trg;
     }

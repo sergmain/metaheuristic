@@ -14,9 +14,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.ml.overfitting;
+package ai.metaheuristic.commons.yaml.ml.fitting;
 
-import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
@@ -26,12 +25,12 @@ import java.util.Map;
  * Date: 10/3/2019
  * Time: 4:51 PM
  */
-public class OverfittingYamlUtils {
+public class FittingYamlUtils {
 
-    private static final OverfittingYamlUtilsV1 YAML_UTILS_V_1 = new OverfittingYamlUtilsV1();
-    private static final OverfittingYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final FittingYamlUtilsV1 YAML_UTILS_V_1 = new FittingYamlUtilsV1();
+    private static final FittingYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    public static final BaseYamlUtils<OverfittingYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<FittingYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1
             ),

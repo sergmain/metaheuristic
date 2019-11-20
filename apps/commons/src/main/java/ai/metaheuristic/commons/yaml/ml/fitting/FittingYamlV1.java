@@ -14,8 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.ml.overfitting;
+package ai.metaheuristic.commons.yaml.ml.fitting;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,12 +30,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OverfittingYaml implements BaseParams {
+public class FittingYamlV1 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
         return true;
     }
 
-    public boolean overfitting;
+    public EnumsApi.Fitting fitting;
 }

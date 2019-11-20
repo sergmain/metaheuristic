@@ -91,7 +91,7 @@ public class StationCommParamsYamlUtilsV4
                             ? v4.reportTaskProcessingResult.results
                             .stream()
                             .map(o->new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(o.taskId, o.result,
-                                    o.ml==null ? null : new StationCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult(o.ml.metrics, o.ml.predicted, o.ml.overfitted)))
+                                    o.ml==null ? null : new StationCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult(o.ml.metrics, o.ml.predicted, o.ml.fitting)))
                             .collect(Collectors.toList())
                             : new ArrayList<>();
         }

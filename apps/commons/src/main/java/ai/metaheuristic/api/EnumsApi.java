@@ -21,10 +21,12 @@ import lombok.ToString;
 
 public class EnumsApi {
 
+    public enum Fitting { UNDERFITTING, NORMAL, OVERFITTING}
+
     public enum ExperimentSnippet {
         FIT(CommonConsts.FIT_TYPE),
         PREDICT(CommonConsts.PREDICT_TYPE),
-        CHECK_OVERFITTING(CommonConsts.CHECK_OVERFITTING_TYPE);
+        CHECK_FITTING(CommonConsts.CHECK_FITTING_TYPE);
 
         public String code;
 
@@ -38,8 +40,8 @@ public class EnumsApi {
                     return FIT;
                 case CommonConsts.PREDICT_TYPE:
                     return PREDICT;
-                case CommonConsts.CHECK_OVERFITTING_TYPE:
-                    return CHECK_OVERFITTING;
+                case CommonConsts.CHECK_FITTING_TYPE:
+                    return CHECK_FITTING;
                 default:
                     throw new IllegalStateException("Unknown code: " + code);
             }
@@ -159,7 +161,7 @@ public class EnumsApi {
         INPUT_CODE_NOT_SPECIFIED_ERROR,
         WRONG_FORMAT_OF_SNIPPET_CODE,
         SNIPPET_NOT_FOUND_ERROR,
-        OVERFITTING_SNIPPET_NOT_FOUND_ERROR,
+        FITTING_SNIPPET_NOT_FOUND_ERROR,
         VERSION_OF_SNIPPET_IS_TOO_LOW_ERROR,
         EXPERIMENT_NOT_FOUND_ERROR,
         EXPERIMENT_ALREADY_STARTED_ERROR,

@@ -155,7 +155,7 @@ public class StationCommParamsYaml implements BaseParams {
         public static class MachineLearningTaskResult {
             public String metrics;
             public String predicted;
-            public boolean overfitted;
+            public EnumsApi.Fitting fitting;
         }
 
         @Data

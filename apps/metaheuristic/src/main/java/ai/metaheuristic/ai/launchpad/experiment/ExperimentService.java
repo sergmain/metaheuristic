@@ -851,9 +851,9 @@ public class ExperimentService {
                         }
                         yaml.taskYaml.postSnippets = new ArrayList<>();
                         if (snippetItem.type== EnumsApi.ExperimentSnippet.PREDICT) {
-                            Meta m = MetaUtils.getMeta(snippet.getSnippetConfig(false).metas, ConstsApi.META_MH_OVERFITTING_DETECTION_SUPPORTED);
-                            if (MetaUtils.isTrue(m) && !S.b(epy.experimentYaml.checkOverfittingSnippet)) {
-                                Snippet cos = getSnippet(localCache, epy.experimentYaml.checkOverfittingSnippet);
+                            Meta m = MetaUtils.getMeta(snippet.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
+                            if (MetaUtils.isTrue(m) && !S.b(epy.experimentYaml.checkFittingSnippet)) {
+                                Snippet cos = getSnippet(localCache, epy.experimentYaml.checkFittingSnippet);
                                 if (snippet == null) {
                                     log.warn("#179.140 Snippet wasn't found for code: {}", snippetCode);
                                     continue;

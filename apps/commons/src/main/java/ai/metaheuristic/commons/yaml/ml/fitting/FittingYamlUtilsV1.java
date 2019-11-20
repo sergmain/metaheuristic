@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.ml.overfitting;
+package ai.metaheuristic.commons.yaml.ml.fitting;
 
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -26,8 +26,8 @@ import org.yaml.snakeyaml.Yaml;
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class OverfittingYamlUtilsV1
-        extends AbstractParamsYamlUtils<OverfittingYamlV1, OverfittingYaml, Void, Void, Void, Void> {
+public class FittingYamlUtilsV1
+        extends AbstractParamsYamlUtils<FittingYamlV1, FittingYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -35,14 +35,14 @@ public class OverfittingYamlUtilsV1
     }
 
     public Yaml getYaml() {
-        return YamlUtils.init(OverfittingYamlV1.class);
+        return YamlUtils.init(FittingYamlV1.class);
     }
 
     @Override
-    public OverfittingYaml upgradeTo(OverfittingYamlV1 src, Long ... vars) {
+    public FittingYaml upgradeTo(FittingYamlV1 src, Long ... vars) {
         src.checkIntegrity();
-        OverfittingYaml trg = new OverfittingYaml();
-        trg.overfitting = src.overfitting;
+        FittingYaml trg = new FittingYaml();
+        trg.fitting = src.fitting;
         trg.checkIntegrity();
         return trg;
     }
@@ -63,16 +63,16 @@ public class OverfittingYamlUtilsV1
     }
 
     @Override
-    public String toString(OverfittingYamlV1 yaml) {
+    public String toString(FittingYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    public OverfittingYamlV1 to(String s) {
+    public FittingYamlV1 to(String s) {
         if (S.b(s)) {
             return null;
         }
         //noinspection UnnecessaryLocalVariable
-        final OverfittingYamlV1 p = getYaml().load(s);
+        final FittingYamlV1 p = getYaml().load(s);
         return p;
     }
 
