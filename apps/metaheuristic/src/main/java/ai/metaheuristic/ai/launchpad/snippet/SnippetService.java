@@ -80,31 +80,16 @@ public class SnippetService {
         if (o1.getType().equals(o2.getType())) {
             return 0;
         }
-        if (CommonConsts.FIT_TYPE.equals(o1.getType().toLowerCase())) {
-            if (CommonConsts.PREDICT_TYPE.equals(o2.getType().toLowerCase())) {
-                return 0;
-            }
-            else {
+        switch (o1.getType().toLowerCase()) {
+            case CommonConsts.FIT_TYPE:
                 return -1;
-            }
-        }
-        else if (CommonConsts.PREDICT_TYPE.equals(o1.getType().toLowerCase())) {
-            if (CommonConsts.FIT_TYPE.equals(o2.getType().toLowerCase())) {
+            case CommonConsts.PREDICT_TYPE:
+                return CommonConsts.FIT_TYPE.equals(o2.getType().toLowerCase()) ? 1 : -1;
+            case CommonConsts.CHECK_FITTING_TYPE:
                 return 1;
-            }
-            else {
-                return -1;
-            }
-        }
-        else if (CommonConsts.CHECK_FITTING_TYPE.equals(o1.getType().toLowerCase())) {
-            if (CommonConsts.FIT_TYPE.equals(o2.getType().toLowerCase())) {
-                return 1;
-            }
-            else {
+            default:
                 return 0;
-            }
         }
-        else return 0;
     }
 
     public List<Snippet> getSnippetsForCodes(List<String> snippetCodes) {
