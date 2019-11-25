@@ -63,8 +63,7 @@ public class FileProcessService {
         if (process.parallelExec) {
             for (int i = 0; i < process.snippets.size(); i++) {
                 SnippetDefForPlan snDef = process.snippets.get(i);
-                String tempCode = snDef.params != null && !snDef.params.isBlank() ? snDef.code + ' ' + snDef.params : snDef.code;
-                String normalizedSnippetCode = StrUtils.normalizeCode(tempCode);
+                String normalizedSnippetCode = StrUtils.normalizeCode(snDef.code);
                 String normalizedPlanCode = StrUtils.normalizeCode(process.code);
                 String outputResourceCode = PlanUtils.getResourceCode(workbookId, normalizedPlanCode, normalizedSnippetCode, process.order, i);
                 result.outputResourceCodes.add(outputResourceCode);
