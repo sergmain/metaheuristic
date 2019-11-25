@@ -132,7 +132,7 @@ public class ExperimentRestController {
 
     @GetMapping("/experiment-snippet-delete-by-type-commit/{experimentId}/{snippetType}")
     public OperationStatusRest snippetDeleteByTypeCommit(@PathVariable Long experimentId, @PathVariable String snippetType) {
-        return experimentTopLevelService.snippetDeleteCommit(experimentId, snippetType);
+        return experimentTopLevelService.snippetDeleteByTypeCommit(experimentId, snippetType);
     }
 
     @PostMapping("/experiment-delete-commit")
