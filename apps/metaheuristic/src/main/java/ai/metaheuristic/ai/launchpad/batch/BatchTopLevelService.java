@@ -179,7 +179,8 @@ public class BatchTopLevelService {
         if (S.b(tempFilename)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.040 name of uploaded file is null or blank");
         }
-        final String originFilename = tempFilename.toLowerCase();
+        // fix for the case when browser send full path, ie Edge
+        final String originFilename = new File(tempFilename.toLowerCase()).getName();
 
         String ext = StrUtils.getExtension(originFilename);
         if (ext==null) {
