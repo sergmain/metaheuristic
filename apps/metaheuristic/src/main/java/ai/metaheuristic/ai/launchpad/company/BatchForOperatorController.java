@@ -79,10 +79,10 @@ public class BatchForOperatorController {
             Model model,
             @ModelAttribute("errorMessage") final String errorMessage,
             @ModelAttribute("infoMessages") final String infoMessages,
-            @PathVariable Long companyId
+            @PathVariable Long companyId,
             @PathVariable Integer days
         ) {
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyId, true);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(null, companyId, true);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         model.addAttribute("companyId", companyId);
