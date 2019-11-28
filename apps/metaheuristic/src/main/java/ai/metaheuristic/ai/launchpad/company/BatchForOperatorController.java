@@ -73,6 +73,23 @@ public class BatchForOperatorController {
         return "launchpad/company/batch/company-batches";
     }
 
+    @GetMapping("/company-batches-usage-info/{companyId}/{days}")
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
+    public String batches(
+            Model model,
+            @ModelAttribute("errorMessage") final String errorMessage,
+            @ModelAttribute("infoMessages") final String infoMessages,
+            @PathVariable Long companyId
+            @PathVariable Integer days
+        ) {
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyId, true);
+        ControllerUtils.addMessagesToModel(model, batchesResult);
+        model.addAttribute("result", batchesResult);
+        model.addAttribute("companyId", companyId);
+        model.addAttribute("days", days);
+        return "launchpad/company/batch/company-batches-usage-info";
+    }
+
     @PostMapping("/company-batches-part/{companyId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, @PathVariable Long companyId) {
