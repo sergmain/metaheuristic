@@ -42,15 +42,39 @@ public class TaskParamsYamlUtilsV1
         return YamlUtils.init(TaskParamsYamlV1.class);
     }
 
+    private static TaskParamsYamlV2.SnippetConfigYamlV2 to(TaskParamsYamlV1.SnippetConfigYamlV1 src) {
+        if (src==null) {
+            return null;
+        }
+        TaskParamsYamlV2.SnippetConfigYamlV2 trg = new TaskParamsYamlV2.SnippetConfigYamlV2();
+        trg.checksum = src.checksum;
+        trg.checksumMap = src.checksumMap;
+        trg.code = src.code;
+        trg.env = src.env;
+        trg.file = src.file;
+        trg.git = src.git;
+        if (src.info!=null) {
+            trg.info = new TaskParamsYamlV2.SnippetInfoV2(src.info.signed, src.info.length);
+        }
+        trg.metas = src.metas;
+        trg.metrics = src.metrics;
+        trg.params = src.params;
+        trg.skipParams = src.skipParams;
+        trg.sourcing = src.sourcing;
+        trg.type = src.type;
+        return trg;
+    }
+
     @Override
     public TaskParamsYamlV2 upgradeTo(TaskParamsYamlV1 taskParams, Long ... vars) {
         TaskParamsYamlV2 t = new TaskParamsYamlV2();
-        BeanUtils.copyProperties(taskParams, t.taskYaml, "preSnippet", "postSnippet");
+        BeanUtils.copyProperties(taskParams, t.taskYaml, "snippet", "preSnippet", "postSnippet");
+        t.taskYaml.snippet = to(taskParams.snippet);
         if (taskParams.preSnippet!=null) {
-            t.taskYaml.preSnippets = List.of(taskParams.preSnippet);
+            t.taskYaml.preSnippets = List.of(to(taskParams.preSnippet));
         }
         if (taskParams.postSnippet!=null) {
-            t.taskYaml.postSnippets = List.of(taskParams.postSnippet);
+            t.taskYaml.postSnippets = List.of(to(taskParams.postSnippet));
         }
         return t;
     }

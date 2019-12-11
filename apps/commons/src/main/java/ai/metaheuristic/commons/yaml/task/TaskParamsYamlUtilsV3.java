@@ -19,10 +19,13 @@ package ai.metaheuristic.commons.yaml.task;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV2;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV3;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
+
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -46,7 +49,15 @@ public class TaskParamsYamlUtilsV3
         yaml.checkIntegrity();
         TaskParamsYaml t = new TaskParamsYaml();
         t.taskYaml = new TaskParamsYaml.TaskYaml();
-        BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml);
+        BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml, "snippet", "preSnippet", "postSnippet");
+        t.taskYaml.snippet = toUp(yaml.taskYaml.snippet);
+        if (yaml.taskYaml.preSnippets!=null) {
+            t.taskYaml.preSnippets = yaml.taskYaml.preSnippets.stream().map(TaskParamsYamlUtilsV3::toUp).collect(Collectors.toList());;
+        }
+        if (yaml.taskYaml.postSnippets!=null) {
+            t.taskYaml.postSnippets = yaml.taskYaml.postSnippets.stream().map(TaskParamsYamlUtilsV3::toUp).collect(Collectors.toList());;
+        }
+
         t.checkIntegrity();
 
         return t;
@@ -56,14 +67,70 @@ public class TaskParamsYamlUtilsV3
     public TaskParamsYamlV2 downgradeTo(TaskParamsYaml yaml) {
         yaml.checkIntegrity();
         TaskParamsYamlV2 t = new TaskParamsYamlV2();
-        BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml);
-/*
-        yaml.taskYaml.preSnippets = t.taskYaml.preSnippets;
-        yaml.taskYaml.postSnippets = t.taskYaml.postSnippets;
-        yaml.taskYaml.snippet = t.taskYaml.snippet;
-*/
+        BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml, "snippet", "preSnippet", "postSnippet");
+        if (yaml.taskYaml.preSnippets!=null && yaml.taskYaml.preSnippets.size()>0) {
+            if (yaml.taskYaml.preSnippets.size()>1) {
+                throw new DowngradeNotSupportedException("Too many preSnippets");
+            }
+            t.taskYaml.preSnippets = yaml.taskYaml.preSnippets.stream().map(TaskParamsYamlUtilsV3::toDown).collect(Collectors.toList());;
+        }
+        if (yaml.taskYaml.postSnippets!=null && yaml.taskYaml.postSnippets.size()>0) {
+            if (yaml.taskYaml.postSnippets.size()>1) {
+                throw new DowngradeNotSupportedException("Too many postSnippets");
+            }
+            t.taskYaml.postSnippets = yaml.taskYaml.postSnippets.stream().map(TaskParamsYamlUtilsV3::toDown).collect(Collectors.toList());;
+        }
+        t.taskYaml.snippet = toDown(yaml.taskYaml.snippet);
+
         t.checkIntegrity();
         return t;
+    }
+
+
+    private static TaskParamsYaml.SnippetConfigYaml toUp(TaskParamsYamlV3.SnippetConfigYamlV3 src) {
+        if (src==null) {
+            return null;
+        }
+        TaskParamsYaml.SnippetConfigYaml trg = new TaskParamsYaml.SnippetConfigYaml();
+        trg.checksum = src.checksum;
+        trg.checksumMap = src.checksumMap;
+        trg.code = src.code;
+        trg.env = src.env;
+        trg.file = src.file;
+        trg.git = src.git;
+        if (src.info!=null) {
+            trg.info = new TaskParamsYaml.SnippetInfo(src.info.signed, src.info.length);
+        }
+        trg.metas = src.metas;
+        trg.metrics = src.metrics;
+        trg.params = src.params;
+        trg.skipParams = src.skipParams;
+        trg.sourcing = src.sourcing;
+        trg.type = src.type;
+        return trg;
+    }
+
+    private static TaskParamsYamlV2.SnippetConfigYamlV2 toDown(TaskParamsYaml.SnippetConfigYaml src) {
+        if (src==null) {
+            return null;
+        }
+        TaskParamsYamlV2.SnippetConfigYamlV2 trg = new TaskParamsYamlV2.SnippetConfigYamlV2();
+        trg.checksum = src.checksum;
+        trg.checksumMap = src.checksumMap;
+        trg.code = src.code;
+        trg.env = src.env;
+        trg.file = src.file;
+        trg.git = src.git;
+        if (src.info!=null) {
+            trg.info = new TaskParamsYamlV2.SnippetInfoV2(src.info.signed, src.info.length);
+        }
+        trg.metas = src.metas;
+        trg.metrics = src.metrics;
+        trg.params = src.params;
+        trg.skipParams = src.skipParams;
+        trg.sourcing = src.sourcing;
+        trg.type = src.type;
+        return trg;
     }
 
     @Override

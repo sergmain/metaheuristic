@@ -25,6 +25,8 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.stream.Collectors;
+
 /**
  * @author Serge
  * Date: 6/17/2019
@@ -46,28 +48,82 @@ public class TaskParamsYamlUtilsV2
     public TaskParamsYamlV3 upgradeTo(TaskParamsYamlV2 yaml, Long ... vars) {
         TaskParamsYamlV3 t = new TaskParamsYamlV3();
         t.taskYaml = new TaskParamsYamlV3.TaskYamlV3();
-        BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml);
+        BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml, "snippet", "preSnippet", "postSnippet");
+        t.taskYaml.snippet = toUp(yaml.taskYaml.snippet);
+        if (yaml.taskYaml.preSnippets!=null) {
+            t.taskYaml.preSnippets = yaml.taskYaml.preSnippets.stream().map(TaskParamsYamlUtilsV2::toUp).collect(Collectors.toList());;
+        }
+        if (yaml.taskYaml.postSnippets!=null) {
+            t.taskYaml.postSnippets = yaml.taskYaml.postSnippets.stream().map(TaskParamsYamlUtilsV2::toUp).collect(Collectors.toList());;
+        }
         t.checkIntegrity();
 
         return t;
     }
 
+    private static TaskParamsYamlV3.SnippetConfigYamlV3 toUp(TaskParamsYamlV2.SnippetConfigYamlV2 src) {
+        if (src==null) {
+            return null;
+        }
+        TaskParamsYamlV3.SnippetConfigYamlV3 trg = new TaskParamsYamlV3.SnippetConfigYamlV3();
+        trg.checksum = src.checksum;
+        trg.checksumMap = src.checksumMap;
+        trg.code = src.code;
+        trg.env = src.env;
+        trg.file = src.file;
+        trg.git = src.git;
+        if (src.info!=null) {
+            trg.info = new TaskParamsYamlV3.SnippetInfoV3(src.info.signed, src.info.length);
+        }
+        trg.metas = src.metas;
+        trg.metrics = src.metrics;
+        trg.params = src.params;
+        trg.skipParams = src.skipParams;
+        trg.sourcing = src.sourcing;
+        trg.type = src.type;
+        return trg;
+    }
+
+    private static TaskParamsYamlV1.SnippetConfigYamlV1 toDown(TaskParamsYamlV2.SnippetConfigYamlV2 src) {
+        if (src==null) {
+            return null;
+        }
+        TaskParamsYamlV1.SnippetConfigYamlV1 trg = new TaskParamsYamlV1.SnippetConfigYamlV1();
+        trg.checksum = src.checksum;
+        trg.checksumMap = src.checksumMap;
+        trg.code = src.code;
+        trg.env = src.env;
+        trg.file = src.file;
+        trg.git = src.git;
+        if (src.info!=null) {
+            trg.info = new TaskParamsYamlV1.SnippetInfoV1(src.info.signed, src.info.length);
+        }
+        trg.metas = src.metas;
+        trg.metrics = src.metrics;
+        trg.params = src.params;
+        trg.skipParams = src.skipParams;
+        trg.sourcing = src.sourcing;
+        trg.type = src.type;
+        return trg;
+    }
+
     @Override
     public TaskParamsYamlV1 downgradeTo(TaskParamsYamlV2 yaml) {
         TaskParamsYamlV1 t = new TaskParamsYamlV1();
-        BeanUtils.copyProperties(yaml.taskYaml, t);
+        BeanUtils.copyProperties(yaml.taskYaml, t, "snippet", "preSnippet", "postSnippet");
         if (yaml.taskYaml.preSnippets!=null && yaml.taskYaml.preSnippets.size()>0) {
             if (yaml.taskYaml.preSnippets.size()>1) {
                 throw new DowngradeNotSupportedException("Too many preSnippets");
             }
-            t.preSnippet = yaml.taskYaml.preSnippets.get(0);
+            t.preSnippet = toDown(yaml.taskYaml.preSnippets.get(0));
         }
         if (yaml.taskYaml.postSnippets!=null && yaml.taskYaml.postSnippets.size()>0) {
             if (yaml.taskYaml.postSnippets.size()>1) {
                 throw new DowngradeNotSupportedException("Too many postSnippets");
             }
-            t.postSnippet = yaml.taskYaml.postSnippets.get(0);
+            t.postSnippet = toDown(yaml.taskYaml.postSnippets.get(0));
         }
+        t.snippet = toDown(yaml.taskYaml.snippet);
         return t;
     }
 

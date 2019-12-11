@@ -33,7 +33,7 @@ public class MetricsUtils {
         return YamlUtils.init(Metrics.class);
     }
 
-    private static Yaml getValueYaml() {
+    public static Yaml getValueYaml() {
         return YamlUtils.init(MetricValues.class);
     }
 
@@ -53,13 +53,18 @@ public class MetricsUtils {
         return (Metrics) YamlUtils.to(file, getYaml());
     }
 
+
     public static MetricValues getValues(Metrics metrics) {
         if (metrics==null || metrics.getStatus()!= EnumsApi.MetricsStatus.Ok) {
             return null;
         }
         //noinspection UnnecessaryLocalVariable
-        MetricValues metricValues = (MetricValues) YamlUtils.to(metrics.metrics, getValueYaml());
+        MetricValues metricValues = getMetricValues(metrics.metrics);
         return metricValues;
+    }
+
+    public static MetricValues getMetricValues(String metrics) {
+        return (MetricValues) YamlUtils.to(metrics, getValueYaml());
     }
 
     public static MetricValues getValues(TaskMachineLearningYaml.Metrics metrics) {

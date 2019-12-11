@@ -16,12 +16,14 @@
 
 package ai.metaheuristic.api.data.task;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import ai.metaheuristic.api.sourcing.GitInfo;
+import lombok.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,62 @@ public class TaskParamsYaml implements BaseParams {
     @Override
     public boolean checkIntegrity() {
         return true;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SnippetInfo {
+        public boolean signed;
+        /**
+         * snippet's binary length
+         */
+        public long length;
+    }
+
+    @Data
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(of = "code")
+    public static class SnippetConfigYaml implements Cloneable {
+
+        @SneakyThrows
+        public TaskParamsYamlV3.SnippetConfigYamlV3 clone() {
+            final TaskParamsYamlV3.SnippetConfigYamlV3 clone = (TaskParamsYamlV3.SnippetConfigYamlV3) super.clone();
+            if (this.checksumMap != null) {
+                clone.checksumMap = new HashMap<>(this.checksumMap);
+            }
+            if (this.metas != null) {
+                clone.metas = new ArrayList<>();
+                for (Meta meta : this.metas) {
+                    clone.metas.add(new Meta(meta.key, meta.value, meta.ext));
+                }
+            }
+            return clone;
+        }
+
+        /**
+         * code of snippet, i.e. simple-app:1.0
+         */
+        public String code;
+        public String type;
+        public String file;
+        /**
+         * params for command line fo invoking snippet
+         * <p>
+         * this isn't a holder for yaml-based config
+         */
+        public String params;
+        public String env;
+        public EnumsApi.SnippetSourcing sourcing;
+        public boolean metrics = false;
+        public Map<EnumsApi.Type, String> checksumMap;
+        public SnippetInfo info = new SnippetInfo();
+        public String checksum;
+        public GitInfo git;
+        public boolean skipParams = false;
+        public List<Meta> metas = new ArrayList<>();
     }
 
     @Data

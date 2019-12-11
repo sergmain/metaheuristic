@@ -41,17 +41,17 @@ public class TestTaskParamsYaml {
         final TaskParamsYamlV2.TaskYamlV2 ty = new TaskParamsYamlV2.TaskYamlV2();
         v2.taskYaml = ty;
 
-        final SnippetConfigYaml preSnippet = new SnippetConfigYaml();
+        final TaskParamsYamlV2.SnippetConfigYamlV2 preSnippet = new TaskParamsYamlV2.SnippetConfigYamlV2();
         preSnippet.code = "pre-snippet-code";
         preSnippet.sourcing = EnumsApi.SnippetSourcing.station;
         ty.preSnippets = List.of(preSnippet);
 
-        final SnippetConfigYaml snippet = new SnippetConfigYaml();
+        final TaskParamsYamlV2.SnippetConfigYamlV2 snippet = new TaskParamsYamlV2.SnippetConfigYamlV2();
         snippet.code = "snippet-code";
         snippet.sourcing = EnumsApi.SnippetSourcing.git;
         ty.snippet = snippet;
 
-        final SnippetConfigYaml postSnippet = new SnippetConfigYaml();
+        final TaskParamsYamlV2.SnippetConfigYamlV2 postSnippet = new TaskParamsYamlV2.SnippetConfigYamlV2();
         postSnippet.code = "post-snippet-code";
         postSnippet.sourcing = EnumsApi.SnippetSourcing.launchpad;
         ty.postSnippets = List.of(postSnippet);

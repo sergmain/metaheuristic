@@ -19,8 +19,6 @@ package ai.metaheuristic.commons.yaml.task_ml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -45,9 +43,9 @@ public class TaskMachineLearningYamlUtilsV1
     public TaskMachineLearningYamlV2 upgradeTo(TaskMachineLearningYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         TaskMachineLearningYamlV2 trg = new TaskMachineLearningYamlV2();
-        Metrics m = MetricsUtils.to(src.metrics);
+//        MetricValues m = MetricsUtils.getMetricValues(src.metrics);
 
-        trg.metrics = new TaskMachineLearningYamlV2.MetricsV2(m.status, m.error, m.metrics);
+        trg.metrics = new TaskMachineLearningYamlV2.MetricsV2(src.status, src.error, src.metrics);
         trg.fitting = EnumsApi.Fitting.NORMAL;
         trg.checkIntegrity();
         return trg;
