@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.data;
 
+import ai.metaheuristic.ai.launchpad.batch.data.BatchExecStatus;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.launchpad.Plan;
@@ -34,6 +35,13 @@ import java.util.List;
  */
 public final class BatchData {
 
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @AllArgsConstructor
+    public static class ExecStatuses extends BaseDataClass {
+        public List<BatchExecStatus> statuses;
+    }
 
     @Data
     @EqualsAndHashCode(callSuper = false)

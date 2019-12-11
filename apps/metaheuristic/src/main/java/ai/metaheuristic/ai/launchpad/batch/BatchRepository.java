@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.batch;
 
+import ai.metaheuristic.ai.launchpad.batch.data.BatchExecStatus;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.List;
 
 @Repository
 @Profile("launchpad")
@@ -41,4 +45,9 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     @Transactional(readOnly = true)
     @Query("select b.id from Batch b where b.companyId=:companyId and b.deleted=false order by b.createdOn desc")
     Page<Long> findAllExcludeDeletedByOrderByCreatedOnDesc(Pageable pageable, Long companyId);
+
+    @Transactional(readOnly = true)
+    @Query(value="select new ai.metaheuristic.ai.launchpad.batch.data.BatchExecStatus(b.id, b.execState) " +
+            "from Batch b where b.companyId=:companyId")
+    List<BatchExecStatus> getBatchExecStatuses(Long companyId);
 }

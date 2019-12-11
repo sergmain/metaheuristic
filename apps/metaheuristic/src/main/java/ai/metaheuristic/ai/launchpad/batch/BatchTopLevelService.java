@@ -73,7 +73,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.Consts.*;
+import static ai.metaheuristic.ai.Consts.XML_EXT;
+import static ai.metaheuristic.ai.Consts.ZIP_EXT;
 
 /**
  * @author Serge
@@ -101,6 +102,11 @@ public class BatchTopLevelService {
     private final LaunchpadEventService launchpadEventService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
+
+    @SuppressWarnings("unused")
+    public BatchData.ExecStatuses getBatchExecStatuses(LaunchpadContext context) {
+        return new BatchData.ExecStatuses(batchRepository.getBatchExecStatuses(context.getCompanyId()));
+    }
 
     @Data
     @AllArgsConstructor

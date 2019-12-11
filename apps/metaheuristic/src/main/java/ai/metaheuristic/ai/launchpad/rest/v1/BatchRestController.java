@@ -65,6 +65,12 @@ public class BatchRestController {
         return batchTopLevelService.getBatches(pageable, context, false);
     }
 
+    @GetMapping("/batch-exec-statuses")
+    public BatchData.ExecStatuses batchExecStatuses(Authentication authentication) {
+        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        return batchTopLevelService.getBatchExecStatuses(context);
+    }
+
     @PostMapping("/batches-part")
     public BatchData.BatchesResult batchesPart(@PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
