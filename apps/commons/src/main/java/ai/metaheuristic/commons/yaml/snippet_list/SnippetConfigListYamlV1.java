@@ -93,6 +93,8 @@ public class SnippetConfigListYamlV1 implements BaseParams {
         public List<Meta> metas = new ArrayList<>();
         public boolean metrics = false;
 
+        // this field is here only for compatibility
+        public int version;
     }
 
 }
