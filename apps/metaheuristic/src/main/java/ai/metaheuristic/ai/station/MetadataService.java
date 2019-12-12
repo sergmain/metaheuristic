@@ -19,8 +19,6 @@ package ai.metaheuristic.ai.station;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.snippet.StationSnippetService;
@@ -32,10 +30,12 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataUtils;
 import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
 import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -111,7 +111,7 @@ public class MetadataService {
         int i=0;
     }
 
-    public ChecksumState prepareChecksum(String snippetCode, String launchpadUrl, SnippetConfigYaml snippetConfig) {
+    public ChecksumState prepareChecksum(String snippetCode, String launchpadUrl, TaskParamsYaml.SnippetConfig snippetConfig) {
         ChecksumState checksumState = new ChecksumState();
         // check requirements of signature
         if (S.b(snippetConfig.checksum)) {
@@ -180,7 +180,7 @@ public class MetadataService {
             removeSnippet(launchpadUrl, snippetCode);
             return;
         }
-        SnippetConfigYaml snippetConfig = downloadedSnippetConfigStatus.snippetConfig;
+        TaskParamsYaml.SnippetConfig snippetConfig = downloadedSnippetConfigStatus.snippetConfig;
 
         ChecksumState checksumState = prepareChecksum(snippetCode, launchpadUrl, snippetConfig);
         if (!checksumState.signatureIsOk) {

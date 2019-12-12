@@ -37,6 +37,7 @@ public class LaunchpadCommParamsYamlUtilsV1
         return 1;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(LaunchpadCommParamsYamlV1.class);
     }
@@ -101,10 +102,12 @@ public class LaunchpadCommParamsYamlUtilsV1
         return null;
     }
 
+    @Override
     public String toString(LaunchpadCommParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
+    @Override
     public LaunchpadCommParamsYamlV1 to(String s) {
         final LaunchpadCommParamsYamlV1 p = getYaml().load(s);
         return p;

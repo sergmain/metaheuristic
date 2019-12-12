@@ -54,15 +54,23 @@ public class TaskParamsYaml implements BaseParams {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MachineLearning {
+        public boolean metrics = false;
+        public boolean fitting = false;
+    }
+
+    @Data
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class SnippetConfigYaml implements Cloneable {
+    public static class SnippetConfig implements Cloneable {
 
         @SneakyThrows
-        public TaskParamsYamlV3.SnippetConfigYamlV3 clone() {
-            final TaskParamsYamlV3.SnippetConfigYamlV3 clone = (TaskParamsYamlV3.SnippetConfigYamlV3) super.clone();
+        public SnippetConfig clone() {
+            final SnippetConfig clone = (SnippetConfig) super.clone();
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
@@ -89,21 +97,21 @@ public class TaskParamsYaml implements BaseParams {
         public String params;
         public String env;
         public EnumsApi.SnippetSourcing sourcing;
-        public boolean metrics = false;
         public Map<EnumsApi.Type, String> checksumMap;
         public SnippetInfo info = new SnippetInfo();
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
         public List<Meta> metas = new ArrayList<>();
+        public MachineLearning ml;
     }
 
     @Data
     public static class TaskYaml {
         public Map<String, List<String>> inputResourceCodes = new HashMap<>();
-        public SnippetConfigYaml snippet;
-        public List<SnippetConfigYaml> preSnippets;
-        public List<SnippetConfigYaml> postSnippets;
+        public SnippetConfig snippet;
+        public List<SnippetConfig> preSnippets;
+        public List<SnippetConfig> postSnippets;
         public Map<String, String> hyperParams;
         public String outputResourceCode;
         public Map<String, DataStorageParams> resourceStorageUrls = new HashMap<>();
@@ -128,7 +136,7 @@ public class TaskParamsYaml implements BaseParams {
         public Map<String, String> realNames;
     }
 
-    public final int version = 3;
+    public final int version = 4;
     public TaskYaml taskYaml = new TaskYaml();
 
 }

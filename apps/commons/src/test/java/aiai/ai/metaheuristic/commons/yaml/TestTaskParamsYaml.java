@@ -19,7 +19,6 @@ package aiai.ai.metaheuristic.commons.yaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV2;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.Test;
 
@@ -41,17 +40,17 @@ public class TestTaskParamsYaml {
         final TaskParamsYamlV2.TaskYamlV2 ty = new TaskParamsYamlV2.TaskYamlV2();
         v2.taskYaml = ty;
 
-        final TaskParamsYamlV2.SnippetConfigYamlV2 preSnippet = new TaskParamsYamlV2.SnippetConfigYamlV2();
+        final TaskParamsYamlV2.SnippetConfigV2 preSnippet = new TaskParamsYamlV2.SnippetConfigV2();
         preSnippet.code = "pre-snippet-code";
         preSnippet.sourcing = EnumsApi.SnippetSourcing.station;
         ty.preSnippets = List.of(preSnippet);
 
-        final TaskParamsYamlV2.SnippetConfigYamlV2 snippet = new TaskParamsYamlV2.SnippetConfigYamlV2();
+        final TaskParamsYamlV2.SnippetConfigV2 snippet = new TaskParamsYamlV2.SnippetConfigV2();
         snippet.code = "snippet-code";
         snippet.sourcing = EnumsApi.SnippetSourcing.git;
         ty.snippet = snippet;
 
-        final TaskParamsYamlV2.SnippetConfigYamlV2 postSnippet = new TaskParamsYamlV2.SnippetConfigYamlV2();
+        final TaskParamsYamlV2.SnippetConfigV2 postSnippet = new TaskParamsYamlV2.SnippetConfigV2();
         postSnippet.code = "post-snippet-code";
         postSnippet.sourcing = EnumsApi.SnippetSourcing.launchpad;
         ty.postSnippets = List.of(postSnippet);

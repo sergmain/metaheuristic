@@ -41,6 +41,7 @@ public class AtlasParamsYamlUtilsV2
         return 2;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(AtlasParamsYamlV2.class);
     }
@@ -79,6 +80,7 @@ public class AtlasParamsYamlUtilsV2
         return getYaml().dump(yaml);
     }
 
+    @Override
     public AtlasParamsYamlV2 to(String s) {
         //noinspection UnnecessaryLocalVariable
         final AtlasParamsYamlV2 p = getYaml().load(s);

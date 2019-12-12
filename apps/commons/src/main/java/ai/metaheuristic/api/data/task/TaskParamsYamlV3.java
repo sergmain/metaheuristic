@@ -57,11 +57,11 @@ public class TaskParamsYamlV3 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class SnippetConfigYamlV3 implements Cloneable {
+    public static class SnippetConfigV3 implements Cloneable {
 
         @SneakyThrows
-        public SnippetConfigYamlV3 clone() {
-            final SnippetConfigYamlV3 clone = (SnippetConfigYamlV3) super.clone();
+        public SnippetConfigV3 clone() {
+            final SnippetConfigV3 clone = (SnippetConfigV3) super.clone();
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
@@ -100,9 +100,9 @@ public class TaskParamsYamlV3 implements BaseParams {
     @Data
     public static class TaskYamlV3 {
         public Map<String, List<String>> inputResourceCodes = new HashMap<>();
-        public SnippetConfigYamlV3 snippet;
-        public List<SnippetConfigYamlV3> preSnippets;
-        public List<SnippetConfigYamlV3> postSnippets;
+        public SnippetConfigV3 snippet;
+        public List<SnippetConfigV3> preSnippets;
+        public List<SnippetConfigV3> postSnippets;
         public Map<String, String> hyperParams;
         public String outputResourceCode;
         public Map<String, DataStorageParams> resourceStorageUrls = new HashMap<>();

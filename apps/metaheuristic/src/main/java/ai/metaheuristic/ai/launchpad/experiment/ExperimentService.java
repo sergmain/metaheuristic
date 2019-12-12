@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
+import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
 import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
@@ -842,7 +843,7 @@ public class ExperimentService {
                             epy.processing.taskFeatures.add(tef);
                         }
 
-                        yaml.taskYaml.snippet = snippet.getSnippetConfig(true);
+                        yaml.taskYaml.snippet = TaskParamsUtils.toSnippetConfig(snippet.getSnippetConfig(true));
                         yaml.taskYaml.preSnippets = new ArrayList<>();
                         if (process.getPreSnippets() != null) {
                             for (SnippetDefForPlan snDef : process.getPreSnippets()) {
@@ -858,7 +859,7 @@ public class ExperimentService {
                                     log.warn("#179.140 Snippet wasn't found for code: {}", snippetCode);
                                     continue;
                                 }
-                                yaml.taskYaml.postSnippets.add(cos.getSnippetConfig(false));
+                                yaml.taskYaml.postSnippets.add(TaskParamsUtils.toSnippetConfig(cos.getSnippetConfig(false)));
                             }
                         }
                         if (process.getPostSnippets()!=null) {

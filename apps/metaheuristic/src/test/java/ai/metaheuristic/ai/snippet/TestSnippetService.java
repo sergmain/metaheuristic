@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
@@ -78,7 +79,7 @@ public class TestSnippetService {
         SnippetDefForPlan sd = new SnippetDefForPlan();
         sd.code = TEST_SNIPPET;
         sd.params = null;
-        SnippetConfigYaml sc = snippetService.getSnippetConfig(sd);
+        TaskParamsYaml.SnippetConfig sc = snippetService.getSnippetConfig(sd);
 
         assertNotNull(sc.params);
         final String[] split = StringUtils.split(sc.params);

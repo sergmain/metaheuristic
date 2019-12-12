@@ -15,6 +15,8 @@
  */
 package ai.metaheuristic.commons.yaml.task;
 
+import ai.metaheuristic.api.data.task.TaskParamsYamlV4;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 
@@ -25,13 +27,15 @@ public class TaskParamsYamlUtils {
     private static final TaskParamsYamlUtilsV1 YAML_UTILS_V_1 = new TaskParamsYamlUtilsV1();
     private static final TaskParamsYamlUtilsV2 YAML_UTILS_V_2 = new TaskParamsYamlUtilsV2();
     private static final TaskParamsYamlUtilsV3 YAML_UTILS_V_3 = new TaskParamsYamlUtilsV3();
-    private static final TaskParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
+    private static final TaskParamsYamlUtilsV4 YAML_UTILS_V_4 = new TaskParamsYamlUtilsV4();
+    private static final TaskParamsYamlUtilsV4 DEFAULT_UTILS = YAML_UTILS_V_4;
 
     public static final BaseYamlUtils<TaskParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
                     2, YAML_UTILS_V_2,
-                    3, YAML_UTILS_V_3
+                    3, YAML_UTILS_V_3,
+                    4, YAML_UTILS_V_4
             ),
             DEFAULT_UTILS
     );

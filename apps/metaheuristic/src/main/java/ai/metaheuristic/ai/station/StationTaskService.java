@@ -34,7 +34,6 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
@@ -360,7 +359,7 @@ public class StationTaskService {
         }
     }
 
-    public void storePredictedData(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) throws IOException {
+    public void storePredictedData(String launchpadUrl, StationTask task, TaskParamsYaml.SnippetConfig snippet, File artifactDir) throws IOException {
         Meta m = MetaUtils.getMeta(snippet.metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
         if (MetaUtils.isTrue(m)) {
             log.info("storePredictedData(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
@@ -372,7 +371,7 @@ public class StationTaskService {
         }
     }
 
-    public void storeFittingCheck(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) throws IOException {
+    public void storeFittingCheck(String launchpadUrl, StationTask task, TaskParamsYaml.SnippetConfig snippet, File artifactDir) throws IOException {
         if (snippet.type.equals(CommonConsts.CHECK_FITTING_TYPE)) {
            log.info("storeFittingCheck(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
             FittingYaml fittingYaml = getFittingCheck(artifactDir);
@@ -386,7 +385,7 @@ public class StationTaskService {
         }
     }
 
-    public void storeMetrics(String launchpadUrl, StationTask task, SnippetConfigYaml snippet, File artifactDir) {
+    public void storeMetrics(String launchpadUrl, StationTask task, TaskParamsYaml.SnippetConfig snippet, File artifactDir) {
         // store metrics after predict only
         if (snippet.ml!=null && snippet.ml.metrics) {
             log.info("storeMetrics(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());

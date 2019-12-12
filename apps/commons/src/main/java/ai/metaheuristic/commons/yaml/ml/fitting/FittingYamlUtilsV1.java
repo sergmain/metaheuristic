@@ -34,6 +34,7 @@ public class FittingYamlUtilsV1
         return 1;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(FittingYamlV1.class);
     }
@@ -67,6 +68,7 @@ public class FittingYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @Override
     public FittingYamlV1 to(String s) {
         if (S.b(s)) {
             return null;

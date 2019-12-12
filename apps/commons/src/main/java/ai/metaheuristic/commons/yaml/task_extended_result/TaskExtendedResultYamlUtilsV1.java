@@ -34,6 +34,7 @@ public class TaskExtendedResultYamlUtilsV1
         return 1;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskExtendedResultYamlV1.class);
     }
@@ -67,6 +68,7 @@ public class TaskExtendedResultYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @Override
     public TaskExtendedResultYamlV1 to(String s) {
         if (S.b(s)) {
             return null;

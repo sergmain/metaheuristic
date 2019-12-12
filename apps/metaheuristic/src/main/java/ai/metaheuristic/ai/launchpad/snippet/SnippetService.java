@@ -24,10 +24,12 @@ import ai.metaheuristic.ai.snippet.SnippetCode;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
+import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigList;
 import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListUtils;
@@ -68,7 +70,7 @@ public class SnippetService {
     }
 
     public boolean isSnippetVersionOk(int requiredVersion, SnippetDefForPlan snDef) {
-        SnippetConfigYaml sc = getSnippetConfig(snDef);
+        TaskParamsYaml.SnippetConfig sc = getSnippetConfig(snDef);
         return sc != null && (sc.skipParams || requiredVersion <= SnippetCoreUtils.getTaskParamsVersion(sc.metas));
     }
 
@@ -104,12 +106,12 @@ public class SnippetService {
         return list;
     }
 
-    public SnippetConfigYaml getSnippetConfig(SnippetDefForPlan snippetDef) {
-        SnippetConfigYaml snippetConfig = null;
+    public TaskParamsYaml.SnippetConfig getSnippetConfig(SnippetDefForPlan snippetDef) {
+        TaskParamsYaml.SnippetConfig snippetConfig = null;
         if(StringUtils.isNotBlank(snippetDef.code)) {
             Snippet snippet = findByCode(snippetDef.code);
             if (snippet != null) {
-                snippetConfig = snippet.getSnippetConfig(true);
+                snippetConfig = TaskParamsUtils.toSnippetConfig(snippet.getSnippetConfig(true));
                 if (!snippetConfig.skipParams) {
                     // TODO 2019-10-09 need to handle a case when field 'params'
                     //  contains actual code (mh.snippet-params-as-file==true)

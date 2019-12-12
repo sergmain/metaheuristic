@@ -34,6 +34,7 @@ public class TaskMachineLearningYamlUtilsV2
         return 2;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskMachineLearningYamlV2.class);
     }
@@ -68,6 +69,7 @@ public class TaskMachineLearningYamlUtilsV2
         return getYaml().dump(yaml);
     }
 
+    @Override
     public TaskMachineLearningYamlV2 to(String s) {
         if (S.b(s)) {
             return null;

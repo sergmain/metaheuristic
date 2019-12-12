@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.station.actors;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.resource.AssetFile;
@@ -107,7 +108,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             final String payloadRestUrl = launchpadUrl + CommonConsts.REST_V1_URL + Consts.PAYLOAD_REST_URL;
 
             // task.snippetConfig is null when we are downloading a snippet proactively, without any task
-            SnippetConfigYaml snippetConfig = task.snippetConfig;
+            TaskParamsYaml.SnippetConfig snippetConfig = task.snippetConfig;
             if (snippetConfig ==null) {
                 StationSnippetService.DownloadedSnippetConfigStatus downloadedSnippetConfigStatus = stationSnippetService.downloadSnippetConfig(launchpad, payloadRestUrl, snippetCode, task.stationId);
                 if (downloadedSnippetConfigStatus.status == StationSnippetService.ConfigStatus.error) {

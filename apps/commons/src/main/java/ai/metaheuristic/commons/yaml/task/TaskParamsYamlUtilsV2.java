@@ -40,6 +40,7 @@ public class TaskParamsYamlUtilsV2
         return 2;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskParamsYamlV2.class);
     }
@@ -61,11 +62,11 @@ public class TaskParamsYamlUtilsV2
         return t;
     }
 
-    private static TaskParamsYamlV3.SnippetConfigYamlV3 toUp(TaskParamsYamlV2.SnippetConfigYamlV2 src) {
+    private static TaskParamsYamlV3.SnippetConfigV3 toUp(TaskParamsYamlV2.SnippetConfigV2 src) {
         if (src==null) {
             return null;
         }
-        TaskParamsYamlV3.SnippetConfigYamlV3 trg = new TaskParamsYamlV3.SnippetConfigYamlV3();
+        TaskParamsYamlV3.SnippetConfigV3 trg = new TaskParamsYamlV3.SnippetConfigV3();
         trg.checksum = src.checksum;
         trg.checksumMap = src.checksumMap;
         trg.code = src.code;
@@ -84,11 +85,11 @@ public class TaskParamsYamlUtilsV2
         return trg;
     }
 
-    private static TaskParamsYamlV1.SnippetConfigYamlV1 toDown(TaskParamsYamlV2.SnippetConfigYamlV2 src) {
+    private static TaskParamsYamlV1.SnippetConfigV1 toDown(TaskParamsYamlV2.SnippetConfigV2 src) {
         if (src==null) {
             return null;
         }
-        TaskParamsYamlV1.SnippetConfigYamlV1 trg = new TaskParamsYamlV1.SnippetConfigYamlV1();
+        TaskParamsYamlV1.SnippetConfigV1 trg = new TaskParamsYamlV1.SnippetConfigV1();
         trg.checksum = src.checksum;
         trg.checksumMap = src.checksumMap;
         trg.code = src.code;
@@ -134,13 +135,15 @@ public class TaskParamsYamlUtilsV2
 
     @Override
     public TaskParamsYamlUtilsV1 prevUtil() {
-        return null;
+        return (TaskParamsYamlUtilsV1) TaskParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1);
     }
 
+    @Override
     public String toString(TaskParamsYamlV2 planYaml) {
         return getYaml().dump(planYaml);
     }
 
+    @Override
     public TaskParamsYamlV2 to(String s) {
         final TaskParamsYamlV2 p = getYaml().load(s);
         return p;

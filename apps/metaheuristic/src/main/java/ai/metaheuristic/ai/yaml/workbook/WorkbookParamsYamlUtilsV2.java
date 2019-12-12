@@ -36,6 +36,7 @@ public class WorkbookParamsYamlUtilsV2
         return 2;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(WorkbookParamsYamlV2.class);
     }
@@ -69,10 +70,12 @@ public class WorkbookParamsYamlUtilsV2
         return null;
     }
 
+    @Override
     public String toString(WorkbookParamsYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
+    @Override
     public WorkbookParamsYamlV2 to(String s) {
         final WorkbookParamsYamlV2 p = getYaml().load(s);
         return p;

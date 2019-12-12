@@ -37,6 +37,7 @@ public class StationCommParamsYamlUtilsV1
         return 1;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(StationCommParamsYamlV1.class);
     }
@@ -113,10 +114,12 @@ public class StationCommParamsYamlUtilsV1
         return null;
     }
 
+    @Override
     public String toString(StationCommParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
+    @Override
     public StationCommParamsYamlV1 to(String s) {
         final StationCommParamsYamlV1 p = getYaml().load(s);
         return p;

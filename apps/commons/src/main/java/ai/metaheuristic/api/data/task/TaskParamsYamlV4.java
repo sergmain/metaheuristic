@@ -34,12 +34,17 @@ import java.util.Map;
  * Time: 9:10 PM
  */
 @Data
-public class TaskParamsYamlV2 implements BaseParams {
+public class TaskParamsYamlV4 implements BaseParams {
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class SnippetInfoV2 {
+    public static class SnippetInfoV4 {
         public boolean signed;
         /**
          * snippet's binary length
@@ -48,15 +53,25 @@ public class TaskParamsYamlV2 implements BaseParams {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MachineLearningV4 {
+        // does this snippet support metrics
+        public boolean metrics = false;
+        // does this snippet support fitting detection
+        public boolean fitting = false;
+    }
+
+    @Data
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class SnippetConfigV2 implements Cloneable {
+    public static class SnippetConfigV4 implements Cloneable {
 
         @SneakyThrows
-        public SnippetConfigV2 clone() {
-            final SnippetConfigV2 clone = (SnippetConfigV2) super.clone();
+        public SnippetConfigV4 clone() {
+            final SnippetConfigV4 clone = (SnippetConfigV4) super.clone();
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
@@ -83,26 +98,21 @@ public class TaskParamsYamlV2 implements BaseParams {
         public String params;
         public String env;
         public EnumsApi.SnippetSourcing sourcing;
-        public boolean metrics = false;
         public Map<EnumsApi.Type, String> checksumMap;
-        public SnippetInfoV2 info = new SnippetInfoV2();
+        public SnippetInfoV4 info = new SnippetInfoV4();
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
         public List<Meta> metas = new ArrayList<>();
-    }
-
-    @Override
-    public boolean checkIntegrity() {
-        return true;
+        public MachineLearningV4 ml;
     }
 
     @Data
-    public static class TaskYamlV2 {
+    public static class TaskYamlV4 {
         public Map<String, List<String>> inputResourceCodes = new HashMap<>();
-        public SnippetConfigV2 snippet;
-        public List<SnippetConfigV2> preSnippets;
-        public List<SnippetConfigV2> postSnippets;
+        public SnippetConfigV4 snippet;
+        public List<SnippetConfigV4> preSnippets;
+        public List<SnippetConfigV4> postSnippets;
         public Map<String, String> hyperParams;
         public String outputResourceCode;
         public Map<String, DataStorageParams> resourceStorageUrls = new HashMap<>();
@@ -122,9 +132,12 @@ public class TaskParamsYamlV2 implements BaseParams {
         // TODO as a result we'll support only direct access to files
         public Map<String, List<String>> inputResourceAbsolutePaths = new HashMap<>();
         public String outputResourceAbsolutePath;
+
+        // key - resource code, value - real file name of resource
+        public Map<String, String> realNames;
     }
 
-    public final int version = 2;
-    public TaskYamlV2 taskYaml = new TaskYamlV2();
+    public final int version = 4;
+    public TaskYamlV4 taskYaml = new TaskYamlV4();
 
 }

@@ -36,6 +36,7 @@ public class LaunchpadEventYamlUtilsV1
         return 1;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(LaunchpadEventYamlV1.class);
     }
@@ -86,6 +87,7 @@ public class LaunchpadEventYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @Override
     public LaunchpadEventYamlV1 to(String s) {
         if (S.b(s)) {
             return null;

@@ -15,11 +15,10 @@
  */
 package ai.metaheuristic.ai.yaml.task;
 
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.Assert;
@@ -54,7 +53,7 @@ public class TestTaskParamYaml {
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.setHyperParams(map);
-        seq.setSnippet(new SnippetApiData.SnippetConfigYaml(
+        seq.setSnippet(new SnippetApiData.SnippetConfig(
                 "123:1.0",
                 CommonConsts.FIT_TYPE,
                 "file.txt",
@@ -63,7 +62,7 @@ public class TestTaskParamYaml {
                 EnumsApi.SnippetSourcing.launchpad,
                 true,
                 null,
-                new SnippetApiData.SnippetConfigYaml.SnippetInfo(),
+                new SnippetApiData.SnippetConfig.SnippetInfo(),
                 null,
                 null,
                 false
@@ -88,7 +87,7 @@ public class TestTaskParamYaml {
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.taskYaml.setHyperParams(map);
-        seq.taskYaml.setSnippet(new SnippetConfigYaml(
+        seq.taskYaml.setSnippet(TaskParamsUtils.toSnippetConfig(new SnippetConfigYaml(
                 "123:1.0",
                 CommonConsts.FIT_TYPE,
                 "file.txt",
@@ -102,7 +101,7 @@ public class TestTaskParamYaml {
                 false,
                 new ArrayList<>(),
                 new SnippetConfigYaml.MachineLearning(true, false)
-        ));
+        )));
 
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(seq);
         System.out.println(s);

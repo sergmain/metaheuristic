@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -111,7 +110,7 @@ public class TaskAssetPreparer {
 
             // start preparing snippets
             final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
-            final SnippetConfigYaml snippetConfig = taskParamYaml.taskYaml.snippet;
+            final TaskParamsYaml.SnippetConfig snippetConfig = taskParamYaml.taskYaml.snippet;
             if ( !prepareSnippet(snippetConfig, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
                 isAllReady.set(false);
             }
@@ -138,7 +137,7 @@ public class TaskAssetPreparer {
         }
     }
 
-    private boolean prepareSnippet(SnippetConfigYaml snippetConfig, String launchpadUrl, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, String stationId) {
+    private boolean prepareSnippet(TaskParamsYaml.SnippetConfig snippetConfig, String launchpadUrl, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, String stationId) {
         if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.launchpad) {
             final String code = snippetConfig.code;
             final SnippetDownloadStatusYaml.Status snippetDownloadStatuses = metadataService.getSnippetDownloadStatuses(launchpadUrl, code);

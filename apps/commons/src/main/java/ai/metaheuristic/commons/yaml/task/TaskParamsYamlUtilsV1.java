@@ -38,15 +38,16 @@ public class TaskParamsYamlUtilsV1
         return 1;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskParamsYamlV1.class);
     }
 
-    private static TaskParamsYamlV2.SnippetConfigYamlV2 to(TaskParamsYamlV1.SnippetConfigYamlV1 src) {
+    private static TaskParamsYamlV2.SnippetConfigV2 to(TaskParamsYamlV1.SnippetConfigV1 src) {
         if (src==null) {
             return null;
         }
-        TaskParamsYamlV2.SnippetConfigYamlV2 trg = new TaskParamsYamlV2.SnippetConfigYamlV2();
+        TaskParamsYamlV2.SnippetConfigV2 trg = new TaskParamsYamlV2.SnippetConfigV2();
         trg.checksum = src.checksum;
         trg.checksumMap = src.checksumMap;
         trg.code = src.code;
@@ -96,10 +97,12 @@ public class TaskParamsYamlUtilsV1
         return null;
     }
 
+    @Override
     public String toString(TaskParamsYamlV1 planYaml) {
         return getYaml().dump(planYaml);
     }
 
+    @Override
     public TaskParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable
         final TaskParamsYamlV1 p = getYaml().load(s);

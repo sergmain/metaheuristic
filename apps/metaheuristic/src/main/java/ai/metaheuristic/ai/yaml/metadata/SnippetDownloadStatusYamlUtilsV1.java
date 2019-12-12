@@ -36,6 +36,7 @@ public class SnippetDownloadStatusYamlUtilsV1
         return 1;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(SnippetDownloadStatusYamlV1.class);
     }
@@ -77,6 +78,7 @@ public class SnippetDownloadStatusYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @Override
     public SnippetDownloadStatusYamlV1 to(String s) {
         if (S.b(s)) {
             return null;

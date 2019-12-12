@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.station.tasks;
 
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,5 +27,5 @@ import lombok.EqualsAndHashCode;
 public class DownloadSnippetTask extends StationRestTask {
     public Long chunkSize;
     public String snippetCode;
-    public SnippetConfigYaml snippetConfig;
+    public TaskParamsYaml.SnippetConfig snippetConfig;
 }

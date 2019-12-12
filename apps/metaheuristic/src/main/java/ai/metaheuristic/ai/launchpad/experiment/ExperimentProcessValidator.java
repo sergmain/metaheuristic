@@ -96,15 +96,17 @@ public class ExperimentProcessValidator implements ProcessValidator {
         if (predictSnippet==null) {
             return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
         }
-        Meta m = MetaUtils.getMeta(predictSnippet.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
-        if (MetaUtils.isTrue(m) && S.b(epy.experimentYaml.checkFittingSnippet)) {
-            return EnumsApi.PlanValidateStatus.FITTING_SNIPPET_NOT_FOUND_ERROR;
-        }
-        Snippet fittingSnippet = snippetRepository.findByCode(epy.experimentYaml.checkFittingSnippet);
-        if (fittingSnippet==null) {
-            return EnumsApi.PlanValidateStatus.FITTING_SNIPPET_NOT_FOUND_ERROR;
-        }
+        boolean isFittingDetection = MetaUtils.isTrue(predictSnippet.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
+        if (isFittingDetection) {
+            if (S.b(epy.experimentYaml.checkFittingSnippet)) {
+                return EnumsApi.PlanValidateStatus.FITTING_SNIPPET_NOT_FOUND_ERROR;
+            }
+            Snippet fittingSnippet = snippetRepository.findByCode(epy.experimentYaml.checkFittingSnippet);
+            if (fittingSnippet==null) {
+                return EnumsApi.PlanValidateStatus.FITTING_SNIPPET_NOT_FOUND_ERROR;
+            }
 
+        }
         if (!isFirst) {
             if (process.metas == null || process.metas.isEmpty()) {
                 return EnumsApi.PlanValidateStatus.EXPERIMENT_META_NOT_FOUND_ERROR;

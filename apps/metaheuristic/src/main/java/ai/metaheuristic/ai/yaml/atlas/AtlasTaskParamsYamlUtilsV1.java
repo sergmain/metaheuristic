@@ -36,6 +36,7 @@ public class AtlasTaskParamsYamlUtilsV1
         return 1;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(AtlasTaskParamsYamlV1.class);
     }
@@ -69,6 +70,7 @@ public class AtlasTaskParamsYamlUtilsV1
         return getYaml().dump(planYaml);
     }
 
+    @Override
     public AtlasTaskParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable
         final AtlasTaskParamsYamlV1 p = getYaml().load(s);

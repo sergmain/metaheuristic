@@ -38,6 +38,7 @@ public class SnippetConfigYamlUtilsV2
         return 2;
     }
 
+    @Override
     public Yaml getYaml() {
         return YamlUtils.init(SnippetConfigYamlV2.class);
     }
