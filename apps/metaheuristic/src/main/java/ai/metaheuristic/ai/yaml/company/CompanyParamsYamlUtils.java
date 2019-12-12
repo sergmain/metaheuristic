@@ -14,25 +14,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.launchpad.process;
+package ai.metaheuristic.ai.yaml.company;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+
+import java.util.Map;
 
 /**
  * @author Serge
- * Date: 6/19/2019
- * Time: 1:02 PM
+ * Date: 10/3/2019
+ * Time: 4:51 PM
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class SnippetDefForPlan {
-    public String code;
-    public String params;
+public class CompanyParamsYamlUtils {
 
-    public SnippetDefForPlan(String code) {
-        this.code = code;
-    }
+    private static final CompanyParamsYamlUtilsV1 YAML_UTILS_V_1 = new CompanyParamsYamlUtilsV1();
+    private static final CompanyParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+
+    public static final BaseYamlUtils<CompanyParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, YAML_UTILS_V_1
+            ),
+            DEFAULT_UTILS
+    );
+
+
 }

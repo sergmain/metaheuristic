@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.data.CompanyData;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
@@ -65,11 +67,17 @@ public class CompanyTopLevelService {
         return new CompanyData.CompanyResult(company);
     }
 
-    public OperationStatusRest editFormCommit(Long companyId, String name) {
+    public OperationStatusRest editFormCommit(Long companyId, String name, String companyYamlAsStr) {
         Company c = companyRepository.findByIdForUpdate(companyId);
         if (c == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.060 company wasn't found, accountId: " + companyId);
         }
+        try {
+            CompanyParamsYamlUtils.BASE_YAML_UTILS.to(companyYamlAsStr);
+        } catch (Throwable th) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.062 company params is in wrong format, error: " + th.getMessage());
+        }
+        c.setParams(companyYamlAsStr);
         c.setName(name);
         companyCache.save(c);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of company was changed successfully", null);

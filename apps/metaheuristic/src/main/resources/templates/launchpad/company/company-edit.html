@@ -18,6 +18,11 @@
                 <input name="name" id="name" type="text" placeholder="text" th:field="${company.name}">
                 <span class="pure-form-message">This is a required field.</span>
 
+                <label for="companyYamlAsStr">Parameters of company</label>
+                <textarea name="companyYamlAsStr" id="companyYamlAsStr" placeholder="Parameters of company" cols="70" rows="15"
+                          th:text="${companyYamlAsStr}" maxlength="10000"></textarea>
+                <span class="pure-form-message">This is a required field.</span>
+
                 <table>
                     <tr>
                         <td>

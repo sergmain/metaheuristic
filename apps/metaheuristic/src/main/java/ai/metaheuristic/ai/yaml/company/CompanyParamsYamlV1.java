@@ -14,25 +14,42 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.launchpad.process;
+package ai.metaheuristic.ai.yaml.company;
 
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Serge
- * Date: 6/19/2019
- * Time: 1:02 PM
+ * Date: 10/3/2019
+ * Time: 4:51 PM
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SnippetDefForPlan {
-    public String code;
-    public String params;
+public class CompanyParamsYamlV1 implements BaseParams {
 
-    public SnippetDefForPlan(String code) {
-        this.code = code;
+    public final int version=1;
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
     }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AccessControlV1 {
+        public String group;
+    }
+
+    public AccessControlV1 ac;
+
 }

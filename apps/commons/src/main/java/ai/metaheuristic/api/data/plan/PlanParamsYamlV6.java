@@ -16,14 +16,10 @@
 
 package ai.metaheuristic.api.data.plan;
 
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.launchpad.process.Process;
-import lombok.AllArgsConstructor;
+import ai.metaheuristic.api.launchpad.process.ProcessV6;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +27,10 @@ import java.util.List;
 /**
  * @author Serge
  * Date: 6/17/2019
- * Time: 9:01 PM
+ * Time: 8:58 PM
  */
 @Data
-public class PlanParamsYaml implements BaseParams {
+public class PlanParamsYamlV6 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
@@ -45,8 +41,8 @@ public class PlanParamsYaml implements BaseParams {
                     "(boolean b = planYaml != null && planYaml.planCode != null && " +
                             "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
         }
-        for (Process process : planYaml.processes) {
-            if (process.type== EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0)) {
+        for (ProcessV6 process : planYaml.processes) {
+            if (process.snippets==null || process.snippets.size()==0) {
                 throw new IllegalArgumentException("(process.snippets==null || process.snippets.size()==0) ");
             }
         }
@@ -55,23 +51,20 @@ public class PlanParamsYaml implements BaseParams {
     }
 
     @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class AccessControl {
+    public static class AccessControlV6 {
         public String group;
     }
 
     @Data
-    @ToString
-    public static class PlanYaml {
-        public List<Process> processes = new ArrayList<>();
+    public static class PlanYamlV6 {
+        public List<ProcessV6> processes = new ArrayList<>();
         public boolean clean = false;
         public String planCode;
         public List<Meta> metas;
-        public AccessControl ac;
+        public AccessControlV6 ac;
 
         public Meta getMeta(String key) {
-            if (metas==null) {
+            if (metas == null) {
                 return null;
             }
             for (Meta meta : metas) {
@@ -84,6 +77,7 @@ public class PlanParamsYaml implements BaseParams {
     }
 
     public final int version=6;
-    public PlanYaml planYaml;
+    public PlanYamlV6 planYaml;
     public PlanApiData.PlanInternalParamsYaml internalParams;
+
 }

@@ -18,12 +18,12 @@ package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV5;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV6;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.process.ProcessV5;
+import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.api.launchpad.process.ProcessV6;
-import ai.metaheuristic.api.launchpad.process.SnippetDefForPlanV6;
+import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -37,38 +37,41 @@ import java.util.stream.Collectors;
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class PlanParamsYamlUtilsV5
-        extends AbstractParamsYamlUtils<PlanParamsYamlV5, PlanParamsYamlV6, PlanParamsYamlUtilsV6, Void, Void, Void> {
+public class PlanParamsYamlUtilsV6
+        extends AbstractParamsYamlUtils<PlanParamsYamlV6, PlanParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 5;
+        return 6;
     }
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(PlanParamsYamlV5.class);
+        return YamlUtils.init(PlanParamsYamlV6.class);
     }
 
     @Override
-    public PlanParamsYamlV6 upgradeTo(PlanParamsYamlV5 pV5, Long ... vars) {
-        PlanParamsYamlV6 p = new PlanParamsYamlV6();
-        p.internalParams = pV5.internalParams;
-        p.planYaml = new PlanParamsYamlV6.PlanYamlV6();
-        if (pV5.planYaml.metas!=null){
-            p.planYaml.metas = new ArrayList<>(pV5.planYaml.metas);
+    public PlanParamsYaml upgradeTo(PlanParamsYamlV6 v6, Long ... vars) {
+        PlanParamsYaml p = new PlanParamsYaml();
+        p.internalParams = v6.internalParams;
+        p.planYaml = new PlanParamsYaml.PlanYaml();
+        if (v6.planYaml.metas!=null){
+            p.planYaml.metas = new ArrayList<>(v6.planYaml.metas);
         }
-        p.planYaml.clean = pV5.planYaml.clean;
-        p.planYaml.processes = pV5.planYaml.processes.stream().map( o-> {
-            ProcessV6 pr = new ProcessV6();
+        p.planYaml.clean = v6.planYaml.clean;
+        p.planYaml.processes = v6.planYaml.processes.stream().map( o-> {
+            Process pr = new Process();
             BeanUtils.copyProperties(o, pr, "snippets", "preSnippets", "postSnippets");
-            pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new SnippetDefForPlanV6(d.code, d.params)).collect(Collectors.toList()) : null;
-            pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new SnippetDefForPlanV6(d.code, d.params)).collect(Collectors.toList()) : null;
-            pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new SnippetDefForPlanV6(d.code, d.params)).collect(Collectors.toList()) : null;
+            pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new SnippetDefForPlan(d.code, d.params)).collect(Collectors.toList()) : null;
+            pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new SnippetDefForPlan(d.code, d.params)).collect(Collectors.toList()) : null;
+            pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new SnippetDefForPlan(d.code, d.params)).collect(Collectors.toList()) : null;
             pr.metas = o.metas;
             return pr;
         }).collect(Collectors.toList());
-        p.planYaml.planCode = pV5.planYaml.planCode;
+        p.planYaml.planCode = v6.planYaml.planCode;
+        if (v6.planYaml.ac!=null) {
+            p.planYaml.ac = new PlanParamsYaml.AccessControl(v6.planYaml.ac.group);
+        }
         p.checkIntegrity();
         return p;
     }
@@ -80,8 +83,8 @@ public class PlanParamsYamlUtilsV5
     }
 
     @Override
-    public PlanParamsYamlUtilsV6 nextUtil() {
-        return (PlanParamsYamlUtilsV6)PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(6);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -91,19 +94,19 @@ public class PlanParamsYamlUtilsV5
     }
 
     @Override
-    public String toString(PlanParamsYamlV5 planYaml) {
+    public String toString(PlanParamsYamlV6 planYaml) {
         return getYaml().dump(planYaml);
     }
 
     @Override
-    public PlanParamsYamlV5 to(String s) {
-        final PlanParamsYamlV5 p = getYaml().load(s);
+    public PlanParamsYamlV6 to(String s) {
+        final PlanParamsYamlV6 p = getYaml().load(s);
         if (p.planYaml ==null) {
             throw new IllegalStateException("#635.010 Plan Yaml is null");
         }
 
         // fix default values
-        for (ProcessV5 process : p.planYaml.processes) {
+        for (ProcessV6 process : p.planYaml.processes) {
             if (process.outputParams==null) {
                 process.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             }

@@ -100,13 +100,14 @@ public class CompanyController {
             return "redirect:/launchpad/company/companies";
         }
         model.addAttribute("company", companyResult.company);
+        model.addAttribute("companyYamlAsStr", companyResult.company.params);
         return "launchpad/company/company-edit";
     }
 
     @PostMapping("/company-edit-commit")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
-    public String editFormCommit(Long id, String name, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = companyTopLevelService.editFormCommit(id, name);
+    public String editFormCommit(Long id, String name, String companyYamlAsStr, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = companyTopLevelService.editFormCommit(id, name, companyYamlAsStr);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }

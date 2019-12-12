@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.snippet.SnippetCode;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.SnippetApiData;
@@ -28,6 +29,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
@@ -37,6 +39,7 @@ import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -112,6 +115,10 @@ public class SnippetService {
             Snippet snippet = findByCode(snippetDef.code);
             if (snippet != null) {
                 snippetConfig = TaskParamsUtils.toSnippetConfig(snippet.getSnippetConfig(true));
+                boolean paramsAsFile = MetaUtils.isTrue(snippetConfig.metas, ConstsApi.META_MH_SNIPPET_PARAMS_AS_FILE_META);
+                if (paramsAsFile) {
+                    throw new NotImplementedException("mh.snippet-params-as-file==true isn't supported right now");
+                }
                 if (!snippetConfig.skipParams) {
                     // TODO 2019-10-09 need to handle a case when field 'params'
                     //  contains actual code (mh.snippet-params-as-file==true)
