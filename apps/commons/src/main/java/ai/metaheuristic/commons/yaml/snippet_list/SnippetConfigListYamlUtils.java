@@ -15,14 +15,21 @@
  */
 package ai.metaheuristic.commons.yaml.snippet_list;
 
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
-import lombok.Data;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
-import java.util.List;
+import java.util.Map;
 
-@Data
-public class SnippetConfigList {
+public class SnippetConfigListYamlUtils {
 
-    public List<SnippetConfigYaml> snippets;
+    private static final SnippetConfigListYamlUtilsV1 YAML_UTILS_V_1 = new SnippetConfigListYamlUtilsV1();
+    private static final SnippetConfigListYamlUtilsV2 YAML_UTILS_V_2 = new SnippetConfigListYamlUtilsV2();
+    private static final SnippetConfigListYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
+    public static final BaseYamlUtils<SnippetConfigListYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, YAML_UTILS_V_1,
+                    2, YAML_UTILS_V_2
+            ),
+            DEFAULT_UTILS
+    );
 }

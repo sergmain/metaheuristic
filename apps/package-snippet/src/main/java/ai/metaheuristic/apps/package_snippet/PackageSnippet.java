@@ -22,8 +22,8 @@ import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigList;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListUtils;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYaml;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYamlUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -92,8 +92,8 @@ public class PackageSnippet implements CommandLineRunner {
             System.out.println("Directory "+targetDir.getPath()+" already exists");
             return;
         }
-
-        SnippetConfigList snippetConfigList = SnippetConfigListUtils.to(snippetYamlFile);
+        String yaml = FileUtils.readFileToString(snippetYamlFile, StandardCharsets.UTF_8);
+        SnippetConfigListYaml snippetConfigList = SnippetConfigListYamlUtils.BASE_YAML_UTILS.to(yaml);
 
         // Verify
         boolean isError = false;
@@ -159,7 +159,7 @@ public class PackageSnippet implements CommandLineRunner {
             }
         }
 
-        String yaml = SnippetConfigListUtils.toString(snippetConfigList);
+        String yaml = SnippetConfigListYamlUtils.toString(snippetConfigList);
         final File file = new File(targetDir, SNIPPETS_YAML);
         FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
 

@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.snippet;
+package ai.metaheuristic.commons.yaml.snippet_list;
 
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -24,14 +24,15 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class SnippetConfigYamlUtilsV2
-        extends AbstractParamsYamlUtils<SnippetConfigYamlV2, SnippetConfigYaml, Void, Void, Void, Void> {
+public class SnippetConfigListYamlUtilsV2
+        extends AbstractParamsYamlUtils<SnippetConfigListYamlV2, SnippetConfigListYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -40,27 +41,31 @@ public class SnippetConfigYamlUtilsV2
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(SnippetConfigYamlV2.class);
+        return YamlUtils.init(SnippetConfigListYamlV2.class);
     }
 
     @Override
-    public SnippetConfigYaml upgradeTo(SnippetConfigYamlV2 src, Long ... vars) {
+    public SnippetConfigListYaml upgradeTo(SnippetConfigListYamlV2 src, Long ... vars) {
         src.checkIntegrity();
-        SnippetConfigYaml trg = new SnippetConfigYaml();
-        BeanUtils.copyProperties(src, trg);
+        SnippetConfigListYaml trg = new SnippetConfigListYaml();
+        trg.snippets = src.snippets.stream().map(snSrc-> {
+            SnippetConfigListYaml.SnippetConfigYaml snTrg = new SnippetConfigListYaml.SnippetConfigYaml();
+            BeanUtils.copyProperties(snSrc, snTrg);
 
-        if (src.checksumMap!=null) {
-            trg.checksumMap = new HashMap<>(src.checksumMap);
-        }
-        if (src.info!=null) {
-            trg.info = new SnippetConfigYaml.SnippetInfo(src.info.signed, src.info.length);
-        }
-        if (src.metas!=null) {
-            trg.metas = new ArrayList<>(src.metas);
-        }
-        if (src.ml!=null) {
-            trg.ml = new SnippetConfigYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
-        }
+            if (snSrc.checksumMap!=null) {
+                snTrg.checksumMap = new HashMap<>(snSrc.checksumMap);
+            }
+            if (snSrc.info!=null) {
+                snTrg.info = new SnippetConfigListYaml.SnippetInfo(snSrc.info.signed, snSrc.info.length);
+            }
+            if (snSrc.metas!=null) {
+                snTrg.metas = new ArrayList<>(snSrc.metas);
+            }
+            if (snSrc.ml!=null) {
+                snTrg.ml = new SnippetConfigListYaml.MachineLearning(snSrc.ml.metrics, snSrc.ml.fitting);
+            }
+            return  snTrg;
+        }).collect(Collectors.toList());
         trg.checkIntegrity();
         return trg;
     }
@@ -81,17 +86,17 @@ public class SnippetConfigYamlUtilsV2
     }
 
     @Override
-    public String toString(SnippetConfigYamlV2 yaml) {
+    public String toString(SnippetConfigListYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
     @Override
-    public SnippetConfigYamlV2 to(String s) {
+    public SnippetConfigListYamlV2 to(String s) {
         if (S.b(s)) {
             return null;
         }
         //noinspection UnnecessaryLocalVariable
-        final SnippetConfigYamlV2 p = getYaml().load(s);
+        final SnippetConfigListYamlV2 p = getYaml().load(s);
         return p;
     }
 

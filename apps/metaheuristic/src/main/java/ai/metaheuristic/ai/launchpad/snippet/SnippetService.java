@@ -31,8 +31,8 @@ import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigList;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListUtils;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYaml;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYamlUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -190,9 +190,10 @@ public class SnippetService {
         }
 
         String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
-        SnippetConfigList snippetConfigList = SnippetConfigListUtils.to(cfg);
+        SnippetConfigListYaml snippetConfigList = SnippetConfigListYamlUtils.BASE_YAML_UTILS.to(cfg);
         List<SnippetApiData.SnippetConfigStatus> statuses = new ArrayList<>();
-        for (SnippetConfigYaml snippetConfig : snippetConfigList.snippets) {
+        for (SnippetConfigListYaml.SnippetConfigYaml snippetConfigYaml : snippetConfigList.snippets) {
+            SnippetConfigYaml snippetConfig = SnippetCoreUtils.to(snippetConfigYaml);
             SnippetApiData.SnippetConfigStatus status = null;
             try {
                 status = SnippetCoreUtils.validate(snippetConfig);

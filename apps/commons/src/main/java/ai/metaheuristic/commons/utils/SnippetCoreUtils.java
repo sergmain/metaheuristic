@@ -21,10 +21,13 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -32,6 +35,26 @@ import java.util.StringTokenizer;
 public class SnippetCoreUtils {
 
     private static final SnippetApiData.SnippetConfigStatus SNIPPET_CONFIG_STATUS_OK = new SnippetApiData.SnippetConfigStatus(true, null);
+
+    public static SnippetConfigYaml to(SnippetConfigListYaml.SnippetConfigYaml snSrc) {
+        SnippetConfigYaml snTrg = new SnippetConfigYaml();
+        BeanUtils.copyProperties(snSrc, snTrg);
+
+        if (snSrc.checksumMap != null) {
+            snTrg.checksumMap = new HashMap<>(snSrc.checksumMap);
+        }
+        if (snSrc.info != null) {
+            snTrg.info = new SnippetConfigYaml.SnippetInfo(snSrc.info.signed, snSrc.info.length);
+        }
+        if (snSrc.metas != null) {
+            snTrg.metas = new ArrayList<>(snSrc.metas);
+        }
+        if (snSrc.ml!=null) {
+            snTrg.ml = new SnippetConfigYaml.MachineLearning(true, false);
+        }
+        return  snTrg;
+
+    }
 
     public static SnippetApiData.SnippetConfigStatus validate(SnippetConfigYaml snippetConfig) {
         if ((snippetConfig.file ==null || snippetConfig.file.isBlank()) && (snippetConfig.env ==null || snippetConfig.env.isBlank())) {

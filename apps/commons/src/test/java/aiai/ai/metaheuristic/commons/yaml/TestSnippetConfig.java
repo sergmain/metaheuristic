@@ -18,8 +18,8 @@ package aiai.ai.metaheuristic.commons.yaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigList;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListUtils;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYaml;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYamlUtils;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -28,10 +28,10 @@ public class TestSnippetConfig {
 
     @Test
     public void test() {
-        SnippetConfigList scs = new SnippetConfigList();
+        SnippetConfigListYaml scs = new SnippetConfigListYaml();
         scs.snippets = new ArrayList<>();
 
-        SnippetConfigYaml config = new SnippetConfigYaml();
+        SnippetConfigListYaml.SnippetConfigYaml config = new SnippetConfigListYaml.SnippetConfigYaml();
         config.code = "aiai.fit.default.snippet:1.0";
         config.type = CommonConsts.FIT_TYPE;
         config.file = "fit-model.py";
@@ -41,7 +41,7 @@ public class TestSnippetConfig {
 
         scs.snippets.add(config);
 
-        String yaml = SnippetConfigListUtils.toString(scs);
+        String yaml = SnippetConfigListYamlUtils.BASE_YAML_UTILS.toString(scs);
         System.out.println(yaml);
     }
 

@@ -20,8 +20,8 @@ import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigList;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListUtils;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYaml;
+import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYamlUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -109,7 +109,7 @@ public class TestYamlParser {
 
         try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/snippets-test-error.yaml")) {
 
-            SnippetConfigList config = SnippetConfigListUtils.to(is);
+            SnippetConfigListYaml config = SnippetConfigListYamlUtils.to(is);
             assertNotNull(config);
             assertNotNull(config.getSnippets());
             assertEquals(1, config.getSnippets().size());
@@ -124,7 +124,7 @@ public class TestYamlParser {
 
         try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/snippets-test.yaml")) {
 
-            SnippetConfigList config = SnippetConfigListUtils.to(is);
+            SnippetConfigListYaml config = SnippetConfigListYamlUtils.to(is);
 
             assertNotNull(config);
             assertNotNull(config.snippets);
