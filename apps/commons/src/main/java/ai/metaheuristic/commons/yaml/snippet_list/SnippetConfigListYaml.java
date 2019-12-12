@@ -31,7 +31,7 @@ public class SnippetConfigListYaml implements BaseParams {
 
     public final int version=2;
 
-    public List<SnippetConfigYaml> snippets;
+    public List<SnippetConfig> snippets;
 
     @Override
     public boolean checkIntegrity() {
@@ -62,11 +62,11 @@ public class SnippetConfigListYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class SnippetConfigYaml implements Cloneable {
+    public static class SnippetConfig implements Cloneable {
 
         @SneakyThrows
-        public SnippetConfigYaml clone() {
-            final SnippetConfigYaml clone = (SnippetConfigYaml) super.clone();
+        public SnippetConfig clone() {
+            final SnippetConfig clone = (SnippetConfig) super.clone();
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }

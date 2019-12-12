@@ -17,7 +17,6 @@ package aiai.ai.metaheuristic.commons.yaml;
 
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYaml;
 import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYamlUtils;
 import org.junit.Test;
@@ -31,7 +30,7 @@ public class TestSnippetConfig {
         SnippetConfigListYaml scs = new SnippetConfigListYaml();
         scs.snippets = new ArrayList<>();
 
-        SnippetConfigListYaml.SnippetConfigYaml config = new SnippetConfigListYaml.SnippetConfigYaml();
+        SnippetConfigListYaml.SnippetConfig config = new SnippetConfigListYaml.SnippetConfig();
         config.code = "aiai.fit.default.snippet:1.0";
         config.type = CommonConsts.FIT_TYPE;
         config.file = "fit-model.py";

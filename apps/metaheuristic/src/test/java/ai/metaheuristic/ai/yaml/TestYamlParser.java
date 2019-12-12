@@ -22,6 +22,8 @@ import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYaml;
 import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYamlUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,6 +37,7 @@ import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -107,54 +110,48 @@ public class TestYamlParser {
     @Test
     public void loadSnippetYamlWithError_01() throws IOException {
 
-        try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/snippets-test-error.yaml")) {
-
-            SnippetConfigListYaml config = SnippetConfigListYamlUtils.to(is);
-            assertNotNull(config);
-            assertNotNull(config.getSnippets());
-            assertEquals(1, config.getSnippets().size());
-            SnippetConfigYaml snippet = config.getSnippets().get(0);
-            SnippetApiData.SnippetConfigStatus status = SnippetCoreUtils.validate(snippet);
-            assertFalse(status.isOk);
-        }
+        SnippetConfigListYaml config = SnippetConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/snippets-test-error.yaml", StandardCharsets.UTF_8));
+        assertNotNull(config);
+        assertNotNull(config.getSnippets());
+        assertEquals(1, config.getSnippets().size());
+        SnippetConfigListYaml.SnippetConfig snippet = config.getSnippets().get(0);
+        SnippetApiData.SnippetConfigStatus status = SnippetCoreUtils.validate(snippet);
+        assertFalse(status.isOk);
     }
 
     @Test
     public void loadSnippetsFromYaml() throws IOException {
 
-        try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/snippets-test.yaml")) {
+        SnippetConfigListYaml config = SnippetConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/snippets-test.yaml", StandardCharsets.UTF_8));
 
-            SnippetConfigListYaml config = SnippetConfigListYamlUtils.to(is);
+        assertNotNull(config);
+        assertNotNull(config.snippets);
+        assertEquals(3, config.snippets.size());
 
-            assertNotNull(config);
-            assertNotNull(config.snippets);
-            assertEquals(3, config.snippets.size());
+        SnippetConfigListYaml.SnippetConfig sc;
+        sc = config.snippets.get(0);
+        assertEquals("aiai.fit.default.snippet:1.0-SNAPSHOT", sc.code);
+        assertEquals(CommonConsts.FIT_TYPE, sc.type);
+        assertEquals("fit-model.py", sc.file);
+        assertEquals("python-3", sc.env);
+        assertEquals("abc1", sc.params);
+        assertNull(sc.ml);
 
-            SnippetConfigYaml sc;
-            sc = config.snippets.get(0);
-            assertEquals("aiai.fit.default.snippet:1.0-SNAPSHOT", sc.code);
-            assertEquals(CommonConsts.FIT_TYPE, sc.type);
-            assertEquals("fit-model.py", sc.file);
-            assertEquals("python-3", sc.env);
-            assertEquals("abc1", sc.params);
-            assertNull(sc.ml);
+        sc = config.snippets.get(1);
+        assertEquals("aiai.predict.default.snippet:1.0-SNAPSHOT", sc.code);
+        assertEquals(CommonConsts.PREDICT_TYPE, sc.type);
+        assertEquals("predict-model.py", sc.file);
+        assertEquals("python-3", sc.env);
+        assertEquals("abc2", sc.params);
+        assertNotNull(sc.ml);
+        assertTrue(sc.ml.metrics);
 
-            sc = config.snippets.get(1);
-            assertEquals("aiai.predict.default.snippet:1.0-SNAPSHOT", sc.code);
-            assertEquals(CommonConsts.PREDICT_TYPE, sc.type);
-            assertEquals("predict-model.py", sc.file);
-            assertEquals("python-3", sc.env);
-            assertEquals("abc2", sc.params);
-            assertNotNull(sc.ml);
-            assertTrue(sc.ml.metrics);
-
-            sc = config.snippets.get(2);
-            assertEquals("aiai.predict-model-for-test-only.snippet:1.0-SNAPSHOT", sc.code);
-            assertEquals(CommonConsts.PREDICT_TYPE, sc.type);
-            assertEquals("predict-model-for-test-only.py", sc.file);
-            assertEquals("python-3", sc.env);
-            assertEquals("abc3", sc.params);
-            assertNull(sc.ml);
-        }
+        sc = config.snippets.get(2);
+        assertEquals("aiai.predict-model-for-test-only.snippet:1.0-SNAPSHOT", sc.code);
+        assertEquals(CommonConsts.PREDICT_TYPE, sc.type);
+        assertEquals("predict-model-for-test-only.py", sc.file);
+        assertEquals("python-3", sc.env);
+        assertEquals("abc3", sc.params);
+        assertNull(sc.ml);
     }
 }

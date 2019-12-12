@@ -49,7 +49,7 @@ public class SnippetConfigListYamlUtilsV1
         src.checkIntegrity();
         SnippetConfigListYamlV2 trg = new SnippetConfigListYamlV2();
         trg.snippets = src.snippets.stream().map(snSrc-> {
-            SnippetConfigListYamlV2.SnippetConfigYamlV2 snTrg = new SnippetConfigListYamlV2.SnippetConfigYamlV2();
+            SnippetConfigListYamlV2.SnippetConfigV2 snTrg = new SnippetConfigListYamlV2.SnippetConfigV2();
             BeanUtils.copyProperties(snSrc, snTrg);
 
             if (snSrc.checksumMap != null) {

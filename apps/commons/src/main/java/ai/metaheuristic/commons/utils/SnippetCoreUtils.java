@@ -36,7 +36,7 @@ public class SnippetCoreUtils {
 
     private static final SnippetApiData.SnippetConfigStatus SNIPPET_CONFIG_STATUS_OK = new SnippetApiData.SnippetConfigStatus(true, null);
 
-    public static SnippetConfigYaml to(SnippetConfigListYaml.SnippetConfigYaml snSrc) {
+    public static SnippetConfigYaml to(SnippetConfigListYaml.SnippetConfig snSrc) {
         SnippetConfigYaml snTrg = new SnippetConfigYaml();
         BeanUtils.copyProperties(snSrc, snTrg);
 
@@ -56,7 +56,27 @@ public class SnippetCoreUtils {
 
     }
 
-    public static SnippetApiData.SnippetConfigStatus validate(SnippetConfigYaml snippetConfig) {
+    public static SnippetConfigYaml to1(SnippetConfigListYaml.SnippetConfig snSrc) {
+        SnippetConfigYaml snTrg = new SnippetConfigYaml();
+        BeanUtils.copyProperties(snSrc, snTrg);
+
+        if (snSrc.checksumMap != null) {
+            snTrg.checksumMap = new HashMap<>(snSrc.checksumMap);
+        }
+        if (snSrc.info != null) {
+            snTrg.info = new SnippetConfigYaml.SnippetInfo(snSrc.info.signed, snSrc.info.length);
+        }
+        if (snSrc.metas != null) {
+            snTrg.metas = new ArrayList<>(snSrc.metas);
+        }
+        if (snSrc.ml!=null) {
+            snTrg.ml = new SnippetConfigYaml.MachineLearning(true, false);
+        }
+        return  snTrg;
+
+    }
+
+    public static SnippetApiData.SnippetConfigStatus validate(SnippetConfigListYaml.SnippetConfig snippetConfig) {
         if ((snippetConfig.file ==null || snippetConfig.file.isBlank()) && (snippetConfig.env ==null || snippetConfig.env.isBlank())) {
             return new SnippetApiData.SnippetConfigStatus(false, "#401.10 Fields 'file' and 'env' can't be null or empty both.");
         }
@@ -86,7 +106,7 @@ public class SnippetCoreUtils {
         return SNIPPET_CONFIG_STATUS_OK;
     }
 
-    public static String getDataForChecksumWhenGitSourcing(SnippetConfigYaml snippetConfig) {
+    public static String getDataForChecksumWhenGitSourcing(SnippetConfigListYaml.SnippetConfig snippetConfig) {
         return "" + snippetConfig.env+", " + snippetConfig.file +" " + snippetConfig.params;
     }
 

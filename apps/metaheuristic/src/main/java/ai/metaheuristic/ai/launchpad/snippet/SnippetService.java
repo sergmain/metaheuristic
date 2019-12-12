@@ -192,8 +192,8 @@ public class SnippetService {
         String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
         SnippetConfigListYaml snippetConfigList = SnippetConfigListYamlUtils.BASE_YAML_UTILS.to(cfg);
         List<SnippetApiData.SnippetConfigStatus> statuses = new ArrayList<>();
-        for (SnippetConfigListYaml.SnippetConfigYaml snippetConfigYaml : snippetConfigList.snippets) {
-            SnippetConfigYaml snippetConfig = SnippetCoreUtils.to(snippetConfigYaml);
+        for (SnippetConfigListYaml.SnippetConfig snippetConfig : snippetConfigList.snippets) {
+//            SnippetConfigYaml snippetConfig = SnippetCoreUtils.to(scTemp);
             SnippetApiData.SnippetConfigStatus status = null;
             try {
                 status = SnippetCoreUtils.validate(snippetConfig);
@@ -272,11 +272,12 @@ public class SnippetService {
         return statuses;
     }
 
-    private void storeSnippet(SnippetConfigYaml snippetConfig, String sum, File file, Snippet snippet) throws IOException {
+    private void storeSnippet(SnippetConfigListYaml.SnippetConfig snippetConfig, String sum, File file, Snippet snippet) throws IOException {
         setChecksum(snippetConfig, sum);
         snippet.code = snippetConfig.code;
         snippet.type = snippetConfig.type;
-        snippet.params = SnippetConfigYamlUtils.BASE_YAML_UTILS.toString(snippetConfig);
+        SnippetConfigYaml scy = SnippetCoreUtils.to(snippetConfig);
+        snippet.params = SnippetConfigYamlUtils.BASE_YAML_UTILS.toString(scy);
         snippetCache.save(snippet);
         if (file != null) {
             try (InputStream inputStream = new FileInputStream(file)) {
@@ -286,7 +287,7 @@ public class SnippetService {
         }
     }
 
-    private void setChecksum(SnippetConfigYaml snippetConfig, String sum) {
+    private void setChecksum(SnippetConfigListYaml.SnippetConfig snippetConfig, String sum) {
         if (sum==null) {
             snippetConfig.checksum = null;
             snippetConfig.info.setSigned(false);

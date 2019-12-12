@@ -92,13 +92,14 @@ public class PackageSnippet implements CommandLineRunner {
             System.out.println("Directory "+targetDir.getPath()+" already exists");
             return;
         }
-        String yaml = FileUtils.readFileToString(snippetYamlFile, StandardCharsets.UTF_8);
-        SnippetConfigListYaml snippetConfigList = SnippetConfigListYamlUtils.BASE_YAML_UTILS.to(yaml);
+        String yamlContent = FileUtils.readFileToString(snippetYamlFile, StandardCharsets.UTF_8);
+        SnippetConfigListYaml snippetConfigList = SnippetConfigListYamlUtils.BASE_YAML_UTILS.to(yamlContent);
 
         // Verify
         boolean isError = false;
         Set<String> set = new HashSet<>();
-        for (SnippetConfigYaml snippet : snippetConfigList.getSnippets()) {
+        for (SnippetConfigListYaml.SnippetConfig snippet : snippetConfigList.getSnippets()) {
+//            SnippetConfigYaml snippet = SnippetCoreUtils.to(snTemp);
             final SnippetApiData.SnippetConfigStatus verify = SnippetCoreUtils.validate(snippet);
             if (!verify.isOk) {
                 System.out.println(verify.error);
@@ -128,7 +129,7 @@ public class PackageSnippet implements CommandLineRunner {
         }
 
         // Process
-        for (SnippetConfigYaml snippetConfig : snippetConfigList.getSnippets()) {
+        for (SnippetConfigListYaml.SnippetConfig snippetConfig : snippetConfigList.getSnippets()) {
             String sum;
             if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.station ||
                     snippetConfig.sourcing==EnumsApi.SnippetSourcing.git) {
@@ -159,7 +160,7 @@ public class PackageSnippet implements CommandLineRunner {
             }
         }
 
-        String yaml = SnippetConfigListYamlUtils.toString(snippetConfigList);
+        String yaml = SnippetConfigListYamlUtils.BASE_YAML_UTILS.toString(snippetConfigList);
         final File file = new File(targetDir, SNIPPETS_YAML);
         FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
 

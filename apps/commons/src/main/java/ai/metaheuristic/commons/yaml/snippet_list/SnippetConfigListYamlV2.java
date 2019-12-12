@@ -36,7 +36,7 @@ public class SnippetConfigListYamlV2 implements BaseParams {
         return true;
     }
 
-    public List<SnippetConfigYamlV2> snippets;
+    public List<SnippetConfigV2> snippets;
 
     @Data
     @AllArgsConstructor
@@ -62,11 +62,11 @@ public class SnippetConfigListYamlV2 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class SnippetConfigYamlV2 implements Cloneable {
+    public static class SnippetConfigV2 implements Cloneable {
 
         @SneakyThrows
-        public SnippetConfigYamlV2 clone() {
-            final SnippetConfigYamlV2 clone = (SnippetConfigYamlV2) super.clone();
+        public SnippetConfigV2 clone() {
+            final SnippetConfigV2 clone = (SnippetConfigV2) super.clone();
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
