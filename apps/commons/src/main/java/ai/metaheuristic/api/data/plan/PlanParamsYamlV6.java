@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.data.plan;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.launchpad.process.ProcessV6;
@@ -42,8 +43,8 @@ public class PlanParamsYamlV6 implements BaseParams {
                             "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
         }
         for (ProcessV6 process : planYaml.processes) {
-            if (process.snippets==null || process.snippets.size()==0) {
-                throw new IllegalArgumentException("(process.snippets==null || process.snippets.size()==0) ");
+            if (process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0)) {
+                throw new IllegalArgumentException("(process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0))");
             }
         }
 

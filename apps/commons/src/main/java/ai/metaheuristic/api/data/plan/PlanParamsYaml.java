@@ -46,8 +46,8 @@ public class PlanParamsYaml implements BaseParams {
                             "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
         }
         for (Process process : planYaml.processes) {
-            if (process.type== EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0)) {
-                throw new IllegalArgumentException("(process.snippets==null || process.snippets.size()==0) ");
+            if (process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0)) {
+                throw new IllegalArgumentException("(process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0))");
             }
         }
 

@@ -70,15 +70,9 @@ public class TaskParamsYamlUtilsV4
         TaskParamsYamlV3 t = new TaskParamsYamlV3();
         BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml, "snippet", "preSnippet", "postSnippet");
         if (yaml.taskYaml.preSnippets!=null && yaml.taskYaml.preSnippets.size()>0) {
-            if (yaml.taskYaml.preSnippets.size()>1) {
-                throw new DowngradeNotSupportedException("Too many preSnippets");
-            }
             t.taskYaml.preSnippets = yaml.taskYaml.preSnippets.stream().map(TaskParamsYamlUtilsV4::toDown).collect(Collectors.toList());;
         }
         if (yaml.taskYaml.postSnippets!=null && yaml.taskYaml.postSnippets.size()>0) {
-            if (yaml.taskYaml.postSnippets.size()>1) {
-                throw new DowngradeNotSupportedException("Too many postSnippets");
-            }
             t.taskYaml.postSnippets = yaml.taskYaml.postSnippets.stream().map(TaskParamsYamlUtilsV4::toDown).collect(Collectors.toList());;
         }
         t.taskYaml.snippet = toDown(yaml.taskYaml.snippet);
