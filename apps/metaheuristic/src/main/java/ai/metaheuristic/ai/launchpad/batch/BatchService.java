@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.*;
+import ai.metaheuristic.ai.launchpad.batch.data.BatchAndWorkbookExecStates;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchParams;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatus;
 import ai.metaheuristic.ai.launchpad.beans.*;
@@ -30,7 +31,6 @@ import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
@@ -105,7 +105,6 @@ public class BatchService {
     private final PlanService planService;
     private final BatchCache batchCache;
     private final BatchRepository batchRepository;
-    private final WorkbookRepository workbookRepository;
     private final WorkbookCache workbookCache;
     private final WorkbookService workbookService;
     private final BatchWorkbookRepository batchWorkbookRepository;
@@ -185,7 +184,7 @@ public class BatchService {
         return mainDocFile;
     }
 
-    public static String getMainDocument(File configFile) throws IOException {
+    private static String getMainDocument(File configFile) throws IOException {
         try (InputStream is = new FileInputStream(configFile)) {
             return getMainDocument(is);
         }
@@ -312,7 +311,7 @@ public class BatchService {
         final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
-            try {
+//            try {
                 Batch b = batchCache.findById(batchId);
                 if (b == null) {
                     log.warn("#990.010 batch wasn't found {}", batchId);
@@ -328,10 +327,12 @@ public class BatchService {
                 }
                 b.execState = Enums.BatchExecState.Preparing.code;
                 return batchCache.save(b);
+/*
             }
             finally {
                 batchMap.remove(batchId);
             }
+*/
         }
     }
 
@@ -339,7 +340,7 @@ public class BatchService {
         final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
-            try {
+//            try {
                 Batch b = batchCache.findById(batchId);
                 if (b == null) {
                     log.warn("#990.030 batch wasn't found {}", batchId);
@@ -355,14 +356,16 @@ public class BatchService {
                 b.execState = Enums.BatchExecState.Processing.code;
                 launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
                 return batchCache.save(b);
+/*
             }
             finally {
                 batchMap.remove(batchId);
             }
+*/
         }
     }
 
-    public Batch changeStateToFinished(Batch batch) {
+    private Batch changeStateToFinished(Batch batch) {
         if (batch==null) {
             return null;
         }
@@ -371,7 +374,7 @@ public class BatchService {
         synchronized (obj) {
             try {
                 updateStatus(batch);
-                Batch b = batchCache.findById(batch.id);
+                Batch b = batchRepository.findByIdForUpdate(batch.id);
                 if (b == null) {
                     log.warn("#990.050 batch wasn't found {}", batch.id);
                     return null;
@@ -390,7 +393,7 @@ public class BatchService {
             }
             finally {
                 launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_FINISHED, null, null, null, batch.id, null, null );
-                batchMap.remove(batch.id);
+//                batchMap.remove(batch.id);
             }
         }
     }
@@ -423,7 +426,7 @@ public class BatchService {
             }
             finally {
                 launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
-                batchMap.remove(batchId);
+//                batchMap.remove(batchId);
             }
         }
     }
@@ -440,35 +443,24 @@ public class BatchService {
         return codes.get(0);
     }
 
+    public void updateBatchStatuses() {
+        List<BatchAndWorkbookExecStates> statuses = batchRepository.findAllUnfinished();
+        for (BatchAndWorkbookExecStates status : statuses) {
+            Long batchId = status.batchId;
+            final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (obj) {
+                Batch batch = batchCache.findById(batchId);
+                changeStateToFinished(batch);
+            }
+        }
+    }
+
     List<BatchData.ProcessResourceItem> getBatches(Page<Long> batchIds) {
         List<BatchData.ProcessResourceItem> items = new ArrayList<>();
         List<Object[]> batchInfos = binaryDataService.getFilenamesForBatchIds(batchIds.getContent());
         for (Long batchId : batchIds) {
-            Batch batch;
-            final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (obj) {
-                try {
-                    batch = batchCache.findById(batchId);
-                    if (batch!=null && batch.execState != Enums.BatchExecState.Finished.code &&
-                            batch.execState != Enums.BatchExecState.Error.code &&
-                            batch.execState != Enums.BatchExecState.Archived.code) {
-                        Boolean isFinished = null;
-                        for (Integer execState : workbookRepository.findWorkbookExecStateByBatchId(batch.id)) {
-                            isFinished = Boolean.TRUE;
-                            if (execState != EnumsApi.WorkbookExecState.ERROR.code && execState != EnumsApi.WorkbookExecState.FINISHED.code) {
-                                isFinished = Boolean.FALSE;
-                                break;
-                            }
-                        }
-                        if (Boolean.TRUE.equals(isFinished)) {
-                            batch = changeStateToFinished(batch);
-                        }
-                    }
-                } finally {
-                    batchMap.remove(batchId);
-                }
-            }
+            Batch batch = batchCache.findById(batchId);
             String planCode = PLAN_NOT_FOUND;
             if (batch!=null) {
                 Plan plan = planCache.findById(batch.getPlanId());
@@ -522,7 +514,7 @@ public class BatchService {
 
             BatchStatus batchStatus = prepareStatusAndData(batchId, (PrepareZipData prepareZipData, File file) -> true, null);
 
-            b = batchCache.findById(batchId);
+            b = batchRepository.findByIdForUpdate(batchId);
             if (b == null) {
                 final BatchStatus bs = new BatchStatus();
                 bs.getGeneralStatus().add("#990.113, Batch wasn't found, batchId: " + batchId, '\n');
@@ -547,9 +539,9 @@ public class BatchService {
             stationCache.clearCache();
             throw new NeedRetryAfterCacheCleanException();
         }
-        finally {
-            batchMap.remove(batchId);
-        }
+//        finally {
+//            batchMap.remove(batchId);
+//        }
     }
 
     private String getStatusForError(Long batchId, Workbook wb, String mainDocument, Task task, SnippetApiData.SnippetExec snippetExec, String stationIpAndHost) {

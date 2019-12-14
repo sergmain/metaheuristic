@@ -17,6 +17,7 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.launchpad.ArtifactCleanerAtLaunchpad;
 import ai.metaheuristic.ai.launchpad.RoundRobinForLaunchpad;
+import ai.metaheuristic.ai.launchpad.batch.BatchService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
@@ -53,6 +54,7 @@ public class Schedulers {
         private final PlanService planService;
         private final ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad;
         private final ExperimentService experimentService;
+        private final BatchService batchService;
 
         // Launchpad schedulers
 
@@ -87,6 +89,21 @@ public class Schedulers {
                     prevReconciliationTime = System.currentTimeMillis();
                 }
             }
+        }
+
+        /**
+         * update status of all workbooks which are in 'started' state. Also, if workbook is finished, atlas will be produced
+         */
+        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.update-batch-statuses'), 10, 60, 10)*1000 }")
+        public void updateBatchStatuses() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.isLaunchpadEnabled) {
+                return;
+            }
+            log.info("Invoke batchService.updateBatchStatuses()");
+            batchService.updateBatchStatuses();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.create-all-tasks'), 5, 40, 5)*1000 }")

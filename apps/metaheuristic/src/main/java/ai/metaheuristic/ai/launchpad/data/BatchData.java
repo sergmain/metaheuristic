@@ -40,6 +40,7 @@ public final class BatchData {
     @EqualsAndHashCode(callSuper = false)
     @AllArgsConstructor
     public static class ExecStatuses extends BaseDataClass {
+        public String ts;
         public List<BatchExecStatus> statuses;
     }
 

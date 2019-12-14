@@ -111,7 +111,9 @@ public class BatchTopLevelService {
 
     @SuppressWarnings("unused")
     public BatchData.ExecStatuses getBatchExecStatuses(LaunchpadContext context) {
-        return new BatchData.ExecStatuses(batchRepository.getBatchExecStatuses(context.getCompanyId()));
+        //noinspection UnnecessaryLocalVariable
+        BatchData.ExecStatuses execStatuses = new BatchData.ExecStatuses("" + System.currentTimeMillis(), batchRepository.getBatchExecStatuses(context.getCompanyId()));
+        return execStatuses;
     }
 
     @Data
