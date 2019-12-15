@@ -88,7 +88,7 @@ public class TaskParamsYamlV3 implements BaseParams {
         public String params;
         public String env;
         public EnumsApi.SnippetSourcing sourcing;
-        public boolean metrics = false;
+        public Boolean metrics;
         public Map<EnumsApi.Type, String> checksumMap;
         public SnippetInfoV3 info = new SnippetInfoV3();
         public String checksum;

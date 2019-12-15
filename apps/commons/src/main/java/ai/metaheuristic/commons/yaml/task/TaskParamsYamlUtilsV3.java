@@ -103,8 +103,8 @@ public class TaskParamsYamlUtilsV3
             trg.info = new TaskParamsYamlV4.SnippetInfoV4(src.info.signed, src.info.length);
         }
         trg.metas = src.metas;
-        if (src.metrics) {
-            trg.ml = new TaskParamsYamlV4.MachineLearningV4(src.metrics, false); ;
+        if (src.metrics!=null && src.metrics) {
+            trg.ml = new TaskParamsYamlV4.MachineLearningV4(true, false); ;
         }
         trg.params = src.params;
         trg.skipParams = src.skipParams;
@@ -128,7 +128,7 @@ public class TaskParamsYamlUtilsV3
             trg.info = new TaskParamsYamlV2.SnippetInfoV2(src.info.signed, src.info.length);
         }
         trg.metas = src.metas;
-        trg.metrics = src.metrics;
+        trg.metrics = src.metrics!=null ? src.metrics : false;
         trg.params = src.params;
         trg.skipParams = src.skipParams;
         trg.sourcing = src.sourcing;
