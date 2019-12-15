@@ -40,6 +40,7 @@ import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -47,6 +48,7 @@ import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.EqualsAndHashCode;
@@ -329,19 +331,6 @@ public class WorkbookService {
             log.error("#705.140 Station wasn't found for id: {}", stationId);
             return null;
         }
-        StationStatusYaml ss;
-        try {
-            ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
-        } catch (Throwable e) {
-            log.error("#705.150 Error parsing current status of station:\n{}", station.status);
-            log.error("#705.151 Error ", e);
-            return null;
-        }
-        if (ss.taskParamsVersion < TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
-            // this station is blacklisted. ignore it
-            return null;
-        }
-
         List<Long> anyTaskId = taskRepository.findAnyActiveForStationId(Consts.PAGE_REQUEST_1_REC, stationId);
         if (!anyTaskId.isEmpty()) {
             // this station already has active task
@@ -367,8 +356,17 @@ public class WorkbookService {
             workbookIds = List.of(workbook.id);
         }
 
+        StationStatusYaml ss;
+        try {
+            ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
+        } catch (Throwable e) {
+            log.error("#705.150 Error parsing current status of station:\n{}", station.status);
+            log.error("#705.151 Error ", e);
+            return null;
+        }
+
         for (Long wbId : workbookIds) {
-            LaunchpadCommParamsYaml.AssignedTask result = findUnassignedTaskAndAssign(wbId, station, isAcceptOnlySigned);
+            LaunchpadCommParamsYaml.AssignedTask result = findUnassignedTaskAndAssign(wbId, station, ss, isAcceptOnlySigned);
             if (result!=null) {
                 return result;
             }
@@ -389,7 +387,7 @@ public class WorkbookService {
                 .collect(Collectors.toList());
     }
 
-    private LaunchpadCommParamsYaml.AssignedTask findUnassignedTaskAndAssign(Long workbookId, Station station, boolean isAcceptOnlySigned) {
+    private LaunchpadCommParamsYaml.AssignedTask findUnassignedTaskAndAssign(Long workbookId, Station station, StationStatusYaml ss, boolean isAcceptOnlySigned) {
 
         LongHolder longHolder = bannedSince.computeIfAbsent(station.getId(), o -> new LongHolder(0));
         if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
@@ -404,6 +402,7 @@ public class WorkbookService {
 
         int page = 0;
         Task resultTask = null;
+        String resultTaskParams = null;
         List<Task> tasks;
         while ((tasks = getAllByStationIdIsNullAndWorkbookIdAndIdIn(workbookId, vertices, page++)).size()>0) {
             for (Task task : tasks) {
@@ -455,10 +454,17 @@ public class WorkbookService {
                         log.warn("#705.220 Snippet with code {} wasn't signed", taskParamYaml.taskYaml.snippet.getCode());
                         continue;
                     }
-                    resultTask = task;
-                    break;
-                } else {
-                    resultTask = task;
+                }
+                resultTask = task;
+                try {
+                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(resultTask.getParams());
+                    resultTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, ss.taskParamsVersion);
+                } catch (DowngradeNotSupportedException e) {
+                    log.warn("Task #{} can't be assigned to station #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                            resultTask.getId(), station.id, ss.taskParamsVersion);
+                    resultTask = null;
+                }
+                if (resultTask!=null) {
                     break;
                 }
             }
@@ -470,13 +476,17 @@ public class WorkbookService {
             return null;
         }
 
+        if (resultTaskParams==null) {
+            throw new IllegalStateException("(resultTaskParams==null)");
+        }
+
         // normal way of operation
         longHolder.value = 0;
 
         LaunchpadCommParamsYaml.AssignedTask assignedTask = new LaunchpadCommParamsYaml.AssignedTask();
         assignedTask.setTaskId(resultTask.getId());
         assignedTask.setWorkbookId(workbookId);
-        assignedTask.setParams(resultTask.getParams());
+        assignedTask.setParams(resultTaskParams);
 
         resultTask.setAssignedOn(System.currentTimeMillis());
         resultTask.setStationId(station.getId());

@@ -54,14 +54,14 @@ public class BaseYamlUtils<T> {
         return getDefault().getYaml().dumpAsMap(planYaml);
     }
 
-    public String toStringAsVersion(BaseParams planYaml, int version) {
+    public String toStringAsVersion(BaseParams baseParamsYaml, int version) {
         if (getDefault().getVersion()==version) {
-            return getDefault().getYaml().dumpAsMap(planYaml);
+            return toString(baseParamsYaml);
         }
         else {
 
             AbstractParamsYamlUtils yamlUtils = getDefault();
-            Object currPlanParamsYaml = planYaml;
+            Object currPlanParamsYaml = baseParamsYaml;
             do {
                 if (yamlUtils.getVersion()==version) {
                     break;

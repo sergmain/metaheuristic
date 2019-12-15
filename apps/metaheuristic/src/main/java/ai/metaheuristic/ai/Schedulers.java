@@ -92,9 +92,9 @@ public class Schedulers {
         }
 
         /**
-         * update status of all workbooks which are in 'started' state. Also, if workbook is finished, atlas will be produced
+         * update statuses of all batches if all related workbooks are finished
          */
-        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.update-batch-statuses'), 10, 60, 10)*1000 }")
+        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.update-batch-statuses'), 5, 60, 5)*1000 }")
         public void updateBatchStatuses() {
             if (globals.isUnitTesting) {
                 return;
