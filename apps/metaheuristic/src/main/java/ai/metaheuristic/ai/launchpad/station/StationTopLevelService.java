@@ -103,9 +103,6 @@ public class StationTopLevelService {
     }
 
     private String stationBlacklisted(StationStatusYaml status) {
-        if (status.taskParamsVersion < TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
-            return "Station's taskParamsVersion is too old, need to upgrade";
-        }
         if (status.taskParamsVersion > TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
             return "Launchpad is too old and can't communicate to this station, need to upgrade";
         }
