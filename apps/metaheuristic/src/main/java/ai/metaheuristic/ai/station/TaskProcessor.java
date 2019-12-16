@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.ExecProcessService;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
@@ -219,7 +220,7 @@ public class TaskProcessor {
             int idx = 0;
             SnippetPrepareResult result;
             for (TaskParamsYaml.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
-                result = prepareSnippet(launchpadInfo, preSnippetConfig);
+                result = prepareSnippet(task.launchpadUrl, launchpadInfo, preSnippetConfig);
                 if (result.isError) {
                     markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                     isNotReady = true;
@@ -235,7 +236,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = prepareSnippet(launchpadInfo, taskParamYaml.taskYaml.getSnippet());
+            result = prepareSnippet(task.launchpadUrl, launchpadInfo, taskParamYaml.taskYaml.getSnippet());
             if (result.isError) {
                 markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                 continue;
@@ -246,7 +247,7 @@ public class TaskProcessor {
             }
 
             for (TaskParamsYaml.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
-                result = prepareSnippet(launchpadInfo, postSnippetConfig);
+                result = prepareSnippet(task.launchpadUrl, launchpadInfo, postSnippetConfig);
                 if (result.isError) {
                     markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                     isNotReady = true;
@@ -526,7 +527,7 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public SnippetPrepareResult prepareSnippet(Metadata.LaunchpadInfo launchpadCode, TaskParamsYaml.SnippetConfig snippet) {
+    public SnippetPrepareResult prepareSnippet(String launchpadUrl, Metadata.LaunchpadInfo launchpadCode, TaskParamsYaml.SnippetConfig snippet) {
         SnippetPrepareResult snippetPrepareResult = new SnippetPrepareResult();
         snippetPrepareResult.snippet = snippet;
 
@@ -537,6 +538,8 @@ public class TaskProcessor {
             if (snippetPrepareResult.snippetAssetFile.isError || !snippetPrepareResult.snippetAssetFile.isContent) {
                 log.info("Snippet {} hasn't been prepared yet, {}", snippetPrepareResult.snippet.code, snippetPrepareResult.snippetAssetFile);
                 snippetPrepareResult.isLoaded = false;
+
+                metadataService.setSnippetDownloadStatus(launchpadUrl, snippet.code, EnumsApi.SnippetSourcing.launchpad, Enums.SnippetState.none);
             }
         }
         else if (snippetPrepareResult.snippet.sourcing==EnumsApi.SnippetSourcing.git) {

@@ -302,6 +302,7 @@ public class BatchTopLevelService {
                         log.debug("Start loading file data to db");
                         batchService.loadFilesFromDirAfterZip(batch, tempDir, Map.of(dataFile.getName(), originFilename));
                     }
+                    batchService.changeStateToProcessing(batch.id);
                 }
                 catch(UnzipArchiveException e) {
                     final String es = "#995.100 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();

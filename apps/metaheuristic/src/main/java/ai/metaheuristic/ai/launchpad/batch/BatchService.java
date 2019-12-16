@@ -80,6 +80,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -153,7 +154,7 @@ public class BatchService {
 
 
         if (isEmpty.get()) {
-            changeStateToFinished(batch);
+            changeStateToFinished(batch.id);
         }
 
     }
@@ -297,9 +298,6 @@ public class BatchService {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
         planService.createAllTasks();
-
-
-        changeStateToProcessing(batch.id);
         operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
@@ -329,7 +327,7 @@ public class BatchService {
         }
     }
 
-    private Batch changeStateToProcessing(Long batchId) {
+    public Batch changeStateToProcessing(Long batchId) {
         final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
@@ -351,17 +349,17 @@ public class BatchService {
         }
     }
 
-    private void changeStateToFinished(Batch batch) {
-        if (batch==null) {
+    private void changeStateToFinished(Long batchId) {
+        if (batchId==null) {
             return;
         }
-        final Object obj = batchMap.computeIfAbsent(batch.id, o -> new Object());
+        final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
-                Batch b = batchRepository.findByIdForUpdate(batch.id);
+                Batch b = batchRepository.findByIdForUpdate(batchId);
                 if (b == null) {
-                    log.warn("#990.050 batch wasn't found {}", batch.id);
+                    log.warn("#990.050 batch wasn't found {}", batchId);
                     return;
                 }
                 if (b.execState != Enums.BatchExecState.Processing.code
@@ -378,12 +376,12 @@ public class BatchService {
             }
             finally {
                 try {
-                    updateBatchStatusWithoutSync(batch.id);
+                    updateBatchStatusWithoutSync(batchId);
                 } catch (Throwable th) {
-                    log.warn("#990.065 error while updating the status of batch #" + batch.id, th);
+                    log.warn("#990.065 error while updating the status of batch #" + batchId, th);
                     // TODO 2019-12-15 this isn't good solution but need more info about behaviour with this error
                 }
-                launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_FINISHED, null, null, null, batch.id, null, null );
+                launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_FINISHED, null, null, null, batchId, null, null );
             }
         }
     }
@@ -434,13 +432,37 @@ public class BatchService {
 
     public void updateBatchStatuses() {
         List<BatchAndWorkbookExecStates> statuses = batchRepository.findAllUnfinished();
-        for (BatchAndWorkbookExecStates status : statuses) {
-            Long batchId = status.batchId;
-            final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (obj) {
-                Batch batch = batchCache.findById(batchId);
-                changeStateToFinished(batch);
+        Map<Long, List<BatchAndWorkbookExecStates>> map = statuses.parallelStream().collect(Collectors.groupingBy(status -> status.batchId));
+        for (Long batchId : map.keySet()) {
+            boolean isFinished = true;
+            for (BatchAndWorkbookExecStates execStates : map.get(batchId)) {
+/*
+                public enum WorkbookExecState {
+                    ERROR(-2),          // some error in configuration
+                    UNKNOWN(-1),        // unknown state
+                    NONE(0),            // just created workbook
+                    PRODUCING(1),       // producing was just started
+                    PRODUCED(2),        // producing was finished
+                    STARTED(3),         // started
+                    STOPPED(4),         // stopped
+                    FINISHED(5),        // finished
+                    DOESNT_EXIST(6),    // doesn't exist. this state is needed at station side to reconcile list of experiments
+                    EXPORTING_TO_ATLAS(7),    // workbook is marked as needed to be exported to atlas
+                    EXPORTING_TO_ATLAS_WAS_STARTED(8),    // workbook is marked as needed to be exported to atlas and export was started
+                    EXPORTED_TO_ATLAS(9);    // workbook was exported to atlas
+*/
+
+                if (execStates.workbookState != -2 && execStates.workbookState != 5) {
+                    isFinished = false;
+                    break;
+                }
+            }
+            if (isFinished) {
+                final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
+                //noinspection SynchronizationOnLocalVariableOrMethodParameter
+                synchronized (obj) {
+                    changeStateToFinished(batchId);
+                }
             }
         }
     }
@@ -512,8 +534,6 @@ public class BatchService {
     }
 
     private BatchStatus updateBatchStatusWithoutSync(Long batchId) {
-        BatchStatus batchStatus = prepareStatusAndData(batchId, (PrepareZipData prepareZipData, File file) -> true, null);
-
         Batch b = batchRepository.findByIdForUpdate(batchId);
         if (b == null) {
             final BatchStatus bs = new BatchStatus();
@@ -521,6 +541,8 @@ public class BatchService {
             bs.ok = false;
             return bs;
         }
+
+        BatchStatus batchStatus = prepareStatusAndData(batchId, (PrepareZipData prepareZipData, File file) -> true, null);
         BatchParams batchParams = BatchParamsUtils.to(b.getParams());
         if (batchParams == null) {
             batchParams = new BatchParams();
