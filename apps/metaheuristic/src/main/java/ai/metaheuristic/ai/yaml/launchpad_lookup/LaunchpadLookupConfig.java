@@ -43,6 +43,11 @@ public class LaunchpadLookupConfig {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class LaunchpadLookup {
+        // fields, which are specific to concrete installation
+        // actually, it's a schedule
+        public String taskProcessingTime;
+
+        // common fields
         public boolean disabled;
         public String url;
         public boolean signatureRequired;
@@ -50,7 +55,6 @@ public class LaunchpadLookupConfig {
         public LaunchpadLookupType lookupType;
         public AuthType authType;
         public boolean securityEnabled;
-        public String taskProcessingTime;
         public String restPassword;
         public String restUsername;
 

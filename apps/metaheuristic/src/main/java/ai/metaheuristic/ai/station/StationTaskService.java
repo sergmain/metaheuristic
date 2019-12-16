@@ -30,6 +30,7 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
@@ -99,15 +100,20 @@ public class StationTaskService {
                             AtomicBoolean isEmpty = new AtomicBoolean(true);
                             Files.list(p).forEach(s -> {
                                 isEmpty.set(false);
-                                String launchpadDirName = taskGroupDir.getName();
+                                String groupDirName = taskGroupDir.getName();
                                 final File currDir = s.toFile();
                                 String name = currDir.getName();
-                                long taskId = Long.parseLong(launchpadDirName) * DigitUtils.DIV + Long.parseLong(name);
-                                log.info("Found dir of task with id: {}, {}, {}", taskId, launchpadDirName, name);
+                                long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
+                                log.info("Found dir of task with id: {}, {}, {}", taskId, groupDirName, name);
                                 File taskYamlFile = new File(currDir, Consts.TASK_YAML);
                                 if (taskYamlFile.exists()) {
                                     try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
                                         StationTask task = StationTaskUtils.to(fis);
+                                        if (S.b(task.launchpadUrl)) {
+                                            deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
+                                            log.warn("#713.007 task #{} from launchpad {} was deleted from disk because launchpadUrl field was empty", taskId, launchpadUrl);
+                                            return;
+                                        }
                                         getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
 
                                         // fix state of task
@@ -133,17 +139,6 @@ public class StationTaskService {
                                     deleteDir(currDir, "Delete not valid dir of task " + s);
                                 }
                             });
-/*
-                            // TODO 2019-10-29 because of unknown errors with deleted dirs, this will be disabled
-                            if (isEmpty.get()) {
-                                if (taskGroupDir.exists()) {
-                                    log.info("Start deleting empty dir " + taskGroupDir.getPath());
-                                    if (!taskGroupDir.delete()) {
-                                        log.warn("Unable to delete directory {}", taskGroupDir.getPath());
-                                    }
-                                }
-                            }
-*/
                         }
                         catch (IOException e) {
                             String es = "#713.030 Error";
@@ -460,11 +455,20 @@ public class StationTaskService {
         synchronized (StationSyncHolder.stationGlobalSync) {
             List<StationTask> list = new ArrayList<>();
             for (String launchpadUrl : map.keySet()) {
-                for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
+                Map<Long, StationTask> mapForLaunchpadUrl = getMapForLaunchpadUrl(launchpadUrl);
+                List<Long> forDelition = new ArrayList<>();
+                for (StationTask task : mapForLaunchpadUrl.values()) {
+                    if (S.b(task.launchpadUrl)) {
+                        forDelition.add(task.taskId);
+                    }
                     if (!task.completed && task.finishedOn == null && task.assetsPrepared==assetsPreparedStatus) {
                         list.add(task);
                     }
                 }
+                forDelition.forEach(id-> {
+                    log.warn("#713.147 task #{} from launchpad {} was deleted from global map with tasks", id, launchpadUrl);
+                    mapForLaunchpadUrl.remove(id);
+                });
             }
             return list;
         }
