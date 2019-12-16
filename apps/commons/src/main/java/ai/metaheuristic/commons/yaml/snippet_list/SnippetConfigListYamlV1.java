@@ -94,7 +94,7 @@ public class SnippetConfigListYamlV1 implements BaseParams {
         public boolean metrics = false;
 
         // this field is here only for compatibility
-        public int version;
+        public Integer version;
     }
 
 }

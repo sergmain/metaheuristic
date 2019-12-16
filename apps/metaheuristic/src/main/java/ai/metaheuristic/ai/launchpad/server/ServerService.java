@@ -335,7 +335,7 @@ public class ServerService {
             launchpadCommandProcessor.process(scpy, lcpy);
             setLaunchpadCommContext(lcpy);
         } catch (Throwable th) {
-            log.error("#442.040 Error while processing client's request, LaunchpadCommParamsYaml:\n{}", lcpy);
+            log.error("#442.040 Error while processing client's request, StationCommParamsYaml:\n{}", scpy);
             log.error("#442.041 Error", th);
             lcpy.success = false;
             lcpy.msg = th.getMessage();

@@ -90,6 +90,9 @@ public class TaskParamsYamlV1 implements BaseParams {
         public GitInfo git;
         public boolean skipParams = false;
         public List<Meta> metas = new ArrayList<>();
+
+        // this field is here only for compatibility
+        public Integer version;
     }
 
     public Map<String, List<String>> inputResourceCodes = new HashMap<>();
