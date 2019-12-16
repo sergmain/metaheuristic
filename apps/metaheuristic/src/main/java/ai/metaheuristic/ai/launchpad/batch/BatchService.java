@@ -311,28 +311,21 @@ public class BatchService {
         final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
-//            try {
-                Batch b = batchCache.findById(batchId);
-                if (b == null) {
-                    log.warn("#990.010 batch wasn't found {}", batchId);
-                    return null;
-                }
-                if (b.execState != Enums.BatchExecState.Unknown.code && b.execState != Enums.BatchExecState.Stored.code &&
-                        b.execState != Enums.BatchExecState.Preparing.code) {
-                    throw new IllegalStateException("\"#990.020 Can't change state to Preparing, " +
-                            "current state: " + Enums.BatchExecState.toState(b.execState));
-                }
-                if (b.execState == Enums.BatchExecState.Preparing.code) {
-                    return b;
-                }
-                b.execState = Enums.BatchExecState.Preparing.code;
-                return batchCache.save(b);
-/*
+            Batch b = batchCache.findById(batchId);
+            if (b == null) {
+                log.warn("#990.010 batch wasn't found {}", batchId);
+                return null;
             }
-            finally {
-                batchMap.remove(batchId);
+            if (b.execState != Enums.BatchExecState.Unknown.code && b.execState != Enums.BatchExecState.Stored.code &&
+                    b.execState != Enums.BatchExecState.Preparing.code) {
+                throw new IllegalStateException("\"#990.020 Can't change state to Preparing, " +
+                        "current state: " + Enums.BatchExecState.toState(b.execState));
             }
-*/
+            if (b.execState == Enums.BatchExecState.Preparing.code) {
+                return b;
+            }
+            b.execState = Enums.BatchExecState.Preparing.code;
+            return batchCache.save(b);
         }
     }
 
@@ -340,44 +333,36 @@ public class BatchService {
         final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
-//            try {
-                Batch b = batchCache.findById(batchId);
-                if (b == null) {
-                    log.warn("#990.030 batch wasn't found {}", batchId);
-                    return null;
-                }
-                if (b.execState != Enums.BatchExecState.Preparing.code && b.execState != Enums.BatchExecState.Processing.code) {
-                    throw new IllegalStateException("\"#990.040 Can't change state to Finished, " +
-                            "current state: " + Enums.BatchExecState.toState(b.execState));
-                }
-                if (b.execState == Enums.BatchExecState.Processing.code) {
-                    return b;
-                }
-                b.execState = Enums.BatchExecState.Processing.code;
-                launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
-                return batchCache.save(b);
-/*
+            Batch b = batchCache.findById(batchId);
+            if (b == null) {
+                log.warn("#990.030 batch wasn't found {}", batchId);
+                return null;
             }
-            finally {
-                batchMap.remove(batchId);
+            if (b.execState != Enums.BatchExecState.Preparing.code && b.execState != Enums.BatchExecState.Processing.code) {
+                throw new IllegalStateException("\"#990.040 Can't change state to Finished, " +
+                        "current state: " + Enums.BatchExecState.toState(b.execState));
             }
-*/
+            if (b.execState == Enums.BatchExecState.Processing.code) {
+                return b;
+            }
+            b.execState = Enums.BatchExecState.Processing.code;
+            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
+            return batchCache.save(b);
         }
     }
 
-    private Batch changeStateToFinished(Batch batch) {
+    private void changeStateToFinished(Batch batch) {
         if (batch==null) {
-            return null;
+            return;
         }
         final Object obj = batchMap.computeIfAbsent(batch.id, o -> new Object());
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
-                updateStatus(batch);
                 Batch b = batchRepository.findByIdForUpdate(batch.id);
                 if (b == null) {
                     log.warn("#990.050 batch wasn't found {}", batch.id);
-                    return null;
+                    return;
                 }
                 if (b.execState != Enums.BatchExecState.Processing.code
                         && b.execState != Enums.BatchExecState.Finished.code
@@ -386,14 +371,19 @@ public class BatchService {
                             "current state: " + Enums.BatchExecState.toState(b.execState));
                 }
                 if (b.execState == Enums.BatchExecState.Finished.code) {
-                    return b;
+                    return;
                 }
                 b.execState = Enums.BatchExecState.Finished.code;
-                return batchCache.save(b);
+                batchCache.save(b);
             }
             finally {
+                try {
+                    updateBatchStatusWithoutSync(batch.id);
+                } catch (Throwable th) {
+                    log.warn("#990.065 error while updating the status of batch #" + batch.id, th);
+                    // TODO 2019-12-15 this isn't good solution but need more info about behaviour with this error
+                }
                 launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_FINISHED, null, null, null, batch.id, null, null );
-//                batchMap.remove(batch.id);
             }
         }
     }
@@ -426,7 +416,6 @@ public class BatchService {
             }
             finally {
                 launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
-//                batchMap.remove(batchId);
             }
         }
     }
@@ -503,45 +492,44 @@ public class BatchService {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private BatchStatus updateStatusInternal(Batch b)  {
-        Long batchId = b.id;
+    private BatchStatus updateStatusInternal(Batch batch)  {
+        Long batchId = batch.id;
         try {
-            if (b.getParams() != null && !b.getParams().isBlank() &&
-                    (b.execState == Enums.BatchExecState.Finished.code || b.execState == Enums.BatchExecState.Error.code)) {
-                BatchParams batchParams = BatchParamsUtils.to(b.getParams());
+            if (!S.b(batch.getParams()) &&
+                    (batch.execState == Enums.BatchExecState.Finished.code || batch.execState == Enums.BatchExecState.Error.code)) {
+                BatchParams batchParams = BatchParamsUtils.to(batch.getParams());
                 return batchParams.batchStatus;
             }
-
-            BatchStatus batchStatus = prepareStatusAndData(batchId, (PrepareZipData prepareZipData, File file) -> true, null);
-
-            b = batchRepository.findByIdForUpdate(batchId);
-            if (b == null) {
-                final BatchStatus bs = new BatchStatus();
-                bs.getGeneralStatus().add("#990.113, Batch wasn't found, batchId: " + batchId, '\n');
-                bs.ok = false;
-                return bs;
-            }
-            BatchParams batchParams = BatchParamsUtils.to(b.getParams());
-            if (batchParams == null) {
-                batchParams = new BatchParams();
-            }
-            batchParams.batchStatus = batchStatus;
-            b.params = BatchParamsUtils.toString(batchParams);
-            batchCache.save(b);
-
-            return batchStatus;
-
+            return updateBatchStatusWithoutSync(batchId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#990.120 Error updating batch, new: {}, curr: {}", b, batchRepository.findById(batchId).orElse(null));
+            log.error("#990.120 Error updating batch, new: {}, curr: {}", batch, batchRepository.findById(batchId).orElse(null));
             log.error("#990.121 Error updating batch", e);
             batchCache.evictById(batchId);
             // because this error is somehow related to stationCache, let's invalidate it
             stationCache.clearCache();
             throw new NeedRetryAfterCacheCleanException();
         }
-//        finally {
-//            batchMap.remove(batchId);
-//        }
+    }
+
+    private BatchStatus updateBatchStatusWithoutSync(Long batchId) {
+        BatchStatus batchStatus = prepareStatusAndData(batchId, (PrepareZipData prepareZipData, File file) -> true, null);
+
+        Batch b = batchRepository.findByIdForUpdate(batchId);
+        if (b == null) {
+            final BatchStatus bs = new BatchStatus();
+            bs.getGeneralStatus().add("#990.113, Batch wasn't found, batchId: " + batchId, '\n');
+            bs.ok = false;
+            return bs;
+        }
+        BatchParams batchParams = BatchParamsUtils.to(b.getParams());
+        if (batchParams == null) {
+            batchParams = new BatchParams();
+        }
+        batchParams.batchStatus = batchStatus;
+        b.params = BatchParamsUtils.toString(batchParams);
+        batchCache.save(b);
+
+        return batchStatus;
     }
 
     private String getStatusForError(Long batchId, Workbook wb, String mainDocument, Task task, SnippetApiData.SnippetExec snippetExec, String stationIpAndHost) {

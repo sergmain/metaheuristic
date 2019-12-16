@@ -106,36 +106,36 @@ public class StationTaskService {
                                 long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
                                 log.info("Found dir of task with id: {}, {}, {}", taskId, groupDirName, name);
                                 File taskYamlFile = new File(currDir, Consts.TASK_YAML);
-                                if (taskYamlFile.exists()) {
-                                    try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
-                                        StationTask task = StationTaskUtils.to(fis);
-                                        if (S.b(task.launchpadUrl)) {
-                                            deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
-                                            log.warn("#713.007 task #{} from launchpad {} was deleted from disk because launchpadUrl field was empty", taskId, launchpadUrl);
-                                            return;
-                                        }
-                                        getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
+                                if (!taskYamlFile.exists() || taskYamlFile.length()==0L) {
+                                    deleteDir(currDir, "Delete not valid dir of task " + s+", exist: "+taskYamlFile.exists()+", length: " +taskYamlFile.length());
+                                    return;
+                                }
 
-                                        // fix state of task
-                                        SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
-                                        if (snippetExec!=null &&
-                                                ((snippetExec.generalExec!=null && !snippetExec.exec.isOk ) ||
-                                                        (snippetExec.generalExec!=null && !snippetExec.generalExec.isOk))) {
-                                            markAsFinished(launchpadUrl, taskId, snippetExec);
-                                        }
+                                try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
+                                    StationTask task = StationTaskUtils.to(fis);
+                                    if (S.b(task.launchpadUrl)) {
+                                        deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
+                                        log.warn("#713.007 task #{} from launchpad {} was deleted from disk because launchpadUrl field was empty", taskId, launchpadUrl);
+                                        return;
                                     }
-                                    catch (IOException e) {
-                                        String es = "#713.010 Error";
-                                        log.error(es, e);
-                                        throw new RuntimeException(es, e);
-                                    }
-                                    catch (YAMLException e) {
-                                        String es = "#713.020 yaml Error: " + e.getMessage();
-                                        log.warn(es, e);
-                                        deleteDir(currDir, "Delete not valid dir of task " + s);
+                                    getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
+
+                                    // fix state of task
+                                    SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
+                                    if (snippetExec!=null &&
+                                            ((snippetExec.generalExec!=null && !snippetExec.exec.isOk ) ||
+                                                    (snippetExec.generalExec!=null && !snippetExec.generalExec.isOk))) {
+                                        markAsFinished(launchpadUrl, taskId, snippetExec);
                                     }
                                 }
-                                else {
+                                catch (IOException e) {
+                                    String es = "#713.010 Error";
+                                    log.error(es, e);
+                                    throw new RuntimeException(es, e);
+                                }
+                                catch (YAMLException e) {
+                                    String es = "#713.020 yaml Error: " + e.getMessage();
+                                    log.warn(es, e);
                                     deleteDir(currDir, "Delete not valid dir of task " + s);
                                 }
                             });
@@ -168,13 +168,6 @@ public class StationTaskService {
             if (f.exists()) {
                 FileUtils.deleteDirectory(f);
             }
-            // IDK is that bug or side-effect. so delete one more time
-            // TODO 2019-10-29 because of unknown errors with deleted dirs, this will be disabled
-/*
-            if (f.exists()) {
-                FileUtils.deleteDirectory(f);
-            }
-*/
         } catch (IOException e) {
             log.warn("#713.060 Error while deleting dir {}, error: {}", f.getPath(), e.toString());
         }
