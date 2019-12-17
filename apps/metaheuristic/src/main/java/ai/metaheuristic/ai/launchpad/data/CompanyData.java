@@ -41,11 +41,20 @@ public class CompanyData {
         public Page<Company> companies;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CompanyAccessControl {
+        public String groups;
+    }
+
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class CompanyResult extends BaseDataClass {
         public Company company;
+        public final CompanyAccessControl companyAccessControl = new CompanyAccessControl();
 
         public CompanyResult(String errorMessage) {
             this.errorMessages = Collections.singletonList(errorMessage);

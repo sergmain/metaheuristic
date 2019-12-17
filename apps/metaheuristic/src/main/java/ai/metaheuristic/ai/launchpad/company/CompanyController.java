@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.launchpad.data.CompanyData;
 import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -100,14 +101,14 @@ public class CompanyController {
             return "redirect:/launchpad/company/companies";
         }
         model.addAttribute("company", companyResult.company);
-        model.addAttribute("companyYamlAsStr", companyResult.company.params);
+        model.addAttribute("groups", S.b(companyResult.companyAccessControl.groups) ? "" : companyResult.companyAccessControl.groups );
         return "launchpad/company/company-edit";
     }
 
     @PostMapping("/company-edit-commit")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
-    public String editFormCommit(Long id, String name, String companyYamlAsStr, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = companyTopLevelService.editFormCommit(id, name, companyYamlAsStr);
+    public String editFormCommit(Long id, String name, String groups, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = companyTopLevelService.editFormCommit(id, name, groups);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }

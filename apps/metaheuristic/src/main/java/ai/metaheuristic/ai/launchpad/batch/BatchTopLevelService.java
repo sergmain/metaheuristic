@@ -181,8 +181,8 @@ public class BatchTopLevelService {
             final Set<String> groups = new HashSet<>();
             try {
                 CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.params);
-                if (cpy.ac!=null) {
-                    String[] arr = StringUtils.split(cpy.ac.group, ',');
+                if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
+                    String[] arr = StringUtils.split(cpy.ac.groups, ',');
                     Stream.of(arr).forEach(s-> groups.add(s.strip()));
                 }
             } catch (YAMLException e) {
@@ -202,7 +202,7 @@ public class BatchTopLevelService {
                     try {
                         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
                         if (ppy.planYaml.ac!=null) {
-                            String[] arr = StringUtils.split(ppy.planYaml.ac.group, ',');
+                            String[] arr = StringUtils.split(ppy.planYaml.ac.groups, ',');
                             return Stream.of(arr).map(String::strip).anyMatch(groups::contains);
                         }
                         return false;

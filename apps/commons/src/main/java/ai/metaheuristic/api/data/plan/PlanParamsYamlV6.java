@@ -53,7 +53,7 @@ public class PlanParamsYamlV6 implements BaseParams {
 
     @Data
     public static class AccessControlV6 {
-        public String group;
+        public String groups;
     }
 
     @Data

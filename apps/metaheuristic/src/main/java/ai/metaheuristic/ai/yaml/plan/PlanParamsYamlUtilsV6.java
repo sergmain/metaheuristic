@@ -70,7 +70,7 @@ public class PlanParamsYamlUtilsV6
         }).collect(Collectors.toList());
         p.planYaml.planCode = v6.planYaml.planCode;
         if (v6.planYaml.ac!=null) {
-            p.planYaml.ac = new PlanParamsYaml.AccessControl(v6.planYaml.ac.group);
+            p.planYaml.ac = new PlanParamsYaml.AccessControl(v6.planYaml.ac.groups);
         }
         p.checkIntegrity();
         return p;

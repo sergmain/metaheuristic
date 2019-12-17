@@ -44,7 +44,7 @@ public class CompanyParamsYamlUtilsV1
         src.checkIntegrity();
         CompanyParamsYaml trg = new CompanyParamsYaml();
         if (src.ac!=null) {
-            trg.ac = new CompanyParamsYaml.AccessControl(src.ac.group);
+            trg.ac = new CompanyParamsYaml.AccessControl(src.ac.groups);
         }
         trg.checkIntegrity();
         return trg;

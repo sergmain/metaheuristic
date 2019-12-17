@@ -64,20 +64,33 @@ public class CompanyTopLevelService {
         if (company == null) {
             return new CompanyData.CompanyResult("#237.050 company wasn't found, companyId: " + companyId);
         }
-        return new CompanyData.CompanyResult(company);
+        String groups = "";
+        if (!S.b(company.params)) {
+            CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.params);
+            if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
+                groups = cpy.ac.groups;
+            }
+        }
+
+        CompanyData.CompanyResult companyResult = new CompanyData.CompanyResult(company);
+        companyResult.companyAccessControl.groups = groups;
+        return companyResult;
     }
 
-    public OperationStatusRest editFormCommit(Long companyId, String name, String companyYamlAsStr) {
+    public OperationStatusRest editFormCommit(Long companyId, String name, String groups) {
         Company c = companyRepository.findByIdForUpdate(companyId);
         if (c == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.060 company wasn't found, accountId: " + companyId);
         }
+        CompanyParamsYaml cpy = new CompanyParamsYaml();
+        cpy.ac = new CompanyParamsYaml.AccessControl(groups);
+        String paramsYaml;
         try {
-            CompanyParamsYamlUtils.BASE_YAML_UTILS.to(companyYamlAsStr);
+            paramsYaml = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(cpy);
         } catch (Throwable th) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.062 company params is in wrong format, error: " + th.getMessage());
         }
-        c.setParams(companyYamlAsStr);
+        c.setParams(paramsYaml);
         c.setName(name);
         companyCache.save(c);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of company was changed successfully", null);

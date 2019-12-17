@@ -47,7 +47,7 @@ public class CompanyParamsYamlV1 implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class AccessControlV1 {
-        public String group;
+        public String groups;
     }
 
     public AccessControlV1 ac;

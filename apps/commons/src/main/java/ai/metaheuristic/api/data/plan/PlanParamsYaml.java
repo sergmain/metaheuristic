@@ -58,7 +58,7 @@ public class PlanParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AccessControl {
-        public String group;
+        public String groups;
     }
 
     @Data

@@ -13,7 +13,7 @@
         <form class="pure-form pure-form-stacked" th:object="${account}" method="post" action="#" th:method="POST"
               th:action="@{/launchpad/company/company-account-edit-commit/{companyId}(companyId=${companyId})}" accept-charset="UTF-8" id="account-form"
               name="f">
-            <input type="hidden" th:name="id" th:field="${account.id}"/>
+            <input type="hidden" th:name="id" th:value="${account.id}"/>
             <fieldset>
 
                 <label for="enabled">Is account enabled?</label>
@@ -21,7 +21,7 @@
                 <span class="pure-form-message">This is a required field.</span>
 
                 <label for="publicName">Public name</label>
-                <input name="publicName" id="publicName" type="text" placeholder="text" th:field="${account.publicName}">
+                <input name="publicName" id="publicName" type="text" placeholder="text" th:value="${account.publicName}">
                 <span class="pure-form-message">This is a required field.</span>
 
                 <table>
