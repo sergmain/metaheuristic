@@ -73,6 +73,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -157,9 +158,17 @@ public class BatchTopLevelService {
         return getPlansForBatchResult(context.getCompanyId());
     }
 
+    public BatchData.PlansForBatchResult getPlan(Long companyId, Long planId) {
+        return getPlansForBatchResult(companyId, (o) -> o.getId().equals(planId));
+    }
+
     public BatchData.PlansForBatchResult getPlansForBatchResult(Long companyId) {
+            return getPlansForBatchResult(companyId, (f) -> true);
+    }
+
+    public BatchData.PlansForBatchResult getPlansForBatchResult(Long companyId, final Function<Plan, Boolean> planFilter) {
         final BatchData.PlansForBatchResult plans = new BatchData.PlansForBatchResult();
-        plans.items = planRepository.findAllAsPlan(companyId).stream().filter(o->{
+        plans.items = planRepository.findAllAsPlan(companyId).stream().filter(planFilter::apply).filter(o->{
             if (!o.isValid()) {
                 return false;
             }
@@ -224,12 +233,14 @@ public class BatchTopLevelService {
     }
 
     public OperationStatusRest batchUploadFromFile(final MultipartFile file, Long planId, final LaunchpadContext context) {
-        PlanImpl plan = planCache.findById(planId);
-        if (plan == null || !plan.companyId.equals(context.getCompanyId())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
+        BatchData.PlansForBatchResult plansForBatchResult = getPlan(context.getCompanyId(), planId);
+        if (plansForBatchResult.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, plansForBatchResult.errorMessages);
         }
-        if (!plan.companyId.equals(context.getCompanyId())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.051 plan wasn't found, planId: " + planId);
+
+        PlanImpl plan = plansForBatchResult.items.isEmpty() ? null : (PlanImpl)plansForBatchResult.items.get(0);
+        if (plan==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
         }
 
         String tempFilename = file.getOriginalFilename();
@@ -251,7 +262,7 @@ public class BatchTopLevelService {
 
         launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
 
-        // TODO 2019-07-06 Do we need to validate plan here in case that there is another check
+        // TODO 2019-07-06 Do we need to validate the plan here in case that there is another check
         //  2019-10-28 it's working so left it as is until there will be found an issue with this
         // validate the plan
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
