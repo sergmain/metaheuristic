@@ -69,7 +69,7 @@ public class MultiHttpSecurityConfig {
         configuration.setAllowedHeaders(List.of("authorization", "content-type", "x-auth-token"));
         configuration.setExposedHeaders(List.of("x-auth-token", "Content-Disposition"));
         // set max-age to 1 minute
-        configuration.setMaxAge(60L);
+//        configuration.setMaxAge(60L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
