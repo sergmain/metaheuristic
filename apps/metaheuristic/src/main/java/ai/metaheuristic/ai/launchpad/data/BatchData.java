@@ -59,6 +59,7 @@ public final class BatchData {
         public int execState;
         public boolean ok;
         public String uploadedFileName;
+        public String username;
     }
 
     @Data

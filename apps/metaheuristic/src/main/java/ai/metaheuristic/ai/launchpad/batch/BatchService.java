@@ -20,9 +20,10 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.*;
+import ai.metaheuristic.ai.launchpad.account.AccountCache;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchAndWorkbookExecStates;
-import ai.metaheuristic.ai.launchpad.batch.data.BatchParams;
-import ai.metaheuristic.ai.launchpad.batch.data.BatchStatus;
+import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
+import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
@@ -35,7 +36,7 @@ import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
-import ai.metaheuristic.ai.yaml.pilot.BatchParamsUtils;
+import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
@@ -100,8 +101,10 @@ public class BatchService {
     private static final Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml", ".yml");
     private static final String ATTACHMENTS_POOL_CODE = "attachments";
     private static final String CONFIG_FILE = "config.yaml";
+    private static final String DELEMITER_2 = "\n====================================================================\n";
 
     private final Globals globals;
+    private final AccountCache accountCache;
     private final PlanCache planCache;
     private final PlanService planService;
     private final BatchCache batchCache;
@@ -116,6 +119,38 @@ public class BatchService {
     private final ResourceService resourceService;
 
     private static final ConcurrentHashMap<Long, Object> batchMap = new ConcurrentHashMap<>(100, 0.75f, 10);
+
+    /**
+     * Don't forget to call this method before storing in db
+     * @param batchStatus
+     */
+    public static BatchStatusProcessor initBatchStatus(BatchStatusProcessor batchStatus) {
+        {
+            String generalStr = batchStatus.getGeneralStatus().asString();
+            if (!generalStr.isBlank()) {
+                batchStatus.status = generalStr + DELEMITER_2;
+            }
+        }
+        {
+            String progressStr = batchStatus.getProgressStatus().asString();
+            if (!progressStr.isBlank()) {
+                batchStatus.status += progressStr + DELEMITER_2;
+            }
+        }
+        {
+            String okStr = batchStatus.getOkStatus().asString();
+            if (!okStr.isBlank()) {
+                batchStatus.status += okStr + DELEMITER_2;
+            }
+        }
+        {
+            String errorStr = batchStatus.getErrorStatus().asString();
+            if (!errorStr.isBlank()) {
+                batchStatus.status += errorStr + DELEMITER_2;
+            }
+        }
+        return batchStatus;
+    }
 
     public void loadFilesFromDirAfterZip(Batch batch, File srcDir, final Map<String, String> mapping) throws IOException {
 
@@ -399,15 +434,18 @@ public class BatchService {
                 }
                 b.setExecState(Enums.BatchExecState.Error.code);
 
-                BatchParams batchParams = BatchParamsUtils.to(b.params);
+                BatchParamsYaml batchParams = BatchParamsYamlUtils.BASE_YAML_UTILS.to(b.params);
                 if (batchParams == null) {
-                    batchParams = new BatchParams();
+                    batchParams = new BatchParamsYaml();
                 }
-                batchParams.batchStatus = new BatchStatus();
-                batchParams.batchStatus.getGeneralStatus().add(error);
-                batchParams.batchStatus.init();
-
-                b.params = BatchParamsUtils.toString(batchParams);
+                if (batchParams.batchStatus==null) {
+                    batchParams.batchStatus = new BatchParamsYaml.BatchStatus();
+                }
+                BatchStatusProcessor batchStatusProcessor = new BatchStatusProcessor();
+                batchStatusProcessor.getGeneralStatus().add(error);
+                initBatchStatus(batchStatusProcessor);
+                batchParams.batchStatus.status = batchStatusProcessor.status;
+                b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(batchParams);
 
                 b = batchCache.save(b);
                 return b;
@@ -485,14 +523,18 @@ public class BatchService {
                 }
                 String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
                 String filename = batchInfos.stream().filter(o->o[0].equals(batchId)).map(o->(String)o[1]).findFirst().orElse("[unknown]");
-                items.add(new BatchData.ProcessResourceItem(batch, planCode, execStateStr, batch.execState, ok, filename));
+//                Account account = accountCache.findByUsername()
+                BatchParamsYaml bpy = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.params);
+                items.add(new BatchData.ProcessResourceItem(
+                        batch, planCode, execStateStr, batch.execState, ok, filename,
+                        S.b(bpy.username) ? "accountId #"+batch.accountId : bpy.username ));
             }
         }
         return items;
     }
 
     // TODO 2019-10-13 change synchronization to use BatchSyncService
-    public BatchStatus updateStatus(Batch b) {
+    public BatchParamsYaml.BatchStatus updateStatus(Batch b) {
         final Object obj = batchMap.computeIfAbsent(b.id, o -> new Object());
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
@@ -506,20 +548,19 @@ public class BatchService {
                 return updateStatusInternal(b);
             }
             catch(NeedRetryAfterCacheCleanException e) {
-                final BatchStatus status = new BatchStatus();
-                status.getGeneralStatus().add("#990.100 Can't update batch status, Try later");
-                return status;
+                final BatchStatusProcessor statusProcessor = new BatchStatusProcessor().addGeneralStatus("#990.100 Can't update batch status, Try later");
+                return new BatchParamsYaml.BatchStatus(initBatchStatus(statusProcessor).status);
             }
         }
     }
 
     @SuppressWarnings("SameParameterValue")
-    private BatchStatus updateStatusInternal(Batch batch)  {
+    private BatchParamsYaml.BatchStatus updateStatusInternal(Batch batch)  {
         Long batchId = batch.id;
         try {
             if (!S.b(batch.getParams()) &&
                     (batch.execState == Enums.BatchExecState.Finished.code || batch.execState == Enums.BatchExecState.Error.code)) {
-                BatchParams batchParams = BatchParamsUtils.to(batch.getParams());
+                BatchParamsYaml batchParams = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.getParams());
                 return batchParams.batchStatus;
             }
             return updateBatchStatusWithoutSync(batchId);
@@ -533,25 +574,28 @@ public class BatchService {
         }
     }
 
-    private BatchStatus updateBatchStatusWithoutSync(Long batchId) {
+    private BatchParamsYaml.BatchStatus updateBatchStatusWithoutSync(Long batchId) {
         Batch b = batchRepository.findByIdForUpdate(batchId);
         if (b == null) {
-            final BatchStatus bs = new BatchStatus();
-            bs.getGeneralStatus().add("#990.113, Batch wasn't found, batchId: " + batchId, '\n');
-            bs.ok = false;
-            return bs;
+            final BatchStatusProcessor statusProcessor = new BatchStatusProcessor().addGeneralStatus("#990.113, Batch wasn't found, batchId: " + batchId, '\n');
+            BatchParamsYaml.BatchStatus batchStatus = new BatchParamsYaml.BatchStatus(initBatchStatus(statusProcessor).status);
+            batchStatus.ok = false;
+            return batchStatus;
         }
 
-        BatchStatus batchStatus = prepareStatusAndData(batchId, (PrepareZipData prepareZipData, File file) -> true, null);
-        BatchParams batchParams = BatchParamsUtils.to(b.getParams());
+        BatchStatusProcessor batchStatus = prepareStatusAndData(batchId, (PrepareZipData prepareZipData, File file) -> true, null);
+        BatchParamsYaml batchParams = BatchParamsYamlUtils.BASE_YAML_UTILS.to(b.getParams());
         if (batchParams == null) {
-            batchParams = new BatchParams();
+            batchParams = new BatchParamsYaml();
         }
-        batchParams.batchStatus = batchStatus;
-        b.params = BatchParamsUtils.toString(batchParams);
+        if (batchParams.batchStatus == null) {
+            batchParams.batchStatus = new BatchParamsYaml.BatchStatus();
+        }
+        batchParams.batchStatus.status = batchStatus.status;
+        b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(batchParams);
         batchCache.save(b);
 
-        return batchStatus;
+        return batchParams.batchStatus;
     }
 
     private String getStatusForError(Long batchId, Workbook wb, String mainDocument, Task task, SnippetApiData.SnippetExec snippetExec, String stationIpAndHost) {
@@ -598,7 +642,7 @@ public class BatchService {
     @Data
     @AllArgsConstructor
     public static class PrepareZipData {
-        public BatchStatus bs;
+        public BatchStatusProcessor bs;
         public Task task;
         public File zipDir;
         public String mainDocument;
@@ -606,8 +650,8 @@ public class BatchService {
         public Long workbookId;
     }
 
-    public BatchStatus prepareStatusAndData(Long batchId, BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir) {
-        final BatchStatus bs = new BatchStatus();
+    public BatchStatusProcessor prepareStatusAndData(Long batchId, BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir) {
+        final BatchStatusProcessor bs = new BatchStatusProcessor();
         bs.originArchiveName = getUploadedFilename(batchId);
 
         List<Long> ids = batchWorkbookRepository.findWorkbookIdsByBatchId(batchId);
@@ -734,7 +778,7 @@ public class BatchService {
         }
 
         bs.ok = isOk;
-        bs.init();
+        initBatchStatus(bs);
 
         return bs;
     }

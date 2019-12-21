@@ -21,7 +21,8 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
-import ai.metaheuristic.ai.launchpad.batch.data.BatchStatus;
+import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
+import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
 import ai.metaheuristic.ai.launchpad.beans.Company;
@@ -36,6 +37,7 @@ import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
@@ -163,8 +165,6 @@ public class BatchTopLevelService {
         BatchData.BatchesResult result = new BatchData.BatchesResult();
         result.batches = new PageImpl<>(items, pageable, total);
 
-        //noinspection unused
-        int i=0;
         return result;
     }
 
@@ -296,7 +296,11 @@ public class BatchTopLevelService {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
 
-            final Batch b = batchCache.save(new Batch(planId, Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId()));
+            Batch b = new Batch(planId, Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());
+            BatchParamsYaml bpy = new BatchParamsYaml();
+            bpy.username = context.account.username;
+            b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
+            b = batchCache.save(b);
 
             launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), plan.getCode(), null, b.id, null, context );
 
@@ -404,7 +408,7 @@ public class BatchTopLevelService {
             log.warn(es);
             return new BatchData.Status(es);
         }
-        BatchStatus status = batchService.updateStatus(batch);
+        BatchParamsYaml.BatchStatus status = batchService.updateStatus(batch);
         return new BatchData.Status(batchId, status.getStatus(), status.ok);
     }
 
@@ -429,7 +433,7 @@ public class BatchTopLevelService {
         //noinspection ResultOfMethodCallIgnored
         zipDir.mkdir();
 
-        BatchStatus status = batchService.prepareStatusAndData(batchId, this::prepareZip, zipDir);
+        BatchStatusProcessor status = batchService.prepareStatusAndData(batchId, this::prepareZip, zipDir);
 
         File statusFile = new File(zipDir, "status.txt");
         FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);

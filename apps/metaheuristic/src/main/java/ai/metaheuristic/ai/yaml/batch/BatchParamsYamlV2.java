@@ -14,33 +14,45 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.batch.data;
+package ai.metaheuristic.ai.yaml.batch;
 
-import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.api.data.BaseParams;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
+ *
  * @author Serge
- * Date: 5/29/2019
- * Time: 11:38 PM
+ * Date: 12/21/2019
+ * Time: 6:00 PM
  */
 @Data
-public class BatchParams {
+public class BatchParamsYamlV2 implements BaseParams {
 
-    @Data
-    public static class TaskStatus {
-        public long taskId;
-        public long stationId;
-        public String ip;
-        public String host;
-        public String execResults;
-        public EnumsApi.TaskExecState state;
+    public final int version=2;
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
     }
 
-    public BatchStatus batchStatus;
-    public List<TaskStatus> taskStatuses;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BatchStatusV2 {
+        // must be public for yaml's marshalling
+        public boolean ok = false;
+        // must be public for yaml's marshalling
+        public String status = "";
+    }
+
+    public BatchStatusV2 batchStatus;
+    public String username;
     public boolean ok = false;
 
 }

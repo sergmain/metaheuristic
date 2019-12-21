@@ -49,7 +49,7 @@
     <div class="pure-controls">
         <label for="show-status" class="pure-checkbox">
             <input id="show-status" type="checkbox" onclick="switchStatus();"/>
-            Show current status of station
+            Show only my batches
         </label>
     </div>
 
@@ -58,6 +58,7 @@
         <tr th:align="center">
             <th>#</th>
             <th>Created on</th>
+            <th>Owner's username</th>
             <th>Is batch consistent?</th>
             <th>
                 <div class="no-wrap">Plan code</div>
@@ -73,6 +74,7 @@
         <tr th:each="r : ${result.batches}">
             <td th:text="${r.batch.id}">#Id</td>
             <td th:text="${#dates.format(r.batch.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
+            <td th:text="${r.username}">Owner's username</td>
             <td>
                <p th:if="${r.ok}" class="info-msg" >OK</p>
                <p th:if="${!r.ok}" class="error-msg" >Error</p>
