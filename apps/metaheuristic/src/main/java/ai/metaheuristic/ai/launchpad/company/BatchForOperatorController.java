@@ -66,7 +66,7 @@ public class BatchForOperatorController {
             @ModelAttribute("infoMessages") final String infoMessages,
             @PathVariable Long companyId
             ) {
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyId, true);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyId, null, true, false);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         model.addAttribute("companyId", companyId);
@@ -82,7 +82,7 @@ public class BatchForOperatorController {
             @PathVariable Long companyId,
             @PathVariable Integer days
         ) {
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(null, companyId, true);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(null, companyId, null, true, false);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         model.addAttribute("companyId", companyId);
@@ -93,7 +93,7 @@ public class BatchForOperatorController {
     @PostMapping("/company-batches-part/{companyId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, @PathVariable Long companyId) {
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyId, true);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyId, null, true, false);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         model.addAttribute("companyId", companyId);

@@ -66,23 +66,26 @@ public class BatchController {
 
     @GetMapping("/batches")
     public String batches(
-            Model model,
+            @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
             @PageableDefault(size = 20) Pageable pageable,
             @ModelAttribute("errorMessage") final String errorMessage,
             @ModelAttribute("infoMessages") final String infoMessages,
-            Authentication authentication
+            Model model, Authentication authentication
             ) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false, filterBatches);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         return "launchpad/batch/batches";
     }
 
     @PostMapping("/batches-part")
-    public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
+    public String batchesPart(
+            @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
+            @PageableDefault(size = 20) Pageable pageable,
+            Model model, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false, filterBatches);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         return "launchpad/batch/batches :: table";

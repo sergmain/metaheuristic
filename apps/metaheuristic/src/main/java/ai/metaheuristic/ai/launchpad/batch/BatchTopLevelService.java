@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatus;
+import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
 import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
@@ -29,7 +30,6 @@ import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
-import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.resource.ResourceUtils;
@@ -71,9 +71,11 @@ import org.yaml.snakeyaml.error.YAMLException;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -98,7 +100,6 @@ public class BatchTopLevelService {
     private static final List<String> EXCLUDE_FROM_MAPPING = List.of("config.yaml", "config.yml");
 
     private final CompanyCache companyCache;
-    private final PlanCache planCache;
     private final PlanService planService;
     private final BinaryDataService binaryDataService;
     private final BatchRepository batchRepository;
@@ -129,18 +130,31 @@ public class BatchTopLevelService {
         return m.matches();
     }
 
-    public BatchData.BatchesResult getBatches(Pageable pageable, LaunchpadContext context, boolean includeDeleted) {
-        return getBatches(pageable, context.getCompanyId(), includeDeleted);
+    public BatchData.BatchesResult getBatches(Pageable pageable, LaunchpadContext context, boolean includeDeleted, boolean filterBatches) {
+        return getBatches(pageable, context.getCompanyId(), context.account, includeDeleted, context.account != null && filterBatches);
     }
 
-    public BatchData.BatchesResult getBatches(Pageable pageable, Long companyId, boolean includeDeleted) {
+    public BatchData.BatchesResult getBatches(Pageable pageable, Long companyId, Account account, boolean includeDeleted, boolean filterBatches) {
+        if (filterBatches && account==null) {
+            throw new IllegalStateException("(filterBatches && account==null)");
+        }
         pageable = ControllerUtils.fixPageSize(20, pageable);
         Page<Long> batchIds;
         if (includeDeleted) {
-            batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable, companyId);
+            if (filterBatches) {
+                batchIds = batchRepository.findAllForAccountByOrderByCreatedOnDesc(pageable, companyId, account.id);
+            }
+            else {
+                batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable, companyId);
+            }
         }
         else {
-            batchIds = batchRepository.findAllExcludeDeletedByOrderByCreatedOnDesc(pageable, companyId);
+            if (filterBatches) {
+                batchIds = batchRepository.findAllForAccountExcludeDeletedByOrderByCreatedOnDesc(pageable, companyId, account.id);
+            }
+            else {
+                batchIds = batchRepository.findAllExcludeDeletedByOrderByCreatedOnDesc(pageable, companyId);
+            }
         }
 
         long total = batchIds.getTotalElements();

@@ -60,9 +60,11 @@ public class BatchRestController {
     private final LaunchpadContextService launchpadContextService;
 
     @GetMapping("/batches")
-    public BatchData.BatchesResult batches(@PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
+    public BatchData.BatchesResult batches(
+            @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
+            @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return batchTopLevelService.getBatches(pageable, context, false);
+        return batchTopLevelService.getBatches(pageable, context, false, filterBatches);
     }
 
     @GetMapping("/batch-exec-statuses")
@@ -72,9 +74,11 @@ public class BatchRestController {
     }
 
     @PostMapping("/batches-part")
-    public BatchData.BatchesResult batchesPart(@PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
+    public BatchData.BatchesResult batchesPart(
+            @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
+            @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return batchTopLevelService.getBatches(pageable, context, false);
+        return batchTopLevelService.getBatches(pageable, context, false, filterBatches);
     }
 
     @GetMapping(value = "/batch-add")

@@ -46,8 +46,16 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     Page<Long> findAllByOrderByCreatedOnDesc(Pageable pageable, Long companyId);
 
     @Transactional(readOnly = true)
+    @Query("select b.id from Batch b where b.companyId=:companyId and b.accountId=:accountid order by b.createdOn desc")
+    Page<Long> findAllForAccountByOrderByCreatedOnDesc(Pageable pageable, Long companyId, Long accountId);
+
+    @Transactional(readOnly = true)
     @Query("select b.id from Batch b where b.companyId=:companyId and b.deleted=false order by b.createdOn desc")
     Page<Long> findAllExcludeDeletedByOrderByCreatedOnDesc(Pageable pageable, Long companyId);
+
+    @Transactional(readOnly = true)
+    @Query("select b.id from Batch b where b.companyId=:companyId and b.deleted=false and b.accountId=:accountId order by b.createdOn desc")
+    Page<Long> findAllForAccountExcludeDeletedByOrderByCreatedOnDesc(Pageable pageable, Long companyId, Long accountId);
 
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.launchpad.batch.data.BatchExecStatus(b.id, b.execState) " +
