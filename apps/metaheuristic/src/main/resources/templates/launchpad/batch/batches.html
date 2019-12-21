@@ -4,25 +4,40 @@
 >
 
 <script>
+        'use strict';
+
+        let /*boolean*/ isFilterBatches = false;
+
+        function switchStatus() {
+            isFilterBatches = isFilterBatches===false;
+            $(getBatchesAjax());
+
+            return false;
+        }
+
         var table = function (html) {
             $('#table').html(html).find('.ajax-elem').each(function () {
                 $(this).click(function () {
-                    $.post($(this).attr('href'), table);
+                    $.post($(this).attr('href')+'filterBatches='+isFilterBatches, table);
                     return false;
                 });
             });
         };
 
-        $(function () {
-            var token = $("meta[name='_csrf']").attr("content");
-            var header = $("meta[name='_csrf_header']").attr("content");
+        function getBatchesAjax() {
+            return function () {
+                var token = $("meta[name='_csrf']").attr("content");
+                var header = $("meta[name='_csrf_header']").attr("content");
 
-            $(document).ajaxSend(function(e, xhr, options) {
-                xhr.setRequestHeader(header, token);
-            });
-            // is this the right usage?
-            $.post('/launchpad/batch/batches-part', table);
-        });
+                $(document).ajaxSend(function (e, xhr, options) {
+                    xhr.setRequestHeader(header, token);
+                });
+                // is this the right usage?
+                $.post('/launchpad/batch/batches-part?filterBatches='+isFilterBatches, table);
+            };
+        }
+
+        $(getBatchesAjax());
 
     </script>
 
@@ -30,6 +45,13 @@
 
     <a class="pure-button pure-button-primary" href="batch-add.html" th:href="@{/launchpad/batch/batch-add}">Upload files and start processing</a>
     <p></p>
+
+    <div class="pure-controls">
+        <label for="show-status" class="pure-checkbox">
+            <input id="show-status" type="checkbox" onclick="switchStatus();"/>
+            Show current status of station
+        </label>
+    </div>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>

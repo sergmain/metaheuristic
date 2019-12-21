@@ -46,7 +46,7 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     Page<Long> findAllByOrderByCreatedOnDesc(Pageable pageable, Long companyId);
 
     @Transactional(readOnly = true)
-    @Query("select b.id from Batch b where b.companyId=:companyId and b.accountId=:accountid order by b.createdOn desc")
+    @Query("select b.id from Batch b where b.companyId=:companyId and b.accountId=:accountId order by b.createdOn desc")
     Page<Long> findAllForAccountByOrderByCreatedOnDesc(Pageable pageable, Long companyId, Long accountId);
 
     @Transactional(readOnly = true)
