@@ -53,7 +53,7 @@ import java.io.IOException;
 @Profile("launchpad")
 @CrossOrigin
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")
 public class BatchRestController {
 
     private final BatchTopLevelService batchTopLevelService;
