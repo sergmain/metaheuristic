@@ -126,7 +126,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 }
                 String json = response.returnContent().asString();
                 UploadResult result = fromJson(json);
-                log.info("Server response: length: {}, content {}", json.length(), result);
+                log.info("Server response: {}", result);
 
                 if (result.status!= Enums.UploadResourceStatus.OK) {
                     log.error("#311.050 Error uploading file, server's error : " + result.error);

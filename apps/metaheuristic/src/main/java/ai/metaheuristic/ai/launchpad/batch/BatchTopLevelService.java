@@ -218,7 +218,7 @@ public class BatchTopLevelService {
             }
 
             if (!groups.isEmpty()) {
-                List<Plan> commonPlans = planRepository.findAllAsPlan(Consts.ID_1).stream().filter(o -> {
+                List<Plan> commonPlans = planRepository.findAllAsPlan(Consts.ID_1).stream().filter(planFilter::apply).filter(o -> {
                     if (!o.isValid()) {
                         return false;
                     }
@@ -252,11 +252,17 @@ public class BatchTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, plansForBatchResult.errorMessages);
         }
 
+        if (plansForBatchResult.items.size()>1) {
+            log.error("!!!!!!!!!!!!!!!! error in code -  (plansForBatchResult.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
+        }
+
         PlanImpl plan = plansForBatchResult.items.isEmpty() ? null : (PlanImpl)plansForBatchResult.items.get(0);
         if (plan==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
         }
-
+        if (!plan.getId().equals(planId)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.038 Fatal error in configuration of plan, report to developers immediately");
+        }
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.040 name of uploaded file is null or blank");
