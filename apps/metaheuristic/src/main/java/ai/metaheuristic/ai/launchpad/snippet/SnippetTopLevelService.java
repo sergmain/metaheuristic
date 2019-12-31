@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,6 +58,7 @@ public class SnippetTopLevelService {
     public SnippetData.SnippetsResult getSnippets() {
         SnippetData.SnippetsResult result = new SnippetData.SnippetsResult();
         result.snippets = snippetRepository.findAll();
+        result.snippets.sort((o1,o2)->o2.getId().compareTo(o1.getId()));
         return result;
     }
 
