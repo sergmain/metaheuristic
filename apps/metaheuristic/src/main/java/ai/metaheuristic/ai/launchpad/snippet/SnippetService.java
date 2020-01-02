@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.launchpad.snippet;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
@@ -263,6 +264,9 @@ public class SnippetService {
                     snippet = new Snippet();
                     storeSnippet(snippetConfig, sum, file, snippet);
                 }
+            }
+            catch(BinaryDataSaveException e) {
+                status = new SnippetApiData.SnippetConfigStatus(false, e.getMessage());
             }
             catch(Throwable th) {
                 final String es = "#295.050 Error " + th.getClass().getName() + " while processing snippet '" + snippetConfig.code + "': " + th.toString();

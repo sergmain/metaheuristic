@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.event;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.LaunchpadEvent;
@@ -131,32 +130,27 @@ public class LaunchpadEventService {
     public ResourceWithCleanerInfo getEventsForPeriod(List<Integer> periods) throws IOException {
         ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
 
-        List<Long> ids = launchpadEventRepository.findIdByPeriod(periods);
-        if (ids.isEmpty()) {
-            log.warn("#456.010 list of period is empty");
-            resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
-            return resource;
-        }
-
         File tempDir = DirUtils.createTempDir("events-");
         resource.toClean.add(tempDir);
         File filesDir = new File(tempDir, "files");
 
-        Yaml yaml = YamlUtils.init(ListOfEvents.class);
+        List<Long> ids = launchpadEventRepository.findIdByPeriod(periods);
+        if (!ids.isEmpty()) {
+            Yaml yaml = YamlUtils.init(ListOfEvents.class);
 
-        for (int i = 0; i < ids.size() / PAGE_SIZE + 1; i++) {
-            File f = new File(filesDir, "event-file-"+i+".yaml");
-            int fromIndex = i * PAGE_SIZE;
-            List<Long> subList = ids.subList(fromIndex, Math.min(ids.size(), fromIndex + PAGE_SIZE));
-            List<LaunchpadEvent> events = launchpadEventRepository.findByIds(subList);
-            ListOfEvents listOfEvents = new ListOfEvents();
-            listOfEvents.events = new ArrayList<>();
-            for (LaunchpadEvent event : events) {
-                listOfEvents.events.add(event.params);
+            for (int i = 0; i < ids.size() / PAGE_SIZE + 1; i++) {
+                File f = new File(filesDir, "event-file-" + i + ".yaml");
+                int fromIndex = i * PAGE_SIZE;
+                List<Long> subList = ids.subList(fromIndex, Math.min(ids.size(), fromIndex + PAGE_SIZE));
+                List<LaunchpadEvent> events = launchpadEventRepository.findByIds(subList);
+                ListOfEvents listOfEvents = new ListOfEvents();
+                listOfEvents.events = new ArrayList<>();
+                for (LaunchpadEvent event : events) {
+                    listOfEvents.events.add(event.params);
+                }
+                FileUtils.write(f, yaml.dumpAsMap(listOfEvents), StandardCharsets.UTF_8);
             }
-            FileUtils.write(f, yaml.dumpAsMap(listOfEvents), StandardCharsets.UTF_8);
         }
-
         CompanyData.CompanyList companyList = new CompanyData.CompanyList();
         companyRepository.findAll()
                 .forEach(c-> companyList.companies.add(new CompanyData.CompanyShortData(c.id, c.name)));

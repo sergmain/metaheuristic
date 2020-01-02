@@ -186,15 +186,11 @@ public class BinaryDataService {
                            BinaryDataType binaryDataType, String code, String poolCode,
                            boolean isManual, String filename, Long refId, BinaryDataRefType refType) {
         if (binaryDataType== BinaryDataType.SNIPPET && refId!=null) {
-            String es = "#087.030 Snippet can't be bound to workbook";
-            log.error(es);
-            throw new BinaryDataSaveException(es);
+            throw new BinaryDataSaveException("#087.030 Snippet can't be bound to workbook");
         }
         if ((refId==null && refType!=null) || (refId!=null && refType==null)) {
-            String es = "#087.040 refId and refType both must be null or both must not be null, " +
-                    "refId: #"+refId+", refType: "+refType;
-            log.error(es);
-            throw new BinaryDataSaveException(es);
+            throw new BinaryDataSaveException("#087.040 refId and refType both must be null or both must not be null, " +
+                    "refId: #"+refId+", refType: "+refType);
         }
         try {
             BinaryDataImpl data = binaryDataRepository.findByCodeForUpdate(code);
@@ -212,16 +208,12 @@ public class BinaryDataService {
             } else {
                 if (!poolCode.equals(data.getPoolCode())) {
                     // this is exception for the case when two resources have the same names but different pool codes
-                    String es = "#087.050 Pool code is different, old: " + data.getPoolCode() + ", new: " + poolCode;
-                    log.error(es);
-                    throw new BinaryDataSaveException(es);
+                    throw new BinaryDataSaveException("#087.050 Pool code is different, old: " + data.getPoolCode() + ", new: " + poolCode);
                 }
                 DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
                 if (dataStorageParams.sourcing!=DataSourcing.launchpad) {
                     // this is an exception for the case when two resources have the same names but different pool codes
-                    String es = "#087.060 Sourcing must be launchpad, value in db: " + data.getParams();
-                    log.error(es);
-                    throw new BinaryDataSaveException(es);
+                    throw new BinaryDataSaveException("#087.060 Sourcing must be launchpad, value in db: " + data.getParams());
                 }
             }
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
@@ -236,8 +228,7 @@ public class BinaryDataService {
         catch(BinaryDataSaveException | PessimisticLockingFailureException e) {
             throw e;
         } catch(Throwable th) {
-            log.error("#087.070 error storing data to db", th);
-            throw new BinaryDataSaveException("Error", th);
+            throw new BinaryDataSaveException("#087.070 error storing data to db - " + th.getMessage(), th);
         }
     }
 
