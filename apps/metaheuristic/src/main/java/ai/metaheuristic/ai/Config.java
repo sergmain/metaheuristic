@@ -71,7 +71,7 @@ public class Config {
     @Bean
     public ConfigurableWebServerFactory servletContainer() {
         TomcatServletWebServerFactory tomcat = new TomcatServletWebServerFactory();
-        if (ajpEnabled) {
+        if (ajpEnabled && ajpPort!=0) {
             Connector ajpConnector = new Connector("AJP/1.3");
             ajpConnector.setPort(ajpPort);
             ajpConnector.setSecure(false);

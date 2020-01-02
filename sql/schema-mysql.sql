@@ -43,7 +43,8 @@ CREATE INDEX mh_account_company_id_idx
 CREATE TABLE mh_station
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,  UPDATED_ON  bigint not null,
+    VERSION         INT UNSIGNED    NOT NULL,
+    UPDATED_ON  bigint not null,
     IP          VARCHAR(30),
     DESCRIPTION VARCHAR(250),
     STATUS      TEXT not null
@@ -95,7 +96,8 @@ CREATE UNIQUE INDEX mh_data_code_unq_idx
 CREATE TABLE mh_experiment
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,  WORKBOOK_ID  NUMERIC(10, 0),
+    VERSION         INT UNSIGNED    NOT NULL,
+    WORKBOOK_ID  NUMERIC(10, 0),
     CODE        VARCHAR(50)   NOT NULL,
     PARAMS          MEDIUMTEXT not null
 );
@@ -119,7 +121,8 @@ CREATE TABLE mh_task
     EXEC_STATE        tinyint(1) not null default 0,
     IS_RESULT_RECEIVED  tinyint(1) not null default 0,
     RESULT_RESOURCE_SCHEDULED_ON bigint,
-    PROCESS_TYPE tinyint(1) not null
+    PROCESS_TYPE tinyint(1) not null,
+    EXTENDED_RESULT      MEDIUMTEXT
 );
 
 CREATE INDEX mh_task_workbook_id_idx
@@ -145,12 +148,15 @@ CREATE TABLE mh_plan
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
     COMPANY_ID      INT UNSIGNED    not null,
-    CODE      varchar(50)  NOT NULL,
+    CODE            varchar(50)  NOT NULL,
     CREATED_ON    bigint NOT NULL,
     PARAMS        TEXT not null,
     IS_LOCKED      BOOLEAN not null default false,
     IS_VALID      BOOLEAN not null default false
 );
+
+CREATE UNIQUE INDEX mh_plan_code_unq_idx
+    ON mh_plan (CODE);
 
 CREATE TABLE mh_workbook
 (

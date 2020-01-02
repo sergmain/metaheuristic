@@ -1,16 +1,21 @@
-create table MH_LAUNCHPAD_ADDRESS
+CREATE TABLE mh_company
 (
-  ID          bigserial not null PRIMARY KEY,
-  VERSION     bigint NOT NULL,
-  URL varchar(200) not null,
-  DESCRIPTION varchar(100) not null,
-  SIGNATURE varchar(1000)
+    ID          SERIAL PRIMARY KEY,
+    VERSION     NUMERIC(10, 0)  NOT NULL,
+    NAME            VARCHAR(50)   NOT NULL,
+    PARAMS          TEXT null
 );
+
+insert into mh_company
+(id, version, name, params)
+VALUES
+(1, 0, 'master company', '');
 
 create table MH_ACCOUNT
 (
-  ID  bigserial not null PRIMARY KEY,
-  VERSION bigint NOT NULL,
+  ID          SERIAL PRIMARY KEY,
+  VERSION     NUMERIC(10, 0)  NOT NULL,
+  COMPANY_ID     NUMERIC(10, 0) NOT NULL,
   USERNAME varchar(30) not null,
   PASSWORD varchar(100) not null,
   ROLES varchar(100),
@@ -25,10 +30,16 @@ create table MH_ACCOUNT
   PHONE varchar(100) ,
   PHONE_AS_STR varchar(100) ,
 
-  CREATED_ON bigint not null
+  CREATED_ON bigint not null,
+  SECRET_KEY  varchar(25),
+  TWO_FA      BOOLEAN not null default false
 );
 
-CREATE TABLE MH_STATION (
+CREATE INDEX mh_account_company_id_idx
+    ON mh_account (COMPANY_ID);
+
+CREATE TABLE MH_STATION
+(
   ID          SERIAL PRIMARY KEY,
   VERSION     NUMERIC(10, 0)  NOT NULL,
   UPDATED_ON  bigint not null,
@@ -37,7 +48,8 @@ CREATE TABLE MH_STATION (
   STATUS      TEXT NOT NULL
 );
 
-CREATE TABLE MH_LOG_DATA (
+CREATE TABLE MH_LOG_DATA
+(
   ID          SERIAL PRIMARY KEY,
   REF_ID      NUMERIC(10, 0) NOT NULL,
   VERSION     NUMERIC(5, 0)  NOT NULL,
@@ -46,12 +58,13 @@ CREATE TABLE MH_LOG_DATA (
   LOG_DATA    TEXT not null
 );
 
-CREATE TABLE MH_DATA (
+CREATE TABLE MH_DATA
+(
   ID          SERIAL PRIMARY KEY,
+  VERSION     NUMERIC(5, 0) NOT NULL,
   CODE        VARCHAR(200) not null,
   POOL_CODE   VARCHAR(250) not null,
   DATA_TYPE   NUMERIC(2, 0) NOT NULL,
-  VERSION     NUMERIC(5, 0) NOT NULL,
   REF_ID      NUMERIC(10, 0),
   REF_TYPE    VARCHAR(15),
   UPLOAD_TS   TIMESTAMP DEFAULT to_timestamp(0),
@@ -95,16 +108,17 @@ CREATE TABLE MH_TASK (
   PARAMS        TEXT not null,
   STATION_ID    NUMERIC(10, 0),
   ASSIGNED_ON   bigint,
-  IS_COMPLETED  BOOLEAN default false not null ,
+  IS_COMPLETED  BOOLEAN default false not null,
   COMPLETED_ON  bigint,
   SNIPPET_EXEC_RESULTS  TEXT,
   METRICS      TEXT,
   TASK_ORDER   smallint not null,
   WORKBOOK_ID          NUMERIC(10, 0)   NOT NULL,
   EXEC_STATE   smallint not null default 0,
-  IS_RESULT_RECEIVED  BOOLEAN default false not null,
-  RESULT_RESOURCE_SCHEDULED_ON  bigint NOT NULL default 0,
-  PROCESS_TYPE smallint not null
+  IS_RESULT_RECEIVED  BOOLEAN not null default false,
+  RESULT_RESOURCE_SCHEDULED_ON  bigint,
+  PROCESS_TYPE smallint not null,
+  EXTENDED_RESULT      TEXT
 );
 
 CREATE INDEX MH_TASK_WORKBOOK_ID_IDX
@@ -118,7 +132,7 @@ CREATE TABLE MH_SNIPPET (
   VERSION     NUMERIC(5, 0)  NOT NULL,
   SNIPPET_CODE    VARCHAR(100)  not null,
   SNIPPET_TYPE      VARCHAR(50) not null,
-  PARAMS         TEXT
+  PARAMS         TEXT not null
 );
 
 CREATE UNIQUE INDEX MH_SNIPPET_UNQ_IDX
@@ -127,17 +141,19 @@ CREATE UNIQUE INDEX MH_SNIPPET_UNQ_IDX
 CREATE TABLE MH_PLAN (
   ID            SERIAL PRIMARY KEY,
   VERSION       NUMERIC(5, 0)  NOT NULL,
-  CODE      varchar(50)  NOT NULL,
+  COMPANY_ID    NUMERIC(10, 0) NOT NULL,
+  CODE          varchar(50)  NOT NULL,
   CREATED_ON    bigint NOT NULL,
   PARAMS        TEXT not null,
-  IS_LOCKED      BOOLEAN not null default false,
+  IS_LOCKED     BOOLEAN not null default false,
   IS_VALID      BOOLEAN not null default false
 );
 
 CREATE UNIQUE INDEX MH_PLAN_CODE_UNQ_IDX
-  ON MH_PLAN (CODE);
+    ON MH_PLAN (CODE);
 
-CREATE TABLE MH_WORKBOOK (
+CREATE TABLE MH_WORKBOOK
+(
   ID            SERIAL PRIMARY KEY,
   VERSION       NUMERIC(5, 0)  NOT NULL,
   PLAN_ID       NUMERIC(10, 0) NOT NULL,
@@ -153,6 +169,7 @@ CREATE TABLE MH_ATLAS
 (
   ID            SERIAL PRIMARY KEY,
   VERSION       NUMERIC(5, 0)  NOT NULL,
+  COMPANY_ID    NUMERIC(10, 0) NOT NULL,
   NAME          VARCHAR(50)   NOT NULL,
   DESCRIPTION   VARCHAR(250)  NOT NULL,
   CODE          VARCHAR(50)   NOT NULL,
@@ -179,11 +196,14 @@ create table MH_BATCH
 (
   ID               SERIAL PRIMARY KEY,
   VERSION          NUMERIC(5, 0)  NOT NULL,
+  COMPANY_ID    NUMERIC(10, 0) NOT NULL,
+  ACCOUNT_ID    NUMERIC(10, 0),
   PLAN_ID          NUMERIC(10, 0) NOT NULL,
   DATA_ID          NUMERIC(10, 0),
   CREATED_ON       bigint         NOT NULL,
   EXEC_STATE      smallint not null default 0,
-  PARAMS           TEXT
+  PARAMS           TEXT,
+  IS_DELETED      BOOLEAN not null default false
 );
 
 CREATE TABLE MH_BATCH_WORKBOOK
@@ -202,6 +222,9 @@ CREATE TABLE MH_EVENT
     ID              SERIAL PRIMARY KEY,
     VERSION         NUMERIC(5, 0)  NOT NULL,
     CREATED_ON      bigint         NOT NULL,
+    -- company_id can be null
+    COMPANY_ID      NUMERIC(10, 0),
+    CREATED_ON      bigint         NOT NULL,
     PERIOD          NUMERIC(6, 0)  not null ,
     EVENT           VARCHAR(50)    not null,
     PARAMS          TEXT     not null
@@ -209,3 +232,14 @@ CREATE TABLE MH_EVENT
 
 CREATE INDEX MH_EVENT_PERIOD_IDX
     ON MH_EVENT (PERIOD);
+
+-- ========= legacy table
+
+create table MH_LAUNCHPAD_ADDRESS
+(
+    ID          bigserial not null PRIMARY KEY,
+    VERSION     bigint NOT NULL,
+    URL varchar(200) not null,
+    DESCRIPTION varchar(100) not null,
+    SIGNATURE varchar(1000)
+);
