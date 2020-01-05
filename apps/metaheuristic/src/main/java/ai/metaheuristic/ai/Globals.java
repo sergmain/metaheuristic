@@ -132,6 +132,11 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.chunk-size')) }")
     public String chunkSizeStr;
 
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset-mode')) }")
+    public String assetModeStr;
+
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset-source-url')) }")
+    public String assetSourceUrl;
 
     // Station's globals
 
@@ -168,6 +173,7 @@ public class Globals {
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
     public List<String> allowedOrigins;
+    public Enums.AssetMode assetMode = Enums.AssetMode.local;
 
     // TODO 2019-07-28 need to handle this case
     //  https://stackoverflow.com/questions/37436927/utf-8-encoding-of-application-properties-attributes-in-spring-boot
@@ -175,7 +181,7 @@ public class Globals {
     @PostConstruct
     public void init() {
         if (!isSecurityEnabled) {
-            throw new IllegalStateException("mh.launchpad.is-security-enabled==false isn't supported any more\nNeed to change to true and set up login/password");
+            throw new IllegalStateException("mh.launchpad.is-security-enabled==false isn't supported any more\nNeed to change to true and set up master's login/password");
         }
         String publicKeyAsStr = env.getProperty("MH_PUBLIC_KEY");
         if (publicKeyAsStr!=null && !publicKeyAsStr.isBlank()) {
@@ -222,6 +228,24 @@ public class Globals {
             chunkSize = parseChunkSizeValue("10m");
         }
 
+        if (!S.b(env.getProperty("MH_ASSET_MODE"))) {
+            assetModeStr  = env.getProperty("MH_ASSET_MODE");
+        }
+        if (!S.b(assetModeStr)) {
+            try {
+                assetMode = Enums.AssetMode.valueOf(assetModeStr);
+            } catch (Throwable th) {
+                throw new IllegalArgumentException("Wrong value of assertMode, must be one of "+ Arrays.toString(Enums.AssetMode.values()) + ", " +
+                        "actual value: " + assetModeStr);
+            }
+        }
+        if (assetMode ==Enums.AssetMode.replicated && S.b(assetSourceUrl)) {
+            throw new IllegalArgumentException("Wrong value of assertSourceUrl, must be not null when assertMode== Enums.AssetMode ");
+        }
+        if (!isLaunchpadEnabled) {
+            log.warn("Launchpad wasn't enabled, assetMode will be set to AssetMode.local");
+            assetMode = Enums.AssetMode.local;
+        }
 
         String stationEnabledAsStr = env.getProperty("MH_IS_STATION_ENABLED");
         if (stationEnabledAsStr!=null && !stationEnabledAsStr.isBlank()) {
@@ -407,6 +431,8 @@ public class Globals {
         log.info("'\tisSslRequired: {}", isSslRequired);
         log.info("'\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
         log.info("'\tlaunchpadDir: {}", launchpadDir!=null ? launchpadDir.getAbsolutePath() : null);
+        log.info("'\tassetMode: {}", assetMode);
+        log.info("'\tassetSourceUrl: {}", assetSourceUrl);
         log.info("'\tchunkSize: {}", chunkSize);
         log.info("'\tresourceRowsLimit: {}", resourceRowsLimit);
         log.info("'\texperimentRowsLimit: {}", experimentRowsLimit);

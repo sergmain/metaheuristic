@@ -1,5 +1,14 @@
 -- names of tables must be in lower case!
 
+CREATE TABLE mh_replication
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    RESOURCE        VARCHAR(10) not null,
+    PAGE            INT UNSIGNED not null,
+    LAST_UPDATED_ON bigint not null
+);
+
 CREATE TABLE mh_company
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
