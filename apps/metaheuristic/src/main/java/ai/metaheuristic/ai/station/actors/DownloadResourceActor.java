@@ -128,13 +128,8 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
                         RestUtils.addHeaders(request);
 
-                        Response response;
-                        if (task.launchpad.securityEnabled) {
-                            response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restPassword).execute(request);
-                        }
-                        else {
-                            response = request.execute();
-                        }
+                        Response response = HttpClientExecutor.getExecutor(
+                                task.launchpad.url, task.launchpad.restUsername, task.launchpad.restPassword).execute(request);
                         File partFile = new File(dir, String.format(mask, idx));
                         final HttpResponse httpResponse = response.returnResponse();
                         try (final FileOutputStream out = new FileOutputStream(partFile)) {

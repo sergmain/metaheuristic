@@ -19,17 +19,12 @@ package ai.metaheuristic.ai;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ApplicationContext;
-
-import java.lang.management.ManagementFactory;
 
 @SpringBootApplication
 @Slf4j
 public class MetaheuristicApplication {
 
     public static void main(String[] args) {
-        ApplicationContext applicationContext = new SpringApplication(MetaheuristicApplication.class).run();
-        log.debug("PID: {}, Application started context: {}",
-                ManagementFactory.getRuntimeMXBean().getName(), applicationContext);
+        new SpringApplication(MetaheuristicApplication.class).run();
     }
 }

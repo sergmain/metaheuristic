@@ -272,12 +272,11 @@ public class LaunchpadRequestor {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                if (launchpad.launchpadLookup.securityEnabled) {
-                    String auth = launchpad.launchpadLookup.restUsername + ':' + launchpad.launchpadLookup.restPassword;
-                    byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
-                    String authHeader = "Basic " + new String(encodedAuth);
-                    headers.set("Authorization", authHeader);
-                }
+
+                String auth = launchpad.launchpadLookup.restUsername + ':' + launchpad.launchpadLookup.restPassword;
+                byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
+                String authHeader = "Basic " + new String(encodedAuth);
+                headers.set("Authorization", authHeader);
 
                 String yaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);
@@ -307,7 +306,7 @@ public class LaunchpadRequestor {
                     case UNAUTHORIZED:
                     case FORBIDDEN:
                     case NOT_FOUND:
-                        log.error("#775.070 Error {} accessing url {}, securityEnabled: {}", e.getStatusCode().value(), serverRestUrl, launchpad.launchpadLookup.securityEnabled);
+                        log.error("#775.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
                         break;
                     default:
                         throw e;

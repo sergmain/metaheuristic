@@ -15,7 +15,6 @@
  */
 package ai.metaheuristic.ai.launchpad.snippet;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
@@ -34,9 +33,9 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYaml;
 import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYamlUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -235,30 +234,12 @@ public class SnippetService {
                 }
 
                 Snippet snippet = snippetRepository.findByCodeForUpdate(snippetConfig.code);
-                // there is snippet with the same code
+                // there is a snippet with the same code
                 if (snippet!=null) {
-                    SnippetConfigYaml sc = SnippetConfigYamlUtils.BASE_YAML_UTILS.to(snippet.params);
-
-                    // new snippet is to replace one which is already in db
-                    if (globals.isReplaceSnapshot && snippetConfig.code.endsWith(Consts.SNAPSHOT_SUFFIX)) {
-                        // there isn't any checksum for current snippet in db
-                        if (sc.checksum ==null) {
-                            storeSnippet(snippetConfig, sum, file, snippet);
-                        }
-                        else {
-                            final String checksum = Checksum.fromJson(sc.checksum).checksums.get(EnumsApi.Type.SHA256);
-                            // there checksum for current snippet in db isn't equal to new checksum
-                            if (!checksum.equals(sum)) {
-                                storeSnippet(snippetConfig, sum, file, snippet);
-                            }
-                        }
-                    }
-                    else {
-                        status = new SnippetApiData.SnippetConfigStatus(false,
-                                "#295.040 Updating of snippets is prohibited, not a snapshot version, '"+snippet.code+"'");
-                        //noinspection UnnecessaryContinue
-                        continue;
-                    }
+                    status = new SnippetApiData.SnippetConfigStatus(false,
+                            "#295.040 Updating of snippet isn't supported any more, need to upload a snippet as a new version. Snippet code: "+snippet.code);
+                    //noinspection UnnecessaryContinue
+                    continue;
                 }
                 else {
                     snippet = new Snippet();

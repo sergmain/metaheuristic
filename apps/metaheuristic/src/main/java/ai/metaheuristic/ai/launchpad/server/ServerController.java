@@ -19,11 +19,7 @@ package ai.metaheuristic.ai.launchpad.server;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -36,9 +32,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.IOException;
 
 /**
  * User: Serg
@@ -49,21 +43,12 @@ import java.io.IOException;
 @Slf4j
 @Profile("launchpad")
 @RequestMapping("/rest/v1")
-@PreAuthorize("hasAnyRole('ADMIN', 'SERVER_REST_ACCESS')")
+@PreAuthorize("hasAnyRole('SERVER_REST_ACCESS')")
 @RequiredArgsConstructor
 public class ServerController {
 
     private final Globals globals;
     private final ServerService serverService;
-    private final SnippetService snippetService;
-
-    // left there only for compatibility
-    @Deprecated
-    @PostMapping("/srv/{random-part}")
-    public String processRequestAuth(@SuppressWarnings("unused") @PathVariable("random-part") String randomPart,@RequestBody String data) {
-        log.debug("processRequestAuth(), globals.isSecurityEnabled: {}, data: {}", globals.isSecurityEnabled, data);
-        return "{}";
-    }
 
     @PostMapping("/srv-v2/{random-part}")
     public String processRequestAuth(
@@ -71,7 +56,7 @@ public class ServerController {
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @RequestBody String data
             ) {
-        log.debug("processRequestAuth(), globals.isSecurityEnabled: {}, data: {}", globals.isSecurityEnabled, data);
+        log.debug("processRequestAuth(), data: {}", data);
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
@@ -84,8 +69,7 @@ public class ServerController {
             @SuppressWarnings("unused") Long taskId,
             String code, String chunkSize, Integer chunkNum) {
         String normalCode = new File(code).getName();
-        log.debug("deliverResourceAuth(), globals.isSecurityEnabled: {}, typeAsStr: {}, code: {}, chunkSize: {}, chunkNum: {}",
-                globals.isSecurityEnabled, typeAsStr, normalCode, chunkSize, chunkNum);
+        log.debug("deliverResourceAuth(), typeAsStr: {}, code: {}, chunkSize: {}, chunkNum: {}", typeAsStr, normalCode, chunkSize, chunkNum);
         if (chunkSize==null || chunkSize.isBlank() || chunkNum==null) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
         }
@@ -108,54 +92,8 @@ public class ServerController {
             Long taskId,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) {
-        log.debug("uploadResourceAuth(), globals.isSecurityEnabled: {}, taskId: {}", globals.isSecurityEnabled, taskId);
+        log.debug("uploadResourceAuth(), taskId: {}", taskId);
         return serverService.uploadResource(file, taskId);
-    }
-
-    @PostMapping("/payload/snippet-checksum/{random-part}")
-    public String snippetChecksumAuth(
-            HttpServletResponse response,
-            @SuppressWarnings("unused") String stationId,
-            @SuppressWarnings("unused") String taskId,
-            String code,
-            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
-    ) throws IOException {
-        return getSnippetChecksum(response, code);
-    }
-
-    private String getSnippetChecksum(HttpServletResponse response, String snippetCode) throws IOException {
-        Snippet snippet = snippetService.findByCode(snippetCode);
-        if (snippet==null) {
-            log.warn("#440.100 Snippet {} wasn't", snippetCode);
-            response.sendError(HttpServletResponse.SC_GONE);
-            return null;
-        }
-        SnippetConfigYaml sc = snippet.getSnippetConfig(false);
-        log.info("#440.120 Send checksum {} for snippet {}", sc.checksum, sc.getCode());
-        return sc.checksum;
-    }
-
-    @PostMapping("/payload/snippet-config/{random-part}")
-    public String snippetConfig(
-            HttpServletResponse response,
-            @SuppressWarnings("unused") String stationId,
-            @SuppressWarnings("unused") String taskId,
-            String code,
-            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
-    ) throws IOException {
-        return getSnippetConfig(response, code);
-    }
-
-    private String getSnippetConfig(HttpServletResponse response, String snippetCode) throws IOException {
-        Snippet snippet = snippetService.findByCode(snippetCode);
-        if (snippet==null) {
-            log.warn("#440.140 Snippet {} wasn't found", snippetCode);
-            response.sendError(HttpServletResponse.SC_GONE);
-            return null;
-        }
-        SnippetConfigYaml sc = snippet.getSnippetConfig(false);
-        log.info("Send snippet config for snippet {}", sc.getCode());
-        return SnippetConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
     }
 
     /**

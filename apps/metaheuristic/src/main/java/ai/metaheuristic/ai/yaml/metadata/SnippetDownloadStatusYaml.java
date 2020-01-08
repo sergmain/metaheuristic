@@ -42,6 +42,8 @@ public class SnippetDownloadStatusYaml implements BaseParams {
     public static class Status {
         public Enums.SnippetState snippetState;
         public String code;
+
+        // actually this is assetUrl. left it as launchpadUrl until there will be versioning of this config
         public String launchpadUrl;
         public EnumsApi.SnippetSourcing sourcing;
         public boolean verified;

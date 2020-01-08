@@ -36,10 +36,10 @@ public class Consts {
 
     public static final String SESSIONID_NAME = "JSESSIONID";
 
-    public static final String SERVER_REST_URL = "/srv";
     public static final String SERVER_REST_URL_V2 = "/srv-v2";
     public static final String PAYLOAD_REST_URL = "/payload";
     public static final String UPLOAD_REST_URL = "/upload";
+    public static final String REST_ASSET_URL = "/rest/asset";
 
     public static final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(), MediaType.APPLICATION_JSON.getSubtype(), StandardCharsets.UTF_8);
 
@@ -53,8 +53,6 @@ public class Consts {
     public static final Map<String, String> EMPTY_UNMODIFIABLE_MAP = Collections.unmodifiableMap(new HashMap<>(0));
 
     public static final ByteArrayResource ZERO_BYTE_ARRAY_RESOURCE = new ByteArrayResource(new byte[0]);
-
-    public static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 
     public static final String SNIPPET_DIR = "snippet";
     public static final String DATABASE_DIR = "database";

@@ -42,6 +42,15 @@ public class LaunchpadLookupConfig {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class Asset {
+        public String url;
+        public String username;
+        public String password;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class LaunchpadLookup {
         // fields, which are specific to concrete installation
         // actually, it's a schedule
@@ -54,9 +63,21 @@ public class LaunchpadLookupConfig {
         public String publicKey;
         public LaunchpadLookupType lookupType;
         public AuthType authType;
-        public boolean securityEnabled;
+
+        // security must be enabled all the time
+        @SuppressWarnings("DeprecatedIsStillUsed")
+        @Deprecated
+        private boolean securityEnabled;
+        public boolean isSecurityEnabled() {
+            return true;
+        }
+        public void setSecurityEnabled(boolean securityEnabled) {
+            this.securityEnabled = true;
+        }
+
         public String restPassword;
         public String restUsername;
+        public Asset asset;
 
         /**
          * won't delete this field for backward compatibility

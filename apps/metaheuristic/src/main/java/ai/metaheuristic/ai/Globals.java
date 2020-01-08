@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai;
 
+import ai.metaheuristic.ai.exceptions.GlobalConfigurationException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.SecUtils;
@@ -123,8 +124,11 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.account-table-rows-limit'), 5, 100, 20) }")
     public int accountRowsLimit;
 
-    @Value("${mh.launchpad.is-replace-snapshot:#{true}}")
-    public boolean isReplaceSnapshot;
+    // left here for compatibility
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
+    @Value("${mh.launchpad.is-replace-snapshot:#{null}}")
+    public Boolean isReplaceSnapshot;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.default-result-file-extension')) }")
     public String defaultResultFileExtension;
@@ -137,6 +141,12 @@ public class Globals {
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset-source-url')) }")
     public String assetSourceUrl;
+
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset.username')) }")
+    public String assetUsername;
+
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset.password')) }")
+    public String assetPassword;
 
     // Station's globals
 
@@ -173,7 +183,7 @@ public class Globals {
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
     public List<String> allowedOrigins;
-    public Enums.AssetMode assetMode = Enums.AssetMode.local;
+    public Enums.LaunchpadAssetMode assetMode = Enums.LaunchpadAssetMode.local;
 
     // TODO 2019-07-28 need to handle this case
     //  https://stackoverflow.com/questions/37436927/utf-8-encoding-of-application-properties-attributes-in-spring-boot
@@ -181,7 +191,7 @@ public class Globals {
     @PostConstruct
     public void init() {
         if (!isSecurityEnabled) {
-            throw new IllegalStateException("mh.launchpad.is-security-enabled==false isn't supported any more\nNeed to change to true and set up master's login/password");
+            throw new GlobalConfigurationException("mh.launchpad.is-security-enabled==false isn't supported any more\nNeed to change to true and set up master's login/password");
         }
         String publicKeyAsStr = env.getProperty("MH_PUBLIC_KEY");
         if (publicKeyAsStr!=null && !publicKeyAsStr.isBlank()) {
@@ -228,29 +238,29 @@ public class Globals {
             chunkSize = parseChunkSizeValue("10m");
         }
 
-        if (!S.b(env.getProperty("MH_ASSET_MODE"))) {
-            assetModeStr  = env.getProperty("MH_ASSET_MODE");
+        if (!S.b(env.getProperty("MH_LAUNCHPAD_ASSET_MODE"))) {
+            assetModeStr = env.getProperty("MH_LAUNCHPAD_ASSET_MODE");
         }
         if (!S.b(assetModeStr)) {
             try {
-                assetMode = Enums.AssetMode.valueOf(assetModeStr);
+                assetMode = Enums.LaunchpadAssetMode.valueOf(assetModeStr);
             } catch (Throwable th) {
-                throw new IllegalArgumentException("Wrong value of assertMode, must be one of "+ Arrays.toString(Enums.AssetMode.values()) + ", " +
+                throw new GlobalConfigurationException("Wrong value of assertMode, must be one of "+ Arrays.toString(Enums.LaunchpadAssetMode.values()) + ", " +
                         "actual value: " + assetModeStr);
             }
         }
-        if (assetMode ==Enums.AssetMode.replicated && S.b(assetSourceUrl)) {
-            throw new IllegalArgumentException("Wrong value of assertSourceUrl, must be not null when assertMode== Enums.AssetMode ");
+        if (assetMode==Enums.LaunchpadAssetMode.replicated && S.b(assetSourceUrl)) {
+            throw new GlobalConfigurationException("Wrong value of assertSourceUrl, must be not null when launchpadAssetMode==Enums.LaunchpadAssetMode.replicate");
         }
         if (!isLaunchpadEnabled) {
-            log.warn("Launchpad wasn't enabled, assetMode will be set to AssetMode.local");
-            assetMode = Enums.AssetMode.local;
+            log.warn("Launchpad wasn't enabled, assetMode will be set to LaunchpadAssetMode.local");
+            assetMode = Enums.LaunchpadAssetMode.local;
         }
 
         String stationEnabledAsStr = env.getProperty("MH_IS_STATION_ENABLED");
-        if (stationEnabledAsStr!=null && !stationEnabledAsStr.isBlank()) {
+        if (!S.b(stationEnabledAsStr)) {
             try {
-                isStationEnabled = Boolean.parseBoolean(stationEnabledAsStr);
+                isStationEnabled = Boolean.parseBoolean(stationEnabledAsStr.toLowerCase());
             } catch (Throwable th) {
                 log.error("Wrong value in env MH_IS_STATION_ENABLED, must be boolean (true/false), " +
                         "actual: " + stationEnabledAsStr+". Will be used 'false' as value.");
@@ -261,7 +271,7 @@ public class Globals {
         String eventEnabledAsStr = env.getProperty("MH_IS_EVENT_ENABLED");
         if (!S.b(eventEnabledAsStr)) {
             try {
-                isEventEnabled = Boolean.parseBoolean(eventEnabledAsStr);
+                isEventEnabled = Boolean.parseBoolean(eventEnabledAsStr.toLowerCase());
             } catch (Throwable th) {
                 log.error("Wrong value in env MH_IS_EVENT_ENABLED, must be boolean (true/false), " +
                         "actual: " + eventEnabledAsStr+". Will be used 'false' as value.");
@@ -312,7 +322,7 @@ public class Globals {
 
         if (isLaunchpadEnabled) {
             if (launchpadMasterUsername==null || launchpadMasterPassword==null) {
-                throw new IllegalArgumentException(
+                throw new GlobalConfigurationException(
                         "if mh.secure-rest-url=true, then mh.launchpad.master-username, " +
                                 "and mh.launchpad.master-password have to be not null");
             }
@@ -346,6 +356,13 @@ public class Globals {
 
         logGlobals();
         logSystemEnvs();
+        logDepricated();
+    }
+
+    private void logDepricated() {
+        if (isReplaceSnapshot!=null) {
+            log.warn("property 'mh.launchpad.is-replace-snapshot' isn't supported any more and need to be deleted");
+        }
     }
 
     private static final Map<Character, Long> sizes = Map.of(
@@ -359,7 +376,7 @@ public class Globals {
         final char ch = Character.toLowerCase(str.charAt(str.length() - 1));
         if (Character.isLetter(ch)) {
             if (str.length()==1 || !sizes.containsKey(ch)) {
-                throw new IllegalArgumentException("Wrong value of chunkSize: " + str);
+                throw new GlobalConfigurationException("Wrong value of chunkSize: " + str);
             }
             return Long.parseLong(str.substring(0, str.length()-1)) * sizes.get(ch);
         }
@@ -375,6 +392,9 @@ public class Globals {
         }
         else if (SystemUtils.IS_OS_MAC_OSX) {
             os = EnumsApi.OS.macos;
+        }
+        else {
+            os = EnumsApi.OS.unknown;
         }
     }
 
@@ -432,6 +452,7 @@ public class Globals {
         log.info("'\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
         log.info("'\tlaunchpadDir: {}", launchpadDir!=null ? launchpadDir.getAbsolutePath() : null);
         log.info("'\tassetMode: {}", assetMode);
+        log.info("'\tassetUsername: {}", assetUsername);
         log.info("'\tassetSourceUrl: {}", assetSourceUrl);
         log.info("'\tchunkSize: {}", chunkSize);
         log.info("'\tresourceRowsLimit: {}", resourceRowsLimit);
@@ -440,7 +461,6 @@ public class Globals {
         log.info("'\tworkbookRowsLimit: {}", workbookRowsLimit);
         log.info("'\tstationRowsLimit: {}", stationRowsLimit);
         log.info("'\taccountRowsLimit: {}", accountRowsLimit);
-        log.info("'\tisReplaceSnapshot: {}", isReplaceSnapshot);
         log.info("'\tisStationEnabled: {}", isStationEnabled);
         log.info("'\tstationDir: {}", stationDir);
     }

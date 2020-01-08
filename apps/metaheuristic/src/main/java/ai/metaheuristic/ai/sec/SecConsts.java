@@ -25,6 +25,7 @@ import java.util.List;
  */
 public class SecConsts {
     public static final String ROLE_SERVER_REST_ACCESS = "ROLE_SERVER_REST_ACCESS";
+    public static final String ROLE_ASSET_REST_ACCESS = "ROLE_ASSET_REST_ACCESS";
     public static final String ROLE_BILLING = "ROLE_BILLING";
 
     public static final String ROLE_MASTER_ADMIN = "ROLE_MASTER_ADMIN";
@@ -33,5 +34,5 @@ public class SecConsts {
     public static final String ROLE_ADMIN = "ROLE_ADMIN";
 
     public static final List<String> POSSIBLE_ROLES = List.of(ROLE_ADMIN,"ROLE_MANAGER","ROLE_OPERATOR", "ROLE_DATA");
-    public static final List<String> COMPANY_1_ROLES = List.of(ROLE_ADMIN, ROLE_SERVER_REST_ACCESS, ROLE_MASTER_OPERATOR, ROLE_MASTER_SUPPORT, ROLE_BILLING);
+    public static final List<String> COMPANY_1_ROLES = List.of(ROLE_ADMIN, ROLE_SERVER_REST_ACCESS, ROLE_ASSET_REST_ACCESS, ROLE_MASTER_OPERATOR, ROLE_MASTER_SUPPORT, ROLE_BILLING);
 }

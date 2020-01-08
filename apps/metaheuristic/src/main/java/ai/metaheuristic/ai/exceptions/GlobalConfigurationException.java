@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,11 +14,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.server;
+package ai.metaheuristic.ai.exceptions;
 
-public class RegistryData {
+/**
+ * @author Serge
+ * Date: 1/8/2020
+ * Time: 2:00 AM
+ */
+public class GlobalConfigurationException extends RuntimeException{
+    public GlobalConfigurationException(String message) {
+        super(message);
+    }
 
-    public String[] launchpadAddresses;
+    public GlobalConfigurationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    public String token;
+    public GlobalConfigurationException(Throwable cause) {
+        super(cause);
+    }
 }

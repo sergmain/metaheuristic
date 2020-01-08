@@ -17,7 +17,7 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
-    public enum AssetMode { local, master, replicated }
+    public enum LaunchpadAssetMode {local, replicated}
 
     public enum SnippetState {
         none, ok, ready, not_found,

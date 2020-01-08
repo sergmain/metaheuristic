@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.station.snippet;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.station.net.HttpClientExecutor;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
@@ -55,9 +56,9 @@ public class StationSnippetService {
     }
 
     public DownloadedSnippetConfigStatus downloadSnippetConfig(
-            LaunchpadLookupConfig.LaunchpadLookup launchpad, String payloadRestUrl, String snippetCode, String stationId) {
+            LaunchpadLookupConfig.Asset asset, String snippetCode, String stationId) {
 
-        final String snippetChecksumUrl = payloadRestUrl + "/snippet-config";
+        final String snippetChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/snippet-config";
         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +'-' + stationId;
 
         final DownloadedSnippetConfigStatus snippetConfigStatus = new DownloadedSnippetConfigStatus();
@@ -72,12 +73,7 @@ public class StationSnippetService {
 
             RestUtils.addHeaders(request);
 
-            Response response;
-            if (launchpad.securityEnabled) {
-                response = HttpClientExecutor.getExecutor(launchpad.url, launchpad.restUsername, launchpad.restPassword).execute(request);
-            } else {
-                response = request.execute();
-            }
+            Response response = HttpClientExecutor.getExecutor(asset.url, asset.username, asset.password).execute(request);
             String yaml = response.returnContent().asString(StandardCharsets.UTF_8);
 
             snippetConfigStatus.snippetConfig = TaskParamsUtils.toSnippetConfig(SnippetConfigYamlUtils.BASE_YAML_UTILS.to(yaml));
@@ -95,11 +91,11 @@ public class StationSnippetService {
                 log.error("#813.220 HttpResponseException", e);
             }
         } catch (SocketTimeoutException e) {
-            log.error("#813.170 SocketTimeoutException: {}, snippet: {}, launchpad: {}", e.toString(), snippetCode, launchpad.url);
+            log.error("#813.170 SocketTimeoutException: {}, snippet: {}, launchpad: {}", e.toString(), snippetCode, asset.url);
         } catch (IOException e) {
-            log.error(S.f("#813.180 IOException, snippet: %s, launchpad: %s",snippetCode, launchpad.url), e);
+            log.error(S.f("#813.180 IOException, snippet: %s, launchpad: %s",snippetCode, asset.url), e);
         } catch (Throwable th) {
-            log.error(S.f("#813.190 Throwable, snippet: %s, launchpad: %s",snippetCode, launchpad.url), th);
+            log.error(S.f("#813.190 Throwable, snippet: %s, launchpad: %s",snippetCode, asset.url), th);
         }
         return snippetConfigStatus;
     }
