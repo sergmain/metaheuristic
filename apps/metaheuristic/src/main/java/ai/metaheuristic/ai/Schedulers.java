@@ -20,12 +20,14 @@ import ai.metaheuristic.ai.launchpad.RoundRobinForLaunchpad;
 import ai.metaheuristic.ai.launchpad.batch.BatchService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.replication.ReplicationService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
 import ai.metaheuristic.ai.station.*;
 import ai.metaheuristic.ai.station.actors.DownloadResourceActor;
 import ai.metaheuristic.ai.station.actors.DownloadSnippetActor;
 import ai.metaheuristic.ai.station.actors.UploadResourceActor;
 import ai.metaheuristic.ai.station.env.EnvService;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -55,6 +57,7 @@ public class Schedulers {
         private final ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad;
         private final ExperimentService experimentService;
         private final BatchService batchService;
+        private final ReplicationService replicationService;
 
         // Launchpad schedulers
 
@@ -64,7 +67,7 @@ public class Schedulers {
         /**
          * update status of all workbooks which are in 'started' state. Also, if workbook is finished, atlas will be produced
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-workbook'), 1, 40, 2)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.process-workbook'), 1, 40, 3)*1000 }")
         public void updateWorkbookStatuses() {
             if (globals.isUnitTesting) {
                 return;
@@ -72,7 +75,7 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke WorkbookService.updateWorkbookStatuses()");
+            log.info("Invoking WorkbookService.updateWorkbookStatuses()");
             boolean needReconciliation = false;
             try {
                 if ((System.currentTimeMillis()- prevReconciliationTime) > TIMEOUT_BETWEEN_RECONCILIATION) {
@@ -94,7 +97,7 @@ public class Schedulers {
         /**
          * update statuses of all batches if all related workbooks are finished
          */
-        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.update-batch-statuses'), 5, 60, 5)*1000 }")
+        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.update-batch-statuses'), 5, 60, 5)*1000 }")
         public void updateBatchStatuses() {
             if (globals.isUnitTesting) {
                 return;
@@ -102,11 +105,11 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke batchService.updateBatchStatuses()");
+            log.info("Invoking batchService.updateBatchStatuses()");
             batchService.updateBatchStatuses();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.create-all-tasks'), 5, 40, 5)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.create-all-tasks'), 5, 40, 5)*1000 }")
         public void createAllTasks() {
             if (globals.isUnitTesting) {
                 return;
@@ -114,11 +117,11 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke PlanService.producingWorkbooks()");
+            log.info("Invoking planService.createAllTasks()");
             planService.createAllTasks();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.artifact-cleaner'), 30, 300, 60)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.artifact-cleaner'), 30, 300, 60)*1000 }")
         public void artifactCleanerAtLaunchpad() {
             if (globals.isUnitTesting) {
                 return;
@@ -126,11 +129,11 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke PlanService.producingWorkbooks()");
+            log.info("Invoking artifactCleanerAtLaunchpad.fixedDelay()");
             artifactCleanerAtLaunchpad.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.exteriment-finisher'), 5, 300, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.exteriment-finisher'), 5, 300, 10)*1000 }")
         public void experimentFinisher() {
             if (globals.isUnitTesting) {
                 return;
@@ -138,11 +141,11 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke PlanService.producingWorkbooks()");
+            log.info("Invoking experimentService.experimentFinisher()");
             experimentService.experimentFinisher();
         }
 
-        @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
+        @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
         public void garbageCollectionAtLaunchpad() {
             if (globals.isUnitTesting) {
                 return;
@@ -150,12 +153,23 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.debug("Invoke System.gc()");
+            log.debug("Invoking System.gc()");
             System.gc();
             final Runtime rt = Runtime.getRuntime();
             log.warn("Memory after GC. Free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
         }
 
+        @Scheduled(initialDelay = 61_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.asset.sync-timeout'), 120, 3600, 120)*1000 }")
+        public void syncReplication() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.isLaunchpadEnabled) {
+                return;
+            }
+            log.debug("Invoking System.gc()");
+            replicationService.sync();
+        }
     }
 
     // Station schedulers
