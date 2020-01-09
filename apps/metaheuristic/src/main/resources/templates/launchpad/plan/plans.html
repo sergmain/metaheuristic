@@ -44,7 +44,7 @@
             <th>Created on</th>
             <th>Is valid?</th>
             <th>Is locked?</th>
-            <th colspan="4" th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">&nbsp;</th>
+            <th th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated} ? 4 : 3">&nbsp;</th>
         </tr>
         </thead>
         <tbody>
@@ -62,12 +62,10 @@
                 <a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/plan-delete/' + f.id}">Delete</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
                 <a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/plan-archive/' + f.id}">To archive</a></td>
-            <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-                <a class="pure-button pure-button-primary"
-                   th:href="${'/launchpad/plan/workbooks/' + f.id}">Workbooks</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/workbooks/' + f.id}">Workbooks</a></td>
         </tr>
         <tr>
-            <td colspan="9">
+            <td th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated} ? 9 : 6">
                 <div>
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">

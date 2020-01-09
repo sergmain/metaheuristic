@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
@@ -151,6 +150,9 @@ public class PlanTopLevelService {
 
     @SuppressWarnings("Duplicates")
     public PlanApiData.PlanResult addPlan(String planYamlAsStr, LaunchpadContext context) {
+        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+            return new PlanApiData.PlanResult("#560.085 Can't add a new plan while 'replicated' mode of asset is active");
+        }
         if (StringUtils.isBlank(planYamlAsStr)) {
             return new PlanApiData.PlanResult("#560.090 plan yaml is empty");
         }
@@ -189,6 +191,9 @@ public class PlanTopLevelService {
 
     @SuppressWarnings("Duplicates")
     public PlanApiData.PlanResult updatePlan(Long planId, String planYamlAsStr, LaunchpadContext context) {
+        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+            return new PlanApiData.PlanResult("#560.160 Can't update a plan while 'replicated' mode of asset is active");
+        }
         PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
             return new PlanApiData.PlanResult(
@@ -226,6 +231,10 @@ public class PlanTopLevelService {
     }
 
     public OperationStatusRest deletePlanById(Long planId, LaunchpadContext context) {
+        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.240 Can't delete a plan while 'replicated' mode of asset is active");
+        }
         Plan plan = planCache.findById(planId);
         if (plan == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -236,6 +245,10 @@ public class PlanTopLevelService {
     }
 
     public OperationStatusRest archivePlanById(Long id, LaunchpadContext context) {
+        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.260 Can't archive a plan while 'replicated' mode of asset is active");
+        }
         PlanImpl plan = planCache.findById(id);
         OperationStatusRest status = checkPlan(plan, context);
         if (status!=null) {
@@ -253,6 +266,10 @@ public class PlanTopLevelService {
     }
 
     public OperationStatusRest uploadPlan(MultipartFile file, LaunchpadContext context) {
+        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.280 Can't upload plan while 'replicated' mode of asset is active");
+        }
 
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {

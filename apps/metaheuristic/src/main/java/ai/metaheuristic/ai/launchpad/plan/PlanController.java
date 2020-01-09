@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.plan;
 
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -47,6 +48,7 @@ public class PlanController {
 
     public static final String REDIRECT_LAUNCHPAD_PLAN_PLANS = "redirect:/launchpad/plan/plans";
 
+    private final Globals globals;
     private final PlanTopLevelService planTopLevelService;
     private final LaunchpadContextService launchpadContextService;
 
@@ -82,6 +84,10 @@ public class PlanController {
     @GetMapping(value = "/plan-edit/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#561.010 Can't edit plan while 'replicated' mode of asset is active");
+            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        }
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id, context);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
@@ -154,6 +160,10 @@ public class PlanController {
     @GetMapping("/plan-delete/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#561.015 Can't delete plan while 'replicated' mode of asset is active");
+            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        }
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id, context);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
@@ -171,7 +181,7 @@ public class PlanController {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = planTopLevelService.deletePlanById(id, context);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#560.40 plan wasn't found, id: "+id) );
+            redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.020 plan wasn't found, id: "+id) );
         }
         return REDIRECT_LAUNCHPAD_PLAN_PLANS;
     }
@@ -196,7 +206,7 @@ public class PlanController {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = planTopLevelService.archivePlanById(id, context);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#560.40 plan wasn't found, id: "+id) );
+            redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.030 plan wasn't found, id: "+id) );
         }
         return REDIRECT_LAUNCHPAD_PLAN_PLANS;
     }
