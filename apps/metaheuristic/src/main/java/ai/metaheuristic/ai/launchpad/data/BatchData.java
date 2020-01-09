@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.data;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchExecStatus;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
 import ai.metaheuristic.api.data.BaseDataClass;
@@ -84,6 +85,7 @@ public final class BatchData {
     @EqualsAndHashCode(callSuper = false)
     public static class BatchesResult extends BaseDataClass {
         public Page<ProcessResourceItem> batches;
+        public Enums.LaunchpadAssetMode assetMode;
     }
 
     @Data

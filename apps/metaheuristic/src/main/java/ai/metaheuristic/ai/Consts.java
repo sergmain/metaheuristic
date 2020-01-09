@@ -30,21 +30,18 @@ public class Consts {
 
     public static final int PROCESS_ORDER_START_VALUE = 1;
 
-    public static final String PROTOCOL_DELIMITER = "://";
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
 
     public static final String SESSIONID_NAME = "JSESSIONID";
 
     public static final String SERVER_REST_URL_V2 = "/srv-v2";
-    public static final String PAYLOAD_REST_URL = "/payload";
     public static final String UPLOAD_REST_URL = "/upload";
     public static final String REST_ASSET_URL = "/rest/v1/asset";
 
     public static final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(), MediaType.APPLICATION_JSON.getSubtype(), StandardCharsets.UTF_8);
 
     public static final String SEED = "seed";
-    public static final String EPOCH = "epoch";
 
     public static final PageRequest PAGE_REQUEST_1_REC = PageRequest.of(0, 1);
     public static final PageRequest PAGE_REQUEST_10_REC = PageRequest.of(0, 10);

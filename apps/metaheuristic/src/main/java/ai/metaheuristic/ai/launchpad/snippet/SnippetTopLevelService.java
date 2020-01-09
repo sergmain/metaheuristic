@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.snippet;
 
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.SnippetData;
@@ -38,7 +40,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,6 +51,7 @@ import static ai.metaheuristic.ai.Consts.*;
 @RequiredArgsConstructor
 public class SnippetTopLevelService {
 
+    private final Globals globals;
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
     private final SnippetService snippetService;
@@ -59,15 +61,20 @@ public class SnippetTopLevelService {
         SnippetData.SnippetsResult result = new SnippetData.SnippetsResult();
         result.snippets = snippetRepository.findAll();
         result.snippets.sort((o1,o2)->o2.getId().compareTo(o1.getId()));
+        result.assetMode = globals.assetMode;
         return result;
     }
 
     public OperationStatusRest deleteSnippetById(Long id) {
         log.info("Start deleting snippet with id: {}", id );
+        if (globals.assetMode== Enums.LaunchpadAssetMode.replicated) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#424.005 Can't delete snippet while 'replicated' mode of asset is active");
+        }
         final Snippet snippet = snippetCache.findById(id);
         if (snippet == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.50 snippet wasn't found, planId: " + id);
+                    "#424.010 snippet wasn't found, planId: " + id);
         }
         snippetCache.delete(snippet.getId());
         binaryDataService.deleteByCodeAndDataType(snippet.getCode(), EnumsApi.BinaryDataType.SNIPPET);
@@ -75,20 +82,23 @@ public class SnippetTopLevelService {
     }
 
     public OperationStatusRest uploadSnippet(final MultipartFile file) {
-
+        if (globals.assetMode==Enums.LaunchpadAssetMode.replicated) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#424.020 Can't upload snippet while 'replicated' mode of asset is active");
+        }
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.01 name of uploaded file is null");
+                    "#424.030 name of uploaded file is null");
         }
         String ext = StrUtils.getExtension(originFilename);
         if (ext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.02 file without extension, bad filename: " + originFilename);
+                    "#424.040 file without extension, bad filename: " + originFilename);
         }
         if (!StringUtils.equalsAny(ext.toLowerCase(), ZIP_EXT, YAML_EXT, YML_EXT)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.03 only '.zip', '.yml' and '.yaml' files are supported, filename: " + originFilename);
+                    "#424.050 only '.zip', '.yml' and '.yaml' files are supported, filename: " + originFilename);
         }
 
         final String location = System.getProperty("java.io.tmpdir");
@@ -98,7 +108,7 @@ public class SnippetTopLevelService {
             tempDir = DirUtils.createTempDir("snippet-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#422.04 can't create temporary directory in " + location);
+                        "#424.060 can't create temporary directory in " + location);
             }
             final File zipFile = new File(tempDir, "snippets" + ext);
             log.debug("Start storing an uploaded snippet to disk");
@@ -125,7 +135,7 @@ public class SnippetTopLevelService {
         catch (Exception e) {
             log.error("Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.05 can't load snippets, Error: " + e.toString());
+                    "#424.070 can't load snippets, Error: " + e.toString());
         }
         finally {
             DirUtils.deleteAsync(tempDir);

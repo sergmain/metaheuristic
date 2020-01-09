@@ -2,7 +2,7 @@
 
     <p th:if="${(infoMessages!=null and !infoMessages.isEmpty()) or (errorMessage!=null and !errorMessage.isEmpty())}">&nbsp;</p>
 
-    <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
-    <p class="error-msg" th:if="${errorMessage!=null}" th:each="errMsg : ${errorMessage}" th:text="${errMsg}"></p>
+    <p  class="alert alert-success" th:if="${infoMessages!=null and !infoMessages.isEmpty()}" th:each="info : ${infoMessages}" th:text="${info}"></p>
+    <p class="alert alert-danger" th:if="${errorMessage!=null and !errorMessage.isEmpty()}" th:each="errMsg : ${errorMessage}" th:text="${errMsg}"></p>
 
 </div>

@@ -1,9 +1,8 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      layout:decorate="~{layout-batch}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled')) and result.assetMode!=T(ai.metaheuristic.ai.Enums.LaunchpadAssetMode).source}"
 >
-
-<script>
+    <script>
         'use strict';
 
         let /*boolean*/ isFilterBatches = false;

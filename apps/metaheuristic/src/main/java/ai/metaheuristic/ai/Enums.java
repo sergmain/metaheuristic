@@ -17,7 +17,12 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
-    public enum LaunchpadAssetMode {local, replicated}
+    /**
+     * local - all assets are managed locally
+     * source - this launchpad is source for all assets
+     * replicated - all assets on this launchpad are replicated from source launchpad
+     */
+    public enum LaunchpadAssetMode {local, source, replicated}
 
     public enum SnippetState {
         none, ok, ready, not_found,
