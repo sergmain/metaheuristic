@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.launchpad.beans.Company;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,8 +40,8 @@ public class CompanyData {
     @EqualsAndHashCode(callSuper = false)
     public static class CompaniesResult extends BaseDataClass {
         public Page<Company> companies;
+        public EnumsApi.LaunchpadAssetMode assetMode;
     }
-
 
     @Data
     @NoArgsConstructor

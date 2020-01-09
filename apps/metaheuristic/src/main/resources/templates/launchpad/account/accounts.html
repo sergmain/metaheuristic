@@ -26,10 +26,16 @@
 
     </script>
 
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.AccountData$AccountsResult"*/-->
     <h1 class="widget-header">Accounts</h1>
+    <div th:if="${result.assetMode==T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
+        <p class="alert alert-info">Upload and editing of accounts are disabled, assetMode is 'replicated'.</p>
+    </div>
 
-    <a class="pure-button pure-button-primary" href="account-add.html" th:href="@{/launchpad/account/account-add}">Add new account</a>
-    <p></p>
+    <div th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
+        <a class="pure-button pure-button-primary" href="account-add.html" th:href="@{/launchpad/account/account-add}">Add new account</a>
+        <p></p>
+    </div>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
@@ -39,24 +45,24 @@
             <th>Login</th>
             <th>Public name</th>
             <th>Created on</th>
-            <th colspan="2">&nbsp;</th>
+            <th colspan="2" th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">&nbsp;</th>
         </tr>
         </thead>
 
         <tbody>
-        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.AccountData$AccountsResult"*/-->
         <tr th:each="r : ${result.accounts}">
             <td th:text="${r.id}">#Id</td>
             <td th:text="${r.enabled} ? 'Yes' : 'No'">Is enabled</td>
             <td th:text="${r.username}">Login</td>
             <td th:text="${r.publicName}">publicName</td>
             <td th:text="${#dates.formatISO(r.createdOn)}">CreatedOn</td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/account/account-edit/' + r.id}">Edit</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/account/account-password-edit/' + r.id}">Change password</a></td>
-            <!--<td><a class="pure-button pure-button-primary" th:href="${'/launchpad/account/account-delete/' + r.id}">Delete</a></td>-->
+            <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
+                <a class="pure-button pure-button-primary" th:href="${'/launchpad/account/account-edit/' + r.id}">Edit</a></td>
+            <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
+                <a class="pure-button pure-button-primary" th:href="${'/launchpad/account/account-password-edit/' + r.id}">Change password</a></td>
         </tr>
         <tr>
-            <td colspan="8">
+            <td  th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated} ? 8 : 6">
                 <div>
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">

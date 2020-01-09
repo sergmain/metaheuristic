@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.account;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.data.AccountData;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AccountService {
 
+    private final Globals globals;
     private final AccountRepository accountRepository;
     private final AccountCache accountCache;
     private final PasswordEncoder passwordEncoder;
@@ -52,6 +54,7 @@ public class AccountService {
     public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyId)  {
         AccountData.AccountsResult result = new AccountData.AccountsResult();
         result.accounts = accountRepository.findAll(pageable, companyId);
+        result.assetMode = globals.assetMode;
         return result;
     }
 

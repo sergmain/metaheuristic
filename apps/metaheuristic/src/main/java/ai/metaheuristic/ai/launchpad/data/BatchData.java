@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.data;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchExecStatus;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.launchpad.Plan;
 import lombok.AllArgsConstructor;
@@ -85,7 +86,7 @@ public final class BatchData {
     @EqualsAndHashCode(callSuper = false)
     public static class BatchesResult extends BaseDataClass {
         public Page<ProcessResourceItem> batches;
-        public Enums.LaunchpadAssetMode assetMode;
+        public EnumsApi.LaunchpadAssetMode assetMode;
     }
 
     @Data

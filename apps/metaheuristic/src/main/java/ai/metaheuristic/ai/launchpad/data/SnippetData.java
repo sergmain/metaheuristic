@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.Data;
@@ -33,7 +34,7 @@ public class SnippetData {
     @EqualsAndHashCode(callSuper = false)
     public static class SnippetsResult extends BaseDataClass {
         public List<Snippet> snippets;
-        public Enums.LaunchpadAssetMode assetMode;
+        public EnumsApi.LaunchpadAssetMode assetMode;
     }
 
     @Data

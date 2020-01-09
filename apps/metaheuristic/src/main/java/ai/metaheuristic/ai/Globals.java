@@ -136,10 +136,10 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.chunk-size')) }")
     public String chunkSizeStr;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset-mode')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset.mode')) }")
     public String assetModeStr;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset-source-url')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset.source-url')) }")
     public String assetSourceUrl;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset.username')) }")
@@ -183,7 +183,7 @@ public class Globals {
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
     public List<String> allowedOrigins;
-    public Enums.LaunchpadAssetMode assetMode = Enums.LaunchpadAssetMode.local;
+    public EnumsApi.LaunchpadAssetMode assetMode = EnumsApi.LaunchpadAssetMode.local;
 
     // TODO 2019-07-28 need to handle this case
     //  https://stackoverflow.com/questions/37436927/utf-8-encoding-of-application-properties-attributes-in-spring-boot
@@ -243,18 +243,18 @@ public class Globals {
         }
         if (!S.b(assetModeStr)) {
             try {
-                assetMode = Enums.LaunchpadAssetMode.valueOf(assetModeStr);
+                assetMode = EnumsApi.LaunchpadAssetMode.valueOf(assetModeStr);
             } catch (Throwable th) {
-                throw new GlobalConfigurationException("Wrong value of assertMode, must be one of "+ Arrays.toString(Enums.LaunchpadAssetMode.values()) + ", " +
+                throw new GlobalConfigurationException("Wrong value of assertMode, must be one of "+ Arrays.toString(EnumsApi.LaunchpadAssetMode.values()) + ", " +
                         "actual value: " + assetModeStr);
             }
         }
-        if (assetMode==Enums.LaunchpadAssetMode.replicated && S.b(assetSourceUrl)) {
-            throw new GlobalConfigurationException("Wrong value of assertSourceUrl, must be not null when launchpadAssetMode==Enums.LaunchpadAssetMode.replicate");
+        if (assetMode==EnumsApi.LaunchpadAssetMode.replicated && S.b(assetSourceUrl)) {
+            throw new GlobalConfigurationException("Wrong value of assertSourceUrl, must be not null when launchpadAssetMode==EnumsApi.LaunchpadAssetMode.replicate");
         }
         if (!isLaunchpadEnabled) {
             log.warn("Launchpad wasn't enabled, assetMode will be set to LaunchpadAssetMode.local");
-            assetMode = Enums.LaunchpadAssetMode.local;
+            assetMode = EnumsApi.LaunchpadAssetMode.local;
         }
 
         String stationEnabledAsStr = env.getProperty("MH_IS_STATION_ENABLED");

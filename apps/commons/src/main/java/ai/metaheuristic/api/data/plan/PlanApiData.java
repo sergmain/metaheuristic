@@ -93,6 +93,7 @@ public class PlanApiData {
     @EqualsAndHashCode(callSuper = false)
     public static class PlansResult extends BaseDataClass {
         public Slice<Plan> items;
+        public EnumsApi.LaunchpadAssetMode assetMode;
     }
 
     @Data

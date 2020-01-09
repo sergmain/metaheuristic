@@ -68,7 +68,6 @@ public class PlanTopLevelService {
     private final PlanService planService;
     private final PlanRepository planRepository;
     private final WorkbookService workbookService;
-    private final WorkbookCache workbookCache;
     private final ApplicationEventPublisher publisher;
 
     public PlanApiData.WorkbookResult addWorkbook(Long planId, String poolCode, String inputResourceParams, LaunchpadContext context) {
@@ -120,6 +119,7 @@ public class PlanTopLevelService {
 
         PlanApiData.PlansResult plansResultRest = new PlanApiData.PlansResult();
         plansResultRest.items = new PageImpl<>(plans, pageable, count.get());
+        plansResultRest.assetMode = globals.assetMode;
 
         return plansResultRest;
     }

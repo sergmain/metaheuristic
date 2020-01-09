@@ -27,8 +27,13 @@
 
     <h1 class="widget-header">Plans</h1>
 
-    <a class="pure-button pure-button-primary" href="plan-add.html" th:href="@{/launchpad/plan/plan-add}">Add new plan</a>
+    <a class="pure-button pure-button-primary" href="plan-add.html" th:href="@{/launchpad/plan/plan-add}"
+       th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}"
+    >Add new plan</a>
+    <p class="alert alert-info" th:if="${result.assetMode==T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
+        Creation of plans is disabled, assetMode is 'replicated'.</p>
     <p></p>
+
 
     <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.plan.PlanApiData$PlansResult"*/-->
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
@@ -39,7 +44,7 @@
             <th>Created on</th>
             <th>Is valid?</th>
             <th>Is locked?</th>
-            <th colspan="4">&nbsp;</th>
+            <th colspan="4" th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">&nbsp;</th>
         </tr>
         </thead>
         <tbody>
@@ -49,12 +54,16 @@
             <td th:text="${#dates.format(f.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
             <td th:text="${f.valid}">Is valid?</td>
             <td th:text="${f.locked}">Is locked?</td>
-            <td><a class="pure-button pure-button-primary"
+            <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
+                <a class="pure-button pure-button-primary"
                    th:disabled="${f.locked}"
                    th:href="${'/launchpad/plan/plan-edit/' + f.id}">Edit</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/plan-delete/' + f.id}">Delete</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/plan-archive/' + f.id}">To archive</a></td>
-            <td><a class="pure-button pure-button-primary"
+            <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
+                <a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/plan-delete/' + f.id}">Delete</a></td>
+            <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
+                <a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/plan-archive/' + f.id}">To archive</a></td>
+            <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
+                <a class="pure-button pure-button-primary"
                    th:href="${'/launchpad/plan/workbooks/' + f.id}">Workbooks</a></td>
         </tr>
         <tr>

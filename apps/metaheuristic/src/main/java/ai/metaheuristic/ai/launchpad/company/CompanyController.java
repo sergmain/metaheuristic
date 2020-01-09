@@ -69,7 +69,7 @@ public class CompanyController {
     // for AJAX
     @PostMapping("/companies-part")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT')")
-    public String getCompaniesViaAJAX(Model model, @PageableDefault(size=CompanyTopLevelService.ROWS_IN_TABLE) Pageable pageable )  {
+    public String getCompaniesViaAJAX(Model model, @PageableDefault(size=CompanyTopLevelService.ROWS_IN_TABLE) Pageable pageable)  {
         CompanyData.CompaniesResult companies = companyTopLevelService.getCompanies(pageable);
         model.addAttribute("result", companies);
         return "launchpad/company/companies :: table";

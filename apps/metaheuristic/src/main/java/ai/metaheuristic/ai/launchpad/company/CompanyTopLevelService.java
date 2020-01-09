@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.company;
 
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.data.CompanyData;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
@@ -39,6 +40,7 @@ public class CompanyTopLevelService {
 
     public static final int ROWS_IN_TABLE = 50;
 
+    private final Globals globals;
     private final CompanyRepository companyRepository;
     private final CompanyCache companyCache;
 
@@ -46,6 +48,7 @@ public class CompanyTopLevelService {
         pageable = ControllerUtils.fixPageSize(ROWS_IN_TABLE, pageable);
         CompanyData.CompaniesResult result = new CompanyData.CompaniesResult();
         result.companies = companyRepository.findAll(pageable);
+        result.assetMode = globals.assetMode;
         return result;
     }
 

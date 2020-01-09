@@ -67,7 +67,7 @@ public class SnippetTopLevelService {
 
     public OperationStatusRest deleteSnippetById(Long id) {
         log.info("Start deleting snippet with id: {}", id );
-        if (globals.assetMode== Enums.LaunchpadAssetMode.replicated) {
+        if (globals.assetMode== EnumsApi.LaunchpadAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.005 Can't delete snippet while 'replicated' mode of asset is active");
         }
@@ -82,7 +82,7 @@ public class SnippetTopLevelService {
     }
 
     public OperationStatusRest uploadSnippet(final MultipartFile file) {
-        if (globals.assetMode==Enums.LaunchpadAssetMode.replicated) {
+        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.020 Can't upload snippet while 'replicated' mode of asset is active");
         }
