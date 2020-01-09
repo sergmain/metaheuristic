@@ -48,7 +48,7 @@ import java.io.IOException;
 @RestController
 @Slf4j
 @Profile("launchpad")
-@RequestMapping("/rest/asset")
+@RequestMapping("/rest/v1/asset")
 @PreAuthorize("hasAnyRole('ASSET_REST_ACCESS')")
 @RequiredArgsConstructor
 public class AssetController {

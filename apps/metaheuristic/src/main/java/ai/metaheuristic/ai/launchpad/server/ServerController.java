@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -60,23 +61,22 @@ public class ServerController {
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
-    @GetMapping(value="/payload/resource/{type}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value="/payload/resource/data/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<AbstractResource> deliverResourceAuth(
             HttpServletRequest request,
-            @PathVariable("type") String typeAsStr,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @SuppressWarnings("unused") String stationId,
             @SuppressWarnings("unused") Long taskId,
             String code, String chunkSize, Integer chunkNum) {
         String normalCode = new File(code).getName();
-        log.debug("deliverResourceAuth(), typeAsStr: {}, code: {}, chunkSize: {}, chunkNum: {}", typeAsStr, normalCode, chunkSize, chunkNum);
+        log.debug("deliverResourceAuth(), code: {}, chunkSize: {}, chunkNum: {}",normalCode, chunkSize, chunkNum);
         if (chunkSize==null || chunkSize.isBlank() || chunkNum==null) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
         }
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = serverService.deliverResource(typeAsStr, normalCode, chunkSize, chunkNum);
+            ResourceWithCleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryDataType.DATA, normalCode, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {
