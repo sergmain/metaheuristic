@@ -49,6 +49,9 @@ create table mh_account
 CREATE INDEX mh_account_company_id_idx
     ON mh_account (COMPANY_ID);
 
+CREATE UNIQUE INDEX mh_account_username_unq_idx
+    ON mh_account (USERNAME);
+
 CREATE TABLE mh_station
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -149,8 +152,8 @@ CREATE TABLE mh_snippet
     PARAMS        MEDIUMTEXT not null
 );
 
-CREATE UNIQUE INDEX mh_snippet_unq_idx
-  ON mh_snippet (SNIPPET_CODE);
+CREATE UNIQUE INDEX mh_snippet_snippet_code_unq_idx
+    ON mh_snippet (SNIPPET_CODE);
 
 CREATE TABLE mh_plan
 (

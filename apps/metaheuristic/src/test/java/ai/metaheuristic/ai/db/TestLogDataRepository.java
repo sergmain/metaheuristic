@@ -42,6 +42,8 @@ public class TestLogDataRepository {
     @Before
     public void before() {
         logData = new LogData();
+        logData.setId(42L);
+        logData.setVersion(5);
         logData.setLogData("This is log data");
         logData.setType(LogData.Type.ASSEMBLING);
         logData.setRefId(42L);
@@ -59,6 +61,28 @@ public class TestLogDataRepository {
             }
         }
     }
+
+/*
+    <Table schema="TEST" name="WM_FAQ_IDS" type="TABLE">
+        <Field name="sequence_name" dataType="VARCHAR2" javaType="12" javaStringType="java.sql.Types.VARCHAR" size="50" nullable="0"/>
+        <Field name="sequence_next_value" dataType="NUMBER" javaType="3" javaStringType="java.sql.Types.DECIMAL" size="10" decimalDigit="0" nullable="0"/>
+    </Table>
+*/
+/*
+@TableGenerator(
+        name="TABLE_CASH_CURRENCY",
+        table="wm_portal_ids",
+        pkColumnName = "sequence_name",
+        valueColumnName = "sequence_next_value",
+        pkColumnValue = "wm_cash_currency",
+        allocationSize = 1,
+        initialValue = 1
+)
+*/
+/*
+@Id
+@GeneratedValue(strategy= GenerationType.TABLE, generator = "TABLE_CASH_CURRENCY")
+*/
 
     @Test
     public void testLogData(){

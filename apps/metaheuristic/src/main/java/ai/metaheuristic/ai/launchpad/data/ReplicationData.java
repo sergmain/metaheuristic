@@ -16,6 +16,13 @@
 
 package ai.metaheuristic.ai.launchpad.data;
 
+import ai.metaheuristic.ai.Enums;
+import lombok.Data;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Serge
  * Date: 1/9/2020
@@ -23,9 +30,14 @@ package ai.metaheuristic.ai.launchpad.data;
  */
 public class ReplicationData {
 
-    public static class AssetState {
-
+    @Data
+    public static class AssetStateResponse {
+        public Map<Enums.AssetType, List<Long>> newAssets = new HashMap<>();
     }
 
+    @Data
+    public static class AssetStateRequest {
+        public final Map<Enums.AssetType, Long> assetTimestamp = new HashMap<>();
+    }
 
 }

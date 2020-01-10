@@ -39,54 +39,54 @@ public class ReplicationService {
         if (globals.assetMode!= EnumsApi.LaunchpadAssetMode.replicated) {
             return;
         }
-        ReplicationData.AssetState assetState = getAssetState();
-        syncCompanies(assetState);
-        syncAccounts(assetState);
-        syncSnippets(assetState);
-        syncPLans(assetState);
+        ReplicationData.AssetStateResponse assetStateResponse = getAssetState();
+        syncCompanies(assetStateResponse);
+        syncAccounts(assetStateResponse);
+        syncSnippets(assetStateResponse);
+        syncPLans(assetStateResponse);
     }
 
-    private void syncPLans(ReplicationData.AssetState assetState) {
-        if (plansInSyncState(assetState)) {
+    private void syncPLans(ReplicationData.AssetStateResponse assetStateResponse) {
+        if (plansInSyncState(assetStateResponse)) {
             return;
         }
     }
 
-    private boolean plansInSyncState(ReplicationData.AssetState assetState) {
+    private boolean plansInSyncState(ReplicationData.AssetStateResponse assetStateResponse) {
         return false;
     }
 
-    private void syncSnippets(ReplicationData.AssetState assetState) {
-        if (snippetsInSyncState(assetState)) {
+    private void syncSnippets(ReplicationData.AssetStateResponse assetStateResponse) {
+        if (snippetsInSyncState(assetStateResponse)) {
             return;
         }
     }
 
-    private boolean snippetsInSyncState(ReplicationData.AssetState assetState) {
+    private boolean snippetsInSyncState(ReplicationData.AssetStateResponse assetStateResponse) {
         return false;
     }
 
-    private void syncAccounts(ReplicationData.AssetState assetState) {
-        if (accountsInSyncState(assetState)) {
+    private void syncAccounts(ReplicationData.AssetStateResponse assetStateResponse) {
+        if (accountsInSyncState(assetStateResponse)) {
             return;
         }
     }
 
-    private boolean accountsInSyncState(ReplicationData.AssetState assetState) {
+    private boolean accountsInSyncState(ReplicationData.AssetStateResponse assetStateResponse) {
         return false;
     }
 
-    private void syncCompanies(ReplicationData.AssetState assetState) {
-        if (companiesInSyncState(assetState)) {
+    private void syncCompanies(ReplicationData.AssetStateResponse assetStateResponse) {
+        if (companiesInSyncState(assetStateResponse)) {
             return;
         }
     }
 
-    private boolean companiesInSyncState(ReplicationData.AssetState assetState) {
+    private boolean companiesInSyncState(ReplicationData.AssetStateResponse assetStateResponse) {
         return false;
     }
 
-    private ReplicationData.AssetState getAssetState() {
+    private ReplicationData.AssetStateResponse getAssetState() {
         return null;
     }
 
