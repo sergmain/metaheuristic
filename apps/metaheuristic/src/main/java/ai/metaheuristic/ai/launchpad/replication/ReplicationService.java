@@ -24,25 +24,27 @@ import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.client.utils.URIUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -69,7 +71,7 @@ public class ReplicationService {
         if (globals.assetMode!= EnumsApi.LaunchpadAssetMode.replicated) {
             return;
         }
-        ReplicationData.AssetStateResponse assetStateResponse = getAssetState();
+        ReplicationData.AssetStateResponse assetStateResponse = getAssetStates();
         syncCompanies(assetStateResponse);
         syncAccounts(assetStateResponse);
         syncSnippets(assetStateResponse);
@@ -116,10 +118,6 @@ public class ReplicationService {
         return false;
     }
 
-    private ReplicationData.AssetStateResponse getAssetState() {
-        return null;
-    }
-
     public ReplicationData.AssetStateResponse currentAssets() {
         ReplicationData.AssetStateResponse res = new ReplicationData.AssetStateResponse();
         res.companies.addAll(companyRepository.findAllUniqueIds());
@@ -136,39 +134,53 @@ public class ReplicationService {
         return res;
     }
 
-/*
-    private static void makeRequest(BillingAccessConfig config, String normPperiods, File zipFile) throws URISyntaxException, IOException {
-        final String url = config.url + CommonConsts.REST_V1_URL + "/event/events-for-period/"+ normPperiods+"/events.zip";
-
-        final URIBuilder builder = new URIBuilder(url).setCharset(StandardCharsets.UTF_8);
-
-        final URI build = builder.build();
-        final Request request = Request.Get(build)
-                .connectTimeout(5000)
-                .socketTimeout(20000);
-
-        RestUtils.addHeaders(request);
-        Response response = getExecutor(config.url, config.username, config.password)
-                .execute(request);
-
-        final HttpResponse httpResponse = response.returnResponse();
-        if (httpResponse.getStatusLine().getStatusCode()!=200) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            final HttpEntity entity = httpResponse.getEntity();
-            if (entity != null) {
-                entity.writeTo(baos);
-            }
-
-            System.out.println("Server response:\n" + baos.toString());
-            throw new IllegalStateException("Error while accessing url "+ config.url+", http status code: " + httpResponse.getStatusLine().getStatusCode());
+    private static Executor getExecutor(String launchpadUrl, String restUsername, String restPassword) {
+        HttpHost launchpadHttpHostWithAuth;
+        try {
+            launchpadHttpHostWithAuth = URIUtils.extractHost(new URL(launchpadUrl).toURI());
+        } catch (Throwable th) {
+            throw new IllegalArgumentException("Can't build HttpHost for " + launchpadUrl, th);
         }
+        return Executor.newInstance()
+                .authPreemptive(launchpadHttpHostWithAuth)
+                .auth(launchpadHttpHostWithAuth, restUsername, restPassword);
+    }
 
-        try (final FileOutputStream out = new FileOutputStream(zipFile)) {
-            final HttpEntity entity = httpResponse.getEntity();
-            if (entity != null) {
-                entity.writeTo(out);
+    private ReplicationData.AssetStateResponse getAssetStates() {
+        try {
+            final String url = globals.assetSourceUrl + "/rest/v1/replication/current-asset";
+
+            final URIBuilder builder = new URIBuilder(url).setCharset(StandardCharsets.UTF_8);
+
+            final URI build = builder.build();
+            final Request request = Request.Get(build).connectTimeout(5000).socketTimeout(20000);
+
+            RestUtils.addHeaders(request);
+            Response response = getExecutor(globals.assetSourceUrl, globals.assetUsername, globals.assetPassword)
+                    .execute(request);
+
+            final HttpResponse httpResponse = response.returnResponse();
+            if (httpResponse.getStatusLine().getStatusCode()!=200) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                final HttpEntity entity = httpResponse.getEntity();
+                if (entity != null) {
+                    entity.writeTo(baos);
+                }
+
+                log.error("Server response:\n" + baos.toString());
+                return new ReplicationData.AssetStateResponse( S.f("Error while accessing url %s, http status code: %d",
+                        globals.assetSourceUrl, httpResponse.getStatusLine().getStatusCode()));
             }
+            final HttpEntity entity = httpResponse.getEntity();
+            ReplicationData.AssetStateResponse assetResponse = null;
+            if (entity != null) {
+                assetResponse = JsonUtils.getMapper().readValue(entity.getContent(), ReplicationData.AssetStateResponse.class);
+            }
+            return assetResponse;
+        } catch (Throwable th) {
+            log.error("Error", th);
+            return new ReplicationData.AssetStateResponse( S.f("Error while accessing url %s, error message: %s",
+                    globals.assetSourceUrl, th.getMessage()));
         }
     }
-*/
 }
