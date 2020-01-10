@@ -14,10 +14,20 @@ alter table mh_company modify UNIQUE_ID int unsigned not null;
 
 create table mh_ids
 (
-    ID int unsigned NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    ID int unsigned NOT NULL PRIMARY KEY,
     STUB varchar(1) null
-) AUTO_INCREMENT = 2;
+);
 
-insert into mh_ids (stub)
-select 'a' from mh_company
+create table mh_gen_ids
+(
+    SEQUENCE_NAME       varchar(50) not null,
+    SEQUENCE_NEXT_VALUE NUMERIC(10, 0)  NOT NULL
+);
+
+CREATE UNIQUE INDEX mh_gen_ids_sequence_name_unq_idx
+    ON mh_gen_ids (SEQUENCE_NAME);
+
+insert mh_gen_ids
+(SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
+select 'mh_ids', max(UNIQUE_ID) from mh_company;
 

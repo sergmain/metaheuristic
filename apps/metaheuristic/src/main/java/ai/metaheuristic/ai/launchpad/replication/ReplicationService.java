@@ -26,11 +26,24 @@ import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.client.fluent.Response;
+import org.apache.http.client.utils.URIBuilder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -122,4 +135,40 @@ public class ReplicationService {
                 .collect(Collectors.toList()));
         return res;
     }
+
+/*
+    private static void makeRequest(BillingAccessConfig config, String normPperiods, File zipFile) throws URISyntaxException, IOException {
+        final String url = config.url + CommonConsts.REST_V1_URL + "/event/events-for-period/"+ normPperiods+"/events.zip";
+
+        final URIBuilder builder = new URIBuilder(url).setCharset(StandardCharsets.UTF_8);
+
+        final URI build = builder.build();
+        final Request request = Request.Get(build)
+                .connectTimeout(5000)
+                .socketTimeout(20000);
+
+        RestUtils.addHeaders(request);
+        Response response = getExecutor(config.url, config.username, config.password)
+                .execute(request);
+
+        final HttpResponse httpResponse = response.returnResponse();
+        if (httpResponse.getStatusLine().getStatusCode()!=200) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            final HttpEntity entity = httpResponse.getEntity();
+            if (entity != null) {
+                entity.writeTo(baos);
+            }
+
+            System.out.println("Server response:\n" + baos.toString());
+            throw new IllegalStateException("Error while accessing url "+ config.url+", http status code: " + httpResponse.getStatusLine().getStatusCode());
+        }
+
+        try (final FileOutputStream out = new FileOutputStream(zipFile)) {
+            final HttpEntity entity = httpResponse.getEntity();
+            if (entity != null) {
+                entity.writeTo(out);
+            }
+        }
+    }
+*/
 }

@@ -1,10 +1,19 @@
-create table mh_ids
+create table MH_IDS
 (
-    ID      SERIAL PRIMARY KEY,
+    ID      NUMERIC(10, 0) PRIMARY KEY,
     STUB    varchar(1) null
 );
 
-CREATE TABLE mh_company
+create table MH_GEN_IDS
+(
+    SEQUENCE_NAME       varchar(50) not null,
+    SEQUENCE_NEXT_VALUE NUMERIC(10, 0)  NOT NULL
+);
+
+CREATE UNIQUE INDEX MH_GEN_IDS_SEQUENCE_NAME_UNQ_IDX
+    ON MH_GEN_IDS (SEQUENCE_NAME);
+
+CREATE TABLE MH_COMPANY
 (
     ID              SERIAL PRIMARY KEY,
     VERSION         NUMERIC(10, 0)  NOT NULL,
@@ -13,13 +22,18 @@ CREATE TABLE mh_company
     PARAMS          TEXT null
 );
 
-CREATE UNIQUE INDEX mh_company_unique_id_unq_idx
-    ON mh_company (UNIQUE_ID);
+CREATE UNIQUE INDEX MH_COMPANY_UNIQUE_ID_UNQ_IDX
+    ON MH_COMPANY (UNIQUE_ID);
 
-insert into mh_company
+insert into MH_COMPANY
 (id, version, UNIQUE_ID, name, params)
 VALUES
 (1, 0, 1, 'master company', '');
+
+-- !!! this insert must be after creating 'master company'
+insert into mh_gen_ids
+(SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
+select 'mh_ids', max(UNIQUE_ID) from mh_company;
 
 create table MH_ACCOUNT
 (

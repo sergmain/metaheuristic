@@ -80,6 +80,7 @@ public class CompanyTopLevelService {
         Long newUniqueId;
         do {
             newUniqueId = idsRepository.save(new Ids()).id;
+            idsRepository.deleteById(newUniqueId);
             compare = Long.compare(newUniqueId, maxUniqueId);
         } while(compare<1);
         return newUniqueId;

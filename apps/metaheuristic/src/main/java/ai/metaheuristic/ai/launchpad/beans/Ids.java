@@ -29,11 +29,22 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_IDS")
 @Data
+@TableGenerator(
+        name="mh_ids",
+        table="mh_gen_ids",
+        pkColumnName = "sequence_name",
+        valueColumnName = "sequence_next_value",
+        pkColumnValue = "mh_ids",
+        allocationSize = 1,
+        initialValue = 1
+)
 public class Ids implements Serializable {
     private static final long serialVersionUID = 8697932300220763332L;
 
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy= GenerationType.TABLE, generator = "mh_ids")
     public Long id;
 
     public Integer stub;
