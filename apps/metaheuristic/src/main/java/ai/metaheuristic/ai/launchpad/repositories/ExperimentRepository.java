@@ -49,7 +49,7 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
     Page<Experiment> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
-    @Query(value="select e.id from Experiment e order by id desc")
+    @Query(value="select e.id from Experiment e order by e.id desc")
     Slice<Long> findAllByOrderByIdDesc(Pageable pageable);
 
     @Transactional(readOnly = true)

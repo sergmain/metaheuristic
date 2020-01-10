@@ -26,6 +26,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * @author Serge
  * Date: 10/27/2019
@@ -42,4 +44,10 @@ public interface CompanyRepository extends CrudRepository<Company, Long> {
     @Transactional(readOnly = true)
     Page<Company> findAll(Pageable pageable);
 
+    @Query(value="select max(c.uniqueId) from Company c")
+    Long getMaxUniqueIdValue();
+
+    @Transactional(readOnly = true)
+    @Query(value="select c.uniqueId from Company c")
+    List<Long> findAllUniqueIds();
 }

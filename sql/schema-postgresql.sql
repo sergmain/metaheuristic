@@ -1,15 +1,25 @@
+create table mh_ids
+(
+    ID      SERIAL PRIMARY KEY,
+    STUB    varchar(1) null
+);
+
 CREATE TABLE mh_company
 (
-    ID          SERIAL PRIMARY KEY,
-    VERSION     NUMERIC(10, 0)  NOT NULL,
+    ID              SERIAL PRIMARY KEY,
+    VERSION         NUMERIC(10, 0)  NOT NULL,
+    UNIQUE_ID       NUMERIC(10, 0) NOT NULL,
     NAME            VARCHAR(50)   NOT NULL,
     PARAMS          TEXT null
 );
 
+CREATE UNIQUE INDEX mh_company_unique_id_unq_idx
+    ON mh_company (UNIQUE_ID);
+
 insert into mh_company
-(id, version, name, params)
+(id, version, UNIQUE_ID, name, params)
 VALUES
-(1, 0, 'master company', '');
+(1, 0, 1, 'master company', '');
 
 create table MH_ACCOUNT
 (

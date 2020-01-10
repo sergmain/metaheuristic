@@ -26,6 +26,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -53,7 +54,9 @@ public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
     @Query(value="select p.id from PlanImpl p")
     List<Long> findAllAsIds();
 
-
+    @Transactional(readOnly = true)
+    @Query(value="select p.code from PlanImpl p")
+    List<String> findAllPlanCodes();
 }
 
 

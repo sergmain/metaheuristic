@@ -18,8 +18,10 @@ package ai.metaheuristic.ai.launchpad.company;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Company;
+import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.data.CompanyData;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
+import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
@@ -43,6 +45,7 @@ public class CompanyTopLevelService {
     private final Globals globals;
     private final CompanyRepository companyRepository;
     private final CompanyCache companyCache;
+    private final IdsRepository idsRepository;
 
     public CompanyData.CompaniesResult getCompanies(Pageable pageable)  {
         pageable = ControllerUtils.fixPageSize(ROWS_IN_TABLE, pageable);
@@ -53,13 +56,33 @@ public class CompanyTopLevelService {
     }
 
     public OperationStatusRest addCompany(Company company) {
+        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#237.010 Can't create a new company while 'replicated' mode of asset is active");
+        }
         if (S.b(company.name)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#239.010 Name of company name must not be null");
+                    "#237.020 Name of company name must not be null");
         }
 
+        company.uniqueId = getUniqueId();
         companyCache.save(company);
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    private Long getUniqueId() {
+        Long maxUniqueId = companyRepository.getMaxUniqueIdValue();
+        if (maxUniqueId==null) {
+            // 2L because 1 is reserved for 'main company'
+            maxUniqueId = 2L;
+        }
+        int compare;
+        Long newUniqueId;
+        do {
+            newUniqueId = idsRepository.save(new Ids()).id;
+            compare = Long.compare(newUniqueId, maxUniqueId);
+        } while(compare<1);
+        return newUniqueId;
     }
 
     public CompanyData.CompanyResult getCompany(Long companyId){
@@ -81,6 +104,10 @@ public class CompanyTopLevelService {
     }
 
     public OperationStatusRest editFormCommit(Long companyId, String name, String groups) {
+        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#237.055 Can't edit a company while 'replicated' mode of asset is active");
+        }
         Company c = companyRepository.findByIdForUpdate(companyId);
         if (c == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.060 company wasn't found, accountId: " + companyId);
@@ -91,7 +118,7 @@ public class CompanyTopLevelService {
         try {
             paramsYaml = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(cpy);
         } catch (Throwable th) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.062 company params is in wrong format, error: " + th.getMessage());
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.080 company params is in wrong format, error: " + th.getMessage());
         }
         c.setParams(paramsYaml);
         c.setName(name);

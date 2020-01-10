@@ -17,11 +17,22 @@
 package ai.metaheuristic.ai.launchpad.replication;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
+import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
+import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
+import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -31,9 +42,15 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Profile("launchpad")
 public class ReplicationService {
 
     public final Globals globals;
+    public final CompanyRepository companyRepository;
+    public final AccountRepository accountRepository;
+    public final PlanRepository planRepository;
+    public final SnippetRepository snippetRepository;
+    public final PlanCache planCache;
 
     public void sync() {
         if (globals.assetMode!= EnumsApi.LaunchpadAssetMode.replicated) {
@@ -90,4 +107,19 @@ public class ReplicationService {
         return null;
     }
 
+    public ReplicationData.AssetStateResponse currentAssets() {
+        ReplicationData.AssetStateResponse res = new ReplicationData.AssetStateResponse();
+        res.companies.addAll(companyRepository.findAllUniqueIds());
+        res.usernames.addAll(accountRepository.findAllUsernames());
+        res.snippets.addAll(snippetRepository.findAllSnippetCodes());
+        res.plans.addAll(planRepository.findAllAsIds().parallelStream()
+                .map(id->{
+                    PlanImpl plan = planCache.findById(id);
+                    PlanParamsYaml params = plan.getPlanParamsYaml();
+                    return (params.internalParams!=null && params.internalParams.archived) ? null : plan.code;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList()));
+        return res;
+    }
 }

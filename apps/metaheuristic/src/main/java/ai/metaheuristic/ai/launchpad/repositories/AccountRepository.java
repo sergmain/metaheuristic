@@ -26,6 +26,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
  * User: Serg
  * Date: 13.07.2017
@@ -51,4 +54,8 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
     @Transactional(readOnly = true)
     @Query(value="select a from Account a where a.companyId=:companyId")
     Page<Account> findAll(Pageable pageable, Long companyId);
+
+    @Transactional(readOnly = true)
+    @Query(value="select a.username from Account a")
+    List<String> findAllUsernames();
 }

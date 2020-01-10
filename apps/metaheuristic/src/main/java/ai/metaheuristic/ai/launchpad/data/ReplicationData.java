@@ -18,7 +18,9 @@ package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.Enums;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +33,12 @@ import java.util.Map;
 public class ReplicationData {
 
     @Data
+    @NoArgsConstructor
     public static class AssetStateResponse {
-        public Map<Enums.AssetType, List<Long>> newAssets = new HashMap<>();
+        public final List<String> snippets = new ArrayList<>();
+        public final List<String> usernames = new ArrayList<>();
+        public final List<String> plans = new ArrayList<>();
+        public final List<Long> companies = new ArrayList<>();
     }
 
     @Data

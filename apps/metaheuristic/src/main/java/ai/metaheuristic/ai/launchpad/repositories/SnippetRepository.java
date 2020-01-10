@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -47,4 +48,8 @@ public interface SnippetRepository extends JpaRepository<Snippet, Long> {
     @Transactional(readOnly = true)
     @Query(value="select b.id from Snippet b")
     List<Long> findAllIds();
+
+    @Transactional(readOnly = true)
+    @Query(value="select b.code from Snippet b")
+    List<String> findAllSnippetCodes();
 }

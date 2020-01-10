@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,38 +17,24 @@
 package ai.metaheuristic.ai.launchpad.beans;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
 /**
  * @author Serge
- * Date: 10/27/2019
- * Time: 7:10 PM
+ * Date: 1/9/2020
+ * Time: 8:05 PM
  */
 @Entity
-@Table(name = "MH_COMPANY")
+@Table(name = "MH_IDS")
 @Data
-@NoArgsConstructor
-@ToString(exclude = "params")
-public class Company implements Serializable {
-    private static final long serialVersionUID = -159889135750827404L;
+public class Ids implements Serializable {
+    private static final long serialVersionUID = 8697932300220763332L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
-    @Version
-    private Integer version;
-
-    @Column(name = "UNIQUE_ID")
-    public Long uniqueId;
-
-    public String params;
-
-    public String name;
-
-
+    public Integer stub;
 }

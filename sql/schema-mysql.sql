@@ -1,5 +1,13 @@
 -- names of tables must be in lower case!
 
+create table mh_ids
+(
+    ID int unsigned NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    STUB varchar(1) null
+) AUTO_INCREMENT = 2;
+
+/*
+stub for future implementation when there will be tons of records for synchronizing
 CREATE TABLE mh_replication
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -8,19 +16,24 @@ CREATE TABLE mh_replication
     PAGE            INT UNSIGNED not null,
     LAST_UPDATED_ON bigint not null
 );
+*/
 
 CREATE TABLE mh_company
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
+    UNIQUE_ID       INT UNSIGNED    NOT NULL,
     NAME            VARCHAR(50)   NOT NULL,
     PARAMS          MEDIUMTEXT null
 );
 
+CREATE UNIQUE INDEX mh_company_unique_id_unq_idx
+    ON mh_company (UNIQUE_ID);
+
 insert into mh_company
-(id, version, name, params)
+(id, version, UNIQUE_ID, name, params)
 VALUES
-(1, 0, 'master company', '');
+(1, 0, 1, 'master company', '');
 
 create table mh_account
 (

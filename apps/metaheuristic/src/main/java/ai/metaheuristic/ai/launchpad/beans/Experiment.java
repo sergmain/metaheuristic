@@ -35,7 +35,6 @@ import java.io.Serializable;
 @Table(name = "MH_EXPERIMENT")
 @Data
 @ToString(exclude = {"params"})
-
 public class Experiment implements Serializable, Cloneable {
     private static final long serialVersionUID = -3509391644278818781L;
 
