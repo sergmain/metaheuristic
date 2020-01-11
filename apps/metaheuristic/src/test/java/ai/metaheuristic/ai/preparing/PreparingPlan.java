@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
@@ -59,6 +60,9 @@ import static org.junit.Assert.*;
 
 @Slf4j
 public abstract class PreparingPlan extends PreparingExperiment {
+
+    @Autowired
+    public CompanyTopLevelService companyTopLevelService;
 
     @Autowired
     public PlanCache planCache;
@@ -191,7 +195,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
         company = new Company();
         company.name = "Test company #2";
-        companyRepository.save(company);
+        companyTopLevelService.addCompany(company);
+
         assertNotNull(company.id);
 
         // id==1L must be assigned only to master company

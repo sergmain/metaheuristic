@@ -21,7 +21,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.process.Process;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,7 +42,7 @@ public class TestProcessMeta {
         PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
         planYaml.planCode = "test-process-for-meta";
         {
-            Process p = new Process();
+            PlanParamsYaml.Process p = new PlanParamsYaml.Process();
             p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "test-experiment-code-01";

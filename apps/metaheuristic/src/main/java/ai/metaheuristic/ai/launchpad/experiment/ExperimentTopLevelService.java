@@ -46,7 +46,6 @@ import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
-import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
@@ -757,7 +756,7 @@ public class ExperimentTopLevelService {
         for (Long planId : planIds) {
             PlanImpl plan = planCache.findById(planId);
             PlanParamsYaml ppy = plan.getPlanParamsYaml();
-            for (Process process : ppy.planYaml.processes) {
+            for (PlanParamsYaml.Process process : ppy.planYaml.processes) {
                 if (process.type== EnumsApi.ProcessType.EXPERIMENT && process.code.equals(experimentCode)) {
                     p = plan;
                     break;

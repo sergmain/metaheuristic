@@ -16,13 +16,9 @@
 
 package ai.metaheuristic.ai.yaml.plan;
 
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.process.Process;
-import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -41,12 +37,12 @@ public class TestPlanYamlYaml {
     public void testYaml() {
         PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
         {
-            Process p = new Process();
+            PlanParamsYaml.Process p = new PlanParamsYaml.Process();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
-            p.snippets = Collections.singletonList(new SnippetDefForPlan("snippet-01:1.1"));
+            p.snippets = Collections.singletonList(new PlanParamsYaml.SnippetDefForPlan("snippet-01:1.1"));
             p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "assembled-raw";
@@ -59,12 +55,12 @@ public class TestPlanYamlYaml {
         // - code: plan-10-assembly-raw-file-snippet-01
         //   type: assembled-raw
         {
-            Process p = new Process();
+            PlanParamsYaml.Process p = new PlanParamsYaml.Process();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "dataset processing";
             p.code = "dataset-processing";
 
-            p.snippets = Collections.singletonList(new SnippetDefForPlan("snippet-02:1.1"));
+            p.snippets = Collections.singletonList(new PlanParamsYaml.SnippetDefForPlan("snippet-02:1.1"));
             p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "dataset-processing";
@@ -79,12 +75,12 @@ public class TestPlanYamlYaml {
         // - code: plan-10-dataset-processing-snippet-02
         //   type: dataset-processing
         {
-            Process p = new Process();
+            PlanParamsYaml.Process p = new PlanParamsYaml.Process();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "feature processing";
             p.code = "feature-processing";
 
-            p.snippets = Arrays.asList(new SnippetDefForPlan("snippet-03:1.1"), new SnippetDefForPlan("snippet-04:1.1"), new SnippetDefForPlan("snippet-05:1.1"));
+            p.snippets = Arrays.asList(new PlanParamsYaml.SnippetDefForPlan("snippet-03:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-04:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-05:1.1"));
             p.parallelExec = true;
             p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
@@ -108,7 +104,7 @@ public class TestPlanYamlYaml {
         // - code: plan-10-feature-processing-snippet-05
         //   type: feature
         {
-            Process p = new Process();
+            PlanParamsYaml.Process p = new PlanParamsYaml.Process();
             p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "experiment-code-01";
@@ -139,7 +135,7 @@ public class TestPlanYamlYaml {
     public void testYaml_2() {
         PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
 
-        Process p1 = new Process();
+        PlanParamsYaml.Process p1 = new PlanParamsYaml.Process();
         p1.name="experiment";
         p1.collectResources = false;
 

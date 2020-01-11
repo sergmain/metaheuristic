@@ -45,21 +45,21 @@ public class LogData implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public Long id;
 
     @Version
-    private Integer version;
+    public Integer version;
 
     @Column(name = "REF_ID")
-    private Long refId;
+    public Long refId;
 
     @Column(name = "UPDATE_TS")
-    private Timestamp updateTs;
+    public Timestamp updateTs;
 
     @Column(name = "LOG_DATA")
-    private String logData;
+    public String logData;
 
     @Column(name = "LOG_TYPE")
-    private int logType;
+    public int logType;
 
 }

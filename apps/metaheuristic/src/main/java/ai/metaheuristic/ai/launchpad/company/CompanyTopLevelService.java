@@ -70,7 +70,7 @@ public class CompanyTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private Long getUniqueId() {
+    public Long getUniqueId() {
         Long maxUniqueId = companyRepository.getMaxUniqueIdValue();
         if (maxUniqueId==null) {
             // 2L because 1 is reserved for 'main company'

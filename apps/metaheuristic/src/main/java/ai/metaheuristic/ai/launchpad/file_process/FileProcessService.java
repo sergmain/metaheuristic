@@ -28,8 +28,6 @@ import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.process.Process;
-import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +51,7 @@ public class FileProcessService {
     @SuppressWarnings("Duplicates")
     public PlanService.ProduceTaskResult produceTasks(
             boolean isPersist, Long planId, PlanParamsYaml planParams, Long workbookId,
-            Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
+            PlanParamsYaml.Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, DataStorageParams> inputStorageUrls = new HashMap<>(pools.inputStorageUrls);
 
@@ -62,7 +60,7 @@ public class FileProcessService {
         result.outputResourceCodes = new ArrayList<>();
         if (process.parallelExec) {
             for (int i = 0; i < process.snippets.size(); i++) {
-                SnippetDefForPlan snDef = process.snippets.get(i);
+                PlanParamsYaml.SnippetDefForPlan snDef = process.snippets.get(i);
                 String normalizedSnippetCode = StrUtils.normalizeCode(snDef.code);
                 String normalizedPlanCode = StrUtils.normalizeCode(process.code);
                 String outputResourceCode = PlanUtils.getResourceCode(workbookId, normalizedPlanCode, normalizedSnippetCode, process.order, i);
@@ -77,7 +75,7 @@ public class FileProcessService {
             }
         }
         else {
-            SnippetDefForPlan snDef = process.snippets.get(0);
+            PlanParamsYaml.SnippetDefForPlan snDef = process.snippets.get(0);
             String normalizedSnippetCode = StrUtils.normalizeCode(snDef.code);
             String normalizedPlanCode = StrUtils.normalizeCode(process.code);
             String outputResourceCode = PlanUtils.getResourceCode(workbookId, normalizedPlanCode, normalizedSnippetCode, process.order, 0);
@@ -100,9 +98,9 @@ public class FileProcessService {
 
     @SuppressWarnings("Duplicates")
     private TaskImpl createTaskInternal(
-            PlanParamsYaml planParams, Long workbookId, Process process,
+            PlanParamsYaml planParams, Long workbookId, PlanParamsYaml.Process process,
             String outputResourceCode,
-            SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls,
+            PlanParamsYaml.SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls,
             Map<String, String> mappingCodeToOriginalFilename) {
         if (process.type!= EnumsApi.ProcessType.FILE_PROCESSING) {
             throw new IllegalStateException("#171.01 Wrong type of process, " +
@@ -132,13 +130,13 @@ public class FileProcessService {
         }
         yaml.taskYaml.preSnippets = new ArrayList<>();
         if (process.getPreSnippets()!=null) {
-            for (SnippetDefForPlan preSnippet : process.getPreSnippets()) {
+            for (PlanParamsYaml.SnippetDefForPlan preSnippet : process.getPreSnippets()) {
                 yaml.taskYaml.preSnippets.add(snippetService.getSnippetConfig(preSnippet));
             }
         }
         yaml.taskYaml.postSnippets = new ArrayList<>();
         if (process.getPostSnippets()!=null) {
-            for (SnippetDefForPlan postSnippet : process.getPostSnippets()) {
+            for (PlanParamsYaml.SnippetDefForPlan postSnippet : process.getPostSnippets()) {
                 yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(postSnippet));
             }
         }

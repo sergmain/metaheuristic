@@ -26,9 +26,9 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
-import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +56,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
     //      that means that there won't be separated description of experiment and instances of experiment
 
     @Override
-    public EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst) {
+    public EnumsApi.PlanValidateStatus validate(Plan plan, PlanParamsYaml.Process process, boolean isFirst) {
         if (process.snippets!=null && process.snippets.size() > 0) {
             return EnumsApi.PlanValidateStatus.SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR;
         }

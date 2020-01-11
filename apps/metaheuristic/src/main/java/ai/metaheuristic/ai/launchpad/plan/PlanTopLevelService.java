@@ -256,7 +256,7 @@ public class PlanTopLevelService {
         }
         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.params);
         if (ppy.internalParams==null) {
-            ppy.internalParams = new PlanApiData.PlanInternalParamsYaml();
+            ppy.internalParams = new PlanParamsYaml.InternalParams();
         }
         ppy.internalParams.archived = true;
         plan.params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);

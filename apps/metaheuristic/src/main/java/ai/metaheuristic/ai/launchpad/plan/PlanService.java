@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
-import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
@@ -45,8 +44,6 @@ import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
-import ai.metaheuristic.api.launchpad.process.Process;
-import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
@@ -297,11 +294,11 @@ public class PlanService {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
 
-        Process lastProcess = null;
+        PlanParamsYaml.Process lastProcess = null;
         boolean experimentPresent = false;
-        List<Process> processes = planYaml.getProcesses();
+        List<PlanParamsYaml.Process> processes = planYaml.getProcesses();
         for (int i = 0; i < processes.size(); i++) {
-            Process process = processes.get(i);
+            PlanParamsYaml.Process process = processes.get(i);
             if (i + 1 < processes.size()) {
                 if (process.outputParams == null) {
                     return EnumsApi.PlanValidateStatus.PROCESS_PARAMS_EMPTY_ERROR;
@@ -352,11 +349,11 @@ public class PlanService {
         return EnumsApi.PlanValidateStatus.OK;
     }
 
-    private EnumsApi.PlanValidateStatus checkSnippets(Plan plan, Process process) {
+    private EnumsApi.PlanValidateStatus checkSnippets(Plan plan, PlanParamsYaml.Process process) {
         YamlVersion v = YamlForVersioning.getYamlForVersion().load(plan.getParams());
 
         if (process.snippets!=null) {
-            for (SnippetDefForPlan snDef : process.snippets) {
+            for (PlanParamsYaml.SnippetDefForPlan snDef : process.snippets) {
                 EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x != OK) {
                     return x;
@@ -364,7 +361,7 @@ public class PlanService {
             }
         }
         if (process.preSnippets!=null) {
-            for (SnippetDefForPlan snDef : process.preSnippets) {
+            for (PlanParamsYaml.SnippetDefForPlan snDef : process.preSnippets) {
                 EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x != OK) {
                     return x;
@@ -372,7 +369,7 @@ public class PlanService {
             }
         }
         if (process.postSnippets!=null) {
-            for (SnippetDefForPlan snDef : process.postSnippets) {
+            for (PlanParamsYaml.SnippetDefForPlan snDef : process.postSnippets) {
                 EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x != OK) {
                     return x;
@@ -383,7 +380,7 @@ public class PlanService {
         return OK;
     }
 
-    private EnumsApi.PlanValidateStatus checkRequiredVersionOfTaskParams(int planParamsVersion, Process process, SnippetDefForPlan snDef) {
+    private EnumsApi.PlanValidateStatus checkRequiredVersionOfTaskParams(int planParamsVersion, PlanParamsYaml.Process process, PlanParamsYaml.SnippetDefForPlan snDef) {
         if (StringUtils.isNotBlank(snDef.code)) {
             Long  snippetId = snippetRepository.findIdByCode(snDef.code);
             if (snippetId == null) {
@@ -513,7 +510,7 @@ public class PlanService {
         int idx = Consts.PROCESS_ORDER_START_VALUE;
         List<Long> parentTaskIds = new ArrayList<>();
         int numberOfTasks=0;
-        for (Process process : planParams.planYaml.getProcesses()) {
+        for (PlanParamsYaml.Process process : planParams.planYaml.getProcesses()) {
             process.order = idx++;
 
             ProduceTaskResult produceTaskResult;

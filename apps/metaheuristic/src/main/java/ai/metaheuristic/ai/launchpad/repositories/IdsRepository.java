@@ -17,12 +17,16 @@
 package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.Ids;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author Serge
  * Date: 1/9/2020
  * Time: 8:09 PM
  */
+@Repository
+@Profile("launchpad")
 public interface IdsRepository extends CrudRepository<Ids, Long> {
 }

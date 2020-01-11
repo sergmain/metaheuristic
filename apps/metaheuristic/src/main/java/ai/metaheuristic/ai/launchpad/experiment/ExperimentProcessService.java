@@ -32,7 +32,6 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.process.Process;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -59,7 +58,7 @@ public class ExperimentProcessService {
 
     public PlanService.ProduceTaskResult produceTasks(
             boolean isPersist, PlanParamsYaml planParams, Long workbookId,
-            Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
+            PlanParamsYaml.Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
         Map<String, DataStorageParams> inputStorageUrls = pools.inputStorageUrls;

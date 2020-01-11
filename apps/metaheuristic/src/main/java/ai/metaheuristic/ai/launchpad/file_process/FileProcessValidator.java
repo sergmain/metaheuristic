@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.launchpad.file_process;
 
 import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.process.Process;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
 public class FileProcessValidator implements ProcessValidator {
 
     @Override
-    public EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst) {
+    public EnumsApi.PlanValidateStatus validate(Plan plan, PlanParamsYaml.Process process, boolean isFirst) {
         if (process.getSnippets() == null || process.getSnippets().isEmpty()) {
             return EnumsApi.PlanValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }

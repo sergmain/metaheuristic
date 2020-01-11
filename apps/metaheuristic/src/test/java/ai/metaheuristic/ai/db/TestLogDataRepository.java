@@ -29,6 +29,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import static org.junit.Assert.*;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
@@ -41,6 +43,9 @@ public class TestLogDataRepository {
 
     @Before
     public void before() {
+        LogData logDataTemp = logDataRepository.findById(42L).orElse(null);
+        assertNull(logDataTemp);
+
         logData = new LogData();
         logData.setId(42L);
         logData.setVersion(5);
@@ -48,7 +53,14 @@ public class TestLogDataRepository {
         logData.setType(LogData.Type.ASSEMBLING);
         logData.setRefId(42L);
         logData = logDataRepository.saveAndFlush(logData);
-        Assert.assertNotNull(logData);
+        assertNotNull(logData);
+
+/*
+        logData.version = 10;
+        logData = logDataRepository.saveAndFlush(logData);
+        assertNotNull(logData);
+        assertEquals(10, (int)logData.version);
+*/
     }
 
     @After
@@ -88,16 +100,16 @@ public class TestLogDataRepository {
     public void testLogData(){
 
         LogData logDataTemp = logDataRepository.findById(-1L).orElse(null);
-        Assert.assertNull(logDataTemp);
+        assertNull(logDataTemp);
 
 
         LogData datasetWithLogs = logDataRepository.findById(logData.getId()).orElse(null);
-        Assert.assertNotNull(datasetWithLogs);
+        assertNotNull(datasetWithLogs);
 
         logDataRepository.delete(datasetWithLogs);
 
         LogData newlogData = logDataRepository.findById(datasetWithLogs.getId()).orElse(null);
-        Assert.assertNull(newlogData);
+        assertNull(newlogData);
 
     }
 }

@@ -23,8 +23,8 @@ import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +76,7 @@ public class TestSnippetService {
 
     @Test
     public void test() {
-        SnippetDefForPlan sd = new SnippetDefForPlan();
+        PlanParamsYaml.SnippetDefForPlan sd = new PlanParamsYaml.SnippetDefForPlan();
         sd.code = TEST_SNIPPET;
         sd.params = null;
         TaskParamsYaml.SnippetConfig sc = snippetService.getSnippetConfig(sd);

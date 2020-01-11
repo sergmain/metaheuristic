@@ -51,8 +51,6 @@ import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
-import ai.metaheuristic.api.launchpad.process.Process;
-import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -681,7 +679,7 @@ public class ExperimentService {
     }
 
     public EnumsApi.PlanProducingStatus produceTasks(
-            boolean isPersist, PlanParamsYaml planParams, Long workbookId, Process process,
+            boolean isPersist, PlanParamsYaml planParams, Long workbookId, PlanParamsYaml.Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
             Map<String, DataStorageParams> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
         if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
@@ -846,7 +844,7 @@ public class ExperimentService {
                         yaml.taskYaml.snippet = TaskParamsUtils.toSnippetConfig(snippet.getSnippetConfig(true));
                         yaml.taskYaml.preSnippets = new ArrayList<>();
                         if (process.getPreSnippets() != null) {
-                            for (SnippetDefForPlan snDef : process.getPreSnippets()) {
+                            for (PlanParamsYaml.SnippetDefForPlan snDef : process.getPreSnippets()) {
                                 yaml.taskYaml.preSnippets.add(snippetService.getSnippetConfig(snDef));
                             }
                         }
@@ -863,7 +861,7 @@ public class ExperimentService {
                             }
                         }
                         if (process.getPostSnippets()!=null) {
-                            for (SnippetDefForPlan snDef : process.getPostSnippets()) {
+                            for (PlanParamsYaml.SnippetDefForPlan snDef : process.getPostSnippets()) {
                                 yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(snDef));
                             }
                         }

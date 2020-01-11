@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.plan;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.launchpad.process.Process;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,7 +38,7 @@ public class TestProcess {
 
     @Test
     public void testProcessMeta() {
-        Process p = new Process();
+        PlanParamsYaml.Process p = new PlanParamsYaml.Process();
 
         p.metas.addAll(
                 Arrays.asList(
@@ -58,7 +57,7 @@ public class TestProcess {
         PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(s);
         PlanYaml planYamlV21 = planParams.planYaml;
 
-        Process p1 = planYamlV21.getProcesses().get(0);
+        PlanParamsYaml.Process p1 = planYamlV21.getProcesses().get(0);
 
         assertNotNull(p.getMeta("dataset"));
         assertEquals("dataset-processing", p.getMeta("dataset").getValue());
