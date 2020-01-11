@@ -43,10 +43,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -96,10 +98,17 @@ public class ReplicationService {
     private void syncSnippets(List<String> actualSnippets) {
         snippetRepository.findAllSnippetCodes().parallelStream()
                 .filter(s->!actualSnippets.contains(s))
-                .forEach(this::syncSnippet);
+                .map(snippetRepository::findByCode)
+                .filter(Objects::nonNull)
+                .forEach(s->snippetRepository.deleteById(s.id));
+
+        List<String> currSnippets = snippetRepository.findAllSnippetCodes();
+        actualSnippets.parallelStream()
+                .filter(s->!currSnippets.contains(s))
+                .forEach(this::createSnippet);
     }
 
-    private void syncSnippet(String snippetCode) {
+    private void createSnippet(String snippetCode) {
         ReplicationData.SnippetAsset snippetAsset = getSnippetAsset(snippetCode);
         if (snippetAsset.isErrorMessages()) {
             log.error("#308.010 Error while getting snippet "+ snippetCode +", error: " + snippetAsset.getErrorMessagesAsStr());
@@ -195,7 +204,13 @@ public class ReplicationService {
                 assetResponse = JsonUtils.getMapper().readValue(entity.getContent(), clazz);
             }
             return assetResponse;
-        } catch (Throwable th) {
+        }
+        catch (SocketTimeoutException th) {
+            log.error("Error: {}", th.getMessage());
+            return new ReplicationData.AssetStateResponse( S.f("Error while accessing url %s, error message: %s",
+                    globals.assetSourceUrl, th.getMessage()));
+        }
+        catch (Throwable th) {
             log.error("Error", th);
             return new ReplicationData.AssetStateResponse( S.f("Error while accessing url %s, error message: %s",
                     globals.assetSourceUrl, th.getMessage()));
