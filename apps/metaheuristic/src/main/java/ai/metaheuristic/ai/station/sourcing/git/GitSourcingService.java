@@ -30,6 +30,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -38,6 +39,7 @@ import java.util.List;
 
 @Service
 @Slf4j
+@Profile("station")
 public class GitSourcingService {
 
     private static final List<String> GIT_VERSION_CMD = List.of("git", "--version");

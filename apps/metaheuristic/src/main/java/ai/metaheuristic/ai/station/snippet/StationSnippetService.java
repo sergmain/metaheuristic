@@ -30,6 +30,7 @@ import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
@@ -45,6 +46,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
+@Profile("station")
 public class StationSnippetService {
 
     public enum ConfigStatus {ok, error, not_found}
