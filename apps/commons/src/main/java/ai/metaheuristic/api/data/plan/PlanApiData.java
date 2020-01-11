@@ -169,6 +169,7 @@ public class PlanApiData {
         public long currentPlanId;
     }
 
+    // !!! DO NOT CHANGE THIS CLASS UNDER ANY CIRCUMSTANCES
     @Data
     public static class PlanInternalParamsYaml {
         public boolean archived;
