@@ -70,6 +70,7 @@ public class PlanParamsYamlUtilsV6
         if (v6.planYaml.ac!=null) {
             p.planYaml.ac = new PlanParamsYamlV7.AccessControlV7(v6.planYaml.ac.groups);
         }
+        p.originYaml = toString(v6);
         p.checkIntegrity();
         return p;
     }

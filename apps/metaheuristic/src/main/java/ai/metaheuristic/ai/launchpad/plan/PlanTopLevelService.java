@@ -130,7 +130,8 @@ public class PlanTopLevelService {
                     "#560.050 plan wasn't found, planId: " + planId,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
-        return new PlanApiData.PlanResult(plan, plan.getParams());
+        String yaml = plan.getPlanParamsYaml().originYaml;
+        return new PlanApiData.PlanResult(plan, yaml);
     }
 
     public PlanApiData.PlanResult validatePlan(Long planId, LaunchpadContext context) {
@@ -140,7 +141,8 @@ public class PlanTopLevelService {
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.getParams());
+        String yaml = plan.getPlanParamsYaml().originYaml;
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, yaml);
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         result.errorMessages = planValidation.errorMessages;
         result.infoMessages = planValidation.infoMessages;
@@ -174,11 +176,14 @@ public class PlanTopLevelService {
         }
 
         PlanImpl plan = new PlanImpl();
+        ppy.originYaml = planYamlAsStr;
+        ppy.internalParams.updatedOn = System.currentTimeMillis();
+        String params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
+        plan.setParams(params);
+
         plan.companyId = context.getCompanyId();
         plan.createdOn = System.currentTimeMillis();
         plan.code = ppy.planYaml.planCode;
-        // we have to preserve a format of planParamsYaml for compatibility with old snippets
-        plan.setParams(planYamlAsStr);
         plan = planCache.save(plan);
 
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
@@ -218,8 +223,12 @@ public class PlanTopLevelService {
             return new PlanApiData.PlanResult("#560.230 plan with such code already exists, code: " + code);
         }
         plan.code = code;
-        // we have to preserve a format of planParamsYaml for compatibility with old snippets
-        plan.setParams(planYamlAsStr);
+
+        ppy.originYaml = planYamlAsStr;
+        ppy.internalParams.updatedOn = System.currentTimeMillis();
+        String params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
+        plan.setParams(params);
+
         plan = planCache.save(plan);
 
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
@@ -259,6 +268,7 @@ public class PlanTopLevelService {
             ppy.internalParams = new PlanParamsYaml.InternalParams();
         }
         ppy.internalParams.archived = true;
+        ppy.internalParams.updatedOn = System.currentTimeMillis();
         plan.params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
 
         planCache.save(plan);
