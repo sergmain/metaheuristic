@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.server;
 
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
 import ai.metaheuristic.ai.launchpad.replication.ReplicationService;
+import ai.metaheuristic.ai.launchpad.replication.ReplicationSourceService;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,11 +40,16 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ReplicationController {
 
-    private final ReplicationService replicationService;
+    private final ReplicationSourceService replicationSourceService;
 
-    @GetMapping(value="/current-asset")
+    @GetMapping(value="/current-assets")
     public @ResponseBody ReplicationData.AssetStateResponse currentAssets() {
-        return replicationService.currentAssets();
+        return replicationSourceService.currentAssets();
+    }
+
+    @PostMapping(value="/snippet")
+    public @ResponseBody ReplicationData.SnippetAsset currentAssets(@RequestParam String snippetCode) {
+        return replicationSourceService.getSnippet(snippetCode);
     }
 
 }

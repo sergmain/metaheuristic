@@ -17,7 +17,9 @@
 package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.api.data.BaseDataClass;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -34,10 +36,20 @@ import java.util.Map;
  */
 public class ReplicationData {
 
+    public interface ReplicationAsset {}
+
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class AssetStateResponse extends BaseDataClass {
+    @AllArgsConstructor
+    public static class SnippetAsset extends BaseDataClass implements ReplicationAsset {
+        public Snippet snippet;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class AssetStateResponse extends BaseDataClass implements ReplicationAsset {
         public final List<String> snippets = new ArrayList<>();
         public final List<String> usernames = new ArrayList<>();
         public final List<String> plans = new ArrayList<>();

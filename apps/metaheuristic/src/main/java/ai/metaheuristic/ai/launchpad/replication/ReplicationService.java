@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.replication;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +34,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.client.utils.URIBuilder;
@@ -46,14 +46,15 @@ import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Serge
  * Date: 1/9/2020
  * Time: 12:16 AM
  */
+@SuppressWarnings("UnnecessaryLocalVariable")
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -72,9 +73,13 @@ public class ReplicationService {
             return;
         }
         ReplicationData.AssetStateResponse assetStateResponse = getAssetStates();
+        if (assetStateResponse.isErrorMessages()) {
+            log.error("#308.010 Error while getting actual assets: " + assetStateResponse.getErrorMessagesAsStr());
+            return;
+        }
+        syncSnippets(assetStateResponse.snippets);
         syncCompanies(assetStateResponse);
         syncAccounts(assetStateResponse);
-        syncSnippets(assetStateResponse);
         syncPLans(assetStateResponse);
     }
 
@@ -88,14 +93,24 @@ public class ReplicationService {
         return false;
     }
 
-    private void syncSnippets(ReplicationData.AssetStateResponse assetStateResponse) {
-        if (snippetsInSyncState(assetStateResponse)) {
-            return;
-        }
+    private void syncSnippets(List<String> actualSnippets) {
+        snippetRepository.findAllSnippetCodes().parallelStream()
+                .filter(s->!actualSnippets.contains(s))
+                .forEach(this::syncSnippet);
     }
 
-    private boolean snippetsInSyncState(ReplicationData.AssetStateResponse assetStateResponse) {
-        return false;
+    private void syncSnippet(String snippetCode) {
+        ReplicationData.SnippetAsset snippetAsset = getSnippetAsset(snippetCode);
+        if (snippetAsset.isErrorMessages()) {
+            log.error("#308.010 Error while getting snippet "+ snippetCode +", error: " + snippetAsset.getErrorMessagesAsStr());
+            return;
+        }
+        Snippet sn = snippetRepository.findByCode(snippetCode);
+        if (sn!=null) {
+            return;
+        }
+        snippetAsset.snippet.id=null;
+        snippetRepository.save(snippetAsset.snippet);
     }
 
     private void syncAccounts(ReplicationData.AssetStateResponse assetStateResponse) {
@@ -118,22 +133,6 @@ public class ReplicationService {
         return false;
     }
 
-    public ReplicationData.AssetStateResponse currentAssets() {
-        ReplicationData.AssetStateResponse res = new ReplicationData.AssetStateResponse();
-        res.companies.addAll(companyRepository.findAllUniqueIds());
-        res.usernames.addAll(accountRepository.findAllUsernames());
-        res.snippets.addAll(snippetRepository.findAllSnippetCodes());
-        res.plans.addAll(planRepository.findAllAsIds().parallelStream()
-                .map(id->{
-                    PlanImpl plan = planCache.findById(id);
-                    PlanParamsYaml params = plan.getPlanParamsYaml();
-                    return (params.internalParams!=null && params.internalParams.archived) ? null : plan.code;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList()));
-        return res;
-    }
-
     private static Executor getExecutor(String launchpadUrl, String restUsername, String restPassword) {
         HttpHost launchpadHttpHostWithAuth;
         try {
@@ -147,13 +146,32 @@ public class ReplicationService {
     }
 
     private ReplicationData.AssetStateResponse getAssetStates() {
+        ReplicationData.AssetStateResponse response = (ReplicationData.AssetStateResponse)getData(
+                "/rest/v1/replication/current-assets", ReplicationData.AssetStateResponse.class,
+                (uri) -> Request.Get(uri).connectTimeout(5000).socketTimeout(20000)
+        );
+        return response;
+    }
+
+    private ReplicationData.SnippetAsset getSnippetAsset(String snippetCode) {
+        ReplicationData.SnippetAsset response = (ReplicationData.SnippetAsset)getData(
+                "/rest/v1/replication/snippet", ReplicationData.SnippetAsset.class,
+                (uri) -> Request.Post(uri)
+                        .bodyForm(Form.form().add("code", snippetCode).build(), StandardCharsets.UTF_8)
+                        .connectTimeout(5000)
+                        .socketTimeout(20000)
+        );
+        return response;
+    }
+
+    private Object getData(String uri, Class clazz, Function<URI, Request> requestFunc) {
         try {
-            final String url = globals.assetSourceUrl + "/rest/v1/replication/current-asset";
+            final String url = globals.assetSourceUrl + uri;
 
             final URIBuilder builder = new URIBuilder(url).setCharset(StandardCharsets.UTF_8);
 
             final URI build = builder.build();
-            final Request request = Request.Get(build).connectTimeout(5000).socketTimeout(20000);
+            final Request request = requestFunc.apply(build);
 
             RestUtils.addHeaders(request);
             Response response = getExecutor(globals.assetSourceUrl, globals.assetUsername, globals.assetPassword)
@@ -172,9 +190,9 @@ public class ReplicationService {
                         globals.assetSourceUrl, httpResponse.getStatusLine().getStatusCode()));
             }
             final HttpEntity entity = httpResponse.getEntity();
-            ReplicationData.AssetStateResponse assetResponse = null;
+            Object assetResponse = null;
             if (entity != null) {
-                assetResponse = JsonUtils.getMapper().readValue(entity.getContent(), ReplicationData.AssetStateResponse.class);
+                assetResponse = JsonUtils.getMapper().readValue(entity.getContent(), clazz);
             }
             return assetResponse;
         } catch (Throwable th) {
@@ -182,5 +200,6 @@ public class ReplicationService {
             return new ReplicationData.AssetStateResponse( S.f("Error while accessing url %s, error message: %s",
                     globals.assetSourceUrl, th.getMessage()));
         }
+
     }
 }
