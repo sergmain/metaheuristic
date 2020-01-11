@@ -166,7 +166,7 @@ public class ReplicationService {
         ReplicationData.SnippetAsset response = (ReplicationData.SnippetAsset)getData(
                 "/rest/v1/replication/snippet", ReplicationData.SnippetAsset.class,
                 (uri) -> Request.Post(uri)
-                        .bodyForm(Form.form().add("code", snippetCode).build(), StandardCharsets.UTF_8)
+                        .bodyForm(Form.form().add("snippetCode", snippetCode).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );
