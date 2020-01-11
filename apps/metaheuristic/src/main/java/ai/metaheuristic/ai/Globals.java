@@ -283,13 +283,15 @@ public class Globals {
             log.warn("Station is disabled, stationDir is null, isStationEnabled: {}", isStationEnabled);
             isStationEnabled = false;
         }
-        else {
+        if (isStationEnabled) {
             stationResourcesDir = new File(stationDir, Consts.RESOURCES_DIR);
             stationResourcesDir.mkdirs();
             stationTaskDir = new File(stationDir, Consts.TASK_DIR);
             stationTaskDir.mkdirs();
-            stationEnvHotDeployDir = new File(stationDir, Consts.ENV_HOT_DEPLOY_DIR);
-            stationEnvHotDeployDir.mkdirs();
+            if (stationEnvHotDeploySupported) {
+                stationEnvHotDeployDir = new File(stationDir, Consts.ENV_HOT_DEPLOY_DIR);
+                stationEnvHotDeployDir.mkdirs();
+            }
 
             // TODO 2019.04.26 right now the change of ownership is disabled
             //  but maybe will be required in future
@@ -399,6 +401,9 @@ public class Globals {
     }
 
     private void checkOwnership(File file) {
+        if (!stationEnvHotDeploySupported) {
+            return;
+        }
         try {
             Path path = file.toPath();
 
