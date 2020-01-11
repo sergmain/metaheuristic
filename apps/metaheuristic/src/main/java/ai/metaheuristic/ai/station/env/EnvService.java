@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -44,6 +45,7 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Profile("station")
 public class EnvService {
 
     private final Globals globals;
