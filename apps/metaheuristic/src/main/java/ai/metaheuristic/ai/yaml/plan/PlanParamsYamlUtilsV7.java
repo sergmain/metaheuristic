@@ -22,7 +22,6 @@ import ai.metaheuristic.api.data.plan.PlanParamsYamlV7;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -57,11 +56,22 @@ public class PlanParamsYamlUtilsV7
         p.planYaml.clean = v7.planYaml.clean;
         p.planYaml.processes = v7.planYaml.processes.stream().map( o-> {
             PlanParamsYaml.Process pr = new PlanParamsYaml.Process();
-            BeanUtils.copyProperties(o, pr, "snippets", "preSnippets", "postSnippets");
+            pr.name = o.name;
+            pr.code = o.code;
+            pr.type = o.type;
+            pr.collectResources = o.collectResources;
+            pr.parallelExec = o.parallelExec;
+            pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
+            pr.inputResourceCode = o.inputResourceCode;
+            pr.outputParams = o.outputParams;
+            pr.outputResourceCode = o.outputResourceCode;
+            pr.order = o.order;
+
             pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new PlanParamsYaml.SnippetDefForPlan(d.code, d.params)).collect(Collectors.toList()) : null;
             pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new PlanParamsYaml.SnippetDefForPlan(d.code, d.params)).collect(Collectors.toList()) : null;
             pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new PlanParamsYaml.SnippetDefForPlan(d.code, d.params)).collect(Collectors.toList()) : null;
             pr.metas = o.metas;
+
             return pr;
         }).collect(Collectors.toList());
         p.planYaml.planCode = v7.planYaml.planCode;

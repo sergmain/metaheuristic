@@ -19,14 +19,13 @@ package ai.metaheuristic.api.data.plan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.task.TaskParamsYamlV1;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -69,7 +68,13 @@ public class PlanParamsYaml implements BaseParams {
 
     @Data
     @ToString
-    public static class Process {
+    public static class Process implements Cloneable {
+
+        @SneakyThrows
+        public Process clone() {
+            final Process clone = (Process) super.clone();
+            return clone;
+        }
 
         public String name;
         public String code;
