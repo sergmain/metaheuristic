@@ -61,7 +61,13 @@ public class ReplicationSourceService {
                 .map(id->{
                     PlanImpl plan = planCache.findById(id);
                     PlanParamsYaml params = plan.getPlanParamsYaml();
-                    return (params.internalParams!=null && params.internalParams.archived) ? null : plan.code;
+                    if (params.internalParams!= null && params.internalParams.archived) {
+                        return null;
+                    }
+                    if (params.internalParams==null) {
+                        log.warn("!!! params.internalParams is null. Need to investigate");
+                    }
+                    return new ReplicationData.PlanShortAsset(plan.code, params.internalParams==null ? 0L : params.internalParams.updatedOn);
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));
@@ -73,4 +79,8 @@ public class ReplicationSourceService {
         return snippetAsset;
     }
 
+    public ReplicationData.PlanAsset getPlan(String planCode) {
+        ReplicationData.PlanAsset snippetAsset = new ReplicationData.PlanAsset(planRepository.findByCode(planCode));
+        return snippetAsset;
+    }
 }

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.replication;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
@@ -24,10 +25,13 @@ import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -47,6 +51,8 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -69,6 +75,7 @@ public class ReplicationService {
     public final PlanRepository planRepository;
     public final SnippetRepository snippetRepository;
     public final PlanCache planCache;
+    public final SnippetCache snippetCache;
 
     public void sync() {
         if (globals.assetMode!= EnumsApi.LaunchpadAssetMode.replicated) {
@@ -80,15 +87,93 @@ public class ReplicationService {
             return;
         }
         syncSnippets(assetStateResponse.snippets);
+        syncPlans(assetStateResponse.plans);
         syncCompanies(assetStateResponse);
         syncAccounts(assetStateResponse);
-        syncPLans(assetStateResponse);
     }
 
-    private void syncPLans(ReplicationData.AssetStateResponse assetStateResponse) {
-        if (plansInSyncState(assetStateResponse)) {
+    @Data
+    @AllArgsConstructor
+    private static class PlanLoopEntry {
+        public ReplicationData.PlanShortAsset planShort;
+        public PlanImpl plan;
+    }
+
+    private void syncPlans(List<ReplicationData.PlanShortAsset> actualPlans) {
+        List<PlanLoopEntry> forUpdating = new ArrayList<>(actualPlans.size());
+        LinkedList<ReplicationData.PlanShortAsset> forCreating = new LinkedList<>(actualPlans);
+
+        List<Long> ids = planRepository.findAllAsIds();
+        for (Long id : ids) {
+            PlanImpl p = planCache.findById(id);
+            if (p==null) {
+                continue;
+            }
+
+            PlanLoopEntry planLoopEntry = null;
+            for (ReplicationData.PlanShortAsset actualPlan : actualPlans) {
+                if (actualPlan.code.equals(p.code) && actualPlan.updateOn!=p.getPlanParamsYaml().internalParams.updatedOn) {
+                    planLoopEntry = new PlanLoopEntry(actualPlan, p);
+                    forUpdating.add(planLoopEntry);
+                    break;
+                }
+            }
+
+            if (planLoopEntry==null) {
+                planCache.deleteById(id);
+            }
+            forCreating.removeIf(planShortAsset -> planShortAsset.code.equals(p.code));
+        }
+
+        forUpdating.parallelStream().forEach(this::updatePlan);
+        forCreating.parallelStream().forEach(this::createPlan);
+    }
+
+    private void updatePlan(PlanLoopEntry planLoopEntry) {
+        ReplicationData.PlanAsset planAsset = getPlanAsset(planLoopEntry.plan.code);
+        if (planAsset == null) {
             return;
         }
+
+        planLoopEntry.plan.params = planAsset.plan.params;
+        planLoopEntry.plan.locked = planAsset.plan.locked;
+        planLoopEntry.plan.valid = planAsset.plan.valid;
+
+        planCache.save(planLoopEntry.plan);
+    }
+
+    private void createPlan(ReplicationData.PlanShortAsset planShortAsset) {
+        ReplicationData.PlanAsset planAsset = getPlanAsset(planShortAsset.code);
+        if (planAsset == null) {
+            return;
+        }
+
+/*
+        PlanImpl p = planRepository.findByCode(planShortAsset.code);
+        if (p!=null) {
+            return;
+        }
+*/
+
+        planAsset.plan.id=null;
+        planCache.save(planAsset.plan);
+    }
+
+    private ReplicationData.PlanAsset getPlanAsset(String planCode) {
+        ReplicationData.PlanAsset planAsset = requestPlanAsset(planCode);
+        if (planAsset.isErrorMessages()) {
+            log.error("#308.020 Error while getting snippet "+ planCode +", error: " + planAsset.getErrorMessagesAsStr());
+            return null;
+        }
+        return planAsset;
+    }
+
+    private static boolean isContained(List<ReplicationData.PlanShortAsset> actualPlans, String code) {
+        return actualPlans.parallelStream().anyMatch(o->o.code.equals(code));
+    }
+
+    private void checkPlanNeedUpdate(String planCode) {
+
     }
 
     private boolean plansInSyncState(ReplicationData.AssetStateResponse assetStateResponse) {
@@ -109,7 +194,7 @@ public class ReplicationService {
     }
 
     private void createSnippet(String snippetCode) {
-        ReplicationData.SnippetAsset snippetAsset = getSnippetAsset(snippetCode);
+        ReplicationData.SnippetAsset snippetAsset = requestSnippetAsset(snippetCode);
         if (snippetAsset.isErrorMessages()) {
             log.error("#308.010 Error while getting snippet "+ snippetCode +", error: " + snippetAsset.getErrorMessagesAsStr());
             return;
@@ -119,7 +204,7 @@ public class ReplicationService {
             return;
         }
         snippetAsset.snippet.id=null;
-        snippetRepository.save(snippetAsset.snippet);
+        snippetCache.save(snippetAsset.snippet);
     }
 
     private void syncAccounts(ReplicationData.AssetStateResponse assetStateResponse) {
@@ -162,11 +247,22 @@ public class ReplicationService {
         return response;
     }
 
-    private ReplicationData.SnippetAsset getSnippetAsset(String snippetCode) {
+    private ReplicationData.SnippetAsset requestSnippetAsset(String snippetCode) {
         ReplicationData.SnippetAsset response = (ReplicationData.SnippetAsset)getData(
                 "/rest/v1/replication/snippet", ReplicationData.SnippetAsset.class,
                 (uri) -> Request.Post(uri)
                         .bodyForm(Form.form().add("snippetCode", snippetCode).build(), StandardCharsets.UTF_8)
+                        .connectTimeout(5000)
+                        .socketTimeout(20000)
+        );
+        return response;
+    }
+
+    private ReplicationData.PlanAsset requestPlanAsset(String planCode) {
+        ReplicationData.PlanAsset response = (ReplicationData.PlanAsset)getData(
+                "/rest/v1/replication/plan", ReplicationData.PlanAsset.class,
+                (uri) -> Request.Post(uri)
+                        .bodyForm(Form.form().add("planCode", planCode).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );

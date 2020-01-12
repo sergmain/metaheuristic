@@ -48,8 +48,13 @@ public class ReplicationController {
     }
 
     @PostMapping(value="/snippet")
-    public @ResponseBody ReplicationData.SnippetAsset currentAssets(@RequestParam String snippetCode) {
+    public @ResponseBody ReplicationData.SnippetAsset getSnippet(@RequestParam String snippetCode) {
         return replicationSourceService.getSnippet(snippetCode);
+    }
+
+    @PostMapping(value="/plan")
+    public @ResponseBody ReplicationData.PlanAsset getPlan(@RequestParam String planCode) {
+        return replicationSourceService.getPlan(planCode);
     }
 
 }

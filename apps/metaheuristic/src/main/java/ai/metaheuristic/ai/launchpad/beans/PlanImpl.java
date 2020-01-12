@@ -36,7 +36,7 @@ public class PlanImpl implements Serializable, Plan {
     public Long id;
 
     @Version
-    private Integer version;
+    public Integer version;
 
     @NotNull
     @Column(name = "COMPANY_ID")

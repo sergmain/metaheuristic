@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.AllArgsConstructor;
@@ -49,10 +50,26 @@ public class ReplicationData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PlanAsset extends BaseDataClass implements ReplicationAsset {
+        public PlanImpl plan;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PlanShortAsset {
+        public String code;
+        public long updateOn;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
     public static class AssetStateResponse extends BaseDataClass implements ReplicationAsset {
         public final List<String> snippets = new ArrayList<>();
+        public final List<PlanShortAsset> plans = new ArrayList<>();
         public final List<String> usernames = new ArrayList<>();
-        public final List<String> plans = new ArrayList<>();
         public final List<Long> companies = new ArrayList<>();
 
         public AssetStateResponse(String errorMessage) {

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.api.launchpad.Plan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -57,6 +58,9 @@ public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
     @Transactional(readOnly = true)
     @Query(value="select p.code from PlanImpl p")
     List<String> findAllPlanCodes();
+
+    @Transactional(readOnly = true)
+    PlanImpl findByCode(String code);
 }
 
 
