@@ -42,9 +42,22 @@ public class ReplicationData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
+    public static class AssetAcquiringError extends BaseDataClass implements ReplicationAsset {
+        public AssetAcquiringError(String errorMessage) {
+            addErrorMessage(errorMessage);
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class SnippetAsset extends BaseDataClass implements ReplicationAsset {
         public Snippet snippet;
+
+        public SnippetAsset(List<String> errorMessages) {
+            addErrorMessages(errorMessages);
+        }
     }
 
     @Data
@@ -53,11 +66,15 @@ public class ReplicationData {
     @AllArgsConstructor
     public static class PlanAsset extends BaseDataClass implements ReplicationAsset {
         public PlanImpl plan;
+        public PlanAsset(List<String> errorMessages) {
+            addErrorMessages(errorMessages);
+        }
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @EqualsAndHashCode(of = "code")
     public static class PlanShortAsset {
         public String code;
         public long updateOn;
@@ -76,6 +93,9 @@ public class ReplicationData {
             addErrorMessage(errorMessage);
         }
 
+        public AssetStateResponse(List<String> errorMessages) {
+            addErrorMessages(errorMessages);
+        }
     }
 
     @Data

@@ -28,17 +28,24 @@ public class BaseDataClass {
     public List<String> infoMessages;
 
     public void addErrorMessage(String errorMessage) {
-        if (errorMessages==null) {
-            errorMessages = new ArrayList<>();
+        if (this.errorMessages==null) {
+            this.errorMessages = new ArrayList<>();
         }
-        errorMessages.add(errorMessage);
+        this.errorMessages.add(errorMessage);
+    }
+
+    public void addErrorMessages(List<String> errorMessages) {
+        if (this.errorMessages==null) {
+            this.errorMessages = new ArrayList<>();
+        }
+        this.errorMessages.addAll(errorMessages);
     }
 
     public void addInfoMessage(String infoMessage) {
-        if (infoMessages==null) {
-            infoMessages = new ArrayList<>();
+        if (this.infoMessages==null) {
+            this.infoMessages = new ArrayList<>();
         }
-        infoMessages.add(infoMessage);
+        this.infoMessages.add(infoMessage);
     }
 
     public String getErrorMessagesAsStr() {

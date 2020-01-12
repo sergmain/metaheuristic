@@ -111,16 +111,19 @@ public class ReplicationService {
                 continue;
             }
 
-            PlanLoopEntry planLoopEntry = null;
+            boolean isDeleted = true;
             for (ReplicationData.PlanShortAsset actualPlan : actualPlans) {
-                if (actualPlan.code.equals(p.code) && actualPlan.updateOn!=p.getPlanParamsYaml().internalParams.updatedOn) {
-                    planLoopEntry = new PlanLoopEntry(actualPlan, p);
-                    forUpdating.add(planLoopEntry);
+                if (actualPlan.code.equals(p.code)) {
+                    isDeleted = false;
+                    if (actualPlan.updateOn != p.getPlanParamsYaml().internalParams.updatedOn) {
+                        PlanLoopEntry planLoopEntry = new PlanLoopEntry(actualPlan, p);
+                        forUpdating.add(planLoopEntry);
+                    }
                     break;
                 }
             }
 
-            if (planLoopEntry==null) {
+            if (isDeleted) {
                 planCache.deleteById(id);
             }
             forCreating.removeIf(planShortAsset -> planShortAsset.code.equals(p.code));
@@ -149,12 +152,10 @@ public class ReplicationService {
             return;
         }
 
-/*
         PlanImpl p = planRepository.findByCode(planShortAsset.code);
         if (p!=null) {
             return;
         }
-*/
 
         planAsset.plan.id=null;
         planCache.save(planAsset.plan);
@@ -241,36 +242,48 @@ public class ReplicationService {
     }
 
     private ReplicationData.AssetStateResponse getAssetStates() {
-        ReplicationData.AssetStateResponse response = (ReplicationData.AssetStateResponse)getData(
+        ReplicationData.ReplicationAsset data = getData(
                 "/rest/v1/replication/current-assets", ReplicationData.AssetStateResponse.class,
                 (uri) -> Request.Get(uri).connectTimeout(5000).socketTimeout(20000)
         );
+        if (data instanceof ReplicationData.AssetAcquiringError) {
+            return new ReplicationData.AssetStateResponse(((ReplicationData.AssetAcquiringError) data).errorMessages);
+        }
+        ReplicationData.AssetStateResponse response = (ReplicationData.AssetStateResponse) data;
         return response;
     }
 
     private ReplicationData.SnippetAsset requestSnippetAsset(String snippetCode) {
-        ReplicationData.SnippetAsset response = (ReplicationData.SnippetAsset)getData(
+        ReplicationData.ReplicationAsset data = getData(
                 "/rest/v1/replication/snippet", ReplicationData.SnippetAsset.class,
                 (uri) -> Request.Post(uri)
                         .bodyForm(Form.form().add("snippetCode", snippetCode).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );
+        if (data instanceof ReplicationData.AssetAcquiringError) {
+            return new ReplicationData.SnippetAsset(((ReplicationData.AssetAcquiringError) data).errorMessages);
+        }
+        ReplicationData.SnippetAsset response = (ReplicationData.SnippetAsset) data;
         return response;
     }
 
     private ReplicationData.PlanAsset requestPlanAsset(String planCode) {
-        ReplicationData.PlanAsset response = (ReplicationData.PlanAsset)getData(
+        Object data = getData(
                 "/rest/v1/replication/plan", ReplicationData.PlanAsset.class,
                 (uri) -> Request.Post(uri)
                         .bodyForm(Form.form().add("planCode", planCode).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );
+        if (data instanceof ReplicationData.AssetAcquiringError) {
+            return new ReplicationData.PlanAsset(((ReplicationData.AssetAcquiringError) data).errorMessages);
+        }
+        ReplicationData.PlanAsset response = (ReplicationData.PlanAsset) data;
         return response;
     }
 
-    private Object getData(String uri, Class clazz, Function<URI, Request> requestFunc) {
+    private ReplicationData.ReplicationAsset getData(String uri, Class clazz, Function<URI, Request> requestFunc) {
         try {
             final String url = globals.assetSourceUrl + uri;
 
@@ -292,7 +305,7 @@ public class ReplicationService {
                 }
 
                 log.error("Server response:\n" + baos.toString());
-                return new ReplicationData.AssetStateResponse( S.f("Error while accessing url %s, http status code: %d",
+                return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, http status code: %d",
                         globals.assetSourceUrl, httpResponse.getStatusLine().getStatusCode()));
             }
             final HttpEntity entity = httpResponse.getEntity();
@@ -300,16 +313,16 @@ public class ReplicationService {
             if (entity != null) {
                 assetResponse = JsonUtils.getMapper().readValue(entity.getContent(), clazz);
             }
-            return assetResponse;
+            return (ReplicationData.ReplicationAsset)assetResponse;
         }
         catch (HttpHostConnectException | SocketTimeoutException th) {
             log.error("Error: {}", th.getMessage());
-            return new ReplicationData.AssetStateResponse( S.f("Error while accessing url %s, error message: %s",
+            return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, error message: %s",
                     globals.assetSourceUrl, th.getMessage()));
         }
         catch (Throwable th) {
             log.error("Error", th);
-            return new ReplicationData.AssetStateResponse( S.f("Error while accessing url %s, error message: %s",
+            return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, error message: %s",
                     globals.assetSourceUrl, th.getMessage()));
         }
 

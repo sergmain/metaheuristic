@@ -159,7 +159,7 @@ public class Schedulers {
             log.warn("Memory after GC. Free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
         }
 
-        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.asset.sync-timeout'), 120, 3600, 120)*1000 }")
+        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.asset.sync-timeout'), 30, 3600, 120)*1000 }")
         public void syncReplication() {
             if (globals.isUnitTesting) {
                 return;
