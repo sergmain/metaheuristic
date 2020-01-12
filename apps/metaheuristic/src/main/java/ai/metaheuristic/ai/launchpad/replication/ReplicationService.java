@@ -43,6 +43,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URIUtils;
+import org.apache.http.conn.HttpHostConnectException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -301,7 +302,7 @@ public class ReplicationService {
             }
             return assetResponse;
         }
-        catch (SocketTimeoutException th) {
+        catch (HttpHostConnectException | SocketTimeoutException th) {
             log.error("Error: {}", th.getMessage());
             return new ReplicationData.AssetStateResponse( S.f("Error while accessing url %s, error message: %s",
                     globals.assetSourceUrl, th.getMessage()));
