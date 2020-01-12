@@ -89,8 +89,8 @@ public class ReplicationService {
         }
         syncSnippets(assetStateResponse.snippets);
         syncPlans(assetStateResponse.plans);
-        syncCompanies(assetStateResponse);
-        syncAccounts(assetStateResponse);
+        syncCompanies(assetStateResponse.companies);
+        syncAccounts(assetStateResponse.usernames);
     }
 
     @Data
@@ -209,24 +209,10 @@ public class ReplicationService {
         snippetCache.save(snippetAsset.snippet);
     }
 
-    private void syncAccounts(ReplicationData.AssetStateResponse assetStateResponse) {
-        if (accountsInSyncState(assetStateResponse)) {
-            return;
-        }
+    private void syncAccounts(List<String> assetStateResponse) {
     }
 
-    private boolean accountsInSyncState(ReplicationData.AssetStateResponse assetStateResponse) {
-        return false;
-    }
-
-    private void syncCompanies(ReplicationData.AssetStateResponse assetStateResponse) {
-        if (companiesInSyncState(assetStateResponse)) {
-            return;
-        }
-    }
-
-    private boolean companiesInSyncState(ReplicationData.AssetStateResponse assetStateResponse) {
-        return false;
+    private void syncCompanies(List<Long> assetStateResponse) {
     }
 
     private static Executor getExecutor(String launchpadUrl, String restUsername, String restPassword) {
