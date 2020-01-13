@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.yaml.versioning;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.YamlVersion;
+import lombok.NonNull;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Map;
@@ -77,7 +78,7 @@ public class BaseYamlUtils<T> {
         }
     }
 
-    public T to(String s, Long ... vars) {
+    public T to(@NonNull String s, Long ... vars) {
         try {
             YamlVersion v = YamlForVersioning.getYamlForVersion().load(s);
             AbstractParamsYamlUtils yamlUtils = getForVersion(v.getActualVersion());

@@ -65,7 +65,7 @@ public class CompanyTopLevelService {
                     "#237.020 Name of company name must not be null");
         }
 
-        CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
+        CompanyParamsYaml cpy = S.b(company.getParams()) ? null : CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
         if (cpy==null) {
             cpy = new CompanyParamsYaml();
         }
