@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.beans;
 
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -75,8 +75,9 @@ public class Company implements Serializable {
         if (cpy==null) {
             synchronized (this) {
                 if (cpy ==null) {
+                    String p = S.b(params) ? CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(new CompanyParamsYaml()) : params;
                     //noinspection UnnecessaryLocalVariable
-                    CompanyParamsYaml temp = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    CompanyParamsYaml temp = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(p);
                     cpy = temp;
                 }
             }
