@@ -23,10 +23,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -46,14 +44,11 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
     Account findByUsername(String username);
 
     @Transactional(readOnly = true)
-    Account findByMailAddress(String mailAddress);
-
-    @Transactional(readOnly = true)
     Page<Account> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
-    @Query(value="select a from Account a where a.companyId=:companyId")
-    Page<Account> findAll(Pageable pageable, Long companyId);
+    @Query(value="select a from Account a where a.companyId=:companyUniqueId")
+    Page<Account> findAllByCompanyUniqueId(Pageable pageable, Long companyUniqueId);
 
     @Transactional(readOnly = true)
     @Query(value="select a.username from Account a")

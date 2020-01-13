@@ -32,10 +32,10 @@ import java.time.LocalDateTime;
 public class LaunchpadApplicationEvent {
 
     public final LaunchpadEventYaml launchpadEventYaml;
-    public Long companyId;
+    public Long companyUniqueId;
 
-    public LaunchpadApplicationEvent(EnumsApi.LaunchpadEventType event, Long companyId, String contextId, LaunchpadEventYaml.BatchEventData batchEventData) {
-        this.companyId = companyId;
+    public LaunchpadApplicationEvent(EnumsApi.LaunchpadEventType event, Long companyUniqueId, String contextId, LaunchpadEventYaml.BatchEventData batchEventData) {
+        this.companyUniqueId = companyUniqueId;
         LaunchpadEventYaml launchpadEventYaml = new LaunchpadEventYaml();
         launchpadEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
         launchpadEventYaml.event = event;

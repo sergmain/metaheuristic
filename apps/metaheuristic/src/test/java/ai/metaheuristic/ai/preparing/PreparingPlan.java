@@ -198,6 +198,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         companyTopLevelService.addCompany(company);
 
         assertNotNull(company.id);
+        assertNotNull(company.uniqueId);
 
         // id==1L must be assigned only to master company
         assertNotEquals(Consts.ID_1, company.id);
@@ -214,10 +215,10 @@ public abstract class PreparingPlan extends PreparingExperiment {
         String params = getPlanYamlAsString();
         plan.setParams(params);
         plan.setCreatedOn(System.currentTimeMillis());
-        plan.companyId = company.id;
+        plan.companyId = company.uniqueId;
 
 
-        Plan tempPlan = planRepository.findByCodeAndCompanyId(plan.getCode(), company.id);
+        Plan tempPlan = planRepository.findByCodeAndCompanyId(plan.getCode(), company.uniqueId);
         if (tempPlan!=null) {
             planCache.deleteById(tempPlan.getId());
         }

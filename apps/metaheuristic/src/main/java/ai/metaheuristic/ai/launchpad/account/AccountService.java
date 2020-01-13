@@ -51,14 +51,14 @@ public class AccountService {
     private final AccountCache accountCache;
     private final PasswordEncoder passwordEncoder;
 
-    public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyId)  {
+    public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyUniqueId)  {
         AccountData.AccountsResult result = new AccountData.AccountsResult();
-        result.accounts = accountRepository.findAll(pageable, companyId);
+        result.accounts = accountRepository.findAllByCompanyUniqueId(pageable, companyUniqueId);
         result.assetMode = globals.assetMode;
         return result;
     }
 
-    public OperationStatusRest addAccount(Account account, Long companyId) {
+    public OperationStatusRest addAccount(Account account, Long companyUniqueId) {
 
         if (StringUtils.isBlank(account.getUsername()) ||
                 StringUtils.isBlank(account.getPassword()) ||
@@ -88,15 +88,15 @@ public class AccountService {
         account.setAccountNonLocked(true);
         account.setCredentialsNonExpired(true);
         account.setEnabled(true);
-        account.setCompanyId(companyId);
+        account.setCompanyId(companyUniqueId);
 
         accountCache.save(account);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public AccountData.AccountResult getAccount(Long id, Long companyId){
+    public AccountData.AccountResult getAccount(Long id, Long companyUniqueId){
         Account account = accountRepository.findById(id).orElse(null);
-        if (account == null || !Objects.equals(account.companyId, companyId)) {
+        if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
             return new AccountData.AccountResult("#237.050 account wasn't found, accountId: " + id);
         }
         Account acc = (Account) account.clone();
@@ -104,9 +104,9 @@ public class AccountService {
         return new AccountData.AccountResult(acc);
     }
 
-    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, Long companyId) {
+    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, Long companyUniqueId) {
         Account a = accountRepository.findByIdForUpdate(accountId);
-        if (a == null || !Objects.equals(a.companyId, companyId)) {
+        if (a == null || !Objects.equals(a.companyId, companyUniqueId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.060 account wasn't found, accountId: " + accountId);
         }
         a.setEnabled(enabled);
@@ -115,7 +115,7 @@ public class AccountService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", null);
     }
 
-    public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, Long companyId) {
+    public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, Long companyUniqueId) {
         if (StringUtils.isBlank(password) || StringUtils.isBlank(password2)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.080 Both passwords must be not null");
         }
@@ -124,7 +124,7 @@ public class AccountService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.090 Both passwords must be equal");
         }
         Account a = accountRepository.findByIdForUpdate(accountId);
-        if (a == null || !Objects.equals(a.companyId, companyId)) {
+        if (a == null || !Objects.equals(a.companyId, companyUniqueId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.100 account wasn't found, accountId: " + accountId);
         }
         a.setPassword(passwordEncoder.encode(password));
@@ -134,9 +134,9 @@ public class AccountService {
     }
 
     // this method is using with angular's rest
-    public OperationStatusRest roleFormCommit(Long accountId, String roles, Long companyId) {
+    public OperationStatusRest roleFormCommit(Long accountId, String roles, Long companyUniqueId) {
         Account account = accountRepository.findByIdForUpdate(accountId);
-        if (account == null || !Objects.equals(account.companyId, companyId)) {
+        if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.110 account wasn't found, accountId: " + accountId);
         }
         String str = Arrays.stream(StringUtils.split(roles, ','))
@@ -150,12 +150,12 @@ public class AccountService {
     }
 
     // this method is using with company-accounts
-    public OperationStatusRest storeRolesForUserById(Long accountId, int roleId, boolean checkbox, Long companyId) {
+    public OperationStatusRest storeRolesForUserById(Long accountId, int roleId, boolean checkbox, Long companyUniqueId) {
         Account account = accountRepository.findByIdForUpdate(accountId);
-        if (account == null || !Objects.equals(account.companyId, companyId)) {
+        if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.110 account wasn't found, accountId: " + accountId);
         }
-        List<String> possibleRoles = Consts.ID_1.equals(companyId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES;
+        List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES;
 
         String role = possibleRoles.get(roleId);
         boolean isAccountContainsRole = account.hasRole(role);

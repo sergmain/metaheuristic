@@ -136,7 +136,7 @@ public class BatchTopLevelService {
         return getBatches(pageable, context.getCompanyId(), context.account, includeDeleted, context.account != null && filterBatches);
     }
 
-    public BatchData.BatchesResult getBatches(Pageable pageable, Long companyId, Account account, boolean includeDeleted, boolean filterBatches) {
+    public BatchData.BatchesResult getBatches(Pageable pageable, Long companyUniqueId, Account account, boolean includeDeleted, boolean filterBatches) {
         if (filterBatches && account==null) {
             throw new IllegalStateException("(filterBatches && account==null)");
         }
@@ -144,18 +144,18 @@ public class BatchTopLevelService {
         Page<Long> batchIds;
         if (includeDeleted) {
             if (filterBatches) {
-                batchIds = batchRepository.findAllForAccountByOrderByCreatedOnDesc(pageable, companyId, account.id);
+                batchIds = batchRepository.findAllForAccountByOrderByCreatedOnDesc(pageable, companyUniqueId, account.id);
             }
             else {
-                batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable, companyId);
+                batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable, companyUniqueId);
             }
         }
         else {
             if (filterBatches) {
-                batchIds = batchRepository.findAllForAccountExcludeDeletedByOrderByCreatedOnDesc(pageable, companyId, account.id);
+                batchIds = batchRepository.findAllForAccountExcludeDeletedByOrderByCreatedOnDesc(pageable, companyUniqueId, account.id);
             }
             else {
-                batchIds = batchRepository.findAllExcludeDeletedByOrderByCreatedOnDesc(pageable, companyId);
+                batchIds = batchRepository.findAllExcludeDeletedByOrderByCreatedOnDesc(pageable, companyUniqueId);
             }
         }
 
@@ -180,9 +180,9 @@ public class BatchTopLevelService {
             return getPlansForBatchResult(companyId, (f) -> true);
     }
 
-    public BatchData.PlansForBatchResult getPlansForBatchResult(Long companyId, final Function<Plan, Boolean> planFilter) {
+    public BatchData.PlansForBatchResult getPlansForBatchResult(Long companyUniqueId, final Function<Plan, Boolean> planFilter) {
         final BatchData.PlansForBatchResult plans = new BatchData.PlansForBatchResult();
-        plans.items = planRepository.findAllAsPlan(companyId).stream().filter(planFilter::apply).filter(o->{
+        plans.items = planRepository.findAllAsPlan(companyUniqueId).stream().filter(planFilter::apply).filter(o->{
             if (!o.isValid()) {
                 return false;
             }
@@ -199,7 +199,7 @@ public class BatchTopLevelService {
             }
         }).collect(Collectors.toList());
 
-        Company company = companyCache.findById(companyId);
+        Company company = companyCache.findByUniqueId(companyUniqueId);
         if (!S.b(company.params)) {
             final Set<String> groups = new HashSet<>();
             try {
@@ -209,7 +209,7 @@ public class BatchTopLevelService {
                     Stream.of(arr).forEach(s-> groups.add(s.strip()));
                 }
             } catch (YAMLException e) {
-                final String es = "#995.025 Can't parse Company params. It's broken or unknown version. Company id: #" + companyId;
+                final String es = "#995.025 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
                 plans.addErrorMessage(es);
                 log.error(es);
                 log.error("#995.027 Params:\n{}", company.params);
@@ -376,10 +376,10 @@ public class BatchTopLevelService {
         return processResourceDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
     }
 
-    public OperationStatusRest processResourceDeleteCommit(Long batchId, Long companyId, boolean isVirtualDeletion) {
+    public OperationStatusRest processResourceDeleteCommit(Long batchId, Long companyUniqueId, boolean isVirtualDeletion) {
 
         Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(companyId)) {
+        if (batch == null || !batch.companyId.equals(companyUniqueId)) {
             final String es = "#995.250 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
@@ -394,7 +394,7 @@ public class BatchTopLevelService {
         else {
             List<Long> workbookIds = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
             for (Long workbookId : workbookIds) {
-                planService.deleteWorkbook(workbookId, companyId);
+                planService.deleteWorkbook(workbookId, companyUniqueId);
             }
             batchWorkbookRepository.deleteByBatchId(batch.id);
             batchCache.deleteById(batch.id);
@@ -406,9 +406,9 @@ public class BatchTopLevelService {
         return getProcessingResourceStatus(batchId, context.getCompanyId(), includeDeleted);
     }
 
-    public BatchData.Status getProcessingResourceStatus(Long batchId, Long companyId, boolean includeDeleted) {
+    public BatchData.Status getProcessingResourceStatus(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(companyId) ||
+        if (batch == null || !batch.companyId.equals(companyUniqueId) ||
                 (!includeDeleted && batch.deleted)) {
             final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
@@ -422,9 +422,9 @@ public class BatchTopLevelService {
         return getBatchProcessingResult(batchId, context.getCompanyId(), includeDeleted);
     }
 
-    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, Long companyId, boolean includeDeleted) throws IOException {
+    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
         Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(companyId) ||
+        if (batch == null || !batch.companyId.equals(companyUniqueId) ||
                 (!includeDeleted && batch.deleted)) {
             final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
             log.warn(es);

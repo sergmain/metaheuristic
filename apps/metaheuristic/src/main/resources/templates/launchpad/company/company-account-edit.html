@@ -11,7 +11,7 @@
         <p th:text="${'Username: ' + account.username}">username</p>
 
         <form class="pure-form pure-form-stacked" th:object="${account}" method="post" action="#" th:method="POST"
-              th:action="@{/launchpad/company/company-account-edit-commit/{companyId}(companyId=${companyId})}" accept-charset="UTF-8" id="account-form"
+              th:action="@{/launchpad/company/company-account-edit-commit/{companyUniqueId}(companyUniqueId=${companyUniqueId})}" accept-charset="UTF-8" id="account-form"
               name="f">
             <input type="hidden" th:name="id" th:value="${account.id}"/>
             <fieldset>
@@ -34,7 +34,7 @@
                         </td>
                         <td>
                             <a class="pure-button pure-button-primary" href="company-accounts.html"
-                               th:href="${'/launchpad/company/company-accounts/'+ companyId}">Cancel</a>
+                               th:href="${'/launchpad/company/company-accounts/'+ companyUniqueId}">Cancel</a>
                         </td>
                     </tr>
                 </table>

@@ -7,9 +7,9 @@
         <h1 class="widget-header">New account</h1>
 
         <!--/*@thymesVar id="account" type="ai.metaheuristic.ai.launchpad.beans.Account"*/-->
-        <!--/*@thymesVar id="companyId" type="java.lang.Long"*/-->
+        <!--/*@thymesVar id="companyUniqueId" type="java.lang.Long"*/-->
         <form class="pure-form pure-form-stacked" th:object="${account}" method="post" action="#" th:method="POST"
-              th:action="@{/launchpad/company/company-account-add-commit/{companyId}(companyId=${companyId})}" accept-charset="UTF-8" id="account-form" name="f">
+              th:action="@{/launchpad/company/company-account-add-commit/{companyUniqueId}(companyUniqueId=${companyUniqueId})}" accept-charset="UTF-8" id="account-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <input type="hidden" th:field="*{version}"/>
             <fieldset>
@@ -39,7 +39,7 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="company-accounts.html" th:href="${'/launchpad/company/company-accounts/'+companyId}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="company-accounts.html" th:href="${'/launchpad/company/company-accounts/'+companyUniqueId}">Cancel</a>
                         </td>
                     </tr>
                 </table>

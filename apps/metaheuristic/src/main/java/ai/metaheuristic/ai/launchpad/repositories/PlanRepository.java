@@ -35,19 +35,20 @@ import java.util.List;
 @Profile("launchpad")
 public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
 
-    @Query(value="select p from PlanImpl p where p.id=:id and p.companyId=:companyId")
-    Plan findByIdForUpdate(Long id, Long companyId);
+    @Query(value="select p from PlanImpl p where p.id=:id and p.companyId=:companyUniqueId")
+    Plan findByIdForUpdate(Long id, Long companyUniqueId);
 
     @Transactional(readOnly = true)
-    @Query(value="select p from PlanImpl p where p.companyId=:companyId")
-    List<Plan> findAllAsPlan(Long companyId);
+    @Query(value="select p from PlanImpl p where p.companyId=:companyUniqueId")
+    List<Plan> findAllAsPlan(Long companyUniqueId);
 
     @Transactional(readOnly = true)
-    @Query(value="select p from PlanImpl p where p.companyId=:companyId order by p.id desc ")
-    List<Plan> findAllByOrderByIdDesc(Long companyId);
+    @Query(value="select p from PlanImpl p where p.companyId=:companyUniqueId order by p.id desc ")
+    List<Plan> findAllByOrderByIdDesc(Long companyUniqueId);
 
     @Transactional(readOnly = true)
-    PlanImpl findByCodeAndCompanyId(String code, Long companyId);
+    @Query(value="select p from PlanImpl p where p.code=:code and p.companyId=:companyUniqueId")
+    PlanImpl findByCodeAndCompanyId(String code, Long companyUniqueId);
 
 
     // for Experiment, that's why we don't use companyId in this query

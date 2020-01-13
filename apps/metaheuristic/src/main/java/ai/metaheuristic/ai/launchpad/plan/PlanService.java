@@ -214,9 +214,9 @@ public class PlanService {
         }
     }
 
-    public void setLockedTo(Long planId, Long companyId, boolean locked) {
+    public void setLockedTo(Long planId, Long companyUniqueId, boolean locked) {
         synchronized (syncObj) {
-            Plan p = planRepository.findByIdForUpdate(planId, companyId);
+            Plan p = planRepository.findByIdForUpdate(planId, companyUniqueId);
             if (p!=null && p.isLocked()!=locked) {
                 p.setLocked(locked);
                 saveInternal(p);
@@ -563,7 +563,7 @@ public class PlanService {
 
     // ========= Workbook specific =============
 
-    public void deleteWorkbook(Long workbookId, Long companyId) {
+    public void deleteWorkbook(Long workbookId, Long companyUniqueId) {
         experimentService.resetExperimentByWorkbookId(workbookId);
         binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
         Workbook workbook = workbookCache.findById(workbookId);
@@ -573,7 +573,7 @@ public class PlanService {
             if (ids.size()==1) {
                 if (ids.get(0).equals(workbookId)) {
                     if (workbook.getPlanId() != null) {
-                        setLockedTo(workbook.getPlanId(), companyId, false);
+                        setLockedTo(workbook.getPlanId(), companyUniqueId, false);
                     }
                 }
                 else {

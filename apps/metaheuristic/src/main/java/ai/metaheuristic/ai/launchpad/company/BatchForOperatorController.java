@@ -57,132 +57,132 @@ public class BatchForOperatorController {
     private final BatchTopLevelService batchTopLevelService;
     private final LaunchpadContextService launchpadContextService;
 
-    @GetMapping("/company-batches/{companyId}")
+    @GetMapping("/company-batches/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public String batches(
             Model model,
             @PageableDefault(size = 20) Pageable pageable,
             @ModelAttribute("errorMessage") final String errorMessage,
             @ModelAttribute("infoMessages") final String infoMessages,
-            @PathVariable Long companyId
+            @PathVariable Long companyUniqueId
             ) {
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyId, null, true, false);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyUniqueId, null, true, false);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
-        model.addAttribute("companyId", companyId);
+        model.addAttribute("companyUniqueId", companyUniqueId);
         return "launchpad/company/batch/company-batches";
     }
 
-    @GetMapping("/company-batches-usage-info/{companyId}/{days}")
+    @GetMapping("/company-batches-usage-info/{companyUniqueId}/{days}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public String batches(
             Model model,
             @ModelAttribute("errorMessage") final String errorMessage,
             @ModelAttribute("infoMessages") final String infoMessages,
-            @PathVariable Long companyId,
+            @PathVariable Long companyUniqueId,
             @PathVariable Integer days
         ) {
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(null, companyId, null, true, false);
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(null, companyUniqueId, null, true, false);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
-        model.addAttribute("companyId", companyId);
+        model.addAttribute("companyUniqueId", companyUniqueId);
         model.addAttribute("days", days);
         return "launchpad/company/batch/company-batches-usage-info";
     }
 
-    @PostMapping("/company-batches-part/{companyId}")
+    @PostMapping("/company-batches-part/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
-    public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, @PathVariable Long companyId) {
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyId, null, true, false);
+    public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, @PathVariable Long companyUniqueId) {
+        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyUniqueId, null, true, false);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
-        model.addAttribute("companyId", companyId);
+        model.addAttribute("companyUniqueId", companyUniqueId);
         return "launchpad/company/batch/company-batches :: table";
     }
 
-    @GetMapping(value = "/company-batch-add/{companyId}")
+    @GetMapping(value = "/company-batch-add/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
-    public String batchAdd(Model model, @PathVariable Long companyId) {
-        BatchData.PlansForBatchResult plans = batchTopLevelService.getPlansForBatchResult(companyId);
+    public String batchAdd(Model model, @PathVariable Long companyUniqueId) {
+        BatchData.PlansForBatchResult plans = batchTopLevelService.getPlansForBatchResult(companyUniqueId);
         ControllerUtils.addMessagesToModel(model, plans);
         model.addAttribute("result", plans);
-        model.addAttribute("companyId", companyId);
+        model.addAttribute("companyUniqueId", companyUniqueId);
         return "launchpad/company/batch/company-batch-add";
     }
 
-    @GetMapping("/company-batch-delete/{companyId}/{batchId}")
+    @GetMapping("/company-batch-delete/{companyUniqueId}/{batchId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String processResourceDelete(
             Model model,
-            @PathVariable Long companyId,
+            @PathVariable Long companyUniqueId,
             @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyId, true);
+        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyUniqueId, true);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
-            return "redirect:/launchpad/company/batch/company-batches/" + companyId;
+            return "redirect:/launchpad/company/batch/company-batches/" + companyUniqueId;
         }
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.console);
         model.addAttribute("isOk", status.ok);
-        model.addAttribute("companyId", companyId);
+        model.addAttribute("companyUniqueId", companyUniqueId);
         return "launchpad/company/batch/company-batch-delete";
     }
 
-    @PostMapping("/company-batch-delete-commit/{companyId}")
+    @PostMapping("/company-batch-delete-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String processResourceDeleteCommit(
             Long batchId,
-            @PathVariable Long companyId,
+            @PathVariable Long companyUniqueId,
             final RedirectAttributes redirectAttributes) {
-        OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, companyId, false);
+        OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, companyUniqueId, false);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
-        return "redirect:/launchpad/company/batch/company-batches/" + companyId;
+        return "redirect:/launchpad/company/batch/company-batches/" + companyUniqueId;
     }
 
-    @PostMapping(value = "/company-batch-upload-from-file/{companyId}")
+    @PostMapping(value = "/company-batch-upload-from-file/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String uploadFile(
             final MultipartFile file,
-            @PathVariable Long companyId,
+            @PathVariable Long companyUniqueId,
             Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         // create context with putting current user to specific company
-        LaunchpadContext context = launchpadContextService.getContext(authentication, companyId);
+        LaunchpadContext context = launchpadContextService.getContext(authentication, companyUniqueId);
         OperationStatusRest r = batchTopLevelService.batchUploadFromFile(file, planId, context);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
-        return "redirect:/launchpad/company/batch/company-batches/" + companyId;
+        return "redirect:/launchpad/company/batch/company-batches/" + companyUniqueId;
     }
 
-    @GetMapping(value= "/company-batch-status/{companyId}/{batchId}" )
+    @GetMapping(value= "/company-batch-status/{companyUniqueId}/{batchId}" )
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public String getProcessingResourceStatus(
             Model model,
-            @PathVariable Long companyId,
+            @PathVariable Long companyUniqueId,
             @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes) {
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyId, true);
+        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyUniqueId, true);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
-            return "redirect:/launchpad/company/batch/company-batches/" + companyId;
+            return "redirect:/launchpad/company/batch/company-batches/" + companyUniqueId;
         }
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.console);
-        model.addAttribute("companyId", companyId);
+        model.addAttribute("companyUniqueId", companyUniqueId);
         return "launchpad/company/batch/company-batch-status";
     }
 
-    @GetMapping(value= "/company-batch-download-result/{companyId}/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value= "/company-batch-download-result/{companyUniqueId}/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request,
-            @PathVariable Long companyId,
+            @PathVariable Long companyUniqueId,
             @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName) throws IOException {
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, companyId, true);
+            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, companyUniqueId, true);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }
@@ -196,11 +196,11 @@ public class BatchForOperatorController {
     }
 
     @SuppressWarnings("TryWithIdenticalCatches")
-    @GetMapping(value= "/company-batch-download-origin-file/{companyId}/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value= "/company-batch-download-origin-file/{companyUniqueId}/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public HttpEntity<AbstractResource> downloadOrignFile(
             HttpServletRequest request,
-            @PathVariable Long companyId,
+            @PathVariable Long companyUniqueId,
             @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName) {
         final ResponseEntity<AbstractResource> entity;

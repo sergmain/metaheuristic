@@ -34,14 +34,14 @@ public class CompanyCache {
 
     private final CompanyRepository companyRepository;
 
-    @CacheEvict(cacheNames = Consts.COMPANIES_CACHE, key = "#result.id")
+    @CacheEvict(cacheNames = Consts.COMPANIES_CACHE, key = "#result.uniqueId")
     public Company save(Company account) {
         return companyRepository.save(account);
     }
 
     @Cacheable(cacheNames = {Consts.COMPANIES_CACHE}, unless="#result==null")
-    public Company findById(Long id) {
-        return companyRepository.findById(id).orElse(null);
+    public Company findByUniqueId(Long uniqueId) {
+        return companyRepository.findByUniqueId(uniqueId);
     }
 
 

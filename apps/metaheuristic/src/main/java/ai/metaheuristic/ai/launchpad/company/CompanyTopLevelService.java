@@ -65,7 +65,9 @@ public class CompanyTopLevelService {
                     "#237.020 Name of company name must not be null");
         }
 
-        company.uniqueId = getUniqueId();
+        if (company.uniqueId==null) {
+            company.uniqueId = getUniqueId();
+        }
         companyCache.save(company);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -86,10 +88,10 @@ public class CompanyTopLevelService {
         return newUniqueId;
     }
 
-    public CompanyData.CompanyResult getCompany(Long companyId){
-        Company company = companyRepository.findById(companyId).orElse(null);
+    public CompanyData.CompanyResult getCompany(Long companyUniqueId){
+        Company company = companyRepository.findByUniqueId(companyUniqueId);
         if (company == null) {
-            return new CompanyData.CompanyResult("#237.050 company wasn't found, companyId: " + companyId);
+            return new CompanyData.CompanyResult("#237.050 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
         String groups = "";
         if (!S.b(company.params)) {
@@ -104,14 +106,21 @@ public class CompanyTopLevelService {
         return companyResult;
     }
 
-    public OperationStatusRest editFormCommit(Long companyId, String name, String groups) {
+    /**
+     *
+     * @param companyUniqueId contains a value from COmpany.uniqueId, !not! from Company.Id
+     * @param name
+     * @param groups
+     * @return
+     */
+    public OperationStatusRest editFormCommit(Long companyUniqueId, String name, String groups) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.055 Can't edit a company while 'replicated' mode of asset is active");
         }
-        Company c = companyRepository.findByIdForUpdate(companyId);
+        Company c = companyRepository.findByUniqueIdForUpdate(companyUniqueId);
         if (c == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.060 company wasn't found, accountId: " + companyId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.060 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
         CompanyParamsYaml cpy = new CompanyParamsYaml();
         cpy.ac = new CompanyParamsYaml.AccessControl(groups);

@@ -41,7 +41,7 @@ public class Company implements Serializable {
     public Long id;
 
     @Version
-    private Integer version;
+    public Integer version;
 
     @Column(name = "UNIQUE_ID")
     public Long uniqueId;

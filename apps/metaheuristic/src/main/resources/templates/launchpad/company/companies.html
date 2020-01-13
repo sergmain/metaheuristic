@@ -51,15 +51,15 @@
 
         <tbody>
         <tr th:each="r : ${result.companies}">
-            <td th:text="${r.id}">#Id</td>
+            <td th:text="${r.uniqueId}">#Id</td>
             <td th:text="${r.name}">Name</td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-                <a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-edit/' + r.id}">Edit</a></td>
+                <a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-edit/' + r.uniqueId}">Edit</a></td>
             <td>
-                <a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-accounts/' + r.id}">Accounts</a></td>
+                <a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-accounts/' + r.uniqueId}">Accounts</a></td>
             <td>
                 <a sec:authorize="hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')"
-                   th:if='${r.id!=1}' class="pure-button pure-button-primary" th:href="${'/launchpad/company/batch/company-batches/' + r.id}">Batches</a></td>
+                   th:if='${r.id!=1}' class="pure-button pure-button-primary" th:href="${'/launchpad/company/batch/company-batches/' + r.uniqueId}">Batches</a></td>
         </tr>
         <tr>
             <td  th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated} ? 8 : 7">

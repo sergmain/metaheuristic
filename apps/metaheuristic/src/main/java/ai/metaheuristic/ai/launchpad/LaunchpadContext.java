@@ -39,7 +39,7 @@ public class LaunchpadContext {
     public final Account account;
 
     @NonNull
-    public final Company company;
+    private final Company company;
 
     public String getUsername() {
         return account.username;
@@ -48,6 +48,6 @@ public class LaunchpadContext {
         return account.id;
     }
     public Long getCompanyId() {
-        return company.id;
+        return company.uniqueId;
     }
 }

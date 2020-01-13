@@ -1,7 +1,7 @@
 <div layout:fragment="content" layout:decorate="~{layout-batch}"
      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
 >
-    <!--/*@thymesVar id="companyId" type="java.lang.Long"*/-->
+    <!--/*@thymesVar id="companyUniqueId" type="java.lang.Long"*/-->
     <div>
         <h1 class="widget-header" th:text="${'Status of execution of batch #' + batchId}"></h1>
 
@@ -9,7 +9,7 @@
         <pre style="width:100%" th:text="${console}"></pre>
 
         <p>&nbsp;</p>
-        <a class="pure-button pure-button-primary" href="company-batches.html" th:href="${'/launchpad/company/batch/company-batches/'+companyId}">To list of batches</a>
+        <a class="pure-button pure-button-primary" href="company-batches.html" th:href="${'/launchpad/company/batch/company-batches/'+companyUniqueId}">To list of batches</a>
 
     </div>
 </div>

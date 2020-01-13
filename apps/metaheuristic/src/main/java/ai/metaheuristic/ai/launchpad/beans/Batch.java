@@ -40,6 +40,7 @@ public class Batch implements Serializable {
     @Version
     private Integer version;
 
+    // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
     @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;

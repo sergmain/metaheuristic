@@ -49,6 +49,8 @@ public class LaunchpadEventYaml implements BaseParams {
         public String username;
         public Long batchId;
         public Long workbookId;
+
+        // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
         public Long companyId;
     }
 

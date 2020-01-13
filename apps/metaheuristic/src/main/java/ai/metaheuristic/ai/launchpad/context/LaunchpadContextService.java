@@ -52,12 +52,12 @@ public class LaunchpadContextService {
         return getContext(authentication, account.companyId);
     }
 
-    public LaunchpadContext getContext(Authentication authentication, Long companyId) {
+    public LaunchpadContext getContext(Authentication authentication, Long companyUniqueId) {
         Account account = (Account)authentication.getPrincipal();
         if (account==null) {
             throw new BadExecutionContextException("principal is null");
         }
-        Company company = companyCache.findById(companyId);
+        Company company = companyCache.findByUniqueId(companyUniqueId);
         if (company==null) {
             throw new BadExecutionContextException("company not found not found for user: " + account.username);
         }

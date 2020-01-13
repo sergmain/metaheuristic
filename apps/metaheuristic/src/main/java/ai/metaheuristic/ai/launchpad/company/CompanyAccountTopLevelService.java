@@ -37,23 +37,23 @@ public class CompanyAccountTopLevelService {
     private final AccountService accountService;
     private final Globals globals;
 
-    public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyId)  {
+    public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyUniqueId)  {
         pageable = ControllerUtils.fixPageSize(50, pageable);
-        return accountService.getAccounts(pageable, companyId);
+        return accountService.getAccounts(pageable, companyUniqueId);
     }
 
-    public OperationStatusRest addAccount(Account account, Long companyId) {
+    public OperationStatusRest addAccount(Account account, Long companyUniqueId) {
         // don't set any role when account is created
         account.setRoles("");
-        return accountService.addAccount(account, companyId);
+        return accountService.addAccount(account, companyUniqueId);
     }
 
-    public AccountData.AccountResult getAccount(Long id, Long companyId){
-        return accountService.getAccount(id, companyId);
+    public AccountData.AccountResult getAccount(Long id, Long companyUniqueId){
+        return accountService.getAccount(id, companyUniqueId);
     }
 
-    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, Long companyId) {
-        return accountService.editFormCommit(accountId, publicName, enabled, companyId);
+    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, Long companyUniqueId) {
+        return accountService.editFormCommit(accountId, publicName, enabled, companyUniqueId);
     }
 
     public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, Long companyId) {

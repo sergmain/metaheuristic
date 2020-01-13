@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.repositories;
 
-import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Company;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -38,8 +37,12 @@ import java.util.List;
 @Profile("launchpad")
 public interface CompanyRepository extends CrudRepository<Company, Long> {
 
-    @Query(value="select a from Company a where a.id=:id")
-    Company findByIdForUpdate(Long id);
+    @Query(value="select a from Company a where a.uniqueId=:uniqueId")
+    Company findByUniqueIdForUpdate(Long uniqueId);
+
+    @Transactional(readOnly = true)
+    @Query(value="select a from Company a where a.uniqueId=:uniqueId")
+    Company findByUniqueId(Long uniqueId);
 
     @Transactional(readOnly = true)
     Page<Company> findAll(Pageable pageable);

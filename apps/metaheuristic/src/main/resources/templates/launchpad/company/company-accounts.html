@@ -22,7 +22,7 @@
                 xhr.setRequestHeader(header, token);
             });
             // is this the right usage?
-            $.post('/launchpad/company/company-accounts-part/' + [[${companyId}]] , table);
+            $.post('/launchpad/company/company-accounts-part/' + [[${companyUniqueId}]] , table);
         });
 
     </script>
@@ -35,7 +35,7 @@
     </div>
 
     <div th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-        <a class="pure-button pure-button-primary" href="company-account-add.html" th:href="${'/launchpad/company/company-account-add/'+companyId}">Add new account</a>
+        <a class="pure-button pure-button-primary" href="company-account-add.html" th:href="${'/launchpad/company/company-account-add/'+companyUniqueId}">Add new account</a>
         <p></p>
     </div>
 
@@ -61,11 +61,11 @@
             <td th:text="${r.roles}">Roles</td>
             <td th:text="${#dates.format(r.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-                <a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-account-edit/' + companyId + '/' + r.id}">Edit</a></td>
+                <a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-account-edit/' + companyUniqueId + '/' + r.id}">Edit</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-                <a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-account-password-edit/' + companyId + '/' + r.id}">Password</a></td>
+                <a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-account-password-edit/' + companyUniqueId + '/' + r.id}">Password</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-                <a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-account-edit-roles/' + companyId + '/' + r.id}">Roles</a></td>
+                <a class="pure-button pure-button-primary" th:href="${'/launchpad/company/company-account-edit-roles/' + companyUniqueId + '/' + r.id}">Roles</a></td>
         </tr>
         <tr>
             <td  th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated} ? 9 :6">
@@ -74,17 +74,17 @@
                         <li class="table-nav-padding">
                             <span th:if='${result.accounts.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.accounts.first}'
-                               th:href="@{/launchpad/company/company-accounts-part/{companyId}(page=0,size=${result.accounts.pageable.pageSize},companyId=${companyId})}">« First</a>
+                               th:href="@{/launchpad/company/company-accounts-part/{companyUniqueId}(page=0,size=${result.accounts.pageable.pageSize},companyUniqueId=${companyUniqueId})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.accounts.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.accounts.hasPrevious()}'
-                               th:href="@{/launchpad/company/company-accounts-part/{companyId}(page=${result.accounts.pageable.pageNumber - 1},size=${result.accounts.pageable.pageSize},companyId=${companyId})}" title='Go to previous page'>←</a>
+                               th:href="@{/launchpad/company/company-accounts-part/{companyUniqueId}(page=${result.accounts.pageable.pageNumber - 1},size=${result.accounts.pageable.pageSize},companyUniqueId=${companyUniqueId})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.accounts.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.accounts.hasNext()}'
-                               th:href='@{/launchpad/company/company-accounts-part/{companyId}(page=${result.accounts.pageable.pageNumber + 1},size=${result.accounts.pageable.pageSize},companyId=${companyId})}' title='Go to next page'>→</a>
+                               th:href='@{/launchpad/company/company-accounts-part/{companyUniqueId}(page=${result.accounts.pageable.pageNumber + 1},size=${result.accounts.pageable.pageSize},companyUniqueId=${companyUniqueId})}' title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>
