@@ -57,4 +57,9 @@ public class ReplicationController {
         return replicationSourceService.getPlan(planCode);
     }
 
+    @PostMapping(value="/company")
+    public @ResponseBody ReplicationData.CompanyAsset getCompany(@RequestParam long uniqueId) {
+        return replicationSourceService.getCompany(uniqueId);
+    }
+
 }

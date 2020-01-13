@@ -47,7 +47,18 @@ public class WorkbookImpl implements Serializable, Workbook {
     public Long completedOn;
 
     @Column(name = "INPUT_RESOURCE_PARAM")
-    public String params;
+    private String params;
+
+    public void setParams(String params) {
+        synchronized (this) {
+            this.params = params;
+            this.wpy=null;
+        }
+    }
+
+    public String getParams() {
+        return params;
+    }
 
     @Column(name = "IS_VALID")
     public boolean valid;

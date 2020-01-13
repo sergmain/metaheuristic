@@ -52,7 +52,18 @@ public class Experiment implements Serializable, Cloneable {
     public String code;
 
     @Column(name = "PARAMS")
-    public String params;
+    private String params;
+
+    public void setParams(String params) {
+        synchronized (this) {
+            this.params = params;
+            this.epy=null;
+        }
+    }
+
+    public String getParams() {
+        return params;
+    }
 
     @Transient
     @JsonIgnore

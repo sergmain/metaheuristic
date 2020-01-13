@@ -17,13 +17,16 @@
 package ai.metaheuristic.ai.launchpad.replication;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,10 +54,19 @@ public class ReplicationSourceService {
     public final PlanRepository planRepository;
     public final SnippetRepository snippetRepository;
     public final PlanCache planCache;
+    public final CompanyCache companyCache;
 
     public ReplicationData.AssetStateResponse currentAssets() {
         ReplicationData.AssetStateResponse res = new ReplicationData.AssetStateResponse();
-        res.companies.addAll(companyRepository.findAllUniqueIds());
+        res.companies.addAll(companyRepository.findAllUniqueIds().parallelStream()
+                .map(id->{
+                    Company company = companyCache.findByUniqueId(id);
+
+                    CompanyParamsYaml params = company.getCompanyParamsYaml();
+                    return new ReplicationData.CompanyShortAsset(company.uniqueId, params.updatedOn);
+                })
+                .collect(Collectors.toList()));
+
         res.usernames.addAll(accountRepository.findAllUsernames());
         res.snippets.addAll(snippetRepository.findAllSnippetCodes());
         res.plans.addAll(planRepository.findAllAsIds().parallelStream()
@@ -80,7 +92,12 @@ public class ReplicationSourceService {
     }
 
     public ReplicationData.PlanAsset getPlan(String planCode) {
-        ReplicationData.PlanAsset snippetAsset = new ReplicationData.PlanAsset(planRepository.findByCode(planCode));
+        ReplicationData.PlanAsset planAsset = new ReplicationData.PlanAsset(planRepository.findByCode(planCode));
+        return planAsset;
+    }
+
+    public ReplicationData.CompanyAsset getCompany(long uniqueId) {
+        ReplicationData.CompanyAsset snippetAsset = new ReplicationData.CompanyAsset(companyRepository.findByUniqueId(uniqueId));
         return snippetAsset;
     }
 }

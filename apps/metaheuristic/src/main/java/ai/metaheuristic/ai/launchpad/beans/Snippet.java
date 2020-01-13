@@ -45,6 +45,17 @@ public class Snippet implements Serializable {
     @Column(name = "PARAMS")
     public String params;
 
+    public void setParams(String params) {
+        synchronized (this) {
+            this.params = params;
+            this.sc=null;
+        }
+    }
+
+    public String getParams() {
+        return params;
+    }
+
     @Transient
     @JsonIgnore
     private SnippetConfigYaml sc = null;

@@ -49,7 +49,18 @@ public class PlanImpl implements Serializable, Plan {
     public long createdOn;
 
     @Column(name = "PARAMS")
-    public String params;
+    private String params;
+
+    public void setParams(String params) {
+        synchronized (this) {
+            this.params = params;
+            this.ppy=null;
+        }
+    }
+
+    public String getParams() {
+        return params;
+    }
 
     @Column(name = "IS_LOCKED")
     public boolean locked;

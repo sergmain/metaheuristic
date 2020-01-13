@@ -114,7 +114,7 @@ public class PlanService {
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
-            log.info("#701.030 Producing tasks for plan.code: {}, input resource pool: \n{}",plan.code, workbook.params);
+            log.info("#701.030 Producing tasks for plan.code: {}, input resource pool: \n{}",plan.code, workbook.getParams());
             produceAllTasks(true, plan, workbook);
             Monitoring.log("##022", Enums.Monitor.MEMORY);
         }

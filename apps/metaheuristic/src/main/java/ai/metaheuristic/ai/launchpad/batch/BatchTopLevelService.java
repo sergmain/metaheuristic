@@ -200,10 +200,10 @@ public class BatchTopLevelService {
         }).collect(Collectors.toList());
 
         Company company = companyCache.findByUniqueId(companyUniqueId);
-        if (!S.b(company.params)) {
+        if (!S.b(company.getParams())) {
             final Set<String> groups = new HashSet<>();
             try {
-                CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.params);
+                CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
                 if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
                     String[] arr = StringUtils.split(cpy.ac.groups, ',');
                     Stream.of(arr).forEach(s-> groups.add(s.strip()));
@@ -212,7 +212,7 @@ public class BatchTopLevelService {
                 final String es = "#995.025 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
                 plans.addErrorMessage(es);
                 log.error(es);
-                log.error("#995.027 Params:\n{}", company.params);
+                log.error("#995.027 Params:\n{}", company.getParams());
                 log.error("#995.030 Error: {}", e.toString());
                 return plans;
             }

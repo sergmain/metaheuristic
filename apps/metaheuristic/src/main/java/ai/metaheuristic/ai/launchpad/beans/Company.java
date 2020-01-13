@@ -16,6 +16,10 @@
 
 package ai.metaheuristic.ai.launchpad.beans;
 
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -46,9 +50,37 @@ public class Company implements Serializable {
     @Column(name = "UNIQUE_ID")
     public Long uniqueId;
 
-    public String params;
+    @Column(name = "PARAMS")
+    private String params;
+
+    public void setParams(String params) {
+        synchronized (this) {
+            this.params = params;
+            this.cpy=null;
+        }
+    }
+
+    public String getParams() {
+        return params;
+    }
 
     public String name;
 
+    @Transient
+    @JsonIgnore
+    private CompanyParamsYaml cpy = null;
 
+    @JsonIgnore
+    public CompanyParamsYaml getCompanyParamsYaml() {
+        if (cpy==null) {
+            synchronized (this) {
+                if (cpy ==null) {
+                    //noinspection UnnecessaryLocalVariable
+                    CompanyParamsYaml temp = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    cpy = temp;
+                }
+            }
+        }
+        return cpy;
+    }
 }

@@ -16,8 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.company;
 
-import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtilsV2;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -28,26 +26,28 @@ import org.yaml.snakeyaml.Yaml;
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class CompanyParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<CompanyParamsYamlV1, CompanyParamsYamlV2, CompanyParamsYamlUtilsV2, Void, Void, Void> {
+public class CompanyParamsYamlUtilsV2
+        extends AbstractParamsYamlUtils<CompanyParamsYamlV2, CompanyParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(CompanyParamsYamlV1.class);
+        return YamlUtils.init(CompanyParamsYamlV2.class);
     }
 
     @Override
-    public CompanyParamsYamlV2 upgradeTo(CompanyParamsYamlV1 src, Long ... vars) {
+    public CompanyParamsYaml upgradeTo(CompanyParamsYamlV2 src, Long ... vars) {
         src.checkIntegrity();
-        CompanyParamsYamlV2 trg = new CompanyParamsYamlV2();
+        CompanyParamsYaml trg = new CompanyParamsYaml();
         if (src.ac!=null) {
-            trg.ac = new CompanyParamsYamlV2.AccessControlV2(src.ac.groups);
+            trg.ac = new CompanyParamsYaml.AccessControl(src.ac.groups);
         }
+        trg.createdOn = src.createdOn;
+        trg.updatedOn = src.updatedOn;
         trg.checkIntegrity();
         return trg;
     }
@@ -58,8 +58,8 @@ public class CompanyParamsYamlUtilsV1
     }
 
     @Override
-    public CompanyParamsYamlUtilsV2 nextUtil() {
-        return (CompanyParamsYamlUtilsV2) CompanyParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -68,17 +68,17 @@ public class CompanyParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(CompanyParamsYamlV1 yaml) {
+    public String toString(CompanyParamsYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
     @Override
-    public CompanyParamsYamlV1 to(String s) {
+    public CompanyParamsYamlV2 to(String s) {
         if (S.b(s)) {
             return null;
         }
         //noinspection UnnecessaryLocalVariable
-        final CompanyParamsYamlV1 p = getYaml().load(s);
+        final CompanyParamsYamlV2 p = getYaml().load(s);
         return p;
     }
 

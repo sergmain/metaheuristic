@@ -17,8 +17,10 @@
 package ai.metaheuristic.ai.launchpad.replication;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
@@ -77,6 +79,7 @@ public class ReplicationService {
     public final SnippetRepository snippetRepository;
     public final PlanCache planCache;
     public final SnippetCache snippetCache;
+    public final CompanyCache companyCache;
 
     public void sync() {
         if (globals.assetMode!= EnumsApi.LaunchpadAssetMode.replicated) {
@@ -98,6 +101,13 @@ public class ReplicationService {
     private static class PlanLoopEntry {
         public ReplicationData.PlanShortAsset planShort;
         public PlanImpl plan;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class CompanyLoopEntry {
+        public ReplicationData.CompanyShortAsset companyShort;
+        public Company company;
     }
 
     private void syncPlans(List<ReplicationData.PlanShortAsset> actualPlans) {
@@ -139,7 +149,7 @@ public class ReplicationService {
             return;
         }
 
-        planLoopEntry.plan.params = planAsset.plan.params;
+        planLoopEntry.plan.setParams( planAsset.plan.getParams() );
         planLoopEntry.plan.locked = planAsset.plan.locked;
         planLoopEntry.plan.valid = planAsset.plan.valid;
 
@@ -164,22 +174,19 @@ public class ReplicationService {
     private ReplicationData.PlanAsset getPlanAsset(String planCode) {
         ReplicationData.PlanAsset planAsset = requestPlanAsset(planCode);
         if (planAsset.isErrorMessages()) {
-            log.error("#308.020 Error while getting snippet "+ planCode +", error: " + planAsset.getErrorMessagesAsStr());
+            log.error("#308.020 Error while getting plan "+ planCode +", error: " + planAsset.getErrorMessagesAsStr());
             return null;
         }
         return planAsset;
     }
 
-    private static boolean isContained(List<ReplicationData.PlanShortAsset> actualPlans, String code) {
-        return actualPlans.parallelStream().anyMatch(o->o.code.equals(code));
-    }
-
-    private void checkPlanNeedUpdate(String planCode) {
-
-    }
-
-    private boolean plansInSyncState(ReplicationData.AssetStateResponse assetStateResponse) {
-        return false;
+    private ReplicationData.CompanyAsset getCompanyAsset(Long uniqueId) {
+        ReplicationData.CompanyAsset planAsset = requestCompanyAsset(uniqueId);
+        if (planAsset.isErrorMessages()) {
+            log.error("#308.020 Error while getting company with uniqueId "+ uniqueId +", error: " + planAsset.getErrorMessagesAsStr());
+            return null;
+        }
+        return planAsset;
     }
 
     private void syncSnippets(List<String> actualSnippets) {
@@ -212,7 +219,65 @@ public class ReplicationService {
     private void syncAccounts(List<String> assetStateResponse) {
     }
 
-    private void syncCompanies(List<Long> assetStateResponse) {
+    private void syncCompanies(List<ReplicationData.CompanyShortAsset> actualCompanies) {
+        List<CompanyLoopEntry> forUpdating = new ArrayList<>(actualCompanies.size());
+        LinkedList<ReplicationData.CompanyShortAsset> forCreating = new LinkedList<>(actualCompanies);
+
+        List<Long> ids = companyRepository.findAllUniqueIds();
+        for (Long id : ids) {
+            Company c = companyCache.findByUniqueId(id);
+            if (c==null) {
+                continue;
+            }
+
+            boolean isDeleted = true;
+            for (ReplicationData.CompanyShortAsset actualCompany : actualCompanies) {
+                if (actualCompany.uniqueId.equals(c.uniqueId)) {
+                    isDeleted = false;
+                    if (actualCompany.updateOn != c.getCompanyParamsYaml().updatedOn) {
+                        CompanyLoopEntry companyLoopEntry = new CompanyLoopEntry(actualCompany, c);
+                        forUpdating.add(companyLoopEntry);
+                    }
+                    break;
+                }
+            }
+
+            if (isDeleted) {
+                log.warn("!!! Strange situation - company wasn't found, uniqueId: {}", id);
+            }
+            forCreating.removeIf(companyShortAsset -> companyShortAsset.uniqueId.equals(c.uniqueId));
+        }
+
+        forUpdating.parallelStream().forEach(this::updateCompany);
+        forCreating.parallelStream().forEach(this::createCompany);
+    }
+
+    private void createCompany(ReplicationData.CompanyShortAsset companyShortAsset) {
+        ReplicationData.CompanyAsset companyAsset = getCompanyAsset(companyShortAsset.uniqueId);
+        if (companyAsset == null) {
+            return;
+        }
+
+        Company c = companyRepository.findByUniqueId(companyShortAsset.uniqueId);
+        if (c!=null) {
+            return;
+        }
+
+        companyAsset.company.id=null;
+        companyCache.save(companyAsset.company);
+    }
+
+    private void updateCompany(CompanyLoopEntry companyLoopEntry) {
+        ReplicationData.CompanyAsset companyAsset = getCompanyAsset(companyLoopEntry.company.uniqueId);
+        if (companyAsset == null) {
+            return;
+        }
+
+        companyLoopEntry.company.name = companyAsset.company.name;
+        companyLoopEntry.company.setParams( companyAsset.company.getParams() );
+
+        companyCache.save(companyLoopEntry.company);
+
     }
 
     private static Executor getExecutor(String launchpadUrl, String restUsername, String restPassword) {
@@ -266,6 +331,21 @@ public class ReplicationService {
             return new ReplicationData.PlanAsset(((ReplicationData.AssetAcquiringError) data).errorMessages);
         }
         ReplicationData.PlanAsset response = (ReplicationData.PlanAsset) data;
+        return response;
+    }
+
+    private ReplicationData.CompanyAsset requestCompanyAsset(Long uniqueId) {
+        Object data = getData(
+                "/rest/v1/replication/company", ReplicationData.CompanyAsset.class,
+                (uri) -> Request.Post(uri)
+                        .bodyForm(Form.form().add("uniqueId", uniqueId.toString()).build(), StandardCharsets.UTF_8)
+                        .connectTimeout(5000)
+                        .socketTimeout(20000)
+        );
+        if (data instanceof ReplicationData.AssetAcquiringError) {
+            return new ReplicationData.CompanyAsset(((ReplicationData.AssetAcquiringError) data).errorMessages);
+        }
+        ReplicationData.CompanyAsset response = (ReplicationData.CompanyAsset) data;
         return response;
     }
 

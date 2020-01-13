@@ -137,7 +137,7 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentApiData.ExperimentResult("#285.010 experiment wasn't found, experimentId: " + experimentId );
         }
-        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.params);
+        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
         epy.processing = null; //new ExperimentParamsYaml.ExperimentProcessing();
         String params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
 
@@ -602,7 +602,7 @@ public class ExperimentTopLevelService {
                     "#285.270 An experiment wasn't found, experimentId: " + id);
         }
         // do not use experiment.getExperimentParamsYaml() because it's  caching ExperimentParamsYaml
-        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.params);
+        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
         epy.processing = new ExperimentParamsYaml.ExperimentProcessing();
         epy.createdOn = System.currentTimeMillis();
 

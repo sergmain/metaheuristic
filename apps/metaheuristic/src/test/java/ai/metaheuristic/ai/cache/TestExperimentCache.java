@@ -43,7 +43,7 @@ public class TestExperimentCache extends PreparingExperiment {
         assertNotNull(e1);
         assertNotNull(e2);
 
-        System.out.println("\n\ne1.params:\n" + e1.params);
+        System.out.println("\n\ne1.params:\n" + e1.getParams());
 
         assertNull(e1.getWorkbookId());
         assertNull(e2.getWorkbookId());

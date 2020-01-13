@@ -16,28 +16,42 @@
 
 package ai.metaheuristic.ai.yaml.company;
 
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author Serge
  * Date: 10/3/2019
  * Time: 4:51 PM
  */
-public class CompanyParamsYamlUtils {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class CompanyParamsYamlV2 implements BaseParams {
 
-    private static final CompanyParamsYamlUtilsV1 YAML_UTILS_V_1 = new CompanyParamsYamlUtilsV1();
-    private static final CompanyParamsYamlUtilsV2 YAML_UTILS_V_2 = new CompanyParamsYamlUtilsV2();
-    private static final CompanyParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    public final int version=2;
 
-    public static final BaseYamlUtils<CompanyParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
-            Map.of(
-                    1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
-            ),
-            DEFAULT_UTILS
-    );
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AccessControlV2 {
+        public String groups;
+    }
+
+    public long createdOn;
+    public long updatedOn;
+
+    public AccessControlV2 ac;
 
 }

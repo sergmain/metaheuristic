@@ -366,7 +366,7 @@ public class AtlasTopLevelService {
         result.atlas = atlas;
 
         WorkbookImpl workbook = new WorkbookImpl();
-        workbook.params = ypywc.atlasParams.workbook.workbookParams;
+        workbook.setParams(ypywc.atlasParams.workbook.workbookParams);
         workbook.id = ypywc.atlasParams.workbook.workbookId;
         workbook.execState = ypywc.atlasParams.workbook.execState;
         List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookService.findAll(workbook);
@@ -716,7 +716,7 @@ public class AtlasTopLevelService {
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
         WorkbookImpl workbook = new WorkbookImpl();
-        workbook.params = ypywc.atlasParams.workbook.workbookParams;
+        workbook.setParams( ypywc.atlasParams.workbook.workbookParams);
         workbook.id = ypywc.atlasParams.workbook.workbookId;
         workbook.execState = ypywc.atlasParams.workbook.execState;
         List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookService.findAll(workbook);
@@ -768,7 +768,7 @@ public class AtlasTopLevelService {
         ExperimentFeature feature = ypywc.getFeature(featureId);
 
         WorkbookImpl workbook = new WorkbookImpl();
-        workbook.params = ypywc.atlasParams.workbook.workbookParams;
+        workbook.setParams(ypywc.atlasParams.workbook.workbookParams);
         workbook.id = ypywc.atlasParams.workbook.workbookId;
         workbook.execState = ypywc.atlasParams.workbook.execState;
         List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookService.findAll(workbook);

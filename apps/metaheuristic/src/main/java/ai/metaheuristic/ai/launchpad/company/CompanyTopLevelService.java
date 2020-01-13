@@ -65,6 +65,21 @@ public class CompanyTopLevelService {
                     "#237.020 Name of company name must not be null");
         }
 
+        CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
+        if (cpy==null) {
+            cpy = new CompanyParamsYaml();
+        }
+        cpy.createdOn = System.currentTimeMillis();
+        cpy.updatedOn = cpy.createdOn;
+
+        String paramsYaml;
+        try {
+            paramsYaml = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(cpy);
+        } catch (Throwable th) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.030 company params is in wrong format, error: " + th.getMessage());
+        }
+        company.setParams(paramsYaml);
+
         if (company.uniqueId==null) {
             company.uniqueId = getUniqueId();
         }
@@ -94,8 +109,8 @@ public class CompanyTopLevelService {
             return new CompanyData.CompanyResult("#237.050 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
         String groups = "";
-        if (!S.b(company.params)) {
-            CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.params);
+        if (!S.b(company.getParams())) {
+            CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
             if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
                 groups = cpy.ac.groups;
             }
@@ -108,7 +123,7 @@ public class CompanyTopLevelService {
 
     /**
      *
-     * @param companyUniqueId contains a value from COmpany.uniqueId, !not! from Company.Id
+     * @param companyUniqueId contains a value from Company.uniqueId, !not! from Company.Id
      * @param name
      * @param groups
      * @return
@@ -122,7 +137,14 @@ public class CompanyTopLevelService {
         if (c == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.060 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
-        CompanyParamsYaml cpy = new CompanyParamsYaml();
+
+        CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(c.getParams());
+        if (cpy==null) {
+            cpy = new CompanyParamsYaml();
+            cpy.createdOn = System.currentTimeMillis();
+        }
+        cpy.updatedOn = System.currentTimeMillis();
+
         cpy.ac = new CompanyParamsYaml.AccessControl(groups);
         String paramsYaml;
         try {

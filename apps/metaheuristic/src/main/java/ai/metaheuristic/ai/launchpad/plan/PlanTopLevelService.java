@@ -188,7 +188,7 @@ public class PlanTopLevelService {
 
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.params );
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.getParams() );
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
         return result;
@@ -233,7 +233,7 @@ public class PlanTopLevelService {
 
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.params );
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.getParams() );
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
         return result;
@@ -263,13 +263,13 @@ public class PlanTopLevelService {
         if (status!=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 plan wasn't found, planId: " + id+", " + status.getErrorMessagesAsStr());
         }
-        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.params);
+        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
         if (ppy.internalParams==null) {
             ppy.internalParams = new PlanParamsYaml.InternalParams();
         }
         ppy.internalParams.archived = true;
         ppy.internalParams.updatedOn = System.currentTimeMillis();
-        plan.params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
+        plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
 
         planCache.save(plan);
         return OperationStatusRest.OPERATION_STATUS_OK;

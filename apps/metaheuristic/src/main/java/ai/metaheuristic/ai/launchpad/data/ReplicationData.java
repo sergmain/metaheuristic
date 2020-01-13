@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.api.data.BaseDataClass;
@@ -64,6 +65,17 @@ public class ReplicationData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class CompanyAsset extends BaseDataClass implements ReplicationAsset {
+        public Company company;
+        public CompanyAsset(List<String> errorMessages) {
+            addErrorMessages(errorMessages);
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PlanAsset extends BaseDataClass implements ReplicationAsset {
         public PlanImpl plan;
         public PlanAsset(List<String> errorMessages) {
@@ -81,13 +93,22 @@ public class ReplicationData {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(of = "uniqueId")
+    public static class CompanyShortAsset {
+        public Long uniqueId;
+        public long updateOn;
+    }
+
+    @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class AssetStateResponse extends BaseDataClass implements ReplicationAsset {
         public final List<String> snippets = new ArrayList<>();
         public final List<PlanShortAsset> plans = new ArrayList<>();
+        public final List<CompanyShortAsset> companies = new ArrayList<>();
         public final List<String> usernames = new ArrayList<>();
-        public final List<Long> companies = new ArrayList<>();
 
         public AssetStateResponse(String errorMessage) {
             addErrorMessage(errorMessage);

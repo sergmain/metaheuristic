@@ -36,7 +36,7 @@ import java.util.List;
 @NoArgsConstructor
 public class CompanyParamsYaml implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
@@ -49,6 +49,9 @@ public class CompanyParamsYaml implements BaseParams {
     public static class AccessControl {
         public String groups;
     }
+
+    public long createdOn;
+    public long updatedOn;
 
     public AccessControl ac;
 
