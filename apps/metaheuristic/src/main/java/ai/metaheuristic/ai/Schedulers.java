@@ -167,7 +167,7 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.warn("Invoking replicationService.sync()");
+            log.debug("Invoking replicationService.sync()");
             replicationService.sync();
         }
     }
