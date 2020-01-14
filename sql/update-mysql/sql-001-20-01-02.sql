@@ -31,3 +31,10 @@ insert mh_gen_ids
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
 select 'mh_ids', max(UNIQUE_ID) from mh_company;
 
+alter table mh_account
+    add     UPDATED_ON  bigint;
+
+update mh_account
+set UPDATED_ON = CREATED_ON;
+
+alter table mh_account modify UPDATED_ON  bigint not null;

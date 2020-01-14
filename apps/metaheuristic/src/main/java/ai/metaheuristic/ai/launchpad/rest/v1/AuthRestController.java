@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.launchpad.rest.v1;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.data.UserData;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -42,7 +41,7 @@ public class AuthRestController {
         UsernamePasswordAuthenticationToken passwordAuthenticationToken = (UsernamePasswordAuthenticationToken) user;
         Account acc = (Account) passwordAuthenticationToken.getPrincipal();
         Collection<GrantedAuthority> authorities = passwordAuthenticationToken.getAuthorities();
-        return new UserData(acc.getLogin(), acc.getPublicName(), authorities);
+        return new UserData(acc.username, acc.getPublicName(), authorities);
     }
 
 

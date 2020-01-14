@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.launchpad.replication;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.account.AccountCache;
+import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.company.CompanyCache;
@@ -54,6 +56,7 @@ public class ReplicationSourceService {
     public final PlanRepository planRepository;
     public final SnippetRepository snippetRepository;
     public final PlanCache planCache;
+    public final AccountCache accountCache;
     public final CompanyCache companyCache;
 
     public ReplicationData.AssetStateResponse currentAssets() {
@@ -67,7 +70,14 @@ public class ReplicationSourceService {
                 })
                 .collect(Collectors.toList()));
 
-        res.usernames.addAll(accountRepository.findAllUsernames());
+        res.usernames.addAll(accountRepository.findAllUsernames().parallelStream()
+                .map(username->{
+                    Account account = accountCache.findByUsername(username);
+
+                    return new ReplicationData.AccountShortAsset(account.username, account.updatedOn);
+                })
+                .collect(Collectors.toList()));
+
         res.snippets.addAll(snippetRepository.findAllSnippetCodes());
         res.plans.addAll(planRepository.findAllAsIds().parallelStream()
                 .map(id->{
@@ -97,7 +107,12 @@ public class ReplicationSourceService {
     }
 
     public ReplicationData.CompanyAsset getCompany(long uniqueId) {
-        ReplicationData.CompanyAsset snippetAsset = new ReplicationData.CompanyAsset(companyRepository.findByUniqueId(uniqueId));
-        return snippetAsset;
+        ReplicationData.CompanyAsset companyAsset = new ReplicationData.CompanyAsset(companyRepository.findByUniqueId(uniqueId));
+        return companyAsset;
+    }
+
+    public ReplicationData.AccountAsset getAccount(String username) {
+        ReplicationData.AccountAsset accountAsset = new ReplicationData.AccountAsset(accountRepository.findByUsername(username));
+        return accountAsset;
     }
 }

@@ -17,11 +17,12 @@
 package ai.metaheuristic.ai.launchpad.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
@@ -74,14 +75,17 @@ public class Account implements UserDetails, Serializable, Cloneable {
     @Column(name="PUBLIC_NAME")
     public String publicName;
 
-    @Column(name="mail_address")
+    @Column(name="MAIL_ADDRESS")
     public String mailAddress;
 
     @Column(name="PHONE")
     public String phone;
 
-    @Column(name="created_on")
+    @Column(name="CREATED_ON")
     public long createdOn;
+
+    @Column(name="UPDATED_ON")
+    public long updatedOn;
 
     public String roles;
 
@@ -113,9 +117,17 @@ public class Account implements UserDetails, Serializable, Cloneable {
 
     @Transient
     @JsonIgnore
-    private List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+    private List<SerializableGrantedAuthority> grantedAuthorities = new ArrayList<>();
 
-    public List<? extends GrantedAuthority> getAuthorities() {
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SerializableGrantedAuthority implements GrantedAuthority {
+        private static final long serialVersionUID = 8923383713825441981L;
+        public String authority;
+    }
+
+    public List<SerializableGrantedAuthority> getAuthorities() {
         initRoles();
         return grantedAuthorities;
     }
@@ -155,7 +167,7 @@ public class Account implements UserDetails, Serializable, Cloneable {
                         while (st.hasMoreTokens()) {
                             String role = st.nextToken().trim();
                             list.add(role);
-                            grantedAuthorities.add(new SimpleGrantedAuthority(role));
+                            grantedAuthorities.add(new SerializableGrantedAuthority(role));
                         }
                     }
                     rolesAsList = list;
@@ -164,6 +176,8 @@ public class Account implements UserDetails, Serializable, Cloneable {
         }
     }
 
+    @Transient
+    @JsonIgnore
     public String getLogin() {
         return username;
     }

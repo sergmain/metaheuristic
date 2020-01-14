@@ -84,6 +84,7 @@ public class AccountService {
 
         account.setPassword(passwordEncoder.encode(account.getPassword()));
         account.setCreatedOn(System.currentTimeMillis());
+        account.setUpdatedOn(account.createdOn);
         account.setAccountNonExpired(true);
         account.setAccountNonLocked(true);
         account.setCredentialsNonExpired(true);
@@ -111,6 +112,7 @@ public class AccountService {
         }
         a.setEnabled(enabled);
         a.setPublicName(publicName);
+        a.updatedOn = System.currentTimeMillis();
         accountCache.save(a);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", null);
     }
@@ -128,6 +130,7 @@ public class AccountService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.100 account wasn't found, accountId: " + accountId);
         }
         a.setPassword(passwordEncoder.encode(password));
+        a.updatedOn = System.currentTimeMillis();
         accountCache.save(a);
 
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", null);
@@ -145,6 +148,7 @@ public class AccountService {
                 .collect(Collectors.joining(", "));
 
         account.setRoles(str);
+        account.updatedOn = System.currentTimeMillis();
         accountCache.save(account);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", null);
     }
@@ -171,6 +175,7 @@ public class AccountService {
 
         String roles = String.join(", ", account.getRolesAsList());
         account.setRoles(roles);
+        account.updatedOn = System.currentTimeMillis();
         accountCache.save(account);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Roles was changed successfully", null);
     }

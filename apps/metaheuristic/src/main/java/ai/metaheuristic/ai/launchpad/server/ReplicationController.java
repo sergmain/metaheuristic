@@ -17,13 +17,10 @@
 package ai.metaheuristic.ai.launchpad.server;
 
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
-import ai.metaheuristic.ai.launchpad.replication.ReplicationService;
 import ai.metaheuristic.ai.launchpad.replication.ReplicationSourceService;
-import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -60,6 +57,11 @@ public class ReplicationController {
     @PostMapping(value="/company")
     public @ResponseBody ReplicationData.CompanyAsset getCompany(@RequestParam long uniqueId) {
         return replicationSourceService.getCompany(uniqueId);
+    }
+
+    @PostMapping(value="/account")
+    public @ResponseBody ReplicationData.AccountAsset getAccount(@RequestParam String username) {
+        return replicationSourceService.getAccount(username);
     }
 
 }

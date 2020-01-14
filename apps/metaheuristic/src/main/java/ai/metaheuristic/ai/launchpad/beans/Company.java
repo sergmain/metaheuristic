@@ -75,6 +75,7 @@ public class Company implements Serializable {
         if (cpy==null) {
             synchronized (this) {
                 if (cpy ==null) {
+                    // to create a corrected structure of params
                     String p = S.b(params) ? CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(new CompanyParamsYaml()) : params;
                     //noinspection UnnecessaryLocalVariable
                     CompanyParamsYaml temp = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(p);
