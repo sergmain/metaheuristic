@@ -20,10 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.*;
-import ai.metaheuristic.ai.launchpad.account.AccountCache;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchAndWorkbookExecStates;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
-import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
@@ -31,11 +29,13 @@ import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
@@ -99,12 +99,11 @@ public class BatchService {
     private static final String PLAN_NOT_FOUND = "Plan wasn't found";
     private static final String IP_HOST = "IP: %s, host: %s";
     private static final Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml", ".yml");
-    private static final String ATTACHMENTS_POOL_CODE = "attachments";
+    public static final String ATTACHMENTS_POOL_CODE = "attachments";
     private static final String CONFIG_FILE = "config.yaml";
     private static final String DELEMITER_2 = "\n====================================================================\n";
 
     private final Globals globals;
-    private final AccountCache accountCache;
     private final PlanCache planCache;
     private final PlanService planService;
     private final BatchCache batchCache;
@@ -251,17 +250,6 @@ public class BatchService {
         return mainDocumentTemp;
     }
 
-    private static WorkbookParamsYaml initWorkbookParamsYaml(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
-        WorkbookParamsYaml yaml = new WorkbookParamsYaml();
-        yaml.workbookYaml.preservePoolNames = true;
-        yaml.workbookYaml.poolCodes.computeIfAbsent(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, o-> new ArrayList<>()).add(mainPoolCode);
-        if (attachmentCodes.isEmpty()) {
-            return yaml;
-        }
-        yaml.workbookYaml.poolCodes.computeIfAbsent(ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
-        return yaml;
-    }
-
     private void createAndProcessTask(Batch batch, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile) {
 
         Long planId = batch.planId;
@@ -296,7 +284,7 @@ public class BatchService {
             throw new BatchResourceProcessingException("#995.180 main document wasn't found");
         }
 
-        final WorkbookParamsYaml params = initWorkbookParamsYaml(mainPoolCode, attachPoolCode, attachments);
+        final WorkbookParamsYaml.WorkbookResourceCodes params = PlanUtils.initWorkbookParamsYaml(mainPoolCode, attachPoolCode, attachments);
         PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(planId, params);
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
             throw new BatchResourceProcessingException("#995.190 Error creating workbook: " + producingResult.planProducingStatus);

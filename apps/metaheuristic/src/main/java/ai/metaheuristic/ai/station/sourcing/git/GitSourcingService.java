@@ -111,17 +111,19 @@ public class GitSourcingService {
     }
 
     private GitExecResult execGitCmd(List<String> gitVersionCmd, long timeout) {
+        File consoleLogFile = null;
         try {
-            File consoleLogFile = File.createTempFile("console-", ".log");
-            consoleLogFile.deleteOnExit();
+            consoleLogFile = File.createTempFile("console-", ".log");
             SnippetApiData.SnippetExecResult snippetExecResult = execProcessService.execCommand(
                     gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec", null );
-
             log.info("snippetExecResult: {}" , snippetExecResult);
             return new GitExecResult(snippetExecResult, snippetExecResult.isOk, snippetExecResult.console);
         } catch (InterruptedException | IOException e) {
             log.error("#027.020 Error", e);
             return new GitExecResult(null, false, "#027.020 Error: " + e.getMessage());
+        }
+        finally {
+            FileUtils.deleteQuietly(consoleLogFile);
         }
     }
 

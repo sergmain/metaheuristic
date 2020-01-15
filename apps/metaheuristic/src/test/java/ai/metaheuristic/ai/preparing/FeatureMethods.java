@@ -78,7 +78,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookParamsYaml);
+        PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), resourceCodes);
         workbook = (WorkbookImpl)result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);

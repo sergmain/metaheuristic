@@ -140,10 +140,8 @@ public class PlanService {
             return r;
         }
 
-        WorkbookParamsYaml wpy = StringUtils.isNotBlank(inputResourceParams)
-                ? PlanUtils.parseToWorkbookParamsYaml(inputResourceParams)
-                : asWorkbookParamsYaml(poolCode);
-        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(plan.getId(), wpy);
+        WorkbookParamsYaml.WorkbookResourceCodes wrc = PlanUtils.prepareResourceCodes(poolCode, inputResourceParams);
+        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(plan.getId(), wrc);
         if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             return new PlanApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
         }
@@ -166,12 +164,6 @@ public class PlanService {
         workbookService.changeValidStatus(producingResult.workbook.getId(), true);
 
         return result;
-    }
-
-    private static WorkbookParamsYaml asWorkbookParamsYaml(String poolCode) {
-        WorkbookParamsYaml wpy = new WorkbookParamsYaml();
-        wpy.workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o->new ArrayList<>()).add(poolCode);
-        return wpy;
     }
 
     public PlanApiData.PlanValidation validateInternal(PlanImpl plan) {
@@ -214,7 +206,7 @@ public class PlanService {
         }
     }
 
-    public void setLockedTo(Long planId, Long companyUniqueId, boolean locked) {
+    private void setLockedTo(Long planId, Long companyUniqueId, boolean locked) {
         synchronized (syncObj) {
             Plan p = planRepository.findByIdForUpdate(planId, companyUniqueId);
             if (p!=null && p.isLocked()!=locked) {

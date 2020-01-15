@@ -39,6 +39,8 @@ public class DataStorageParams {
 
     public DiskInfo disk;
 
+    // TODO this field is the code of resource actually.
+    //  Have to be renamed to resourceCode
     public String storageType;
 
     public DataStorageParams(EnumsApi.DataSourcing sourcing) {

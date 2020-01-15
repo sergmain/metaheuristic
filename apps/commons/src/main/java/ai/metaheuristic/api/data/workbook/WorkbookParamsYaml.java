@@ -33,7 +33,7 @@ import java.util.Map;
 public class WorkbookParamsYaml implements BaseParams {
 
     @Data
-    public static class WorkbookYaml {
+    public static class WorkbookResourceCodes {
         public Map<String, List<String>> poolCodes = new HashMap<>();
 
         public boolean preservePoolNames;
@@ -49,7 +49,7 @@ public class WorkbookParamsYaml implements BaseParams {
     }
 
     public final int version = 2;
-    public WorkbookYaml workbookYaml = new WorkbookYaml();
+    public WorkbookResourceCodes workbookYaml = new WorkbookResourceCodes();
     public String graph;
 
     @Override

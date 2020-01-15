@@ -103,7 +103,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public Snippet s5 = null;
     public WorkbookImpl workbook = null;
 
-    public WorkbookParamsYaml workbookParamsYaml;
+    public WorkbookParamsYaml.WorkbookResourceCodes resourceCodes;
 
     public Company company;
 
@@ -239,8 +239,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
                 true, "file-03.txt",
                 null, null);
 
-        workbookParamsYaml = new WorkbookParamsYaml();
-        workbookParamsYaml.workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o-> new ArrayList<>()).add(INPUT_POOL_CODE);
+        resourceCodes = new WorkbookParamsYaml.WorkbookResourceCodes();
+        resourceCodes.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o-> new ArrayList<>()).add(INPUT_POOL_CODE);
     }
 
     private Snippet createSnippet(String snippetCode) {
@@ -316,7 +316,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookParamsYaml);
+        TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), resourceCodes);
         workbook = (WorkbookImpl)result.workbook;
 
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
