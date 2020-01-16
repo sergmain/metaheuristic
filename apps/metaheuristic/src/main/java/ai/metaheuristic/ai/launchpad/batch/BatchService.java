@@ -124,29 +124,21 @@ public class BatchService {
      * @param batchStatus
      */
     public static BatchStatusProcessor initBatchStatus(BatchStatusProcessor batchStatus) {
-        {
-            String generalStr = batchStatus.getGeneralStatus().asString();
-            if (!generalStr.isBlank()) {
-                batchStatus.status = generalStr + DELEMITER_2;
-            }
+        String generalStr = batchStatus.getGeneralStatus().asString();
+        if (!generalStr.isBlank()) {
+            batchStatus.status = generalStr + DELEMITER_2;
         }
-        {
-            String progressStr = batchStatus.getProgressStatus().asString();
-            if (!progressStr.isBlank()) {
-                batchStatus.status += progressStr + DELEMITER_2;
-            }
+        String progressStr = batchStatus.getProgressStatus().asString();
+        if (!progressStr.isBlank()) {
+            batchStatus.status += progressStr + DELEMITER_2;
         }
-        {
-            String okStr = batchStatus.getOkStatus().asString();
-            if (!okStr.isBlank()) {
-                batchStatus.status += okStr + DELEMITER_2;
-            }
+        String okStr = batchStatus.getOkStatus().asString();
+        if (!okStr.isBlank()) {
+            batchStatus.status += okStr + DELEMITER_2;
         }
-        {
-            String errorStr = batchStatus.getErrorStatus().asString();
-            if (!errorStr.isBlank()) {
-                batchStatus.status += errorStr + DELEMITER_2;
-            }
+        String errorStr = batchStatus.getErrorStatus().asString();
+        if (!errorStr.isBlank()) {
+            batchStatus.status += errorStr + DELEMITER_2;
         }
         return batchStatus;
     }

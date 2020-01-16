@@ -55,7 +55,7 @@ public class TestExperimentToJson extends PreparingPlan {
     }
 
     @Test
-    public void toExperimentStoredToAtlasToYaml() throws IOException {
+    public void toExperimentStoredToAtlasToYaml() {
 
         //noinspection unused
         PlanApiData.TaskProducingResultComplex result = produceTasksForTest();
@@ -64,9 +64,7 @@ public class TestExperimentToJson extends PreparingPlan {
         assertNotNull(experiment.getId());
         assertNotNull(experiment.getWorkbookId());
 
-        long experimentId = experiment.getId();
-
-        AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(experimentId);
+        AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(plan, workbook, experiment);
         assertEquals(Enums.StoringStatus.OK, r.status);
 
         String yaml = atlasParamsYamlUtils.BASE_YAML_UTILS.toString(r.atlasParamsYamlWithCache.atlasParams);

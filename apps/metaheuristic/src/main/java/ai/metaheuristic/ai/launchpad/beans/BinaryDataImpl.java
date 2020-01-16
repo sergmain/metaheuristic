@@ -35,6 +35,7 @@ import java.sql.Timestamp;
 public class BinaryDataImpl implements Serializable, BinaryData {
     private static final long serialVersionUID = 7768428475142175426L;
 
+    // TODO 2020-01-15 why we have this method?
     @Override
     public void setType(EnumsApi.BinaryDataType binaryDataType) {
         this.dataType = binaryDataType.value;

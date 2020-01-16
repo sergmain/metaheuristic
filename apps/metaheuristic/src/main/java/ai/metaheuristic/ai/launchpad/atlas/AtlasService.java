@@ -100,7 +100,20 @@ public class AtlasService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Can't find experiment for workbookId #" + workbookId);
         }
 
-        StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(experimentId);
+        Experiment experiment = experimentCache.findById(experimentId);
+        if (experiment==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.02 can't find experiment for id: " + experimentId);
+        }
+        WorkbookImpl workbook = workbookCache.findById(experiment.workbookId);
+        if (workbook==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.05 can't find workbook for this experiment");
+        }
+        PlanImpl plan = planCache.findById(workbook.getPlanId());
+        if (plan==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.10 can't find plan for this experiment");
+        }
+
+        StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(plan, workbook, experiment);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.errorMessages);
         }
@@ -128,6 +141,7 @@ public class AtlasService {
         a.description = epy.experimentYaml.description;
         a.code = epy.experimentYaml.code;
         a.createdOn = System.currentTimeMillis();
+        a.companyId = plan.companyId;
         final Atlas atlas = atlasRepository.save(a);
 
         // store all tasks' results
@@ -163,24 +177,7 @@ public class AtlasService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public StoredToAtlasWithStatus toExperimentStoredToAtlas(Long experimentId) {
-
-        Experiment experiment = experimentCache.findById(experimentId);
-        if (experiment==null) {
-            return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
-                    "#604.02 can't find experiment for id: " + experimentId);
-        }
-        WorkbookImpl workbook = workbookCache.findById(experiment.workbookId);
-        if (workbook==null) {
-            return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
-                    "#604.05 can't find workbook for this experiment");
-        }
-        PlanImpl plan = planCache.findById(workbook.getPlanId());
-        if (plan==null) {
-            return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
-                    "#604.10 can't find plan for this experiment");
-        }
-
+    public StoredToAtlasWithStatus toExperimentStoredToAtlas(PlanImpl plan, WorkbookImpl workbook, Experiment experiment) {
         AtlasParamsYaml atlasParamsYaml = new AtlasParamsYaml();
         atlasParamsYaml.createdOn = System.currentTimeMillis();
         atlasParamsYaml.plan = new AtlasParamsYaml.PlanWithParams(plan.id, plan.getParams());
