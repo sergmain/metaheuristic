@@ -35,6 +35,7 @@ import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.YamlVersion;
@@ -52,7 +53,6 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -198,7 +198,7 @@ public class PlanService {
 
     private void setValidTo(Plan plan, boolean valid) {
         synchronized (syncObj) {
-            Plan p = planRepository.findByIdForUpdate(plan.getId(), plan.getCompanyId());
+            PlanImpl p = planRepository.findByIdForUpdate(plan.getId(), plan.getCompanyId());
             if (p!=null && p.isValid()!=valid) {
                 p.setValid(valid);
                 saveInternal(p);
@@ -208,7 +208,7 @@ public class PlanService {
 
     private void setLockedTo(Long planId, Long companyUniqueId, boolean locked) {
         synchronized (syncObj) {
-            Plan p = planRepository.findByIdForUpdate(planId, companyUniqueId);
+            PlanImpl p = planRepository.findByIdForUpdate(planId, companyUniqueId);
             if (p!=null && p.isLocked()!=locked) {
                 p.setLocked(locked);
                 saveInternal(p);
@@ -216,13 +216,16 @@ public class PlanService {
         }
     }
 
-    private void saveInternal(Plan plan) {
-        if (plan instanceof PlanImpl) {
-            planCache.save((PlanImpl)plan);
+    private void saveInternal(PlanImpl plan) {
+        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
+        if (ppy.internalParams==null) {
+            ppy.internalParams = new PlanParamsYaml.InternalParams();
         }
-        else {
-            throw new NotImplementedException("#701.120 Need to implement");
-        }
+        ppy.internalParams.updatedOn = System.currentTimeMillis();
+        String params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
+        plan.setParams(params);
+
+        planCache.save(plan);
     }
 
     public OperationStatusRest workbookTargetExecState(Long workbookId, EnumsApi.WorkbookExecState execState) {
@@ -348,6 +351,7 @@ public class PlanService {
             for (PlanParamsYaml.SnippetDefForPlan snDef : process.snippets) {
                 EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x != OK) {
+                    log.error("#177.030 Pre-snippet wasn't found for code: {}, process: {}", snDef.code, process);
                     return x;
                 }
             }
@@ -356,6 +360,7 @@ public class PlanService {
             for (PlanParamsYaml.SnippetDefForPlan snDef : process.preSnippets) {
                 EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x != OK) {
+                    log.error("#177.030 Pre-snippet {} wasn't found", snDef.code);
                     return x;
                 }
             }
@@ -364,6 +369,7 @@ public class PlanService {
             for (PlanParamsYaml.SnippetDefForPlan snDef : process.postSnippets) {
                 EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x != OK) {
+                    log.error("#177.030 Post-snippet {} wasn't found", snDef.code);
                     return x;
                 }
             }
@@ -376,12 +382,12 @@ public class PlanService {
         if (StringUtils.isNotBlank(snDef.code)) {
             Long  snippetId = snippetRepository.findIdByCode(snDef.code);
             if (snippetId == null) {
-                log.error("#177.030 Pre-snippet wasn't found for code: {}, process: {}", snDef.code, process);
+                log.error("#177.030 snippet wasn't found for code: {}, process: {}", snDef.code, process);
                 return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }
         else {
-            log.error("#177.060 Pre-snippet wasn't found for code: {}, process: {}", snDef.code, process);
+            log.error("#177.060 snippet wasn't found for code: {}, process: {}", snDef.code, process);
             return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
         }
         if (!commonProcessValidatorService.checkRequiredVersion(planParamsVersion, snDef)) {

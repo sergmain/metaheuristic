@@ -155,7 +155,7 @@ public class CompanyController {
         return "launchpad/company/company-account-add";
     }
 
-    @PostMapping("/company-account-add-commit/{companyId}")
+    @PostMapping("/company-account-add-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String addFormCommit(Model model, Account account, @PathVariable Long companyUniqueId) {
         account.companyId = companyUniqueId;
@@ -213,33 +213,33 @@ public class CompanyController {
         return "launchpad/company/company-account-password-edit";
     }
 
-    @PostMapping("/company-account-password-edit-commit/{companyId}")
+    @PostMapping("/company-account-password-edit-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String passwordEditFormCommit(Long id, String password, String password2,
-                                         final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
-        OperationStatusRest operationStatusRest = companyAccountTopLevelService.passwordEditFormCommit(id, password, password2, companyId);
+                                         final RedirectAttributes redirectAttributes, @PathVariable Long companyUniqueId) {
+        OperationStatusRest operationStatusRest = companyAccountTopLevelService.passwordEditFormCommit(id, password, password2, companyUniqueId);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
         if (operationStatusRest.isInfoMessages()) {
             redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
         }
-        return "redirect:/launchpad/company/company-accounts/" + companyId;
+        return "redirect:/launchpad/company/company-accounts/" + companyUniqueId;
     }
 
-    @GetMapping(value = "/company-account-edit-roles/{companyId}/{id}")
+    @GetMapping(value = "/company-account-edit-roles/{companyUniqueId}/{id}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
-    public String editRoles(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
-        AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(id, companyId);
+    public String editRoles(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @PathVariable Long companyUniqueId) {
+        AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(id, companyUniqueId);
         if (accountResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
-            return "redirect:/launchpad/company/company-accounts/"+companyId;
+            return "redirect:/launchpad/company/company-accounts/"+companyUniqueId;
         }
         accountResult.account.setPassword(null);
         accountResult.account.setPassword2(null);
         model.addAttribute("account", accountResult.account);
-        model.addAttribute("roles", Consts.ID_1.equals(companyId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES);
-        model.addAttribute("companyId", companyId);
+        model.addAttribute("roles", Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES);
+        model.addAttribute("companyUniqueId", companyUniqueId);
         return "launchpad/company/company-account-edit-roles";
     }
 

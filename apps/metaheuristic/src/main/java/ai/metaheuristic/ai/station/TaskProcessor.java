@@ -540,6 +540,7 @@ public class TaskProcessor {
                 snippetPrepareResult.isLoaded = false;
 
                 metadataService.setSnippetDownloadStatus(launchpadUrl, snippet.code, EnumsApi.SnippetSourcing.launchpad, Enums.SnippetState.none);
+
             }
         }
         else if (snippetPrepareResult.snippet.sourcing==EnumsApi.SnippetSourcing.git) {

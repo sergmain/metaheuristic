@@ -143,25 +143,26 @@ public class MetadataService {
         }
     }
 
-    public SnippetDownloadStatusYaml.Status syncSnippetStatus(LaunchpadLookupConfig.Asset asset, final String snippetCode) {
+    public SnippetDownloadStatusYaml.Status syncSnippetStatus(String launchpadUrl, LaunchpadLookupConfig.Asset asset, final String snippetCode) {
         try {
-            syncSnippetStatusInternal(asset, snippetCode);
+            syncSnippetStatusInternal(launchpadUrl, asset, snippetCode);
         } catch (Throwable th) {
-            setSnippetState(asset.url, snippetCode, Enums.SnippetState.io_error);
+            log.error("Error in syncSnippetStatus()", th);
+            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.io_error);
         }
-        return getSnippetDownloadStatuses(asset.url, snippetCode);
+        return getSnippetDownloadStatuses(launchpadUrl, snippetCode);
     }
 
-    private void syncSnippetStatusInternal(LaunchpadLookupConfig.Asset asset, String snippetCode) {
-        SnippetDownloadStatusYaml.Status status = getSnippetDownloadStatuses(asset.url, snippetCode);
+    private void syncSnippetStatusInternal(String launchpadUrl, LaunchpadLookupConfig.Asset asset, String snippetCode) {
+        SnippetDownloadStatusYaml.Status status = getSnippetDownloadStatuses(launchpadUrl, snippetCode);
 
         if (status==null || status.sourcing != EnumsApi.SnippetSourcing.launchpad || status.verified) {
             return;
         }
-        SimpleCache simpleCache = simpleCacheMap.computeIfAbsent(asset.url, o->{
-            final Metadata.LaunchpadInfo launchpadInfo = launchpadUrlAsCode(asset.url);
+        SimpleCache simpleCache = simpleCacheMap.computeIfAbsent(launchpadUrl, o->{
+            final Metadata.LaunchpadInfo launchpadInfo = launchpadUrlAsCode(launchpadUrl);
             return new SimpleCache(
-                    launchpadLookupExtendedService.lookupExtendedMap.get(asset.url),
+                    launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl),
                     asset,
                     launchpadInfo,
                     launchpadLookupExtendedService.prepareBaseResourceDir(launchpadInfo)
@@ -169,63 +170,62 @@ public class MetadataService {
         });
 
         StationSnippetService.DownloadedSnippetConfigStatus downloadedSnippetConfigStatus =
-                stationSnippetService.downloadSnippetConfig(simpleCache.asset, snippetCode, simpleCache.launchpadInfo.stationId);
+                stationSnippetService.downloadSnippetConfig(launchpadUrl, simpleCache.asset, snippetCode, simpleCache.launchpadInfo.stationId);
 
         if (downloadedSnippetConfigStatus.status==StationSnippetService.ConfigStatus.error) {
-            setSnippetState(asset.url, snippetCode, Enums.SnippetState.snippet_config_error);
+            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.snippet_config_error);
             return;
         }
         if (downloadedSnippetConfigStatus.status==StationSnippetService.ConfigStatus.not_found) {
-            removeSnippet(asset.url, snippetCode);
+            removeSnippet(launchpadUrl, snippetCode);
             return;
         }
         TaskParamsYaml.SnippetConfig snippetConfig = downloadedSnippetConfigStatus.snippetConfig;
 
-        ChecksumState checksumState = prepareChecksum(snippetCode, asset.url, snippetConfig);
+        ChecksumState checksumState = prepareChecksum(snippetCode, launchpadUrl, snippetConfig);
         if (!checksumState.signatureIsOk) {
             return;
         }
 
         final AssetFile assetFile = ResourceUtils.prepareSnippetFile(simpleCache.baseResourceDir, status.code, snippetConfig.file);
         if (assetFile.isError) {
-            setSnippetState(asset.url, snippetCode, Enums.SnippetState.asset_error);
+            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.asset_error);
             return;
         }
         if (!assetFile.isContent) {
-            setSnippetState(asset.url, snippetCode, Enums.SnippetState.none);
+            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.none);
             return;
         }
 
         try {
             CheckSumAndSignatureStatus checkSumAndSignatureStatus = getCheckSumAndSignatureStatus(
-                    snippetCode, simpleCache.launchpad.launchpadLookup, asset, checksumState.checksum, assetFile.file);
+                    snippetCode, simpleCache.launchpad.launchpadLookup, checksumState.checksum, assetFile.file);
 
             if (checkSumAndSignatureStatus.checksum==CheckSumAndSignatureStatus.Status.correct && checkSumAndSignatureStatus.signature==CheckSumAndSignatureStatus.Status.correct) {
                 if (status.snippetState!=Enums.SnippetState.ready || !status.verified) {
-                    setSnippetState(asset.url, snippetCode, Enums.SnippetState.ready);
+                    setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.ready);
                 }
             }
         } catch (Throwable th) {
-            log.error(S.f("#815.030 Error verifying snippet %s from %s", snippetCode, asset.url), th);
-            setSnippetState(asset.url, snippetCode, Enums.SnippetState.io_error);
+            log.error(S.f("#815.030 Error verifying snippet %s from %s", snippetCode, launchpadUrl), th);
+            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.io_error);
         }
     }
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-            String snippetCode, LaunchpadLookupConfig.LaunchpadLookup launchpad,
-            LaunchpadLookupConfig.Asset asset, Checksum checksum, File snippetTempFile) throws IOException {
+            String snippetCode, LaunchpadLookupConfig.LaunchpadLookup launchpad, Checksum checksum, File snippetTempFile) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(CheckSumAndSignatureStatus.Status.correct, CheckSumAndSignatureStatus.Status.correct);
         if (launchpad.acceptOnlySignedSnippets) {
             try (FileInputStream fis = new FileInputStream(snippetTempFile)) {
-                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "Asset url: "+ asset.url +", snippet: "+snippetCode, fis, true, launchpad.createPublicKey());
+                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "Launchpad url: "+ launchpad.url +", snippet: "+snippetCode, fis, true, launchpad.createPublicKey());
             }
             if (status.signature != CheckSumAndSignatureStatus.Status.correct) {
                 log.warn("#815.040 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
-                setSnippetState(asset.url, snippetCode, Enums.SnippetState.signature_wrong);
+                setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.signature_wrong);
             }
             else if (status.checksum != CheckSumAndSignatureStatus.Status.correct) {
                 log.warn("#815.050 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
-                setSnippetState(asset.url, snippetCode, Enums.SnippetState.checksum_wrong);
+                setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.checksum_wrong);
             }
         }
         return status;
@@ -389,10 +389,10 @@ public class MetadataService {
         }
     }
 
-    public SnippetDownloadStatusYaml.Status getSnippetDownloadStatuses(String assetUrl, String snippetCode) {
+    public SnippetDownloadStatusYaml.Status getSnippetDownloadStatuses(String launchpadUrl, String snippetCode) {
         synchronized (syncObj) {
             return getSnippetDownloadStatusYamlInternal().statuses.stream()
-                    .filter(o->o.launchpadUrl.equals(assetUrl) && o.code.equals(snippetCode))
+                    .filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(snippetCode))
                     .findAny().orElse(null);
         }
     }

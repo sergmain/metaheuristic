@@ -36,7 +36,7 @@ import java.util.List;
 public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
 
     @Query(value="select p from PlanImpl p where p.id=:id and p.companyId=:companyUniqueId")
-    Plan findByIdForUpdate(Long id, Long companyUniqueId);
+    PlanImpl findByIdForUpdate(Long id, Long companyUniqueId);
 
     @Transactional(readOnly = true)
     @Query(value="select p from PlanImpl p where p.companyId=:companyUniqueId")

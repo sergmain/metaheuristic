@@ -249,6 +249,16 @@ public class Globals {
                         "actual value: " + assetModeStr);
             }
         }
+        if (!S.b(env.getProperty("MH_LAUNCHPAD_ASSET_SOURCE_URL"))) {
+            assetSourceUrl = env.getProperty("MH_LAUNCHPAD_ASSET_SOURCE_URL");
+        }
+        if (!S.b(env.getProperty("MH_LAUNCHPAD_ASSET_USERNAME"))) {
+            assetUsername = env.getProperty("MH_LAUNCHPAD_ASSET_USERNAME");
+        }
+        if (!S.b(env.getProperty("MH_LAUNCHPAD_ASSET_PASSWORD"))) {
+            assetPassword = env.getProperty("MH_LAUNCHPAD_ASSET_PASSWORD");
+        }
+
         if (assetMode==EnumsApi.LaunchpadAssetMode.replicated && S.b(assetSourceUrl)) {
             throw new GlobalConfigurationException("Wrong value of assertSourceUrl, must be not null when launchpadAssetMode==EnumsApi.LaunchpadAssetMode.replicate");
         }

@@ -57,7 +57,7 @@ public class StationSnippetService {
         public ConfigStatus status;
     }
 
-    public DownloadedSnippetConfigStatus downloadSnippetConfig(
+    public DownloadedSnippetConfigStatus downloadSnippetConfig(String launchpadUrl,
             LaunchpadLookupConfig.Asset asset, String snippetCode, String stationId) {
 
         final String snippetChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/snippet-config";
@@ -82,7 +82,10 @@ public class StationSnippetService {
             snippetConfigStatus.status = ConfigStatus.ok;
 
         } catch (HttpResponseException e) {
-            if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
+            if (e.getStatusCode()== HttpServletResponse.SC_FORBIDDEN) {
+                log.warn("#813.200 Access denied to url {}", snippetChecksumUrl);
+            }
+            else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
                 snippetConfigStatus.status = ConfigStatus.not_found;
                 log.warn("#813.200 Snippet with code {} wasn't found", snippetCode);
             }
@@ -93,11 +96,11 @@ public class StationSnippetService {
                 log.error("#813.220 HttpResponseException", e);
             }
         } catch (SocketTimeoutException e) {
-            log.error("#813.170 SocketTimeoutException: {}, snippet: {}, launchpad: {}", e.toString(), snippetCode, asset.url);
+            log.error("#813.170 SocketTimeoutException: {}, snippet: {}, launchpad: {}, assetUrl: {}", e.toString(), snippetCode, launchpadUrl, asset.url);
         } catch (IOException e) {
-            log.error(S.f("#813.180 IOException, snippet: %s, launchpad: %s",snippetCode, asset.url), e);
+            log.error(S.f("#813.180 IOException, snippet: %s, launchpad: %s, assetUrl: %s",snippetCode, launchpadUrl), e);
         } catch (Throwable th) {
-            log.error(S.f("#813.190 Throwable, snippet: %s, launchpad: %s",snippetCode, asset.url), th);
+            log.error(S.f("#813.190 Throwable, snippet: %s, launchpad: %s, assetUrl: %s",snippetCode, launchpadUrl, asset.url), th);
         }
         return snippetConfigStatus;
     }
