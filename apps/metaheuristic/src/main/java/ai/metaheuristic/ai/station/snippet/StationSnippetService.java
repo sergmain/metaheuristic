@@ -83,7 +83,6 @@ public class StationSnippetService {
 
         } catch (HttpResponseException e) {
             if (e.getStatusCode()== HttpServletResponse.SC_FORBIDDEN) {
-                snippetConfigStatus.status = ConfigStatus.error;
                 log.warn("#813.200 Access denied to url {}", snippetChecksumUrl);
             }
             else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {

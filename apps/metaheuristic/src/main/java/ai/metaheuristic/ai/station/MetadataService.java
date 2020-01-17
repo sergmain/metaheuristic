@@ -147,6 +147,7 @@ public class MetadataService {
         try {
             syncSnippetStatusInternal(asset, snippetCode);
         } catch (Throwable th) {
+            log.error("Error in syncSnippetStatus()", th);
             setSnippetState(asset.url, snippetCode, Enums.SnippetState.io_error);
         }
         return getSnippetDownloadStatuses(asset.url, snippetCode);
