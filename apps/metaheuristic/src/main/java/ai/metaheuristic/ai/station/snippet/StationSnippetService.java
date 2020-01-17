@@ -82,7 +82,11 @@ public class StationSnippetService {
             snippetConfigStatus.status = ConfigStatus.ok;
 
         } catch (HttpResponseException e) {
-            if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
+            if (e.getStatusCode()== HttpServletResponse.SC_FORBIDDEN) {
+                snippetConfigStatus.status = ConfigStatus.error;
+                log.warn("#813.200 Access denied to url {}", snippetChecksumUrl);
+            }
+            else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
                 snippetConfigStatus.status = ConfigStatus.not_found;
                 log.warn("#813.200 Snippet with code {} wasn't found", snippetCode);
             }
