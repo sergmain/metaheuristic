@@ -22,6 +22,8 @@ import lombok.ToString;
 
 public class EnumsApi {
 
+    public enum SnippetExecContext { external, internal }
+
     /**
      * local - all assets are managed locally
      * source - this launchpad is source for all assets
@@ -193,8 +195,13 @@ public class EnumsApi {
         PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR,
         START_RESOURCE_POOL_CODE_EMPTY_ERROR,
         START_RESOURCE_POOL_IS_EMPTY_ERROR,
-        PROCESS_VALIDATOR_NOT_FOUND_ERROR
-
+        PROCESS_VALIDATOR_NOT_FOUND_ERROR,
+        MIXED_EXTERNAL_AND_INTERNAL_SNIPPETS_ERROR,
+        PRE_SNIPPET_WITH_INTERNAL_SNIPPET_ERROR,
+        POST_SNIPPET_WITH_INTERNAL_SNIPPET_ERROR,
+        INTERNAL_SNIPPET_WITH_PARALLEL_EXEC_ERROR,
+        INTERNAL_AND_EXTERNAL_SNIPPET_IN_THE_SAME_PROCESS_ERROR,
+        TOO_MANY_INTERNAL_SNIPPETS_ERROR
     }
 
     public enum PlanProducingStatus {

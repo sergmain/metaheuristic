@@ -19,8 +19,8 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.data.SnippetData;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
-import ai.metaheuristic.ai.snippet.SnippetCode;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SimpleSelectOption;
@@ -150,12 +150,12 @@ public class SnippetService {
         return false;
     }
 
-    public List<SimpleSelectOption> getSelectOptions(Iterable<Snippet> snippets, List<SnippetCode> snippetCodes,
+    public List<SimpleSelectOption> getSelectOptions(Iterable<Snippet> snippets, List<SnippetData.SnippetCode> snippetCodes,
                                                      Function<Snippet, Boolean> skip) {
         List<SimpleSelectOption> selectOptions = new ArrayList<>();
         for (Snippet snippet : snippets) {
             boolean isExist=false;
-            for (SnippetCode snippetCode : snippetCodes) {
+            for (SnippetData.SnippetCode snippetCode : snippetCodes) {
                 if (snippet.getCode().equals(snippetCode.getSnippetCode()) ) {
                     isExist = true;
                     break;

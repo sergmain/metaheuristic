@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,14 +13,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.snippet;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+package ai.metaheuristic.ai.launchpad.internal_snippet_lib.resource_splitter;
 
-@Data
-@AllArgsConstructor
-public class SnippetCode {
-    public Long id;
-    public String snippetCode;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+/**
+ * @author Serge
+ * Date: 1/17/2020
+ * Time: 9:36 PM
+ */
+@Service
+@Slf4j
+@Profile("launchpad")
+@RequiredArgsConstructor
+public class ResourceSplitterSnippet {
+
+    public void process(List<String> poolResourceCodes) {
+
+    }
 }

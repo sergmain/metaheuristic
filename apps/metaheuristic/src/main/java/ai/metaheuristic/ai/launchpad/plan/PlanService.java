@@ -99,6 +99,7 @@ public class PlanService {
     }
 
     // TODO 2019.05.19 add reporting of producing of tasks
+    // TODO 2020.01.17 reporting to where? do we need to implement it?
     public synchronized void createAllTasks() {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
@@ -313,7 +314,7 @@ public class PlanService {
             if (process.outputResourceCode!=null && !StrUtils.isCodeOk(process.outputResourceCode)){
                 return EnumsApi.PlanValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
-            ProcessValidator processValidator;
+            ProcessValidator processValidator = null;
             if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
                 experimentPresent = true;
                 processValidator = experimentProcessValidator;
@@ -481,17 +482,14 @@ public class PlanService {
             final Map<String, List<String>> collectedInputs = new HashMap<>();
             try {
                 pools.collectedInputs.forEach( (key, value) -> {
-                    String newKey = null;
-                    for (Map.Entry<String, List<String>> entry : resourceParams.workbookYaml.poolCodes.entrySet()) {
-                        if (entry.getValue().contains(key)) {
-                            newKey = entry.getKey();
-                            break;
-                        }
-                    }
-                    if (newKey==null) {
-                        log.error("#701.190 Can't find key for pool code {}", key );
-                        throw new BreakFromForEachException();
-                    }
+                    String newKey = resourceParams.workbookYaml.poolCodes.entrySet().stream()
+                            .filter(entry -> entry.getValue().contains(key))
+                            .findFirst()
+                            .map(Map.Entry::getKey)
+                            .orElseThrow(()-> {
+                                log.error("#701.190 Can't find key for pool code {}", key );
+                                throw new BreakFromForEachException();
+                            });
                     collectedInputs.put(newKey, value);
                 });
             } catch (BreakFromForEachException e) {

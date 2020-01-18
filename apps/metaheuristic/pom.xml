@@ -101,6 +101,17 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.statemachine</groupId>
+            <artifactId>spring-statemachine-autoconfigure</artifactId>
+            <version>3.0.0.M2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.statemachine</groupId>
+            <artifactId>spring-statemachine-uml</artifactId>
+            <version>3.0.0.M2</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-loader</artifactId>
             <scope>provided</scope>
@@ -369,7 +380,14 @@
     </build>
 
     <repositories>
-<!--
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/libs-milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>spring-snapshots</id>
             <name>Spring Snapshots</name>
@@ -378,7 +396,6 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
--->
         <repository>
             <id>spring-milestones</id>
             <name>Spring Milestones</name>
@@ -390,7 +407,6 @@
     </repositories>
 
     <pluginRepositories>
-<!--
         <pluginRepository>
             <id>spring-snapshots</id>
             <name>Spring Snapshots</name>
@@ -399,7 +415,6 @@
                 <enabled>true</enabled>
             </snapshots>
         </pluginRepository>
--->
         <pluginRepository>
             <id>spring-milestones</id>
             <name>Spring Milestones</name>

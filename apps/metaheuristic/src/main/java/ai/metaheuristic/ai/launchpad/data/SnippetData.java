@@ -16,11 +16,11 @@
 
 package ai.metaheuristic.ai.launchpad.data;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.BaseDataClass;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -44,4 +44,10 @@ public class SnippetData {
 
     }
 
+    @Data
+    @AllArgsConstructor
+    public static class SnippetCode {
+        public Long id;
+        public String snippetCode;
+    }
 }

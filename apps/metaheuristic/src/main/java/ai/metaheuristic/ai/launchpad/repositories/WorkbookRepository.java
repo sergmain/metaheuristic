@@ -45,9 +45,6 @@ public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
     List<Long> findAllIds();
 
     @Transactional(readOnly = true)
-    Slice<Workbook> findAllByOrderByExecStateDescCompletedOnDesc(Pageable pageable);
-
-    @Transactional(readOnly = true)
     @Query(value="select e.id from WorkbookImpl e where e.execState=:execState order by e.createdOn asc ")
     List<Long> findByExecStateOrderByCreatedOnAsc(int execState);
 
@@ -58,8 +55,6 @@ public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
     @Query(value="select e.id from WorkbookImpl e where e.execState=:execState")
     List<Long> findIdsByExecState(int execState);
 
-    Slice<Workbook> findByPlanId(Pageable pageable, Long planId);
-
     @Transactional(readOnly = true)
     @Query(value="select e.id from WorkbookImpl e where e.planId=:planId")
     List<Long> findIdsByPlanId(Long planId);
@@ -67,15 +62,5 @@ public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
     @Transactional(readOnly = true)
     Slice<Workbook> findByPlanIdOrderByCreatedOnDesc(Pageable pageable, Long planId);
 
-    @Transactional(readOnly = true)
-    Workbook findFirstByPlanId(Long planId);
-
-    @Transactional(readOnly = true)
-    @Query(value="select w from BatchWorkbook b, WorkbookImpl w where b.batchId=:batchId and b.workbookId=w.id")
-    List<Workbook> findWorkbookByBatchId(long batchId);
-
-    @Transactional(readOnly = true)
-    @Query(value="select w.execState from BatchWorkbook b, WorkbookImpl w where b.batchId=:batchId and b.workbookId=w.id")
-    List<Integer> findWorkbookExecStateByBatchId(long batchId);
 }
 

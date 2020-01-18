@@ -21,18 +21,20 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 9:01 PM
+ * $Date:
  */
 @Data
-public class PlanParamsYaml implements BaseParams {
+public class PlanParamsYamlV8 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
@@ -43,7 +45,7 @@ public class PlanParamsYaml implements BaseParams {
                     "(boolean b = planYaml != null && planYaml.planCode != null && " +
                             "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
         }
-        for (Process process : planYaml.processes) {
+        for (ProcessV8 process : planYaml.processes) {
             if (process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0)) {
                 throw new IllegalArgumentException("(process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0))");
             }
@@ -55,33 +57,27 @@ public class PlanParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SnippetDefForPlan {
+    public static class SnippetDefForPlanV8 {
         public String code;
         public String params;
         public EnumsApi.SnippetExecContext context;
 
-        public SnippetDefForPlan(String code) {
+        public SnippetDefForPlanV8(String code) {
             this.code = code;
         }
     }
 
     @Data
     @ToString
-    public static class Process implements Cloneable {
-
-        @SneakyThrows
-        public Process clone() {
-            final Process clone = (Process) super.clone();
-            return clone;
-        }
+    public static class ProcessV8 {
 
         public String name;
         public String code;
         public EnumsApi.ProcessType type;
         public boolean collectResources = false;
-        public List<SnippetDefForPlan> snippets;
-        public List<SnippetDefForPlan> preSnippets;
-        public List<SnippetDefForPlan> postSnippets;
+        public List<SnippetDefForPlanV8> snippets;
+        public List<SnippetDefForPlanV8> preSnippets;
+        public List<SnippetDefForPlanV8> postSnippets;
         public boolean parallelExec = false;
 
         /**
@@ -105,21 +101,20 @@ public class PlanParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AccessControl {
+    public static class AccessControlV8 {
         public String groups;
     }
 
     @Data
-    @ToString
-    public static class PlanYaml {
-        public List<Process> processes = new ArrayList<>();
+    public static class PlanYamlV8 {
+        public List<ProcessV8> processes = new ArrayList<>();
         public boolean clean = false;
         public String planCode;
         public List<Meta> metas;
-        public AccessControl ac;
+        public AccessControlV8 ac;
 
         public Meta getMeta(String key) {
-            if (metas==null) {
+            if (metas == null) {
                 return null;
             }
             for (Meta meta : metas) {
@@ -134,16 +129,16 @@ public class PlanParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class InternalParams {
+    public static class InternalParamsV8 {
         public boolean archived;
         public boolean published;
         public long updatedOn;
-        public List<Meta> metas;
+        public List<Meta> metas = new ArrayList<>();
     }
 
     public final int version=7;
-    public PlanYaml planYaml;
+    public PlanYamlV8 planYaml;
     public String originYaml;
-    public InternalParams internalParams;
+    public InternalParamsV8 internalParams;
 
 }

@@ -177,7 +177,7 @@ public class BatchTopLevelService {
     }
 
     public BatchData.PlansForBatchResult getPlansForBatchResult(Long companyId) {
-            return getPlansForBatchResult(companyId, (f) -> true);
+        return getPlansForBatchResult(companyId, (f) -> true);
     }
 
     public BatchData.PlansForBatchResult getPlansForBatchResult(Long companyUniqueId, final Function<Plan, Boolean> planFilter) {
@@ -247,22 +247,6 @@ public class BatchTopLevelService {
     }
 
     public OperationStatusRest batchUploadFromFile(final MultipartFile file, Long planId, final LaunchpadContext context) {
-        BatchData.PlansForBatchResult plansForBatchResult = getPlan(context.getCompanyId(), planId);
-        if (plansForBatchResult.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, plansForBatchResult.errorMessages);
-        }
-
-        if (plansForBatchResult.items.size()>1) {
-            log.error("!!!!!!!!!!!!!!!! error in code -  (plansForBatchResult.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
-        }
-
-        PlanImpl plan = plansForBatchResult.items.isEmpty() ? null : (PlanImpl)plansForBatchResult.items.get(0);
-        if (plan==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
-        }
-        if (!plan.getId().equals(planId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.038 Fatal error in configuration of plan, report to developers immediately");
-        }
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.040 name of uploaded file is null or blank");
@@ -280,6 +264,20 @@ public class BatchTopLevelService {
                     "#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
+        BatchData.PlansForBatchResult plansForBatchResult = getPlan(context.getCompanyId(), planId);
+        if (plansForBatchResult.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, plansForBatchResult.errorMessages);
+        }
+        if (plansForBatchResult.items.size()>1) {
+            log.error("!!!!!!!!!!!!!!!! error in code -  (plansForBatchResult.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
+        }
+        PlanImpl plan = plansForBatchResult.items.isEmpty() ? null : (PlanImpl)plansForBatchResult.items.get(0);
+        if (plan==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
+        }
+        if (!plan.getId().equals(planId)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.038 Fatal error in configuration of plan, report to developers immediately");
+        }
         launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
 
         // TODO 2019-07-06 Do we need to validate the plan here in case that there is another check
@@ -358,7 +356,7 @@ public class BatchTopLevelService {
                     try {
                         FileUtils.deleteDirectory(tempDir);
                     } catch (IOException e) {
-                        log.warn("Error deleting dir: {}", e.getMessage());
+                        log.warn("Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());
                     }
                 }
             }).start();

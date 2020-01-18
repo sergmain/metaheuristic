@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.experiment;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.*;
+import ai.metaheuristic.ai.launchpad.data.SnippetData;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
@@ -29,7 +30,6 @@ import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.ai.snippet.SnippetCode;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -264,7 +264,7 @@ public class ExperimentTopLevelService {
 
         snippetResult.selectOptions = snippetService.getSelectOptions(
                 snippets,
-                snippetResult.snippets.stream().map(o -> new SnippetCode(o.getId(), o.getSnippetCode())).collect(Collectors.toList()),
+                snippetResult.snippets.stream().map(o -> new SnippetData.SnippetCode(o.getId(), o.getSnippetCode())).collect(Collectors.toList()),
                 (s) -> {
                     if (!experimentSnippetTypes.contains(s.type) ) {
                         return true;
