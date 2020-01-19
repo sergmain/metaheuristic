@@ -41,16 +41,16 @@ public class TestPlanParamsYamlCloning {
         p.type = EnumsApi.ProcessType.EXPERIMENT;
         p.collectResources = true;
         p.snippets = List.of(
-                new PlanParamsYaml.SnippetDefForPlan("snippet-code", "snippet-params")
+                new PlanParamsYaml.SnippetDefForPlan("snippet-code", "snippet-params", EnumsApi.SnippetExecContext.external)
         );
         p.preSnippets = List.of(
-                new PlanParamsYaml.SnippetDefForPlan("pre1-code", "pre1-params"),
-                new PlanParamsYaml.SnippetDefForPlan("pre2-code", "pre2-params")
+                new PlanParamsYaml.SnippetDefForPlan("pre1-code", "pre1-params", EnumsApi.SnippetExecContext.external),
+                new PlanParamsYaml.SnippetDefForPlan("pre2-code", "pre2-params", EnumsApi.SnippetExecContext.external)
         );
         p.postSnippets = List.of(
-                new PlanParamsYaml.SnippetDefForPlan("post1-code", "post1-params"),
-                new PlanParamsYaml.SnippetDefForPlan("post2-code", "post2-params"),
-                new PlanParamsYaml.SnippetDefForPlan("post3-code", "post3-params")
+                new PlanParamsYaml.SnippetDefForPlan("post1-code", "post1-params", EnumsApi.SnippetExecContext.external),
+                new PlanParamsYaml.SnippetDefForPlan("post2-code", "post2-params", EnumsApi.SnippetExecContext.external),
+                new PlanParamsYaml.SnippetDefForPlan("post3-code", "post3-params", EnumsApi.SnippetExecContext.external)
         ) ;
         p.parallelExec = true;
 

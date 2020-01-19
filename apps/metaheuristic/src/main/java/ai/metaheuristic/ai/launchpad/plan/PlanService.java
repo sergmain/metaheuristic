@@ -21,10 +21,14 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
+import ai.metaheuristic.ai.launchpad.LaunchpadContext;
+import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
+import ai.metaheuristic.ai.launchpad.company.CompanyCache;
+import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessValidator;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
@@ -34,7 +38,10 @@ import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -59,7 +66,9 @@ import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ai.metaheuristic.api.EnumsApi.PlanValidateStatus.OK;
 import static ai.metaheuristic.api.EnumsApi.PlanValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
@@ -87,15 +96,89 @@ public class PlanService {
     private final WorkbookCache workbookCache;
     private final CommonProcessValidatorService commonProcessValidatorService;
     private final SnippetRepository snippetRepository;
+    private final WorkbookFSM workbookFSM;
+    private final CompanyCache companyCache;
 
-    public void toStarted(Workbook workbook) {
-        PlanImpl plan = planCache.findById(workbook.getPlanId());
-        if (plan == null) {
-            workbookService.toError(workbook.getId());
+    public PlanData.PlansForBatchResult getAvailablePlansForCompany(LaunchpadContext context) {
+        return getAvailablePlansForCompany(context.getCompanyId());
+    }
+
+    public PlanData.PlansForBatchResult getPlan(Long companyId, Long planId) {
+        PlanData.PlansForBatchResult availablePlansForCompany = getAvailablePlansForCompany(companyId, (o) -> o.getId().equals(planId));
+        if (availablePlansForCompany.items.size()>1) {
+            log.error("!!!!!!!!!!!!!!!! error in code -  (plansForBatchResult.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
         }
-        else {
-            workbookService.toStarted(workbook.getId());
+        return availablePlansForCompany;
+    }
+
+    public PlanData.PlansForBatchResult getAvailablePlansForCompany(Long companyId) {
+        return getAvailablePlansForCompany(companyId, (f) -> true);
+    }
+
+    public PlanData.PlansForBatchResult getAvailablePlansForCompany(Long companyUniqueId, final Function<Plan, Boolean> planFilter) {
+        final PlanData.PlansForBatchResult plans = new PlanData.PlansForBatchResult();
+        plans.items = planRepository.findAllAsPlan(companyUniqueId).stream().filter(planFilter::apply).filter(o->{
+            if (!o.isValid()) {
+                return false;
+            }
+            try {
+                PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
+                return ppy.internalParams == null || !ppy.internalParams.archived;
+            } catch (YAMLException e) {
+                final String es = "#995.010 Can't parse Plan params. It's broken or unknown version. Plan id: #" + o.getId();
+                plans.addErrorMessage(es);
+                log.error(es);
+                log.error("#995.015 Params:\n{}", o.getParams());
+                log.error("#995.020 Error: {}", e.toString());
+                return false;
+            }
+        }).collect(Collectors.toList());
+
+        Company company = companyCache.findByUniqueId(companyUniqueId);
+        if (!S.b(company.getParams())) {
+            final Set<String> groups = new HashSet<>();
+            try {
+                CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
+                if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
+                    String[] arr = StringUtils.split(cpy.ac.groups, ',');
+                    Stream.of(arr).forEach(s-> groups.add(s.strip()));
+                }
+            } catch (YAMLException e) {
+                final String es = "#995.025 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
+                plans.addErrorMessage(es);
+                log.error(es);
+                log.error("#995.027 Params:\n{}", company.getParams());
+                log.error("#995.030 Error: {}", e.toString());
+                return plans;
+            }
+
+            if (!groups.isEmpty()) {
+                List<Plan> commonPlans = planRepository.findAllAsPlan(Consts.ID_1).stream().filter(planFilter::apply).filter(o -> {
+                    if (!o.isValid()) {
+                        return false;
+                    }
+                    try {
+                        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
+                        if (ppy.planYaml.ac!=null) {
+                            String[] arr = StringUtils.split(ppy.planYaml.ac.groups, ',');
+                            return Stream.of(arr).map(String::strip).anyMatch(groups::contains);
+                        }
+                        return false;
+                    } catch (YAMLException e) {
+                        final String es = "#995.033 Can't parse Plan params. It's broken or unknown version. Plan id: #" + o.getId();
+                        plans.addErrorMessage(es);
+                        log.error(es);
+                        log.error("#995.035 Params:\n{}", o.getParams());
+                        log.error("#995.037 Error: {}", e.toString());
+                        return false;
+                    }
+                }).collect(Collectors.toList());
+                plans.items.addAll(commonPlans);
+            }
         }
+        plans.items.sort((o1, o2) -> Long.compare(o2.getId(), o1.getId()));
+
+        return plans;
     }
 
     // TODO 2019.05.19 add reporting of producing of tasks
@@ -111,7 +194,7 @@ public class PlanService {
         for (WorkbookImpl workbook : workbooks) {
             PlanImpl plan = planCache.findById(workbook.getPlanId());
             if (plan==null) {
-                workbookService.toStopped(workbook.id);
+                workbookFSM.toStopped(workbook.id);
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
@@ -242,7 +325,7 @@ public class PlanService {
         }
 
         if (workbook.execState!=execState.code) {
-            workbookService.toState(workbook.id, execState);
+            workbookFSM.toState(workbook.id, execState);
             setLockedTo(plan.getId(), plan.getCompanyId(), true);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -261,7 +344,7 @@ public class PlanService {
                 result.planValidateStatus != EnumsApi.PlanValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
             log.error("#701.160 Can't produce tasks, error: {}", result.planValidateStatus);
             if(isPersist) {
-                workbookService.toStopped(workbook.getId());
+                workbookFSM.toStopped(workbook.getId());
             }
             return result;
         }
@@ -314,7 +397,7 @@ public class PlanService {
             if (process.outputResourceCode!=null && !StrUtils.isCodeOk(process.outputResourceCode)){
                 return EnumsApi.PlanValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
-            ProcessValidator processValidator = null;
+            ProcessValidator processValidator;
             if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
                 experimentPresent = true;
                 processValidator = experimentProcessValidator;
@@ -546,7 +629,7 @@ public class PlanService {
 
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
         if (isPersist) {
-            workbookService.toProduced(workbookId);
+            workbookFSM.toProduced(workbookId);
         }
         result.workbook = workbookCache.findById(workbookId);
         result.planYaml = planParams.planYaml;

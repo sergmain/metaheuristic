@@ -86,6 +86,7 @@ public class WorkbookService {
     private final WorkbookGraphService workbookGraphService;
     private final WorkbookSyncService workbookSyncService;
     private final LaunchpadEventService launchpadEventService;
+    private final WorkbookFSM workbookFSM;
 
     public static class WorkbookDeletionEvent extends ApplicationEvent {
         public long workbookId;
@@ -164,21 +165,11 @@ public class WorkbookService {
 
             WorkbookImpl workbook = workbookCache.findById(task.workbookId);
             if (workbook.execState != EnumsApi.WorkbookExecState.STARTED.code) {
-                toState(workbook.id, EnumsApi.WorkbookExecState.STARTED);
+                workbookFSM.toState(workbook.id, EnumsApi.WorkbookExecState.STARTED);
             }
         }
 
         return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    public Void toState(Long workbookId, EnumsApi.WorkbookExecState state) {
-        return workbookSyncService.getWithSync(workbookId, workbook -> {
-            if (workbook.execState!=state.code) {
-                workbook.setExecState(state.code);
-                workbookCache.save(workbook);
-            }
-            return null;
-        });
     }
 
     public long getCountUnfinishedTasks(WorkbookImpl workbook) {
@@ -191,45 +182,6 @@ public class WorkbookService {
 
     public List<WorkbookParamsYaml.TaskVertex> findAllVertices(Long workbookId) {
         return workbookSyncService.getWithSync(workbookId, workbookGraphService::findAll);
-    }
-
-    private Void toStateWithCompletion(Long workbookId, EnumsApi.WorkbookExecState state) {
-        return workbookSyncService.getWithSync(workbookId, workbook -> {
-            if (workbook.execState!=state.code) {
-                workbook.setCompletedOn(System.currentTimeMillis());
-                workbook.setExecState(state.code);
-                workbookCache.save(workbook);
-            }
-            return null;
-        });
-    }
-
-    public void toStopped(Long workbookId) {
-        toState(workbookId, EnumsApi.WorkbookExecState.STOPPED);
-    }
-
-    public void toStarted(Long workbookId) {
-        toState(workbookId, EnumsApi.WorkbookExecState.STARTED);
-    }
-
-    public void toProduced(Long workbookId) {
-        toState(workbookId, EnumsApi.WorkbookExecState.PRODUCED);
-    }
-
-    public void toFinished(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.FINISHED);
-    }
-
-    public void toExportingToAtlas(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.EXPORTING_TO_ATLAS);
-    }
-
-    public void toExportingToAtlasStarted(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.EXPORTING_TO_ATLAS_WAS_STARTED);
-    }
-
-    public void toError(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.ERROR);
     }
 
     public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookResourceCodes resourceCodes) {

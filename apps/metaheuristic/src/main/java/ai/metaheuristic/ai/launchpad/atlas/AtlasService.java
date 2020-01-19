@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.launchpad.repositories.AtlasTaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
@@ -67,6 +68,7 @@ public class AtlasService {
     private final AtlasParamsYamlUtils atlasParamsYamlUtils;
     private final WorkbookCache workbookCache;
     private final WorkbookService workbookService;
+    private final WorkbookFSM workbookFSM;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -93,7 +95,7 @@ public class AtlasService {
     }
 
     public OperationStatusRest storeExperimentToAtlas(Long workbookId) {
-        workbookService.toExportingToAtlasStarted(workbookId);
+        workbookFSM.toExportingToAtlasStarted(workbookId);
         Long experimentId = experimentRepository.findIdByWorkbookId(workbookId);
 
         if (experimentId==null ) {
@@ -173,7 +175,7 @@ public class AtlasService {
                 });
 
 
-        workbookService.toFinished(workbookId);
+        workbookFSM.toFinished(workbookId);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

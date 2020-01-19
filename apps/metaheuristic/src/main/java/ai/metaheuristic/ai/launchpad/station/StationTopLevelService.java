@@ -232,6 +232,7 @@ public class StationTopLevelService {
     }
 
     // TODO Need to re-write this method
+    // TODO 2020-01-18 why need to re-write?
     public void reconcileStationTasks(String stationIdAsStr, List<StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus> statuses) {
         final long stationId = Long.parseLong(stationIdAsStr);
         List<Object[]> tasks = taskRepository.findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(stationId);

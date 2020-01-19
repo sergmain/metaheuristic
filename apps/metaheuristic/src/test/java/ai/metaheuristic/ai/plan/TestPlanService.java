@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
@@ -59,6 +60,9 @@ public class TestPlanService extends PreparingPlan {
 
     @Autowired
     public WorkbookSchedulerService workbookSchedulerService;
+
+    @Autowired
+    public WorkbookFSM workbookFSM;
 
     @Override
     public String getPlanYamlAsString() {
@@ -109,7 +113,7 @@ public class TestPlanService extends PreparingPlan {
 
         assertNull(simpleTask0);
 
-        planService.toStarted(workbook);
+        workbookFSM.toStarted(workbook);
         workbook = workbookCache.findById(workbook.getId());
 
         assertEquals(EnumsApi.WorkbookExecState.STARTED.code, workbook.getExecState());

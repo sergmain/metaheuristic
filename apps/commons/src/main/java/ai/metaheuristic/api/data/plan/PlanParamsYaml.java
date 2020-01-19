@@ -63,6 +63,7 @@ public class PlanParamsYaml implements BaseParams {
         public SnippetDefForPlan(String code) {
             this.code = code;
         }
+
     }
 
     @Data

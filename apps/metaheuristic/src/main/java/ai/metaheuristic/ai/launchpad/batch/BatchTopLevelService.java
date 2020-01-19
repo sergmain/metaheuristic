@@ -22,31 +22,24 @@ import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
-import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
-import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
+import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
-import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -73,15 +66,11 @@ import org.yaml.snakeyaml.error.YAMLException;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static ai.metaheuristic.ai.Consts.XML_EXT;
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
@@ -101,13 +90,11 @@ public class BatchTopLevelService {
     private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
     private static final List<String> EXCLUDE_FROM_MAPPING = List.of("config.yaml", "config.yml");
 
-    private final CompanyCache companyCache;
     private final PlanService planService;
     private final BinaryDataService binaryDataService;
     private final BatchRepository batchRepository;
     private final BatchService batchService;
     private final BatchCache batchCache;
-    private final PlanRepository planRepository;
     private final BatchWorkbookRepository batchWorkbookRepository;
     private final LaunchpadEventService launchpadEventService;
 
@@ -168,84 +155,6 @@ public class BatchTopLevelService {
         return result;
     }
 
-    public BatchData.PlansForBatchResult getPlansForBatchResult(LaunchpadContext context) {
-        return getPlansForBatchResult(context.getCompanyId());
-    }
-
-    public BatchData.PlansForBatchResult getPlan(Long companyId, Long planId) {
-        return getPlansForBatchResult(companyId, (o) -> o.getId().equals(planId));
-    }
-
-    public BatchData.PlansForBatchResult getPlansForBatchResult(Long companyId) {
-        return getPlansForBatchResult(companyId, (f) -> true);
-    }
-
-    public BatchData.PlansForBatchResult getPlansForBatchResult(Long companyUniqueId, final Function<Plan, Boolean> planFilter) {
-        final BatchData.PlansForBatchResult plans = new BatchData.PlansForBatchResult();
-        plans.items = planRepository.findAllAsPlan(companyUniqueId).stream().filter(planFilter::apply).filter(o->{
-            if (!o.isValid()) {
-                return false;
-            }
-            try {
-                PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
-                return ppy.internalParams == null || !ppy.internalParams.archived;
-            } catch (YAMLException e) {
-                final String es = "#995.010 Can't parse Plan params. It's broken or unknown version. Plan id: #" + o.getId();
-                plans.addErrorMessage(es);
-                log.error(es);
-                log.error("#995.015 Params:\n{}", o.getParams());
-                log.error("#995.020 Error: {}", e.toString());
-                return false;
-            }
-        }).collect(Collectors.toList());
-
-        Company company = companyCache.findByUniqueId(companyUniqueId);
-        if (!S.b(company.getParams())) {
-            final Set<String> groups = new HashSet<>();
-            try {
-                CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
-                if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
-                    String[] arr = StringUtils.split(cpy.ac.groups, ',');
-                    Stream.of(arr).forEach(s-> groups.add(s.strip()));
-                }
-            } catch (YAMLException e) {
-                final String es = "#995.025 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
-                plans.addErrorMessage(es);
-                log.error(es);
-                log.error("#995.027 Params:\n{}", company.getParams());
-                log.error("#995.030 Error: {}", e.toString());
-                return plans;
-            }
-
-            if (!groups.isEmpty()) {
-                List<Plan> commonPlans = planRepository.findAllAsPlan(Consts.ID_1).stream().filter(planFilter::apply).filter(o -> {
-                    if (!o.isValid()) {
-                        return false;
-                    }
-                    try {
-                        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
-                        if (ppy.planYaml.ac!=null) {
-                            String[] arr = StringUtils.split(ppy.planYaml.ac.groups, ',');
-                            return Stream.of(arr).map(String::strip).anyMatch(groups::contains);
-                        }
-                        return false;
-                    } catch (YAMLException e) {
-                        final String es = "#995.033 Can't parse Plan params. It's broken or unknown version. Plan id: #" + o.getId();
-                        plans.addErrorMessage(es);
-                        log.error(es);
-                        log.error("#995.035 Params:\n{}", o.getParams());
-                        log.error("#995.037 Error: {}", e.toString());
-                        return false;
-                    }
-                }).collect(Collectors.toList());
-                plans.items.addAll(commonPlans);
-            }
-        }
-        plans.items.sort((o1, o2) -> Long.compare(o2.getId(), o1.getId()));
-
-        return plans;
-    }
-
     public OperationStatusRest batchUploadFromFile(final MultipartFile file, Long planId, final LaunchpadContext context) {
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
@@ -264,12 +173,9 @@ public class BatchTopLevelService {
                     "#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
-        BatchData.PlansForBatchResult plansForBatchResult = getPlan(context.getCompanyId(), planId);
+        PlanData.PlansForBatchResult plansForBatchResult = planService.getPlan(context.getCompanyId(), planId);
         if (plansForBatchResult.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, plansForBatchResult.errorMessages);
-        }
-        if (plansForBatchResult.items.size()>1) {
-            log.error("!!!!!!!!!!!!!!!! error in code -  (plansForBatchResult.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
         }
         PlanImpl plan = plansForBatchResult.items.isEmpty() ? null : (PlanImpl)plansForBatchResult.items.get(0);
         if (plan==null) {

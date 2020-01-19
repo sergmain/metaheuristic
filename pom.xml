@@ -31,6 +31,8 @@
         <module>apps/gen-passwords</module>
         <module>apps/sign-string</module>
         <module>apps/simple-app</module>
+
+        <module>apps/utils/fsm</module>
     </modules>
 
 </project>

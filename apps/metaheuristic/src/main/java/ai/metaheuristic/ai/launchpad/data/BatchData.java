@@ -46,12 +46,6 @@ public final class BatchData {
     }
 
     @Data
-    @EqualsAndHashCode(callSuper = false)
-    public static class PlansForBatchResult extends BaseDataClass {
-        public List<Plan> items;
-    }
-
-    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProcessResourceItem {

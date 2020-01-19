@@ -333,7 +333,7 @@ public class PlanTopLevelService {
 
     public OperationStatusRest changeWorkbookExecState(String state, Long workbookId, LaunchpadContext context) {
         EnumsApi.WorkbookExecState execState = EnumsApi.WorkbookExecState.valueOf(state.toUpperCase());
-        if (execState== EnumsApi.WorkbookExecState.UNKNOWN) {
+        if (execState==EnumsApi.WorkbookExecState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
         }
         OperationStatusRest status = workbookService.checkWorkbook(workbookId, context);

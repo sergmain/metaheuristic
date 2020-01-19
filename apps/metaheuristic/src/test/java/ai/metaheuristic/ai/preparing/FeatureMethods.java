@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
@@ -58,8 +59,12 @@ public abstract class FeatureMethods extends PreparingPlan {
 
     @Autowired
     protected TaskService taskService;
+
     @Autowired
     public WorkbookService workbookService;
+
+    @Autowired
+    public WorkbookFSM workbookFSM;
 
     public boolean isCorrectInit = true;
 
@@ -69,7 +74,7 @@ public abstract class FeatureMethods extends PreparingPlan {
     }
 
     public void toStarted() {
-        planService.toStarted(workbook);
+        workbookFSM.toStarted(workbook);
         workbook = workbookCache.findById(workbook.getId());
         assertEquals(EnumsApi.WorkbookExecState.STARTED.code, workbook.getExecState());
     }

@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
@@ -101,6 +102,7 @@ public class ExperimentTopLevelService {
     private final PlanCache planCache;
     private final PlanTopLevelService planTopLevelService;
     private final PlanService planService;
+    private final WorkbookFSM workbookFSM;
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
@@ -716,7 +718,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.420 This experiment isn't bound to Workbook");
         }
-        workbookService.toExportingToAtlas(experiment.workbookId);
+        workbookFSM.toExportingToAtlas(experiment.workbookId);
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Exporting of experiment was successfully started", null);
     }
 

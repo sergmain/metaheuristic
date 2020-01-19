@@ -49,12 +49,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class WorkbookSchedulerService {
 
-    private final WorkbookGraphService workbookGraphService;
-    private final WorkbookCache workbookCache;
     private final WorkbookService workbookService;
     private final WorkbookRepository workbookRepository;
     private final TaskRepository taskRepository;
     private final AtlasService atlasService;
+    private final WorkbookFSM workbookFSM;
 
     public void updateWorkbookStatuses(boolean needReconciliation) {
         List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
@@ -69,14 +68,14 @@ public class WorkbookSchedulerService {
             try {
                 status = atlasService.storeExperimentToAtlas(workbookId);
             } catch (Exception e) {
-                workbookService.toError(workbookId);
+                workbookFSM.toError(workbookId);
                 continue;
             }
 
             if (status.status==EnumsApi.OperationStatus.OK) {
                 log.info("Exporting of workbook #{} was finished", workbookId);
             } else {
-                workbookService.toError(workbookId);
+                workbookFSM.toError(workbookId);
                 log.error("Error exporting experiment to atlas, workbookID #{}\n{}", workbookId, status.getErrorMessagesAsStr());
             }
         }
@@ -97,7 +96,7 @@ public class WorkbookSchedulerService {
             countUnfinishedTasks = workbookService.getCountUnfinishedTasks(workbookId);
             if (countUnfinishedTasks==0) {
                 log.info("Workbook #{} was finished", workbookId);
-                workbookService.toFinished(workbookId);
+                workbookFSM.toFinished(workbookId);
             }
         }
         else {
@@ -137,7 +136,7 @@ public class WorkbookSchedulerService {
 
         if (isNullState.get()) {
             log.info("#705.052 Found non-created task, graph consistency is failed");
-            workbookService.toError(workbookId);
+            workbookFSM.toError(workbookId);
         }
         else {
             workbookService.updateTaskExecStates(workbookId, taskStates);
@@ -158,7 +157,7 @@ public class WorkbookSchedulerService {
                         if (task.assignedOn!=null && tpy.taskYaml.timeoutBeforeTerminate != null && tpy.taskYaml.timeoutBeforeTerminate!=0L) {
                             final long multiplyBy2 = tpy.taskYaml.timeoutBeforeTerminate * 2 * 1000;
                             final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
-                            long timeout = multiplyBy2 > oneHourToMills ? oneHourToMills : multiplyBy2;
+                            long timeout = Math.min(multiplyBy2, oneHourToMills);
                             if ((System.currentTimeMillis() - task.assignedOn) > timeout) {
                                 log.info("Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
                                 workbookService.resetTask(task.id);
