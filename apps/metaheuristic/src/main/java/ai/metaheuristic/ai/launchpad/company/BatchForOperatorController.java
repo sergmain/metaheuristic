@@ -106,7 +106,7 @@ public class BatchForOperatorController {
     @GetMapping(value = "/company-batch-add/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String batchAdd(Model model, @PathVariable Long companyUniqueId) {
-        PlanData.PlansForBatchResult plans = planService.getAvailablePlansForCompany(companyUniqueId);
+        PlanData.PlansForCompany plans = planService.getAvailablePlansForCompany(companyUniqueId);
         ControllerUtils.addMessagesToModel(model, plans);
         model.addAttribute("result", plans);
         model.addAttribute("companyUniqueId", companyUniqueId);

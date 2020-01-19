@@ -97,7 +97,7 @@ public class BatchController {
     @GetMapping(value = "/batch-add")
     public String batchAdd(Model model, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanData.PlansForBatchResult plans = planService.getAvailablePlansForCompany(context);
+        PlanData.PlansForCompany plans = planService.getAvailablePlansForCompany(context);
         ControllerUtils.addMessagesToModel(model, plans);
         model.addAttribute("result", plans);
         return "launchpad/batch/batch-add";

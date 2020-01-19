@@ -85,7 +85,7 @@ public class BatchRestController {
     }
 
     @GetMapping(value = "/batch-add")
-    public PlanData.PlansForBatchResult batchAdd(Authentication authentication) {
+    public PlanData.PlansForCompany batchAdd(Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return planService.getAvailablePlansForCompany(context);
     }

@@ -26,8 +26,10 @@ import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
+import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
@@ -78,6 +80,7 @@ public class WorkbookService {
     private final Globals globals;
     private final WorkbookRepository workbookRepository;
     private final PlanCache planCache;
+    private final PlanService planService;
     private final BinaryDataService binaryDataService;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
@@ -590,9 +593,10 @@ public class WorkbookService {
         if (wb==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 Workbook wasn't found, workbookId: " + workbookId );
         }
-        PlanImpl plan = planCache.findById(wb.getPlanId());
-        if (plan == null || !plan.companyId.equals(context.getCompanyId())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Workbook wasn't found, workbookId: " + workbookId );
+        PlanData.PlansForCompany plansForCompany = planService.getPlan(context.getCompanyId(), wb.getPlanId());
+        if (plansForCompany.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Plan wasn't found, " +
+                    "companyId: "+context.getCompanyId()+", planId: " + wb.getPlanId()+", workbookId: " + wb.getId()+", error msg: " + plansForCompany.getErrorMessagesAsStr() );
         }
         return null;
     }

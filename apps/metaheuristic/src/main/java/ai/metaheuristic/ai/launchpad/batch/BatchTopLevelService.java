@@ -173,11 +173,11 @@ public class BatchTopLevelService {
                     "#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
-        PlanData.PlansForBatchResult plansForBatchResult = planService.getPlan(context.getCompanyId(), planId);
-        if (plansForBatchResult.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, plansForBatchResult.errorMessages);
+        PlanData.PlansForCompany plansForCompany = planService.getPlan(context.getCompanyId(), planId);
+        if (plansForCompany.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, plansForCompany.errorMessages);
         }
-        PlanImpl plan = plansForBatchResult.items.isEmpty() ? null : (PlanImpl)plansForBatchResult.items.get(0);
+        PlanImpl plan = plansForCompany.items.isEmpty() ? null : (PlanImpl) plansForCompany.items.get(0);
         if (plan==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
         }

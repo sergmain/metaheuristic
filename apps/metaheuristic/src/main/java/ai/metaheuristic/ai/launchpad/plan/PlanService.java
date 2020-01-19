@@ -99,24 +99,24 @@ public class PlanService {
     private final WorkbookFSM workbookFSM;
     private final CompanyCache companyCache;
 
-    public PlanData.PlansForBatchResult getAvailablePlansForCompany(LaunchpadContext context) {
+    public PlanData.PlansForCompany getAvailablePlansForCompany(LaunchpadContext context) {
         return getAvailablePlansForCompany(context.getCompanyId());
     }
 
-    public PlanData.PlansForBatchResult getPlan(Long companyId, Long planId) {
-        PlanData.PlansForBatchResult availablePlansForCompany = getAvailablePlansForCompany(companyId, (o) -> o.getId().equals(planId));
+    public PlanData.PlansForCompany getPlan(Long companyId, Long planId) {
+        PlanData.PlansForCompany availablePlansForCompany = getAvailablePlansForCompany(companyId, (o) -> o.getId().equals(planId));
         if (availablePlansForCompany.items.size()>1) {
             log.error("!!!!!!!!!!!!!!!! error in code -  (plansForBatchResult.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
         }
         return availablePlansForCompany;
     }
 
-    public PlanData.PlansForBatchResult getAvailablePlansForCompany(Long companyId) {
+    public PlanData.PlansForCompany getAvailablePlansForCompany(Long companyId) {
         return getAvailablePlansForCompany(companyId, (f) -> true);
     }
 
-    public PlanData.PlansForBatchResult getAvailablePlansForCompany(Long companyUniqueId, final Function<Plan, Boolean> planFilter) {
-        final PlanData.PlansForBatchResult plans = new PlanData.PlansForBatchResult();
+    public PlanData.PlansForCompany getAvailablePlansForCompany(Long companyUniqueId, final Function<Plan, Boolean> planFilter) {
+        final PlanData.PlansForCompany plans = new PlanData.PlansForCompany();
         plans.items = planRepository.findAllAsPlan(companyUniqueId).stream().filter(planFilter::apply).filter(o->{
             if (!o.isValid()) {
                 return false;

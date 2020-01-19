@@ -31,7 +31,7 @@ import java.util.List;
 public class PlanData {
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class PlansForBatchResult extends BaseDataClass {
+    public static class PlansForCompany extends BaseDataClass {
         public List<Plan> items;
     }
 }
