@@ -232,7 +232,7 @@ public class WorkbookService {
         toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.ERROR);
     }
 
-    public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookYaml resourceCodes) {
+    public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookYaml workbookYaml) {
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
 
         WorkbookImpl wb = new WorkbookImpl();
@@ -241,7 +241,7 @@ public class WorkbookService {
         wb.setExecState(EnumsApi.WorkbookExecState.NONE.code);
         wb.setCompletedOn(null);
         WorkbookParamsYaml params = new WorkbookParamsYaml();
-        params.workbookYaml = resourceCodes;
+        params.workbookYaml = workbookYaml;
         params.graph = WorkbookGraphService.EMPTY_GRAPH;
         wb.updateParams(params);
         wb.setValid(true);

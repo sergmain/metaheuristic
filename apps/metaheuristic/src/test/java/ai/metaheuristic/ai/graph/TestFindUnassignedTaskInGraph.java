@@ -60,7 +60,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
     @Test
     public void test() {
 
-        PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), resourceCodes);
+        PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
         workbook = (WorkbookImpl)result.workbook;
 
         assertNotNull(workbook);
