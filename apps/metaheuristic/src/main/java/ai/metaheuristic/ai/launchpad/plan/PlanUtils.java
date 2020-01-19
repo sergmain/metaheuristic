@@ -41,6 +41,7 @@ public class PlanUtils {
     }
 
     public static WorkbookParamsYaml.WorkbookResourceCodes parseToWorkbookParamsYaml(String inputResourceParams) {
+        // we're using V1 because inputResourceParams has a user-generated value in format of V1
         WorkbookParamsYamlV1 v1 = (WorkbookParamsYamlV1) WorkbookParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1).to(inputResourceParams);
         WorkbookParamsYaml.WorkbookResourceCodes wrc = new WorkbookParamsYaml.WorkbookResourceCodes();
         wrc.poolCodes.putAll(v1.poolCodes);

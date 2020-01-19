@@ -32,7 +32,8 @@ public class PlanParamsYamlUtils {
             4, 2,
             5, 2,
             6, 2,
-            7, 2
+            7, 2,
+            8, 2
     );
 
     public static int getRequiredVertionOfTaskParamsYaml(int planParamsYamlVersion) {
@@ -50,7 +51,8 @@ public class PlanParamsYamlUtils {
     private static final PlanParamsYamlUtilsV5 YAML_UTILS_V_5 = new PlanParamsYamlUtilsV5();
     private static final PlanParamsYamlUtilsV6 YAML_UTILS_V_6 = new PlanParamsYamlUtilsV6();
     private static final PlanParamsYamlUtilsV7 YAML_UTILS_V_7 = new PlanParamsYamlUtilsV7();
-    private static final PlanParamsYamlUtilsV7 DEFAULT_UTILS = YAML_UTILS_V_7;
+    private static final PlanParamsYamlUtilsV8 YAML_UTILS_V_8 = new PlanParamsYamlUtilsV8();
+    private static final PlanParamsYamlUtilsV8 DEFAULT_UTILS = YAML_UTILS_V_8;
 
     public static final BaseYamlUtils<PlanParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
@@ -60,7 +62,8 @@ public class PlanParamsYamlUtils {
                     4, YAML_UTILS_V_4,
                     5, YAML_UTILS_V_5,
                     6, YAML_UTILS_V_6,
-                    7, YAML_UTILS_V_7
+                    7, YAML_UTILS_V_7,
+                    8, YAML_UTILS_V_8
             ),
             DEFAULT_UTILS
     );

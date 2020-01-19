@@ -470,7 +470,7 @@ public class BatchService {
                     EXPORTED_TO_ATLAS(9);    // workbook was exported to atlas
 */
 
-                if (execStates.workbookState != -2 && execStates.workbookState != 5) {
+                if (execStates.workbookState != EnumsApi.WorkbookExecState.ERROR.code && execStates.workbookState != EnumsApi.WorkbookExecState.FINISHED.code) {
                     isFinished = false;
                     break;
                 }
