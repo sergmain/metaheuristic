@@ -232,7 +232,7 @@ public class WorkbookService {
         toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.ERROR);
     }
 
-    public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookResourceCodes resourceCodes) {
+    public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookYaml resourceCodes) {
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
 
         WorkbookImpl wb = new WorkbookImpl();

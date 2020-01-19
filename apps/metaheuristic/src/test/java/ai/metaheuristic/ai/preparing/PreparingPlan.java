@@ -103,7 +103,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public Snippet s5 = null;
     public WorkbookImpl workbook = null;
 
-    public WorkbookParamsYaml.WorkbookResourceCodes resourceCodes;
+    public WorkbookParamsYaml.WorkbookYaml resourceCodes;
 
     public Company company;
 
@@ -239,7 +239,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
                 true, "file-03.txt",
                 null, null);
 
-        resourceCodes = new WorkbookParamsYaml.WorkbookResourceCodes();
+        resourceCodes = new WorkbookParamsYaml.WorkbookYaml();
         resourceCodes.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o-> new ArrayList<>()).add(INPUT_POOL_CODE);
     }
 

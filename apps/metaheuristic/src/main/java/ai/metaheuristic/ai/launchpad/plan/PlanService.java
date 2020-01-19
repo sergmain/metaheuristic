@@ -140,7 +140,7 @@ public class PlanService {
             return r;
         }
 
-        WorkbookParamsYaml.WorkbookResourceCodes wrc = PlanUtils.prepareResourceCodes(poolCode, inputResourceParams);
+        WorkbookParamsYaml.WorkbookYaml wrc = PlanUtils.prepareResourceCodes(poolCode, inputResourceParams);
         PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(plan.getId(), wrc);
         if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             return new PlanApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
