@@ -29,7 +29,7 @@
     <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.AccountData$AccountsResult"*/-->
     <h1 class="widget-header">Accounts</h1>
     <div th:if="${result.assetMode==T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-        <p class="alert alert-info">Upload and editing of accounts are disabled, assetMode is 'replicated'.</p>
+        <p class="alert alert-info">Creating and editing of accounts are disabled, assetMode is 'replicated'.</p>
     </div>
 
     <div th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">

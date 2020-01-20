@@ -39,6 +39,7 @@ public class CompanyData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CompanyShortData {
+        // this field contains value from Company.uniqueId
         public Long id;
         public String name;
     }

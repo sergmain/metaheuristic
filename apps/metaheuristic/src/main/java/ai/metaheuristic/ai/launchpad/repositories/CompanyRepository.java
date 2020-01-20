@@ -45,6 +45,7 @@ public interface CompanyRepository extends CrudRepository<Company, Long> {
     Company findByUniqueId(Long uniqueId);
 
     @Transactional(readOnly = true)
+    @Query(value="select a from Company a order by a.uniqueId")
     Page<Company> findAll(Pageable pageable);
 
     @Query(value="select max(c.uniqueId) from Company c")
