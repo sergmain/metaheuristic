@@ -26,10 +26,8 @@ import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
-import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
@@ -187,7 +185,7 @@ public class WorkbookService {
         return workbookSyncService.getWithSync(workbookId, workbookGraphService::findAll);
     }
 
-    public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookResourceCodes resourceCodes) {
+    public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookYaml workbookYaml) {
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
 
         WorkbookImpl wb = new WorkbookImpl();
@@ -196,7 +194,7 @@ public class WorkbookService {
         wb.setExecState(EnumsApi.WorkbookExecState.NONE.code);
         wb.setCompletedOn(null);
         WorkbookParamsYaml params = new WorkbookParamsYaml();
-        params.workbookYaml = resourceCodes;
+        params.workbookYaml = workbookYaml;
         params.graph = WorkbookGraphService.EMPTY_GRAPH;
         wb.updateParams(params);
         wb.setValid(true);

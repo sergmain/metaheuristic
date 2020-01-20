@@ -276,7 +276,7 @@ public class BatchService {
             throw new BatchResourceProcessingException("#995.180 main document wasn't found");
         }
 
-        final WorkbookParamsYaml.WorkbookResourceCodes params = PlanUtils.initWorkbookParamsYaml(mainPoolCode, attachPoolCode, attachments);
+        final WorkbookParamsYaml.WorkbookYaml params = PlanUtils.initWorkbookParamsYaml(mainPoolCode, attachPoolCode, attachments);
         PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(planId, params);
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
             throw new BatchResourceProcessingException("#995.190 Error creating workbook: " + producingResult.planProducingStatus);

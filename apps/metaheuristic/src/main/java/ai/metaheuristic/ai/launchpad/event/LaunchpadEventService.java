@@ -153,7 +153,7 @@ public class LaunchpadEventService {
         }
         CompanyData.CompanyList companyList = new CompanyData.CompanyList();
         companyRepository.findAll()
-                .forEach(c-> companyList.companies.add(new CompanyData.CompanyShortData(c.id, c.name)));
+                .forEach(c-> companyList.companies.add(new CompanyData.CompanyShortData(c.uniqueId, c.name)));
 
         File companyYamlFile = new File(filesDir, "companies.yaml");
         Yaml companyYaml = YamlUtils.init(ListOfEvents.class);
