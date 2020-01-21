@@ -17,6 +17,7 @@ package ai.metaheuristic.apps.simple_snippet;
 
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
+@Slf4j
 public class SimpleApp implements CommandLineRunner {
 
     public static void main(String[] args) {
@@ -52,7 +54,9 @@ public class SimpleApp implements CommandLineRunner {
         System.out.println("Timeout ended.");
 
         if (args.length>1 ) {
-            throw new RuntimeException("Just for test an error reporting");
+            String message = "Just for test an error reporting. ИИИ, 日本語, natürlich";
+            log.error(message);
+            throw new RuntimeException(message);
         }
 
         File yamlFile = new File(args[0]);

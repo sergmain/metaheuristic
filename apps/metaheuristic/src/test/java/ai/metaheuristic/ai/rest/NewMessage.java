@@ -22,6 +22,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 class NewMessage {
-    String t;
     String id;
+    String t;
 }

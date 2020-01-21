@@ -42,6 +42,7 @@ import java.security.SecureRandom;
 public class GoogleAuthenticator {
 
     public static final int SECRET_SIZE = 10;
+    // TODO 2020-01-20 move to Globals
     public static final String SEED = "fRaN+#1ThUZlMOBrLta=itL4Lv-Ve$+?@1bI3REMeS&a@i1LC88_R1r2SwlrU9i2";
     public static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
 

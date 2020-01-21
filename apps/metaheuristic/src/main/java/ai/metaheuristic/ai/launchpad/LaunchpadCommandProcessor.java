@@ -64,9 +64,6 @@ public class LaunchpadCommandProcessor {
 
     public void process(StationCommParamsYaml scpy, LaunchpadCommParamsYaml lcpy) {
         lcpy.resendTaskOutputResource = checkForMissingOutputResources(scpy);
-        // TODO 2019-10-06 doubles, remove on 2019-11-06 if everything will be ok
-//        checkForMissingOutputResources(scpy);
-//        processStationTaskStatus(scpy);
         processStationTaskStatus(scpy);
         processResendTaskOutputResourceResult(scpy);
         processStationTaskStatus(scpy);

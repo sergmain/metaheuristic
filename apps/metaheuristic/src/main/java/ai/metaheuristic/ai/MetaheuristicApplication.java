@@ -20,11 +20,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.nio.charset.StandardCharsets;
+
 @SpringBootApplication
 @Slf4j
 public class MetaheuristicApplication {
 
     public static void main(String[] args) {
+        System.setProperty("file.encoding", StandardCharsets.UTF_8.toString());
+        System.setProperty("sun.jnu.encoding", StandardCharsets.UTF_8.toString());
         new SpringApplication(MetaheuristicApplication.class).run();
     }
 }

@@ -125,7 +125,7 @@ public class MultiHttpSecurityConfig {
                     .authorizeRequests()
                     .antMatchers("/manager/html").denyAll()
                     .antMatchers("/static/**/**", "/css/**", "/js/**", "/webjars/**").permitAll()
-                    .antMatchers("/favicon.ico", "/", "/index", "/about", "/login", "/jssc", "/error/**").permitAll()
+                    .antMatchers("/favicon.ico", "/", "/index", "/about", "/test/**/**", "/login", "/jssc", "/error/**").permitAll()
                     .antMatchers("/login").anonymous()
                     .antMatchers("/logout", "/launchpad/**/**").authenticated()
                     .antMatchers("/admin/**").hasAnyRole("ADMIN")
@@ -142,6 +142,8 @@ public class MultiHttpSecurityConfig {
                     .logout()
                     .logoutUrl("/logout")
                     .logoutSuccessUrl("/index");
+//                    .and()
+//                    .antMatcher("/test/**/**").csrf().disable();
 
             if (globals.isSslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();

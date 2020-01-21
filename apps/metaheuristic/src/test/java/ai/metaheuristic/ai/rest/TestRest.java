@@ -17,8 +17,10 @@
 package ai.metaheuristic.ai.rest;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.ai.core.TestController;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
+import ai.metaheuristic.ai.station.LaunchpadRequestor;
+import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
@@ -33,6 +35,8 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.*;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -40,12 +44,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.WebApplicationContext;
 
 import javax.servlet.http.Cookie;
-
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -59,6 +67,8 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @ActiveProfiles("launchpad")
 public class TestRest {
 
+    private static final String MSG_TEXT = "test msg, ИИИ, 日本語, natürlich";
+
     @RestController
     public static class JsonTestController {
 
@@ -66,13 +76,54 @@ public class TestRest {
         // see testNearMessages() below
         @GetMapping("/rest/test/message")
         public NewMessage getMessage() {
-            return new NewMessage("42", "test msg");
+            return new NewMessage("42", MSG_TEXT);
         }
     }
     private MockMvc mockMvc;
 
     @Autowired
     private WebApplicationContext webApplicationContext;
+
+    @Before
+    public void setup() {
+        this.mockMvc = webAppContextSetup(webApplicationContext)
+                .apply(springSecurity())
+                .build();
+    }
+
+    @Test
+    public void testRestMessages_01() {
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.getForEntity("http://localhost:8080/test/simple?text="+MSG_TEXT, String.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        String s = response.getBody();
+        assertNotNull(s);
+        System.out.println("s = " + s);
+        assertEquals(TestController.TEST_MSG, s.split("\n")[0]);
+        assertEquals(MSG_TEXT.substring(0,20), s.split("\n")[1]);
+    }
+
+    @Test
+    public void testRestMessages_02() {
+        RestTemplate restTemplate = new RestTemplate(LaunchpadRequestor.getHttpRequestFactory());
+        // RestTemplate must be working without this
+//        restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> request = new HttpEntity<>(MSG_TEXT, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange("http://localhost:8080/test/rest", HttpMethod.POST, request, String.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        String s = response.getBody();
+        assertNotNull(s);
+        System.out.println("s = " + s);
+        assertEquals(TestController.TEST_MSG, s.split("\n")[0]);
+        assertEquals(MSG_TEXT.substring(0,20), s.split("\n")[1]);
+    }
 
     // let's test the case with marshalling message to json
     @Test
@@ -82,12 +133,12 @@ public class TestRest {
                 .perform(get("/rest/test/message"))
                 .andExpect(status().isOk())
                 .andReturn();
-        String content = result.getResponse().getContentAsString();
+        String content = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
 
-        NewMessage m = new NewMessage("42", "test msg");
+        NewMessage m = new NewMessage("42", MSG_TEXT);
 
         String json = JsonUtils.getMapper().writeValueAsString(m);
-        Assert.assertEquals(json, content);
+        assertEquals(json, content);
         System.out.println(content);
     }
 
@@ -101,14 +152,8 @@ public class TestRest {
         String json = "";
 
         thrown.expect(MismatchedInputException.class);
-        JsonUtils.getMapper().readValue(json, NewMessage.class);
-    }
-
-    @Before
-    public void setup() {
-        this.mockMvc = webAppContextSetup(webApplicationContext)
-                .apply(springSecurity())
-                .build();
+        NewMessage msg = JsonUtils.getMapper().readValue(json, NewMessage.class);
+        assertEquals(MSG_TEXT, msg.t);
     }
 
     @Test
@@ -134,8 +179,8 @@ public class TestRest {
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
 
         Cookie[] cookies = result.getResponse().getCookies();
-        Assert.assertNotNull(cookies);
-        Assert.assertEquals(0, cookies.length);
+        assertNotNull(cookies);
+        assertEquals(0, cookies.length);
 
         mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
@@ -158,7 +203,7 @@ public class TestRest {
 
         LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadYaml);
 
-        Assert.assertNotNull(d);
+        assertNotNull(d);
         Assert.assertTrue(d.isSuccess());
 
     }
