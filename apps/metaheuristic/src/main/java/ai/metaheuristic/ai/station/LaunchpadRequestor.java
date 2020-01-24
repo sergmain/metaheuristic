@@ -33,6 +33,7 @@ import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.*;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -85,6 +86,7 @@ public class LaunchpadRequestor {
         this.stationCommandProcessor = stationCommandProcessor;
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
+        this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         this.launchpad = this.launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
         if (launchpad == null) {
             throw new IllegalStateException("#775.010 Can'r find launchpad config for url " + launchpadUrl);
@@ -93,7 +95,7 @@ public class LaunchpadRequestor {
         nextRequest = new StationCommParamsYaml();
     }
 
-    private static HttpComponentsClientHttpRequestFactory getHttpRequestFactory() {
+    public static HttpComponentsClientHttpRequestFactory getHttpRequestFactory() {
         // https://github.com/spring-projects/spring-boot/issues/11379
         // https://issues.apache.org/jira/browse/HTTPCLIENT-1892
         // https://github.com/spring-projects/spring-framework/issues/21238
@@ -276,7 +278,7 @@ public class LaunchpadRequestor {
                 String auth = launchpad.launchpadLookup.restUsername + ':' + launchpad.launchpadLookup.restPassword;
                 byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
                 String authHeader = "Basic " + new String(encodedAuth);
-                headers.set("Authorization", authHeader);
+                headers.set(HttpHeaders.AUTHORIZATION, authHeader);
 
                 String yaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);
