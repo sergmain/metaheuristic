@@ -16,10 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.snippet;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.SnippetData;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.api.EnumsApi;
@@ -55,7 +53,7 @@ public class SnippetTopLevelService {
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
     private final SnippetService snippetService;
-    private final BinaryDataService binaryDataService;
+    private final SnippetBinaryDataService snippetBinaryDataService;
 
     public SnippetData.SnippetsResult getSnippets() {
         SnippetData.SnippetsResult result = new SnippetData.SnippetsResult();
@@ -77,7 +75,7 @@ public class SnippetTopLevelService {
                     "#424.010 snippet wasn't found, planId: " + id);
         }
         snippetCache.delete(snippet.getId());
-        binaryDataService.deleteByCodeAndDataType(snippet.getCode(), EnumsApi.BinaryDataType.SNIPPET);
+        snippetBinaryDataService.deleteBySnippetCode(snippet.getCode());
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

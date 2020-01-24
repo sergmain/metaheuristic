@@ -50,8 +50,6 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     @Query(nativeQuery = true, value = "select d.id from mh_data d where d.ref_type='workbook' and d.REF_ID not in (select z.id from mh_workbook z)")
     List<Long> findAllOrphanWorkbookData();
 
-    List<BinaryData> findAllByDataType(int dataType);
-
     @Transactional(readOnly = true)
     @Query(value="select b.id from BinaryDataImpl b where b.code=:code")
     Long getIdByCode(String code);
@@ -73,9 +71,6 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPoolForWorkbook(List<String> poolCodes);
 
     List<BinaryDataImpl> findAllByPoolCode(String poolCode);
-
-    @Query(value="select b.id from BinaryDataImpl b where b.poolCode=:poolCode and b.dataType=:dataType ")
-    List<Long> findIdsByPoolCodeAndDataType(String poolCode, int dataType);
 
     @Query(value="select b.filename from BinaryDataImpl b where b.poolCode=:poolCode and b.dataType=:dataType ")
     String findFilenameByPoolCodeAndDataType(String poolCode, int dataType);
@@ -100,10 +95,6 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
 
     @Transactional(readOnly = true)
     Page<BinaryDataImpl> findAll(Pageable pageable);
-
-    @Transactional
-    @Query("delete FROM BinaryDataImpl where id in :ids ")
-    void deleteByIds(List<Long> ids);
 
     @Transactional
     void deleteAllByDataType(int dataType);

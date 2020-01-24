@@ -19,15 +19,15 @@ package ai.metaheuristic.ai.launchpad.binary_data;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
-import ai.metaheuristic.api.launchpad.BinaryData;
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
-import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
+import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.launchpad.BinaryData;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
@@ -39,7 +39,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.io.*;
+import java.io.File;
+import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -52,17 +53,12 @@ import static ai.metaheuristic.api.EnumsApi.*;
 @Transactional
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class BinaryDataService {
 
     private final EntityManager em;
     private final BinaryDataRepository binaryDataRepository;
     private final Globals globals;
-
-    public BinaryDataService(EntityManager em, BinaryDataRepository binaryDataRepository, Globals globals) {
-        this.em = em;
-        this.binaryDataRepository = binaryDataRepository;
-        this.globals = globals;
-    }
 
     @Transactional(readOnly = true)
     public BinaryDataImpl getBinaryData(Long id) {
@@ -84,21 +80,6 @@ public class BinaryDataService {
             return data;
         } catch (SQLException e) {
             throw new IllegalStateException("SQL error", e);
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] getDataAsBytes(Long id) {
-        try {
-            BinaryData data = binaryDataRepository.findById(id).orElse(null);
-            if (data==null) {
-                return null;
-            }
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            IOUtils.copy(data.getData().getBinaryStream(), baos, 20000);
-            return baos.toByteArray();
-        } catch (IOException | SQLException e) {
-            throw new IllegalStateException("Unexpected error", e);
         }
     }
 
@@ -178,8 +159,8 @@ public class BinaryDataService {
         binaryDataRepository.deleteByCodeAndDataType(code, binaryDataType.value);
     }
 
-    public void deleteByPoolCodeAndDataType(String poolCode, BinaryDataType binaryDataType) {
-        binaryDataRepository.deleteByPoolCodeAndDataType(poolCode, binaryDataType.value);
+    public void deleteByPoolCodeAndDataType(String poolCode) {
+        binaryDataRepository.deleteByPoolCodeAndDataType(poolCode, BinaryDataType.DATA.value);
     }
 
     public BinaryData save(InputStream is, long size,
@@ -306,7 +287,7 @@ public class BinaryDataService {
     }
 
     @Transactional(readOnly = true)
-    public String getFilenameByPool1CodeAndType(String poolCode, BinaryDataType type) {
+    public String getFilenameByPoolCodeAndType(String poolCode, BinaryDataType type) {
         return binaryDataRepository.findFilenameByPoolCodeAndDataType(poolCode, type.value);
     }
 

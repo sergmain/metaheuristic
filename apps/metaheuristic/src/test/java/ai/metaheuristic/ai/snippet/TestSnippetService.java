@@ -18,15 +18,14 @@ package ai.metaheuristic.ai.snippet;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetBinaryDataService;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
@@ -55,7 +54,7 @@ import static org.junit.Assert.*;
 public class TestSnippetService {
 
     private static final String TEST_SNIPPET = "test.snippet:1.0";
-    public static final String SNIPPET_PARAMS = "AAA";
+    private static final String SNIPPET_PARAMS = "AAA";
 
     @Autowired
     private SnippetService snippetService;
@@ -67,7 +66,7 @@ public class TestSnippetService {
     private SnippetCache snippetCache;
 
     @Autowired
-    private BinaryDataService binaryDataService;
+    private SnippetBinaryDataService snippetBinaryDataService;
 
     @Autowired
     private Globals globals;
@@ -118,9 +117,7 @@ public class TestSnippetService {
 
             mills = System.currentTimeMillis();
             log.info("Start binaryDataService.save() #2");
-            binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, EnumsApi.BinaryDataType.SNIPPET, s.getCode(), s.getCode(),
-                    false, null,
-                    null, null);
+            snippetBinaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, s.getCode());
             log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
         }
     }
@@ -136,7 +133,7 @@ public class TestSnippetService {
                 throwable.printStackTrace();
             }
             try {
-                binaryDataService.deleteByCodeAndDataType(snippet.getCode(), EnumsApi.BinaryDataType.SNIPPET);
+                snippetBinaryDataService.deleteBySnippetCode(snippet.getCode());
             } catch (Throwable th) {
                 th.printStackTrace();
             }

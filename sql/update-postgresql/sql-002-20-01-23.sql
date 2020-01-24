@@ -1,1 +1,27 @@
 delete from mh_data where DATA_TYPE in (3, 4);
+
+CREATE TABLE MH_SNIPPET_DATA
+(
+    ID              SERIAL PRIMARY KEY,
+    VERSION         NUMERIC(5, 0) NOT NULL,
+    SNIPPET_CODE    VARCHAR(100) not null,
+    UPLOAD_TS       TIMESTAMP DEFAULT to_timestamp(0),
+    DATA            OID,
+    PARAMS          TEXT not null
+);
+
+CREATE UNIQUE INDEX MH_SNIPPET_DATA_SNIPPET_CODE_UNQ_IDX
+    ON MH_SNIPPET_DATA (SNIPPET_CODE);
+
+insert into MH_SNIPPET_DATA
+(ID, VERSION, SNIPPET_CODE, UPLOAD_TS, DATA, PARAMS)
+select ID, VERSION, CODE, UPLOAD_TS, DATA, PARAMS
+from MH_DATA
+where DATA_TYPE=2;
+
+commit;
+
+delete from MH_DATA where DATA_TYPE =2;
+
+commit;
+

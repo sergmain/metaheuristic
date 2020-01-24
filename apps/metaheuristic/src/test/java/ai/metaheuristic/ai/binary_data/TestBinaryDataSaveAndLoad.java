@@ -86,7 +86,7 @@ public class TestBinaryDataSaveAndLoad {
     public void after() {
         if (code != null) {
             try {
-                binaryDataRepository.deleteAllByDataType(EnumsApi.BinaryDataType.TEST.value);
+                binaryDataService.deleteAllByType(EnumsApi.BinaryDataType.TEST);
             } catch (Throwable th) {
                 log.error("Error while deleting test data", th);
             }

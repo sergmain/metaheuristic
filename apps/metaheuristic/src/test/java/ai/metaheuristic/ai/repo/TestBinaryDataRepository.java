@@ -87,7 +87,7 @@ public class TestBinaryDataRepository {
         //noinspection StatementWithEmptyBody
         while (codes.contains(unique= UUID.randomUUID().toString()) );
 
-        String file = binaryDataService.getFilenameByPool1CodeAndType(unique, EnumsApi.BinaryDataType.DATA);
+        String file = binaryDataService.getFilenameByPoolCodeAndType(unique, EnumsApi.BinaryDataType.DATA);
 
         System.out.println("file = " + file);
         assertNull(file);

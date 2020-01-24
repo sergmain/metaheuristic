@@ -15,7 +15,6 @@
  */
 package ai.metaheuristic.ai.launchpad;
 
-import ai.metaheuristic.ai.launchpad.batch.BatchRepository;
 import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -37,7 +36,6 @@ public class ArtifactCleanerAtLaunchpad {
     private final WorkbookRepository workbookRepository;
     private final TaskRepository taskRepository;
     private final BinaryDataRepository binaryDataRepository;
-    private final BatchRepository batchRepository;
 
     public void fixedDelay() {
         deleteOrphanTasks();

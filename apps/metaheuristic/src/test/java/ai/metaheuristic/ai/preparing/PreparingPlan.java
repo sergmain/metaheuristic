@@ -303,7 +303,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             }
         }
         try {
-            binaryDataService.deleteByPoolCodeAndDataType(INPUT_POOL_CODE, EnumsApi.BinaryDataType.DATA);
+            binaryDataService.deleteByPoolCodeAndDataType(INPUT_POOL_CODE);
         } catch (Throwable th) {
             log.error("error", th);
         }

@@ -764,7 +764,7 @@ public class BatchService {
     }
 
     private String getMainDocumentFilenameForPoolCode(String mainDocumentPoolCode) {
-        final String filename = binaryDataService.getFilenameByPool1CodeAndType(mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
+        final String filename = binaryDataService.getFilenameByPoolCodeAndType(mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
         if (StringUtils.isBlank(filename)) {
             log.error("#990.390 Filename is blank for poolCode: {}, data type: {}", mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
             return null;

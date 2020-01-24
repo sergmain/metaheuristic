@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetBinaryDataService;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
@@ -85,6 +86,9 @@ public abstract class PreparingExperiment {
 
     @Autowired
     private BinaryDataService binaryDataService;
+
+    @Autowired
+    private SnippetBinaryDataService snippetBinaryDataService;
 
     public Station station = null;
     public String stationIdAsStr;
@@ -274,7 +278,7 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
             try {
-                binaryDataService.deleteByCodeAndDataType(predictSnippet.getCode(), EnumsApi.BinaryDataType.SNIPPET);
+                snippetBinaryDataService.deleteBySnippetCode(predictSnippet.getCode());
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -286,7 +290,7 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
             try {
-                binaryDataService.deleteByCodeAndDataType(fitSnippet.getCode(), EnumsApi.BinaryDataType.SNIPPET);
+                snippetBinaryDataService.deleteBySnippetCode(fitSnippet.getCode());
             } catch (Throwable th) {
                 th.printStackTrace();
             }

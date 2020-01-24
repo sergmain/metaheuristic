@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.launchpad.snippet;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.SnippetData;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.api.ConstsApi;
@@ -62,7 +61,7 @@ public class SnippetService {
     private final Globals globals;
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
-    private final BinaryDataService binaryDataService;
+    private final SnippetBinaryDataService snippetBinaryDataService;
 
     public Snippet findByCode(String snippetCode) {
         Long id = snippetRepository.findIdByCode(snippetCode);
@@ -274,7 +273,7 @@ public class SnippetService {
         if (file != null) {
             try (InputStream inputStream = new FileInputStream(file)) {
                 String snippetCode = snippet.getCode();
-                binaryDataService.save(inputStream, snippetConfig.info.length, EnumsApi.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null, null, null);
+                snippetBinaryDataService.save(inputStream, snippetConfig.info.length, snippetCode);
             }
         }
     }

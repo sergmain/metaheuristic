@@ -38,6 +38,10 @@ public class RestUtils {
         }
     }
 
+    public static HttpHeaders getHeader(long length) {
+        return getHeader(null, length);
+    }
+
     public static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
         HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
         header.setContentLength(length);

@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetBinaryDataService;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
@@ -69,6 +70,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -87,23 +89,13 @@ public class ServerService {
 
     private final Globals globals;
     private final BinaryDataService binaryDataService;
+    private final SnippetBinaryDataService snippetBinaryDataService;
     private final LaunchpadCommandProcessor launchpadCommandProcessor;
     private final StationCache stationCache;
     private final WorkbookRepository workbookRepository;
     private final StationsRepository stationsRepository;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-
-    // return a requested resource to a station
-    public ResourceWithCleanerInfo deliverResource(String typeAsStr, String code, String chunkSize, int chunkNum) {
-        EnumsApi.BinaryDataType binaryDataType = EnumsApi.BinaryDataType.valueOf(typeAsStr.toUpperCase());
-        return deliverResource(binaryDataType, code, chunkSize, chunkNum);
-    }
-
-    // return a requested resource to a station
-    public ResourceWithCleanerInfo deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, String chunkSize, int chunkNum) {
-        return deliverResource(binaryDataType, code, null, chunkSize, chunkNum);
-    }
 
     private static final ConcurrentHashMap<String, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
@@ -138,9 +130,9 @@ public class ServerService {
     }
 
     // return a requested resource to a station
-    private ResourceWithCleanerInfo deliverResource(final EnumsApi.BinaryDataType binaryDataType, final String code, final HttpHeaders httpHeaders, final String chunkSize, final int chunkNum) {
+    public ResourceWithCleanerInfo deliverResource(final EnumsApi.BinaryDataType binaryDataType, final String code, final String chunkSize, final int chunkNum) {
         return getWithSync(binaryDataType, code,
-                () -> getAbstractResourceResponseEntity(httpHeaders, chunkSize, chunkNum, binaryDataType, code));
+                () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryDataType, code));
     }
 
     public UploadResult uploadResource(MultipartFile file, Long taskId) {
@@ -204,21 +196,19 @@ public class ServerService {
                 : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+task.getId()+"");
     }
 
-    private ResourceWithCleanerInfo getAbstractResourceResponseEntity(HttpHeaders httpHeaders, String chunkSize, int chunkNum, EnumsApi.BinaryDataType binaryDataType, String code) {
+    private ResourceWithCleanerInfo getAbstractResourceResponseEntity(String chunkSize, int chunkNum, EnumsApi.BinaryDataType binaryDataType, String code) {
 
-        if (!binaryDataService.exist(code)) {
-            String es = "#442.005 Resource with code " + code + " wasn't found";
-            log.error(es);
-            throw new BinaryDataNotFoundException(es);
-        }
         AssetFile assetFile;
+        BiConsumer<String, File> dataSaver;
         switch (binaryDataType) {
             case SNIPPET:
                 assetFile = ResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, code, null);
+                dataSaver = snippetBinaryDataService::storeToFile;
                 break;
             case DATA:
             case TEST:
-                assetFile = ResourceUtils.prepareDataFile(globals.launchpadResourcesDir, code, null);
+                assetFile = ResourceUtils.prepareDataFile(globals.launchpadTempDir, code, null);
+                dataSaver = binaryDataService::storeToFile;
                 break;
             case UNKNOWN:
             default:
@@ -230,11 +220,9 @@ public class ServerService {
             throw new BinaryDataNotFoundException(es);
         }
 
-        ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
-
         if (!assetFile.isContent) {
             try {
-                binaryDataService.storeToFile(code, assetFile.file);
+                dataSaver.accept(code, assetFile.file);
             } catch (BinaryDataNotFoundException e) {
                 log.error("#442.020 Error store data to temp file, data doesn't exist in db, code " + code + ", file: " + assetFile.file.getPath());
                 throw e;
@@ -242,6 +230,7 @@ public class ServerService {
         }
         File f;
         boolean isLastChunk;
+        ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
         if (chunkSize == null || chunkSize.isBlank()) {
             f = assetFile.file;
             isLastChunk = true;
@@ -263,7 +252,7 @@ public class ServerService {
             copyChunk(assetFile.file, f, offset, realSize);
             isLastChunk = (assetFile.file.length() == (offset + realSize));
         }
-        final HttpHeaders headers = RestUtils.getHeader(httpHeaders, f.length());
+        final HttpHeaders headers = RestUtils.getHeader(f.length());
         headers.add(Consts.HEADER_MH_CHUNK_SIZE, Long.toString(f.length()));
         headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, Boolean.toString(isLastChunk));
         resource.entity = new ResponseEntity<>(new FileSystemResource(f.toPath()), headers, HttpStatus.OK);

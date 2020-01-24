@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.launchpad.server;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
@@ -53,7 +52,6 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class AssetController {
 
-    private final Globals globals;
     private final ServerService serverService;
     private final SnippetService snippetService;
 

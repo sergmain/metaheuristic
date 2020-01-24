@@ -133,6 +133,19 @@ CREATE INDEX mh_data_pool_code_id_idx
 CREATE UNIQUE INDEX mh_data_code_unq_idx
   ON mh_data (CODE);
 
+CREATE TABLE mh_snippet_data
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    SNIPPET_CODE    VARCHAR(100) not null,
+    UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+    DATA            LONGBLOB,
+    PARAMS          MEDIUMTEXT not null
+);
+
+CREATE UNIQUE INDEX mh_snippet_data_snippet_code_unq_idx
+    ON mh_snippet_data (SNIPPET_CODE);
+
 CREATE TABLE mh_experiment
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
