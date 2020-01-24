@@ -90,10 +90,6 @@ public class AtlasService {
         return result;
     }
 
-    private static String getPoolCodeForExperiment(Long workbookId, Long experimentId) {
-        return String.format("stored-experiment-%d-%d",workbookId, experimentId);
-    }
-
     public OperationStatusRest storeExperimentToAtlas(Long workbookId) {
         workbookFSM.toExportingToAtlasStarted(workbookId);
         Long experimentId = experimentRepository.findIdByWorkbookId(workbookId);

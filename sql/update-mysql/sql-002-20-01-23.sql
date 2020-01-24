@@ -1,0 +1,1 @@
+delete from mh_data where DATA_TYPE in (3, 4);
