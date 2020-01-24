@@ -21,8 +21,7 @@ import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -45,8 +44,7 @@ public class FileProcessService {
 
     private final TaskRepository taskRepository;
     private final SnippetService snippetService;
-    private final WorkbookService workbookService;
-    private final WorkbookCache workbookCache;
+    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
     @SuppressWarnings("Duplicates")
     public PlanService.ProduceTaskResult produceTasks(
@@ -91,7 +89,7 @@ public class FileProcessService {
         result.status = EnumsApi.PlanProducingStatus.OK;
         result.numberOfTasks = result.outputResourceCodes.size();
 
-        workbookService.addNewTasksToGraph(workbookId, parentTaskIds, result.taskIds);
+        workbookGraphTopLevelService.addNewTasksToGraph(workbookId, parentTaskIds, result.taskIds);
 
         return result;
     }

@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -97,6 +98,7 @@ public class BatchTopLevelService {
     private final BatchCache batchCache;
     private final BatchWorkbookRepository batchWorkbookRepository;
     private final LaunchpadEventService launchpadEventService;
+    private final WorkbookService workbookService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -298,7 +300,7 @@ public class BatchTopLevelService {
         else {
             List<Long> workbookIds = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
             for (Long workbookId : workbookIds) {
-                planService.deleteWorkbook(workbookId, companyUniqueId);
+                workbookService.deleteWorkbook(workbookId, companyUniqueId);
             }
             batchWorkbookRepository.deleteByBatchId(batch.id);
             batchCache.deleteById(batch.id);

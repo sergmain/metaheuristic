@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookOperationStatusWithTaskList;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -251,6 +252,39 @@ public class TaskPersistencer {
             task = taskRepository.save(task);
 
             return task;
+        });
+    }
+
+    public void changeTaskState(Long taskId, EnumsApi.TaskExecState state){
+        switch (state) {
+            case NONE:
+                resetTask(taskId);
+                break;
+            case BROKEN:
+            case ERROR:
+                finishTaskAsBrokenOrError(taskId, state);
+                break;
+            case OK:
+                toOkSimple(taskId);
+                break;
+            case IN_PROGRESS:
+                toInProgressSimple(taskId);
+                break;
+            default:
+                throw new IllegalStateException("Right now it must be initialized somewhere else. state: " + state);
+        }
+    }
+
+    public void updateTasksStateInDb(WorkbookOperationStatusWithTaskList status) {
+        status.childrenTasks.forEach(t -> {
+            TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
+            if (task != null) {
+                if (task.execState != t.execState.value) {
+                    changeTaskState(task.id, t.execState);
+                }
+            } else {
+                log.error("Graph state is compromised, found task in graph but it doesn't exist in db");
+            }
         });
     }
 

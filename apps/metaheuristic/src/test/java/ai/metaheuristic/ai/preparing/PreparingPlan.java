@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.plan.TaskCollector;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
@@ -93,6 +94,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
     @Autowired
     public CompanyRepository companyRepository;
+
+    @Autowired
+    public WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
     public PlanImpl plan = null;
     public PlanParamsYamlV2 planParamsYaml = null;

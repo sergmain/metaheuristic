@@ -63,7 +63,7 @@ public class TestGraphEdges extends PreparingPlan {
 
         assertNotNull(workbook);
 
-        OperationStatusRest osr = workbookService.addNewTasksToGraph(workbook.id, List.of(), List.of(1L));
+        OperationStatusRest osr = workbookGraphTopLevelService.addNewTasksToGraph(workbook.id, List.of(), List.of(1L));
         workbook = workbookCache.findById(workbook.id);
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
@@ -72,28 +72,28 @@ public class TestGraphEdges extends PreparingPlan {
         assertEquals(1, count);
 
 
-        osr = workbookService.addNewTasksToGraph(workbook.id,List.of(1L), List.of(21L, 22L, 23L));
+        osr = workbookGraphTopLevelService.addNewTasksToGraph(workbook.id,List.of(1L), List.of(21L, 22L, 23L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         workbook = workbookCache.findById(workbook.id);
 
-        List<WorkbookParamsYaml.TaskVertex> leafs = workbookService.findLeafs(workbook);
+        List<WorkbookParamsYaml.TaskVertex> leafs = workbookGraphTopLevelService.findLeafs(workbook);
 
         assertEquals(3, leafs.size());
         assertTrue(leafs.contains(new WorkbookParamsYaml.TaskVertex(21L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new WorkbookParamsYaml.TaskVertex(22L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new WorkbookParamsYaml.TaskVertex(23L, EnumsApi.TaskExecState.NONE)));
 
-        osr = workbookService.addNewTasksToGraph( workbook.id,List.of(21L), List.of(311L, 312L, 313L));
+        osr = workbookGraphTopLevelService.addNewTasksToGraph( workbook.id,List.of(21L), List.of(311L, 312L, 313L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         workbook = workbookCache.findById(workbook.id);
 
-        Set<WorkbookParamsYaml.TaskVertex> descendands = workbookService.findDescendants(workbook, 1L);
+        Set<WorkbookParamsYaml.TaskVertex> descendands = workbookGraphTopLevelService.findDescendants(workbook, 1L);
         assertEquals(6, descendands.size());
 
-        descendands = workbookService.findDescendants(workbook, 21L);
+        descendands = workbookGraphTopLevelService.findDescendants(workbook, 21L);
         assertEquals(3, descendands.size());
 
-        leafs = workbookService.findLeafs(workbook);
+        leafs = workbookGraphTopLevelService.findLeafs(workbook);
         assertEquals(5, leafs.size());
     }
 }

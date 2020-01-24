@@ -54,6 +54,7 @@ public class WorkbookSchedulerService {
     private final TaskRepository taskRepository;
     private final AtlasService atlasService;
     private final WorkbookFSM workbookFSM;
+    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
     public void updateWorkbookStatuses(boolean needReconciliation) {
         List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
@@ -139,7 +140,7 @@ public class WorkbookSchedulerService {
             workbookFSM.toError(workbookId);
         }
         else {
-            workbookService.updateTaskExecStates(workbookId, taskStates);
+            workbookGraphTopLevelService.updateTaskExecStates(workbookId, taskStates);
         }
 
         // fix actual state of tasks (can be as a result of OptimisticLockingException)
@@ -164,7 +165,7 @@ public class WorkbookSchedulerService {
                             }
                         }
                         else if (task.resultReceived && task.isCompleted) {
-                            workbookService.updateTaskExecStateByWorkbookId(workbookId, task.id, EnumsApi.TaskExecState.OK.value);
+                            workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(workbookId, task.id, EnumsApi.TaskExecState.OK.value);
                         }
                     }
                 });

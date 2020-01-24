@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
@@ -116,6 +117,7 @@ public class BatchService {
     private final StationCache stationCache;
     private final LaunchpadEventService launchpadEventService;
     private final ResourceService resourceService;
+    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
     private static final ConcurrentHashMap<Long, Object> batchMap = new ConcurrentHashMap<>(100, 0.75f, 10);
 
@@ -292,7 +294,7 @@ public class BatchService {
             throw new BatchResourceProcessingException("#995.200 plan wasn't found, planId: " + planId);
         }
 
-        PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook.getId());
+        PlanApiData.TaskProducingResultComplex countTasks = workbookService.produceTasks(false, plan, producingResult.workbook.getId());
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             workbookService.changeValidStatus(bw.workbookId, false);
             throw new BatchResourceProcessingException("#995.220 validation of plan was failed, status: " + countTasks.planValidateStatus);
@@ -666,7 +668,7 @@ public class BatchService {
 
             List<WorkbookParamsYaml.TaskVertex> taskVertices;
             try {
-                taskVertices = workbookService.findLeafs(wb);
+                taskVertices = workbookGraphTopLevelService.findLeafs(wb);
             } catch (ObjectOptimisticLockingFailureException e) {
                 String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
                 log.warn(msg);

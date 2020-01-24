@@ -69,6 +69,17 @@ public class LaunchpadEventService {
     private final CompanyRepository companyRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    public void publishWorkbookLockingEvent(EnumsApi.LaunchpadEventType event, Long stationId, Long taskId, Long workbookId) {
+        if (!globals.isEventEnabled) {
+            return;
+        }
+        LaunchpadEventYaml.TaskEventData taskEventData = new LaunchpadEventYaml.TaskEventData();
+        taskEventData.stationId = stationId;
+        taskEventData.taskId = taskId;
+        taskEventData.workbookId = workbookId;
+        applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, taskEventData));
+    }
+
     public void publishBatchEvent(
             EnumsApi.LaunchpadEventType event, Long companyUniqueId, String filename,
             Long size, Long batchId, Long workbookId, LaunchpadContext launchpadContext) {

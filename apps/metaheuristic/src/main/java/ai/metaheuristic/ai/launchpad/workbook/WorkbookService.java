@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.launchpad.workbook;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.Monitoring;
+import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Station;
@@ -26,10 +28,13 @@ import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
-import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
+import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
+import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessService;
+import ai.metaheuristic.ai.launchpad.file_process.FileProcessService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
@@ -44,6 +49,7 @@ import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
@@ -52,11 +58,11 @@ import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -64,10 +70,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -80,7 +87,6 @@ public class WorkbookService {
     private final Globals globals;
     private final WorkbookRepository workbookRepository;
     private final PlanCache planCache;
-    private final PlanService planService;
     private final BinaryDataService binaryDataService;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
@@ -90,44 +96,17 @@ public class WorkbookService {
     private final WorkbookSyncService workbookSyncService;
     private final LaunchpadEventService launchpadEventService;
     private final WorkbookFSM workbookFSM;
-
-    public static class WorkbookDeletionEvent extends ApplicationEvent {
-        public long workbookId;
-
-        /**
-         * Create a new ApplicationEvent.
-         *
-         * @param source the object on which the event initially occurred (never {@code null})
-         */
-        public WorkbookDeletionEvent(Object source, long workbookId) {
-            super(source);
-            this.workbookId = workbookId;
-        }
-    }
-
-    @EqualsAndHashCode(of = "workbookId")
-    public static class WorkbookDeletionListener implements ApplicationListener<WorkbookDeletionEvent> {
-        private long workbookId;
-
-        private Consumer<Long> consumer;
-
-        public WorkbookDeletionListener(long workbookId, Consumer<Long> consumer) {
-            this.workbookId = workbookId;
-            this.consumer = consumer;
-        }
-
-        @Override
-        public void onApplicationEvent( WorkbookDeletionEvent event) {
-            consumer.accept(event.workbookId);
-        }
-    }
+    private final ExperimentProcessService experimentProcessService;
+    private final FileProcessService fileProcessService;
+    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public OperationStatusRest resetBrokenTasks(Long workbookId) {
         final WorkbookImpl workbook = workbookCache.findById(workbookId);
         if (workbook==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.003 Can't find workbook with id #"+workbookId);
         }
-        List<WorkbookParamsYaml.TaskVertex> vertices = findAllBroken(workbook);
+        List<WorkbookParamsYaml.TaskVertex> vertices = workbookGraphTopLevelService.findAllBroken(workbook);
         if (vertices==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.005 Can't find workbook with id #"+workbookId);
         }
@@ -147,14 +126,14 @@ public class WorkbookService {
         // TODO 2019-11-03 need to investigate why without this call nothing is working
         Task t = taskPersistencer.resetTask(task.id);
         if (t==null) {
-            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithSettingAllChildrenTasksAsBroken(task.getWorkbookId(), task.id);
-            updateTasksStateInDb(withTaskList);
+            WorkbookOperationStatusWithTaskList withTaskList = workbookGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.getWorkbookId(), task.id);
+            taskPersistencer.updateTasksStateInDb(withTaskList);
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.030 Can't re-run task #" + taskId + ", see log for more information");
             }
         }
         else {
-            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithResettingAllChildrenTasks(task.workbookId, task.id);
+            WorkbookOperationStatusWithTaskList withTaskList = workbookGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(task.workbookId, task.id);
             if (withTaskList == null) {
                 taskPersistencer.finishTaskAsBrokenOrError(taskId, EnumsApi.TaskExecState.BROKEN);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -164,7 +143,7 @@ public class WorkbookService {
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.040 Can't re-run task #" + taskId + ", see log for more information");
             }
-            updateTasksStateInDb(withTaskList);
+            taskPersistencer.updateTasksStateInDb(withTaskList);
 
             WorkbookImpl workbook = workbookCache.findById(task.workbookId);
             if (workbook.execState != EnumsApi.WorkbookExecState.STARTED.code) {
@@ -353,7 +332,7 @@ public class WorkbookService {
         if (workbook==null) {
             return null;
         }
-        final List<WorkbookParamsYaml.TaskVertex> vertices = findAllForAssigning(workbook);
+        final List<WorkbookParamsYaml.TaskVertex> vertices = workbookGraphTopLevelService.findAllForAssigning(workbook);
         final StationStatusYaml stationStatus = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
 
         int page = 0;
@@ -450,7 +429,7 @@ public class WorkbookService {
         resultTask.setResultResourceScheduledOn(0);
 
         taskRepository.save((TaskImpl)resultTask);
-        updateTaskExecStateByWorkbookId(workbookId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
+        workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(workbookId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
         launchpadEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), workbookId);
 
         return assignedTask;
@@ -471,133 +450,184 @@ public class WorkbookService {
         return taskRepository.findForAssigning(workbookId, idsForSearch);
     }
 
-    public final Consumer<Task> actionUpdateTaskExecState = t -> {
-        if (t!=null) {
-            updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
-        }
-    };
-
     public List<Long> storeAllConsoleResults(List<StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results) {
 
         List<Long> ids = new ArrayList<>();
         for (StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result : results) {
             ids.add(result.taskId);
-            taskPersistencer.storeExecResult(result, actionUpdateTaskExecState);
+            taskPersistencer.storeExecResult(result, t -> {
+                if (t!=null) {
+                    workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
+                }
+            });
         }
         return ids;
     }
 
-    // section 'workbook graph methods'
+    public PlanApiData.TaskProducingResultComplex produceTasks(boolean isPersist, PlanImpl plan, Long workbookId) {
 
-    // read-only operations with graph
-    public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
-        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAll(workbook));
-    }
+        Monitoring.log("##023", Enums.Monitor.MEMORY);
+        long mill = System.currentTimeMillis();
 
-    public List<WorkbookParamsYaml.TaskVertex> findLeafs(WorkbookImpl workbook) {
-        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findLeafs(workbook));
-    }
-
-    public Set<WorkbookParamsYaml.TaskVertex> findDescendants(WorkbookImpl workbook, Long taskId) {
-        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findDescendants(workbook, taskId));
-    }
-
-    public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(WorkbookImpl workbook) {
-        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAllForAssigning(workbook));
-    }
-
-    public List<WorkbookParamsYaml.TaskVertex> findAllBroken(WorkbookImpl workbook) {
-        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAllBroken(workbook));
-    }
-
-    // write operations with graph
-    public OperationStatusRest updateTaskExecStateByWorkbookId(Long workbookId, Long taskId, int execState) {
-        return workbookSyncService.getWithSync(workbookId, workbook -> {
-            final WorkbookOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(workbook, taskId, execState);
-            return status.status;
-        });
-    }
-
-    private WorkbookOperationStatusWithTaskList updateTaskExecStateWithoutSync(WorkbookImpl workbook, Long taskId, int execState) {
-        changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
-        final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecState(workbook, taskId, execState);
-        updateTasksStateInDb(status);
-        return status;
-    }
-
-    public WorkbookOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(Long workbookId, Long taskId) {
-        return workbookSyncService.getWithSync(workbookId, (workbook) -> workbookGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, taskId));
-    }
-
-    public OperationStatusRest addNewTasksToGraph(Long workbookId, List<Long> parentTaskIds, List<Long> taskIds) {
-        final OperationStatusRest withSync = workbookSyncService.getWithSync(workbookId, (workbook) -> workbookGraphService.addNewTasksToGraph(workbook, parentTaskIds, taskIds));
-        return withSync != null ? withSync : OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    public WorkbookOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(Long workbookId, Long taskId) {
-        return workbookSyncService.getWithSync(workbookId, (workbook) -> workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, taskId));
-    }
-
-    public WorkbookOperationStatusWithTaskList updateTaskExecStates(Long workbookId, ConcurrentHashMap<Long, Integer> taskStates) {
-        if (taskStates==null || taskStates.isEmpty()) {
-            return new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-        }
-        return workbookSyncService.getWithSync(workbookId, (workbook) -> {
-            final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecStates(workbook, taskStates);
-            updateTasksStateInDb(status);
-            return status;
-        });
-    }
-
-    // end of section 'workbook graph methods'
-
-
-    private void updateTasksStateInDb(WorkbookOperationStatusWithTaskList status) {
-        status.childrenTasks.forEach(t -> {
-            TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
-            if (task != null) {
-                if (task.execState != t.execState.value) {
-                    changeTaskState(task.id, t.execState);
-                }
-            } else {
-                log.error("Graph state is compromised, found task in graph but it doesn't exist in db");
+        WorkbookParamsYaml resourceParams;
+        {
+            WorkbookImpl workbook = workbookCache.findById(workbookId);
+            if (workbook == null) {
+                log.error("#701.175 Can't find workbook #{}", workbookId);
+                return new PlanApiData.TaskProducingResultComplex(EnumsApi.PlanValidateStatus.WORKBOOK_NOT_FOUND_ERROR);
             }
-        });
+
+            resourceParams = workbook.getWorkbookParamsYaml();
+        }
+        List<SimpleCodeAndStorageUrl> initialInputResourceCodes;
+        initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllPoolCodes());
+        log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
+
+        PlanService.ResourcePools pools = new PlanService.ResourcePools(initialInputResourceCodes);
+        if (pools.status!= EnumsApi.PlanProducingStatus.OK) {
+            return new PlanApiData.TaskProducingResultComplex(pools.status);
+        }
+
+        if (resourceParams.workbookYaml.preservePoolNames) {
+            final Map<String, List<String>> collectedInputs = new HashMap<>();
+            try {
+                pools.collectedInputs.forEach( (key, value) -> {
+                    String newKey = resourceParams.workbookYaml.poolCodes.entrySet().stream()
+                            .filter(entry -> entry.getValue().contains(key))
+                            .findFirst()
+                            .map(Map.Entry::getKey)
+                            .orElseThrow(()-> {
+                                log.error("#701.190 Can't find key for pool code {}", key );
+                                throw new BreakFromForEachException();
+                            });
+                    collectedInputs.put(newKey, value);
+                });
+            } catch (BreakFromForEachException e) {
+                return new PlanApiData.TaskProducingResultComplex(EnumsApi.PlanProducingStatus.ERROR);
+            }
+
+            pools.collectedInputs.clear();
+            pools.collectedInputs.putAll(collectedInputs);
+        }
+
+        Monitoring.log("##025", Enums.Monitor.MEMORY);
+        PlanParamsYaml planParams = plan.getPlanParamsYaml();
+
+        int idx = Consts.PROCESS_ORDER_START_VALUE;
+        List<Long> parentTaskIds = new ArrayList<>();
+        int numberOfTasks=0;
+        for (PlanParamsYaml.Process process : planParams.planYaml.getProcesses()) {
+            process.order = idx++;
+
+            PlanService.ProduceTaskResult produceTaskResult;
+            switch(process.type) {
+                case FILE_PROCESSING:
+                    Monitoring.log("##026", Enums.Monitor.MEMORY);
+                    produceTaskResult = fileProcessService.produceTasks(isPersist, plan.getId(), planParams, workbookId, process, pools, parentTaskIds);
+                    Monitoring.log("##027", Enums.Monitor.MEMORY);
+                    break;
+                case EXPERIMENT:
+                    Monitoring.log("##028", Enums.Monitor.MEMORY);
+                    produceTaskResult = experimentProcessService.produceTasks(isPersist, planParams, workbookId, process, pools, parentTaskIds);
+                    Monitoring.log("##029", Enums.Monitor.MEMORY);
+                    break;
+                default:
+                    throw new IllegalStateException("#701.200 Unknown process type");
+            }
+            parentTaskIds.clear();
+            parentTaskIds.addAll(produceTaskResult.taskIds);
+
+            numberOfTasks += produceTaskResult.numberOfTasks;
+            if (produceTaskResult.status != EnumsApi.PlanProducingStatus.OK) {
+                return new PlanApiData.TaskProducingResultComplex(produceTaskResult.status);
+            }
+            if (!process.collectResources) {
+                pools.clean();
+            }
+            Monitoring.log("##030", Enums.Monitor.MEMORY);
+            if (process.outputParams.storageType!=null) {
+                pools.add(process.outputParams.storageType, produceTaskResult.outputResourceCodes);
+                for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
+                    pools.inputStorageUrls.put(outputResourceCode, process.outputParams);
+                }
+            }
+            Monitoring.log("##031", Enums.Monitor.MEMORY);
+        }
+
+        PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
+        if (isPersist) {
+            workbookFSM.toProduced(workbookId);
+        }
+        result.workbook = workbookCache.findById(workbookId);
+        result.planYaml = planParams.planYaml;
+        result.numberOfTasks += numberOfTasks;
+        result.planValidateStatus = EnumsApi.PlanValidateStatus.OK;
+        result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
+
+        return result;
     }
 
-    private void changeTaskState(Long taskId, EnumsApi.TaskExecState state){
-        switch (state) {
-            case NONE:
-                taskPersistencer.resetTask(taskId);
-                break;
-            case BROKEN:
-            case ERROR:
-                taskPersistencer.finishTaskAsBrokenOrError(taskId, state);
-                break;
-            case OK:
-                taskPersistencer.toOkSimple(taskId);
-                break;
-            case IN_PROGRESS:
-                taskPersistencer.toInProgressSimple(taskId);
-                break;
-            default:
-                throw new IllegalStateException("Right now it must be initialized somewhere else. state: " + state);
+    public PlanApiData.WorkbookResult getAddWorkbookInternal(String poolCode, String inputResourceParams, @NonNull PlanImpl plan) {
+        if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams)) {
+            return new PlanApiData.WorkbookResult("#560.063 both inputResourcePoolCode of Workbook and inputResourceParams are empty");
+        }
+
+        if (StringUtils.isNotBlank(poolCode) && StringUtils.isNotBlank(inputResourceParams)) {
+            return new PlanApiData.WorkbookResult("#560.065 both inputResourcePoolCode of Workbook and inputResourceParams aren't empty");
+        }
+
+        WorkbookParamsYaml.WorkbookYaml wrc = PlanUtils.prepareResourceCodes(poolCode, inputResourceParams);
+        PlanApiData.TaskProducingResultComplex producingResult = createWorkbook(plan.getId(), wrc);
+        if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
+            return new PlanApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
+        }
+
+        PlanApiData.TaskProducingResultComplex countTasks = produceTasks(false, plan, producingResult.workbook.getId());
+        if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
+            changeValidStatus(producingResult.workbook.getId(), false);
+            return new PlanApiData.WorkbookResult("#560.077 plan producing was failed, status: " + countTasks.planProducingStatus);
+        }
+
+        if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
+            changeValidStatus(producingResult.workbook.getId(), false);
+            return new PlanApiData.WorkbookResult("#560.081 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
+                    "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook + ", tasks in this workbook:  " + countTasks.numberOfTasks);
+        }
+
+        PlanApiData.WorkbookResult result = new PlanApiData.WorkbookResult(plan);
+        result.workbook = producingResult.workbook;
+
+        changeValidStatus(producingResult.workbook.getId(), true);
+
+        return result;
+    }
+
+    public void deleteWorkbook(Long workbookId, Long companyUniqueId) {
+//        experimentService.resetExperimentByWorkbookId(workbookId);
+        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.ExperimentResetEvent(workbookId));
+        binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
+        Workbook workbook = workbookCache.findById(workbookId);
+        if (workbook != null) {
+            // unlock plan if this is the last workbook in the plan
+            List<Long> ids = workbookRepository.findIdsByPlanId(workbook.getPlanId());
+            if (ids.size()==1) {
+                if (ids.get(0).equals(workbookId)) {
+                    if (workbook.getPlanId() != null) {
+//                        setLockedTo(workbook.getPlanId(), companyUniqueId, false);
+                        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.PlanLockingEvent(workbook.getPlanId(), companyUniqueId, false));
+                    }
+                }
+                else {
+                    log.warn("#701.300 unexpected state, workbookId: {}, ids: {}, ", workbookId, ids);
+                }
+            }
+            else if (ids.isEmpty()) {
+                log.warn("#701.310 unexpected state, workbookId: {}, ids is empty", workbookId);
+            }
+            workbookCache.deleteById(workbookId);
         }
     }
 
-    public OperationStatusRest checkWorkbook(Long workbookId, LaunchpadContext context) {
-        if (workbookId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 workbookId is null");
-        }
-        Workbook wb = workbookCache.findById(workbookId);
-        if (wb==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 Workbook wasn't found, workbookId: " + workbookId );
-        }
-        PlanData.PlansForCompany plansForCompany = planService.getPlan(context.getCompanyId(), wb.getPlanId());
-        if (plansForCompany.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Plan wasn't found, " +
-                    "companyId: "+context.getCompanyId()+", planId: " + wb.getPlanId()+", workbookId: " + wb.getId()+", error msg: " + plansForCompany.getErrorMessagesAsStr() );
-        }
-        return null;
-    }
+
+
 }

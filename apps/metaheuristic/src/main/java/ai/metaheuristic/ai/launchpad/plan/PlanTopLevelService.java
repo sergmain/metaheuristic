@@ -19,7 +19,10 @@ package ai.metaheuristic.ai.launchpad.plan;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.data.PlanData;
+import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
@@ -28,6 +31,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -68,23 +72,30 @@ public class PlanTopLevelService {
     private final PlanRepository planRepository;
     private final WorkbookService workbookService;
     private final ApplicationEventPublisher publisher;
+    private final WorkbookCache workbookCache;
 
     public PlanApiData.WorkbookResult addWorkbook(Long planId, String poolCode, String inputResourceParams, LaunchpadContext context) {
-        final PlanImpl plan = planCache.findById(planId);
-        OperationStatusRest status = checkPlan(plan, context);
-        if (status!=null) {
-            return new PlanApiData.WorkbookResult("#560.010 access denied: " + status.getErrorMessagesAsStr());
-        }
-        return planService.getAddWorkbookInternal(poolCode, inputResourceParams, plan);
+        return getWorkbookResult(poolCode, inputResourceParams, context, planCache.findById(planId));
     }
 
     public PlanApiData.WorkbookResult addWorkbook(String planCode, String poolCode, String inputResourceParams, LaunchpadContext context) {
-        final PlanImpl plan = planRepository.findByCodeAndCompanyId(planCode, context.getCompanyId());
-        OperationStatusRest status = checkPlan(plan, context);
-        if (status!=null) {
-            return new PlanApiData.WorkbookResult("#560.011 access denied: " + status.getErrorMessagesAsStr());
+        return getWorkbookResult(poolCode, inputResourceParams, context, planRepository.findByCodeAndCompanyId(planCode, context.getCompanyId()));
+    }
+
+    private PlanApiData.WorkbookResult getWorkbookResult(String poolCode, String inputResourceParams, LaunchpadContext context, PlanImpl plan) {
+        // validate the plan
+        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
+        if (planValidation.status != EnumsApi.PlanValidateStatus.OK) {
+            PlanApiData.WorkbookResult r = new PlanApiData.WorkbookResult();
+            r.errorMessages = planValidation.errorMessages;
+            return r;
         }
-        return planService.getAddWorkbookInternal(poolCode, inputResourceParams, plan);
+
+        OperationStatusRest status = checkPlan(plan, context);
+        if (status != null) {
+            return new PlanApiData.WorkbookResult( "#560.011 access denied: " + status.getErrorMessagesAsStr());
+        }
+        return workbookService.getAddWorkbookInternal(poolCode, inputResourceParams, plan);
     }
 
     public PlanApiData.PlansResult getPlans(Pageable pageable, boolean isArchive, LaunchpadContext context) {
@@ -336,7 +347,7 @@ public class PlanTopLevelService {
         if (execState==EnumsApi.WorkbookExecState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
         }
-        OperationStatusRest status = workbookService.checkWorkbook(workbookId, context);
+        OperationStatusRest status = checkWorkbook(workbookId, context);
         if (status != null) {
             return status;
         }
@@ -345,14 +356,30 @@ public class PlanTopLevelService {
     }
 
     public OperationStatusRest deleteWorkbookById(Long workbookId, LaunchpadContext context) {
-        OperationStatusRest status = workbookService.checkWorkbook(workbookId, context);
+        OperationStatusRest status = checkWorkbook(workbookId, context);
         if (status != null) {
             return status;
         }
-        publisher.publishEvent( new WorkbookService.WorkbookDeletionEvent(this, workbookId) );
-        planService.deleteWorkbook(workbookId, context.getCompanyId());
+        publisher.publishEvent( new LaunchpadInternalEvent.WorkbookDeletionEvent(this, workbookId) );
+        workbookService.deleteWorkbook(workbookId, context.getCompanyId());
 
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    private OperationStatusRest checkWorkbook(Long workbookId, LaunchpadContext context) {
+        if (workbookId==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 workbookId is null");
+        }
+        Workbook wb = workbookCache.findById(workbookId);
+        if (wb==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 Workbook wasn't found, workbookId: " + workbookId );
+        }
+        PlanData.PlansForCompany plansForCompany = planService.getPlan(context.getCompanyId(), wb.getPlanId());
+        if (plansForCompany.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Plan wasn't found, " +
+                    "companyId: "+context.getCompanyId()+", planId: " + wb.getPlanId()+", workbookId: " + wb.getId()+", error msg: " + plansForCompany.getErrorMessagesAsStr() );
+        }
+        return null;
     }
 
     private OperationStatusRest checkPlan(Plan plan, LaunchpadContext context) {

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.plan;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
@@ -63,6 +64,9 @@ public class TestPlanService extends PreparingPlan {
 
     @Autowired
     public WorkbookFSM workbookFSM;
+
+    @Autowired
+    public WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
     @Override
     public String getPlanYamlAsString() {
@@ -210,7 +214,11 @@ public class TestPlanService extends PreparingPlan {
         r.setMl(null);
         r.setResult(getOKExecResult());
 
-        taskPersistencer.storeExecResult(r, workbookService.actionUpdateTaskExecState);
+        taskPersistencer.storeExecResult(r, t -> {
+            if (t!=null) {
+                workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
+            }
+        });
         taskPersistencer.setResultReceived(simpleTask.getTaskId(), true);
     }
 

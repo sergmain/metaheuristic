@@ -142,7 +142,7 @@ public class PlanParamsYaml implements BaseParams {
         public List<Meta> metas;
     }
 
-    public final int version=7;
+    public final int version=8;
     public PlanYaml planYaml;
     public String originYaml;
     public InternalParams internalParams;

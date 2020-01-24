@@ -22,21 +22,17 @@ import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
-import ai.metaheuristic.commons.utils.TaskParamsUtils;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
@@ -55,7 +51,12 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -65,10 +66,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ApplicationEventMulticaster;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -99,10 +102,16 @@ public class ExperimentService {
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final SnippetService snippetService;
-    private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
+    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
+
+    @Async
+    @EventListener
+    public void handleAsync(LaunchpadInternalEvent.ExperimentResetEvent event) {
+        resetExperimentByWorkbookId(event.workbookId);
+    }
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
         for (int i = 0; i < Math.min(o1.getValues().size(), o2.getValues().size()); i++) {
@@ -595,7 +604,7 @@ public class ExperimentService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookService.findAll(workbook);
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphTopLevelService.findAll(workbook);
 
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
@@ -636,8 +645,7 @@ public class ExperimentService {
         return experimentHyperParams.stream().collect(Collectors.toMap(HyperParam::getKey, HyperParam::getValues, (a, b) -> b, HashMap::new));
     }
 
-    public void resetExperimentByWorkbookId(Long workbookId) {
-
+    private void resetExperimentByWorkbookId(Long workbookId) {
         Experiment e = experimentRepository.findByWorkbookIdForUpdate(workbookId);
         if (e==null) {
             return;
@@ -726,8 +734,8 @@ public class ExperimentService {
                 boolHolder.set(true);
             }
         };
-        final WorkbookService.WorkbookDeletionListener listener =
-                new WorkbookService.WorkbookDeletionListener(workbookId, longConsumer);
+        final LaunchpadInternalEvent.WorkbookDeletionListener listener =
+                new LaunchpadInternalEvent.WorkbookDeletionListener(workbookId, longConsumer);
 
         int processed = 0;
         long prevMills = System.currentTimeMillis();
@@ -887,7 +895,7 @@ public class ExperimentService {
                             if (task == null) {
                                 return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
-                            workbookService.addNewTasksToGraph(workbookId, prevParentTaskIds, taskIds);
+                            workbookGraphTopLevelService.addNewTasksToGraph(workbookId, prevParentTaskIds, taskIds);
                         }
                         prevParentTaskIds = taskIds;
                     }

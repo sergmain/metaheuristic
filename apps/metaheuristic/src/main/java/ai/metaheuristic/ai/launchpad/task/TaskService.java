@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.launchpad.task;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookOperationStatusWithTaskList;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.launchpad.Task;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final WorkbookService workbookService;
+    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
     public List<Long> resourceReceivingChecker(long stationId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
@@ -61,7 +61,7 @@ public class TaskService {
                 }
                 taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
                 WorkbookOperationStatusWithTaskList workbookOperationStatusWithTaskList =
-                        workbookService.updateGraphWithSettingAllChildrenTasksAsBroken(task.workbookId, task.id);
+                        workbookGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.workbookId, task.id);
                 if (workbookOperationStatusWithTaskList==null) {
                     log.warn("#317.030 Workbook for this task was already deleted");
                     return;

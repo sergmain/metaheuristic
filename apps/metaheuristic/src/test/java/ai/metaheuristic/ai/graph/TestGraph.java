@@ -66,7 +66,7 @@ public class TestGraph extends PreparingPlan {
 
         assertNotNull(workbook);
 
-        OperationStatusRest osr = workbookService.addNewTasksToGraph(workbook.id, List.of(), List.of(1L));
+        OperationStatusRest osr = workbookGraphTopLevelService.addNewTasksToGraph(workbook.id, List.of(), List.of(1L));
         workbook = workbookCache.findById(workbook.id);
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
@@ -75,14 +75,14 @@ public class TestGraph extends PreparingPlan {
         assertEquals(1, count);
 
 
-        osr = workbookService.addNewTasksToGraph(workbook.id,List.of(1L), List.of(2L, 3L));
+        osr = workbookGraphTopLevelService.addNewTasksToGraph(workbook.id,List.of(1L), List.of(2L, 3L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         workbook = workbookCache.findById(workbook.id);
 
         count = workbookService.getCountUnfinishedTasks(workbook);
         assertEquals(3, count);
 
-        List<TaskVertex> leafs = workbookService.findLeafs(workbook);
+        List<TaskVertex> leafs = workbookGraphTopLevelService.findLeafs(workbook);
 
         assertEquals(2, leafs.size());
         assertTrue(leafs.contains(new TaskVertex(2L, EnumsApi.TaskExecState.NONE)));
@@ -93,12 +93,12 @@ public class TestGraph extends PreparingPlan {
         setExecState(workbook, 3L, EnumsApi.TaskExecState.NONE);
 
         WorkbookOperationStatusWithTaskList status =
-                workbookService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook.id,1L);
+                workbookGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook.id,1L);
         assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
         workbook = workbookCache.findById(workbook.id);
 
         // there is only 'BROKEN' exec state
-        Set<EnumsApi.TaskExecState> states = workbookService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
+        Set<EnumsApi.TaskExecState> states = workbookGraphTopLevelService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(1, states.size());
         assertTrue(states.contains(EnumsApi.TaskExecState.BROKEN));
 
@@ -107,11 +107,11 @@ public class TestGraph extends PreparingPlan {
 
 
         setExecState(workbook, 1L, EnumsApi.TaskExecState.NONE);
-        workbookService.updateGraphWithResettingAllChildrenTasks(workbook.id,1L);
+        workbookGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(workbook.id,1L);
         workbook = workbookCache.findById(workbook.id);
 
         // there is only 'NONE' exec state
-        states = workbookService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
+        states = workbookGraphTopLevelService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(1, states.size());
         assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
     }
@@ -120,7 +120,7 @@ public class TestGraph extends PreparingPlan {
         TaskImpl t1 = new TaskImpl();
         t1.id = id;
         t1.execState = execState.value;
-        workbookService.updateTaskExecStateByWorkbookId(workbook.id, t1.id, t1.execState );
+        workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id, t1.id, t1.execState );
     }
 
 }
