@@ -82,7 +82,7 @@ public class PlanTopLevelService {
         return getWorkbookResult(poolCode, inputResourceParams, context, planRepository.findByCodeAndCompanyId(planCode, context.getCompanyId()));
     }
 
-    private PlanApiData.WorkbookResult getWorkbookResult(String poolCode, String inputResourceParams, LaunchpadContext context, PlanImpl plan) {
+    public PlanApiData.WorkbookResult getWorkbookResult(String poolCode, String inputResourceParams, LaunchpadContext context, PlanImpl plan) {
         // validate the plan
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK) {

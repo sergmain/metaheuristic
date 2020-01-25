@@ -99,7 +99,6 @@ public class BatchTopLevelService {
     private final BatchRepository batchRepository;
     private final BatchService batchService;
     private final BatchCache batchCache;
-    private final BatchWorkbookRepository batchWorkbookRepository;
     private final LaunchpadEventService launchpadEventService;
     private final WorkbookService workbookService;
 
@@ -231,7 +230,7 @@ public class BatchTopLevelService {
             b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
             b = batchCache.save(b);
 
-            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), plan.getCode(), null, b.id, null, context );
+            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), plan.getCode(), null, b.id, producingResult.workbook.getId(), context );
 
 
             final Batch batch = batchService.changeStateToPreparing(b.id);
@@ -309,11 +308,7 @@ public class BatchTopLevelService {
             }
         }
         else {
-            List<Long> workbookIds = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
-            for (Long workbookId : workbookIds) {
-                workbookService.deleteWorkbook(workbookId, companyUniqueId);
-            }
-            batchWorkbookRepository.deleteByBatchId(batch.id);
+            workbookService.deleteWorkbook(batch.workbookId, companyUniqueId);
             batchCache.deleteById(batch.id);
         }
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
@@ -356,7 +351,7 @@ public class BatchTopLevelService {
         //noinspection ResultOfMethodCallIgnored
         zipDir.mkdir();
 
-        BatchStatusProcessor status = batchService.prepareStatusAndData(batchId, this::prepareZip, zipDir);
+        BatchStatusProcessor status = batchService.prepareStatusAndData(batch, this::prepareZip, zipDir);
 
         File statusFile = new File(zipDir, "status.txt");
         FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);

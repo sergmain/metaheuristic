@@ -22,7 +22,10 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchAndWorkbookExecStates;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
-import ai.metaheuristic.ai.launchpad.beans.*;
+import ai.metaheuristic.ai.launchpad.beans.Batch;
+import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.Station;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
@@ -111,7 +114,6 @@ public class BatchService {
     private final BatchRepository batchRepository;
     private final WorkbookCache workbookCache;
     private final WorkbookService workbookService;
-    private final BatchWorkbookRepository batchWorkbookRepository;
     private final BinaryDataService binaryDataService;
     private final TaskRepository taskRepository;
     private final StationCache stationCache;
@@ -283,11 +285,6 @@ public class BatchService {
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
             throw new BatchResourceProcessingException("#995.190 Error creating workbook: " + producingResult.planProducingStatus);
         }
-        BatchWorkbook bw = new BatchWorkbook();
-        bw.batchId=batch.id;
-        bw.workbookId=producingResult.workbook.getId();
-        batchWorkbookRepository.save(bw);
-        launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_WORKBOOK_CREATED, null, mainDocFilename.get(), null, batch.id, bw.workbookId, null );
 
         PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
@@ -296,7 +293,7 @@ public class BatchService {
 
         PlanApiData.TaskProducingResultComplex countTasks = workbookService.produceTasks(false, plan, producingResult.workbook.getId());
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
-            workbookService.changeValidStatus(bw.workbookId, false);
+            workbookService.changeValidStatus(batch.workbookId, false);
             throw new BatchResourceProcessingException("#995.220 validation of plan was failed, status: " + countTasks.planValidateStatus);
         }
 
@@ -565,7 +562,7 @@ public class BatchService {
             return batchStatus;
         }
 
-        BatchStatusProcessor batchStatus = prepareStatusAndData(batchId, (PrepareZipData prepareZipData, File file) -> true, null);
+        BatchStatusProcessor batchStatus = prepareStatusAndData(b, (PrepareZipData prepareZipData, File file) -> true, null);
         BatchParamsYaml batchParams = BatchParamsYamlUtils.BASE_YAML_UTILS.to(b.getParams());
         if (batchParams == null) {
             batchParams = new BatchParamsYaml();
@@ -632,137 +629,125 @@ public class BatchService {
         public Long workbookId;
     }
 
-    public BatchStatusProcessor prepareStatusAndData(Long batchId, BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir) {
+    public BatchStatusProcessor prepareStatusAndData(Batch batch, BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir) {
+        Long batchId = batch.id;
         final BatchStatusProcessor bs = new BatchStatusProcessor();
         bs.originArchiveName = getUploadedFilename(batchId);
 
-        List<Long> ids = batchWorkbookRepository.findWorkbookIdsByBatchId(batchId);
-        if (ids.isEmpty()) {
-            bs.getGeneralStatus().add("#990.250 Batch is empty, there isn't any task, batchId: " + batchId, '\n');
+        Long workbookId = batch.workbookId;
+        if (workbookId==null) {
+            bs.getGeneralStatus().add("#990.250 Batch #"+batchId+" wasn't linked to Workbook", '\n');
             bs.ok = true;
             return bs;
         }
 
-        boolean isOk = true;
-        for (Long workbookId : ids) {
-            WorkbookImpl wb = workbookCache.findById(workbookId);
-            if (wb == null) {
-                String msg = "#990.260 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
-                bs.getGeneralStatus().add(msg, '\n');
-                log.warn(msg);
-                isOk = false;
-                continue;
-            }
-            String mainDocumentPoolCode = getMainDocumentPoolCode(wb);
-
-            final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode);
-            if (fullMainDocument == null) {
-                String msg = "#990.270 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
-                        "batchId: " + batchId + ", workbookId: " + workbookId;
-                log.warn(msg);
-                bs.getGeneralStatus().add(msg, '\n');
-                isOk = false;
-                continue;
-            }
-            final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
-
-            List<WorkbookParamsYaml.TaskVertex> taskVertices;
-            try {
-                taskVertices = workbookGraphTopLevelService.findLeafs(wb);
-            } catch (ObjectOptimisticLockingFailureException e) {
-                String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
-                log.warn(msg);
-                bs.getGeneralStatus().add(msg,'\n');
-                isOk = false;
-                continue;
-            }
-            if (taskVertices.isEmpty()) {
-                String msg = "#990.290 " + mainDocument + ", Can't find any task for batchId: " + batchId;
-                log.info(msg);
-                bs.getGeneralStatus().add(msg,'\n');
-                isOk = false;
-                continue;
-            }
-            if (taskVertices.size() > 1) {
-                String msg = "#990.300 " + mainDocument + ", Can't download file because there are more than one task " +
-                        "at the final state, batchId: " + batchId + ", workbookId: " + wb.getId();
-                log.info(msg);
-                bs.getGeneralStatus().add(msg,'\n');
-                isOk = false;
-                continue;
-            }
-            final Task task = taskRepository.findById(taskVertices.get(0).taskId).orElse(null);
-            if (task==null) {
-                String msg = "#990.303 " + mainDocument + ", Can't find task #" + taskVertices.get(0).taskId;
-                log.info(msg);
-                bs.getGeneralStatus().add(msg,'\n');
-                isOk = false;
-                continue;
-            }
-
-            EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
-            SnippetApiData.SnippetExec snippetExec;
-            try {
-                snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
-            } catch (YAMLException e) {
-                bs.getGeneralStatus().add("#990.310 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                        ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                        "taskId: " + task.getId(),'\n');
-                isOk = false;
-                continue;
-            }
-            Station s = null;
-            if (task.getStationId()!=null) {
-                s = stationCache.findById(task.getStationId());
-            }
-            final String stationIpAndHost = getStationIpAndHost(s);
-            switch (execState) {
-                case NONE:
-                case IN_PROGRESS:
-                    bs.getProgressStatus().add("#990.320 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                                    ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                                    "taskId: " + task.getId() + ", stationId: " + task.getStationId() +
-                                    ", " + stationIpAndHost
-                            ,'\n');
-                    isOk = true;
-                    continue;
-                case ERROR:
-                case BROKEN:
-                    bs.getErrorStatus().add(getStatusForError(batchId, wb, mainDocument, task, snippetExec, stationIpAndHost));
-                    isOk = true;
-                    continue;
-                case OK:
-                    isOk = true;
-                    // !!! Don't change to continue;
-                    break;
-            }
-
-            if (wb.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
-                bs.getProgressStatus().add("#990.360 " + mainDocument + ", Task hasn't completed yet, " +
-                                "batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                                "taskId: " + task.getId() + ", " +
-                                "stationId: " + task.getStationId() + ", " + stationIpAndHost
-                        ,'\n');
-                isOk = true;
-                continue;
-            }
-
-            PrepareZipData prepareZipData = new PrepareZipData(bs, task, zipDir, mainDocument, batchId, workbookId);
-            isOk = prepareZip.apply(prepareZipData, zipDir);
-            if (!isOk) {
-                continue;
-            }
-
-            String msg = "#990.380 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", workbookId: " + workbookId +
-                    ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
-            bs.getOkStatus().add(msg,'\n');
-            isOk = true;
-        }
-
-        bs.ok = isOk;
+        bs.ok = prepareStatus(prepareZip, zipDir, batchId, bs, workbookId);
         initBatchStatus(bs);
 
         return bs;
+    }
+
+    public boolean prepareStatus(BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir, Long batchId, BatchStatusProcessor bs, Long workbookId) {
+        WorkbookImpl wb = workbookCache.findById(workbookId);
+        if (wb == null) {
+            String msg = "#990.260 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
+            bs.getGeneralStatus().add(msg, '\n');
+            log.warn(msg);
+            return false;
+        }
+        String mainDocumentPoolCode = getMainDocumentPoolCode(wb);
+
+        final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode);
+        if (fullMainDocument == null) {
+            String msg = "#990.270 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
+                    "batchId: " + batchId + ", workbookId: " + workbookId;
+            log.warn(msg);
+            bs.getGeneralStatus().add(msg, '\n');
+            return false;
+        }
+        final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
+
+        List<WorkbookParamsYaml.TaskVertex> taskVertices;
+        try {
+            taskVertices = workbookGraphTopLevelService.findLeafs(wb);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
+            log.warn(msg);
+            bs.getGeneralStatus().add(msg,'\n');
+            return false;
+        }
+        if (taskVertices.isEmpty()) {
+            String msg = "#990.290 " + mainDocument + ", Can't find any task for batchId: " + batchId;
+            log.info(msg);
+            bs.getGeneralStatus().add(msg,'\n');
+            return false;
+        }
+        if (taskVertices.size() > 1) {
+            String msg = "#990.300 " + mainDocument + ", Can't download file because there are more than one task " +
+                    "at the final state, batchId: " + batchId + ", workbookId: " + wb.getId();
+            log.info(msg);
+            bs.getGeneralStatus().add(msg,'\n');
+            return false;
+        }
+        final Task task = taskRepository.findById(taskVertices.get(0).taskId).orElse(null);
+        if (task==null) {
+            String msg = "#990.303 " + mainDocument + ", Can't find task #" + taskVertices.get(0).taskId;
+            log.info(msg);
+            bs.getGeneralStatus().add(msg,'\n');
+            return false;
+        }
+
+        EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
+        SnippetApiData.SnippetExec snippetExec;
+        try {
+            snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
+        } catch (YAMLException e) {
+            bs.getGeneralStatus().add("#990.310 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                    ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                    "taskId: " + task.getId(),'\n');
+            return false;
+        }
+        Station s = null;
+        if (task.getStationId()!=null) {
+            s = stationCache.findById(task.getStationId());
+        }
+        final String stationIpAndHost = getStationIpAndHost(s);
+        switch (execState) {
+            case NONE:
+            case IN_PROGRESS:
+                bs.getProgressStatus().add("#990.320 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                                ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                                "taskId: " + task.getId() + ", stationId: " + task.getStationId() +
+                                ", " + stationIpAndHost
+                        ,'\n');
+                return true;
+            case ERROR:
+            case BROKEN:
+                bs.getErrorStatus().add(getStatusForError(batchId, wb, mainDocument, task, snippetExec, stationIpAndHost));
+                return true;
+            case OK:
+                break;
+        }
+
+        if (wb.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
+            bs.getProgressStatus().add("#990.360 " + mainDocument + ", Task hasn't completed yet, " +
+                            "batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                            "taskId: " + task.getId() + ", " +
+                            "stationId: " + task.getStationId() + ", " + stationIpAndHost
+                    ,'\n');
+            return true;
+        }
+
+        PrepareZipData prepareZipData = new PrepareZipData(bs, task, zipDir, mainDocument, batchId, workbookId);
+        boolean isOk = prepareZip.apply(prepareZipData, zipDir);
+        if (!isOk) {
+            return false;
+        }
+
+        String msg = "#990.380 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", workbookId: " + workbookId +
+                ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
+        bs.getOkStatus().add(msg,'\n');
+        return true;
     }
 
     private String getMainDocumentFilenameForPoolCode(String mainDocumentPoolCode) {

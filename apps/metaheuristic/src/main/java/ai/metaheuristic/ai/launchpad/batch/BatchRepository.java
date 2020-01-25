@@ -99,8 +99,8 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
 */
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.launchpad.batch.data.BatchAndWorkbookExecStates(b.id, w.id, b.execState, w.execState) " +
-            "from Batch b, BatchWorkbook bw, WorkbookImpl w " +
-            "where b.id=bw.batchId and bw.workbookId=w.id and b.execState=3")
+            "from Batch b, WorkbookImpl w " +
+            "where b.workbookId=w.id and b.execState=3")
     List<BatchAndWorkbookExecStates> findAllUnfinished();
 
 }
