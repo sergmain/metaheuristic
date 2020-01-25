@@ -104,28 +104,21 @@ CREATE TABLE mh_data
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    CODE        VARCHAR(200) not null,
-    POOL_CODE   VARCHAR(250) not null,
-    DATA_TYPE   NUMERIC(2, 0) NOT NULL,
-    REF_ID      NUMERIC(10, 0),
-    REF_TYPE    VARCHAR(15),
-    UPLOAD_TS   TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
-    DATA        LONGBLOB,
-    CHECKSUM    VARCHAR(2048),
-    IS_VALID    tinyint(1) not null default 0,
-    IS_MANUAL   tinyint(1) not null default 0,
-    FILENAME    VARCHAR(150),
-    PARAMS      MEDIUMTEXT not null
+    CODE            VARCHAR(200) not null,
+    POOL_CODE       VARCHAR(250) not null,
+    DATA_TYPE       NUMERIC(2, 0) NOT NULL,
+    WORKBOOK_ID     NUMERIC(10, 0),
+    UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+    DATA            LONGBLOB,
+    FILENAME        VARCHAR(150),
+    PARAMS          MEDIUMTEXT not null
 );
 
 CREATE INDEX mh_data_data_type_idx
   ON mh_data (DATA_TYPE);
 
-CREATE INDEX mh_data_ref_id_ref_type_idx
-  ON mh_data (REF_ID, REF_TYPE);
-
-CREATE INDEX mh_data_ref_type_idx
-  ON mh_data (REF_TYPE);
+CREATE INDEX mh_data_workbook_id_idx
+  ON mh_data (WORKBOOK_ID);
 
 CREATE INDEX mh_data_pool_code_id_idx
     ON mh_data (POOL_CODE);
@@ -258,6 +251,7 @@ create table mh_batch
     COMPANY_ID      INT UNSIGNED    not null,
     ACCOUNT_ID      INT UNSIGNED,
     PLAN_ID         NUMERIC(10, 0) NOT NULL,
+    WORKBOOK_ID     NUMERIC(10, 0),
     DATA_ID         NUMERIC(10, 0),
     CREATED_ON      bigint         NOT NULL,
     EXEC_STATE      tinyint(1) not null default 0,
@@ -265,16 +259,8 @@ create table mh_batch
     IS_DELETED      BOOLEAN not null default false
 );
 
-CREATE TABLE mh_batch_workbook
-(
-    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,
-    BATCH_ID    NUMERIC(10, 0) NOT NULL,
-    WORKBOOK_ID NUMERIC(10, 0) NOT NULL
-);
-
-CREATE INDEX mh_batch_workbook_batch_id_idx
-    ON mh_batch_workbook (BATCH_ID);
+CREATE INDEX mh_batch_workbook_id_idx
+    ON mh_batch (WORKBOOK_ID);
 
 CREATE TABLE mh_event
 (

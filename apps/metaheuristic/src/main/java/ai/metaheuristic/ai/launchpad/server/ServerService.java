@@ -167,9 +167,8 @@ public class ServerService {
                         is, resFile.length(), EnumsApi.BinaryDataType.DATA,
                         taskParamYaml.taskYaml.outputResourceCode,
                         taskParamYaml.taskYaml.outputResourceCode,
-                        false,
                         null,
-                        task.workbookId, EnumsApi.BinaryDataRefType.workbook);
+                        task.workbookId);
             }
         }
         catch (BinaryDataSaveException th) {

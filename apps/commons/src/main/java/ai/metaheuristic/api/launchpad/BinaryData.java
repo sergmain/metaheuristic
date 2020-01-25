@@ -36,17 +36,11 @@ public interface BinaryData {
 
     int getDataType();
 
-    Long getRefId();
+    Long getWorkbookId();
 
     java.sql.Timestamp getUploadTs();
 
     java.sql.Blob getData();
-
-    String getChecksum();
-
-    boolean isValid();
-
-    boolean isManual();
 
     String getFilename();
 
@@ -64,25 +58,15 @@ public interface BinaryData {
 
     void setDataType(int dataType);
 
-    void setRefId(Long refId);
+    void setWorkbookId(Long refId);
 
     void setUploadTs(java.sql.Timestamp uploadTs);
 
     void setData(java.sql.Blob data);
-
-    void setChecksum(String checksum);
-
-    void setValid(boolean valid);
-
-    void setManual(boolean manual);
 
     void setFilename(String filename);
 
     void setBytes(byte[] bytes);
 
     void setParams(String params);
-
-    String getRefType();
-
-    void setRefType(String refType);
 }

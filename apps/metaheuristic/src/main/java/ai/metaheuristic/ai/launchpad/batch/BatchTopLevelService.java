@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
+import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
@@ -30,6 +31,7 @@ import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
@@ -41,6 +43,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -208,7 +211,21 @@ public class BatchTopLevelService {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
 
-            Batch b = new Batch(planId, Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());
+            String code = ResourceUtils.toResourceCode(originFilename);
+
+            WorkbookParamsYaml.WorkbookYaml workbookYaml = PlanUtils.asWorkbookParamsYaml(code);
+            PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(planId, workbookYaml);
+            if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
+                throw new BatchResourceProcessingException("#995.075 Error creating workbook: " + producingResult.planProducingStatus);
+            }
+
+            try(InputStream is = new FileInputStream(dataFile)) {
+                binaryDataService.save(
+                        is, dataFile.length(), EnumsApi.BinaryDataType.BATCH, code, code,
+                        originFilename, producingResult.workbook.getId());
+            }
+
+            Batch b = new Batch(planId, producingResult.workbook.getId(), Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());
             BatchParamsYaml bpy = new BatchParamsYaml();
             bpy.username = context.account.username;
             b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
@@ -216,12 +233,6 @@ public class BatchTopLevelService {
 
             launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), plan.getCode(), null, b.id, null, context );
 
-            try(InputStream is = new FileInputStream(dataFile)) {
-                String code = ResourceUtils.toResourceCode(originFilename);
-                binaryDataService.save(
-                        is, dataFile.length(), EnumsApi.BinaryDataType.BATCH, code, code,
-                        true, originFilename, b.id, EnumsApi.BinaryDataRefType.batch);
-            }
 
             final Batch batch = batchService.changeStateToPreparing(b.id);
             // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed

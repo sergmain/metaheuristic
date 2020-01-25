@@ -43,11 +43,7 @@ import java.util.List;
 public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long> {
 
     @Transactional(readOnly = true)
-    @Query(nativeQuery = true, value = "select d.id from mh_data d where d.ref_type='batch' and d.REF_ID not in (select z.id from mh_batch z)")
-    List<Long> findAllOrphanBatchData();
-
-    @Transactional(readOnly = true)
-    @Query(nativeQuery = true, value = "select d.id from mh_data d where d.ref_type='workbook' and d.REF_ID not in (select z.id from mh_workbook z)")
+    @Query(nativeQuery = true, value = "select d.id from mh_data d where d.WORKBOOK_ID is not null and d.WORKBOOK_ID not in (select z.id from mh_workbook z)")
     List<Long> findAllOrphanWorkbookData();
 
     @Transactional(readOnly = true)
@@ -57,12 +53,12 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
             "b.code, b.poolCode, b.params, b.filename ) " +
             "from BinaryDataImpl b where b.poolCode in :poolCodes and " +
-            "b.refId=:refId and b.refType='workbook'")
-    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPoolForWorkbook(List<String> poolCodes, Long refId);
+            "b.workbookId=:workbookId")
+    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPoolForWorkbook(List<String> poolCodes, Long workbookId);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.refId, b.filename from BinaryDataImpl b " +
-            "where b.refType='batch' and b.refId in :ids ")
+    @Query(value="select b.workbookId, b.filename from BinaryDataImpl b " +
+            "where b.workbookId in :ids ")
     List<Object[]> getFilenamesForBatchIds(Collection<Long> ids);
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
@@ -75,7 +71,7 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     @Query(value="select b.filename from BinaryDataImpl b where b.poolCode=:poolCode and b.dataType=:dataType ")
     String findFilenameByPoolCodeAndDataType(String poolCode, int dataType);
 
-    @Query(value="select b.filename from BinaryDataImpl b where b.refType='batch' and b.refId=:batchId ")
+    @Query(value="select b.filename from BinaryDataImpl b where and b.workbookId=:batchId ")
     String findFilenameByBatchId(Long batchId);
 
     @Transactional(readOnly = true)
@@ -86,7 +82,7 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     Blob getDataAsStreamByCode(String code);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.data from BinaryDataImpl b where b.refType='batch' and b.refId=:batchId ")
+    @Query(value="select b.data from BinaryDataImpl b where b.workbookId=:batchId ")
     Blob getDataAsStreamForBatchAndRefId(Long batchId);
 
     @Transactional
@@ -103,15 +99,14 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     void deleteByCodeAndDataType(String code, int dataType);
 
     @Transactional
-    void deleteByRefIdAndRefType(Long refId, String refType);
+    void deleteByWorkbookId(Long workbookId);
 
     @Transactional
     void deleteByPoolCodeAndDataType(String poolCode, int dataType);
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource(" +
-            "b.id, b.version, b.code, b.poolCode, b.dataType, b.uploadTs, b.checksum, b.valid, b.manual, b.filename, " +
-            "b.params ) " +
-            "from BinaryDataImpl b where b.manual=true " +
+            "b.id, b.version, b.code, b.poolCode, b.dataType, b.uploadTs, b.filename, b.params ) " +
+            "from BinaryDataImpl b " +
             "order by b.uploadTs desc ")
     Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);
 

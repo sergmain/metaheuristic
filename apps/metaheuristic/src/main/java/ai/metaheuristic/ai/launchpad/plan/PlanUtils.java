@@ -48,7 +48,7 @@ public class PlanUtils {
         return wrc;
     }
 
-    private static WorkbookParamsYaml.WorkbookYaml asWorkbookParamsYaml(String poolCode) {
+    public static WorkbookParamsYaml.WorkbookYaml asWorkbookParamsYaml(String poolCode) {
         WorkbookParamsYaml.WorkbookYaml wrc = new WorkbookParamsYaml.WorkbookYaml();
         wrc.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o->new ArrayList<>()).add(poolCode);
         return wrc;

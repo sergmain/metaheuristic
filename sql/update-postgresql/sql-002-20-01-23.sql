@@ -25,3 +25,23 @@ delete from MH_DATA where DATA_TYPE =2;
 
 commit;
 
+alter table mh_data drop column checksum;
+
+alter table mh_data drop column IS_MANUAL;
+
+alter table mh_data drop column IS_VALID;
+
+drop index mh_data_ref_id_ref_type_idx;
+
+alter table mh_data rename column ref_id to WORKBOOK_ID;
+
+CREATE INDEX MH_DATA_WORKBOOK_ID_IDX ON MH_DATA (WORKBOOK_ID);
+
+alter table mh_data drop column REF_TYPE;
+
+alter table mh_data add WORKBOOK_ID       NUMERIC(10, 0);
+
+CREATE INDEX MH_BATCH_WORKBOOK_ID_IDX
+    ON MH_BATCH (WORKBOOK_ID);
+
+drop table MH_BATCH_WORKBOOK;

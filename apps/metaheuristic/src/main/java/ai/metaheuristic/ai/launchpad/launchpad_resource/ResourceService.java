@@ -41,7 +41,7 @@ public class ResourceService {
         try {
             try (InputStream is = new FileInputStream(tempFile)) {
                 binaryDataService.save(
-                        is, tempFile.length(), EnumsApi.BinaryDataType.DATA, code, poolCode, true, filename, null, null);
+                        is, tempFile.length(), EnumsApi.BinaryDataType.DATA, code, poolCode, filename, null);
             }
         } catch (IOException e) {
             log.error("Error", e);

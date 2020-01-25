@@ -107,7 +107,7 @@ public class ResourceTopLevelService {
         }
         DataStorageParams dsp = DataStorageParamsUtils.to(params);
         if (dsp.sourcing==null || dsp.sourcing== EnumsApi.DataSourcing.launchpad) {
-            String es = "#172.055 Sourcing must be "+ EnumsApi.DataSourcing.launchpad + " or " +EnumsApi.DataSourcing.launchpad +", actual: " + dsp.sourcing;
+            String es = "#172.055 Sourcing must be "+ EnumsApi.DataSourcing.disk + " or " +EnumsApi.DataSourcing.git +", actual: " + dsp.sourcing;
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }

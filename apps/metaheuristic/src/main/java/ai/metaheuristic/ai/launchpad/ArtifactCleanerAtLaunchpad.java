@@ -39,8 +39,6 @@ public class ArtifactCleanerAtLaunchpad {
 
     public void fixedDelay() {
         deleteOrphanTasks();
-//# select count(*) from aiai.mh_data d where d.ref_type='batch' and d.REF_ID not in (select z.id from aiai.mh_batch z)
-        deleteOrphanBatchData();
 //# select count(*) from aiai.mh_data d where d.ref_type='workbook' and d.REF_ID not in (select z.id from aiai.mh_workbook z)
         deleteOrphanWorkbookData();
 
@@ -51,10 +49,6 @@ public class ArtifactCleanerAtLaunchpad {
 
     private void deleteOrphanWorkbookData() {
         deleteOrphanData(binaryDataRepository.findAllOrphanWorkbookData());
-    }
-
-    private void deleteOrphanBatchData() {
-        deleteOrphanData(binaryDataRepository.findAllOrphanBatchData());
     }
 
     private void deleteOrphanData(List<Long> ids) {

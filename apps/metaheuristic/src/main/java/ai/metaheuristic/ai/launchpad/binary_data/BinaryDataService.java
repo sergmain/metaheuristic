@@ -28,6 +28,7 @@ import ai.metaheuristic.api.launchpad.BinaryData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
@@ -131,8 +132,8 @@ public class BinaryDataService {
         }
     }
 
-    public void deleteByRefId(Long workbookId, BinaryDataRefType refType) {
-        binaryDataRepository.deleteByRefIdAndRefType(workbookId, refType.toString());
+    public void deleteByWorkbookId(Long workbookId) {
+        binaryDataRepository.deleteByWorkbookId(workbookId);
     }
 
     public void deleteAllByType(BinaryDataType binaryDataType) {
@@ -165,26 +166,19 @@ public class BinaryDataService {
 
     public BinaryData save(InputStream is, long size,
                            BinaryDataType binaryDataType, String code, String poolCode,
-                           boolean isManual, String filename, Long refId, BinaryDataRefType refType) {
-        if (binaryDataType== BinaryDataType.SNIPPET && refId!=null) {
-            throw new BinaryDataSaveException("#087.030 Snippet can't be bound to workbook");
-        }
-        if ((refId==null && refType!=null) || (refId!=null && refType==null)) {
-            throw new BinaryDataSaveException("#087.040 refId and refType both must be null or both must not be null, " +
-                    "refId: #"+refId+", refType: "+refType);
+                           String filename, Long workbookId) {
+        if (binaryDataType==BinaryDataType.SNIPPET) {
+            throw new BinaryDataSaveException("#087.030 snipper can't be saved via BinaryDataService.save()");
         }
         try {
             BinaryDataImpl data = binaryDataRepository.findByCodeForUpdate(code);
             if (data == null) {
                 data = new BinaryDataImpl();
                 data.setType(binaryDataType);
-                data.setValid(true);
                 data.setCode(code);
                 data.setPoolCode(poolCode);
-                data.setManual(isManual);
                 data.setFilename(filename);
-                data.setRefId(refId);
-                data.setRefType(refType!=null ? refType.toString() : null);
+                data.setWorkbookId(workbookId);
                 data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
             } else {
                 if (!poolCode.equals(data.getPoolCode())) {
@@ -235,13 +229,10 @@ public class BinaryDataService {
                 }
             }
             data.setType(BinaryDataType.DATA);
-            data.setValid(true);
             data.setCode(resourceCode);
             data.setPoolCode(poolCode);
-            data.setManual(true);
             data.setFilename(null);
-            data.setRefId(null);
-            data.setRefType(null);
+            data.setWorkbookId(null);
             data.setParams(params);
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setData(null);
@@ -293,6 +284,9 @@ public class BinaryDataService {
 
     @Transactional(readOnly = true)
     public String findFilenameByBatchId(Long batchId) {
+        if (true) {
+            throw new NotImplementedException("Need to re-write");
+        }
         return binaryDataRepository.findFilenameByBatchId(batchId);
     }
 
@@ -300,6 +294,9 @@ public class BinaryDataService {
     public List<Object[]> getFilenamesForBatchIds(List<Long> batchIds) {
         if (batchIds.isEmpty()) {
             return List.of();
+        }
+        if (true) {
+            throw new NotImplementedException("Need to re-write");
         }
         return binaryDataRepository.getFilenamesForBatchIds(batchIds);
     }

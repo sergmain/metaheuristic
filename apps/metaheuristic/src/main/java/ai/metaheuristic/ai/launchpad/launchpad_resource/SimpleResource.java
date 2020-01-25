@@ -31,9 +31,6 @@ public class SimpleResource {
     private String poolCode;
     private int dataType;
     private java.util.Date uploadTs;
-    public String checksum;
-    public boolean valid;
-    public boolean manual;
     public String filename;
     public String storageUrl;
 

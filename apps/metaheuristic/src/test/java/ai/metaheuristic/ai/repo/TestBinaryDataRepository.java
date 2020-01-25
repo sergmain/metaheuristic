@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.repo;
 
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
-import ai.metaheuristic.api.launchpad.BinaryData;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.launchpad.BinaryData;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.ByteArrayInputStream;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
@@ -47,13 +46,13 @@ public class TestBinaryDataRepository {
     private TestBinaryDataService testBinaryDataService;
 
     @Test
-    public void testFeatureCompletionWithAllError() throws SQLException, InterruptedException {
+    public void testFeatureCompletionWithAllError() throws InterruptedException {
         byte[] bytes = "this is very short data".getBytes();
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
         BinaryData d1 = binaryDataService.save(inputStream, bytes.length, EnumsApi.BinaryDataType.TEST, "test-01", "test-01",
-                true, "test-file.bin", null, null);
+                "test-file.bin", null);
 
         Timestamp ts = d1.getUploadTs();
 

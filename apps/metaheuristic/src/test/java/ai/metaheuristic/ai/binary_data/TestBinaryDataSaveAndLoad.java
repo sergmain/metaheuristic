@@ -108,7 +108,7 @@ public class TestBinaryDataSaveAndLoad {
         try (InputStream is = new FileInputStream(dataFile)) {
             binaryData = binaryDataService.save(is, dataFile.length(),
                     EnumsApi.BinaryDataType.TEST, code, code,
-                    true, DATA_FILE_BIN, null, null);
+                    DATA_FILE_BIN, null);
         }
         assertNotNull(binaryData);
 

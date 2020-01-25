@@ -63,11 +63,8 @@ public class BinaryDataImpl implements Serializable, BinaryData {
      * Also this field is used as refId for deleting any resources which were produced
      * while workbook was processed.
      */
-    @Column(name = "REF_ID")
-    private Long refId;
-
-    @Column(name = "REF_TYPE")
-    public String refType;
+    @Column(name = "WORKBOOK_ID")
+    private Long workbookId;
 
     @Column(name = "UPLOAD_TS")
     private Timestamp uploadTs;
@@ -75,15 +72,6 @@ public class BinaryDataImpl implements Serializable, BinaryData {
     @Column(name = "DATA")
     @Lob
     private Blob data;
-
-    @Column(name = "CHECKSUM")
-    public String checksum;
-
-    @Column(name = "IS_VALID")
-    public boolean valid;
-
-    @Column(name = "IS_MANUAL")
-    public boolean manual;
 
     @Column(name = "FILENAME")
     public String filename;

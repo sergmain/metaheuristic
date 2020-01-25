@@ -187,9 +187,8 @@ public class WorkbookService {
             return result;
         }
 
-        workbookCache.save(wb);
+        result.workbook = workbookCache.save(wb);
         result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
-        result.workbook = wb;
 
         return result;
     }
@@ -605,7 +604,7 @@ public class WorkbookService {
     public void deleteWorkbook(Long workbookId, Long companyUniqueId) {
 //        experimentService.resetExperimentByWorkbookId(workbookId);
         applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.ExperimentResetEvent(workbookId));
-        binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
+        binaryDataService.deleteByWorkbookId(workbookId);
         Workbook workbook = workbookCache.findById(workbookId);
         if (workbook != null) {
             // unlock plan if this is the last workbook in the plan
