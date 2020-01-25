@@ -56,6 +56,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
@@ -232,52 +233,18 @@ public class BatchTopLevelService {
 
             launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), plan.getCode(), null, b.id, producingResult.workbook.getId(), context );
 
-
             final Batch batch = batchService.changeStateToPreparing(b.id);
             // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed
             if (batch==null) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.080 can't find batch with id " + b.id);
             }
 
-            log.info("The file {} was successfully stored to disk", originFilename);
-            new Thread(() -> {
-                try {
-                    if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
 
-                        log.debug("Start unzipping archive");
-                        Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
-                        log.debug("Start loading file data to db");
-                        batchService.loadFilesFromDirAfterZip(batch, tempDir, mapping);
-                    }
-                    else {
-                        log.debug("Start loading file data to db");
-                        batchService.loadFilesFromDirAfterZip(batch, tempDir, Map.of(dataFile.getName(), originFilename));
-                    }
-                    batchService.changeStateToProcessing(batch.id);
-                }
-                catch(UnzipArchiveException e) {
-                    final String es = "#995.100 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
-                    log.error(es, e);
-                    batchService.changeStateToError(batch.id, es);
-                }
-                catch(BatchProcessingException e) {
-                    final String es = "#995.105 General error of processing batch.\nError: " + e.getMessage();
-                    log.error(es, e);
-                    batchService.changeStateToError(batch.id, es);
-                }
-                catch(Throwable th) {
-                    final String es = "#995.110 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
-                    log.error(es, th);
-                    batchService.changeStateToError(batch.id, es);
-                }
-                finally {
-                    try {
-                        FileUtils.deleteDirectory(tempDir);
-                    } catch (IOException e) {
-                        log.warn("Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());
-                    }
-                }
-            }).start();
+            if (true) {
+                // TODO  insert here additional processing of file of batch
+                throw new NotImplementedException("Need to re-write");
+            }
+
             //noinspection unused
             int i=0;
         }
