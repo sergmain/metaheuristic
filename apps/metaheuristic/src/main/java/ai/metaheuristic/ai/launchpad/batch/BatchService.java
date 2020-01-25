@@ -102,7 +102,6 @@ public class BatchService {
 
     private static final String PLAN_NOT_FOUND = "Plan wasn't found";
     private static final String IP_HOST = "IP: %s, host: %s";
-    public static final String ATTACHMENTS_POOL_CODE = "attachments";
     private static final String DELEMITER_2 = "\n====================================================================\n";
 
     private final Globals globals;

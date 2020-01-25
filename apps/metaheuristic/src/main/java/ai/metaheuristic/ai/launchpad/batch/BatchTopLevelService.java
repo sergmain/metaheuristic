@@ -93,7 +93,6 @@ public class BatchTopLevelService {
 
     private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[/\\\\A-Za-z0-9._-]*$";
     private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
-    private static final List<String> EXCLUDE_FROM_MAPPING = List.of("config.yaml", "config.yml");
 
     private final PlanService planService;
     private final BinaryDataService binaryDataService;
@@ -239,6 +238,7 @@ public class BatchTopLevelService {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.080 can't find batch with id " + b.id);
             }
 
+            log.info("The file {} was successfully stored to disk", originFilename);
 
             if (true) {
                 // TODO  insert here additional processing of file of batch

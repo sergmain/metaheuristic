@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.internal_snippet_lib.resource_splitter;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BatchConfigYamlException;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
@@ -24,14 +25,26 @@ import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.launchpad.batch.BatchService;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
+import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
+import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
+import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
@@ -49,12 +62,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
@@ -70,56 +81,92 @@ import static ai.metaheuristic.ai.Consts.ZIP_EXT;
 @RequiredArgsConstructor
 public class ResourceSplitterSnippet {
 
+    public static final String ATTACHMENTS_POOL_CODE = "attachments";
     private static final Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml", ".yml");
     private static final String CONFIG_FILE = "config.yaml";
+    private static final List<String> EXCLUDE_FROM_MAPPING = List.of("config.yaml", "config.yml");
 
+    public final Globals globals;
     public final BatchService batchService;
+    public final PlanService planService;
+    public final PlanCache planCache;
+    public final WorkbookService workbookService;
+    public final ResourceService resourceService;
+    private final BinaryDataRepository binaryDataRepository;
+    private final WorkbookCache workbookCache;
 
-    public void process(List<String> poolResourceCodes) {
+    public void process(Long planId, Long workbookId, TaskParamsYaml taskParamsYaml) {
 
-        log.info("The file {} was successfully stored to disk", originFilename);
-        new Thread(() -> {
+        List<String> values = taskParamsYaml.taskYaml.inputResourceCodes.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        if (values.size()>1) {
+            throw new IllegalStateException("Too many input codes");
+        }
+        String inputCode = values.get(0);
+        BinaryDataImpl bd = binaryDataRepository.findByCode(inputCode);
+        if (bd==null) {
+            throw new IllegalStateException("BinaryDataImpl not found for code " + inputCode);
+        }
+        String originFilename = bd.filename;
+        String ext = StrUtils.getExtension(originFilename);
+
+        try {
+            File tempDir = DirUtils.createTempDir("batch-file-upload-");
+            if (tempDir==null || tempDir.isFile()) {
+                String es = "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir");
+                throw new IllegalStateException(es);
+                // return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
+            }
+
+            final File dataFile = File.createTempFile("uploaded-file-", ext, tempDir);
+
+            if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
+
+                log.debug("Start unzipping archive");
+                Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
+                log.debug("Start loading file data to db");
+                loadFilesFromDirAfterZip(planId, workbookId, tempDir, mapping);
+            }
+            else {
+                log.debug("Start loading file data to db");
+                loadFilesFromDirAfterZip(planId, workbookId, tempDir, Map.of(dataFile.getName(), originFilename));
+            }
+            batchService.changeStateToProcessing(batch.id);
+        }
+        catch(UnzipArchiveException e) {
+            final String es = "#995.100 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
+            log.error(es, e);
+            batchService.changeStateToError(batch.id, es);
+        }
+        catch(BatchProcessingException e) {
+            final String es = "#995.105 General error of processing batch.\nError: " + e.getMessage();
+            log.error(es, e);
+            batchService.changeStateToError(batch.id, es);
+        }
+        catch(Throwable th) {
+            final String es = "#995.110 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
+            log.error(es, th);
+            batchService.changeStateToError(batch.id, es);
+        }
+        finally {
             try {
-                if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
-
-                    log.debug("Start unzipping archive");
-                    Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
-                    log.debug("Start loading file data to db");
-                    loadFilesFromDirAfterZip(batch, tempDir, mapping);
-                }
-                else {
-                    log.debug("Start loading file data to db");
-                    loadFilesFromDirAfterZip(batch, tempDir, Map.of(dataFile.getName(), originFilename));
-                }
-                batchService.changeStateToProcessing(batch.id);
+                FileUtils.deleteDirectory(tempDir);
+            } catch (IOException e) {
+                log.warn("Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());
             }
-            catch(UnzipArchiveException e) {
-                final String es = "#995.100 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
-                log.error(es, e);
-                batchService.changeStateToError(batch.id, es);
-            }
-            catch(BatchProcessingException e) {
-                final String es = "#995.105 General error of processing batch.\nError: " + e.getMessage();
-                log.error(es, e);
-                batchService.changeStateToError(batch.id, es);
-            }
-            catch(Throwable th) {
-                final String es = "#995.110 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
-                log.error(es, th);
-                batchService.changeStateToError(batch.id, es);
-            }
-            finally {
-                try {
-                    FileUtils.deleteDirectory(tempDir);
-                } catch (IOException e) {
-                    log.warn("Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());
-                }
-            }
-        }).start();
+        }
 
     }
 
-    public void loadFilesFromDirAfterZip(Batch batch, File srcDir, final Map<String, String> mapping) throws IOException {
+    public void loadFilesFromDirAfterZip(Long planId, Long workbookId, File srcDir, final Map<String, String> mapping) throws IOException {
+
+        PlanImpl plan = planCache.findById(planId);
+        if (plan==null) {
+            throw new IllegalStateException("#995.200 plan wasn't found, planId: " + planId);
+        }
+        Workbook wb = workbookCache.findById(workbookId);
+        if (wb==null) {
+            throw new IllegalStateException("#995.202 workbook wasn't found, workbookId: " + workbookId);
+        }
 
         final AtomicBoolean isEmpty = new AtomicBoolean(true);
         Files.list(srcDir.toPath())
@@ -140,10 +187,10 @@ public class ResourceSplitterSnippet {
                                         final String actualFileName = mapping.get(currFileName);
                                         return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
                                     });
-                            createAndProcessTask(batch, files, mainDocFile);
+                            createAndProcessTask(plan, wb, files, mainDocFile);
                         } else {
                             String actualFileName = mapping.get(file.getName());
-                            createAndProcessTask(batch, Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), file);
+                            createAndProcessTask(plan, wb, Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), file);
                         }
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;
@@ -161,13 +208,12 @@ public class ResourceSplitterSnippet {
 
     }
 
-    private void createAndProcessTask(Batch batch, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile) {
+    private void createAndProcessTask(PlanImpl plan, Workbook wb, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile) {
 
-        Long planId = batch.planId;
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
-        String mainPoolCode = String.format("%d-%s-%d", planId, Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
-        String attachPoolCode = String.format("%d-%s-%d", planId, ATTACHMENTS_POOL_CODE, nanoTime);
+        String mainPoolCode = String.format("%d-%s-%d", wb.getId(), Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
+        String attachPoolCode = String.format("%d-%s-%d", wb.getId(), ATTACHMENTS_POOL_CODE, nanoTime);
         final AtomicBoolean isMainDocPresent = new AtomicBoolean(false);
         AtomicReference<String> mainDocFilename = new AtomicReference<>();
         dataFiles.forEach( fileWithMapping -> {
@@ -195,39 +241,28 @@ public class ResourceSplitterSnippet {
             throw new BatchResourceProcessingException("#995.180 main document wasn't found");
         }
 
-        final WorkbookParamsYaml.WorkbookYaml params = PlanUtils.initWorkbookParamsYaml(mainPoolCode, attachPoolCode, attachments);
-        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(planId, params);
-        if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
-            throw new BatchResourceProcessingException("#995.190 Error creating workbook: " + producingResult.planProducingStatus);
-        }
-
-        PlanImpl plan = planCache.findById(planId);
-        if (plan == null) {
-            throw new BatchResourceProcessingException("#995.200 plan wasn't found, planId: " + planId);
-        }
-
-        PlanApiData.TaskProducingResultComplex countTasks = workbookService.produceTasks(false, plan, producingResult.workbook.getId());
+        PlanApiData.TaskProducingResultComplex countTasks = workbookService.produceTasks(false, plan, wb.getId());
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
-            workbookService.changeValidStatus(batch.workbookId, false);
+            workbookService.changeValidStatus(wb.getId(), false);
             throw new BatchResourceProcessingException("#995.220 validation of plan was failed, status: " + countTasks.planValidateStatus);
         }
 
         if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
-            workbookService.changeValidStatus(producingResult.workbook.getId(), false);
+            workbookService.changeValidStatus(wb.getId(), false);
             throw new BatchResourceProcessingException(
                     "#995.220 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                             "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook +", tasks in this workbook:  " + countTasks.numberOfTasks);
         }
-        workbookService.changeValidStatus(producingResult.workbook.getId(), true);
+        workbookService.changeValidStatus(wb.getId(), true);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.PRODUCING);
+        OperationStatusRest operationStatus = planService.workbookTargetExecState(wb.getId(), EnumsApi.WorkbookExecState.PRODUCING);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
         planService.createAllTasks();
-        operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.STARTED);
+        operationStatus = planService.workbookTargetExecState(wb.getId(), EnumsApi.WorkbookExecState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());

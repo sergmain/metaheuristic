@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.launchpad.batch.BatchService;
+import ai.metaheuristic.ai.launchpad.internal_snippet_lib.resource_splitter.ResourceSplitterSnippet;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV1;
@@ -61,7 +61,8 @@ public class PlanUtils {
         if (attachmentCodes.isEmpty()) {
             return wy;
         }
-        wy.poolCodes.computeIfAbsent(BatchService.ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
+        // TODO 2020-01-24 need to re-write with using aliases from plan
+        wy.poolCodes.computeIfAbsent(ResourceSplitterSnippet.ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
         return wy;
     }
 }
