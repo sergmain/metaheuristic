@@ -21,13 +21,16 @@ import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.BatchCache;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.beans.Account;
+import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
+import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV8;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -41,6 +44,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -60,22 +64,24 @@ public class TestUploadFileForBatch extends PreparingPlan {
     @Override
     public String getPlanYamlAsString() {
         PlanParamsYamlV8 planParamsYaml = new PlanParamsYamlV8();
+
         planParamsYaml.planYaml = new PlanParamsYamlV8.PlanYamlV8();
+        planParamsYaml.planYaml.planCode = "Plan for testing uploading batch file";
         {
             PlanParamsYamlV8.ProcessV8 p = new PlanParamsYamlV8.ProcessV8();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
-            p.name = "assembly raw file";
-            p.code = "assembly-raw-file";
+            p.name = "Plocess mh.resource-splitter";
+            p.code = "process-mh.resource-splitter";
 
             p.snippets = List.of(new PlanParamsYamlV8.SnippetDefForPlanV8(Consts.MH_RESOURCE_SPLITTER_SNIPPET, EnumsApi.SnippetExecContext.internal));
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-            p.outputParams.storageType = "assembled-raw-output";
+            p.outputParams.storageType = "batch-array";
 
             planParamsYaml.planYaml.processes.add(p);
         }
 
         String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
-        System.out.println(yaml);
+        System.out.println("TestUploadFileForBatch.getPlanYamlAsString yaml:\n" + yaml);
         return yaml;
     }
 
@@ -90,6 +96,8 @@ public class TestUploadFileForBatch extends PreparingPlan {
     private BatchTopLevelService batchTopLevelService;
     @Autowired
     private BatchCache batchCache;
+    @Autowired
+    private PlanTopLevelService planTopLevelService;
 
     private BatchData.UploadingStatus uploadingStatus = null;
 
@@ -117,16 +125,24 @@ public class TestUploadFileForBatch extends PreparingPlan {
     public void testUploadFileForBatch() {
         log.info("Start TestUploadFileForBatch.testUploadFileForBatch()");
 
-        PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
-        MockMultipartFile mockFile = new MockMultipartFile("file-for-batch-processing.txt", "content of file".getBytes());
-
         Account a = new Account();
         a.username = "test-batch-processing";
         a.companyId = company.uniqueId;
         final LaunchpadContext context = new LaunchpadContext(a, company);
 
+
+        PlanApiData.PlanResult planResult = planTopLevelService.validatePlan(plan.id, context);
+        assertEquals(EnumsApi.PlanValidateStatus.OK, planResult.status);
+        plan = planCache.findById(plan.id);
+        assertTrue(plan.isValid());
+
+        String planYamlAsString = getPlanYamlAsString();
+        System.out.println("actual plan yaml:\n" + planYamlAsString);
+        PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsString);
+        MockMultipartFile mockFile = new MockMultipartFile("random-name.txt", "file-for-batch-processing.xml", StandardCharsets.UTF_8.toString(), "content of file".getBytes());
+
         uploadingStatus = batchTopLevelService.batchUploadFromFile(mockFile, plan.getId(), context);
-        assertFalse(uploadingStatus.isErrorMessages());
+        assertFalse(uploadingStatus.getErrorMessagesAsStr(), uploadingStatus.isErrorMessages());
         assertNotNull(uploadingStatus.batchId);
         assertNotNull(uploadingStatus.workbookId);
 

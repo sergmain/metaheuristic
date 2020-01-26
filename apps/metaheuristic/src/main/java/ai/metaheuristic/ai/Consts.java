@@ -23,6 +23,7 @@ import org.springframework.http.MediaType;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("DeprecatedIsStillUsed")
@@ -125,4 +126,6 @@ public class Consts {
     public static final Long ID_1 = 1L;
 
     public static final String MH_RESOURCE_SPLITTER_SNIPPET = "mh.resource-splitter";
+    public static final List<String> MH_INTERNAL_SNIPPETS = List.of(MH_RESOURCE_SPLITTER_SNIPPET);
+
 }

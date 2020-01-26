@@ -140,7 +140,7 @@ public class PlanParamsYamlV8 implements BaseParams {
         public List<Meta> metas = new ArrayList<>();
     }
 
-    public final int version=7;
+    public final int version=8;
     public PlanYamlV8 planYaml;
     public String originYaml;
     public InternalParamsV8 internalParams;

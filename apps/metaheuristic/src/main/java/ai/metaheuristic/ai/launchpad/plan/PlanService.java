@@ -237,6 +237,7 @@ public class PlanService {
                 p.setValid(valid);
                 saveInternal(p);
             }
+            plan.setValid(valid);
         }
     }
 
@@ -383,10 +384,17 @@ public class PlanService {
 
         if (process.snippets!=null) {
             for (PlanParamsYaml.SnippetDefForPlan snDef : process.snippets) {
-                EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
-                if (x != OK) {
-                    log.error("#177.030 Pre-snippet wasn't found for code: {}, process: {}", snDef.code, process);
-                    return x;
+                if (snDef.context==EnumsApi.SnippetExecContext.internal) {
+                    if (!Consts.MH_INTERNAL_SNIPPETS.contains(snDef.code)) {
+                        return EnumsApi.PlanValidateStatus.INTERNAL_SNIPPET_NOT_FOUND_ERROR;
+                    }
+                }
+                else {
+                    EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
+                    if (x != OK) {
+                        log.error("#177.030 Snippet wasn't found for code: {}, process: {}", snDef.code, process);
+                        return x;
+                    }
                 }
             }
         }

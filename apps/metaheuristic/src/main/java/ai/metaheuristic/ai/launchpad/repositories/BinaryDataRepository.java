@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.launchpad.repositories;
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
-import ai.metaheuristic.api.launchpad.BinaryData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -71,7 +70,7 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     @Query(value="select b.filename from BinaryDataImpl b where b.poolCode=:poolCode and b.dataType=:dataType ")
     String findFilenameByPoolCodeAndDataType(String poolCode, int dataType);
 
-    @Query(value="select b.filename from BinaryDataImpl b where and b.workbookId=:batchId ")
+    @Query(value="select b.filename from BinaryDataImpl b where b.workbookId=:batchId ")
     String findFilenameByBatchId(Long batchId);
 
     @Transactional(readOnly = true)
