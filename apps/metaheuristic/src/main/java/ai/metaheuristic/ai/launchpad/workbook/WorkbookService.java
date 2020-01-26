@@ -167,6 +167,10 @@ public class WorkbookService {
     }
 
     public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookYaml workbookYaml) {
+        return createWorkbook(planId, workbookYaml, true);
+    }
+
+    public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookYaml workbookYaml, boolean checkResources) {
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
 
         WorkbookImpl wb = new WorkbookImpl();
@@ -180,11 +184,13 @@ public class WorkbookService {
         wb.updateParams(params);
         wb.setValid(true);
 
-        WorkbookParamsYaml resourceParam = wb.getWorkbookParamsYaml();
-        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParam.getAllPoolCodes());
-        if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
-            result.planProducingStatus = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
-            return result;
+        if (checkResources) {
+            WorkbookParamsYaml resourceParam = wb.getWorkbookParamsYaml();
+            List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParam.getAllPoolCodes());
+            if (inputResourceCodes == null || inputResourceCodes.isEmpty()) {
+                result.planProducingStatus = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
+                return result;
+            }
         }
 
         result.workbook = workbookCache.save(wb);

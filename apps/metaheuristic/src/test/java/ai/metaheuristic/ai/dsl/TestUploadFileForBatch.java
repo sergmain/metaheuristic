@@ -126,6 +126,8 @@ public class TestUploadFileForBatch extends PreparingPlan {
         log.info("Start TestUploadFileForBatch.testUploadFileForBatch()");
 
         Account a = new Account();
+        // ID==1L for admin but in this case it doesn't matter
+        a.id = 1L;
         a.username = "test-batch-processing";
         a.companyId = company.uniqueId;
         final LaunchpadContext context = new LaunchpadContext(a, company);

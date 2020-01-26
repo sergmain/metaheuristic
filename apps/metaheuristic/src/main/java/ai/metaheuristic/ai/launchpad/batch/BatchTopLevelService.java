@@ -211,10 +211,10 @@ public class BatchTopLevelService {
             String code = ResourceUtils.toResourceCode(originFilename);
 
             WorkbookParamsYaml.WorkbookYaml workbookYaml = PlanUtils.asWorkbookParamsYaml(code);
-            if (true) {
-                throw new NotImplementedException("Need to decide how to initialize resource with workbookId in case when workbook is validating pool code as well");
-            }
-            producingResult = workbookService.createWorkbook(planId, workbookYaml);
+//            if (true) {
+//                throw new NotImplementedException("Need to decide how to initialize resource with workbookId in case when workbook is validating pool code as well");
+//            }
+            producingResult = workbookService.createWorkbook(planId, workbookYaml, false);
             if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
                 throw new BatchResourceProcessingException("#995.075 Error creating workbook: " + producingResult.planProducingStatus);
             }
@@ -242,8 +242,9 @@ public class BatchTopLevelService {
             log.info("The file {} was successfully stored to disk", originFilename);
 
             if (true) {
-                // TODO  insert here additional processing of file of batch
-                throw new NotImplementedException("Need to re-write");
+                // TODO  insert here additional processing of file of batch.
+                //  and which one is it?
+                return new BatchData.UploadingStatus("Need to re-write");
             }
 
             //noinspection unused
