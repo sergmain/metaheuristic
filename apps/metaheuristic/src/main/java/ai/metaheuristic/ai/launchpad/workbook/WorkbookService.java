@@ -540,9 +540,12 @@ public class WorkbookService {
             if (produceTaskResult.status != EnumsApi.PlanProducingStatus.OK) {
                 return new PlanApiData.TaskProducingResultComplex(produceTaskResult.status);
             }
+/*
+            // TODO 2020-01-26 commented out after removing process.collectResources
             if (!process.collectResources) {
                 pools.clean();
             }
+*/
             Monitoring.log("##030", Enums.Monitor.MEMORY);
             if (process.outputParams.storageType!=null) {
                 pools.add(process.outputParams.storageType, produceTaskResult.outputResourceCodes);

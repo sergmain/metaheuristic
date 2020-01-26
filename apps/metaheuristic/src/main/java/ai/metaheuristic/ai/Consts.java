@@ -123,4 +123,6 @@ public class Consts {
 
     public static final String RESULT_ZIP = "result.zip";
     public static final Long ID_1 = 1L;
+
+    public static final String MH_RESOURCE_SPLITTER_SNIPPET = "mh.resource-splitter";
 }

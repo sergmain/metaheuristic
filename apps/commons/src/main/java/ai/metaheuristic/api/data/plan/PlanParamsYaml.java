@@ -72,6 +72,7 @@ public class PlanParamsYaml implements BaseParams {
 
         @SneakyThrows
         public Process clone() {
+            //noinspection UnnecessaryLocalVariable
             final Process clone = (Process) super.clone();
             return clone;
         }
@@ -79,7 +80,6 @@ public class PlanParamsYaml implements BaseParams {
         public String name;
         public String code;
         public EnumsApi.ProcessType type;
-        public boolean collectResources = false;
         public List<SnippetDefForPlan> snippets;
         public List<SnippetDefForPlan> preSnippets;
         public List<SnippetDefForPlan> postSnippets;

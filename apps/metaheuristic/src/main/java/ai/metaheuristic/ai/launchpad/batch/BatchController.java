@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -130,9 +131,9 @@ public class BatchController {
     @PostMapping(value = "/batch-upload-from-file")
     public String uploadFile(final MultipartFile file, Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        OperationStatusRest r = batchTopLevelService.batchUploadFromFile(file, planId, context);
-        if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
+        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, planId, context);
+        if (uploadingStatus.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.errorMessages);
         }
         return REDIRECT_BATCH_BATCHES;
     }

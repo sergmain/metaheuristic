@@ -43,7 +43,6 @@ public class TestPlanYamlYaml {
             p.code = "assembly-raw-file";
 
             p.snippets = Collections.singletonList(new PlanParamsYaml.SnippetDefForPlan("snippet-01:1.1"));
-            p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "assembled-raw";
 
@@ -61,7 +60,6 @@ public class TestPlanYamlYaml {
             p.code = "dataset-processing";
 
             p.snippets = Collections.singletonList(new PlanParamsYaml.SnippetDefForPlan("snippet-02:1.1"));
-            p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "dataset-processing";
 
@@ -82,7 +80,6 @@ public class TestPlanYamlYaml {
 
             p.snippets = Arrays.asList(new PlanParamsYaml.SnippetDefForPlan("snippet-03:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-04:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-05:1.1"));
             p.parallelExec = true;
-            p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "feature";
 
@@ -137,7 +134,6 @@ public class TestPlanYamlYaml {
 
         PlanParamsYaml.Process p1 = new PlanParamsYaml.Process();
         p1.name="experiment";
-        p1.collectResources = false;
 
         p1.type = EnumsApi.ProcessType.EXPERIMENT;
 

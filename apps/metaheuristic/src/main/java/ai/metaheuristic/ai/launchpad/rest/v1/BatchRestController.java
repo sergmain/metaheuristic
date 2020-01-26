@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -102,7 +103,11 @@ public class BatchRestController {
 
     @PostMapping(value = "/batch-upload-from-file")
     public OperationStatusRest uploadFile(final MultipartFile file, Long planId, Authentication authentication) {
-        return batchTopLevelService.batchUploadFromFile(file, planId, launchpadContextService.getContext(authentication));
+        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, planId, launchpadContextService.getContext(authentication));
+        if (uploadingStatus.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, uploadingStatus.getErrorMessages());
+        }
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @GetMapping(value= "/batch-status/{batchId}" )

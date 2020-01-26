@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.launchpad.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
@@ -45,7 +44,6 @@ import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -72,7 +70,6 @@ import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -159,34 +156,33 @@ public class BatchTopLevelService {
         return result;
     }
 
-    public OperationStatusRest batchUploadFromFile(final MultipartFile file, Long planId, final LaunchpadContext context) {
+    public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long planId, final LaunchpadContext context) {
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.040 name of uploaded file is null or blank");
+            return new BatchData.UploadingStatus("#995.040 name of uploaded file is null or blank");
         }
         // fix for the case when browser send full path, ie Edge
         final String originFilename = new File(tempFilename.toLowerCase()).getName();
 
         String ext = StrUtils.getExtension(originFilename);
         if (ext==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+            return new BatchData.UploadingStatus(
                     "#995.043 file without extension, bad filename: " + originFilename);
         }
         if (!StringUtils.equalsAny(ext.toLowerCase(), ZIP_EXT, XML_EXT)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
+            return new BatchData.UploadingStatus("#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
         PlanData.PlansForCompany plansForCompany = planService.getPlan(context.getCompanyId(), planId);
         if (plansForCompany.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, plansForCompany.errorMessages);
+            return new BatchData.UploadingStatus(plansForCompany.errorMessages);
         }
         PlanImpl plan = plansForCompany.items.isEmpty() ? null : (PlanImpl) plansForCompany.items.get(0);
         if (plan==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
+            return new BatchData.UploadingStatus("#995.050 plan wasn't found, planId: " + planId);
         }
         if (!plan.getId().equals(planId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.038 Fatal error in configuration of plan, report to developers immediately");
+            return new BatchData.UploadingStatus("#995.038 Fatal error in configuration of plan, report to developers immediately");
         }
         launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
 
@@ -195,14 +191,16 @@ public class BatchTopLevelService {
         // validate the plan
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.060 validation of plan was failed, status: " + planValidation.status);
+            return new BatchData.UploadingStatus("#995.060 validation of plan was failed, status: " + planValidation.status);
         }
 
+        Batch b;
+        PlanApiData.TaskProducingResultComplex producingResult;
         try {
             // tempDir will be deleted in processing thread
             File tempDir = DirUtils.createTempDir("batch-file-upload-");
             if (tempDir==null || tempDir.isFile()) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
+                return new BatchData.UploadingStatus("#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
             }
             final File dataFile = File.createTempFile("uploaded-file-", ext, tempDir);
             log.debug("Start storing an uploaded file to disk");
@@ -213,7 +211,7 @@ public class BatchTopLevelService {
             String code = ResourceUtils.toResourceCode(originFilename);
 
             WorkbookParamsYaml.WorkbookYaml workbookYaml = PlanUtils.asWorkbookParamsYaml(code);
-            PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(planId, workbookYaml);
+            producingResult = workbookService.createWorkbook(planId, workbookYaml);
             if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
                 throw new BatchResourceProcessingException("#995.075 Error creating workbook: " + producingResult.planProducingStatus);
             }
@@ -224,7 +222,7 @@ public class BatchTopLevelService {
                         originFilename, producingResult.workbook.getId());
             }
 
-            Batch b = new Batch(planId, producingResult.workbook.getId(), Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());
+            b = new Batch(planId, producingResult.workbook.getId(), Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());
             BatchParamsYaml bpy = new BatchParamsYaml();
             bpy.username = context.account.username;
             b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
@@ -235,7 +233,7 @@ public class BatchTopLevelService {
             final Batch batch = batchService.changeStateToPreparing(b.id);
             // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed
             if (batch==null) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.080 can't find batch with id " + b.id);
+                return new BatchData.UploadingStatus("#995.080 can't find batch with id " + b.id);
             }
 
             log.info("The file {} was successfully stored to disk", originFilename);
@@ -250,9 +248,10 @@ public class BatchTopLevelService {
         }
         catch (Throwable th) {
             log.error("Error", th);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.120 can't load file, error: " + th.getMessage()+", class: " + th.getClass());
+            return new BatchData.UploadingStatus("#995.120 can't load file, error: " + th.getMessage()+", class: " + th.getClass());
         }
-        return OperationStatusRest.OPERATION_STATUS_OK;
+        BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, producingResult.workbook.getId());
+        return uploadingStatus;
     }
 
     public OperationStatusRest processResourceDeleteCommit(Long batchId, LaunchpadContext context, boolean isVirtualDeletion) {

@@ -65,6 +65,11 @@ public class PlanParamsYamlV8 implements BaseParams {
         public SnippetDefForPlanV8(String code) {
             this.code = code;
         }
+
+        public SnippetDefForPlanV8(String code, EnumsApi.SnippetExecContext context) {
+            this.code = code;
+            this.context = context;
+        }
     }
 
     @Data
@@ -74,7 +79,6 @@ public class PlanParamsYamlV8 implements BaseParams {
         public String name;
         public String code;
         public EnumsApi.ProcessType type;
-        public boolean collectResources = false;
         public List<SnippetDefForPlanV8> snippets;
         public List<SnippetDefForPlanV8> preSnippets;
         public List<SnippetDefForPlanV8> postSnippets;

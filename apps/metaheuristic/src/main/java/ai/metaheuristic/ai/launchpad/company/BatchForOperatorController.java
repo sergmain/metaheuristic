@@ -152,9 +152,9 @@ public class BatchForOperatorController {
             Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         // create context with putting current user to specific company
         LaunchpadContext context = launchpadContextService.getContext(authentication, companyUniqueId);
-        OperationStatusRest r = batchTopLevelService.batchUploadFromFile(file, planId, context);
-        if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
+        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, planId, context);
+        if (uploadingStatus.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.errorMessages);
         }
         return "redirect:/launchpad/company/batch/company-batches/" + companyUniqueId;
     }

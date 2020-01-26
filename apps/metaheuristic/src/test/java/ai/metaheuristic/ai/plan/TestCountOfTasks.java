@@ -17,14 +17,15 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.launchpad.process.ProcessV2;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,6 +59,7 @@ public class TestCountOfTasks extends PreparingPlan {
     @Test
     public void testCountNumberOfTasks() {
         log.info("Start TestCountOfTasks.testCountNumberOfTasks()");
+        PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
 
         assertFalse(planParamsYaml.planYaml.processes.isEmpty());
         assertEquals(EnumsApi.ProcessType.EXPERIMENT, planParamsYaml.planYaml.processes.get(planParamsYaml.planYaml.processes.size()-1).type);
@@ -114,11 +116,11 @@ public class TestCountOfTasks extends PreparingPlan {
         assertEquals(numberOfTasks, tasks.size());
 
         int taskNumber = 0;
-        for (ProcessV2 process : planParamsYaml.planYaml.processes) {
+        for (PlanParamsYaml.Process process : planParamsYaml.planYaml.processes) {
             if (process.type== EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }
-            taskNumber += process.snippetCodes.size();
+            taskNumber += process.snippets.size();
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 

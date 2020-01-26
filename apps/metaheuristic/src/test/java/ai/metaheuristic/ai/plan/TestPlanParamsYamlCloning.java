@@ -39,7 +39,6 @@ public class TestPlanParamsYamlCloning {
         p.name = "name";
         p.code = "code";
         p.type = EnumsApi.ProcessType.EXPERIMENT;
-        p.collectResources = true;
         p.snippets = List.of(
                 new PlanParamsYaml.SnippetDefForPlan("snippet-code", "snippet-params", EnumsApi.SnippetExecContext.external)
         );
@@ -67,7 +66,6 @@ public class TestPlanParamsYamlCloning {
         assertEquals("name", p.name);
         assertEquals("code", p.code);
         assertEquals(EnumsApi.ProcessType.EXPERIMENT, p.type);
-        assertTrue(p.collectResources);
         assertEquals(1, p.snippets.size());
         assertEquals("snippet-code", p.snippets.get(0).code);
         assertEquals("snippet-params", p.snippets.get(0).params);

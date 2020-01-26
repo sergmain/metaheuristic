@@ -60,7 +60,6 @@ public class PlanParamsYamlUtilsV7
             pr.name = o.name;
             pr.code = o.code;
             pr.type = o.type;
-            pr.collectResources = o.collectResources;
             pr.parallelExec = o.parallelExec;
             pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
             pr.inputResourceCode = o.inputResourceCode;

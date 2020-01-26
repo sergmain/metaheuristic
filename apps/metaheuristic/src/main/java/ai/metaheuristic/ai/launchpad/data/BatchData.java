@@ -41,6 +41,22 @@ public final class BatchData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @AllArgsConstructor
+    public static class UploadingStatus extends BaseDataClass {
+        public Long batchId;
+        public Long workbookId;
+
+        public UploadingStatus(String errorMessage) {
+            addErrorMessage(errorMessage);
+        }
+
+        public UploadingStatus(List<String> errorMessages) {
+            addErrorMessages(errorMessages);
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @AllArgsConstructor
     public static class ExecStatuses extends BaseDataClass {
         public List<BatchExecStatus> statuses;
     }

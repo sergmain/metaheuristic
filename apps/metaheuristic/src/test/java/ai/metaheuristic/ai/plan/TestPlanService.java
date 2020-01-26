@@ -25,13 +25,14 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.process.ProcessV2;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -87,6 +88,8 @@ public class TestPlanService extends PreparingPlan {
 
     @Test
     public void testCreateTasks() {
+        PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
+
         PlanApiData.TaskProducingResultComplex result = produceTasksForTest();
         List<Object[]> tasks = taskCollector.getTasks(workbook);
 
@@ -96,11 +99,11 @@ public class TestPlanService extends PreparingPlan {
         assertFalse(tasks.isEmpty());
 
         int taskNumber = 0;
-        for (ProcessV2 process : planParamsYaml.planYaml.processes) {
+        for (PlanParamsYaml.Process process : planParamsYaml.planYaml.processes) {
             if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }
-            taskNumber += process.snippetCodes.size();
+            taskNumber += process.snippets.size();
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 

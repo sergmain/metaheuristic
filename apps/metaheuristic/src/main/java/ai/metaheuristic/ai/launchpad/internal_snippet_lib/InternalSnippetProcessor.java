@@ -16,13 +16,13 @@
 
 package ai.metaheuristic.ai.launchpad.internal_snippet_lib;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.resource_splitter.ResourceSplitterSnippet;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * @author Serge
@@ -37,10 +37,10 @@ public class InternalSnippetProcessor {
 
     public final ResourceSplitterSnippet resourceSplitterSnippet;
 
-    public void process(String snippetCode, List<String> poolResourceCodes) {
+    public void process(String snippetCode, Long planId, Long workbookId, TaskParamsYaml taskParamsYaml) {
         switch(snippetCode) {
-            case "" :
-                resourceSplitterSnippet.process(poolResourceCodes);
+            case Consts.MH_RESOURCE_SPLITTER_SNIPPET:
+                resourceSplitterSnippet.process(planId, workbookId, taskParamsYaml);
         }
     }
 }

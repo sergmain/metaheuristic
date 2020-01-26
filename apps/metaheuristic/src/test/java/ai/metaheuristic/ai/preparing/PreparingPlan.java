@@ -38,6 +38,7 @@ import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsV2;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV2;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -99,7 +100,6 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
     public PlanImpl plan = null;
-    public PlanParamsYamlV2 planParamsYaml = null;
     public Snippet s1 = null;
     public Snippet s2 = null;
     public Snippet s3 = null;
@@ -114,7 +114,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public abstract String getPlanYamlAsString();
 
     public String getPlanParamsYamlAsString_Simple() {
-        planParamsYaml = new PlanParamsYamlV2();
+        PlanParamsYamlV2 planParamsYaml = new PlanParamsYamlV2();
         planParamsYaml.planYaml = new PlanParamsYamlV2.PlanYamlV2();
         {
             ProcessV2 p = new ProcessV2();
@@ -314,6 +314,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     }
 
     public TaskProducingResultComplex produceTasksForTest() {
+        PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
         assertFalse(planParamsYaml.planYaml.processes.isEmpty());
         assertEquals(EnumsApi.ProcessType.EXPERIMENT, planParamsYaml.planYaml.processes.get(planParamsYaml.planYaml.processes.size()-1).type);
 

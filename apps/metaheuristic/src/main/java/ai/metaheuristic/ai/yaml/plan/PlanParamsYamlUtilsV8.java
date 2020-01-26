@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV7;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV8;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -58,7 +57,6 @@ public class PlanParamsYamlUtilsV8
             pr.name = o.name;
             pr.code = o.code;
             pr.type = o.type;
-            pr.collectResources = o.collectResources;
             pr.parallelExec = o.parallelExec;
             pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
             pr.inputResourceCode = o.inputResourceCode;
