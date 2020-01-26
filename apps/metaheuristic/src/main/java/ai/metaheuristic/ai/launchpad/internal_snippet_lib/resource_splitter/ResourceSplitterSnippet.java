@@ -22,16 +22,12 @@ import ai.metaheuristic.ai.exceptions.BatchConfigYamlException;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
-import ai.metaheuristic.ai.launchpad.batch.BatchService;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.launchpad.beans.Batch;
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
-import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
@@ -40,10 +36,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
-import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -52,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
@@ -86,12 +80,11 @@ public class ResourceSplitterSnippet {
     private static final String CONFIG_FILE = "config.yaml";
     private static final List<String> EXCLUDE_FROM_MAPPING = List.of("config.yaml", "config.yml");
 
-    public final Globals globals;
-    public final BatchService batchService;
-    public final PlanService planService;
-    public final PlanCache planCache;
-    public final WorkbookService workbookService;
-    public final ResourceService resourceService;
+    private final Globals globals;
+    private final PlanService planService;
+    private final PlanCache planCache;
+    private final WorkbookService workbookService;
+    private final ResourceService resourceService;
     private final BinaryDataRepository binaryDataRepository;
     private final WorkbookCache workbookCache;
 
@@ -109,8 +102,9 @@ public class ResourceSplitterSnippet {
         String originFilename = bd.filename;
         String ext = StrUtils.getExtension(originFilename);
 
+        File tempDir=null;
         try {
-            File tempDir = DirUtils.createTempDir("batch-file-upload-");
+            tempDir = DirUtils.createTempDir("batch-file-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 String es = "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir");
                 throw new IllegalStateException(es);
@@ -130,31 +124,21 @@ public class ResourceSplitterSnippet {
                 log.debug("Start loading file data to db");
                 loadFilesFromDirAfterZip(planId, workbookId, tempDir, Map.of(dataFile.getName(), originFilename));
             }
-            batchService.changeStateToProcessing(batch.id);
-        }
-        catch(UnzipArchiveException e) {
-            final String es = "#995.100 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
-            log.error(es, e);
-            batchService.changeStateToError(batch.id, es);
-        }
-        catch(BatchProcessingException e) {
-            final String es = "#995.105 General error of processing batch.\nError: " + e.getMessage();
-            log.error(es, e);
-            batchService.changeStateToError(batch.id, es);
         }
         catch(Throwable th) {
             final String es = "#995.110 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
-            batchService.changeStateToError(batch.id, es);
+            ExceptionUtils.rethrow(th);
         }
         finally {
             try {
-                FileUtils.deleteDirectory(tempDir);
+                if (tempDir!=null) {
+                    FileUtils.deleteDirectory(tempDir);
+                }
             } catch (IOException e) {
                 log.warn("Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());
             }
         }
-
     }
 
     public void loadFilesFromDirAfterZip(Long planId, Long workbookId, File srcDir, final Map<String, String> mapping) throws IOException {
@@ -200,12 +184,6 @@ public class ResourceSplitterSnippet {
                         throw new BatchResourceProcessingException(es);
                     }
                 });
-
-
-        if (isEmpty.get()) {
-            changeStateToFinished(batch.id);
-        }
-
     }
 
     private void createAndProcessTask(PlanImpl plan, Workbook wb, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile) {

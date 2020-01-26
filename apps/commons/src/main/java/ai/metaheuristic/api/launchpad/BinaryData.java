@@ -23,6 +23,7 @@ import ai.metaheuristic.api.EnumsApi;
  * Date: 5/9/2019
  * Time: 3:18 PM
  */
+// We need an interface because of not putting an implementation (which is Entity bean) here
 public interface BinaryData {
     void setType(EnumsApi.BinaryDataType binaryDataType);
 

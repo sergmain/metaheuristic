@@ -21,6 +21,7 @@ package ai.metaheuristic.api.launchpad;
  * Date: 5/9/2019
  * Time: 3:27 PM
  */
+// We need an interface because of not putting an implementation (which is Entity bean) here
 public interface Plan {
     Long getId();
 

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.launchpad;
 
+// We need an interface because of not putting an implementation (which is Entity bean) here
 public interface Task {
     Long getId();
 
