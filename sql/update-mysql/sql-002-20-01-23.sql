@@ -44,3 +44,7 @@ alter table mh_batch add WORKBOOK_ID     NUMERIC(10, 0);
 CREATE INDEX mh_batch_workbook_id_idx ON mh_batch (WORKBOOK_ID);
 
 drop table mh_batch_workbook;
+
+alter table mh_data drop column CODE;
+
+alter table mh_data change POOL_CODE VAR VARCHAR(250) not null;

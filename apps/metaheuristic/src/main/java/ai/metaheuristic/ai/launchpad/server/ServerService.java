@@ -166,7 +166,6 @@ public class ServerService {
                 binaryDataService.save(
                         is, resFile.length(), EnumsApi.BinaryDataType.DATA,
                         taskParamYaml.taskYaml.outputResourceCode,
-                        taskParamYaml.taskYaml.outputResourceCode,
                         null,
                         task.workbookId);
             }

@@ -45,3 +45,7 @@ CREATE INDEX MH_BATCH_WORKBOOK_ID_IDX
     ON MH_BATCH (WORKBOOK_ID);
 
 drop table MH_BATCH_WORKBOOK;
+
+alter table mh_data drop column CODE;
+
+alter table mh_data rename column pool_code to VAR;

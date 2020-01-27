@@ -49,11 +49,8 @@ public class BinaryDataImpl implements Serializable, BinaryData {
     @Version
     private Integer version;
 
-    @Column(name = "CODE")
-    private String code;
-
-    @Column(name = "POOL_CODE")
-    private String poolCode;
+    @Column(name = "VAR")
+    private String variable;
 
     @Column(name = "DATA_TYPE")
     private int dataType;

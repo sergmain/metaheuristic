@@ -69,11 +69,11 @@ public class ResourceController {
     @PostMapping(value = "/resource-upload-from-file")
     public String createResourceFromFile(
             MultipartFile file,
-            @RequestParam(name = "code") String resourceCode,
-            @RequestParam(name = "poolCode") String resourcePoolCode,
+            @SuppressWarnings("unused") @RequestParam(name = "code") String resourceCode,
+            @RequestParam(name = "poolCode") String variable,
             final RedirectAttributes redirectAttributes) {
 
-        OperationStatusRest operationStatusRest = resourceTopLevelService.createResourceFromFile(file, resourcePoolCode, resourceCode);
+        OperationStatusRest operationStatusRest = resourceTopLevelService.createResourceFromFile(file, variable);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
@@ -82,11 +82,11 @@ public class ResourceController {
 
     @PostMapping(value = "/resource-in-external-storage")
     public String registerResourceInExternalStorage(
-            @RequestParam(name = "poolCode") String resourcePoolCode,
+            @RequestParam(name = "poolCode") String variable,
             @RequestParam(name = "params") String params,
             final RedirectAttributes redirectAttributes) {
 
-        OperationStatusRest operationStatusRest = resourceTopLevelService.registerResourceInExternalStorage(resourcePoolCode, params);
+        OperationStatusRest operationStatusRest = resourceTopLevelService.registerResourceInExternalStorage(variable, params);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }

@@ -211,9 +211,6 @@ public class BatchTopLevelService {
             String code = ResourceUtils.toResourceCode(originFilename);
 
             WorkbookParamsYaml.WorkbookYaml workbookYaml = PlanUtils.asWorkbookParamsYaml(code);
-//            if (true) {
-//                throw new NotImplementedException("Need to decide how to initialize resource with workbookId in case when workbook is validating pool code as well");
-//            }
             producingResult = workbookService.createWorkbook(planId, workbookYaml, false);
             if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
                 throw new BatchResourceProcessingException("#995.075 Error creating workbook: " + producingResult.planProducingStatus);
@@ -221,7 +218,7 @@ public class BatchTopLevelService {
 
             try(InputStream is = new FileInputStream(dataFile)) {
                 binaryDataService.save(
-                        is, dataFile.length(), EnumsApi.BinaryDataType.BATCH, code, code,
+                        is, dataFile.length(), EnumsApi.BinaryDataType.BATCH, code,
                         originFilename, producingResult.workbook.getId());
             }
 

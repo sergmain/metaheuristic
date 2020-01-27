@@ -44,25 +44,25 @@ public class ResourceRestController {
         return resourceTopLevelService.getResources(pageable);
     }
 
-    @PostMapping(value = "/resource-upload-from-file-with-params/{resourcePoolCode}")
+    @PostMapping(value = "/resource-upload-from-file-with-params/{variable}")
     public OperationStatusRest createResourceFromFileWithParams(
-            MultipartFile file, @PathVariable String resourcePoolCode) {
-        return resourceTopLevelService.createResourceFromFile(file, resourcePoolCode, null);
+            MultipartFile file, @PathVariable String variable) {
+        return resourceTopLevelService.createResourceFromFile(file, variable);
     }
 
     @PostMapping(value = "/resource-upload-from-file", headers = ("content-type=multipart/*"), produces = "application/json", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public OperationStatusRest createResourceFromFile(
             @RequestPart MultipartFile file,
-            @RequestParam(name = "code") String resourceCode,
-            @RequestParam(name = "poolCode") String resourcePoolCode ) {
-        return resourceTopLevelService.createResourceFromFile(file, resourcePoolCode, resourceCode);
+            @SuppressWarnings("unused") @RequestParam(name = "code") String resourceCode,
+            @RequestParam(name = "poolCode") String variable ) {
+        return resourceTopLevelService.createResourceFromFile(file, variable);
     }
 
     @PostMapping(value = "/resource-in-external-storage")
     public OperationStatusRest registerResourceInExternalStorage(
-            @RequestParam(name = "poolCode") String resourcePoolCode,
+            @RequestParam(name = "poolCode") String variable,
             @RequestParam(name = "storageUrl") String storageUrl ) {
-        return resourceTopLevelService.registerResourceInExternalStorage(resourcePoolCode, storageUrl);
+        return resourceTopLevelService.registerResourceInExternalStorage(variable, storageUrl);
     }
 
     @GetMapping("/resource/{id}")
@@ -80,11 +80,11 @@ public class ResourceRestController {
     @PostMapping(value = "/store-initial-resource", headers = ("content-type=multipart/*"), produces = "application/json", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public OperationStatusRest storeInitialResource(
             @RequestPart MultipartFile file,
-            @RequestParam(name = "code") String resourceCode,
-            @RequestParam(name = "poolCode") String resourcePoolCode,
+            @SuppressWarnings("unused") @RequestParam(name = "code") String resourceCode,
+            @RequestParam(name = "poolCode") String variable,
             @RequestParam(name = "filename") String filename
     ) {
-        return resourceTopLevelService.storeInitialResource(file, resourceCode, resourcePoolCode, filename);
+        return resourceTopLevelService.storeInitialResource(file, variable, filename);
     }
 
 }

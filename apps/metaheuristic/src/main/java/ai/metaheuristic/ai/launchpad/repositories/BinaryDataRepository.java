@@ -50,8 +50,8 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     Long getIdByCode(String code);
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
-            "b.code, b.poolCode, b.params, b.filename ) " +
-            "from BinaryDataImpl b where b.poolCode in :poolCodes and " +
+            "b.code, b.variable, b.params, b.filename ) " +
+            "from BinaryDataImpl b where b.variable in :poolCodes and " +
             "b.workbookId=:workbookId")
     List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPoolForWorkbook(List<String> poolCodes, Long workbookId);
 
@@ -61,13 +61,13 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     List<Object[]> getFilenamesForBatchIds(Collection<Long> ids);
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
-            "b.code, b.poolCode, b.params, b.filename ) " +
-            "from BinaryDataImpl b where b.poolCode in :poolCodes")
+            "b.code, b.variable, b.params, b.filename ) " +
+            "from BinaryDataImpl b where b.variable in :poolCodes")
     List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPoolForWorkbook(List<String> poolCodes);
 
     List<BinaryDataImpl> findAllByPoolCode(String poolCode);
 
-    @Query(value="select b.filename from BinaryDataImpl b where b.poolCode=:poolCode and b.dataType=:dataType ")
+    @Query(value="select b.filename from BinaryDataImpl b where b.variable=:poolCode and b.dataType=:dataType ")
     String findFilenameByPoolCodeAndDataType(String poolCode, int dataType);
 
     @Query(value="select b.filename from BinaryDataImpl b where b.workbookId=:batchId ")
@@ -104,7 +104,7 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
     void deleteByPoolCodeAndDataType(String poolCode, int dataType);
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource(" +
-            "b.id, b.version, b.code, b.poolCode, b.dataType, b.uploadTs, b.filename, b.params ) " +
+            "b.id, b.version, b.code, b.variable, b.dataType, b.uploadTs, b.filename, b.params ) " +
             "from BinaryDataImpl b " +
             "order by b.uploadTs desc ")
     Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);

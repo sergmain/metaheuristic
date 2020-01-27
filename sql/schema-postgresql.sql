@@ -90,8 +90,7 @@ CREATE TABLE MH_DATA
 (
   ID            SERIAL PRIMARY KEY,
   VERSION       NUMERIC(5, 0) NOT NULL,
-  CODE          VARCHAR(200) not null,
-  POOL_CODE     VARCHAR(250) not null,
+  VAR           VARCHAR(250) not null,
   DATA_TYPE     NUMERIC(2, 0) NOT NULL,
   WORKBOOK_ID   NUMERIC(10, 0),
   UPLOAD_TS     TIMESTAMP DEFAULT to_timestamp(0),

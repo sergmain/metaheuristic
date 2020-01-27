@@ -165,32 +165,18 @@ public class BinaryDataService {
     }
 
     public BinaryData save(InputStream is, long size,
-                           BinaryDataType binaryDataType, String code, String poolCode,
+                           BinaryDataType binaryDataType, String variable,
                            String filename, Long workbookId) {
         if (binaryDataType==BinaryDataType.SNIPPET) {
             throw new BinaryDataSaveException("#087.030 snipper can't be saved via BinaryDataService.save()");
         }
         try {
-            BinaryDataImpl data = binaryDataRepository.findByCodeForUpdate(code);
-            if (data == null) {
-                data = new BinaryDataImpl();
-                data.setType(binaryDataType);
-                data.setCode(code);
-                data.setPoolCode(poolCode);
-                data.setFilename(filename);
-                data.setWorkbookId(workbookId);
-                data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
-            } else {
-                if (!poolCode.equals(data.getPoolCode())) {
-                    // this is exception for the case when two resources have the same names but different pool codes
-                    throw new BinaryDataSaveException("#087.050 Pool code is different, old: " + data.getPoolCode() + ", new: " + poolCode);
-                }
-                DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
-                if (dataStorageParams.sourcing!=DataSourcing.launchpad) {
-                    // this is an exception for the case when two resources have the same names but different pool codes
-                    throw new BinaryDataSaveException("#087.060 Sourcing must be launchpad, value in db: " + data.getParams());
-                }
-            }
+            BinaryDataImpl data = new BinaryDataImpl();
+            data.setType(binaryDataType);
+            data.setVariable(variable);
+            data.setFilename(filename);
+            data.setWorkbookId(workbookId);
+            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
@@ -208,16 +194,16 @@ public class BinaryDataService {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public BinaryData saveWithSpecificStorageUrl(String resourceCode, String poolCode, String params) {
+    public BinaryData saveWithSpecificStorageUrl(String variable, String params) {
 
         try {
-            List<BinaryDataImpl> datas = binaryDataRepository.findAllByPoolCode(poolCode);
+            List<BinaryDataImpl> datas = binaryDataRepository.findAllByPoolCode(variable);
             BinaryDataImpl data;
             if (datas.isEmpty()) {
                 data = new BinaryDataImpl();
             } else {
                 if (datas.size()>1) {
-                    String es = "#087.080 Can't create resource with storage url, too many resources are associated with this pool code: " + poolCode;
+                    String es = "#087.080 Can't create resource with storage url, too many resources are associated with this variable: " + variable;
                     log.error(es);
                     throw new IllegalStateException(es);
                 }
@@ -229,8 +215,7 @@ public class BinaryDataService {
                 }
             }
             data.setType(BinaryDataType.DATA);
-            data.setCode(resourceCode);
-            data.setPoolCode(poolCode);
+            data.setVariable(variable);
             data.setFilename(null);
             data.setWorkbookId(null);
             data.setParams(params);

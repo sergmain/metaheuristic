@@ -231,15 +231,15 @@ public abstract class PreparingPlan extends PreparingExperiment {
         byte[] bytes = "A resource for input pool".getBytes();
 
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                EnumsApi.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE,
+                EnumsApi.BinaryDataType.DATA, INPUT_POOL_CODE,
                 "file-01.txt",
                 null);
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                EnumsApi.BinaryDataType.DATA,INPUT_RESOURCE_CODE+2, INPUT_POOL_CODE,
+                EnumsApi.BinaryDataType.DATA, INPUT_POOL_CODE,
                 "file-02.txt",
                 null);
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                EnumsApi.BinaryDataType.DATA,INPUT_RESOURCE_CODE+3, INPUT_POOL_CODE,
+                EnumsApi.BinaryDataType.DATA, INPUT_POOL_CODE,
                 "file-03.txt",
                 null);
 

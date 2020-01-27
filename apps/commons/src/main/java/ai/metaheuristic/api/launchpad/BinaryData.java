@@ -31,9 +31,7 @@ public interface BinaryData {
 
     Integer getVersion();
 
-    String getCode();
-
-    String getPoolCode();
+    String getVariable();
 
     int getDataType();
 
@@ -53,9 +51,7 @@ public interface BinaryData {
 
     void setVersion(Integer version);
 
-    void setCode(String code);
-
-    void setPoolCode(String poolCode);
+    void setVariable(String poolCode);
 
     void setDataType(int dataType);
 

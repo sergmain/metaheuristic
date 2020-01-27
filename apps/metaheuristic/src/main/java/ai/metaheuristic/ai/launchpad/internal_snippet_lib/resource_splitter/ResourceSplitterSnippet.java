@@ -31,7 +31,6 @@ import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
@@ -44,6 +43,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
@@ -199,20 +199,21 @@ public class ResourceSplitterSnippet {
             if (EXCLUDE_EXT.contains(StrUtils.getExtension(originFilename))) {
                 return;
             }
-            final String code = ResourceUtils.toResourceCode(fileWithMapping.file.getName());
-
-            String poolCode;
+            String variable;
             if (fileWithMapping.file.equals(mainDocFile)) {
-                poolCode = mainPoolCode;
+                variable = mainPoolCode;
                 isMainDocPresent.set(true);
                 mainDocFilename.set(fileWithMapping.originName);
             }
             else {
-                poolCode = attachPoolCode;
-                attachments.add(code);
+                variable = attachPoolCode;
+                if (true) {
+                    throw new NotImplementedException("Need to re-write and use names of variables from snippet config");
+                }
+//                attachments.add(code);
             }
 
-            resourceService.storeInitialResource(fileWithMapping.file, code, poolCode, originFilename);
+            resourceService.storeInitialResource(fileWithMapping.file, variable, originFilename);
         });
 
         if (!isMainDocPresent.get()) {

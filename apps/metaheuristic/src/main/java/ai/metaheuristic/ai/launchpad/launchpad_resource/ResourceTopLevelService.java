@@ -17,15 +17,14 @@ package ai.metaheuristic.ai.launchpad.launchpad_resource;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
-import ai.metaheuristic.ai.resource.ResourceUtils;
-import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.BinaryData;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.ResourceData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.launchpad.BinaryData;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,13 +53,12 @@ public class ResourceTopLevelService {
         return new ResourceData.ResourcesResult(binaryDataService.getAllAsSimpleResources(pageable));
     }
 
-    public OperationStatusRest createResourceFromFile(
-            MultipartFile file, String resourcePoolCode, String resourceCode) {
+    public OperationStatusRest createResourceFromFile(MultipartFile file, String variable) {
         String originFilename = file.getOriginalFilename();
-        return storeFileInternal(file, resourceCode, resourcePoolCode, originFilename);
+        return storeFileInternal(file, variable, originFilename);
     }
 
-    public OperationStatusRest storeFileInternal(MultipartFile file, String resourceCode, String resourcePoolCode, String originFilename) {
+    private OperationStatusRest storeFileInternal(MultipartFile file, String variable, String originFilename) {
         if (originFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.010 name of uploaded file is null");
         }
@@ -81,12 +79,8 @@ public class ResourceTopLevelService {
                                 tempFile.getAbsolutePath()+", error: " + e.toString());
             }
 
-            String code = StringUtils.isNotBlank(resourceCode)
-                    ? resourceCode
-                    : resourcePoolCode + '-' + originFilename;
-
             try {
-                resourceService.storeInitialResource(tempFile, code, resourcePoolCode, originFilename);
+                resourceService.storeInitialResource(tempFile, variable, originFilename);
             } catch (StoreNewFileException e) {
                 String es = "#172.040 An error while saving data to file, " + e.toString();
                 log.error(es, e);
@@ -98,7 +92,7 @@ public class ResourceTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest registerResourceInExternalStorage(String resourcePoolCode, String params ) {
+    public OperationStatusRest registerResourceInExternalStorage(String variable, String params ) {
 
         if (StringUtils.isBlank(params)) {
             String es = "#172.050 resource params is blank";
@@ -112,9 +106,8 @@ public class ResourceTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
 
-        String code = ResourceUtils.toResourceCode(resourcePoolCode);
         try {
-            binaryDataService.saveWithSpecificStorageUrl(code, resourcePoolCode, params);
+            binaryDataService.saveWithSpecificStorageUrl(variable, params);
         } catch (StoreNewFileException e) {
             String es = "#172.080 An error while saving data to file, " + e.toString();
             log.error(es, e);
@@ -142,7 +135,7 @@ public class ResourceTopLevelService {
 
     // ============= Service methods =============
 
-    public OperationStatusRest storeInitialResource(MultipartFile file, String resourceCode, String resourcePoolCode, String filename) {
-        return storeFileInternal(file, resourceCode, resourcePoolCode, filename);
+    public OperationStatusRest storeInitialResource(MultipartFile file, String variable, String filename) {
+        return storeFileInternal(file, variable, filename);
     }
 }

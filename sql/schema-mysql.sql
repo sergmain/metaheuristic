@@ -104,8 +104,7 @@ CREATE TABLE mh_data
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    CODE            VARCHAR(200) not null,
-    POOL_CODE       VARCHAR(250) not null,
+    VAR             VARCHAR(250) not null,
     DATA_TYPE       NUMERIC(2, 0) NOT NULL,
     WORKBOOK_ID     NUMERIC(10, 0),
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
