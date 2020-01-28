@@ -22,8 +22,8 @@ import java.util.Map;
 
 public class PlanParamsYamlUtils {
 
-    // Map of minimum required version of TaskParamsYaml related to version of PlanParamsYamlV5
-    // key - version of PlanParamsYamlV5
+    // Map of minimum required version of TaskParamsYaml related to version of PlanParamsYaml
+    // key - version of PlanParamsYaml
     // value - version of TaskParamsYaml
     private static final Map<Integer, Integer> MIN_TASK_PARAMS_YAML_VERSION = Map.of(
             1, 1,
