@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.yaml.task;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV3;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV4;
+import ai.metaheuristic.api.data.task.TaskParamsYamlV5;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 public class TaskParamsYamlUtilsV4
-        extends AbstractParamsYamlUtils<TaskParamsYamlV4, TaskParamsYaml, Void, TaskParamsYamlV3, TaskParamsYamlUtilsV3, TaskParamsYaml> {
+        extends AbstractParamsYamlUtils<TaskParamsYamlV4, TaskParamsYamlV5, TaskParamsYamlUtilsV5, TaskParamsYamlV3, TaskParamsYamlUtilsV3, TaskParamsYaml> {
 
     @Override
     public int getVersion() {
@@ -46,19 +47,22 @@ public class TaskParamsYamlUtilsV4
     }
 
     @Override
-    public TaskParamsYaml upgradeTo(TaskParamsYamlV4 yaml, Long ... vars) {
-        yaml.checkIntegrity();
-        TaskParamsYaml t = new TaskParamsYaml();
-        t.taskYaml = new TaskParamsYaml.TaskYaml();
-        BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml, "snippet", "preSnippet", "postSnippet");
-        t.taskYaml.snippet = toUp(yaml.taskYaml.snippet);
-        if (yaml.taskYaml.preSnippets!=null) {
-            t.taskYaml.preSnippets = yaml.taskYaml.preSnippets.stream().map(TaskParamsYamlUtilsV4::toUp).collect(Collectors.toList());;
+    public TaskParamsYamlV5 upgradeTo(TaskParamsYamlV4 v4, Long ... vars) {
+        v4.checkIntegrity();
+        TaskParamsYamlV5 t = new TaskParamsYamlV5();
+        t.taskYaml = new TaskParamsYamlV5.TaskYamlV5();
+        BeanUtils.copyProperties(v4.taskYaml, t.taskYaml, "snippet", "preSnippet", "postSnippet");
+        t.taskYaml.snippet = toUp(v4.taskYaml.snippet);
+        if (v4.taskYaml.preSnippets!=null) {
+            t.taskYaml.preSnippets = v4.taskYaml.preSnippets.stream().map(TaskParamsYamlUtilsV4::toUp).collect(Collectors.toList());;
         }
-        if (yaml.taskYaml.postSnippets!=null) {
-            t.taskYaml.postSnippets = yaml.taskYaml.postSnippets.stream().map(TaskParamsYamlUtilsV4::toUp).collect(Collectors.toList());;
+        if (v4.taskYaml.postSnippets!=null) {
+            t.taskYaml.postSnippets = v4.taskYaml.postSnippets.stream().map(TaskParamsYamlUtilsV4::toUp).collect(Collectors.toList());;
         }
-
+        if (v4.taskYaml.hyperParams!=null && !v4.taskYaml.hyperParams.isEmpty()) {
+            t.taskYaml.taskMl = new TaskParamsYamlV5.TaskMachineLearningV5();
+            t.taskYaml.taskMl.hyperParams = v4.taskYaml.hyperParams;
+        }
         t.checkIntegrity();
 
         return t;
@@ -82,11 +86,11 @@ public class TaskParamsYamlUtilsV4
     }
 
 
-    private static TaskParamsYaml.SnippetConfig toUp(TaskParamsYamlV4.SnippetConfigV4 src) {
+    private static TaskParamsYamlV5.SnippetConfigV5 toUp(TaskParamsYamlV4.SnippetConfigV4 src) {
         if (src==null) {
             return null;
         }
-        TaskParamsYaml.SnippetConfig trg = new TaskParamsYaml.SnippetConfig();
+        TaskParamsYamlV5.SnippetConfigV5 trg = new TaskParamsYamlV5.SnippetConfigV5();
         trg.checksum = src.checksum;
         trg.checksumMap = src.checksumMap;
         trg.code = src.code;
@@ -94,11 +98,11 @@ public class TaskParamsYamlUtilsV4
         trg.file = src.file;
         trg.git = src.git;
         if (src.info!=null) {
-            trg.info = new TaskParamsYaml.SnippetInfo(src.info.signed, src.info.length);
+            trg.info = new TaskParamsYamlV5.SnippetInfoV5(src.info.signed, src.info.length);
         }
         trg.metas = src.metas;
         if (src.ml!=null) {
-            trg.ml = new TaskParamsYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
+            trg.ml = new TaskParamsYamlV5.MachineLearningV5(src.ml.metrics, src.ml.fitting);
         }
         trg.params = src.params;
         trg.skipParams = src.skipParams;
@@ -136,8 +140,8 @@ public class TaskParamsYamlUtilsV4
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public TaskParamsYamlUtilsV5 nextUtil() {
+        return (TaskParamsYamlUtilsV5) TaskParamsYamlUtils.BASE_YAML_UTILS.getForVersion(5);
     }
 
     @Override

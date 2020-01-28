@@ -226,7 +226,7 @@ public class TaskPersistencer {
             else {
                 task.setResultResourceScheduledOn(System.currentTimeMillis());
                 TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                final DataStorageParams dataStorageParams = yaml.taskYaml.resourceStorageUrls.get(yaml.taskYaml.outputResourceCode);
+                final DataStorageParams dataStorageParams = yaml.taskYaml.resourceStorageUrls.get(yaml.taskYaml.outputResourceIds.values().iterator().next());
 
                 if (dataStorageParams.sourcing == EnumsApi.DataSourcing.disk) {
                     task.setCompleted(true);

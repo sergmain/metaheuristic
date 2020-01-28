@@ -42,8 +42,6 @@ public class SimpleApp implements CommandLineRunner {
         SpringApplication.run(SimpleApp.class, args);
     }
 
-    private TaskParamsYaml params;
-
     @Override
     public void run(String... args) throws IOException, InterruptedException {
         if (args.length==0) {
@@ -67,15 +65,15 @@ public class SimpleApp implements CommandLineRunner {
         String config = FileUtils.readFileToString(yamlFile, "utf-8");
         System.out.println("Yaml config file:\n"+config);
 
-        params = TaskParamsYamlUtils.BASE_YAML_UTILS.to(config);
+        TaskParamsYaml params = TaskParamsYamlUtils.BASE_YAML_UTILS.to(config);
 
-        List<String> inputFiles = params.taskYaml.inputResourceCodes.values()
+        List<String> inputFiles = params.taskYaml.inputResourceIds.values()
                 .stream()
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
         System.out.println("input files: " + inputFiles);
 
-        String outputFilename = params.taskYaml.outputResourceCode;
+        String outputFilename = params.taskYaml.outputResourceIds.values().iterator().next();
         System.out.println("output filename: " + outputFilename);
 
         File outputFile = Path.of(params.taskYaml.workingPath, ConstsApi.ARTIFACTS_DIR, outputFilename).toFile();

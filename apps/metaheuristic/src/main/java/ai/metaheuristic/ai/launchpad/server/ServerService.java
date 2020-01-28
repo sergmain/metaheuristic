@@ -165,7 +165,7 @@ public class ServerService {
             try (InputStream is = new FileInputStream(resFile)) {
                 binaryDataService.save(
                         is, resFile.length(), EnumsApi.BinaryDataType.DATA,
-                        taskParamYaml.taskYaml.outputResourceCode,
+                        taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
                         null,
                         task.workbookId);
             }

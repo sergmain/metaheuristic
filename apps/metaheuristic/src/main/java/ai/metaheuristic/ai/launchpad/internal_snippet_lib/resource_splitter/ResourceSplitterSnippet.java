@@ -90,7 +90,7 @@ public class ResourceSplitterSnippet {
 
     public void process(Long planId, Long workbookId, TaskParamsYaml taskParamsYaml) {
 
-        List<String> values = taskParamsYaml.taskYaml.inputResourceCodes.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        List<String> values = taskParamsYaml.taskYaml.inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         if (values.size()>1) {
             throw new IllegalStateException("Too many input codes");
         }

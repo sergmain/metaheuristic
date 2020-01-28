@@ -106,11 +106,11 @@ public class FileProcessService {
                     "actual: " + process.type);
         }
         TaskParamsYaml yaml = new TaskParamsYaml();
-        yaml.taskYaml.setHyperParams( Collections.emptyMap() );
+//        yaml.taskYaml.setHyperParams( Collections.emptyMap() );
         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
-            yaml.taskYaml.inputResourceCodes.put(entry.getKey(), entry.getValue());
+            yaml.taskYaml.inputResourceIds.put(entry.getKey(), entry.getValue());
         }
-        yaml.taskYaml.outputResourceCode = outputResourceCode;
+        yaml.taskYaml.outputResourceIds.put("default-output", outputResourceCode);
         yaml.taskYaml.realNames = mappingCodeToOriginalFilename;
 
         // work around with SnakeYaml's refs

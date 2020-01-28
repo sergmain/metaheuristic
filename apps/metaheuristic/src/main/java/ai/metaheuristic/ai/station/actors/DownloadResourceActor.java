@@ -73,7 +73,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 log.info("Task #{} was already finished, skip it", task.taskId);
                 continue;
             }
-            AssetFile assetFile = ResourceUtils.prepareDataFile(task.targetDir, task.id, null);
+            AssetFile assetFile = ResourceUtils.prepareDataFile(task.targetDir, task.resourceId, null);
             if (assetFile.isError ) {
                 log.warn("#810.010 Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
@@ -86,7 +86,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             log.info("Start processing the download task {}", task);
             try {
                 final String payloadRestUrl = task.launchpad.url + "/rest/v1/payload/resource/data";
-                final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.stationId+ '-' + task.taskId + '-' + URLEncoder.encode(task.getId(), StandardCharsets.UTF_8.toString());
+                final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.stationId+ '-' + task.taskId + '-' + URLEncoder.encode(task.resourceId, StandardCharsets.UTF_8.toString());
 
                 File parentDir = assetFile.file.getParentFile();
                 if (parentDir==null) {
@@ -112,7 +112,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 do {
                     try {
                         final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)
-                                .addParameter("id", task.getId())
+                                .addParameter("id", task.resourceId)
                                 .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
                                 .addParameter("chunkNum", Integer.toString(idx));
 
@@ -152,21 +152,21 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                         }
                     } catch (HttpResponseException e) {
                         if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                            final String es = String.format("#810.035 Resource %s wasn't found on launchpad. Task #%s is finished.", task.getId(), task.getTaskId());
+                            final String es = String.format("#810.035 Resource %s wasn't found on launchpad. Task #%s is finished.", task.resourceId, task.getTaskId());
                             log.warn(es);
                             stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.resource_doesnt_exist;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
-                            final String es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.getId(), task.getTaskId());
+                            final String es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.resourceId, task.getTaskId());
                             log.warn(es);
                             stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.unknown_error;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
-                            final String es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.getId(), task.getTaskId());
+                            final String es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.resourceId, task.getTaskId());
                             log.warn(es);
                             stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.unknown_error;
@@ -205,10 +205,10 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                     log.warn("#810.060 Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());
                     continue;
                 }
-                log.info("Resource #{} was loaded", task.getId());
+                log.info("Resource #{} was loaded", task.resourceId);
             } catch (HttpResponseException e) {
                 if (e.getStatusCode() == HttpServletResponse.SC_CONFLICT) {
-                    log.warn("#810.080 Resource with id {} is broken and need to be recreated", task.getId());
+                    log.warn("#810.080 Resource with id {} is broken and need to be recreated", task.resourceId);
                 } else {
                     log.error("#810.090 HttpResponseException.getStatusCode(): {}", e.getStatusCode());
                     log.error("#810.091 HttpResponseException", e);

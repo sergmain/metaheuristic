@@ -17,8 +17,6 @@
 package ai.metaheuristic.ai.launchpad.atlas;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.launchpad.beans.Atlas;
 import ai.metaheuristic.ai.launchpad.beans.AtlasTask;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
@@ -27,16 +25,12 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasTaskRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.atlas.AtlasTaskParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -47,10 +41,15 @@ import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
+import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
+import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -96,7 +95,6 @@ public class AtlasTopLevelService {
     private final AtlasRepository atlasRepository;
     private final AtlasTaskRepository atlasTaskRepository;
     private final AtlasParamsYamlUtils atlasParamsYamlUtils;
-    private final WorkbookService workbookService;
     private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
     private static class ParamFilter {
@@ -542,8 +540,8 @@ public class AtlasTopLevelService {
             }
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.taskParams);
-            int idxX = mapX.get(taskParamYaml.taskYaml.hyperParams.get(paramCleared.get(0)));
-            int idxY = mapY.get(taskParamYaml.taskYaml.hyperParams.get(paramCleared.get(1)));
+            int idxX = mapX.get(taskParamYaml.taskYaml.taskMl.hyperParams.get(paramCleared.get(0)));
+            int idxY = mapY.get(taskParamYaml.taskYaml.taskMl.hyperParams.get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
         }
 
@@ -566,9 +564,9 @@ public class AtlasTopLevelService {
         List<AtlasTaskParamsYaml> selected = new ArrayList<>();
         for (AtlasTaskParamsYaml task : tasks) {
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.taskParams);
-            boolean[] isOk = new boolean[taskParamYaml.taskYaml.hyperParams.size()];
+            boolean[] isOk = new boolean[taskParamYaml.taskYaml.taskMl.hyperParams.size()];
             int idx = 0;
-            for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.hyperParams.entrySet()) {
+            for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.taskMl.hyperParams.entrySet()) {
                 try {
                     if (!paramFilterKeys.contains(entry.getKey())) {
                         isOk[idx] = true;

@@ -477,8 +477,8 @@ public class ExperimentService {
             }
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            int idxX = mapX.get(taskParamYaml.taskYaml.hyperParams.get(paramCleared.get(0)));
-            int idxY = mapY.get(taskParamYaml.taskYaml.hyperParams.get(paramCleared.get(1)));
+            int idxX = mapX.get(taskParamYaml.taskYaml.taskMl.hyperParams.get(paramCleared.get(0)));
+            int idxY = mapY.get(taskParamYaml.taskYaml.taskMl.hyperParams.get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
         }
 
@@ -503,9 +503,9 @@ public class ExperimentService {
         List<Task> selected = new ArrayList<>();
         for (Task task : list) {
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            boolean[] isOk = new boolean[taskParamYaml.taskYaml.hyperParams.size()];
+            boolean[] isOk = new boolean[taskParamYaml.taskYaml.taskMl.hyperParams.size()];
             int idx = 0;
-            for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.hyperParams.entrySet()) {
+            for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.taskMl.hyperParams.entrySet()) {
                 try {
                     if (!paramFilterKeys.contains(entry.getKey())) {
                         isOk[idx] = true;
@@ -782,12 +782,12 @@ public class ExperimentService {
                         TaskParamsYaml yaml = new TaskParamsYaml();
                         yaml.taskYaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
 
-                        yaml.taskYaml.setHyperParams(hyperParams.toSortedMap());
+                        yaml.taskYaml.taskMl.setHyperParams(hyperParams.toSortedMap());
                         // TODO need to implement an unit-test for a Plan without metas in experiment
                         //  and check that features are correctly defined
                         // TODO 2019-07-17 right now it doesn't work
                         //  - you need to specify 'feature', dataset'(not sure about 'dataset') in metas
-                        yaml.taskYaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
+                        yaml.taskYaml.inputResourceIds.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
 
                             // TODO 2019.04.24 need to decide do we need this check or not
@@ -799,7 +799,7 @@ public class ExperimentService {
                                     .stream()
                                     .filter(o -> o.value.equals(entry.getKey()))
                                     .findFirst()
-                                    .ifPresent(meta -> yaml.taskYaml.inputResourceCodes
+                                    .ifPresent(meta -> yaml.taskYaml.inputResourceIds
                                             .computeIfAbsent(meta.getKey(), k -> new ArrayList<>())
                                             .addAll(entry.getValue())
                                     );
@@ -814,15 +814,15 @@ public class ExperimentService {
 
                         EnumsApi.ExperimentTaskType type;
                         if (CommonConsts.FIT_TYPE.equals(snippet.getType())) {
-                            yaml.taskYaml.outputResourceCode = getModelFilename(task);
+                            yaml.taskYaml.outputResourceIds.put("default-output", getModelFilename(task));
                             type = EnumsApi.ExperimentTaskType.FIT;
                         } else if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
                             if (prevTask == null) {
                                 throw new IllegalStateException("#179.120 prevTask is null");
                             }
                             String modelFilename = getModelFilename(prevTask);
-                            yaml.taskYaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(modelFilename);
-                            yaml.taskYaml.outputResourceCode = "task-" + task.getId() + "-output-stub-for-predict";
+                            yaml.taskYaml.inputResourceIds.computeIfAbsent("model", k -> new ArrayList<>()).add(modelFilename);
+                            yaml.taskYaml.outputResourceIds.put("default-output", "task-" + task.getId() + "-output-stub-for-predict");
                             type = EnumsApi.ExperimentTaskType.PREDICT;
 
                             // TODO 2019.05.02 add implementation of disk storage for models
@@ -831,9 +831,9 @@ public class ExperimentService {
                         } else {
                             throw new IllegalStateException("#179.130 Not supported type of snippet encountered, type: " + snippet.getType());
                         }
-                        yaml.taskYaml.resourceStorageUrls.put(yaml.taskYaml.outputResourceCode, process.outputParams);
+                        yaml.taskYaml.resourceStorageUrls.put(yaml.taskYaml.outputResourceIds.values().iterator().next(), process.outputParams);
 
-                        yaml.taskYaml.inputResourceCodes.forEach((key, value) -> {
+                        yaml.taskYaml.inputResourceIds.forEach((key, value) -> {
                             HashSet<String> set = new HashSet<>(value);
                             value.clear();
                             value.addAll(set);

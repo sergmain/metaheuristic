@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
 import ai.metaheuristic.ai.station.tasks.UploadResourceTask;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
@@ -126,19 +125,23 @@ public class StationService {
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
         File taskDir = stationTaskService.prepareTaskDir(metadataService.launchpadUrlAsCode(launchpadUrl), taskId);
 
-        final DataStorageParams dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
+        final DataStorageParams dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
+                .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
         ResourceProvider resourceProvider;
         try {
             resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
         } catch (ResourceProviderException e) {
-            log.error("#749.030 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.taskYaml.outputResourceCode);
+            log.error("#749.030 storageUrl wasn't found for outputResourceCode {}",
+                    taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
             return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
         }
         if (resourceProvider instanceof DiskResourceProvider) {
             return Enums.ResendTaskOutputResourceStatus.OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE;
         }
 
-        final AssetFile assetFile = ResourceUtils.prepareOutputAssetFile(taskDir, taskParamYaml.taskYaml.outputResourceCode, taskParamYaml.taskYaml.outputResourceCode);
+        final AssetFile assetFile = ResourceUtils.prepareOutputAssetFile(
+                taskDir, taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
+                taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
 
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
@@ -169,7 +172,7 @@ public class StationService {
     public StationService.ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.LaunchpadInfo launchpadCode, TaskParamsYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
         StationService.ResultOfChecking result = new StationService.ResultOfChecking();
         try {
-            taskParamYaml.taskYaml.inputResourceCodes.forEach((key, value) -> {
+            taskParamYaml.taskYaml.inputResourceIds.forEach((key, value) -> {
                 for (String resourceCode : value) {
                     final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(resourceCode);
                     if (params==null) {
@@ -217,12 +220,13 @@ public class StationService {
 
     public File getOutputResourceFile(StationTask task, TaskParamsYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
         try {
-            final DataStorageParams dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
+            final DataStorageParams dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
+                    .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
 
             ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
             //noinspection UnnecessaryLocalVariable
             File outputResourceFile = resourceProvider.getOutputResourceFile(
-                    taskDir, launchpad, task, taskParamYaml.taskYaml.outputResourceCode, dataStorageParams);
+                    taskDir, launchpad, task, taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), dataStorageParams);
             return outputResourceFile;
         } catch (ResourceProviderException e) {
             final String msg = "#749.080 Error: " + e.toString();

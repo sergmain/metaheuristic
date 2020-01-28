@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -67,7 +68,8 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     public SnippetApiData.SnippetExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            File outputResourceFile, TaskParamsYaml.SnippetConfig snippet) {
+            String outputResourceId, TaskParamsYaml.SnippetConfig snippet) {
+        File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
         if (outputResourceFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputResourceFile.getPath());
             UploadResourceTask uploadResourceTask = new UploadResourceTask(task.taskId, outputResourceFile);

@@ -396,9 +396,10 @@ public class BatchTopLevelService {
         prepareZipData.bs.renameTo.put("zip/" + tempFile.getName(), "zip/" + prepareZipData.mainDocument);
 
         try {
-            binaryDataService.storeToFile(taskParamYaml.taskYaml.outputResourceCode, tempFile);
+            binaryDataService.storeToFile(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), tempFile);
         } catch (BinaryDataNotFoundException e) {
-            String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.taskYaml.outputResourceCode +
+            String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " +
+                    taskParamYaml.taskYaml.outputResourceIds.values().iterator().next() +
                     ", file: " + tempFile.getPath();
             log.error(msg);
             prepareZipData.bs.getGeneralStatus().add(msg,'\n');

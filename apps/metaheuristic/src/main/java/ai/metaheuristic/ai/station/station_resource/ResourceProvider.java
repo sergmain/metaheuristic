@@ -28,12 +28,15 @@ import java.io.File;
 import java.util.List;
 
 public interface ResourceProvider {
-    List<AssetFile> prepareForDownloadingDataFile(File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, StationTask task, Metadata.LaunchpadInfo launchpadCode, String resourceId, DataStorageParams dataStorageParams);
+    List<AssetFile> prepareForDownloadingDataFile(
+            File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            String resourceId, DataStorageParams dataStorageParams);
 
     SnippetApiData.SnippetExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            File outputResourceFile,
+            String outputResourceId,
             TaskParamsYaml.SnippetConfig snippet
     );
 
@@ -41,5 +44,5 @@ public interface ResourceProvider {
             File taskDir,
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task,
-            String outputResourceCode, DataStorageParams dataStorageParams);
+            String outputResourceId, DataStorageParams dataStorageParams);
 }

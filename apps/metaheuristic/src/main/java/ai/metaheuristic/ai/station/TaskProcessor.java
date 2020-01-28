@@ -154,44 +154,16 @@ public class TaskProcessor {
                 continue;
             }
             boolean isAllLoaded = resultOfChecking.isAllLoaded;
-            for (Map.Entry<String, List<AssetFile>> entry : resultOfChecking.assetFiles.entrySet()) {
-                for (AssetFile assetFile : entry.getValue()) {
-                    taskParamYaml.taskYaml.inputResourceAbsolutePaths
-                            .computeIfAbsent(entry.getKey(), o-> new ArrayList<>())
-                            .add(assetFile.file.getAbsolutePath());
-                }
-            }
             File outputResourceFile = stationService.getOutputResourceFile(task, taskParamYaml, launchpad, taskDir);
             if (outputResourceFile==null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
                 continue;
             }
-            DataStorageParams dsp = taskParamYaml.taskYaml.getResourceStorageUrls().get(taskParamYaml.taskYaml.outputResourceCode);
+            DataStorageParams dsp = taskParamYaml.taskYaml.getResourceStorageUrls()
+                    .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
             if (dsp==null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.050 Broken task. Can't find params for outputResourceCode");
                 continue;
-            }
-            switch(dsp.sourcing) {
-                case launchpad:
-                    taskParamYaml.taskYaml.outputResourceAbsolutePath = outputResourceFile.getAbsolutePath();
-                    break;
-                case disk:
-                    if (dsp.disk!=null && StringUtils.isNotBlank(dsp.disk.path)) {
-                        File f = new File(outputResourceFile.getParent(), dsp.disk.path);
-                        taskParamYaml.taskYaml.outputResourceAbsolutePath = f.getAbsolutePath();
-                    }
-                    else {
-                        taskParamYaml.taskYaml.outputResourceAbsolutePath = outputResourceFile.getAbsolutePath();
-                    }
-                    break;
-                case git:
-                    stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId,
-                            "#100.060 Git sourcing isn't implemented yet");
-                    continue;
-                default:
-                    stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId,
-                            "#100.070 Unknown sourcing type: " + dsp.sourcing);
-                    continue;
             }
             if (taskParamYaml.taskYaml.snippet==null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.080 Broken task. Snippet isn't defined");
@@ -362,11 +334,12 @@ public class TaskProcessor {
                             stationTaskService.storePredictedData(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
                             stationTaskService.storeFittingCheck(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
 
-                            final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
+                            final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls
+                                    .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
                             ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                             generalExec = resourceProvider.processResultingFile(
                                     launchpad, task, launchpadInfo,
-                                    new File(taskParamYaml.taskYaml.outputResourceAbsolutePath),
+                                    taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
                                     mainSnippetConfig
                             );
                         }

@@ -78,16 +78,17 @@ public class TestTaskParamYaml {
 
     @Test
     public void testSequenceYaml() {
-        TaskParamsYaml seq = new TaskParamsYaml();
+        TaskParamsYaml tpy = new TaskParamsYaml();
 
-        seq.taskYaml.inputResourceCodes.put("type1", Collections.singletonList("1"));
-        seq.taskYaml.inputResourceCodes.put("type2", Collections.singletonList("2"));
-        seq.taskYaml.inputResourceCodes.put("type3", Collections.singletonList("3"));
+        tpy.taskYaml.inputResourceIds.put("type1", Collections.singletonList("1"));
+        tpy.taskYaml.inputResourceIds.put("type2", Collections.singletonList("2"));
+        tpy.taskYaml.inputResourceIds.put("type3", Collections.singletonList("3"));
         Map<String, String> map = new HashMap<>();
         map.put("key1", "#1");
         map.put("key2", "#1");
-        seq.taskYaml.setHyperParams(map);
-        seq.taskYaml.setSnippet(TaskParamsUtils.toSnippetConfig(new SnippetConfigYaml(
+        tpy.taskYaml.taskMl = new TaskParamsYaml.TaskMachineLearning();
+        tpy.taskYaml.taskMl.setHyperParams(map);
+        tpy.taskYaml.setSnippet(TaskParamsUtils.toSnippetConfig(new SnippetConfigYaml(
                 "123:1.0",
                 CommonConsts.FIT_TYPE,
                 "file.txt",
@@ -103,12 +104,12 @@ public class TestTaskParamYaml {
                 new SnippetConfigYaml.MachineLearning(true, false)
         )));
 
-        String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(seq);
+        String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
         System.out.println(s);
 
         assertFalse(s.startsWith("!!"));
 
         TaskParamsYaml seq1 = TaskParamsYamlUtils.BASE_YAML_UTILS.to(s);
-        Assert.assertEquals(seq, seq1);
+        Assert.assertEquals(tpy, seq1);
     }
 }

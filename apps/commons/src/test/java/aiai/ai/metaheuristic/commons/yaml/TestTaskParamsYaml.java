@@ -19,6 +19,7 @@ package aiai.ai.metaheuristic.commons.yaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV2;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.Test;
 
@@ -39,6 +40,17 @@ public class TestTaskParamsYaml {
         TaskParamsYamlV2 v2 = new TaskParamsYamlV2();
         final TaskParamsYamlV2.TaskYamlV2 ty = new TaskParamsYamlV2.TaskYamlV2();
         v2.taskYaml = ty;
+        ty.inputResourceCodes = Map.of("code-1", List.of("value-1-1", "value-1-2"));
+        ty.outputResourceCode = "output-code-1";
+        ty.resourceStorageUrls = Map.of(
+                "value-1-1", new DataStorageParams(EnumsApi.DataSourcing.launchpad),
+                "value-1-2", new DataStorageParams(EnumsApi.DataSourcing.disk)
+        );
+        ty.clean = true;
+        ty.hyperParams = Map.of("hyper-param-key-01", "hyper-param-value-01");
+        ty.workingPath = "working-path";
+        ty.timeoutBeforeTerminate = 42L;
+
 
         final TaskParamsYamlV2.SnippetConfigV2 preSnippet = new TaskParamsYamlV2.SnippetConfigV2();
         preSnippet.code = "pre-snippet-code";
@@ -55,25 +67,41 @@ public class TestTaskParamsYaml {
         postSnippet.sourcing = EnumsApi.SnippetSourcing.launchpad;
         ty.postSnippets = List.of(postSnippet);
 
-        //Map<String, String> realNames = Map.of("file-code-01", "real-name-01","file-code-02", "real-name-02");
-        ty.clean = true;
-        ty.hyperParams = Map.of("hyper-param-key-01", "hyper-param-value-01");
-        ty.workingPath = "working-path";
-
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(v2);
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(s);
 
         assertNotNull(tpy);
-        assertEquals(3, tpy.version);
+        assertEquals(5, tpy.version);
         assertNotNull(tpy.taskYaml);
         assertNotNull(tpy.taskYaml.preSnippets);
         assertNotNull(tpy.taskYaml.snippet);
         assertNotNull(tpy.taskYaml.postSnippets);
-        assertNotNull(tpy.taskYaml.hyperParams);
+        assertNotNull(tpy.taskYaml.taskMl);
+        assertNotNull(tpy.taskYaml.taskMl.hyperParams);
         assertNotNull(tpy.taskYaml.workingPath);
 
         assertTrue(tpy.taskYaml.clean);
         assertEquals("working-path", tpy.taskYaml.workingPath);
+        assertEquals(Long.valueOf(42L), tpy.taskYaml.timeoutBeforeTerminate);
+        assertNotNull(tpy.taskYaml.inputResourceIds);
+        assertNotNull(tpy.taskYaml.outputResourceIds);
+        assertNotNull(tpy.taskYaml.resourceStorageUrls);
+
+
+        assertNotNull(tpy.taskYaml.inputResourceIds.get("code-1"));
+        assertTrue(tpy.taskYaml.inputResourceIds.get("code-1").contains("value-1-1"));
+        assertTrue(tpy.taskYaml.inputResourceIds.get("code-1").contains("value-1-2"));
+        ty.outputResourceCode = "output-code-1";
+        ty.resourceStorageUrls = Map.of(
+                "value-1-1", new DataStorageParams(EnumsApi.DataSourcing.launchpad),
+                "value-1-2", new DataStorageParams(EnumsApi.DataSourcing.disk)
+        );
+
+        assertEquals(1, tpy.taskYaml.taskMl.hyperParams.size());
+        assertTrue(tpy.taskYaml.taskMl.hyperParams.containsKey("hyper-param-key-01"));
+        assertEquals("hyper-param-value-01", tpy.taskYaml.taskMl.hyperParams.get("hyper-param-key-01"));
+
+        // test snippets
 
         assertEquals(1, tpy.taskYaml.preSnippets.size());
         assertEquals("pre-snippet-code", tpy.taskYaml.preSnippets.get(0).code);
@@ -85,10 +113,6 @@ public class TestTaskParamsYaml {
         assertEquals(1, tpy.taskYaml.postSnippets.size());
         assertEquals("post-snippet-code", tpy.taskYaml.postSnippets.get(0).code);
         assertEquals(EnumsApi.SnippetSourcing.launchpad, tpy.taskYaml.postSnippets.get(0).sourcing);
-
-        assertEquals(1, tpy.taskYaml.hyperParams.size());
-        assertTrue(tpy.taskYaml.hyperParams.containsKey("hyper-param-key-01"));
-        assertEquals("hyper-param-value-01", tpy.taskYaml.hyperParams.get("hyper-param-key-01"));
 
     }
 }

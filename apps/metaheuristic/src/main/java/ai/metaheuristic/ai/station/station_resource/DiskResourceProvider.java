@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.yaml.env.DiskStorage;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -36,6 +37,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -103,8 +105,9 @@ public class DiskResourceProvider implements ResourceProvider {
     public SnippetApiData.SnippetExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            File outputResourceFile, TaskParamsYaml.SnippetConfig snippet
+            String outputResourceId, TaskParamsYaml.SnippetConfig snippet
     ) {
+        File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
         if (outputResourceFile.exists()) {
             log.info("The result data was already written to file {}, no need to upload to launchpad", outputResourceFile.getPath());
             stationTaskService.setResourceUploadedAndCompleted(launchpad.launchpadLookup.url, task.taskId);
@@ -119,7 +122,7 @@ public class DiskResourceProvider implements ResourceProvider {
     @Override
     public File getOutputResourceFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, String outputResourceCode, DataStorageParams dataStorageParams) {
+            StationTask task, String outputResourceId, DataStorageParams dataStorageParams) {
 
         EnvYaml env = envService.getEnvYaml();
         DiskStorage diskStorage = env.findDiskStorageByCode(dataStorageParams.disk.code);
@@ -131,7 +134,7 @@ public class DiskResourceProvider implements ResourceProvider {
             throw new ResourceProviderException("#015.042 The path of disk storage doesn't exist: " + path.getAbsolutePath());
         }
 
-        return new File(path, outputResourceCode);
+        return new File(path, outputResourceId);
     }
 
 }

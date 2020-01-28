@@ -88,7 +88,7 @@ public class TaskAssetPreparer {
                 continue;
             }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            if (taskParamYaml.taskYaml.inputResourceCodes.isEmpty()) {
+            if (taskParamYaml.taskYaml.inputResourceIds.isEmpty()) {
                 log.warn("#951.040 taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;
             }

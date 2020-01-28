@@ -17,9 +17,8 @@
 package ai.metaheuristic.commons.yaml.task;
 
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYamlV3;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV4;
-import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
+import ai.metaheuristic.api.data.task.TaskParamsYamlV5;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -33,30 +32,33 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 public class TaskParamsYamlUtilsV5
-        extends AbstractParamsYamlUtils<TaskParamsYamlV4, TaskParamsYaml, Void, TaskParamsYamlV3, TaskParamsYamlUtilsV3, TaskParamsYaml> {
+        extends AbstractParamsYamlUtils<TaskParamsYamlV5, TaskParamsYaml, Void, TaskParamsYamlV4, TaskParamsYamlUtilsV4, TaskParamsYaml> {
 
     @Override
     public int getVersion() {
-        return 4;
+        return 5;
     }
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(TaskParamsYamlV4.class);
+        return YamlUtils.init(TaskParamsYamlV5.class);
     }
 
     @Override
-    public TaskParamsYaml upgradeTo(TaskParamsYamlV4 yaml, Long ... vars) {
-        yaml.checkIntegrity();
+    public TaskParamsYaml upgradeTo(TaskParamsYamlV5 v5, Long ... vars) {
+        v5.checkIntegrity();
         TaskParamsYaml t = new TaskParamsYaml();
         t.taskYaml = new TaskParamsYaml.TaskYaml();
-        BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml, "snippet", "preSnippet", "postSnippet");
-        t.taskYaml.snippet = toUp(yaml.taskYaml.snippet);
-        if (yaml.taskYaml.preSnippets!=null) {
-            t.taskYaml.preSnippets = yaml.taskYaml.preSnippets.stream().map(TaskParamsYamlUtilsV5::toUp).collect(Collectors.toList());;
+        BeanUtils.copyProperties(v5.taskYaml, t.taskYaml, "snippet", "preSnippet", "postSnippet");
+        t.taskYaml.snippet = toUp(v5.taskYaml.snippet);
+        if (v5.taskYaml.preSnippets!=null) {
+            t.taskYaml.preSnippets = v5.taskYaml.preSnippets.stream().map(TaskParamsYamlUtilsV5::toUp).collect(Collectors.toList());;
         }
-        if (yaml.taskYaml.postSnippets!=null) {
-            t.taskYaml.postSnippets = yaml.taskYaml.postSnippets.stream().map(TaskParamsYamlUtilsV5::toUp).collect(Collectors.toList());;
+        if (v5.taskYaml.postSnippets!=null) {
+            t.taskYaml.postSnippets = v5.taskYaml.postSnippets.stream().map(TaskParamsYamlUtilsV5::toUp).collect(Collectors.toList());;
+        }
+        if (v5.taskYaml.taskMl!=null) {
+            t.taskYaml.taskMl = new TaskParamsYaml.TaskMachineLearning(v5.taskYaml.taskMl.hyperParams);
         }
 
         t.checkIntegrity();
@@ -65,9 +67,9 @@ public class TaskParamsYamlUtilsV5
     }
 
     @Override
-    public TaskParamsYamlV3 downgradeTo(TaskParamsYaml yaml) {
+    public TaskParamsYamlV4 downgradeTo(TaskParamsYaml yaml) {
         yaml.checkIntegrity();
-        TaskParamsYamlV3 t = new TaskParamsYamlV3();
+        TaskParamsYamlV4 t = new TaskParamsYamlV4();
         BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml, "snippet", "preSnippet", "postSnippet");
         if (yaml.taskYaml.preSnippets!=null && yaml.taskYaml.preSnippets.size()>0) {
             t.taskYaml.preSnippets = yaml.taskYaml.preSnippets.stream().map(TaskParamsYamlUtilsV5::toDown).collect(Collectors.toList());;
@@ -82,7 +84,7 @@ public class TaskParamsYamlUtilsV5
     }
 
 
-    private static TaskParamsYaml.SnippetConfig toUp(TaskParamsYamlV4.SnippetConfigV4 src) {
+    private static TaskParamsYaml.SnippetConfig toUp(TaskParamsYamlV5.SnippetConfigV5 src) {
         if (src==null) {
             return null;
         }
@@ -107,11 +109,11 @@ public class TaskParamsYamlUtilsV5
         return trg;
     }
 
-    private static TaskParamsYamlV3.SnippetConfigV3 toDown(TaskParamsYaml.SnippetConfig src) {
+    private static TaskParamsYamlV4.SnippetConfigV4 toDown(TaskParamsYaml.SnippetConfig src) {
         if (src==null) {
             return null;
         }
-        TaskParamsYamlV3.SnippetConfigV3 trg = new TaskParamsYamlV3.SnippetConfigV3();
+        TaskParamsYamlV4.SnippetConfigV4 trg = new TaskParamsYamlV4.SnippetConfigV4();
         trg.checksum = src.checksum;
         trg.checksumMap = src.checksumMap;
         trg.code = src.code;
@@ -119,14 +121,11 @@ public class TaskParamsYamlUtilsV5
         trg.file = src.file;
         trg.git = src.git;
         if (src.info!=null) {
-            trg.info = new TaskParamsYamlV3.SnippetInfoV3(src.info.signed, src.info.length);
+            trg.info = new TaskParamsYamlV4.SnippetInfoV4(src.info.signed, src.info.length);
         }
         trg.metas = src.metas;
         if (src.ml!=null) {
-            if (src.ml.fitting) {
-                throw new DowngradeNotSupportedException("ml.fitting is true");
-            }
-            trg.metrics = src.ml.metrics;
+            trg.ml = new TaskParamsYamlV4.MachineLearningV4(src.ml.metrics, src.ml.fitting);
         }
         trg.params = src.params;
         trg.skipParams = src.skipParams;
@@ -141,19 +140,19 @@ public class TaskParamsYamlUtilsV5
     }
 
     @Override
-    public TaskParamsYamlUtilsV3 prevUtil() {
-        return (TaskParamsYamlUtilsV3) TaskParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
+    public TaskParamsYamlUtilsV4 prevUtil() {
+        return (TaskParamsYamlUtilsV4) TaskParamsYamlUtils.BASE_YAML_UTILS.getForVersion(4);
     }
 
     @Override
-    public String toString(TaskParamsYamlV4 params) {
+    public String toString(TaskParamsYamlV5 params) {
         return getYaml().dump(params);
     }
 
     @Override
-    public TaskParamsYamlV4 to(String s) {
+    public TaskParamsYamlV5 to(String s) {
         //noinspection UnnecessaryLocalVariable
-        final TaskParamsYamlV4 p = getYaml().load(s);
+        final TaskParamsYamlV5 p = getYaml().load(s);
         return p;
     }
 
