@@ -74,9 +74,7 @@ public class TestBinaryDataRepository {
         assertArrayEquals(bytes, d2.bytes);
 
         binaryDataService.deleteAllByType(EnumsApi.BinaryDataType.TEST);
-
     }
-
 
     @Test
     public void testNonExistRecord() {

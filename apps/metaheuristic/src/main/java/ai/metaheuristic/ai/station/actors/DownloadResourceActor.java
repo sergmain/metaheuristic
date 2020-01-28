@@ -112,9 +112,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 do {
                     try {
                         final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)
-                                .addParameter("stationId", task.stationId)
-                                .addParameter("taskId", Long.toString(task.getTaskId()))
-                                .addParameter("code", task.getId())
+                                .addParameter("id", task.getId())
                                 .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
                                 .addParameter("chunkNum", Integer.toString(idx));
 

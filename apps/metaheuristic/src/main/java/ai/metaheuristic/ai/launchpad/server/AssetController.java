@@ -56,21 +56,18 @@ public class AssetController {
     private final SnippetService snippetService;
 
     @GetMapping(value="/snippet/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<AbstractResource> deliverResourceAuth(
+    public ResponseEntity<AbstractResource> deliverSnippetAuth(
             HttpServletRequest request,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
-            @SuppressWarnings("unused") String stationId,
-            @SuppressWarnings("unused") Long taskId,
             String code, String chunkSize, Integer chunkNum) {
-        String normalCode = new File(code).getName();
-        log.debug("deliverResourceAuth(), code: {}, chunkSize: {}, chunkNum: {}", normalCode, chunkSize, chunkNum);
+        log.debug("deliverSnippetAuth(), code: {}, chunkSize: {}, chunkNum: {}", code, chunkSize, chunkNum);
         if (chunkSize==null || chunkSize.isBlank() || chunkNum==null) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
         }
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryDataType.SNIPPET, normalCode, chunkSize, chunkNum);
+            ResourceWithCleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryDataType.SNIPPET, code, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

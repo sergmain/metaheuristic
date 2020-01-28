@@ -115,30 +115,6 @@ public class StationService {
         }
     }
 
-    // check only active Launchpad
-    public boolean isStationProcessingAnyTask() {
-        for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpadLookupExtendedService.lookupExtendedMap.entrySet()) {
-            String launchpadUrl = entry.getKey();
-            LaunchpadLookupConfig.LaunchpadLookup launchpadLookup = entry.getValue().launchpadLookup;
-            if (launchpadLookup.disabled) {
-                continue;
-            }
-
-            final String stationId = metadataService.getStationId(launchpadUrl);
-            final String sessionId = metadataService.getSessionId(launchpadUrl);
-
-            if (stationId == null || sessionId==null) {
-                return false;
-            }
-
-            final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
-            if (!b) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(String launchpadUrl, long taskId) {
         if (launchpadUrl==null) {
             throw new IllegalStateException("#749.020 launchpadUrl is null");
@@ -162,7 +138,7 @@ public class StationService {
             return Enums.ResendTaskOutputResourceStatus.OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE;
         }
 
-        final AssetFile assetFile = ResourceUtils.prepareArtifactFile(taskDir, taskParamYaml.taskYaml.outputResourceCode, taskParamYaml.taskYaml.outputResourceCode);
+        final AssetFile assetFile = ResourceUtils.prepareOutputAssetFile(taskDir, taskParamYaml.taskYaml.outputResourceCode, taskParamYaml.taskYaml.outputResourceCode);
 
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {

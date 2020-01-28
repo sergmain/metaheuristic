@@ -23,9 +23,9 @@ import java.io.File;
 
 @Data
 @AllArgsConstructor
-@EqualsAndHashCode(of = {"id", "taskId"}, callSuper = false)
+@EqualsAndHashCode(of = {"resourceId"}, callSuper = false)
 public class DownloadResourceTask extends StationRestTask {
-    public String id;
+    public String resourceId;
     public long taskId;
     public File targetDir;
     public Long chunkSize;
@@ -33,7 +33,7 @@ public class DownloadResourceTask extends StationRestTask {
     @Override
     public String toString() {
         return "DownloadResourceTask{" +
-                "id='" + id + '\'' +
+                "resourceId='" + resourceId + '\'' +
                 ", targetDir=" + targetDir.getPath() +
                 '}';
     }

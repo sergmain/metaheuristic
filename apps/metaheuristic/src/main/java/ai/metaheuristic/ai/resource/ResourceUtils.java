@@ -29,24 +29,24 @@ public class ResourceUtils {
     /**
      *
      * @param rootDir File
-     * @param id -  this is the code of resource
+     * @param resourceId -  this is the code of resource
      * @param resourceFilename String
      * @return AssetFile
      */
-    public static AssetFile prepareDataFile(File rootDir, String id, String resourceFilename) {
-        return prepareAssetFile(rootDir, id, resourceFilename, EnumsApi.BinaryDataType.DATA.toString());
+    public static AssetFile prepareDataFile(File rootDir, String resourceId, String resourceFilename) {
+        return prepareAssetFile(rootDir, resourceId, resourceFilename, EnumsApi.BinaryDataType.DATA.toString());
     }
 
-    public static AssetFile prepareArtifactFile(File rootDir, String id, String resourceFilename) {
+    public static AssetFile prepareOutputAssetFile(File rootDir, String id, String resourceFilename) {
         return prepareAssetFile(rootDir, id, resourceFilename, ConstsApi.ARTIFACTS_DIR);
     }
 
-    private static AssetFile prepareAssetFile(File rootDir, String id, String resourceFilename, String assetDirname ) {
+    private static AssetFile prepareAssetFile(File rootDir, String resourceId, String resourceFilename, String assetDirname ) {
         final File assetDir = new File(rootDir, assetDirname);
-        return prepareAssetFile(assetDir, id, resourceFilename);
+        return prepareAssetFile(assetDir, resourceId, resourceFilename);
     }
 
-    public static AssetFile prepareAssetFile(File assetDir, String id, String resourceFilename) {
+    public static AssetFile prepareAssetFile(File assetDir, String resourceId, String resourceFilename) {
         final AssetFile assetFile = new AssetFile();
         if (!assetDir.exists() && !assetDir.mkdirs()) {
             assetFile.isError = true;
@@ -57,7 +57,7 @@ public class ResourceUtils {
             assetFile.file = new File(assetDir, resourceFilename);
         }
         else {
-            final String resId = id.replace(':', '_');
+            final String resId = resourceId.replace(':', '_');
             assetFile.file = new File(assetDir, "" + resId);
         }
         assetFile.isExist = assetFile.file.exists();

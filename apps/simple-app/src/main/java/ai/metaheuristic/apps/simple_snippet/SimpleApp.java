@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.apps.simple_snippet;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -25,10 +26,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 @Slf4j
@@ -65,28 +69,17 @@ public class SimpleApp implements CommandLineRunner {
 
         params = TaskParamsYamlUtils.BASE_YAML_UTILS.to(config);
 
-        String inputFile = getInputFile();
-        System.out.println("input file: " + inputFile);
-        String outputFile = getOutputFile();
-        System.out.println("output file: " + outputFile);
+        List<String> inputFiles = params.taskYaml.inputResourceCodes.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+        System.out.println("input files: " + inputFiles);
 
-        FileUtils.copyFile( new File(inputFile), new File(outputFile) );
+        String outputFilename = params.taskYaml.outputResourceCode;
+        System.out.println("output filename: " + outputFilename);
+
+        File outputFile = Path.of(params.taskYaml.workingPath, ConstsApi.ARTIFACTS_DIR, outputFilename).toFile();
+        FileUtils.write(outputFile, inputFiles.isEmpty() ? "No files were provided" : inputFiles.toString(), StandardCharsets.UTF_8);
     }
 
-    public String getOutputFile() {
-        return params.taskYaml.outputResourceAbsolutePath;
-    }
-
-    public String getInputFile() {
-
-        Collection<List<String>> values = params.taskYaml.inputResourceAbsolutePaths.values();
-        if (values.isEmpty()) {
-            throw new IllegalStateException("inputResourceAbsolutePaths is empty");
-        }
-        List<String> list = values.iterator().next();
-        if (list.isEmpty()) {
-            throw new IllegalStateException("inputResourceAbsolutePaths/list  is empty");
-        }
-        return list.get(0);
-    }
 }

@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
 
 /**
  * User: Serg
@@ -65,18 +64,15 @@ public class ServerController {
     public ResponseEntity<AbstractResource> deliverResourceAuth(
             HttpServletRequest request,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
-            @SuppressWarnings("unused") String stationId,
-            @SuppressWarnings("unused") Long taskId,
-            String code, String chunkSize, Integer chunkNum) {
-        String normalCode = new File(code).getName();
-        log.debug("deliverResourceAuth(), code: {}, chunkSize: {}, chunkNum: {}",normalCode, chunkSize, chunkNum);
+            String id, String chunkSize, Integer chunkNum) {
+        log.debug("deliverResourceAuth(), id: {}, chunkSize: {}, chunkNum: {}", id, chunkSize, chunkNum);
         if (chunkSize==null || chunkSize.isBlank() || chunkNum==null) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
         }
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryDataType.DATA, normalCode, chunkSize, chunkNum);
+            ResourceWithCleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryDataType.DATA, id, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

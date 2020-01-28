@@ -56,7 +56,7 @@ public class DiskResourceProvider implements ResourceProvider {
     public List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            String resourceCode, DataStorageParams dataStorageParams) {
+            String resourceId, DataStorageParams dataStorageParams) {
 
         if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.disk) {
             throw new ResourceProviderException("#015.018 Wrong type of sourcing of data storage" + dataStorageParams.sourcing);

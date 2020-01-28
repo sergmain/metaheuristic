@@ -179,7 +179,6 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +'-' + task.stationId;
                     try {
                         final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
-                                .addParameter("stationId", task.stationId)
                                 .addParameter("code", task.snippetCode)
                                 .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
                                 .addParameter("chunkNum", Integer.toString(idx));

@@ -51,16 +51,16 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     public List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            String resourceCode, DataStorageParams dataStorageParams) {
+            String resourceId, DataStorageParams dataStorageParams) {
 
         // process it only if the launchpad has already sent its config
         if (launchpad.context.chunkSize != null) {
-            DownloadResourceTask resourceTask = new DownloadResourceTask(resourceCode, task.getTaskId(), taskDir, launchpad.context.chunkSize);
+            DownloadResourceTask resourceTask = new DownloadResourceTask(resourceId, task.getTaskId(), taskDir, launchpad.context.chunkSize);
             resourceTask.launchpad = launchpad.launchpadLookup;
             resourceTask.stationId = launchpadCode.stationId;
             downloadResourceActor.add(resourceTask);
         }
-        return Collections.singletonList(ResourceUtils.prepareDataFile(taskDir, resourceCode, null));
+        return Collections.singletonList(ResourceUtils.prepareDataFile(taskDir, resourceId, null));
     }
 
     @Override

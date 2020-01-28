@@ -28,7 +28,7 @@ import java.io.File;
 import java.util.List;
 
 public interface ResourceProvider {
-    List<AssetFile> prepareForDownloadingDataFile(File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, StationTask task, Metadata.LaunchpadInfo launchpadCode, String resourceCode, DataStorageParams dataStorageParams);
+    List<AssetFile> prepareForDownloadingDataFile(File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, StationTask task, Metadata.LaunchpadInfo launchpadCode, String resourceId, DataStorageParams dataStorageParams);
 
     SnippetApiData.SnippetExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
