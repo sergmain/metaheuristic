@@ -34,8 +34,7 @@ import java.util.Map;
  * Time: 9:10 PM
  */
 @Data
-@EqualsAndHashCode
-public class TaskParamsYaml implements BaseParams {
+public class TaskParamsYamlV5 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
@@ -45,7 +44,7 @@ public class TaskParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class SnippetInfo {
+    public static class SnippetInfoV5 {
         public boolean signed;
         /**
          * snippet's binary length
@@ -56,7 +55,7 @@ public class TaskParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class MachineLearning {
+    public static class MachineLearningV5 {
         // does this snippet support metrics
         public boolean metrics = false;
         // does this snippet support fitting detection
@@ -66,7 +65,7 @@ public class TaskParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class TaskMachineLearning {
+    public static class TaskMachineLearningV5 {
         public Map<String, String> hyperParams;
     }
 
@@ -75,11 +74,11 @@ public class TaskParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class SnippetConfig implements Cloneable {
+    public static class SnippetConfigV5 implements Cloneable {
 
         @SneakyThrows
-        public SnippetConfig clone() {
-            final SnippetConfig clone = (SnippetConfig) super.clone();
+        public SnippetConfigV5 clone() {
+            final SnippetConfigV5 clone = (SnippetConfigV5) super.clone();
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
@@ -107,23 +106,23 @@ public class TaskParamsYaml implements BaseParams {
         public String env;
         public EnumsApi.SnippetSourcing sourcing;
         public Map<EnumsApi.Type, String> checksumMap;
-        public SnippetInfo info = new SnippetInfo();
+        public SnippetInfoV5 info = new SnippetInfoV5();
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
         public List<Meta> metas = new ArrayList<>();
-        public MachineLearning ml;
+        public MachineLearningV5 ml;
     }
 
     @Data
-    public static class TaskYaml {
-        public SnippetConfig snippet;
-        public List<SnippetConfig> preSnippets;
-        public List<SnippetConfig> postSnippets;
+    public static class TaskYamlV5 {
+        public SnippetConfigV5 snippet;
+        public List<SnippetConfigV5> preSnippets;
+        public List<SnippetConfigV5> postSnippets;
         public Map<String, List<String>> inputResourceIds = new HashMap<>();
         public Map<String, String> outputResourceIds = new HashMap<>();
         public Map<String, DataStorageParams> resourceStorageUrls = new HashMap<>();
-        public TaskMachineLearning taskMl;
+        public TaskMachineLearningV5 taskMl;
         public boolean clean = false;
 
         /**
@@ -141,6 +140,6 @@ public class TaskParamsYaml implements BaseParams {
     }
 
     public final int version = 5;
-    public TaskYaml taskYaml = new TaskYaml();
+    public TaskYamlV5 taskYaml = new TaskYamlV5();
 
 }
