@@ -166,7 +166,7 @@ public class BinaryDataService {
 
     public BinaryData save(InputStream is, long size,
                            BinaryDataType binaryDataType, String variable,
-                           String filename, Long workbookId) {
+                           String filename, Long workbookId, String contextId) {
         if (binaryDataType==BinaryDataType.SNIPPET) {
             throw new BinaryDataSaveException("#087.030 snipper can't be saved via BinaryDataService.save()");
         }
@@ -178,6 +178,7 @@ public class BinaryDataService {
             data.setWorkbookId(workbookId);
             data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+            data.setContextId(contextId);
 
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
             data.setData(blob);

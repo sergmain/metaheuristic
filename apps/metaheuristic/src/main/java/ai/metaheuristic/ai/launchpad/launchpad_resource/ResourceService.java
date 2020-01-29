@@ -42,7 +42,7 @@ public class ResourceService {
         try {
             try (InputStream is = new FileInputStream(tempFile)) {
                 return binaryDataService.save(
-                        is, tempFile.length(), EnumsApi.BinaryDataType.DATA, variable, filename, null);
+                        is, tempFile.length(), EnumsApi.BinaryDataType.DATA, variable, filename, null, null);
             }
         } catch (IOException e) {
             log.error("Error", e);

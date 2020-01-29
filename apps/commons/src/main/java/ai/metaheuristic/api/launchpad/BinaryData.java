@@ -25,6 +25,9 @@ import ai.metaheuristic.api.EnumsApi;
  */
 // We need an interface because of not putting an implementation (which is Entity bean) here
 public interface BinaryData {
+    String getContextId();
+    void setContextId(String contextId);
+
     void setType(EnumsApi.BinaryDataType binaryDataType);
 
     Long getId();

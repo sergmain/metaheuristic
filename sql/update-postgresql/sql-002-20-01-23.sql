@@ -49,3 +49,15 @@ drop table MH_BATCH_WORKBOOK;
 alter table mh_data drop column CODE;
 
 alter table mh_data rename column pool_code to VAR;
+
+alter table mh_account
+    add         CONTEXT_ID      NUMERIC(10, 0);
+
+update mh_data
+set CONTEXT_ID = (select SEQUENCE_NEXT_VALUE from mh_gen_ids where SEQUENCE_NAME='mh_ids') + id;
+
+update mh_gen_ids
+set SEQUENCE_NEXT_VALUE = (
+    select max(CONTEXT_ID) + 1 from mh_data
+)
+where SEQUENCE_NAME='mh_ids';

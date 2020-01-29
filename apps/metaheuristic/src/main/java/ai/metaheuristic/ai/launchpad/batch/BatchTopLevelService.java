@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
+import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
@@ -31,6 +32,7 @@ import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
+import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
@@ -98,6 +100,7 @@ public class BatchTopLevelService {
     private final BatchCache batchCache;
     private final LaunchpadEventService launchpadEventService;
     private final WorkbookService workbookService;
+    private final IdsRepository idsRepository;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -219,7 +222,9 @@ public class BatchTopLevelService {
             try(InputStream is = new FileInputStream(dataFile)) {
                 binaryDataService.save(
                         is, dataFile.length(), EnumsApi.BinaryDataType.BATCH, code,
-                        originFilename, producingResult.workbook.getId());
+                        originFilename, producingResult.workbook.getId(),
+                        ""+idsRepository.save(new Ids()).id
+                );
             }
 
             b = new Batch(planId, producingResult.workbook.getId(), Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());

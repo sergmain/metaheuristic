@@ -64,6 +64,9 @@ public class BinaryDataImpl implements Serializable, BinaryData {
     @Column(name = "WORKBOOK_ID")
     private Long workbookId;
 
+    @Column(name = "CONTEXT_ID")
+    private String contextId;
+
     @Column(name = "UPLOAD_TS")
     private Timestamp uploadTs;
 

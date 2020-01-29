@@ -233,15 +233,15 @@ public abstract class PreparingPlan extends PreparingExperiment {
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
                 EnumsApi.BinaryDataType.DATA, INPUT_POOL_CODE,
                 "file-01.txt",
-                null);
+                null, null);
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
                 EnumsApi.BinaryDataType.DATA, INPUT_POOL_CODE,
                 "file-02.txt",
-                null);
+                null, null);
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
                 EnumsApi.BinaryDataType.DATA, INPUT_POOL_CODE,
                 "file-03.txt",
-                null);
+                null, null);
 
         workbookYaml = new WorkbookParamsYaml.WorkbookYaml();
         workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o-> new ArrayList<>()).add(INPUT_POOL_CODE);

@@ -22,9 +22,11 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.LaunchpadCommandProcessor;
+import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -51,6 +53,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
@@ -96,6 +99,7 @@ public class ServerService {
     private final StationsRepository stationsRepository;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
+    private final IdsRepository idsRepository;
 
     private static final ConcurrentHashMap<String, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
@@ -163,11 +167,15 @@ public class ServerService {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
             try (InputStream is = new FileInputStream(resFile)) {
+                String contextId = ""+idsRepository.save(new Ids()).id;
+                if (true) {
+                    throw new NotImplementedException("Need to fix a creation of contextId");
+                }
                 binaryDataService.save(
                         is, resFile.length(), EnumsApi.BinaryDataType.DATA,
                         taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
-                        null,
-                        task.workbookId);
+                        null, task.workbookId, contextId
+                );
             }
         }
         catch (BinaryDataSaveException th) {

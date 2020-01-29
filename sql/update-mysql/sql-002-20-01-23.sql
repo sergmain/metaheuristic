@@ -48,3 +48,23 @@ drop table mh_batch_workbook;
 alter table mh_data drop column CODE;
 
 alter table mh_data change POOL_CODE VAR VARCHAR(250) not null;
+
+alter table mh_data
+    add         CONTEXT_ID      NUMERIC(10, 0);
+
+update mh_data
+set CTX_ID = (select SEQUENCE_NEXT_VALUE from mh_gen_ids where SEQUENCE_NAME='mh_ids') + id;
+
+update mh_gen_ids
+set SEQUENCE_NEXT_VALUE = (
+    select max(CONTEXT_ID) + 1 from mh_data
+    )
+where SEQUENCE_NAME='mh_ids';
+
+alter table mh_data change CONTEXT_ID CTX_ID decimal null;
+
+alter table mh_data add         CONTEXT_ID      VARCHAR(250);
+
+update mh_data set CONTEXT_ID = CAST(ctx_id as CHAR(250));
+
+alter table mh_data drop column CTX_ID;
