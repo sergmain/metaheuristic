@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
@@ -44,8 +43,8 @@ import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.process.ProcessV2;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -187,11 +186,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         return yaml;
     }
 
-    @Autowired
-    private BinaryDataService binaryDataService;
-
-    public static final String INPUT_POOL_CODE = "test-input-pool-code";
-    public static final String INPUT_RESOURCE_CODE = "test-input-resource-code-";
+    public static final String TEST_GLOBAL_VARIABLE = "test-variable";
 
     @Before
     public void beforePreparingPlan() {
@@ -230,21 +225,18 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
         byte[] bytes = "A resource for input pool".getBytes();
 
-        binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                EnumsApi.BinaryDataType.DATA, INPUT_POOL_CODE,
-                "file-01.txt",
-                null, null);
-        binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                EnumsApi.BinaryDataType.DATA, INPUT_POOL_CODE,
-                "file-02.txt",
-                null, null);
-        binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                EnumsApi.BinaryDataType.DATA, INPUT_POOL_CODE,
-                "file-03.txt",
-                null, null);
+        try {
+            globalBinaryDataService.deleteByVariable(TEST_GLOBAL_VARIABLE);
+        } catch (Throwable th) {
+            log.error("error preparing variables", th);
+        }
+
+        globalBinaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-01.txt");
+        globalBinaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-02.txt");
+        globalBinaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-03.txt");
 
         workbookYaml = new WorkbookParamsYaml.WorkbookYaml();
-        workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o-> new ArrayList<>()).add(INPUT_POOL_CODE);
+        workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o-> new ArrayList<>()).add(TEST_GLOBAL_VARIABLE);
     }
 
     private Snippet createSnippet(String snippetCode) {
@@ -307,7 +299,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             }
         }
         try {
-            binaryDataService.deleteByPoolCodeAndDataType(INPUT_POOL_CODE);
+            globalBinaryDataService.deleteByVariable(TEST_GLOBAL_VARIABLE);
         } catch (Throwable th) {
             log.error("error", th);
         }

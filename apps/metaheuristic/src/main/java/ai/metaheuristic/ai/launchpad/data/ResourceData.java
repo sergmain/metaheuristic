@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.launchpad.data;
 
+import ai.metaheuristic.ai.launchpad.beans.GlobalBinaryData;
 import ai.metaheuristic.api.data.BaseDataClass;
-import ai.metaheuristic.api.launchpad.BinaryData;
-import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
+import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -32,20 +32,20 @@ public class ResourceData {
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class ResourcesResult extends BaseDataClass {
-        public Slice<SimpleResource> items;
+        public Slice<SimpleVariable> items;
     }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ResourceResult extends BaseDataClass {
-        public BinaryData data;
+        public GlobalBinaryData data;
 
         public ResourceResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ResourceResult(BinaryData data) {
+        public ResourceResult(GlobalBinaryData data) {
             this.data = data;
         }
     }

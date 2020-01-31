@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,10 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.binary_data;
+package ai.metaheuristic.ai.launchpad.launchpad_resource;
 
-import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,13 +24,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SimpleCodeAndStorageUrl {
-    public String code;
-    public String poolCode;
+public class SimpleVariable {
+    private Long id;
+    private Integer version;
+    private String variable;
+    private java.util.Date uploadTs;
+    public String filename;
     public String storageUrl;
-    public String originalFilename;
-
-    public DataStorageParams getParams() {
-        return DataStorageParamsUtils.to(storageUrl);
-    }
 }

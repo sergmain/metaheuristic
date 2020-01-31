@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
+import ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessService;
@@ -186,7 +186,7 @@ public class WorkbookService {
 
         if (checkResources) {
             WorkbookParamsYaml resourceParam = wb.getWorkbookParamsYaml();
-            List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParam.getAllPoolCodes());
+            List<SimpleVariableAndStorageUrl> inputResourceCodes = binaryDataService.getIdInVariables(resourceParam.getAllPoolCodes());
             if (inputResourceCodes == null || inputResourceCodes.isEmpty()) {
                 result.planProducingStatus = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
                 return result;
@@ -262,7 +262,7 @@ public class WorkbookService {
         return result;
     }
 
-    // TODO 2019.08.27 is it good to synchronize whole method?
+    // TODO 2019.08.27 is it good to synchronize the whole method?
     //  but it's working actually
     public synchronized LaunchpadCommParamsYaml.AssignedTask getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long workbookId) {
 
@@ -484,8 +484,8 @@ public class WorkbookService {
 
             resourceParams = workbook.getWorkbookParamsYaml();
         }
-        List<SimpleCodeAndStorageUrl> initialInputResourceCodes;
-        initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllPoolCodes());
+        List<SimpleVariableAndStorageUrl> initialInputResourceCodes;
+        initialInputResourceCodes = binaryDataService.getIdInVariables(resourceParams.getAllPoolCodes());
         log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
 
         PlanService.ResourcePools pools = new PlanService.ResourcePools(initialInputResourceCodes);

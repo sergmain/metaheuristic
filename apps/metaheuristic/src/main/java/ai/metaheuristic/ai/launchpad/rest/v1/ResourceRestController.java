@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,6 @@ public class ResourceRestController {
     @PostMapping(value = "/resource-upload-from-file", headers = ("content-type=multipart/*"), produces = "application/json", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public OperationStatusRest createResourceFromFile(
             @RequestPart MultipartFile file,
-            @SuppressWarnings("unused") @RequestParam(name = "code") String resourceCode,
             @RequestParam(name = "poolCode") String variable ) {
         return resourceTopLevelService.createResourceFromFile(file, variable);
     }
@@ -62,7 +61,7 @@ public class ResourceRestController {
     public OperationStatusRest registerResourceInExternalStorage(
             @RequestParam(name = "poolCode") String variable,
             @RequestParam(name = "storageUrl") String storageUrl ) {
-        return resourceTopLevelService.registerResourceInExternalStorage(variable, storageUrl);
+        return resourceTopLevelService.createGlobalVariableWithExternalStorage(variable, storageUrl);
     }
 
     @GetMapping("/resource/{id}")

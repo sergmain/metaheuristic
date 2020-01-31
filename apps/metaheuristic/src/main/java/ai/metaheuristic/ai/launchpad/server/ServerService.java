@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -172,7 +172,7 @@ public class ServerService {
                     throw new NotImplementedException("Need to fix a creation of contextId");
                 }
                 binaryDataService.save(
-                        is, resFile.length(), EnumsApi.BinaryDataType.DATA,
+                        is, resFile.length(),
                         taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
                         null, task.workbookId, contextId
                 );
@@ -212,11 +212,9 @@ public class ServerService {
                 dataSaver = snippetBinaryDataService::storeToFile;
                 break;
             case DATA:
-            case TEST:
                 assetFile = ResourceUtils.prepareDataFile(globals.launchpadTempDir, code, null);
                 dataSaver = binaryDataService::storeToFile;
                 break;
-            case UNKNOWN:
             default:
                 throw new IllegalStateException("#442.008 Unknown type of data: " + binaryDataType);
         }

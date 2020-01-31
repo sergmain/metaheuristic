@@ -16,11 +16,9 @@
 
 package ai.metaheuristic.ai.binary_data;
 
-import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
+import ai.metaheuristic.ai.launchpad.beans.BinaryData;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.launchpad.BinaryData;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -71,7 +69,7 @@ public class TestBinaryDataSaveAndLoad {
         int i;
         for (i = 0; i < 10; i++) {
             code = "test-code-" + System.nanoTime();
-            BinaryDataImpl bd = binaryDataRepository.findByCode(code);
+            BinaryData bd = binaryDataRepository.findByCode(code);
             if (bd == null) {
                 break;
             }
@@ -82,11 +80,12 @@ public class TestBinaryDataSaveAndLoad {
 
     }
 
+    private BinaryData binaryData=null;
     @After
     public void after() {
-        if (code != null) {
+        if (binaryData != null) {
             try {
-                binaryDataService.deleteAllByType(EnumsApi.BinaryDataType.TEST);
+                binaryDataService.deleteById(binaryData.id);
             } catch (Throwable th) {
                 log.error("Error while deleting test data", th);
             }
@@ -103,10 +102,8 @@ public class TestBinaryDataSaveAndLoad {
         File dataFile = new File(tempDir, DATA_FILE_BIN);
         FileUtils.writeByteArrayToFile(dataFile, bytes);
 
-        BinaryData binaryData;
         try (InputStream is = new FileInputStream(dataFile)) {
-            binaryData = binaryDataService.save(is, dataFile.length(),
-                    EnumsApi.BinaryDataType.TEST, code, DATA_FILE_BIN, null,  null);
+            binaryData = binaryDataService.save(is, dataFile.length(), code, DATA_FILE_BIN, 1L,  "1,2,3");
         }
         assertNotNull(binaryData);
 

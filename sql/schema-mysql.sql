@@ -105,7 +105,6 @@ CREATE TABLE mh_data
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
     VAR             VARCHAR(250) not null,
-    DATA_TYPE       NUMERIC(2, 0) NOT NULL,
     CONTEXT_ID      VARCHAR(250),
     WORKBOOK_ID     NUMERIC(10, 0),
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -114,17 +113,22 @@ CREATE TABLE mh_data
     PARAMS          MEDIUMTEXT not null
 );
 
-CREATE INDEX mh_data_data_type_idx
-  ON mh_data (DATA_TYPE);
-
 CREATE INDEX mh_data_workbook_id_idx
   ON mh_data (WORKBOOK_ID);
 
-CREATE INDEX mh_data_pool_code_id_idx
-    ON mh_data (POOL_CODE);
+CREATE INDEX mh_data_var_id_idx
+    ON mh_data (VAR);
 
-CREATE UNIQUE INDEX mh_data_code_unq_idx
-  ON mh_data (CODE);
+CREATE TABLE mh_global_data
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    VAR             VARCHAR(250) not null,
+    UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+    DATA            LONGBLOB,
+    FILENAME        VARCHAR(150),
+    PARAMS          MEDIUMTEXT not null
+);
 
 CREATE TABLE mh_snippet_data
 (

@@ -218,31 +218,7 @@ public class EnumsApi {
         TOO_MANY_TASKS_PER_PLAN_ERROR
     }
 
-    /**
-     * TEST is being used only for testing BinaryDataService
-     */
-    public enum BinaryDataType { UNKNOWN(0), DATA(1), SNIPPET(2), TEST(3), BATCH(5);
-
-        public int value;
-        BinaryDataType(int value) {
-            this.value = value;
-        }
-
-        public static BinaryDataType from(int type) {
-            switch(type) {
-                case 1:
-                    return DATA;
-                case 2:
-                    return SNIPPET;
-                case 3:
-                    return TEST;
-                case 5:
-                    return BATCH;
-                default:
-                    return UNKNOWN;
-            }
-        }
-    }
+    public enum BinaryDataType { DATA, SNIPPET }
 
     public enum OperationStatus {OK, ERROR}
 

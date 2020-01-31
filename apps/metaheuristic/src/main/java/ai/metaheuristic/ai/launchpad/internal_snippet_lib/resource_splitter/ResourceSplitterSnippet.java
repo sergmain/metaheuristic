@@ -23,12 +23,14 @@ import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
+import ai.metaheuristic.ai.launchpad.beans.BinaryData;
+import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
+import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
+import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.EnumsApi;
@@ -84,9 +86,10 @@ public class ResourceSplitterSnippet {
     private final PlanService planService;
     private final PlanCache planCache;
     private final WorkbookService workbookService;
-    private final ResourceService resourceService;
     private final BinaryDataRepository binaryDataRepository;
+    private final BinaryDataService binaryDataService;
     private final WorkbookCache workbookCache;
+    private final IdsRepository idsRepository;
 
     public void process(Long planId, Long workbookId, TaskParamsYaml taskParamsYaml) {
 
@@ -95,9 +98,9 @@ public class ResourceSplitterSnippet {
             throw new IllegalStateException("Too many input codes");
         }
         String inputCode = values.get(0);
-        BinaryDataImpl bd = binaryDataRepository.findByCode(inputCode);
+        BinaryData bd = binaryDataRepository.findByCode(inputCode);
         if (bd==null) {
-            throw new IllegalStateException("BinaryDataImpl not found for code " + inputCode);
+            throw new IllegalStateException("BinaryData not found for code " + inputCode);
         }
         String originFilename = bd.filename;
         String ext = StrUtils.getExtension(originFilename);
@@ -152,6 +155,10 @@ public class ResourceSplitterSnippet {
             throw new IllegalStateException("#995.202 workbook wasn't found, workbookId: " + workbookId);
         }
 
+        if (true) {
+            throw new NotImplementedException("need to use real contextId");
+        }
+        String contextId = "1L";
         final AtomicBoolean isEmpty = new AtomicBoolean(true);
         Files.list(srcDir.toPath())
                 .filter(o -> {
@@ -161,6 +168,7 @@ public class ResourceSplitterSnippet {
                 .forEach( dataFilePath ->  {
                     isEmpty.set(false);
                     File file = dataFilePath.toFile();
+                    String ctxId = contextId+"," + idsRepository.save(new Ids()).id;
                     try {
                         if (file.isDirectory()) {
                             final File mainDocFile = getMainDocumentFileFromConfig(file, mapping);
@@ -171,10 +179,10 @@ public class ResourceSplitterSnippet {
                                         final String actualFileName = mapping.get(currFileName);
                                         return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
                                     });
-                            createAndProcessTask(plan, wb, files, mainDocFile);
+                            createAndProcessTask(plan, wb, files, mainDocFile, ctxId);
                         } else {
                             String actualFileName = mapping.get(file.getName());
-                            createAndProcessTask(plan, wb, Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), file);
+                            createAndProcessTask(plan, wb, Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), file, ctxId);
                         }
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;
@@ -186,7 +194,7 @@ public class ResourceSplitterSnippet {
                 });
     }
 
-    private void createAndProcessTask(PlanImpl plan, Workbook wb, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile) {
+    private void createAndProcessTask(PlanImpl plan, Workbook wb, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile, String contextId) {
 
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
@@ -213,7 +221,7 @@ public class ResourceSplitterSnippet {
 //                attachments.add(code);
             }
 
-            resourceService.storeInitialResource(fileWithMapping.file, variable, originFilename);
+            binaryDataService.storeInitialResource(fileWithMapping.file, variable, originFilename, wb.getId(), contextId);
         });
 
         if (!isMainDocPresent.get()) {

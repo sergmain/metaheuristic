@@ -16,10 +16,9 @@
 
 package ai.metaheuristic.ai.repo;
 
-import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
+import ai.metaheuristic.ai.launchpad.beans.BinaryData;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.launchpad.BinaryData;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +28,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.ByteArrayInputStream;
 import java.sql.Timestamp;
-import java.util.List;
-import java.util.UUID;
 
 import static org.junit.Assert.*;
 
@@ -42,21 +39,25 @@ public class TestBinaryDataRepository {
     @Autowired
     private BinaryDataService binaryDataService;
 
-    @Autowired
-    private TestBinaryDataService testBinaryDataService;
+    private BinaryData d1 = null;
+    @After
+    public void after() {
+        if (d1!=null) {
+            binaryDataService.deleteById(d1.id);
+        }
+    }
 
     @Test
-    public void testFeatureCompletionWithAllError() throws InterruptedException {
+    public void test() throws InterruptedException {
         byte[] bytes = "this is very short data".getBytes();
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        BinaryData d1 = binaryDataService.save(inputStream, bytes.length, EnumsApi.BinaryDataType.TEST, "test-01",
-                "test-file.bin", null, null);
+        d1 = binaryDataService.save(inputStream, bytes.length, "test-01","test-file.bin", 10L, "1");
 
         Timestamp ts = d1.getUploadTs();
 
-        BinaryDataImpl d2 = binaryDataService.getBinaryData(d1.getId());
+        BinaryData d2 = binaryDataService.getBinaryData(d1.getId());
         assertNotNull(d2);
         assertEquals(d1, d2);
         assertArrayEquals(bytes, d2.bytes);
@@ -72,22 +73,5 @@ public class TestBinaryDataRepository {
         assertNotNull(d2);
         assertNotEquals(ts, d2.getUploadTs());
         assertArrayEquals(bytes, d2.bytes);
-
-        binaryDataService.deleteAllByType(EnumsApi.BinaryDataType.TEST);
     }
-
-    @Test
-    public void testNonExistRecord() {
-        List<String> codes = testBinaryDataService.getAllCodes();
-
-        String unique;
-        //noinspection StatementWithEmptyBody
-        while (codes.contains(unique= UUID.randomUUID().toString()) );
-
-        String file = binaryDataService.getFilenameByPoolCodeAndType(unique, EnumsApi.BinaryDataType.DATA);
-
-        System.out.println("file = " + file);
-        assertNull(file);
-    }
-
 }

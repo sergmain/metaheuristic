@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.*;
+import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchAndWorkbookExecStates;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
@@ -29,16 +29,11 @@ import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
-import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
-import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -47,9 +42,7 @@ import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
@@ -62,31 +55,21 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Serge
@@ -106,16 +89,13 @@ public class BatchService {
 
     private final Globals globals;
     private final PlanCache planCache;
-    private final PlanService planService;
     private final BatchCache batchCache;
     private final BatchRepository batchRepository;
     private final WorkbookCache workbookCache;
-    private final WorkbookService workbookService;
     private final BinaryDataService binaryDataService;
     private final TaskRepository taskRepository;
     private final StationCache stationCache;
     private final LaunchpadEventService launchpadEventService;
-    private final ResourceService resourceService;
     private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
     private static final ConcurrentHashMap<Long, Object> batchMap = new ConcurrentHashMap<>(100, 0.75f, 10);
@@ -387,7 +367,7 @@ public class BatchService {
             return batchStatus;
         }
 
-        BatchStatusProcessor batchStatus = prepareStatusAndData(b, (PrepareZipData prepareZipData, File file) -> true, null);
+        BatchStatusProcessor batchStatus = prepareStatusAndData(b, (prepareZipData, file) -> true, null);
         BatchParamsYaml batchParams = BatchParamsYamlUtils.BASE_YAML_UTILS.to(b.getParams());
         if (batchParams == null) {
             batchParams = new BatchParamsYaml();
@@ -457,13 +437,17 @@ public class BatchService {
     public BatchStatusProcessor prepareStatusAndData(Batch batch, BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir) {
         Long batchId = batch.id;
         final BatchStatusProcessor bs = new BatchStatusProcessor();
-        bs.originArchiveName = getUploadedFilename(batchId);
+        bs.originArchiveName = getUploadedFilename(batchId, batch.workbookId);
 
         Long workbookId = batch.workbookId;
         if (workbookId==null) {
             bs.getGeneralStatus().add("#990.250 Batch #"+batchId+" wasn't linked to Workbook", '\n');
             bs.ok = true;
             return bs;
+        }
+        if (true) {
+            throw new NotImplementedException("need to re-write algo of collecting of statuses. " +
+                    "Old version was using list of workbooks but new one must use a list of tasks");
         }
 
         bs.ok = prepareStatus(prepareZip, zipDir, batchId, bs, workbookId);
@@ -473,6 +457,11 @@ public class BatchService {
     }
 
     public boolean prepareStatus(BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir, Long batchId, BatchStatusProcessor bs, Long workbookId) {
+        if (true) {
+            throw new NotImplementedException("Previous version was using list of workbooks and in this method " +
+                    "data was prepared only for one task (there was one task for one workbook)." +
+                    "Not we have only one workbook with a number of tasks. So need to re-write to use taskId or something like that.");
+        }
         WorkbookImpl wb = workbookCache.findById(workbookId);
         if (wb == null) {
             String msg = "#990.260 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
@@ -482,7 +471,7 @@ public class BatchService {
         }
         String mainDocumentPoolCode = getMainDocumentPoolCode(wb);
 
-        final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode);
+        final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode, workbookId);
         if (fullMainDocument == null) {
             String msg = "#990.270 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
                     "batchId: " + batchId + ", workbookId: " + workbookId;
@@ -575,22 +564,22 @@ public class BatchService {
         return true;
     }
 
-    private String getMainDocumentFilenameForPoolCode(String mainDocumentPoolCode) {
-        final String filename = binaryDataService.getFilenameByPoolCodeAndType(mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
-        if (StringUtils.isBlank(filename)) {
-            log.error("#990.390 Filename is blank for poolCode: {}, data type: {}", mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
+    private String getMainDocumentFilenameForPoolCode(String mainDocumentPoolCode, Long workbookId) {
+        final List<String> filename = binaryDataService.getFilenameByVariableAndWorkbookId(mainDocumentPoolCode, workbookId);
+        if (filename==null || filename.isEmpty() || StringUtils.isBlank(filename.get(0))) {
+            log.error("#990.390 Filename is blank for poolCode: {}, workbookId: {}", mainDocumentPoolCode, workbookId);
             return null;
         }
-        return filename;
+        return filename.get(0);
     }
 
-    public String getUploadedFilename(Long batchId) {
-        final String filename = binaryDataService.findFilenameByBatchId(batchId);
-        if (S.b(filename)) {
+    public String getUploadedFilename(Long batchId, Long workbookId) {
+        final List<String> filename = binaryDataService.findFilenameByBatchId(batchId, workbookId);
+        if (filename==null || filename.isEmpty() || S.b(filename.get(0))) {
             log.error("#990.392 Filename is blank for batchId: {}, will be used default name - result.zip", batchId);
             return Consts.RESULT_ZIP;
         }
-        return filename;
+        return filename.get(0);
     }
 
     @SuppressWarnings("deprecation")

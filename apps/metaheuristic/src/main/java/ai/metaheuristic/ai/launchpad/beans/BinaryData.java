@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.beans;
 
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.launchpad.BinaryData;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -30,17 +28,10 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "MH_DATA")
 @Data
-@EqualsAndHashCode(of = {"id", "version", "dataType"})
+@EqualsAndHashCode(of = {"id", "version"})
 @ToString(exclude={"data", "bytes"})
-public class BinaryDataImpl implements Serializable, BinaryData {
+public class BinaryData implements Serializable {
     private static final long serialVersionUID = 7768428475142175426L;
-
-    // TODO 2020-01-15 why we have this method?
-    //  2020-01-24 so, is it just helper method?
-    @Override
-    public void setType(EnumsApi.BinaryDataType binaryDataType) {
-        this.dataType = binaryDataType.value;
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,9 +42,6 @@ public class BinaryDataImpl implements Serializable, BinaryData {
 
     @Column(name = "VAR")
     private String variable;
-
-    @Column(name = "DATA_TYPE")
-    private int dataType;
 
     /**
      * This field is initialized only for data resources which were produced while processing workbook.

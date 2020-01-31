@@ -25,7 +25,7 @@
 
     </script>
 
-    <h1 class="widget-header">Create resource from file</h1>
+    <h1 class="widget-header">Create global variable from file</h1>
 
     <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
           th:action="@{/launchpad/resource/resource-upload-from-file}"
@@ -40,13 +40,8 @@
             <span class="pure-form-message">This is a required field.</span>
         </fieldset>
         <fieldset>
-            <label for="code">Resource code</label>
-            <input name="code" id="code" type="text" placeholder="Code">
-            <span class="pure-form-message">This is an optional field.</span>
-        </fieldset>
-        <fieldset>
-            <label for="poolCode">Resource pool code</label>
-            <input name="poolCode" id="poolCode" type="text" placeholder="Pool code">
+            <label for="variable">Variable</label>
+            <input name="variable" id="variable" type="text" placeholder="variable">
             <span class="pure-form-message">This is a required field.</span>
         </fieldset>
 
@@ -61,12 +56,12 @@
         };
     </script>
 
-    <h1 class="widget-header">Create resource with storage url</h1>
+    <h1 class="widget-header">Create global variable with external storage</h1>
     <form class="pure-form pure-form-stacked" action="#" th:method="POST"
           th:action="@{/launchpad/resource/resource-in-external-storage}" accept-charset="UTF-8" id="workbook-multiply-add-form" name="f">
         <fieldset>
-            <label for="poolCode1">Resource pool code</label>
-            <input name="poolCode" id="poolCode1" type="text" placeholder="Pool code">
+            <label for="variable">Variable</label>
+            <input name="variable" id="variable1" type="text" placeholder="variable">
             <span class="pure-form-message">This is a required field.</span>
         </fieldset>
 
@@ -89,7 +84,7 @@ git:
 </pre>
 
 
-            <label for="params">Params of resources</label>
+            <label for="params">Params of resource</label>
             <textarea name="params" id="params" placeholder="Params of resources" cols="70" rows="15"
                       maxlength="10000"></textarea>
             <span class="pure-form-message"></span>
@@ -107,19 +102,14 @@ git:
 
     <p>&nbsp;</p>
 
-    <h1 class="widget-header">List of resources</h1>
+    <h1 class="widget-header">List of variables</h1>
     <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.ResourceData$ResourcesResult"*/-->
     <table class="pure-table pure-table-bordered" id="fragment-table" th:fragment="fragment-table">
         <thead>
         <tr>
             <th>#</th>
-            <th>Is valid?</th>
             <th>Upload date</th>
-            <th>Type of resource</th>
-            <th>Checksum</th>
-            <th>Code</th>
-            <th>Pool code</th>
-            <th>Is manual</th>
+            <th>Variable</th>
             <th>Filename</th>
             <th>Storage url</th>
             <th colspan="1">&nbsp;</th>
@@ -128,13 +118,8 @@ git:
         <tbody>
         <tr th:each="p : ${result.items}">
             <td th:text="${p.id}">#Id</td>
-            <td th:text="${p.isValid() ? 'True' : 'False'}">Is valid?</td>
             <td th:text="${#dates.format(p.uploadTs, 'dd-MMM-yy HH:mm')}">Upload date</td>
-            <td th:text="${p.getDataTypeAsStr()}">Type of data</td>
-            <td th:text="${p.checksum}">Checksum</td>
-            <td th:text="${p.code}">Code</td>
-            <td th:text="${p.poolCode}">Pool code</td>
-            <td th:text="${p.manual}">is manual</td>
+            <td th:text="${p.variable}">Variable</td>
             <td th:text="${p.filename}">Filename</td>
             <td th:text="${p.storageUrl}">Storage url</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/resource/resource-delete/' + p.id}">Delete</a></td>

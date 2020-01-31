@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,9 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.launchpad_resource;
+package ai.metaheuristic.ai.launchpad.binary_data;
 
-import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,17 +25,20 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SimpleResource {
-    private Long id;
-    private Integer version;
-    private String code;
-    private String poolCode;
-    private int dataType;
-    private java.util.Date uploadTs;
-    public String filename;
+public class SimpleVariableAndStorageUrl {
+    public String id;
+    public String variable;
     public String storageUrl;
+    public String originalFilename;
 
-    public String getDataTypeAsStr() {
-        return EnumsApi.BinaryDataType.from(dataType).toString();
+    public SimpleVariableAndStorageUrl(Long id, String variable, String storageUrl, String originalFilename) {
+        this.id = id.toString();
+        this.variable = variable;
+        this.storageUrl = storageUrl;
+        this.originalFilename = originalFilename;
+    }
+
+    public DataStorageParams getParams() {
+        return DataStorageParamsUtils.to(storageUrl);
     }
 }

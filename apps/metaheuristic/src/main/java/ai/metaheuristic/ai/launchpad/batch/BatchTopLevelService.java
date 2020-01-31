@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -221,7 +221,7 @@ public class BatchTopLevelService {
 
             try(InputStream is = new FileInputStream(dataFile)) {
                 binaryDataService.save(
-                        is, dataFile.length(), EnumsApi.BinaryDataType.BATCH, code,
+                        is, dataFile.length(), code,
                         originFilename, producingResult.workbook.getId(),
                         ""+idsRepository.save(new Ids()).id
                 );
@@ -354,11 +354,15 @@ public class BatchTopLevelService {
         File resultDir = DirUtils.createTempDir("prepare-origin-file-");
         resource.toClean.add(resultDir);
 
-        String originFilename = batchService.getUploadedFilename(batchId);
+        String originFilename = batchService.getUploadedFilename(batchId, batch.workbookId);
         File tempFile = File.createTempFile("batch-origin-file-", ".bin", resultDir);
 
         try {
-            binaryDataService.storeBatchOriginFileToFile(batchId, tempFile);
+            if (true) {
+                throw new NotImplementedException("need to re-write with using workbookId and find the first vatiable in workbook");
+            }
+            String dataId = "1";
+            binaryDataService.storeToFile(dataId, tempFile);
         } catch (BinaryDataNotFoundException e) {
             String msg = "#990.375 Error store data to temp file, data doesn't exist in db, batchId " + batchId +
                     ", file: " + tempFile.getPath();
@@ -374,6 +378,11 @@ public class BatchTopLevelService {
     }
 
     private boolean prepareZip(BatchService.PrepareZipData prepareZipData, File zipDir ) {
+        if (true) {
+            throw new NotImplementedException("Previous version was using list of workbooks and in this method " +
+                    "data was prepared only for one task (there was one task for one workbook)." +
+                    "Not we have only one workbook with a number of tasks. So need to re-write to use taskId or something like that.");
+        }
         final TaskParamsYaml taskParamYaml;
         try {
             taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(prepareZipData.task.getParams());
@@ -401,6 +410,7 @@ public class BatchTopLevelService {
         prepareZipData.bs.renameTo.put("zip/" + tempFile.getName(), "zip/" + prepareZipData.mainDocument);
 
         try {
+            // TODO 2020-01-30 need to re-write
             binaryDataService.storeToFile(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), tempFile);
         } catch (BinaryDataNotFoundException e) {
             String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " +

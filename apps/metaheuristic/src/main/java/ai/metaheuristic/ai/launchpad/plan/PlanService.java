@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
+import ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
@@ -454,7 +454,7 @@ public class PlanService {
         public final Map<String, String> mappingCodeToOriginalFilename = new HashMap<>();
         public EnumsApi.PlanProducingStatus status = EnumsApi.PlanProducingStatus.OK;
 
-        public ResourcePools(List<SimpleCodeAndStorageUrl> initialInputResourceCodes) {
+        public ResourcePools(List<SimpleVariableAndStorageUrl> initialInputResourceCodes) {
 
             if (initialInputResourceCodes==null || initialInputResourceCodes.isEmpty()) {
                 status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
@@ -462,15 +462,15 @@ public class PlanService {
             }
 
             initialInputResourceCodes.forEach(o->
-                collectedInputs.computeIfAbsent(o.poolCode, p -> new ArrayList<>()).add(o.code)
+                collectedInputs.computeIfAbsent(o.variable, p -> new ArrayList<>()).add(o.id)
             );
 
-            initialInputResourceCodes.forEach(o-> mappingCodeToOriginalFilename.put(o.code, o.originalFilename));
+            initialInputResourceCodes.forEach(o-> mappingCodeToOriginalFilename.put(o.id, o.originalFilename));
 
             //noinspection Convert2MethodRef
             inputStorageUrls = initialInputResourceCodes
                     .stream()
-                    .collect(Collectors.toMap(o -> o.code, o -> o.getParams()));
+                    .collect(Collectors.toMap(o -> o.id, o -> o.getParams()));
 
         }
 

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -121,7 +121,7 @@ public class AtlasService {
         // TODO 2019-07-13 need to re-write this check
 /*
         String poolCode = getPoolCodeForExperiment(workbookId, experimentId);
-        List<SimpleCodeAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), workbookId);
+        List<SimpleVariableAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), workbookId);
         if (!codes.isEmpty()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment already stored");
         }

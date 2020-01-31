@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.binary_data.GlobalBinaryDataService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentCache;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
@@ -86,6 +87,9 @@ public abstract class PreparingExperiment {
 
     @Autowired
     private BinaryDataService binaryDataService;
+
+    @Autowired
+    public GlobalBinaryDataService globalBinaryDataService;
 
     @Autowired
     private SnippetBinaryDataService snippetBinaryDataService;

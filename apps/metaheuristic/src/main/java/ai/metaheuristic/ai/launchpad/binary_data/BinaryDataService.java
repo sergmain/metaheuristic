@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +19,12 @@ package ai.metaheuristic.ai.launchpad.binary_data;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
-import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
-import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
+import ai.metaheuristic.ai.exceptions.StoreNewFileException;
+import ai.metaheuristic.ai.launchpad.beans.BinaryData;
+import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable;
 import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.BinaryData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -41,6 +41,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.SQLException;
@@ -48,7 +50,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
-import static ai.metaheuristic.api.EnumsApi.*;
+import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
 @Service
 @Transactional
@@ -62,16 +64,16 @@ public class BinaryDataService {
     private final Globals globals;
 
     @Transactional(readOnly = true)
-    public BinaryDataImpl getBinaryData(Long id) {
+    public BinaryData getBinaryData(Long id) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("this method intended to be only for test cases");
         }
         return getBinaryData(id, true);
     }
 
-    private BinaryDataImpl getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
+    private BinaryData getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
         try {
-            BinaryDataImpl data = binaryDataRepository.findById(id).orElse(null);
+            BinaryData data = binaryDataRepository.findById(id).orElse(null);
             if (data==null) {
                 return null;
             }
@@ -84,41 +86,12 @@ public class BinaryDataService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public boolean exist(String code) {
+    public void storeToFile(String id, File trgFile) {
         try {
-            Long id = binaryDataRepository.getIdByCode(code);
-            return (id!=null);
-        } catch (Throwable th) {
-            return false;
-        }
-    }
-
-    public void storeToFile(String code, File trgFile) {
-        try {
-            Blob blob = binaryDataRepository.getDataAsStreamByCode(code);
+            Blob blob = binaryDataRepository.getDataAsStreamByCode(Long.valueOf(id));
             if (blob==null) {
-                log.warn("#087.010 Binary data for code {} wasn't found", code);
-                throw new BinaryDataNotFoundException("#087.010 Binary data wasn't found, code: " + code);
-            }
-            try (InputStream is = blob.getBinaryStream()) {
-                FileUtils.copyInputStreamToFile(is, trgFile);
-            }
-        } catch (BinaryDataNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            String es = "#087.020 Error while storing binary data";
-            log.error(es, e);
-            throw new IllegalStateException(es, e);
-        }
-    }
-
-    public void storeBatchOriginFileToFile(Long batchId, File trgFile) {
-        try {
-            Blob blob = binaryDataRepository.getDataAsStreamForBatchAndRefId(batchId);
-            if (blob==null) {
-                log.warn("#087.010 Binary data for batchId {} wasn't found", batchId);
-                throw new BinaryDataNotFoundException("#087.010 Binary data wasn't found, batchId: " + batchId);
+                log.warn("#087.010 Binary data for id {} wasn't found", id);
+                throw new BinaryDataNotFoundException("#087.010 Binary data wasn't found, code: " + id);
             }
             try (InputStream is = blob.getBinaryStream()) {
                 FileUtils.copyInputStreamToFile(is, trgFile);
@@ -136,43 +109,35 @@ public class BinaryDataService {
         binaryDataRepository.deleteByWorkbookId(workbookId);
     }
 
-    public void deleteAllByType(BinaryDataType binaryDataType) {
-        binaryDataRepository.deleteAllByDataType(binaryDataType.value);
+    @Transactional(readOnly = true)
+    public List<SimpleVariableAndStorageUrl> getIdInVariables(List<String> variables, Long workbookId) {
+        if (variables.isEmpty()) {
+            return List.of();
+        }
+        return binaryDataRepository.getIdAndStorageUrlInVarsForWorkbook(variables, workbookId);
     }
 
     @Transactional(readOnly = true)
-    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode, Long workbookId) {
-        if (inputResourcePoolCode.isEmpty()) {
+    public List<SimpleVariableAndStorageUrl> getIdInVariables(List<String> variables) {
+        if (variables.isEmpty()) {
             return List.of();
         }
-        return binaryDataRepository.getCodeAndStorageUrlInPoolForWorkbook(inputResourcePoolCode, workbookId);
+        return binaryDataRepository.getIdAndStorageUrlInVars(variables);
     }
 
-    @Transactional(readOnly = true)
-    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode) {
-        if (inputResourcePoolCode.isEmpty()) {
-            return List.of();
-        }
-        return binaryDataRepository.getCodeAndStorageUrlInPoolForWorkbook(inputResourcePoolCode);
+/*
+    public void deleteByCodeAndDataType(String code) {
+        binaryDataRepository.deleteByCodeAndDataType(code);
+    }
+*/
+
+    public void deleteByVariable(String variable) {
+        binaryDataRepository.deleteByVariable(variable);
     }
 
-    public void deleteByCodeAndDataType(String code, BinaryDataType binaryDataType) {
-        binaryDataRepository.deleteByCodeAndDataType(code, binaryDataType.value);
-    }
-
-    public void deleteByPoolCodeAndDataType(String poolCode) {
-        binaryDataRepository.deleteByPoolCodeAndDataType(poolCode, BinaryDataType.DATA.value);
-    }
-
-    public BinaryData save(InputStream is, long size,
-                           BinaryDataType binaryDataType, String variable,
-                           String filename, Long workbookId, String contextId) {
-        if (binaryDataType==BinaryDataType.SNIPPET) {
-            throw new BinaryDataSaveException("#087.030 snipper can't be saved via BinaryDataService.save()");
-        }
+    public BinaryData save(InputStream is, long size, String variable, String filename, Long workbookId, String contextId) {
         try {
-            BinaryDataImpl data = new BinaryDataImpl();
-            data.setType(binaryDataType);
+            BinaryData data = new BinaryData();
             data.setVariable(variable);
             data.setFilename(filename);
             data.setWorkbookId(workbookId);
@@ -183,7 +148,7 @@ public class BinaryDataService {
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
             data.setData(blob);
 
-            binaryDataRepository.saveAndFlush(data);
+            binaryDataRepository.save(data);
 
             return data;
         }
@@ -196,34 +161,15 @@ public class BinaryDataService {
 
     @SuppressWarnings("UnusedReturnValue")
     public BinaryData saveWithSpecificStorageUrl(String variable, String params) {
-
         try {
-            List<BinaryDataImpl> datas = binaryDataRepository.findAllByPoolCode(variable);
-            BinaryDataImpl data;
-            if (datas.isEmpty()) {
-                data = new BinaryDataImpl();
-            } else {
-                if (datas.size()>1) {
-                    String es = "#087.080 Can't create resource with storage url, too many resources are associated with this variable: " + variable;
-                    log.error(es);
-                    throw new IllegalStateException(es);
-                }
-                data = datas.get(0);
-                if (data.getDataType()!= BinaryDataType.DATA.value) {
-                    String es = "#087.090 Can't create resource with storage url because record has different types: " + BinaryDataType.from(data.getDataType());
-                    log.error(es);
-                    throw new IllegalStateException(es);
-                }
-            }
-            data.setType(BinaryDataType.DATA);
+            BinaryData data = new BinaryData();
             data.setVariable(variable);
             data.setFilename(null);
             data.setWorkbookId(null);
             data.setParams(params);
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setData(null);
-
-            binaryDataRepository.saveAndFlush(data);
+            binaryDataRepository.save(data);
 
             return data;
         }
@@ -236,16 +182,16 @@ public class BinaryDataService {
         }
     }
 
-    public void update(InputStream is, long size, BinaryDataImpl data) {
+    public void update(InputStream is, long size, BinaryData data) {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
         data.setData(blob);
 
-        binaryDataRepository.saveAndFlush(data);
+        binaryDataRepository.save(data);
     }
 
-    public Page<BinaryDataImpl> findAll(Pageable pageable) {
+    public Page<BinaryData> findAll(Pageable pageable) {
         return binaryDataRepository.findAll(pageable);
     }
 
@@ -254,26 +200,26 @@ public class BinaryDataService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<BinaryDataImpl> findById(Long id) {
+    public Optional<BinaryData> findById(Long id) {
         return binaryDataRepository.findById(id);
     }
 
     @Transactional(readOnly = true)
-    public Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable) {
+    public Slice<SimpleVariable> getAllAsSimpleResources(Pageable pageable) {
         return binaryDataRepository.getAllAsSimpleResources(pageable);
     }
 
     @Transactional(readOnly = true)
-    public String getFilenameByPoolCodeAndType(String poolCode, BinaryDataType type) {
-        return binaryDataRepository.findFilenameByPoolCodeAndDataType(poolCode, type.value);
+    public List<String> getFilenameByVariableAndWorkbookId(String variable, Long workbookId) {
+        return binaryDataRepository.findFilenameByVariableAndWorkbookId(variable, workbookId);
     }
 
     @Transactional(readOnly = true)
-    public String findFilenameByBatchId(Long batchId) {
+    public List<String> findFilenameByBatchId(Long batchId, Long workbookId) {
         if (true) {
             throw new NotImplementedException("Need to re-write");
         }
-        return binaryDataRepository.findFilenameByBatchId(batchId);
+        return binaryDataRepository.findFilenameByVariableAndWorkbookId(batchId.toString(), workbookId);
     }
 
     @Transactional(readOnly = true)
@@ -286,4 +232,14 @@ public class BinaryDataService {
         }
         return binaryDataRepository.getFilenamesForBatchIds(batchIds);
     }
-}
+
+    public BinaryData storeInitialResource(File tempFile, String variable, String filename, Long workbookId, String contextId) {
+        try {
+            try (InputStream is = new FileInputStream(tempFile)) {
+                return save(is, tempFile.length(), variable, filename, workbookId, contextId);
+            }
+        } catch (IOException e) {
+            log.error("Error", e);
+            throw new StoreNewFileException("Error while storing", e, tempFile.getPath(), filename);
+        }
+    }}

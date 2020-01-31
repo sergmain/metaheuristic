@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,14 +17,14 @@ package ai.metaheuristic.ai.launchpad.launchpad_resource;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.beans.GlobalBinaryData;
+import ai.metaheuristic.ai.launchpad.binary_data.GlobalBinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.ResourceData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.BinaryData;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,12 +45,11 @@ import java.io.IOException;
 public class ResourceTopLevelService {
 
     private final Globals globals;
-    private final ResourceService resourceService;
-    private final BinaryDataService binaryDataService;
+    private final GlobalBinaryDataService globalBinaryDataService;
 
     public ResourceData.ResourcesResult getResources(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.resourceRowsLimit, pageable);
-        return new ResourceData.ResourcesResult(binaryDataService.getAllAsSimpleResources(pageable));
+        return new ResourceData.ResourcesResult(globalBinaryDataService.getAllAsSimpleResources(pageable));
     }
 
     public OperationStatusRest createResourceFromFile(MultipartFile file, String variable) {
@@ -80,7 +79,7 @@ public class ResourceTopLevelService {
             }
 
             try {
-                resourceService.storeInitialResource(tempFile, variable, originFilename);
+                globalBinaryDataService.storeInitialResource(tempFile, variable, originFilename);
             } catch (StoreNewFileException e) {
                 String es = "#172.040 An error while saving data to file, " + e.toString();
                 log.error(es, e);
@@ -92,7 +91,7 @@ public class ResourceTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest registerResourceInExternalStorage(String variable, String params ) {
+    public OperationStatusRest createGlobalVariableWithExternalStorage(String variable, String params ) {
 
         if (StringUtils.isBlank(params)) {
             String es = "#172.050 resource params is blank";
@@ -107,7 +106,7 @@ public class ResourceTopLevelService {
         }
 
         try {
-            binaryDataService.saveWithSpecificStorageUrl(variable, params);
+            globalBinaryDataService.createGlobalVariableWithExternalStorage(variable, params);
         } catch (StoreNewFileException e) {
             String es = "#172.080 An error while saving data to file, " + e.toString();
             log.error(es, e);
@@ -117,7 +116,7 @@ public class ResourceTopLevelService {
     }
 
     public ResourceData.ResourceResult getResourceById(Long id) {
-        final BinaryData data = binaryDataService.findById(id).orElse(null);
+        final GlobalBinaryData data = globalBinaryDataService.findById(id).orElse(null);
         if (data==null) {
             return new ResourceData.ResourceResult("#172.100 Resource wasn't found for id: " + id);
         }
@@ -125,11 +124,11 @@ public class ResourceTopLevelService {
     }
 
     public OperationStatusRest deleteResource(Long id) {
-        final BinaryData data = binaryDataService.findById(id).orElse(null);
+        final GlobalBinaryData data = globalBinaryDataService.findById(id).orElse(null);
         if (data==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.120 Resource wasn't found for id: " + id);
         }
-        binaryDataService.deleteById(id);
+        globalBinaryDataService.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
