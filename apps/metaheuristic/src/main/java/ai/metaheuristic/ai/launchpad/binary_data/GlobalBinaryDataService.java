@@ -200,6 +200,11 @@ public class GlobalBinaryDataService {
     }
 
     @Transactional(readOnly = true)
+    public SimpleVariable getByIdAsSimpleResource(Long id) {
+        return globalBinaryDataRepository.getByIdAsSimpleResource(id);
+    }
+
+    @Transactional(readOnly = true)
     public List<String> getFilenamesByVariable(String variable) {
         return globalBinaryDataRepository.findFilenamesByVar(variable);
     }

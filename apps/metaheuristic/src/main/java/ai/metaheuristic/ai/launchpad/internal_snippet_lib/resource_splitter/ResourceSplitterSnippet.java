@@ -98,7 +98,7 @@ public class ResourceSplitterSnippet {
             throw new IllegalStateException("Too many input codes");
         }
         String inputCode = values.get(0);
-        BinaryData bd = binaryDataRepository.findByCode(inputCode);
+        BinaryData bd = binaryDataRepository.findById(Long.valueOf(inputCode)).orElse(null);
         if (bd==null) {
             throw new IllegalStateException("BinaryData not found for code " + inputCode);
         }

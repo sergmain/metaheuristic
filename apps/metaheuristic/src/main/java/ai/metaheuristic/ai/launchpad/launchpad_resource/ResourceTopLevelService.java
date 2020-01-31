@@ -116,11 +116,11 @@ public class ResourceTopLevelService {
     }
 
     public ResourceData.ResourceResult getResourceById(Long id) {
-        final GlobalBinaryData data = globalBinaryDataService.findById(id).orElse(null);
-        if (data==null) {
+        final SimpleVariable sv = globalBinaryDataService.getByIdAsSimpleResource(id);
+        if (sv==null) {
             return new ResourceData.ResourceResult("#172.100 Resource wasn't found for id: " + id);
         }
-        return new ResourceData.ResourceResult(data);
+        return new ResourceData.ResourceResult(sv);
     }
 
     public OperationStatusRest deleteResource(Long id) {

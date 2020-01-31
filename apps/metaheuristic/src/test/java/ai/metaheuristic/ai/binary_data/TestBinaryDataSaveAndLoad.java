@@ -53,6 +53,8 @@ public class TestBinaryDataSaveAndLoad {
 
     private static final String DATA_FILE_BIN = "data-file.bin";
     private static final String TRG_DATA_FILE_BIN = "trg-data-file.bin";
+    private static final String TEST_VARIABLE = "test-variable";
+
     @Autowired
     private BinaryDataService binaryDataService;
 
@@ -62,33 +64,21 @@ public class TestBinaryDataSaveAndLoad {
     private static final int ARRAY_SIZE = 1_000_000;
     private static final Random r = new Random();
 
-    private String code = null;
-
     @Before
     public void before() {
-        int i;
-        for (i = 0; i < 10; i++) {
-            code = "test-code-" + System.nanoTime();
-            BinaryData bd = binaryDataRepository.findByCode(code);
-            if (bd == null) {
-                break;
-            }
+        try {
+            binaryDataRepository.deleteByVariable(TEST_VARIABLE);
+        } catch (Throwable e) {
+            log.error("Error", e);
         }
-        if (i == 10) {
-            throw new IllegalStateException("Can't find new code for binaryData");
-        }
-
     }
 
-    private BinaryData binaryData=null;
     @After
     public void after() {
-        if (binaryData != null) {
-            try {
-                binaryDataService.deleteById(binaryData.id);
-            } catch (Throwable th) {
-                log.error("Error while deleting test data", th);
-            }
+        try {
+            binaryDataRepository.deleteByVariable(TEST_VARIABLE);
+        } catch (Throwable th) {
+            log.error("Error while deleting test data", th);
         }
     }
 
@@ -102,13 +92,15 @@ public class TestBinaryDataSaveAndLoad {
         File dataFile = new File(tempDir, DATA_FILE_BIN);
         FileUtils.writeByteArrayToFile(dataFile, bytes);
 
+        BinaryData binaryData = null;
         try (InputStream is = new FileInputStream(dataFile)) {
-            binaryData = binaryDataService.save(is, dataFile.length(), code, DATA_FILE_BIN, 1L,  "1,2,3");
+            binaryData = binaryDataService.save(is, dataFile.length(), TEST_VARIABLE, DATA_FILE_BIN, 1L,  "1,2,3");
         }
         assertNotNull(binaryData);
+        assertNotNull(binaryData.id);
 
         File trgFile = new File(tempDir, TRG_DATA_FILE_BIN);
-        binaryDataService.storeToFile(code, trgFile);
+        binaryDataService.storeToFile(binaryData.id.toString(), trgFile);
 
         assertTrue(FileUtils.contentEquals(dataFile, trgFile));
 

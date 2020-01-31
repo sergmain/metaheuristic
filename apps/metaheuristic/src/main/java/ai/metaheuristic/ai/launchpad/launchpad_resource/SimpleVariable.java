@@ -25,10 +25,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SimpleVariable {
-    private Long id;
-    private Integer version;
-    private String variable;
-    private java.util.Date uploadTs;
+    public Long id;
+    public Integer version;
+    public String variable;
+    public java.util.Date uploadTs;
     public String filename;
     public String storageUrl;
 }

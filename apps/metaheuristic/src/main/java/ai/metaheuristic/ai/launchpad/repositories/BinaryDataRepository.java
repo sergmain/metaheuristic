@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Blob;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * User: Serg
@@ -45,12 +46,6 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     @Transactional(readOnly = true)
     @Query(nativeQuery = true, value = "select d.id from mh_data d where d.WORKBOOK_ID is not null and d.WORKBOOK_ID not in (select z.id from mh_workbook z)")
     List<Long> findAllOrphanWorkbookData();
-
-/*
-    @Transactional(readOnly = true)
-    @Query(value="select b.id from BinaryData b where b.id=:id")
-    Long getIdByCode(String code);
-*/
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl(" +
             "b.id, b.variable, b.params, b.filename ) " +
@@ -76,8 +71,9 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     @Query(value="select b.filename from BinaryData b where b.variable=:variable and b.workbookId=:workbookId ")
     List<String> findFilenameByVariableAndWorkbookId(String variable, Long workbookId);
 
+    @NonNull
     @Transactional(readOnly = true)
-    BinaryData findByCode(String code);
+    Optional<BinaryData> findById(@NonNull Long id);
 
     @Transactional(readOnly = true)
     @Query(value="select b.data from BinaryData b where b.id=:id")
@@ -100,13 +96,14 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     @Transactional
     void deleteByVariable(String variable);
 
+    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable(" +
             "b.id, b.version, b.variable, b.uploadTs, b.filename, b.params ) " +
             "from BinaryData b " +
             "order by b.uploadTs desc ")
     Slice<SimpleVariable> getAllAsSimpleResources(Pageable pageable);
 
-
+    @Transactional(readOnly = true)
     @Query(value="select b.id from BinaryData b")
     List<Long> getAllIds();
 }

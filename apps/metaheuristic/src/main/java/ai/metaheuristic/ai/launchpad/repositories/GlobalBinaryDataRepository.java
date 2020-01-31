@@ -66,13 +66,21 @@ public interface GlobalBinaryDataRepository extends CrudRepository<GlobalBinaryD
     @Transactional
     void deleteByVariable(String variable);
 
+    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable(" +
             "b.id, b.version, b.variable, b.uploadTs, b.filename, b.params ) " +
             "from GlobalBinaryData b " +
             "order by b.uploadTs desc ")
     Slice<SimpleVariable> getAllAsSimpleResources(Pageable pageable);
 
+    @Transactional(readOnly = true)
+    @Query(value="select new ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable(" +
+            "b.id, b.version, b.variable, b.uploadTs, b.filename, b.params ) " +
+            "from BinaryData b " +
+            "where b.id=:id")
+    SimpleVariable getByIdAsSimpleResource(Long id);
 
+    @Transactional(readOnly = true)
     @Query(value="select b.id from GlobalBinaryData b")
     List<Long> getAllIds();
 }

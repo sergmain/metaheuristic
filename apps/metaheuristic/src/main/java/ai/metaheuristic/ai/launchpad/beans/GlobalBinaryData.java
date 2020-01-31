@@ -38,13 +38,13 @@ public class GlobalBinaryData implements Serializable {
     public Long id;
 
     @Version
-    private Integer version;
+    public Integer version;
 
     @Column(name = "VAR")
-    private String variable;
+    public String variable;
 
     @Column(name = "UPLOAD_TS")
-    private Timestamp uploadTs;
+    public Timestamp uploadTs;
 
     @Column(name = "DATA")
     @Lob

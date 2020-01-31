@@ -1,5 +1,3 @@
-delete from mh_data where DATA_TYPE in (3, 4);
-
 CREATE TABLE mh_snippet_data
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -21,50 +19,40 @@ where DATA_TYPE=2;
 
 commit;
 
-delete from mh_data where DATA_TYPE =2;
-
-commit;
-
-alter table mh_data drop column CHECKSUM;
-
-alter table mh_data drop column IS_MANUAL;
-
-alter table mh_data drop column IS_VALID;
-
-drop index MH_DATA_REF_ID_REF_TYPE_IDX on mh_data;
-
-alter table mh_data change REF_ID WORKBOOK_ID decimal null;
-
-CREATE INDEX mh_data_workbook_id_idx ON mh_data (WORKBOOK_ID);
-
-alter table mh_data drop column REF_TYPE;
-
 alter table mh_batch add WORKBOOK_ID     NUMERIC(10, 0);
 
 CREATE INDEX mh_batch_workbook_id_idx ON mh_batch (WORKBOOK_ID);
 
 drop table mh_batch_workbook;
 
-alter table mh_data drop column CODE;
+drop table mh_data;
 
-alter table mh_data change POOL_CODE VAR VARCHAR(250) not null;
+CREATE TABLE mh_data
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    VAR             VARCHAR(250) not null,
+    CONTEXT_ID      VARCHAR(250),
+    WORKBOOK_ID     NUMERIC(10, 0),
+    UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+    DATA            LONGBLOB,
+    FILENAME        VARCHAR(150),
+    PARAMS          MEDIUMTEXT not null
+);
 
-alter table mh_data
-    add         CONTEXT_ID      NUMERIC(10, 0);
+CREATE INDEX mh_data_workbook_id_idx
+    ON mh_data (WORKBOOK_ID);
 
-update mh_data
-set CTX_ID = (select SEQUENCE_NEXT_VALUE from mh_gen_ids where SEQUENCE_NAME='mh_ids') + id;
+CREATE INDEX mh_data_var_id_idx
+    ON mh_data (VAR);
 
-update mh_gen_ids
-set SEQUENCE_NEXT_VALUE = (
-    select max(CONTEXT_ID) + 1 from mh_data
-    )
-where SEQUENCE_NAME='mh_ids';
-
-alter table mh_data change CONTEXT_ID CTX_ID decimal null;
-
-alter table mh_data add         CONTEXT_ID      VARCHAR(250);
-
-update mh_data set CONTEXT_ID = CAST(ctx_id as CHAR(250));
-
-alter table mh_data drop column CTX_ID;
+CREATE TABLE mh_global_data
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    VAR             VARCHAR(250) not null,
+    UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+    DATA            LONGBLOB,
+    FILENAME        VARCHAR(150),
+    PARAMS          MEDIUMTEXT not null
+);

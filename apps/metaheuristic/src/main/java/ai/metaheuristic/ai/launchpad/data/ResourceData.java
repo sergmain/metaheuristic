@@ -39,13 +39,13 @@ public class ResourceData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ResourceResult extends BaseDataClass {
-        public GlobalBinaryData data;
+        public SimpleVariable data;
 
         public ResourceResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ResourceResult(GlobalBinaryData data) {
+        public ResourceResult(SimpleVariable data) {
             this.data = data;
         }
     }
