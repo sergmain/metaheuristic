@@ -19,12 +19,15 @@ package ai.metaheuristic.api.data.plan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.sourcing.DiskInfo;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -67,6 +70,22 @@ public class PlanParamsYaml implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Variable {
+        public EnumsApi.DataSourcing sourcing;
+        public GitInfo git;
+        public DiskInfo disk;
+        public String variable;
+
+        public Variable(EnumsApi.DataSourcing sourcing, String variable) {
+            this.sourcing = sourcing;
+            this.variable = variable;
+        }
+    }
+
+
+    @Data
     @ToString
     public static class Process implements Cloneable {
 
@@ -91,10 +110,8 @@ public class PlanParamsYaml implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-
-        public String inputResourceCode;
-        public DataStorageParams outputParams;
-        public String outputResourceCode;
+        public final List<Variable> input = new ArrayList<>();
+        public final List<Variable> output = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
         public int order;
 
@@ -111,8 +128,17 @@ public class PlanParamsYaml implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class VariableDefinition {
+        public String global;
+        public final Map<String, String> inline = new HashMap<>();
+    }
+
+    @Data
     @ToString
     public static class PlanYaml {
+        public VariableDefinition variable;
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
         public String planCode;

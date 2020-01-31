@@ -20,6 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.data_storage.DataStorageParamsV2;
 import org.junit.Test;
 
 import java.util.List;
@@ -55,9 +56,7 @@ public class TestPlanParamsYamlCloning {
 
         p.timeoutBeforeTerminate = 120L;
 
-        p.inputResourceCode = "input-code";
-        p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);;
-        p.outputResourceCode = "output-code";
+        p.output.add( new DataStorageParamsV2(EnumsApi.DataSourcing.launchpad, "output-code"));
         p.metas.add(new Meta("key", "value", "ext"));
         p.order = 42;
 
@@ -82,10 +81,13 @@ public class TestPlanParamsYamlCloning {
         assertNotNull(p.timeoutBeforeTerminate);
         assertEquals(120L, (long)p.timeoutBeforeTerminate);
 
-        assertEquals("input-code", p.inputResourceCode);
-        assertNotNull(p.outputParams);
-        assertEquals(EnumsApi.DataSourcing.launchpad, p.outputParams.sourcing);
-        assertEquals("output-code", p.outputResourceCode);
+        assertNotNull(p.output);
+        assertEquals(1, p.output.size());
+        DataStorageParamsV2 params = p.output.get(0);
+
+        assertEquals(EnumsApi.DataSourcing.launchpad, params.sourcing);
+        assertEquals("output-code", params.variable);
+
         assertNotNull(p.metas);
         assertEquals(1, p.metas.size());
         assertEquals("key", p.metas.get(0).key);

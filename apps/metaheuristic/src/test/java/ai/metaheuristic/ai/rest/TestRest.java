@@ -104,6 +104,7 @@ public class TestRest {
     }
 
     @Test
+//    @WithUserDetails("data_rest")
     public void testRestMessages_02() {
         RestTemplate restTemplate = new RestTemplate(LaunchpadRequestor.getHttpRequestFactory());
         // RestTemplate must be working without this

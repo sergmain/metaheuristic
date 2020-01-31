@@ -77,7 +77,9 @@ public class EnumsApi {
         // snippet already has been deployed locally at station
         disk(2),
         // snippet will be downloaded from git
-        git(3);
+        git(3),
+        // data will be provided via inline in params.yaml
+        inline(4);
 
         public int value;
 
@@ -95,6 +97,8 @@ public class EnumsApi {
                     return disk;
                 case 3:
                     return git;
+                case 4:
+                    return inline;
                 default:
                     return launchpad;
             }
@@ -166,7 +170,7 @@ public class EnumsApi {
         NO_INPUT_POOL_CODE_ERROR,
         NO_ANY_PROCESSES_ERROR,
         INPUT_TYPE_EMPTY_ERROR,
-        OUTPUT_TYPE_EMPTY_ERROR,
+        OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
         NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR,
         SNIPPET_NOT_DEFINED_ERROR,
         PLAN_PARAMS_EMPTY_ERROR,
@@ -189,7 +193,8 @@ public class EnumsApi {
         EXPERIMENT_MUST_BE_LAST_PROCESS_ERROR,
         RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR,
         PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR,
-        START_RESOURCE_POOL_CODE_EMPTY_ERROR,
+        SOURCING_OF_VARIABLE_NOT_DEFINED_ERROR,
+        START_VARIABLE_EMPTY_ERROR,
         START_RESOURCE_POOL_IS_EMPTY_ERROR,
         PROCESS_VALIDATOR_NOT_FOUND_ERROR,
         MIXED_EXTERNAL_AND_INTERNAL_SNIPPETS_ERROR,

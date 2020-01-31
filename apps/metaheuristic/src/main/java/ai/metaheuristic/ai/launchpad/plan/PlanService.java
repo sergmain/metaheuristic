@@ -43,6 +43,7 @@ import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.data_storage.DataStorageParamsV2;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.S;
@@ -330,23 +331,22 @@ public class PlanService {
         for (int i = 0; i < processes.size(); i++) {
             PlanParamsYaml.Process process = processes.get(i);
             if (i + 1 < processes.size()) {
-                if (process.outputParams == null) {
+                if (process.output.isEmpty()) {
                     return EnumsApi.PlanValidateStatus.PROCESS_PARAMS_EMPTY_ERROR;
                 }
-                if (StringUtils.isBlank(process.outputParams.storageType)) {
-                    return EnumsApi.PlanValidateStatus.OUTPUT_TYPE_EMPTY_ERROR;
+                for (DataStorageParamsV2 params : process.output) {
+                    if (S.b(params.variable)) {
+                        return EnumsApi.PlanValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR;
+                    }
+                    if (params.sourcing==null) {
+                        return EnumsApi.PlanValidateStatus.SOURCING_OF_VARIABLE_NOT_DEFINED_ERROR;
+                    }
                 }
             }
             lastProcess = process;
             if (S.b(process.code) || !StrUtils.isCodeOk(process.code)){
                 log.error("Error while validating plan {}", planYaml);
                 return EnumsApi.PlanValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
-            }
-            if (process.inputResourceCode!=null && !StrUtils.isCodeOk(process.inputResourceCode)){
-                return EnumsApi.PlanValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
-            }
-            if (process.outputResourceCode!=null && !StrUtils.isCodeOk(process.outputResourceCode)){
-                return EnumsApi.PlanValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
             ProcessValidator processValidator;
             if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
