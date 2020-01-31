@@ -189,8 +189,8 @@ public class BatchTopLevelService {
         }
         launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
 
-        // TODO 2019-07-06 Do we need to validate the plan here in case that there is another check
-        //  2019-10-28 it's working so left it as is until there will be found an issue with this
+        // TODO 2019-07-06 Do we need to validate the plan here in case that there is another check?
+        //  2019-10-28 it's working so left it as is until an issue with this will be found
         // validate the plan
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
@@ -243,12 +243,6 @@ public class BatchTopLevelService {
 
             log.info("The file {} was successfully stored to disk", originFilename);
 
-            if (true) {
-                // TODO  insert here additional processing of file of batch.
-                //  and which one is it?
-                return new BatchData.UploadingStatus("Need to re-write");
-            }
-
             //noinspection unused
             int i=0;
         }
@@ -256,6 +250,7 @@ public class BatchTopLevelService {
             log.error("Error", th);
             return new BatchData.UploadingStatus("#995.120 can't load file, error: " + th.getMessage()+", class: " + th.getClass());
         }
+        //noinspection UnnecessaryLocalVariable
         BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, producingResult.workbook.getId());
         return uploadingStatus;
     }

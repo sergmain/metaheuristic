@@ -85,11 +85,11 @@ public class ServerController {
     public UploadResult uploadResourceAuth(
             MultipartFile file,
             @SuppressWarnings("unused") String stationId,
-            Long taskId,
+            Long resourceId,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) {
-        log.debug("uploadResourceAuth(), taskId: {}", taskId);
-        return serverService.uploadResource(file, taskId);
+        log.debug("uploadResourceAuth(), resourceId: {}", resourceId);
+        return serverService.uploadResource(file, resourceId);
     }
 
     /**

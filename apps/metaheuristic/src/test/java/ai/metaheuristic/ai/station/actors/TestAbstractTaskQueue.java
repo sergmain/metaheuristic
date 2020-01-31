@@ -52,9 +52,10 @@ public class TestAbstractTaskQueue {
         actor.add(task2);
         assertEquals(2, actor.queueSize());
 
+        // now it doesn't matter which task because resourceId is unique across all tasks
         DownloadResourceTask task3 = new DownloadResourceTask("resource-id-02", 11, new File("."), null);
         actor.add(task3);
-        assertEquals(3, actor.queueSize());
+        assertEquals(2, actor.queueSize());
 
     }
 }

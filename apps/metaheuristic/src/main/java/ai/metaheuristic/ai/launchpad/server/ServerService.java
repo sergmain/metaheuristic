@@ -22,9 +22,8 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.LaunchpadCommandProcessor;
-import ai.metaheuristic.ai.launchpad.beans.Ids;
+import ai.metaheuristic.ai.launchpad.beans.BinaryData;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
@@ -134,25 +133,27 @@ public class ServerService {
     }
 
     // return a requested resource to a station
-    public ResourceWithCleanerInfo deliverResource(final EnumsApi.BinaryDataType binaryDataType, final String code, final String chunkSize, final int chunkNum) {
-        return getWithSync(binaryDataType, code,
-                () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryDataType, code));
+    public ResourceWithCleanerInfo deliverResource(final EnumsApi.BinaryDataType binaryDataType, final String resourceId, final String chunkSize, final int chunkNum) {
+        return getWithSync(binaryDataType, resourceId,
+                () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryDataType, resourceId));
     }
 
-    public UploadResult uploadResource(MultipartFile file, Long taskId) {
+    public UploadResult uploadResource(MultipartFile file, Long resourceId) {
         String originFilename = file.getOriginalFilename();
         if (StringUtils.isBlank(originFilename)) {
             return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
         }
-        if (taskId==null) {
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.020 taskId is null" );
+        if (resourceId==null) {
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.020 resourceId is null" );
         }
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        if (task==null) {
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 taskId is null" );
+        BinaryData binaryData = binaryDataService.findById(resourceId).orElse(null);
+        if (binaryData==null) {
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 BinaryData for resourceId "+resourceId+" wasn't found" );
         }
-
-        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+        if (true) {
+            throw new NotImplementedException("Need to re-write a logic of storing resources from station");
+        }
+        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(binaryData.getParams());
 
         File tempDir=null;
         try {
@@ -167,15 +168,7 @@ public class ServerService {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
             try (InputStream is = new FileInputStream(resFile)) {
-                String contextId = ""+idsRepository.save(new Ids()).id;
-                if (true) {
-                    throw new NotImplementedException("Need to fix a creation of contextId");
-                }
-                binaryDataService.save(
-                        is, resFile.length(),
-                        taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
-                        null, task.workbookId, contextId
-                );
+                binaryDataService.update(is, resFile.length(), binaryData);
             }
         }
         catch (BinaryDataSaveException th) {
@@ -196,39 +189,39 @@ public class ServerService {
         finally {
             DirUtils.deleteAsync(tempDir);
         }
-        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(task.getId(), true);
+        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(binaryData.getId(), true);
         return status== Enums.UploadResourceStatus.OK
                 ? OK_UPLOAD_RESULT
-                : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+task.getId()+"");
+                : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+binaryData.getId()+"");
     }
 
-    private ResourceWithCleanerInfo getAbstractResourceResponseEntity(String chunkSize, int chunkNum, EnumsApi.BinaryDataType binaryDataType, String code) {
+    private ResourceWithCleanerInfo getAbstractResourceResponseEntity(String chunkSize, int chunkNum, EnumsApi.BinaryDataType binaryDataType, String resourceId) {
 
         AssetFile assetFile;
         BiConsumer<String, File> dataSaver;
         switch (binaryDataType) {
             case SNIPPET:
-                assetFile = ResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, code, null);
+                assetFile = ResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, resourceId, null);
                 dataSaver = snippetBinaryDataService::storeToFile;
                 break;
             case DATA:
-                assetFile = ResourceUtils.prepareDataFile(globals.launchpadTempDir, code, null);
+                assetFile = ResourceUtils.prepareDataFile(globals.launchpadTempDir, resourceId, null);
                 dataSaver = binaryDataService::storeToFile;
                 break;
             default:
                 throw new IllegalStateException("#442.008 Unknown type of data: " + binaryDataType);
         }
         if (assetFile.isError) {
-            String es = "#442.006 Resource with code " + code + " is broken";
+            String es = "#442.006 Resource with id " + resourceId + " is broken";
             log.error(es);
             throw new BinaryDataNotFoundException(es);
         }
 
         if (!assetFile.isContent) {
             try {
-                dataSaver.accept(code, assetFile.file);
+                dataSaver.accept(resourceId, assetFile.file);
             } catch (BinaryDataNotFoundException e) {
-                log.error("#442.020 Error store data to temp file, data doesn't exist in db, code " + code + ", file: " + assetFile.file.getPath());
+                log.error("#442.020 Error store data to temp file, data doesn't exist in db, id " + resourceId + ", file: " + assetFile.file.getPath());
                 throw e;
             }
         }

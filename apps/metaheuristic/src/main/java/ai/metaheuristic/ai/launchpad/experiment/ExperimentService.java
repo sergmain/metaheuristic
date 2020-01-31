@@ -782,7 +782,12 @@ public class ExperimentService {
                         TaskParamsYaml yaml = new TaskParamsYaml();
                         yaml.taskYaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
 
-                        yaml.taskYaml.taskMl.setHyperParams(hyperParams.toSortedMap());
+                        if (!hyperParams.params.isEmpty()) {
+                            if (yaml.taskYaml.taskMl==null) {
+                                yaml.taskYaml.taskMl = new TaskParamsYaml.TaskMachineLearning();
+                            }
+                            yaml.taskYaml.taskMl.setHyperParams(hyperParams.toSortedMap());
+                        }
                         // TODO need to implement an unit-test for a Plan without metas in experiment
                         //  and check that features are correctly defined
                         // TODO 2019-07-17 right now it doesn't work

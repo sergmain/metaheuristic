@@ -55,3 +55,5 @@ CREATE TABLE MH_GLOBAL_DATA
     FILENAME      VARCHAR(150),
     PARAMS        TEXT not null
 );
+
+truncate table mh_batch;

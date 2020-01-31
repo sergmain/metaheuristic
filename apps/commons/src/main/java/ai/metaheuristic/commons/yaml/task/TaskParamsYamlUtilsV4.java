@@ -63,6 +63,7 @@ public class TaskParamsYamlUtilsV4
             t.taskYaml.taskMl = new TaskParamsYamlV5.TaskMachineLearningV5();
             t.taskYaml.taskMl.hyperParams = v4.taskYaml.hyperParams;
         }
+        v4.taskYaml.inputResourceCodes.forEach((key, value) -> t.taskYaml.inputResourceIds.put(key, value));
         t.checkIntegrity();
 
         return t;
