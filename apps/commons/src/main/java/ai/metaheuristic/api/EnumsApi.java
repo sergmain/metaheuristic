@@ -22,6 +22,8 @@ import lombok.ToString;
 
 public class EnumsApi {
 
+    public enum PlanProcessExec { parallel, sequence }
+
     public enum SnippetExecContext { external, internal }
 
     /**

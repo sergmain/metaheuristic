@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.*;
 
@@ -39,16 +40,13 @@ public class PlanParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        final boolean b = plan != null && plan.code != null && !plan.code.isBlank() &&
-                plan.processes != null;
+        final boolean b = plan != null && !S.b(plan.code) && plan.processes != null;
         if (!b) {
-            throw new IllegalArgumentException(
-                    "(boolean b = planYaml != null && planYaml.planCode != null && " +
-                            "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
+            throw new IllegalArgumentException("(b = plan != null && !S.b(plan.code) && plan.processes != null) ");
         }
         for (Process process : plan.processes) {
-            if (process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0)) {
-                throw new IllegalArgumentException("(process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0))");
+            if (process.snippet==null) {
+                throw new IllegalArgumentException("(process.snippet==null)");
             }
         }
 
@@ -88,6 +86,11 @@ public class PlanParamsYaml implements BaseParams {
         }
     }
 
+    public static class SubProcesses {
+        public EnumsApi.PlanProcessExec exec;
+        public List<Process> processes;
+    }
+
     @Data
     @ToString
     public static class Process implements Cloneable {
@@ -102,10 +105,9 @@ public class PlanParamsYaml implements BaseParams {
         public String name;
         public String code;
         public EnumsApi.ProcessType type;
-        public List<SnippetDefForPlan> snippets;
+        public SnippetDefForPlan snippet;
         public List<SnippetDefForPlan> preSnippets;
         public List<SnippetDefForPlan> postSnippets;
-        public boolean parallelExec = false;
 
         /**
          * Timeout before terminating a process with snippet
@@ -116,6 +118,7 @@ public class PlanParamsYaml implements BaseParams {
         public final List<Variable> input = new ArrayList<>();
         public final List<Variable> output = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
+        public SubProcesses subProcesses;
 
         public Meta getMeta(String key) {
             return MetaUtils.getMeta(metas, key);

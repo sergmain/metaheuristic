@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.yaml.plan;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV8;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
-import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.yaml.snakeyaml.Yaml;
@@ -95,8 +94,8 @@ public class PlanParamsYamlUtilsV8
     }
 
     @Override
-    public String toString(PlanParamsYamlV8 planYaml) {
-        return getYaml().dump(planYaml);
+    public String toString(PlanParamsYamlV8 planParamsYaml) {
+        return getYaml().dump(planParamsYaml);
     }
 
     @Override

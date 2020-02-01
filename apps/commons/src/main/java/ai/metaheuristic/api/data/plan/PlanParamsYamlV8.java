@@ -104,7 +104,6 @@ public class PlanParamsYamlV8 implements BaseParams {
         public List<SnippetDefForPlanV8> snippets;
         public List<SnippetDefForPlanV8> preSnippets;
         public List<SnippetDefForPlanV8> postSnippets;
-        public boolean parallelExec = false;
 
         /**
          * Timeout before terminating a process with snippet
