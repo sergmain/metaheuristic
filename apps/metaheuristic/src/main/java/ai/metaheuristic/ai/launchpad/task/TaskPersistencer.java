@@ -25,8 +25,8 @@ import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -38,6 +38,7 @@ import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -226,9 +227,12 @@ public class TaskPersistencer {
             else {
                 task.setResultResourceScheduledOn(System.currentTimeMillis());
                 TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                final DataStorageParams dataStorageParams = yaml.taskYaml.resourceStorageUrls.get(yaml.taskYaml.outputResourceIds.values().iterator().next());
+                if (true) {
+                    throw new NotImplementedException("output resourceIds are a list");
+                }
+                final PlanParamsYaml.Variable variable = yaml.taskYaml.resourceStorageUrls.get(yaml.taskYaml.outputResourceIds.values().iterator().next());
 
-                if (dataStorageParams.sourcing == EnumsApi.DataSourcing.disk) {
+                if (variable.sourcing == EnumsApi.DataSourcing.disk) {
                     task.setCompleted(true);
                     task.setCompletedOn(System.currentTimeMillis());
                 }

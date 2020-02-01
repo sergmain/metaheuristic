@@ -18,14 +18,12 @@ package ai.metaheuristic.ai.launchpad.file_process;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
-import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -34,7 +32,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -51,7 +52,7 @@ public class FileProcessService {
             boolean isPersist, Long planId, PlanParamsYaml planParams, Long workbookId,
             PlanParamsYaml.Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
 
-        Map<String, DataStorageParams> inputStorageUrls = new HashMap<>(pools.inputStorageUrls);
+        Map<String, PlanParamsYaml.Variable> inputStorageUrls = new HashMap<>(pools.inputStorageUrls);
 
         PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
 
@@ -59,13 +60,20 @@ public class FileProcessService {
         if (process.parallelExec) {
             for (int i = 0; i < process.snippets.size(); i++) {
                 PlanParamsYaml.SnippetDefForPlan snDef = process.snippets.get(i);
+/*
                 String normalizedSnippetCode = StrUtils.normalizeCode(snDef.code);
                 String normalizedPlanCode = StrUtils.normalizeCode(process.code);
                 String outputResourceCode = PlanUtils.getResourceCode(workbookId, normalizedPlanCode, normalizedSnippetCode, process.order, i);
-                result.outputResourceCodes.add(outputResourceCode);
-                inputStorageUrls.put(outputResourceCode, process.outputParams);
+*/
+                Map<String, PlanParamsYaml.Variable> outputResourceIds = new HashMap<>();
+                for (PlanParamsYaml.Variable variable : process.output) {
+                    String resourceId = "1L";
+                    outputResourceIds.put(resourceId, variable);
+                    result.outputResourceCodes.add(resourceId);
+                    inputStorageUrls.put(resourceId, variable);
+                }
                 if (isPersist) {
-                    Task t = createTaskInternal(planParams, workbookId, process, outputResourceCode, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
+                    Task t = createTaskInternal(planParams, workbookId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
                     if (t!=null) {
                         result.taskIds.add(t.getId());
                     }
@@ -75,12 +83,19 @@ public class FileProcessService {
         else {
             PlanParamsYaml.SnippetDefForPlan snDef = process.snippets.get(0);
             String normalizedSnippetCode = StrUtils.normalizeCode(snDef.code);
+/*
             String normalizedPlanCode = StrUtils.normalizeCode(process.code);
             String outputResourceCode = PlanUtils.getResourceCode(workbookId, normalizedPlanCode, normalizedSnippetCode, process.order, 0);
-            result.outputResourceCodes.add(outputResourceCode);
-            inputStorageUrls.put(outputResourceCode, process.outputParams);
+*/
+            Map<String, PlanParamsYaml.Variable> outputResourceIds = new HashMap<>();
+            for (PlanParamsYaml.Variable variable : process.output) {
+                String resourceId = "1L";
+                outputResourceIds.put(resourceId, variable);
+                result.outputResourceCodes.add(resourceId);
+                inputStorageUrls.put(resourceId, variable);
+            }
             if (isPersist) {
-                Task t = createTaskInternal(planParams, workbookId, process, outputResourceCode, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
+                Task t = createTaskInternal(planParams, workbookId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
                 if (t!=null) {
                     result.taskIds.add(t.getId());
                 }
@@ -97,8 +112,8 @@ public class FileProcessService {
     @SuppressWarnings("Duplicates")
     private TaskImpl createTaskInternal(
             PlanParamsYaml planParams, Long workbookId, PlanParamsYaml.Process process,
-            String outputResourceCode,
-            PlanParamsYaml.SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls,
+            Map<String, PlanParamsYaml.Variable> outputResourceIds,
+            PlanParamsYaml.SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, PlanParamsYaml.Variable> inputStorageUrls,
             Map<String, String> mappingCodeToOriginalFilename) {
         if (process.type!= EnumsApi.ProcessType.FILE_PROCESSING) {
             throw new IllegalStateException("#171.01 Wrong type of process, " +
@@ -106,18 +121,17 @@ public class FileProcessService {
                     "actual: " + process.type);
         }
         TaskParamsYaml yaml = new TaskParamsYaml();
-//        yaml.taskYaml.setHyperParams( Collections.emptyMap() );
-        for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
-            yaml.taskYaml.inputResourceIds.put(entry.getKey(), entry.getValue());
-        }
-        yaml.taskYaml.outputResourceIds.put("default-output", outputResourceCode);
+
+        collectedInputs.forEach((key, value) -> yaml.taskYaml.inputResourceIds.put(key, value));
+        outputResourceIds.forEach((key, value) -> yaml.taskYaml.outputResourceIds.put(value.variable, key));
+
         yaml.taskYaml.realNames = mappingCodeToOriginalFilename;
 
         // work around with SnakeYaml's refs
-        Map<String, DataStorageParams> map = new HashMap<>();
-        for (Map.Entry<String, DataStorageParams> entry : inputStorageUrls.entrySet()) {
-            final DataStorageParams v = entry.getValue();
-            map.put(entry.getKey(), new DataStorageParams(v.sourcing, v.git, v.disk, v.storageType));
+        Map<String, PlanParamsYaml.Variable> map = new HashMap<>();
+        for (Map.Entry<String, PlanParamsYaml.Variable> entry : inputStorageUrls.entrySet()) {
+            final PlanParamsYaml.Variable v = entry.getValue();
+            map.put(entry.getKey(), new PlanParamsYaml.Variable(v.sourcing, v.git, v.disk, v.variable));
         }
         yaml.taskYaml.resourceStorageUrls = map;
 

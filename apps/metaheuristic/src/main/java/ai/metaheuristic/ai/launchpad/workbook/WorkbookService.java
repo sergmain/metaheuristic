@@ -522,8 +522,6 @@ public class WorkbookService {
         List<Long> parentTaskIds = new ArrayList<>();
         int numberOfTasks=0;
         for (PlanParamsYaml.Process process : planParams.plan.getProcesses()) {
-            process.order = idx++;
-
             PlanService.ProduceTaskResult produceTaskResult;
             switch(process.type) {
                 case FILE_PROCESSING:
@@ -547,12 +545,22 @@ public class WorkbookService {
                 return new PlanApiData.TaskProducingResultComplex(produceTaskResult.status);
             }
             Monitoring.log("##030", Enums.Monitor.MEMORY);
+
+            // this part of code replaces the code below
+            for (PlanParamsYaml.Variable variable : process.output) {
+                pools.add(variable.variable, produceTaskResult.outputResourceCodes);
+                for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
+                    pools.inputStorageUrls.put(outputResourceCode, variable);
+                }
+            }
+/*
             if (process.outputParams.storageType!=null) {
                 pools.add(process.outputParams.storageType, produceTaskResult.outputResourceCodes);
                 for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
                     pools.inputStorageUrls.put(outputResourceCode, process.outputParams);
                 }
             }
+*/
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }
 

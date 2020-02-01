@@ -44,7 +44,6 @@ import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.CommonConsts;
@@ -689,7 +688,7 @@ public class ExperimentService {
     public EnumsApi.PlanProducingStatus produceTasks(
             boolean isPersist, PlanParamsYaml planParams, Long workbookId, PlanParamsYaml.Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
-            Map<String, DataStorageParams> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
+            Map<String, PlanParamsYaml.Variable> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
         if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
             throw new IllegalStateException("#179.070 Wrong type of process, " +
                     "expected: "+ EnumsApi.ProcessType.EXPERIMENT+", " +
@@ -826,12 +825,15 @@ public class ExperimentService {
                             type = EnumsApi.ExperimentTaskType.PREDICT;
 
                             // TODO 2019.05.02 add implementation of disk storage for models
-                            yaml.taskYaml.resourceStorageUrls.put(modelFilename, new DataStorageParams(EnumsApi.DataSourcing.launchpad));
+                            yaml.taskYaml.resourceStorageUrls.put(modelFilename, new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "mode"));
 //                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                         } else {
                             throw new IllegalStateException("#179.130 Not supported type of snippet encountered, type: " + snippet.getType());
                         }
-                        yaml.taskYaml.resourceStorageUrls.put(yaml.taskYaml.outputResourceIds.values().iterator().next(), process.outputParams);
+                        for (PlanParamsYaml.Variable variable : process.output) {
+                            String resourceId = "1L";
+                            yaml.taskYaml.resourceStorageUrls.put(resourceId, variable);
+                        }
 
                         yaml.taskYaml.inputResourceIds.forEach((key, value) -> {
                             HashSet<String> set = new HashSet<>(value);

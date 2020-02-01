@@ -17,16 +17,13 @@
 package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV7;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV8;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.yaml.snakeyaml.Yaml;
-
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -48,14 +45,16 @@ public class PlanParamsYamlUtilsV7
 
     @Override
     public PlanParamsYamlV8 upgradeTo(PlanParamsYamlV7 v7, Long ... vars) {
+        throw new UpgradeNotSupportedException();
+/*
         PlanParamsYamlV8 p = new PlanParamsYamlV8();
         p.internalParams = new PlanParamsYamlV8.InternalParamsV8(v7.internalParams.archived, v7.internalParams.published, v7.internalParams.updatedOn, null);
-        p.planYaml = new PlanParamsYamlV8.PlanYamlV8();
+        p.plan = new PlanParamsYamlV8.PlanYamlV8();
         if (v7.planYaml.metas!=null){
-            p.planYaml.metas = new ArrayList<>(v7.planYaml.metas);
+            p.plan.metas = new ArrayList<>(v7.planYaml.metas);
         }
-        p.planYaml.clean = v7.planYaml.clean;
-        p.planYaml.processes = v7.planYaml.processes.stream().map( o-> {
+        p.plan.clean = v7.planYaml.clean;
+        p.plan.processes = v7.planYaml.processes.stream().map(o-> {
             PlanParamsYamlV8.ProcessV8 pr = new PlanParamsYamlV8.ProcessV8();
             pr.name = o.name;
             pr.code = o.code;
@@ -74,13 +73,14 @@ public class PlanParamsYamlUtilsV7
 
             return pr;
         }).collect(Collectors.toList());
-        p.planYaml.planCode = v7.planYaml.planCode;
+        p.plan.code = v7.planYaml.planCode;
         if (v7.planYaml.ac!=null) {
-            p.planYaml.ac = new PlanParamsYamlV8.AccessControlV8(v7.planYaml.ac.groups);
+            p.plan.ac = new PlanParamsYamlV8.AccessControlV8(v7.planYaml.ac.groups);
         }
         p.originYaml = v7.originYaml;
         p.checkIntegrity();
         return p;
+*/
     }
 
     @Override

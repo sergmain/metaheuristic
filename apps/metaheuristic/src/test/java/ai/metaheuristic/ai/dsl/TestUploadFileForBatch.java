@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.BatchCache;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.beans.Account;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
@@ -33,7 +32,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV8;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Test;
@@ -48,7 +46,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author Serge
@@ -65,8 +62,8 @@ public class TestUploadFileForBatch extends PreparingPlan {
     public String getPlanYamlAsString() {
         PlanParamsYamlV8 planParamsYaml = new PlanParamsYamlV8();
 
-        planParamsYaml.planYaml = new PlanParamsYamlV8.PlanYamlV8();
-        planParamsYaml.planYaml.planCode = "Plan for testing uploading batch file";
+        planParamsYaml.plan = new PlanParamsYamlV8.PlanYamlV8();
+        planParamsYaml.plan.code = "Plan for testing uploading batch file";
         {
             PlanParamsYamlV8.ProcessV8 p = new PlanParamsYamlV8.ProcessV8();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
@@ -74,10 +71,9 @@ public class TestUploadFileForBatch extends PreparingPlan {
             p.code = "process-mh.resource-splitter";
 
             p.snippets = List.of(new PlanParamsYamlV8.SnippetDefForPlanV8(Consts.MH_RESOURCE_SPLITTER_SNIPPET, EnumsApi.SnippetExecContext.internal));
-            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-            p.outputParams.storageType = "batch-array";
+            p.output.add( new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad,"batch-array"));
 
-            planParamsYaml.planYaml.processes.add(p);
+            planParamsYaml.plan.processes.add(p);
         }
 
         String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);

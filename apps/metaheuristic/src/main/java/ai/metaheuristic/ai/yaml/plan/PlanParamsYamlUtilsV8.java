@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.ai.yaml.plan;
 
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV8;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
+import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.yaml.snakeyaml.Yaml;
@@ -48,22 +48,19 @@ public class PlanParamsYamlUtilsV8
         PlanParamsYaml p = new PlanParamsYaml();
         p.internalParams = new PlanParamsYaml.InternalParams(v8.internalParams.archived, v8.internalParams.published, v8.internalParams.updatedOn, null);
         p.plan = new PlanParamsYaml.PlanYaml();
-        if (v8.planYaml.metas!=null){
-            p.plan.metas = new ArrayList<>(v8.planYaml.metas);
+        if (v8.plan.metas!=null){
+            p.plan.metas = new ArrayList<>(v8.plan.metas);
         }
-        p.plan.clean = v8.planYaml.clean;
-        p.plan.processes = v8.planYaml.processes.stream().map(o-> {
+        p.plan.clean = v8.plan.clean;
+        p.plan.processes = v8.plan.processes.stream().map(o-> {
             PlanParamsYaml.Process pr = new PlanParamsYaml.Process();
             pr.name = o.name;
             pr.code = o.code;
             pr.type = o.type;
             pr.parallelExec = o.parallelExec;
             pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
-            pr.inputResourceCode = o.inputResourceCode;
-            pr.outputParams = o.outputParams;
-            pr.outputResourceCode = o.outputResourceCode;
-            pr.order = o.order;
-
+            o.input.stream().map(v->new PlanParamsYaml.Variable(v.sourcing, v.git, v.disk, v.variable)).forEach(pr.input::add);
+            o.output.stream().map(v->new PlanParamsYaml.Variable(v.sourcing, v.git, v.disk, v.variable)).forEach(pr.output::add);
             pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new PlanParamsYaml.SnippetDefForPlan(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
             pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new PlanParamsYaml.SnippetDefForPlan(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
             pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new PlanParamsYaml.SnippetDefForPlan(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
@@ -71,9 +68,9 @@ public class PlanParamsYamlUtilsV8
 
             return pr;
         }).collect(Collectors.toList());
-        p.plan.code = v8.planYaml.planCode;
-        if (v8.planYaml.ac!=null) {
-            p.plan.ac = new PlanParamsYaml.AccessControl(v8.planYaml.ac.groups);
+        p.plan.code = v8.plan.code;
+        if (v8.plan.ac!=null) {
+            p.plan.ac = new PlanParamsYaml.AccessControl(v8.plan.ac.groups);
         }
         p.originYaml = v8.originYaml;
         p.checkIntegrity();
@@ -83,7 +80,7 @@ public class PlanParamsYamlUtilsV8
     @Override
     public Void downgradeTo(Void yaml) {
         // not supported
-        return null;
+        throw new DowngradeNotSupportedException();
     }
 
     @Override
@@ -105,16 +102,10 @@ public class PlanParamsYamlUtilsV8
     @Override
     public PlanParamsYamlV8 to(String s) {
         final PlanParamsYamlV8 p = getYaml().load(s);
-        if (p.planYaml ==null) {
+        if (p.plan ==null) {
             throw new IllegalStateException("#635.010 Plan Yaml is null");
         }
 
-        // fix of default values
-        for (PlanParamsYamlV8.ProcessV8 process : p.planYaml.processes) {
-            if (process.outputParams==null) {
-                process.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-            }
-        }
         if (p.internalParams==null) {
             p.internalParams = new PlanParamsYamlV8.InternalParamsV8();
         }

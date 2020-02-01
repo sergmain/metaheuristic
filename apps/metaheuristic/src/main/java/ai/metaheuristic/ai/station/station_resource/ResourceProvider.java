@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.station.LaunchpadLookupExtendedService;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 
@@ -31,7 +32,7 @@ public interface ResourceProvider {
     List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            String resourceId, DataStorageParams dataStorageParams);
+            String resourceId, PlanParamsYaml.Variable dataStorageParams);
 
     SnippetApiData.SnippetExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
@@ -44,5 +45,5 @@ public interface ResourceProvider {
             File taskDir,
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task,
-            String outputResourceId, DataStorageParams dataStorageParams);
+            String outputResourceId, PlanParamsYaml.Variable dataStorageParams);
 }

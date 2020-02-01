@@ -43,7 +43,6 @@ import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.data_storage.DataStorageParamsV2;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.S;
@@ -334,7 +333,7 @@ public class PlanService {
                 if (process.output.isEmpty()) {
                     return EnumsApi.PlanValidateStatus.PROCESS_PARAMS_EMPTY_ERROR;
                 }
-                for (DataStorageParamsV2 params : process.output) {
+                for (PlanParamsYaml.Variable params : process.output) {
                     if (S.b(params.variable)) {
                         return EnumsApi.PlanValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR;
                     }
@@ -450,7 +449,7 @@ public class PlanService {
     @NoArgsConstructor
     public static class ResourcePools {
         public final Map<String, List<String>> collectedInputs = new HashMap<>();
-        public Map<String, DataStorageParams> inputStorageUrls=null;
+        public Map<String, PlanParamsYaml.Variable> inputStorageUrls=null;
         public final Map<String, String> mappingCodeToOriginalFilename = new HashMap<>();
         public EnumsApi.PlanProducingStatus status = EnumsApi.PlanProducingStatus.OK;
 
@@ -467,10 +466,11 @@ public class PlanService {
 
             initialInputResourceCodes.forEach(o-> mappingCodeToOriginalFilename.put(o.id, o.originalFilename));
 
-            //noinspection Convert2MethodRef
-            inputStorageUrls = initialInputResourceCodes
-                    .stream()
-                    .collect(Collectors.toMap(o -> o.id, o -> o.getParams()));
+            inputStorageUrls = initialInputResourceCodes.stream()
+                    .collect(Collectors.toMap(o -> o.id, o -> {
+                        DataStorageParams p = o.getParams();
+                        return new PlanParamsYaml.Variable(p.sourcing, p.git, p.disk, p.storageType);
+                    }));
 
         }
 

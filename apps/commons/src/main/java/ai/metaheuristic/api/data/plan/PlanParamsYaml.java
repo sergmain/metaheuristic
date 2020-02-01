@@ -67,6 +67,10 @@ public class PlanParamsYaml implements BaseParams {
             this.code = code;
         }
 
+        public SnippetDefForPlan(String code, EnumsApi.SnippetExecContext context) {
+            this.code = code;
+            this.context = context;
+        }
     }
 
     @Data
@@ -83,7 +87,6 @@ public class PlanParamsYaml implements BaseParams {
             this.variable = variable;
         }
     }
-
 
     @Data
     @ToString
@@ -113,7 +116,6 @@ public class PlanParamsYaml implements BaseParams {
         public final List<Variable> input = new ArrayList<>();
         public final List<Variable> output = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
-        public int order;
 
         public Meta getMeta(String key) {
             return MetaUtils.getMeta(metas, key);

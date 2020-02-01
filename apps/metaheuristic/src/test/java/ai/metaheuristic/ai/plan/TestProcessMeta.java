@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
@@ -46,7 +45,7 @@ public class TestProcessMeta {
             p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "test-experiment-code-01";
-            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
+            p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "model"));
 
             p.metas.addAll(
                     Arrays.asList(

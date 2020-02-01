@@ -19,15 +19,15 @@ package ai.metaheuristic.api.data.plan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.sourcing.DiskInfo;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -38,14 +38,14 @@ public class PlanParamsYamlV8 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        final boolean b = planYaml != null && planYaml.planCode != null && !planYaml.planCode.isBlank() &&
-                planYaml.processes != null;
+        final boolean b = plan != null && plan.code != null && !plan.code.isBlank() &&
+                plan.processes != null;
         if (!b) {
             throw new IllegalArgumentException(
                     "(boolean b = planYaml != null && planYaml.planCode != null && " +
                             "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
         }
-        for (ProcessV8 process : planYaml.processes) {
+        for (ProcessV8 process : plan.processes) {
             if (process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0)) {
                 throw new IllegalArgumentException("(process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0))");
             }
@@ -73,8 +73,30 @@ public class PlanParamsYamlV8 implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class VariableV8 {
+        public EnumsApi.DataSourcing sourcing;
+        public GitInfo git;
+        public DiskInfo disk;
+        public String variable;
+
+        public VariableV8(EnumsApi.DataSourcing sourcing, String variable) {
+            this.sourcing = sourcing;
+            this.variable = variable;
+        }
+    }
+
+    @Data
     @ToString
-    public static class ProcessV8 {
+    public static class ProcessV8 implements Cloneable {
+
+        @SneakyThrows
+        public ProcessV8 clone() {
+            //noinspection UnnecessaryLocalVariable
+            final ProcessV8 clone = (ProcessV8) super.clone();
+            return clone;
+        }
 
         public String name;
         public String code;
@@ -90,12 +112,9 @@ public class PlanParamsYamlV8 implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-
-        public String inputResourceCode;
-        public DataStorageParams outputParams;
-        public String outputResourceCode;
+        public final List<VariableV8> input = new ArrayList<>();
+        public final List<VariableV8> output = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
-        public int order;
 
         public Meta getMeta(String key) {
             return MetaUtils.getMeta(metas, key);
@@ -110,10 +129,19 @@ public class PlanParamsYamlV8 implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class VariableDefinitionV8 {
+        public String global;
+        public final Map<String, String> inline = new HashMap<>();
+    }
+
+    @Data
     public static class PlanYamlV8 {
+        public VariableDefinitionV8 variables;
         public List<ProcessV8> processes = new ArrayList<>();
         public boolean clean = false;
-        public String planCode;
+        public String code;
         public List<Meta> metas;
         public AccessControlV8 ac;
 
@@ -141,7 +169,7 @@ public class PlanParamsYamlV8 implements BaseParams {
     }
 
     public final int version=8;
-    public PlanYamlV8 planYaml;
+    public PlanYamlV8 plan;
     public String originYaml;
     public InternalParamsV8 internalParams;
 

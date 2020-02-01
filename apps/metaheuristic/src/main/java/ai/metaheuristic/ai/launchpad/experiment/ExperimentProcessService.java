@@ -61,7 +61,7 @@ public class ExperimentProcessService {
             PlanParamsYaml.Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
-        Map<String, DataStorageParams> inputStorageUrls = pools.inputStorageUrls;
+        Map<String, PlanParamsYaml.Variable> inputStorageUrls = pools.inputStorageUrls;
 
         Long experimentId = experimentRepository.findIdByCode(process.code);
         Experiment e;

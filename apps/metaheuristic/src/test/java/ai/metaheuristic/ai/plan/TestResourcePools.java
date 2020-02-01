@@ -18,8 +18,10 @@ package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.api.sourcing.DiskInfo;
 import org.junit.Test;
 
 import java.util.*;
@@ -36,13 +38,14 @@ public class TestResourcePools {
         new ArrayList<>();
         p.collectedInputs.put("aaa", new ArrayList<>(List.of("a1", "a2", "a3")));
         p.inputStorageUrls = new HashMap<>();
-        p.inputStorageUrls.put("aaa", new DataStorageParams(EnumsApi.DataSourcing.launchpad));
+        p.inputStorageUrls.put("aaa", new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "aaa"));
 
         PlanService.ResourcePools p1 = new PlanService.ResourcePools();
         p1.collectedInputs.put("aaa", new ArrayList<>(List.of("a4")));
         p1.collectedInputs.put("bbb", new ArrayList<>(List.of("b1", "b2", "b3")));
         p1.inputStorageUrls = new HashMap<>();
-        p1.inputStorageUrls.put("bbb", SOURCING_DISK_PARAMS);
+        DiskInfo diskInfo = new DiskInfo("*", "dir-code", null);
+        p1.inputStorageUrls.put("bbb", new PlanParamsYaml.Variable(SOURCING_DISK_PARAMS.sourcing, null, diskInfo, "bbb"));
 
         p.merge(p1);
 
@@ -59,10 +62,13 @@ public class TestResourcePools {
         assertTrue(p.collectedInputs.get("bbb").contains("b3"));
 
         assertEquals(2, p.inputStorageUrls.keySet().size());
-        DataStorageParams params = p.inputStorageUrls.get("aaa");
-        assertEquals(new DataStorageParams(EnumsApi.DataSourcing.launchpad).sourcing, params.sourcing);
+        PlanParamsYaml.Variable variable = p.inputStorageUrls.get("aaa");
+        assertEquals(new DataStorageParams(EnumsApi.DataSourcing.launchpad).sourcing, variable.sourcing);
 
-        params = p.inputStorageUrls.get("bbb");
-        assertEquals(SOURCING_DISK_PARAMS.sourcing, params.sourcing);
+        variable = p.inputStorageUrls.get("bbb");
+        assertEquals(SOURCING_DISK_PARAMS.sourcing, variable.sourcing);
+        assertNotNull(variable.disk);
+        assertEquals(variable.disk, diskInfo);
+
     }
 }

@@ -34,8 +34,8 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -159,7 +159,7 @@ public class TaskProcessor {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
                 continue;
             }
-            DataStorageParams dsp = taskParamYaml.taskYaml.getResourceStorageUrls()
+            PlanParamsYaml.Variable dsp = taskParamYaml.taskYaml.getResourceStorageUrls()
                     .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
             if (dsp==null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.050 Broken task. Can't find params for outputResourceCode");
@@ -334,7 +334,7 @@ public class TaskProcessor {
                             stationTaskService.storePredictedData(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
                             stationTaskService.storeFittingCheck(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
 
-                            final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls
+                            final PlanParamsYaml.Variable params = taskParamYaml.taskYaml.resourceStorageUrls
                                     .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
                             ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                             generalExec = resourceProvider.processResultingFile(

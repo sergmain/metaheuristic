@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -43,8 +42,7 @@ public class TestPlanYamlYaml {
             p.code = "assembly-raw-file";
 
             p.snippets = Collections.singletonList(new PlanParamsYaml.SnippetDefForPlan("snippet-01:1.1"));
-            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-            p.outputParams.storageType = "assembled-raw";
+            p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "assembled-raw"));
 
             planYaml.processes.add(p);
         }
@@ -60,8 +58,7 @@ public class TestPlanYamlYaml {
             p.code = "dataset-processing";
 
             p.snippets = Collections.singletonList(new PlanParamsYaml.SnippetDefForPlan("snippet-02:1.1"));
-            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-            p.outputParams.storageType = "dataset-processing";
+            p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "dataset-processing"));
 
             planYaml.processes.add(p);
         }
@@ -80,8 +77,7 @@ public class TestPlanYamlYaml {
 
             p.snippets = Arrays.asList(new PlanParamsYaml.SnippetDefForPlan("snippet-03:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-04:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-05:1.1"));
             p.parallelExec = true;
-            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-            p.outputParams.storageType = "feature";
+            p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "feature"));
 
             planYaml.processes.add(p);
         }
@@ -105,7 +101,7 @@ public class TestPlanYamlYaml {
             p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "experiment-code-01";
-            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
+            p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "model"));
 
             planYaml.processes.add(p);
         }

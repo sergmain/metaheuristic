@@ -45,8 +45,10 @@ public class FileProcessValidator implements ProcessValidator {
             if (process.snippets.size()>1) {
                 return EnumsApi.PlanValidateStatus.TOO_MANY_INTERNAL_SNIPPETS_ERROR;
             }
-            if (process.outputParams.sourcing!= EnumsApi.DataSourcing.launchpad) {
-                return EnumsApi.PlanValidateStatus.INTERNAL_SNIPPET_SUPPORT_ONLY_LAUNCHPAD_ERROR;
+            for (PlanParamsYaml.Variable variable : process.output) {
+                if (variable.sourcing!= EnumsApi.DataSourcing.launchpad) {
+                    return EnumsApi.PlanValidateStatus.INTERNAL_SNIPPET_SUPPORT_ONLY_LAUNCHPAD_ERROR;
+                }
             }
             if (CollectionUtils.isNotEmpty(process.preSnippets)) {
                 return EnumsApi.PlanValidateStatus.PRE_SNIPPET_WITH_INTERNAL_SNIPPET_ERROR;

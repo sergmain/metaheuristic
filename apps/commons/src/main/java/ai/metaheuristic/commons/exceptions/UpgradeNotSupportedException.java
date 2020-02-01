@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,35 +14,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.sourcing;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package ai.metaheuristic.commons.exceptions;
 
 /**
  * @author Serge
- * Date: 5/8/2019
- * Time: 12:06 AM
+ * Date: 1/31/2020
+ * Time: 8:57 PM
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class DiskInfo {
-    /**
-     * A file mask. Can include * and ? as well
-     */
-    public String mask;
+public class UpgradeNotSupportedException extends RuntimeException{
+    public UpgradeNotSupportedException() {
+    }
 
-    /**
-     * A code for directory. This code must be configured at station side in file env.yaml
-     */
-    public String code;
-
-    /**
-     * A direct path to file(s), path + mask
-     * i.e. \tmp\some-dir\file??.*
-     */
-    public String path;
-
+    public UpgradeNotSupportedException(String message) {
+        super(message);
+    }
 }

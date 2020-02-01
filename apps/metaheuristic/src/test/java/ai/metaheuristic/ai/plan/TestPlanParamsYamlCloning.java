@@ -19,8 +19,6 @@ package ai.metaheuristic.ai.plan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.data_storage.DataStorageParamsV2;
 import org.junit.Test;
 
 import java.util.List;
@@ -56,44 +54,42 @@ public class TestPlanParamsYamlCloning {
 
         p.timeoutBeforeTerminate = 120L;
 
-        p.output.add( new DataStorageParamsV2(EnumsApi.DataSourcing.launchpad, "output-code"));
+        p.output.add( new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "output-code"));
         p.metas.add(new Meta("key", "value", "ext"));
-        p.order = 42;
 
         PlanParamsYaml.Process p1 = p.clone();
 
-        assertEquals("name", p.name);
-        assertEquals("code", p.code);
-        assertEquals(EnumsApi.ProcessType.EXPERIMENT, p.type);
-        assertEquals(1, p.snippets.size());
-        assertEquals("snippet-code", p.snippets.get(0).code);
-        assertEquals("snippet-params", p.snippets.get(0).params);
+        assertEquals("name", p1.name);
+        assertEquals("code", p1.code);
+        assertEquals(EnumsApi.ProcessType.EXPERIMENT, p1.type);
+        assertEquals(1, p1.snippets.size());
+        assertEquals("snippet-code", p1.snippets.get(0).code);
+        assertEquals("snippet-params", p1.snippets.get(0).params);
 
-        assertEquals(2, p.preSnippets.size());
-        assertEquals("pre1-code", p.preSnippets.get(0).code);
-        assertEquals("pre1-params", p.preSnippets.get(0).params);
-        assertEquals("pre2-code", p.preSnippets.get(1).code);
-        assertEquals("pre2-params", p.preSnippets.get(1).params);
+        assertEquals(2, p1.preSnippets.size());
+        assertEquals("pre1-code", p1.preSnippets.get(0).code);
+        assertEquals("pre1-params", p1.preSnippets.get(0).params);
+        assertEquals("pre2-code", p1.preSnippets.get(1).code);
+        assertEquals("pre2-params", p1.preSnippets.get(1).params);
 
-        assertEquals(3, p.postSnippets.size());
+        assertEquals(3, p1.postSnippets.size());
 
-        assertTrue(p.parallelExec);
-        assertNotNull(p.timeoutBeforeTerminate);
-        assertEquals(120L, (long)p.timeoutBeforeTerminate);
+        assertTrue(p1.parallelExec);
+        assertNotNull(p1.timeoutBeforeTerminate);
+        assertEquals(120L, (long)p1.timeoutBeforeTerminate);
 
-        assertNotNull(p.output);
-        assertEquals(1, p.output.size());
-        DataStorageParamsV2 params = p.output.get(0);
+        assertNotNull(p1.output);
+        assertEquals(1, p1.output.size());
+        PlanParamsYaml.Variable params = p1.output.get(0);
 
         assertEquals(EnumsApi.DataSourcing.launchpad, params.sourcing);
         assertEquals("output-code", params.variable);
 
         assertNotNull(p.metas);
-        assertEquals(1, p.metas.size());
-        assertEquals("key", p.metas.get(0).key);
-        assertEquals("value", p.metas.get(0).value);
-        assertEquals("ext", p.metas.get(0).ext);
-        assertEquals(42, p.order);
+        assertEquals(1, p1.metas.size());
+        assertEquals("key", p1.metas.get(0).key);
+        assertEquals("value", p1.metas.get(0).value);
+        assertEquals("ext", p1.metas.get(0).ext);
 
     }
 }

@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -125,7 +126,7 @@ public class StationService {
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
         File taskDir = stationTaskService.prepareTaskDir(metadataService.launchpadUrlAsCode(launchpadUrl), taskId);
 
-        final DataStorageParams dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
+        final PlanParamsYaml.Variable dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
                 .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
         ResourceProvider resourceProvider;
         try {
@@ -174,7 +175,7 @@ public class StationService {
         try {
             taskParamYaml.taskYaml.inputResourceIds.forEach((key, value) -> {
                 for (String resourceCode : value) {
-                    final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(resourceCode);
+                    final PlanParamsYaml.Variable params = taskParamYaml.taskYaml.resourceStorageUrls.get(resourceCode);
                     if (params==null) {
                         final String es = "#749.060 resource code: " + resourceCode + ", inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml);
                         log.error(es);
@@ -220,7 +221,7 @@ public class StationService {
 
     public File getOutputResourceFile(StationTask task, TaskParamsYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
         try {
-            final DataStorageParams dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
+            final PlanParamsYaml.Variable dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
                     .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
 
             ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
