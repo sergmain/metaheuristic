@@ -49,13 +49,13 @@ public class TestProcess {
         );
         PlanParamsYaml planParamsYaml = new PlanParamsYaml();
         PlanYaml planYaml = new PlanYaml();
-        planYaml.planCode = "test-process-for-meta";
+        planYaml.code = "test-process-for-meta";
         planYaml.processes.add(p);
-        planParamsYaml.planYaml = planYaml;
+        planParamsYaml.plan = planYaml;
 
         String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
         PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(s);
-        PlanYaml planYamlV21 = planParams.planYaml;
+        PlanYaml planYamlV21 = planParams.plan;
 
         PlanParamsYaml.Process p1 = planYamlV21.getProcesses().get(0);
 

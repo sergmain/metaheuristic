@@ -47,12 +47,12 @@ public class PlanParamsYamlUtilsV8
     public PlanParamsYaml upgradeTo(PlanParamsYamlV8 v8, Long ... vars) {
         PlanParamsYaml p = new PlanParamsYaml();
         p.internalParams = new PlanParamsYaml.InternalParams(v8.internalParams.archived, v8.internalParams.published, v8.internalParams.updatedOn, null);
-        p.planYaml = new PlanParamsYaml.PlanYaml();
+        p.plan = new PlanParamsYaml.PlanYaml();
         if (v8.planYaml.metas!=null){
-            p.planYaml.metas = new ArrayList<>(v8.planYaml.metas);
+            p.plan.metas = new ArrayList<>(v8.planYaml.metas);
         }
-        p.planYaml.clean = v8.planYaml.clean;
-        p.planYaml.processes = v8.planYaml.processes.stream().map( o-> {
+        p.plan.clean = v8.planYaml.clean;
+        p.plan.processes = v8.planYaml.processes.stream().map(o-> {
             PlanParamsYaml.Process pr = new PlanParamsYaml.Process();
             pr.name = o.name;
             pr.code = o.code;
@@ -71,9 +71,9 @@ public class PlanParamsYamlUtilsV8
 
             return pr;
         }).collect(Collectors.toList());
-        p.planYaml.planCode = v8.planYaml.planCode;
+        p.plan.code = v8.planYaml.planCode;
         if (v8.planYaml.ac!=null) {
-            p.planYaml.ac = new PlanParamsYaml.AccessControl(v8.planYaml.ac.groups);
+            p.plan.ac = new PlanParamsYaml.AccessControl(v8.planYaml.ac.groups);
         }
         p.originYaml = v8.originYaml;
         p.checkIntegrity();

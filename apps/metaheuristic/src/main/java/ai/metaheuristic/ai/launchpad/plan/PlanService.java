@@ -153,8 +153,8 @@ public class PlanService {
                     }
                     try {
                         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
-                        if (ppy.planYaml.ac!=null) {
-                            String[] arr = StringUtils.split(ppy.planYaml.ac.groups, ',');
+                        if (ppy.plan.ac!=null) {
+                            String[] arr = StringUtils.split(ppy.plan.ac.groups, ',');
                             return Stream.of(arr).map(String::strip).anyMatch(groups::contains);
                         }
                         return false;
@@ -320,7 +320,7 @@ public class PlanService {
             return EnumsApi.PlanValidateStatus.PLAN_PARAMS_EMPTY_ERROR;
         }
         PlanParamsYaml planParams = plan.getPlanParamsYaml();
-        PlanParamsYaml.PlanYaml planYaml = planParams.planYaml;
+        PlanParamsYaml.PlanYaml planYaml = planParams.plan;
         if (planYaml.getProcesses().isEmpty()) {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
         }

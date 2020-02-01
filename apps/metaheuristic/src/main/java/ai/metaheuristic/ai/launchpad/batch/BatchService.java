@@ -592,7 +592,7 @@ public class BatchService {
         }
 
         PlanParamsYaml planParams = plan.getPlanParamsYaml();
-        final Meta meta = MetaUtils.getMeta(planParams.planYaml.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION, Consts.RESULT_FILE_EXTENSION);
+        final Meta meta = MetaUtils.getMeta(planParams.plan.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION, Consts.RESULT_FILE_EXTENSION);
 
         return meta != null && StringUtils.isNotBlank(meta.getValue())
                 ? meta.getValue()

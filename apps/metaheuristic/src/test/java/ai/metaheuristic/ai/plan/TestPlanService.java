@@ -99,7 +99,7 @@ public class TestPlanService extends PreparingPlan {
         assertFalse(tasks.isEmpty());
 
         int taskNumber = 0;
-        for (PlanParamsYaml.Process process : planParamsYaml.planYaml.processes) {
+        for (PlanParamsYaml.Process process : planParamsYaml.plan.processes) {
             if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }

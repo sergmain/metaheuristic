@@ -39,14 +39,14 @@ public class PlanParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        final boolean b = planYaml != null && planYaml.planCode != null && !planYaml.planCode.isBlank() &&
-                planYaml.processes != null;
+        final boolean b = plan != null && plan.code != null && !plan.code.isBlank() &&
+                plan.processes != null;
         if (!b) {
             throw new IllegalArgumentException(
                     "(boolean b = planYaml != null && planYaml.planCode != null && " +
                             "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
         }
-        for (Process process : planYaml.processes) {
+        for (Process process : plan.processes) {
             if (process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0)) {
                 throw new IllegalArgumentException("(process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0))");
             }
@@ -138,10 +138,10 @@ public class PlanParamsYaml implements BaseParams {
     @Data
     @ToString
     public static class PlanYaml {
-        public VariableDefinition variable;
+        public VariableDefinition variables;
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
-        public String planCode;
+        public String code;
         public List<Meta> metas;
         public AccessControl ac;
 
@@ -169,7 +169,7 @@ public class PlanParamsYaml implements BaseParams {
     }
 
     public final int version=8;
-    public PlanYaml planYaml;
+    public PlanYaml plan;
     public String originYaml;
     public InternalParams internalParams;
 

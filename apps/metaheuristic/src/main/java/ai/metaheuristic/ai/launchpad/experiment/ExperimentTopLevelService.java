@@ -760,7 +760,7 @@ public class ExperimentTopLevelService {
         for (Long planId : planIds) {
             PlanImpl plan = planCache.findById(planId);
             PlanParamsYaml ppy = plan.getPlanParamsYaml();
-            for (PlanParamsYaml.Process process : ppy.planYaml.processes) {
+            for (PlanParamsYaml.Process process : ppy.plan.processes) {
                 if (process.type== EnumsApi.ProcessType.EXPERIMENT && process.code.equals(experimentCode)) {
                     p = plan;
                     break;

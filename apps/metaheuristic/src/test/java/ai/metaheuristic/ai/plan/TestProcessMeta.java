@@ -40,7 +40,7 @@ public class TestProcessMeta {
     @Test
     public void testProcessMeta() {
         PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
-        planYaml.planCode = "test-process-for-meta";
+        planYaml.code = "test-process-for-meta";
         {
             PlanParamsYaml.Process p = new PlanParamsYaml.Process();
             p.type = EnumsApi.ProcessType.EXPERIMENT;
@@ -59,14 +59,14 @@ public class TestProcessMeta {
             planYaml.processes.add(p);
         }
         PlanParamsYaml planParamsYaml = new PlanParamsYaml();
-        planParamsYaml.planYaml = planYaml;
+        planParamsYaml.plan = planYaml;
 
         String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
 
         System.out.println(s);
 
         PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(s);
-        PlanParamsYaml.PlanYaml yaml1 = planParams.planYaml;
+        PlanParamsYaml.PlanYaml yaml1 = planParams.plan;
 
         Assert.assertEquals(planYaml, yaml1);
 

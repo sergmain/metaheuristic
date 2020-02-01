@@ -61,8 +61,8 @@ public class TestCountOfTasks extends PreparingPlan {
         log.info("Start TestCountOfTasks.testCountNumberOfTasks()");
         PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
 
-        assertFalse(planParamsYaml.planYaml.processes.isEmpty());
-        assertEquals(EnumsApi.ProcessType.EXPERIMENT, planParamsYaml.planYaml.processes.get(planParamsYaml.planYaml.processes.size()-1).type);
+        assertFalse(planParamsYaml.plan.processes.isEmpty());
+        assertEquals(EnumsApi.ProcessType.EXPERIMENT, planParamsYaml.plan.processes.get(planParamsYaml.plan.processes.size()-1).type);
 
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
@@ -116,7 +116,7 @@ public class TestCountOfTasks extends PreparingPlan {
         assertEquals(numberOfTasks, tasks.size());
 
         int taskNumber = 0;
-        for (PlanParamsYaml.Process process : planParamsYaml.planYaml.processes) {
+        for (PlanParamsYaml.Process process : planParamsYaml.plan.processes) {
             if (process.type== EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }

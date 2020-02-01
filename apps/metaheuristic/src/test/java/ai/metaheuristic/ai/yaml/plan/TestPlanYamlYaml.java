@@ -111,8 +111,8 @@ public class TestPlanYamlYaml {
         }
 
         PlanParamsYaml planParamsYaml = new PlanParamsYaml();
-        planYaml.planCode = "test-processes";
-        planParamsYaml.planYaml = planYaml;
+        planYaml.code = "test-processes";
+        planParamsYaml.plan = planYaml;
 
         String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
         System.out.println(yaml);
@@ -121,7 +121,7 @@ public class TestPlanYamlYaml {
 
 
         PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
-        PlanParamsYaml.PlanYaml py = planParams.planYaml;
+        PlanParamsYaml.PlanYaml py = planParams.plan;
 
         assertNotNull(py);
         assertNotNull(py.processes);
@@ -140,7 +140,7 @@ public class TestPlanYamlYaml {
         planYaml.processes = Collections.singletonList(p1);
 
         PlanParamsYaml planParamsYaml = new PlanParamsYaml();
-        planParamsYaml.planYaml = planYaml;
+        planParamsYaml.plan = planYaml;
 
         String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
 

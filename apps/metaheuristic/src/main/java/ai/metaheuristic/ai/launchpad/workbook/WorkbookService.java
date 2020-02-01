@@ -521,7 +521,7 @@ public class WorkbookService {
         int idx = Consts.PROCESS_ORDER_START_VALUE;
         List<Long> parentTaskIds = new ArrayList<>();
         int numberOfTasks=0;
-        for (PlanParamsYaml.Process process : planParams.planYaml.getProcesses()) {
+        for (PlanParamsYaml.Process process : planParams.plan.getProcesses()) {
             process.order = idx++;
 
             PlanService.ProduceTaskResult produceTaskResult;
@@ -561,7 +561,7 @@ public class WorkbookService {
             workbookFSM.toProduced(workbookId);
         }
         result.workbook = workbookCache.findById(workbookId);
-        result.planYaml = planParams.planYaml;
+        result.planYaml = planParams.plan;
         result.numberOfTasks += numberOfTasks;
         result.planValidateStatus = EnumsApi.PlanValidateStatus.OK;
         result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;

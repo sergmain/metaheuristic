@@ -795,11 +795,6 @@ public class ExperimentService {
                         yaml.taskYaml.inputResourceIds.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
 
-                            // TODO 2019.04.24 need to decide do we need this check or not
-                            // TODO 2019-07-17 see comment above about required metas
-                            // if ("feature".equals(entry.getKey())) {
-                            //     log.info("Output type is the same as workbook inputResourceParam:\n"+ workbook.inputResourceParam );
-                            // }
                             process.getMetas()
                                     .stream()
                                     .filter(o -> o.value.equals(entry.getKey()))
@@ -878,7 +873,7 @@ public class ExperimentService {
                                 yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(snDef));
                             }
                         }
-                        yaml.taskYaml.clean = planParams.planYaml.clean;
+                        yaml.taskYaml.clean = planParams.plan.clean;
                         yaml.taskYaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
                         String currTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);

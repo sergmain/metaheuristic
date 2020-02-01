@@ -138,7 +138,7 @@ public class FileProcessService {
                 yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(postSnippet));
             }
         }
-        yaml.taskYaml.clean = planParams.planYaml.clean;
+        yaml.taskYaml.clean = planParams.plan.clean;
         yaml.taskYaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
         String taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);

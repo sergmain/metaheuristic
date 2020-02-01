@@ -177,7 +177,7 @@ public class PlanTopLevelService {
             return new PlanApiData.PlanResult("#560.110 An error parsing yaml: " + e.getMessage());
         }
 
-        final String code = ppy.planYaml.planCode;
+        final String code = ppy.plan.code;
         if (StringUtils.isBlank(code)) {
             return new PlanApiData.PlanResult("#560.130 the code of plan is empty");
         }
@@ -194,7 +194,7 @@ public class PlanTopLevelService {
 
         plan.companyId = context.getCompanyId();
         plan.createdOn = System.currentTimeMillis();
-        plan.code = ppy.planYaml.planCode;
+        plan.code = ppy.plan.code;
         plan = planCache.save(plan);
 
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
@@ -222,7 +222,7 @@ public class PlanTopLevelService {
 
         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsStr);
 
-        final String code = ppy.planYaml.planCode;
+        final String code = ppy.plan.code;
         if (StringUtils.isBlank(code)) {
             return new PlanApiData.PlanResult("#560.190 code of plan is empty");
         }
