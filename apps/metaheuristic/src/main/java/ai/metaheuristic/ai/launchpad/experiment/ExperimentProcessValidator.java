@@ -54,12 +54,10 @@ public class ExperimentProcessValidator implements ProcessValidator {
     //      because each experiment has its own set of hyper parameters
     // TODO 2019.08.26 an experiment will be always stateful.
     //      that means that there won't be separated description of experiment and instances of experiment
+    // TODO 2020.02.01 experiment as special process will be deleted. There will be only a standard snippet processing
 
     @Override
     public EnumsApi.PlanValidateStatus validate(Plan plan, PlanParamsYaml.Process process, boolean isFirst) {
-        if (process.snippets!=null && process.snippets.size() > 0) {
-            return EnumsApi.PlanValidateStatus.SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR;
-        }
         if (StringUtils.isBlank(process.code)) {
             return EnumsApi.PlanValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }

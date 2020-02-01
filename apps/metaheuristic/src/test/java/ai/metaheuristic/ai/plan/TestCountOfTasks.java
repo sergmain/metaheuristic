@@ -27,6 +27,7 @@ import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +63,6 @@ public class TestCountOfTasks extends PreparingPlan {
         PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
 
         assertFalse(planParamsYaml.plan.processes.isEmpty());
-        assertEquals(EnumsApi.ProcessType.EXPERIMENT, planParamsYaml.plan.processes.get(planParamsYaml.plan.processes.size()-1).type);
 
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
@@ -117,10 +117,12 @@ public class TestCountOfTasks extends PreparingPlan {
 
         int taskNumber = 0;
         for (PlanParamsYaml.Process process : planParamsYaml.plan.processes) {
-            if (process.type== EnumsApi.ProcessType.EXPERIMENT) {
-                continue;
+            if (process.subProcesses!=null) {
+                if (true) {
+                    throw new NotImplementedException("Need to calc number of tasks for parallel case");
+                }
             }
-            taskNumber += process.snippets.size();
+            taskNumber++;
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 

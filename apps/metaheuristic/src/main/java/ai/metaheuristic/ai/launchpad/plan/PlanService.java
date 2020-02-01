@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
-import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessValidator;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
@@ -65,15 +64,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.metaheuristic.api.EnumsApi.PlanValidateStatus.OK;
-import static ai.metaheuristic.api.EnumsApi.PlanValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
 
 @Service
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
 public class PlanService {
-
-    private final ExperimentProcessValidator experimentProcessValidator;
 
     private final WorkbookRepository workbookRepository;
     private final PlanCache planCache;
@@ -272,7 +268,7 @@ public class PlanService {
         final WorkbookImpl workbook = (WorkbookImpl) result.workbook;
         final Plan plan = result.plan;
         if (plan==null || workbook ==null) {
-            throw new IllegalStateException("#701.110 Error: (result.plan==null || result.workbook==null)");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#701.110 Error: (result.plan==null || result.workbook==null)");
         }
 
         if (workbook.execState!=execState.code) {
@@ -325,7 +321,6 @@ public class PlanService {
         }
 
         PlanParamsYaml.Process lastProcess = null;
-        boolean experimentPresent = false;
         List<PlanParamsYaml.Process> processes = planYaml.getProcesses();
         for (int i = 0; i < processes.size(); i++) {
             PlanParamsYaml.Process process = processes.get(i);
@@ -347,33 +342,22 @@ public class PlanService {
                 log.error("Error while validating plan {}", planYaml);
                 return EnumsApi.PlanValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
-            ProcessValidator processValidator;
-            if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
-                experimentPresent = true;
-                processValidator = experimentProcessValidator;
-            }
-            else if (process.type == EnumsApi.ProcessType.FILE_PROCESSING) {
-                processValidator = fileProcessValidator;
-            }
-            else {
-                return PROCESS_VALIDATOR_NOT_FOUND_ERROR;
-            }
             EnumsApi.PlanValidateStatus status;
             status = checkSnippets(plan, process);
             if (status!=OK) {
                 return status;
             }
-            status = processValidator.validate(plan, process, i==0);
+            status = fileProcessValidator.validate(plan, process, i==0);
             if (status!=null) {
                 return status;
             }
 
+/*
+            // TODO 2020-02-01 need to-rewrite this check
             if (process.parallelExec && (process.snippets==null || process.snippets.size()<2)) {
                 return EnumsApi.PlanValidateStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
             }
-        }
-        if (experimentPresent && lastProcess.type!= EnumsApi.ProcessType.EXPERIMENT) {
-            return  EnumsApi.PlanValidateStatus.EXPERIMENT_MUST_BE_LAST_PROCESS_ERROR;
+*/
         }
         return EnumsApi.PlanValidateStatus.OK;
     }
@@ -381,19 +365,18 @@ public class PlanService {
     private EnumsApi.PlanValidateStatus checkSnippets(Plan plan, PlanParamsYaml.Process process) {
         YamlVersion v = YamlForVersioning.getYamlForVersion().load(plan.getParams());
 
-        if (process.snippets!=null) {
-            for (PlanParamsYaml.SnippetDefForPlan snDef : process.snippets) {
-                if (snDef.context==EnumsApi.SnippetExecContext.internal) {
-                    if (!Consts.MH_INTERNAL_SNIPPETS.contains(snDef.code)) {
-                        return EnumsApi.PlanValidateStatus.INTERNAL_SNIPPET_NOT_FOUND_ERROR;
-                    }
+        if (process.snippet!=null) {
+            PlanParamsYaml.SnippetDefForPlan snDef = process.snippet;
+            if (snDef.context==EnumsApi.SnippetExecContext.internal) {
+                if (!Consts.MH_INTERNAL_SNIPPETS.contains(snDef.code)) {
+                    return EnumsApi.PlanValidateStatus.INTERNAL_SNIPPET_NOT_FOUND_ERROR;
                 }
-                else {
-                    EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
-                    if (x != OK) {
-                        log.error("#177.030 Snippet wasn't found for code: {}, process: {}", snDef.code, process);
-                        return x;
-                    }
+            }
+            else {
+                EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
+                if (x != OK) {
+                    log.error("#177.030 Snippet wasn't found for code: {}, process: {}", snDef.code, process);
+                    return x;
                 }
             }
         }

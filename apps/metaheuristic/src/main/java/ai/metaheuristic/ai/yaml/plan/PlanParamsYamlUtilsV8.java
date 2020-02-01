@@ -55,12 +55,10 @@ public class PlanParamsYamlUtilsV8
             PlanParamsYaml.Process pr = new PlanParamsYaml.Process();
             pr.name = o.name;
             pr.code = o.code;
-            pr.type = o.type;
-            pr.parallelExec = o.parallelExec;
             pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
             o.input.stream().map(v->new PlanParamsYaml.Variable(v.sourcing, v.git, v.disk, v.variable)).forEach(pr.input::add);
             o.output.stream().map(v->new PlanParamsYaml.Variable(v.sourcing, v.git, v.disk, v.variable)).forEach(pr.output::add);
-            pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new PlanParamsYaml.SnippetDefForPlan(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
+            pr.snippet = o.snippet!=null ? new PlanParamsYaml.SnippetDefForPlan(o.snippet.code, o.snippet.params, o.snippet.context) : null;
             pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new PlanParamsYaml.SnippetDefForPlan(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
             pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new PlanParamsYaml.SnippetDefForPlan(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
             pr.metas = o.metas;

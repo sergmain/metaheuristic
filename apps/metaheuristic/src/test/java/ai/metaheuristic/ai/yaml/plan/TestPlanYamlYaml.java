@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.*;
@@ -37,11 +37,10 @@ public class TestPlanYamlYaml {
         PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
         {
             PlanParamsYaml.Process p = new PlanParamsYaml.Process();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
-            p.snippets = Collections.singletonList(new PlanParamsYaml.SnippetDefForPlan("snippet-01:1.1"));
+            p.snippet = new PlanParamsYaml.SnippetDefForPlan("snippet-01:1.1");
             p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "assembled-raw"));
 
             planYaml.processes.add(p);
@@ -53,11 +52,10 @@ public class TestPlanYamlYaml {
         //   type: assembled-raw
         {
             PlanParamsYaml.Process p = new PlanParamsYaml.Process();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "dataset processing";
             p.code = "dataset-processing";
 
-            p.snippets = Collections.singletonList(new PlanParamsYaml.SnippetDefForPlan("snippet-02:1.1"));
+            p.snippet = new PlanParamsYaml.SnippetDefForPlan("snippet-02:1.1");
             p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "dataset-processing"));
 
             planYaml.processes.add(p);
@@ -71,12 +69,16 @@ public class TestPlanYamlYaml {
         //   type: dataset-processing
         {
             PlanParamsYaml.Process p = new PlanParamsYaml.Process();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "feature processing";
             p.code = "feature-processing";
 
-            p.snippets = Arrays.asList(new PlanParamsYaml.SnippetDefForPlan("snippet-03:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-04:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-05:1.1"));
+            if (true) {
+                throw new NotImplementedException("Need to re-write according with latest version of PlanParamYaml");
+            }
+/*
+            p.snippet = Arrays.asList(new PlanParamsYaml.SnippetDefForPlan("snippet-03:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-04:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-05:1.1"));
             p.parallelExec = true;
+*/
             p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "feature"));
 
             planYaml.processes.add(p);
@@ -98,7 +100,6 @@ public class TestPlanYamlYaml {
         //   type: feature
         {
             PlanParamsYaml.Process p = new PlanParamsYaml.Process();
-            p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "experiment-code-01";
             p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "model"));
@@ -130,8 +131,6 @@ public class TestPlanYamlYaml {
 
         PlanParamsYaml.Process p1 = new PlanParamsYaml.Process();
         p1.name="experiment";
-
-        p1.type = EnumsApi.ProcessType.EXPERIMENT;
 
         planYaml.processes = Collections.singletonList(p1);
 

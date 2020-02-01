@@ -29,6 +29,7 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -57,9 +58,16 @@ public class FileProcessService {
         PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
 
         result.outputResourceCodes = new ArrayList<>();
+        if (true) {
+            throw new NotImplementedException("Need to re-write according with latest version of PlanParamYaml");
+        }
+        if (true) {
+/*
         if (process.parallelExec) {
             for (int i = 0; i < process.snippets.size(); i++) {
                 PlanParamsYaml.SnippetDefForPlan snDef = process.snippets.get(i);
+*/
+                PlanParamsYaml.SnippetDefForPlan snDef = process.snippet;
 /*
                 String normalizedSnippetCode = StrUtils.normalizeCode(snDef.code);
                 String normalizedPlanCode = StrUtils.normalizeCode(process.code);
@@ -78,10 +86,9 @@ public class FileProcessService {
                         result.taskIds.add(t.getId());
                     }
                 }
-            }
         }
         else {
-            PlanParamsYaml.SnippetDefForPlan snDef = process.snippets.get(0);
+            PlanParamsYaml.SnippetDefForPlan snDef = process.snippet;
             String normalizedSnippetCode = StrUtils.normalizeCode(snDef.code);
 /*
             String normalizedPlanCode = StrUtils.normalizeCode(process.code);
@@ -115,11 +122,6 @@ public class FileProcessService {
             Map<String, PlanParamsYaml.Variable> outputResourceIds,
             PlanParamsYaml.SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, PlanParamsYaml.Variable> inputStorageUrls,
             Map<String, String> mappingCodeToOriginalFilename) {
-        if (process.type!= EnumsApi.ProcessType.FILE_PROCESSING) {
-            throw new IllegalStateException("#171.01 Wrong type of process, " +
-                    "expected: "+ EnumsApi.ProcessType.FILE_PROCESSING+", " +
-                    "actual: " + process.type);
-        }
         TaskParamsYaml yaml = new TaskParamsYaml();
 
         collectedInputs.forEach((key, value) -> yaml.taskYaml.inputResourceIds.put(key, value));
@@ -160,7 +162,6 @@ public class FileProcessService {
         TaskImpl task = new TaskImpl();
         task.setWorkbookId(workbookId);
         task.setParams(taskParams);
-        task.setProcessType(process.type.value);
         taskRepository.save(task);
 
         return task;

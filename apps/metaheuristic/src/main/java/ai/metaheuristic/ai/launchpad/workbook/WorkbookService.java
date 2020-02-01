@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
-import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
@@ -96,7 +95,6 @@ public class WorkbookService {
     private final WorkbookSyncService workbookSyncService;
     private final LaunchpadEventService launchpadEventService;
     private final WorkbookFSM workbookFSM;
-    private final ExperimentProcessService experimentProcessService;
     private final FileProcessService fileProcessService;
     private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
     private final ApplicationEventPublisher applicationEventPublisher;
@@ -522,13 +520,10 @@ public class WorkbookService {
         List<Long> parentTaskIds = new ArrayList<>();
         int numberOfTasks=0;
         for (PlanParamsYaml.Process process : planParams.plan.getProcesses()) {
-            PlanService.ProduceTaskResult produceTaskResult;
-            switch(process.type) {
-                case FILE_PROCESSING:
-                    Monitoring.log("##026", Enums.Monitor.MEMORY);
-                    produceTaskResult = fileProcessService.produceTasks(isPersist, plan.getId(), planParams, workbookId, process, pools, parentTaskIds);
-                    Monitoring.log("##027", Enums.Monitor.MEMORY);
-                    break;
+            Monitoring.log("##026", Enums.Monitor.MEMORY);
+            PlanService.ProduceTaskResult produceTaskResult = fileProcessService.produceTasks(isPersist, plan.getId(), planParams, workbookId, process, pools, parentTaskIds);
+            Monitoring.log("##027", Enums.Monitor.MEMORY);
+/*
                 case EXPERIMENT:
                     Monitoring.log("##028", Enums.Monitor.MEMORY);
                     produceTaskResult = experimentProcessService.produceTasks(isPersist, planParams, workbookId, process, pools, parentTaskIds);
@@ -537,6 +532,7 @@ public class WorkbookService {
                 default:
                     throw new IllegalStateException("#701.200 Unknown process type");
             }
+*/
             parentTaskIds.clear();
             parentTaskIds.addAll(produceTaskResult.taskIds);
 

@@ -20,18 +20,15 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.data.SnippetData;
-import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -43,7 +40,6 @@ import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
@@ -58,6 +54,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
@@ -94,13 +91,10 @@ public class ExperimentTopLevelService {
     private final SnippetService snippetService;
     private final TaskRepository taskRepository;
     private final WorkbookCache workbookCache;
-    private final WorkbookService workbookService;
 
     private final ExperimentCache experimentCache;
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
-    private final PlanRepository planRepository;
-    private final PlanCache planCache;
     private final PlanTopLevelService planTopLevelService;
     private final PlanService planService;
     private final WorkbookFSM workbookFSM;
@@ -110,12 +104,6 @@ public class ExperimentTopLevelService {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
         return new ExperimentApiData.SimpleExperiment(params.experimentYaml.getName(), params.experimentYaml.getDescription(), params.experimentYaml.getCode(), params.experimentYaml.getSeed(), e.getId());
     }
-
-/*
-    public static ExperimentApiData.ExperimentResult asExperimentResult(Experiment e) {
-        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(e), e.params);
-    }
-*/
 
     public static ExperimentApiData.ExperimentResult asExperimentResultShort(Experiment e) {
         return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentDataShort(e), null);
@@ -738,11 +726,17 @@ public class ExperimentTopLevelService {
         if (experiment.workbookId!=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.502 an experiment '"+experimentCode+"' was already bound to plan");
         }
-        PlanImpl p = getPlanByExperimentCode(experimentCode);
+        if (true) {
+            throw new NotImplementedException("Need to re-write logic of working with experiment and plan");
+        }
+        PlanImpl p = null;
+/*
+        p = getPlanByExperimentCode(experimentCode);
         if (p==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.510 can't find a plan with experiment code: " + experimentCode);
         }
+*/
         PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(p.id, resourcePoolCode, null, context);
         if (workbookResultRest.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, workbookResultRest.errorMessages, workbookResultRest.infoMessages);
@@ -754,24 +748,7 @@ public class ExperimentTopLevelService {
                 "Binding an experiment '"+experimentCode+"' to plan '"+p.code+"' with using a resource '"+resourcePoolCode+"' was successful", null);
     }
 
-    private PlanImpl getPlanByExperimentCode(String experimentCode) {
-        List<Long> planIds = planRepository.findAllAsIds();
-        PlanImpl p = null;
-        for (Long planId : planIds) {
-            PlanImpl plan = planCache.findById(planId);
-            PlanParamsYaml ppy = plan.getPlanParamsYaml();
-            for (PlanParamsYaml.Process process : ppy.plan.processes) {
-                if (process.type== EnumsApi.ProcessType.EXPERIMENT && process.code.equals(experimentCode)) {
-                    p = plan;
-                    break;
-                }
-            }
-            if (p!=null) {
-                break;
-            }
-        }
-        return p;
-    }
+
 
     public OperationStatusRest produceTasks(String experimentCode) {
         return changeExecStateTo(experimentCode, EnumsApi.WorkbookExecState.PRODUCING);
@@ -800,11 +777,6 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentRepository.findByCode(experimentCode);
         if (experiment==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.560 can't find an experiment for code: " + experimentCode);
-        }
-        PlanImpl p = getPlanByExperimentCode(experimentCode);
-        if (p==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.570 can't find a plan with experiment code: " + experimentCode);
         }
         OperationStatusRest status = planService.workbookTargetExecState(experiment.workbookId, execState);
         if (status.isErrorMessages()) {

@@ -67,4 +67,7 @@ update mh_experiment set WORKBOOK_ID=null where 1=1;
 
 update mh_plan set IS_LOCKED=0 where 1=1;
 
+alter table mh_task
+    drop column PROCESS_TYPE;
+
 

@@ -104,7 +104,6 @@ public class PlanParamsYaml implements BaseParams {
 
         public String name;
         public String code;
-        public EnumsApi.ProcessType type;
         public SnippetDefForPlan snippet;
         public List<SnippetDefForPlan> preSnippets;
         public List<SnippetDefForPlan> postSnippets;

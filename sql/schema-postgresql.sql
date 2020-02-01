@@ -155,7 +155,6 @@ CREATE TABLE MH_TASK (
   EXEC_STATE   smallint not null default 0,
   IS_RESULT_RECEIVED  BOOLEAN not null default false,
   RESULT_RESOURCE_SCHEDULED_ON  bigint,
-  PROCESS_TYPE smallint not null,
   EXTENDED_RESULT      TEXT
 );
 

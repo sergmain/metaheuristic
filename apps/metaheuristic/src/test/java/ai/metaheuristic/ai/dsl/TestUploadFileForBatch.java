@@ -43,7 +43,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -66,11 +65,10 @@ public class TestUploadFileForBatch extends PreparingPlan {
         planParamsYaml.plan.code = "Plan for testing uploading batch file";
         {
             PlanParamsYamlV8.ProcessV8 p = new PlanParamsYamlV8.ProcessV8();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "Plocess mh.resource-splitter";
             p.code = "process-mh.resource-splitter";
 
-            p.snippets = List.of(new PlanParamsYamlV8.SnippetDefForPlanV8(Consts.MH_RESOURCE_SPLITTER_SNIPPET, EnumsApi.SnippetExecContext.internal));
+            p.snippet = new PlanParamsYamlV8.SnippetDefForPlanV8(Consts.MH_RESOURCE_SPLITTER_SNIPPET, EnumsApi.SnippetExecContext.internal);
             p.output.add( new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad,"batch-array"));
 
             planParamsYaml.plan.processes.add(p);

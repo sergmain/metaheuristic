@@ -33,6 +33,7 @@ import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
+import org.apache.commons.lang3.NotImplementedException;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -100,10 +101,12 @@ public class TestPlanService extends PreparingPlan {
 
         int taskNumber = 0;
         for (PlanParamsYaml.Process process : planParamsYaml.plan.processes) {
-            if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
-                continue;
+            if (process.subProcesses!=null) {
+                if (true) {
+                    throw new NotImplementedException("Need to calc number of tasks for parallel case");
+                }
             }
-            taskNumber += process.snippets.size();
+            taskNumber++;
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 

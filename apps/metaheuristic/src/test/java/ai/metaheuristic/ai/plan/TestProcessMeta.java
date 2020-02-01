@@ -42,7 +42,6 @@ public class TestProcessMeta {
         planYaml.code = "test-process-for-meta";
         {
             PlanParamsYaml.Process p = new PlanParamsYaml.Process();
-            p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "test-experiment-code-01";
             p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "model"));

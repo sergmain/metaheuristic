@@ -71,10 +71,6 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "EXEC_STATE")
     public int execState;
 
-    // FILE_PROCESSING(1), EXPERIMENT(2);
-    @Column(name = "PROCESS_TYPE")
-    public int processType;
-
     // by result that means a file which is created by this task
     @Column(name = "IS_RESULT_RECEIVED")
     public boolean resultReceived;

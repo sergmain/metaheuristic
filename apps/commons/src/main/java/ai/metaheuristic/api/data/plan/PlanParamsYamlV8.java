@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.*;
 
@@ -38,16 +39,13 @@ public class PlanParamsYamlV8 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        final boolean b = plan != null && plan.code != null && !plan.code.isBlank() &&
-                plan.processes != null;
+        final boolean b = plan != null && !S.b(plan.code) && plan.processes != null;
         if (!b) {
-            throw new IllegalArgumentException(
-                    "(boolean b = planYaml != null && planYaml.planCode != null && " +
-                            "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
+            throw new IllegalArgumentException("(b = plan != null && !S.b(plan.code) && plan.processes != null) ");
         }
         for (ProcessV8 process : plan.processes) {
-            if (process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0)) {
-                throw new IllegalArgumentException("(process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0))");
+            if (process.snippet==null) {
+                throw new IllegalArgumentException("(process.snippet==null)");
             }
         }
 
@@ -87,6 +85,11 @@ public class PlanParamsYamlV8 implements BaseParams {
         }
     }
 
+    public static class SubProcessesV8 {
+        public EnumsApi.PlanProcessExec exec;
+        public List<Process> processes;
+    }
+
     @Data
     @ToString
     public static class ProcessV8 implements Cloneable {
@@ -100,8 +103,7 @@ public class PlanParamsYamlV8 implements BaseParams {
 
         public String name;
         public String code;
-        public EnumsApi.ProcessType type;
-        public List<SnippetDefForPlanV8> snippets;
+        public SnippetDefForPlanV8 snippet;
         public List<SnippetDefForPlanV8> preSnippets;
         public List<SnippetDefForPlanV8> postSnippets;
 
@@ -114,6 +116,7 @@ public class PlanParamsYamlV8 implements BaseParams {
         public final List<VariableV8> input = new ArrayList<>();
         public final List<VariableV8> output = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
+        public SubProcessesV8 subProcesses;
 
         public Meta getMeta(String key) {
             return MetaUtils.getMeta(metas, key);
@@ -136,6 +139,7 @@ public class PlanParamsYamlV8 implements BaseParams {
     }
 
     @Data
+    @ToString
     public static class PlanYamlV8 {
         public VariableDefinitionV8 variables;
         public List<ProcessV8> processes = new ArrayList<>();
@@ -164,7 +168,7 @@ public class PlanParamsYamlV8 implements BaseParams {
         public boolean archived;
         public boolean published;
         public long updatedOn;
-        public List<Meta> metas = new ArrayList<>();
+        public List<Meta> metas;
     }
 
     public final int version=8;

@@ -171,7 +171,6 @@ CREATE TABLE mh_task
     EXEC_STATE        tinyint(1) not null default 0,
     IS_RESULT_RECEIVED  tinyint(1) not null default 0,
     RESULT_RESOURCE_SCHEDULED_ON bigint,
-    PROCESS_TYPE tinyint(1) not null,
     EXTENDED_RESULT      MEDIUMTEXT
 );
 

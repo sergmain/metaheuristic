@@ -40,8 +40,6 @@ public interface Task {
 
     int getExecState();
 
-    int getProcessType();
-
     boolean isResultReceived();
 
     long getResultResourceScheduledOn();
@@ -67,8 +65,6 @@ public interface Task {
     void setWorkbookId(long workbookId);
 
     void setExecState(int execState);
-
-    void setProcessType(int processType);
 
     void setResultReceived(boolean resultReceived);
 

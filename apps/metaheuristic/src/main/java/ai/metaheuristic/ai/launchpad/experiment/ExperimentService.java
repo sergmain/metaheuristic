@@ -689,11 +689,6 @@ public class ExperimentService {
             boolean isPersist, PlanParamsYaml planParams, Long workbookId, PlanParamsYaml.Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
             Map<String, PlanParamsYaml.Variable> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
-        if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
-            throw new IllegalStateException("#179.070 Wrong type of process, " +
-                    "expected: "+ EnumsApi.ProcessType.EXPERIMENT+", " +
-                    "actual: " + process.type);
-        }
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         if (StringUtils.isBlank(epy.experimentYaml.fitSnippet)|| StringUtils.isBlank(epy.experimentYaml.predictSnippet)) {
@@ -768,7 +763,6 @@ public class ExperimentService {
                         task = new TaskImpl();
                         task.setParams("");
                         task.setWorkbookId(workbookId);
-                        task.setProcessType(process.type.value);
                         if (isPersist) {
                             task = taskRepository.save(task);
                         }

@@ -37,10 +37,7 @@ public class TestPlanParamsYamlCloning {
         PlanParamsYaml.Process p = new PlanParamsYaml.Process();
         p.name = "name";
         p.code = "code";
-        p.type = EnumsApi.ProcessType.EXPERIMENT;
-        p.snippets = List.of(
-                new PlanParamsYaml.SnippetDefForPlan("snippet-code", "snippet-params", EnumsApi.SnippetExecContext.external)
-        );
+        p.snippet = new PlanParamsYaml.SnippetDefForPlan("snippet-code", "snippet-params", EnumsApi.SnippetExecContext.external);
         p.preSnippets = List.of(
                 new PlanParamsYaml.SnippetDefForPlan("pre1-code", "pre1-params", EnumsApi.SnippetExecContext.external),
                 new PlanParamsYaml.SnippetDefForPlan("pre2-code", "pre2-params", EnumsApi.SnippetExecContext.external)
@@ -50,7 +47,6 @@ public class TestPlanParamsYamlCloning {
                 new PlanParamsYaml.SnippetDefForPlan("post2-code", "post2-params", EnumsApi.SnippetExecContext.external),
                 new PlanParamsYaml.SnippetDefForPlan("post3-code", "post3-params", EnumsApi.SnippetExecContext.external)
         ) ;
-        p.parallelExec = true;
 
         p.timeoutBeforeTerminate = 120L;
 
@@ -61,10 +57,9 @@ public class TestPlanParamsYamlCloning {
 
         assertEquals("name", p1.name);
         assertEquals("code", p1.code);
-        assertEquals(EnumsApi.ProcessType.EXPERIMENT, p1.type);
-        assertEquals(1, p1.snippets.size());
-        assertEquals("snippet-code", p1.snippets.get(0).code);
-        assertEquals("snippet-params", p1.snippets.get(0).params);
+        assertNotNull(p1.snippet);
+        assertEquals("snippet-code", p1.snippet.code);
+        assertEquals("snippet-params", p1.snippet.params);
 
         assertEquals(2, p1.preSnippets.size());
         assertEquals("pre1-code", p1.preSnippets.get(0).code);
@@ -74,7 +69,6 @@ public class TestPlanParamsYamlCloning {
 
         assertEquals(3, p1.postSnippets.size());
 
-        assertTrue(p1.parallelExec);
         assertNotNull(p1.timeoutBeforeTerminate);
         assertEquals(120L, (long)p1.timeoutBeforeTerminate);
 

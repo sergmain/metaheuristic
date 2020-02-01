@@ -308,7 +308,6 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public TaskProducingResultComplex produceTasksForTest() {
         PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
         assertFalse(planParamsYaml.plan.processes.isEmpty());
-        assertEquals(EnumsApi.ProcessType.EXPERIMENT, planParamsYaml.plan.processes.get(planParamsYaml.plan.processes.size()-1).type);
 
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);

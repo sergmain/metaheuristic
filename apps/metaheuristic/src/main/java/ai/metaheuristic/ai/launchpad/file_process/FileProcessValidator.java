@@ -34,17 +34,11 @@ public class FileProcessValidator implements ProcessValidator {
 
     @Override
     public EnumsApi.PlanValidateStatus validate(Plan plan, PlanParamsYaml.Process process, boolean isFirst) {
-        if (process.getSnippets() == null || process.getSnippets().isEmpty()) {
+        if (process.snippet==null) {
             return EnumsApi.PlanValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }
-        if (!process.parallelExec && process.snippets.size()>1) {
-            return EnumsApi.PlanValidateStatus.TOO_MANY_SNIPPET_CODES_ERROR;
-        }
-        boolean isInternal = process.snippets.stream().anyMatch(s->s.context== EnumsApi.SnippetExecContext.internal);
+        boolean isInternal = (process.snippet.context== EnumsApi.SnippetExecContext.internal);
         if (isInternal) {
-            if (process.snippets.size()>1) {
-                return EnumsApi.PlanValidateStatus.TOO_MANY_INTERNAL_SNIPPETS_ERROR;
-            }
             for (PlanParamsYaml.Variable variable : process.output) {
                 if (variable.sourcing!= EnumsApi.DataSourcing.launchpad) {
                     return EnumsApi.PlanValidateStatus.INTERNAL_SNIPPET_SUPPORT_ONLY_LAUNCHPAD_ERROR;
@@ -55,12 +49,6 @@ public class FileProcessValidator implements ProcessValidator {
             }
             if (CollectionUtils.isNotEmpty(process.postSnippets)) {
                 return EnumsApi.PlanValidateStatus.POST_SNIPPET_WITH_INTERNAL_SNIPPET_ERROR;
-            }
-            if (process.parallelExec) {
-                return EnumsApi.PlanValidateStatus.INTERNAL_SNIPPET_WITH_PARALLEL_EXEC_ERROR;
-            }
-            if (process.snippets.stream().anyMatch(s -> s.context == EnumsApi.SnippetExecContext.external)) {
-                return EnumsApi.PlanValidateStatus.INTERNAL_AND_EXTERNAL_SNIPPET_IN_THE_SAME_PROCESS_ERROR;
             }
         }
         return null;
