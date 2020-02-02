@@ -92,7 +92,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
     private final WorkbookCache workbookCache;
     private final IdsRepository idsRepository;
 
-    public void process(Long planId, Long workbookId, TaskParamsYaml taskParamsYaml) {
+    public void process(Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
 
         List<String> values = taskParamsYaml.taskYaml.inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         if (values.size()>1) {
@@ -122,11 +122,11 @@ public class ResourceSplitterSnippet implements InternalSnippet {
                 log.debug("Start unzipping archive");
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(planId, workbookId, tempDir, mapping);
+                loadFilesFromDirAfterZip(planId, workbookId, contextId, tempDir, mapping);
             }
             else {
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(planId, workbookId, tempDir, Map.of(dataFile.getName(), originFilename));
+                loadFilesFromDirAfterZip(planId, workbookId, contextId, tempDir, Map.of(dataFile.getName(), originFilename));
             }
         }
         catch(Throwable th) {
@@ -145,7 +145,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         }
     }
 
-    public void loadFilesFromDirAfterZip(Long planId, Long workbookId, File srcDir, final Map<String, String> mapping) throws IOException {
+    public void loadFilesFromDirAfterZip(Long planId, Long workbookId, String contextId, File srcDir, final Map<String, String> mapping) throws IOException {
 
         PlanImpl plan = planCache.findById(planId);
         if (plan==null) {
@@ -159,7 +159,6 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         if (true) {
             throw new NotImplementedException("need to use real contextId");
         }
-        String contextId = "1L";
         final AtomicBoolean isEmpty = new AtomicBoolean(true);
         Files.list(srcDir.toPath())
                 .filter(o -> {

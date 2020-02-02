@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.task;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV3;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV4;
@@ -64,6 +65,7 @@ public class TaskParamsYamlUtilsV4
             t.taskYaml.taskMl.hyperParams = v4.taskYaml.hyperParams;
         }
         v4.taskYaml.inputResourceCodes.forEach((key, value) -> t.taskYaml.inputResourceIds.put(key, value));
+        t.taskYaml.context = EnumsApi.SnippetExecContext.external;
         t.checkIntegrity();
 
         return t;

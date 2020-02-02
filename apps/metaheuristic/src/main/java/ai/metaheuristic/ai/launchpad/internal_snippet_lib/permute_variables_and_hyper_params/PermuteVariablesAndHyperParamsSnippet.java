@@ -42,7 +42,7 @@ public class PermuteVariablesAndHyperParamsSnippet implements InternalSnippet {
 
     private final BinaryDataRepository binaryDataRepository;
 
-    public void process(Long planId, Long workbookId, TaskParamsYaml taskParamsYaml) {
+    public void process(Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
 
         List<String> values = taskParamsYaml.taskYaml.inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         if (values.size()>1) {

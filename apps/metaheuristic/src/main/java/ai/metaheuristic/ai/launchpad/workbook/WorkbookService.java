@@ -22,14 +22,12 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
+import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.task.TaskProducingService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
@@ -98,6 +96,7 @@ public class WorkbookService {
     private final TaskProducingService taskProducingService;
     private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final IdsRepository idsRepository;
 
     public OperationStatusRest resetBrokenTasks(Long workbookId) {
         final WorkbookImpl workbook = workbookCache.findById(workbookId);
@@ -472,18 +471,14 @@ public class WorkbookService {
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
 
-        WorkbookParamsYaml resourceParams;
-        {
-            WorkbookImpl workbook = workbookCache.findById(workbookId);
-            if (workbook == null) {
-                log.error("#701.175 Can't find workbook #{}", workbookId);
-                return new PlanApiData.TaskProducingResultComplex(EnumsApi.PlanValidateStatus.WORKBOOK_NOT_FOUND_ERROR);
-            }
-
-            resourceParams = workbook.getWorkbookParamsYaml();
+        WorkbookImpl workbook = workbookCache.findById(workbookId);
+        if (workbook == null) {
+            log.error("#701.175 Can't find workbook #{}", workbookId);
+            return new PlanApiData.TaskProducingResultComplex(EnumsApi.PlanValidateStatus.WORKBOOK_NOT_FOUND_ERROR);
         }
-        List<SimpleVariableAndStorageUrl> initialInputResourceCodes;
-        initialInputResourceCodes = binaryDataService.getIdInVariables(resourceParams.getAllPoolCodes());
+
+        WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
+        List<SimpleVariableAndStorageUrl> initialInputResourceCodes = binaryDataService.getIdInVariables(resourceParams.getAllPoolCodes());
         log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
 
         PlanService.ResourcePools pools = new PlanService.ResourcePools(initialInputResourceCodes);
@@ -519,9 +514,11 @@ public class WorkbookService {
         int idx = Consts.PROCESS_ORDER_START_VALUE;
         List<Long> parentTaskIds = new ArrayList<>();
         int numberOfTasks=0;
+        String contextId = "" + idsRepository.save(new Ids()).id;
+
         for (PlanParamsYaml.Process process : planParams.plan.getProcesses()) {
             Monitoring.log("##026", Enums.Monitor.MEMORY);
-            PlanService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(isPersist, plan.getId(), planParams, workbookId, process, pools, parentTaskIds);
+            PlanService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(isPersist, plan.getId(), contextId, planParams, workbookId, process, pools, parentTaskIds);
             Monitoring.log("##027", Enums.Monitor.MEMORY);
 /*
                 case EXPERIMENT:
@@ -566,7 +563,7 @@ public class WorkbookService {
         }
         result.workbook = workbookCache.findById(workbookId);
         result.planYaml = planParams.plan;
-        result.numberOfTasks += numberOfTasks;
+        result.numberOfTasks = numberOfTasks;
         result.planValidateStatus = EnumsApi.PlanValidateStatus.OK;
         result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
 

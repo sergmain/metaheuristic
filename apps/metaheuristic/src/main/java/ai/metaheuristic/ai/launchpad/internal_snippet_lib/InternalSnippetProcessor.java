@@ -39,13 +39,13 @@ public class InternalSnippetProcessor {
     public final ResourceSplitterSnippet resourceSplitterSnippet;
     public final PermuteVariablesAndHyperParamsSnippet permuteVariablesAndHyperParamsSnippet;
 
-    public void process(String snippetCode, Long planId, Long workbookId, TaskParamsYaml taskParamsYaml) {
+    public void process(String snippetCode, Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
         switch(snippetCode) {
             case Consts.MH_RESOURCE_SPLITTER_SNIPPET:
-                resourceSplitterSnippet.process(planId, workbookId, taskParamsYaml);
+                resourceSplitterSnippet.process(planId, workbookId, contextId, taskParamsYaml);
                 break;
             case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS:
-                permuteVariablesAndHyperParamsSnippet.process(planId, workbookId, taskParamsYaml);
+                permuteVariablesAndHyperParamsSnippet.process(planId, workbookId, contextId, taskParamsYaml);
                 break;
         }
     }

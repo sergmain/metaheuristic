@@ -24,5 +24,5 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
  * Time: 9:19 PM
  */
 public interface InternalSnippet {
-    void process(Long planId, Long workbookId, TaskParamsYaml taskParamsYaml);
+    void process(Long planId, Long workbookId, String contxtId, TaskParamsYaml taskParamsYaml);
 }

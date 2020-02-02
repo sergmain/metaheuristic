@@ -22,6 +22,7 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -40,6 +41,9 @@ public class TaskParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
+        if (taskYaml.context==null) {
+            throw new CheckIntegrityFailedException("snippet exec context is null");
+        }
         return true;
     }
 

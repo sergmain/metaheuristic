@@ -50,7 +50,7 @@ public class TaskProducingService {
 
     @SuppressWarnings("Duplicates")
     public PlanService.ProduceTaskResult produceTasks(
-            boolean isPersist, Long planId, PlanParamsYaml planParams, Long workbookId,
+            boolean isPersist, Long planId, String contextId, PlanParamsYaml planParams, Long workbookId,
             PlanParamsYaml.Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, PlanParamsYaml.Variable> inputStorageUrls = new HashMap<>(pools.inputStorageUrls);
