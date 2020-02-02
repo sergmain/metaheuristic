@@ -39,6 +39,7 @@ public class TestProcess {
     @Test
     public void testProcessMeta() {
         PlanParamsYaml.Process p = new PlanParamsYaml.Process();
+        p.snippet = new PlanParamsYaml.SnippetDefForPlan("some-snippet:1.0");
 
         p.metas.addAll(
                 Arrays.asList(
