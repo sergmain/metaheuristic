@@ -126,6 +126,7 @@ public class TaskParamsYaml implements BaseParams {
         public Map<String, PlanParamsYaml.Variable> resourceStorageUrls = new HashMap<>();
         public TaskMachineLearning taskMl;
         public boolean clean = false;
+        public EnumsApi.SnippetExecContext context;
 
         /**
          * Timeout before terminate a process with snippet
