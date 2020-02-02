@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.plan;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.binary_data.GlobalBinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
@@ -32,6 +33,7 @@ import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -73,16 +75,23 @@ public class PlanTopLevelService {
     private final WorkbookService workbookService;
     private final ApplicationEventPublisher publisher;
     private final WorkbookCache workbookCache;
+    private final GlobalBinaryDataService globalBinaryDataService;
 
-    public PlanApiData.WorkbookResult addWorkbook(Long planId, String poolCode, String inputResourceParams, LaunchpadContext context) {
-        return getWorkbookResult(poolCode, inputResourceParams, context, planCache.findById(planId));
+    public PlanApiData.WorkbookResult addWorkbook(Long planId, String variable, LaunchpadContext context) {
+        return getWorkbookResult(variable, context, planCache.findById(planId));
     }
 
-    public PlanApiData.WorkbookResult addWorkbook(String planCode, String poolCode, String inputResourceParams, LaunchpadContext context) {
-        return getWorkbookResult(poolCode, inputResourceParams, context, planRepository.findByCodeAndCompanyId(planCode, context.getCompanyId()));
+    public PlanApiData.WorkbookResult addWorkbook(String planCode, String variable, LaunchpadContext context) {
+        return getWorkbookResult(variable, context, planRepository.findByCodeAndCompanyId(planCode, context.getCompanyId()));
     }
 
-    public PlanApiData.WorkbookResult getWorkbookResult(String poolCode, String inputResourceParams, LaunchpadContext context, PlanImpl plan) {
+    private PlanApiData.WorkbookResult getWorkbookResult(String variable, LaunchpadContext context, PlanImpl plan) {
+        if (S.b(variable)) {
+            return new PlanApiData.WorkbookResult("#560.006 name of variable is empty");
+        }
+        if (globalBinaryDataService.getIdInVariables(List.of(variable)).isEmpty()) {
+            return new PlanApiData.WorkbookResult( "#560.008 global variable " + variable +" wasn't found");
+        }
         // validate the plan
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK) {
@@ -95,7 +104,7 @@ public class PlanTopLevelService {
         if (status != null) {
             return new PlanApiData.WorkbookResult( "#560.011 access denied: " + status.getErrorMessagesAsStr());
         }
-        return workbookService.getAddWorkbookInternal(poolCode, inputResourceParams, plan);
+        return workbookService.createWorkbookInternal(plan, variable);
     }
 
     public PlanApiData.PlansResult getPlans(Pageable pageable, boolean isArchive, LaunchpadContext context) {

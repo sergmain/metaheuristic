@@ -570,16 +570,8 @@ public class WorkbookService {
         return result;
     }
 
-    public PlanApiData.WorkbookResult getAddWorkbookInternal(String poolCode, String inputResourceParams, @NonNull PlanImpl plan) {
-        if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams)) {
-            return new PlanApiData.WorkbookResult("#560.063 both inputResourcePoolCode of Workbook and inputResourceParams are empty");
-        }
-
-        if (StringUtils.isNotBlank(poolCode) && StringUtils.isNotBlank(inputResourceParams)) {
-            return new PlanApiData.WorkbookResult("#560.065 both inputResourcePoolCode of Workbook and inputResourceParams aren't empty");
-        }
-
-        WorkbookParamsYaml.WorkbookYaml wrc = PlanUtils.prepareResourceCodes(poolCode, inputResourceParams);
+    public PlanApiData.WorkbookResult createWorkbookInternal(@NonNull PlanImpl plan, String variable) {
+        WorkbookParamsYaml.WorkbookYaml wrc = PlanUtils.asWorkbookParamsYaml(variable);
         PlanApiData.TaskProducingResultComplex producingResult = createWorkbook(plan.getId(), wrc);
         if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             return new PlanApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.planProducingStatus);

@@ -15,8 +15,8 @@
             <input type="hidden" name="planId" th:value="${result.plan.id}"/>
             <fieldset>
 
-                <label for="code">Input pool code for this plan</label>
-                <input name="code" id="code" type="text" placeholder="Input pool code for this plan" th:name="poolCode">
+                <label for="variable">Input variable for this plan</label>
+                <input name="variable" id="variable" type="text" placeholder="Input variable for this plan" th:name="variable">
                 <span class="pure-form-message">This is a required field.</span>
 
                 <p>&nbsp;</p>
@@ -36,37 +36,7 @@
             </fieldset>
         </form>
 
-        <h1 class="widget-header">New workbook with multiply inputs</h1>
-        <form class="pure-form pure-form-stacked" action="#" th:method="POST" th:action="@{/launchpad/plan/workbook-add-commit}" accept-charset="UTF-8" id="workbook-multiply-add-form" name="f">
-            <input type="hidden" name="planId" th:value="${result.plan.id}"/>
-            <fieldset>
-
-                <p th:text="Example"></p>
-                <pre style="width:50%">
-poolCodes:
-  dataset-files:
-    - dataset-001-pool-code
-  vocabulary:
-    - vocabulary-001-pool-code</pre>
-
-
-                <label for="inputResourceParams">Input resources of workbook</label>
-                <textarea name="inputResourceParams" id="inputResourceParams" placeholder="Input resources of workbook" cols="70" rows="15"
-                          maxlength="10000"></textarea>
-                <span class="pure-form-message"></span>
-
-                <p>&nbsp;</p>
-                <table>
-                    <tr>
-                        <td>
-                            <button type="submit" class="pure-button pure-button-primary">Create</button>
-                        </td>
-                    </tr>
-                </table>
-            </fieldset>
-        </form>
-
-        <h1 class="widget-header">&nbsp;</h1>
+        <p>&nbsp;</p>
 
         <a class="pure-button pure-button-primary" href="workbooks.html" th:href="${'/launchpad/plan/workbooks/' + result.plan.id}">Cancel</a>
 

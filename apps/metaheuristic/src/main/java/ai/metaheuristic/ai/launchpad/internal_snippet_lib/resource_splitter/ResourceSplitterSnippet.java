@@ -38,6 +38,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -91,6 +92,18 @@ public class ResourceSplitterSnippet implements InternalSnippet {
     private final BinaryDataService binaryDataService;
     private final WorkbookCache workbookCache;
     private final IdsRepository idsRepository;
+
+    public static WorkbookParamsYaml.WorkbookYaml initWorkbookParamsYaml(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
+        WorkbookParamsYaml.WorkbookYaml wy = new WorkbookParamsYaml.WorkbookYaml();
+        wy.preservePoolNames = true;
+        wy.poolCodes.computeIfAbsent(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, o-> new ArrayList<>()).add(mainPoolCode);
+        if (attachmentCodes.isEmpty()) {
+            return wy;
+        }
+        // TODO 2020-01-24 need to re-write with using aliases from plan
+        wy.poolCodes.computeIfAbsent(ResourceSplitterSnippet.ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
+        return wy;
+    }
 
     public void process(Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
 

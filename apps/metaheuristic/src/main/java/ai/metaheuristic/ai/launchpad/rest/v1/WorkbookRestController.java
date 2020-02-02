@@ -75,9 +75,9 @@ public class WorkbookRestController {
      */
     @PostMapping("/plan-code-workbook-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SimpleWorkbookAddingResult workbookAddCommit(String planCode, String poolCode, String inputResourceParams, Authentication authentication) {
+    public SimpleWorkbookAddingResult workbookAddCommit(String planCode, String variable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planCode, poolCode, inputResourceParams, context);
+        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planCode, variable, context);
         return new SimpleWorkbookAddingResult(workbookResult.workbook.getId());
     }
 
@@ -86,20 +86,11 @@ public class WorkbookRestController {
      */
     @PostMapping("/workbook-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public PlanApiData.WorkbookResult workbookAddCommit(
-            Long planId, String poolCode, String inputResourceParams, Authentication authentication) {
+    public PlanApiData.WorkbookResult workbookAddCommit(Long planId, String poolCode, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         //noinspection UnnecessaryLocalVariable
-        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams, context);
+        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planId, poolCode, context);
         return workbookResult;
-    }
-
-    @PostMapping("/workbook-create")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public PlanApiData.TaskProducingResult createWorkbook(
-            Long planId, String inputResourceParam, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return workbookTopLevelService.createWorkbook(planId, inputResourceParam, context);
     }
 
     @GetMapping(value = "/workbook/{planId}/{workbookId}")

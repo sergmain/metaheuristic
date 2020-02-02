@@ -88,10 +88,9 @@ public class WorkbookController {
 
     @PostMapping("/workbook-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String workbookAddCommit(Long planId, String poolCode, String inputResourceParams,
-                                    final RedirectAttributes redirectAttributes, Authentication authentication) {
+    public String workbookAddCommit(Long planId, String variable, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams, context);
+        PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(planId, variable, context);
         if (workbookResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", workbookResultRest.errorMessages);
         }

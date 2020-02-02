@@ -74,7 +74,7 @@ public class Consts {
     public static final String PARAMS_YAML_MASK = "params-v%d.yaml";
     public static final String TASK_YAML = "task.yaml";
 
-    public static final String WORKBOOK_INPUT_TYPE = "workbook-input-type";
+    public static final String MH_WORKBOOK_INPUT_VARIABLE = "mh.workbook-input-variable";
     public static final String ML_MODEL_BIN = "ml_model.bin";
     public static final String LOCALHOST_IP = "127.0.0.1";
 

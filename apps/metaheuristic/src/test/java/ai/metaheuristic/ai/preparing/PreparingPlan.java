@@ -299,7 +299,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         globalBinaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-03.txt");
 
         workbookYaml = new WorkbookParamsYaml.WorkbookYaml();
-        workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o-> new ArrayList<>()).add(TEST_GLOBAL_VARIABLE);
+        workbookYaml.poolCodes.computeIfAbsent(Consts.MH_WORKBOOK_INPUT_VARIABLE, o-> new ArrayList<>()).add(TEST_GLOBAL_VARIABLE);
     }
 
     private Snippet createSnippet(String snippetCode) {

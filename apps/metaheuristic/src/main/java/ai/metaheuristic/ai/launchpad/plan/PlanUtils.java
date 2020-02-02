@@ -17,27 +17,17 @@
 package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.launchpad.internal_snippet_lib.resource_splitter.ResourceSplitterSnippet;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV1;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class PlanUtils {
 
     public static String getResourceCode(Long workbookId, String processCode, String snippetName, int processOrder, int snippetIdx) {
         return String.format("%d-%d-%s-%s-%d", workbookId, processOrder, snippetName, processCode, snippetIdx);
-    }
-
-    public static WorkbookParamsYaml.WorkbookYaml prepareResourceCodes(String poolCode, String inputResourceParams) {
-        //noinspection UnnecessaryLocalVariable
-        WorkbookParamsYaml.WorkbookYaml resourceCodes = StringUtils.isNotBlank(inputResourceParams)
-                ? parseToWorkbookParamsYaml(inputResourceParams)
-                : asWorkbookParamsYaml(poolCode);
-        return resourceCodes;
     }
 
     public static WorkbookParamsYaml.WorkbookYaml parseToWorkbookParamsYaml(String inputResourceParams) {
@@ -48,21 +38,10 @@ public class PlanUtils {
         return wrc;
     }
 
-    public static WorkbookParamsYaml.WorkbookYaml asWorkbookParamsYaml(String poolCode) {
+    public static WorkbookParamsYaml.WorkbookYaml asWorkbookParamsYaml(String variable) {
         WorkbookParamsYaml.WorkbookYaml wrc = new WorkbookParamsYaml.WorkbookYaml();
-        wrc.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o->new ArrayList<>()).add(poolCode);
+        wrc.poolCodes.computeIfAbsent(Consts.MH_WORKBOOK_INPUT_VARIABLE, o->new ArrayList<>()).add(variable);
         return wrc;
     }
 
-    public static WorkbookParamsYaml.WorkbookYaml initWorkbookParamsYaml(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
-        WorkbookParamsYaml.WorkbookYaml wy = new WorkbookParamsYaml.WorkbookYaml();
-        wy.preservePoolNames = true;
-        wy.poolCodes.computeIfAbsent(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, o-> new ArrayList<>()).add(mainPoolCode);
-        if (attachmentCodes.isEmpty()) {
-            return wy;
-        }
-        // TODO 2020-01-24 need to re-write with using aliases from plan
-        wy.poolCodes.computeIfAbsent(ResourceSplitterSnippet.ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
-        return wy;
-    }
 }
