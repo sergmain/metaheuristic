@@ -58,7 +58,7 @@ public class PlanParamsYamlV8 implements BaseParams {
     public static class SnippetDefForPlanV8 {
         public String code;
         public String params;
-        public EnumsApi.SnippetExecContext context;
+        public EnumsApi.SnippetExecContext context = EnumsApi.SnippetExecContext.external;
 
         public SnippetDefForPlanV8(String code) {
             this.code = code;
@@ -87,7 +87,7 @@ public class PlanParamsYamlV8 implements BaseParams {
 
     public static class SubProcessesV8 {
         public EnumsApi.PlanProcessExec exec;
-        public List<Process> processes;
+        public List<ProcessV8> processes;
     }
 
     @Data
@@ -135,7 +135,7 @@ public class PlanParamsYamlV8 implements BaseParams {
     @AllArgsConstructor
     public static class VariableDefinitionV8 {
         public String global;
-        public final Map<String, String> inline = new HashMap<>();
+        public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
     @Data

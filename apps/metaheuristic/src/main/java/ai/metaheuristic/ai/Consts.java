@@ -126,6 +126,7 @@ public class Consts {
     public static final Long ID_1 = 1L;
 
     public static final String MH_RESOURCE_SPLITTER_SNIPPET = "mh.resource-splitter";
-    public static final List<String> MH_INTERNAL_SNIPPETS = List.of(MH_RESOURCE_SPLITTER_SNIPPET);
+    public static final String MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS = "mh.permute-variables-and-hyper-params";
+    public static final List<String> MH_INTERNAL_SNIPPETS = List.of(MH_RESOURCE_SPLITTER_SNIPPET, MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS);
 
 }

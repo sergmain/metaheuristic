@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.internal_snippet_lib;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.launchpad.internal_snippet_lib.permute_variables_and_hyper_params.PermuteVariablesAndHyperParamsSnippet;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.resource_splitter.ResourceSplitterSnippet;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -36,11 +37,16 @@ import org.springframework.stereotype.Service;
 public class InternalSnippetProcessor {
 
     public final ResourceSplitterSnippet resourceSplitterSnippet;
+    public final PermuteVariablesAndHyperParamsSnippet permuteVariablesAndHyperParamsSnippet;
 
     public void process(String snippetCode, Long planId, Long workbookId, TaskParamsYaml taskParamsYaml) {
         switch(snippetCode) {
             case Consts.MH_RESOURCE_SPLITTER_SNIPPET:
                 resourceSplitterSnippet.process(planId, workbookId, taskParamsYaml);
+                break;
+            case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS:
+                permuteVariablesAndHyperParamsSnippet.process(planId, workbookId, taskParamsYaml);
+                break;
         }
     }
 }

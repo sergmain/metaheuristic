@@ -26,6 +26,9 @@ public class ConstsApi {
     public static final String ARTIFACTS_DIR = "artifacts";
     public static final String MH_ENV_FILE = "mh-env.yaml";
 
+    // name of inline variable
+    public static final String MH_HYPER_PARAMS = "mh.hyper-params";
+
     // === plan's meta
     //
     public static final String META_MH_RESULT_FILE_EXTENSION = "mh.result-file-extension";

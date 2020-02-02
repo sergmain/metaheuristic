@@ -57,8 +57,9 @@ import static org.junit.Assert.assertTrue;
 @Slf4j
 public abstract class PreparingExperiment {
 
-    private static final String TEST_FIT_SNIPPET = "test.fit.snippet:1.0";
-    private static final String TEST_PREDICT_SNIPPET = "test.predict.snippet:1.0";
+    public static final String TEST_FIT_SNIPPET = "test.fit.snippet:1.0";
+    public static final String TEST_PREDICT_SNIPPET = "test.predict.snippet:1.0";
+    public static final String TEST_FITTING_SNIPPET = "test.fitting.snippet:1.0";
     static final String TEST_EXPERIMENT_CODE_01 = "test-experiment-code-01";
 
     @Autowired

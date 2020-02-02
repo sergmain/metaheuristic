@@ -34,15 +34,14 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.plan.TaskCollector;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsV2;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsV8;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV2;
+import ai.metaheuristic.api.data.plan.PlanParamsYamlV8;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.process.ProcessV2;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -53,8 +52,8 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static ai.metaheuristic.api.data.plan.PlanApiData.TaskProducingResultComplex;
 import static org.junit.Assert.*;
@@ -113,75 +112,134 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public abstract String getPlanYamlAsString();
 
     public String getPlanParamsYamlAsString_Simple() {
-        PlanParamsYamlV2 planParamsYaml = new PlanParamsYamlV2();
-        planParamsYaml.planYaml = new PlanParamsYamlV2.PlanYamlV2();
+        PlanParamsYamlV8 planParamsYaml = new PlanParamsYamlV8();
+        planParamsYaml.plan = new PlanParamsYamlV8.PlanYamlV8();
+//            global: global-var
+//            inline:
+//              mh.hyper-params:
+//                RNN: LSTM
+//                batches: '40'
+//                seed: '42'
+//                time_steps: '7'
+
+        planParamsYaml.plan.variables.global = PreparingPlan.TEST_GLOBAL_VARIABLE;
+        planParamsYaml.plan.variables.inline.put(ConstsApi.MH_HYPER_PARAMS, Map.of("RNN", "LSTM", "batches", "40", "seed", "42", "time_steps", "7"));
         {
-            ProcessV2 p = new ProcessV2();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
+            PlanParamsYamlV8.ProcessV8 p = new PlanParamsYamlV8.ProcessV8();
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
-            p.snippetCodes = List.of("snippet-01:1.1");
-            p.collectResources = false;
-            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-            p.outputParams.storageType = "assembled-raw-output";
-            p.outputType = "assembled-raw-output";
+            p.snippet = new PlanParamsYamlV8.SnippetDefForPlanV8("snippet-01:1.1");
+            p.input.add( new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, PreparingPlan.TEST_GLOBAL_VARIABLE));
+            p.output.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "assembled-raw-output"));
+//      input:
+//        - variable: test-variable
+//          sourcing: launchpad
+//      output:
+//        - variable: assembled-raw-output
+//          sourcing: launchpad
 
-            planParamsYaml.planYaml.processes.add(p);
+            planParamsYaml.plan.processes.add(p);
         }
         {
-            ProcessV2 p = new ProcessV2();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
+            PlanParamsYamlV8.ProcessV8 p = new PlanParamsYamlV8.ProcessV8();
             p.name = "dataset processing";
             p.code = "dataset-processing";
 
-            p.snippetCodes = List.of("snippet-02:1.1");
-            p.collectResources = true;
-            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-            p.outputParams.storageType = "dataset-processing-output";
-            p.outputType = "dataset-processing-output";
+            p.snippet = new PlanParamsYamlV8.SnippetDefForPlanV8("snippet-02:1.1");
+            p.input.add( new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "assembled-raw-output"));
+            p.output.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
 
-            planParamsYaml.planYaml.processes.add(p);
+            planParamsYaml.plan.processes.add(p);
+
+            p.subProcesses = new PlanParamsYamlV8.SubProcessesV8();
+            p.subProcesses.exec = EnumsApi.PlanProcessExec.parallel;
+
+            PlanParamsYamlV8.ProcessV8 p1 = new PlanParamsYamlV8.ProcessV8();
+            p1.name = "feature-processing-1";
+            p1.code = "feature-processing-1";
+            p1.snippet = new PlanParamsYamlV8.SnippetDefForPlanV8("snippet-03:1.1");
+            p1.input.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
+            p1.output.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "feature-output-1"));
+
+            PlanParamsYamlV8.ProcessV8 p2 = new PlanParamsYamlV8.ProcessV8();
+            p2.name = "feature-processing-2";
+            p2.code = "feature-processing-2";
+            p2.snippet = new PlanParamsYamlV8.SnippetDefForPlanV8("snippet-04:1.1");
+            p2.input.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
+            p2.output.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "feature-output-2"));
+
+            PlanParamsYamlV8.ProcessV8 p3 = new PlanParamsYamlV8.ProcessV8();
+            p3.name = "feature-processing-3";
+            p3.code = "feature-processing-3";
+            p3.snippet = new PlanParamsYamlV8.SnippetDefForPlanV8("snippet-05:1.1");
+            p3.input.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
+            p3.output.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "feature-output-3"));
+
+            p.subProcesses.processes = List.of(p1, p2);
         }
         {
-            ProcessV2 p = new ProcessV2();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
-            p.name = "feature processing";
-            p.code = "feature-processing";
+//    - code: mh.permute-variables-and-hyper-params
+//      name: permute variables and hyper params
+//      metas:
+//        - key: variables
+//          value: feature-processing_matrix_of_winning, feature-processing_cluster_size_1
+//      snippets:
+//        - code: mh.permute-variables-and-hyper-params
+//      output:
+//        - variable: feature-per-task
+//          sourcing: launchpad
 
-            p.snippetCodes = List.of("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
-            p.parallelExec = true;
-            p.collectResources = true;
-            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-            p.outputParams.storageType = "feature-output";
-            p.outputType = "feature-output";
+            PlanParamsYamlV8.ProcessV8 p = new PlanParamsYamlV8.ProcessV8();
+            p.name = "permute variables and hyper params";
+            p.code = "mh.permute-variables-and-hyper-params";
 
-            planParamsYaml.planYaml.processes.add(p);
+            p.snippet = new PlanParamsYamlV8.SnippetDefForPlanV8("mh.permute-variables-and-hyper-params", EnumsApi.SnippetExecContext.internal);
+            p.metas = List.of(new Meta("variables", "feature-output-1,feature-output-2,feature-output-3", null));
+            p.output.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "feature-per-task"));
+
+            planParamsYaml.plan.processes.add(p);
+
+            p.subProcesses = new PlanParamsYamlV8.SubProcessesV8();
+            p.subProcesses.exec = EnumsApi.PlanProcessExec.sequential;
+
+            PlanParamsYamlV8.ProcessV8 p1 = new PlanParamsYamlV8.ProcessV8();
+            p1.name = "feature-processing-1";
+            p1.code = "feature-processing-1";
+            p1.snippet = new PlanParamsYamlV8.SnippetDefForPlanV8(TEST_FIT_SNIPPET);
+//            input:
+//              - variable: feature-per-task
+//                sourcing: launchpad
+//            output:
+//              - variable: model
+//                sourcing: launchpad
+            p1.input.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
+            p1.input.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "feature-per-task"));
+            p1.output.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "model"));
+
+            PlanParamsYamlV8.ProcessV8 p2 = new PlanParamsYamlV8.ProcessV8();
+            p2.name = "feature-processing-2";
+            p2.code = "feature-processing-2";
+            p2.snippet = new PlanParamsYamlV8.SnippetDefForPlanV8(TEST_PREDICT_SNIPPET);
+            p2.input.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
+//              - variable: metrics
+//                sourcing: launchpad
+//              - variable: predicted
+//                sourcing: launchpad
+            p2.output.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "metrics"));
+            p2.output.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "predicted"));
+
+            PlanParamsYamlV8.ProcessV8 p3 = new PlanParamsYamlV8.ProcessV8();
+            p3.name = "feature-processing-3";
+            p3.code = "feature-processing-3";
+            p3.snippet = new PlanParamsYamlV8.SnippetDefForPlanV8(TEST_FITTING_SNIPPET);
+            p3.input.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "predicted"));
+            p3.output.add(new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad, "overfitting"));
+
+            p.subProcesses.processes = List.of(p1, p2);
         }
-        {
-            ProcessV2 p = new ProcessV2();
-            p.type = EnumsApi.ProcessType.EXPERIMENT;
-            p.name = "experiment";
-            p.code = PreparingExperiment.TEST_EXPERIMENT_CODE_01;
-            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-            p.metas.addAll(
-                    Arrays.asList(
-                            new Meta("assembled-raw", "assembled-raw-output", null),
-                            new Meta("dataset", "dataset-processing-output", null),
-                            new Meta("feature", "feature-output", null)
-                    )
-            );
-
-            planParamsYaml.planYaml.processes.add(p);
-        }
-//        planYaml.planCode = "test-plan-code";
-
-//        planParamsYaml = new PlanParamsYamlV2();
-//        planParamsYaml.planYaml = planYaml;
-
-        final PlanParamsYamlUtilsV2 forVersion = (PlanParamsYamlUtilsV2) PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+        final PlanParamsYamlUtilsV8 forVersion = (PlanParamsYamlUtilsV8) PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(8);
         String yaml = forVersion.toString(planParamsYaml);
-//        String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
         System.out.println(yaml);
         return yaml;
     }

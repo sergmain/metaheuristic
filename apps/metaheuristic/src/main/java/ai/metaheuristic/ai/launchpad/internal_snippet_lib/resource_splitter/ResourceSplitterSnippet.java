@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.launchpad.beans.BinaryData;
 import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippet;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
@@ -75,7 +76,7 @@ import static ai.metaheuristic.ai.Consts.ZIP_EXT;
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
-public class ResourceSplitterSnippet {
+public class ResourceSplitterSnippet implements InternalSnippet {
 
     public static final String ATTACHMENTS_POOL_CODE = "attachments";
     private static final Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml", ".yml");

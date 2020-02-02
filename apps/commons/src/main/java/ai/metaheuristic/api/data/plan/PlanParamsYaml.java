@@ -59,7 +59,7 @@ public class PlanParamsYaml implements BaseParams {
     public static class SnippetDefForPlan {
         public String code;
         public String params;
-        public EnumsApi.SnippetExecContext context;
+        public EnumsApi.SnippetExecContext context = EnumsApi.SnippetExecContext.external;
 
         public SnippetDefForPlan(String code) {
             this.code = code;
@@ -136,7 +136,7 @@ public class PlanParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class VariableDefinition {
         public String global;
-        public final Map<String, String> inline = new HashMap<>();
+        public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
     @Data
