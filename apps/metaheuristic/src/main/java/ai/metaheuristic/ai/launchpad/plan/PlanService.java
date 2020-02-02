@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
-import ai.metaheuristic.ai.launchpad.file_process.FileProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -75,7 +74,6 @@ public class PlanService {
     private final PlanCache planCache;
     private final PlanRepository planRepository;
 
-    private final FileProcessValidator fileProcessValidator;
     private final WorkbookService workbookService;
     private final CommonProcessValidatorService commonProcessValidatorService;
     private final SnippetRepository snippetRepository;
@@ -347,17 +345,6 @@ public class PlanService {
             if (status!=OK) {
                 return status;
             }
-            status = fileProcessValidator.validate(plan, process, i==0);
-            if (status!=null) {
-                return status;
-            }
-
-/*
-            // TODO 2020-02-01 need to-rewrite this check
-            if (process.parallelExec && (process.snippets==null || process.snippets.size()<2)) {
-                return EnumsApi.PlanValidateStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
-            }
-*/
         }
         return EnumsApi.PlanValidateStatus.OK;
     }

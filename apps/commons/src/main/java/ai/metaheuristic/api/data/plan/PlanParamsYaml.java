@@ -22,6 +22,7 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.*;
 
@@ -42,11 +43,11 @@ public class PlanParamsYaml implements BaseParams {
     public boolean checkIntegrity() {
         final boolean b = plan != null && !S.b(plan.code) && plan.processes != null;
         if (!b) {
-            throw new IllegalArgumentException("(b = plan != null && !S.b(plan.code) && plan.processes != null) ");
+            throw new CheckIntegrityFailedException("(b = plan != null && !S.b(plan.code) && plan.processes != null) ");
         }
         for (Process process : plan.processes) {
             if (process.snippet==null) {
-                throw new IllegalArgumentException("(process.snippet==null)");
+                throw new CheckIntegrityFailedException("(process.snippet==null)");
             }
         }
 

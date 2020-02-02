@@ -111,9 +111,10 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
     public abstract String getPlanYamlAsString();
 
-    public String getPlanParamsYamlAsString_Simple() {
+    public static String getPlanV8() {
         PlanParamsYamlV8 planParamsYaml = new PlanParamsYamlV8();
         planParamsYaml.plan = new PlanParamsYamlV8.PlanYamlV8();
+        planParamsYaml.plan.code = "Plan for experiment";
 //            global: global-var
 //            inline:
 //              mh.hyper-params:
@@ -122,6 +123,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
 //                seed: '42'
 //                time_steps: '7'
 
+        planParamsYaml.plan.variables = new PlanParamsYamlV8.VariableDefinitionV8();
         planParamsYaml.plan.variables.global = PreparingPlan.TEST_GLOBAL_VARIABLE;
         planParamsYaml.plan.variables.inline.put(ConstsApi.MH_HYPER_PARAMS, Map.of("RNN", "LSTM", "batches", "40", "seed", "42", "time_steps", "7"));
         {
@@ -240,8 +242,11 @@ public abstract class PreparingPlan extends PreparingExperiment {
         }
         final PlanParamsYamlUtilsV8 forVersion = (PlanParamsYamlUtilsV8) PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(8);
         String yaml = forVersion.toString(planParamsYaml);
-        System.out.println(yaml);
         return yaml;
+    }
+
+    public String getPlanParamsYamlAsString_Simple() {
+        return getPlanV8();
     }
 
     public static final String TEST_GLOBAL_VARIABLE = "test-variable";
@@ -307,7 +312,10 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
         sc.info.setSigned(false);
         sc.info.setLength(1000);
-
+//  metas:
+//  - key: mh.task-params-version
+//    value: '3'
+        sc.metas.add(new Meta(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5", null));
         Snippet s = new Snippet();
         Long snippetId = snippetRepository.findIdByCode(snippetCode);
         if (snippetId!=null) {

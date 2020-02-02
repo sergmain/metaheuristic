@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.file_process;
+package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
@@ -42,7 +42,7 @@ import java.util.Map;
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
-public class FileProcessService {
+public class TaskProducingService {
 
     private final TaskRepository taskRepository;
     private final SnippetService snippetService;

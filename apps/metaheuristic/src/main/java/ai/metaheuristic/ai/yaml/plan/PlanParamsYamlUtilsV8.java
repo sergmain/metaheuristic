@@ -51,8 +51,10 @@ public class PlanParamsYamlUtilsV8
         if (v8.plan.metas!=null){
             p.plan.metas = new ArrayList<>(v8.plan.metas);
         }
-        p.plan.variables = new PlanParamsYaml.VariableDefinition(v8.plan.variables.global);
-        v8.plan.variables.inline.forEach(p.plan.variables.inline::put);
+        if (v8.plan.variables!=null) {
+            p.plan.variables = new PlanParamsYaml.VariableDefinition(v8.plan.variables.global);
+            v8.plan.variables.inline.forEach(p.plan.variables.inline::put);
+        }
         p.plan.clean = v8.plan.clean;
         p.plan.processes = v8.plan.processes.stream().map(o-> {
             PlanParamsYaml.Process pr = new PlanParamsYaml.Process();

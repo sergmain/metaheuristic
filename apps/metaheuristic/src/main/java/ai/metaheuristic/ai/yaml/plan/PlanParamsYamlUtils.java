@@ -33,7 +33,7 @@ public class PlanParamsYamlUtils {
             5, 2,
             6, 2,
             7, 2,
-            8, 2
+            8, 5
     );
 
     public static int getRequiredVertionOfTaskParamsYaml(int planParamsYamlVersion) {

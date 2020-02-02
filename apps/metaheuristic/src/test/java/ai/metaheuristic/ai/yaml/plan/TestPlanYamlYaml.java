@@ -16,9 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.plan;
 
-import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -34,89 +33,9 @@ public class TestPlanYamlYaml {
 
     @Test
     public void testYaml() {
-        PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
-        {
-            PlanParamsYaml.Process p = new PlanParamsYaml.Process();
-            p.name = "assembly raw file";
-            p.code = "assembly-raw-file";
-
-            p.snippet = new PlanParamsYaml.SnippetDefForPlan("snippet-01:1.1");
-            p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "assembled-raw"));
-
-            planYaml.processes.add(p);
-        }
-        // output resource code: plan-10-assembly-raw-file-snippet-01
-        //
-        // input resource:
-        // - code: plan-10-assembly-raw-file-snippet-01
-        //   type: assembled-raw
-        {
-            PlanParamsYaml.Process p = new PlanParamsYaml.Process();
-            p.name = "dataset processing";
-            p.code = "dataset-processing";
-
-            p.snippet = new PlanParamsYaml.SnippetDefForPlan("snippet-02:1.1");
-            p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "dataset-processing"));
-
-            planYaml.processes.add(p);
-        }
-        // output resource code: plan-10-dataset-processing-snippet-02
-        //
-        // input resource:
-        // - code: plan-10-assembly-raw-file-snippet-01
-        //   type: assembled-raw
-        // - code: plan-10-dataset-processing-snippet-02
-        //   type: dataset-processing
-        {
-            PlanParamsYaml.Process p = new PlanParamsYaml.Process();
-            p.name = "feature processing";
-            p.code = "feature-processing";
-
-            if (true) {
-                throw new NotImplementedException("Need to re-write according with latest version of PlanParamYaml");
-            }
-/*
-            p.snippet = Arrays.asList(new PlanParamsYaml.SnippetDefForPlan("snippet-03:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-04:1.1"), new PlanParamsYaml.SnippetDefForPlan("snippet-05:1.1"));
-            p.parallelExec = true;
-*/
-            p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "feature"));
-
-            planYaml.processes.add(p);
-        }
-        // output resource code: plan-10-feature-processing-snippet-03
-        // output resource code: plan-10-feature-processing-snippet-04
-        // output resource code: plan-10-feature-processing-snippet-05
-        //
-        // input resource:
-        // - code: plan-10-assembly-raw-file-snippet-01
-        //   type: assembled-raw
-        // - code: plan-10-dataset-processing-snippet-02
-        //   type: dataset-processing
-        // - code: plan-10-feature-processing-snippet-03
-        //   type: feature
-        // - code: plan-10-feature-processing-snippet-04
-        //   type: feature
-        // - code: plan-10-feature-processing-snippet-05
-        //   type: feature
-        {
-            PlanParamsYaml.Process p = new PlanParamsYaml.Process();
-            p.name = "experiment";
-            p.code = "experiment-code-01";
-            p.output.add(new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "model"));
-
-            planYaml.processes.add(p);
-        }
-
-        PlanParamsYaml planParamsYaml = new PlanParamsYaml();
-        planYaml.code = "test-processes";
-        planParamsYaml.plan = planYaml;
-
-        String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
+        String yaml = PreparingPlan.getPlanV8();
         System.out.println(yaml);
-
         assertFalse(yaml.startsWith("!!"));
-
-
         PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         PlanParamsYaml.PlanYaml py = planParams.plan;
 
