@@ -24,7 +24,6 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -52,7 +51,7 @@ public class PlanParamsYamlUtilsV8
             p.plan.metas = new ArrayList<>(v8.plan.metas);
         }
         if (v8.plan.variables!=null) {
-            p.plan.variables = new PlanParamsYaml.VariableDefinition(v8.plan.variables.global);
+            p.plan.variables = new PlanParamsYaml.VariableDefinition(v8.plan.variables.global, v8.plan.variables.runtime);
             v8.plan.variables.inline.forEach(p.plan.variables.inline::put);
         }
         p.plan.clean = v8.plan.clean;

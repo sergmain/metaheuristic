@@ -38,7 +38,7 @@ public class TestResourcePools {
         new ArrayList<>();
         p.collectedInputs.put("aaa", new ArrayList<>(List.of("a1", "a2", "a3")));
         p.inputStorageUrls = new HashMap<>();
-        p.inputStorageUrls.put("aaa", new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "aaa"));
+        p.inputStorageUrls.put("aaa", new PlanParamsYaml.Variable("aaa"));
 
         PlanService.ResourcePools p1 = new PlanService.ResourcePools();
         p1.collectedInputs.put("aaa", new ArrayList<>(List.of("a4")));

@@ -76,10 +76,14 @@ public class PlanParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Variable {
-        public EnumsApi.DataSourcing sourcing;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.launchpad;
         public GitInfo git;
         public DiskInfo disk;
         public String variable;
+
+        public Variable(String variable) {
+            this.variable = variable;
+        }
 
         public Variable(EnumsApi.DataSourcing sourcing, String variable) {
             this.sourcing = sourcing;
@@ -137,6 +141,7 @@ public class PlanParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class VariableDefinition {
         public String global;
+        public String runtime;
         public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 

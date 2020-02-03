@@ -1,0 +1,29 @@
+plan:
+  code: plan-for-batch-processing-1:0
+  variables:
+    globals: vocab
+    runtime: dataset
+  processes:
+    - code: mh.resource-splitter
+      name: mh.resource-splitter
+      context: internal
+      snippets:
+        - code: mh.resource-splitter
+      input:
+        - variable: vocab
+        - variable: dataset
+      output:
+        - variable: batch-item
+      subProcesses:
+        exec: parallel
+        processes:
+          - code: snippet-1
+            name: snippet-1
+            snippets:
+              - code: serg.fit:6.2
+            input:
+              - variable: batch-item
+            output:
+              - variable: processed-file
+
+version: 8

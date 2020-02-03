@@ -819,7 +819,7 @@ public class ExperimentService {
                             type = EnumsApi.ExperimentTaskType.PREDICT;
 
                             // TODO 2019.05.02 add implementation of disk storage for models
-                            yaml.taskYaml.resourceStorageUrls.put(modelFilename, new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "mode"));
+                            yaml.taskYaml.resourceStorageUrls.put(modelFilename, new PlanParamsYaml.Variable("mode"));
 //                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                         } else {
                             throw new IllegalStateException("#179.130 Not supported type of snippet encountered, type: " + snippet.getType());

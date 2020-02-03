@@ -50,7 +50,7 @@ public class TestPlanParamsYamlCloning {
 
         p.timeoutBeforeTerminate = 120L;
 
-        p.output.add( new PlanParamsYaml.Variable(EnumsApi.DataSourcing.launchpad, "output-code"));
+        p.output.add( new PlanParamsYaml.Variable("output-code"));
         p.metas.add(new Meta("key", "value", "ext"));
 
         PlanParamsYaml.Process p1 = p.clone();

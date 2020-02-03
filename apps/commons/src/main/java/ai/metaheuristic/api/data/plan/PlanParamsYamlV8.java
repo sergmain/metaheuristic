@@ -136,6 +136,7 @@ public class PlanParamsYamlV8 implements BaseParams {
     @AllArgsConstructor
     public static class VariableDefinitionV8 {
         public String global;
+        public String runtime;
         public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
