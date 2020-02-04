@@ -26,11 +26,11 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "MH_DATA")
+@Table(name = "mh_variable")
 @Data
 @EqualsAndHashCode(of = {"id", "version"})
 @ToString(exclude={"data", "bytes"})
-public class GlobalBinaryData implements Serializable {
+public class GlobalVariable implements Serializable {
     private static final long serialVersionUID = 5114121077582180465L;
 
     @Id
@@ -40,7 +40,7 @@ public class GlobalBinaryData implements Serializable {
     @Version
     public Integer version;
 
-    @Column(name = "VAR")
+    @Column(name = "NAME")
     public String variable;
 
     @Column(name = "UPLOAD_TS")

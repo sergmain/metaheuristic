@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.launchpad.beans.Batch;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
@@ -92,7 +92,7 @@ public class BatchService {
     private final BatchCache batchCache;
     private final BatchRepository batchRepository;
     private final WorkbookCache workbookCache;
-    private final BinaryDataService binaryDataService;
+    private final VariableService variableService;
     private final TaskRepository taskRepository;
     private final StationCache stationCache;
     private final LaunchpadEventService launchpadEventService;
@@ -291,7 +291,7 @@ public class BatchService {
 
     List<BatchData.ProcessResourceItem> getBatches(Page<Long> batchIds) {
         List<BatchData.ProcessResourceItem> items = new ArrayList<>();
-        List<Object[]> batchInfos = binaryDataService.getFilenamesForBatchIds(batchIds.getContent());
+        List<Object[]> batchInfos = variableService.getFilenamesForBatchIds(batchIds.getContent());
         for (Long batchId : batchIds) {
             Batch batch = batchCache.findById(batchId);
             String planCode = PLAN_NOT_FOUND;
@@ -565,7 +565,7 @@ public class BatchService {
     }
 
     private String getMainDocumentFilenameForPoolCode(String mainDocumentPoolCode, Long workbookId) {
-        final List<String> filename = binaryDataService.getFilenameByVariableAndWorkbookId(mainDocumentPoolCode, workbookId);
+        final List<String> filename = variableService.getFilenameByVariableAndWorkbookId(mainDocumentPoolCode, workbookId);
         if (filename==null || filename.isEmpty() || StringUtils.isBlank(filename.get(0))) {
             log.error("#990.390 Filename is blank for poolCode: {}, workbookId: {}", mainDocumentPoolCode, workbookId);
             return null;
@@ -574,7 +574,7 @@ public class BatchService {
     }
 
     public String getUploadedFilename(Long batchId, Long workbookId) {
-        final List<String> filename = binaryDataService.findFilenameByBatchId(batchId, workbookId);
+        final List<String> filename = variableService.findFilenameByBatchId(batchId, workbookId);
         if (filename==null || filename.isEmpty() || S.b(filename.get(0))) {
             log.error("#990.392 Filename is blank for batchId: {}, will be used default name - result.zip", batchId);
             return Consts.RESULT_ZIP;

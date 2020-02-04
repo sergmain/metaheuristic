@@ -30,7 +30,7 @@ import java.sql.Timestamp;
 @Data
 @EqualsAndHashCode(of = {"snippetCode"})
 @ToString(exclude={"data", "bytes"})
-public class SnippetBinaryData implements Serializable {
+public class SnippetData implements Serializable {
     private static final long serialVersionUID = 7768428475142175426L;
 
     @Id

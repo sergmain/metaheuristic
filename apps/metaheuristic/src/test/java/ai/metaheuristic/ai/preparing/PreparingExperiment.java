@@ -20,14 +20,14 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.ai.launchpad.binary_data.GlobalBinaryDataService;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
+import ai.metaheuristic.ai.launchpad.variable.GlobalVariableService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentCache;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetBinaryDataService;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetDataService;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
@@ -87,13 +87,13 @@ public abstract class PreparingExperiment {
     protected ExperimentCache experimentCache;
 
     @Autowired
-    private BinaryDataService binaryDataService;
+    private VariableService variableService;
 
     @Autowired
-    public GlobalBinaryDataService globalBinaryDataService;
+    public GlobalVariableService globalVariableService;
 
     @Autowired
-    private SnippetBinaryDataService snippetBinaryDataService;
+    private SnippetDataService snippetDataService;
 
     public Station station = null;
     public String stationIdAsStr;
@@ -170,7 +170,7 @@ public abstract class PreparingExperiment {
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #1");
-                snippetBinaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, fitSnippet.getCode());
+                snippetDataService.save(new ByteArrayInputStream(bytes), bytes.length, fitSnippet.getCode());
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
 
@@ -196,7 +196,7 @@ public abstract class PreparingExperiment {
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #2");
-                snippetBinaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, predictSnippet.getCode());
+                snippetDataService.save(new ByteArrayInputStream(bytes), bytes.length, predictSnippet.getCode());
                 log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
             }
 
@@ -280,7 +280,7 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
             try {
-                snippetBinaryDataService.deleteBySnippetCode(predictSnippet.getCode());
+                snippetDataService.deleteBySnippetCode(predictSnippet.getCode());
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -292,7 +292,7 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
             try {
-                snippetBinaryDataService.deleteBySnippetCode(fitSnippet.getCode());
+                snippetDataService.deleteBySnippetCode(fitSnippet.getCode());
             } catch (Throwable th) {
                 th.printStackTrace();
             }

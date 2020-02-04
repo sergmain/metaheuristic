@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.plan;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.binary_data.GlobalBinaryDataService;
+import ai.metaheuristic.ai.launchpad.variable.GlobalVariableService;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
@@ -75,7 +75,7 @@ public class PlanTopLevelService {
     private final WorkbookService workbookService;
     private final ApplicationEventPublisher publisher;
     private final WorkbookCache workbookCache;
-    private final GlobalBinaryDataService globalBinaryDataService;
+    private final GlobalVariableService globalVariableService;
 
     public PlanApiData.WorkbookResult addWorkbook(Long planId, String variable, LaunchpadContext context) {
         return getWorkbookResult(variable, context, planCache.findById(planId));
@@ -89,7 +89,7 @@ public class PlanTopLevelService {
         if (S.b(variable)) {
             return new PlanApiData.WorkbookResult("#560.006 name of variable is empty");
         }
-        if (globalBinaryDataService.getIdInVariables(List.of(variable)).isEmpty()) {
+        if (globalVariableService.getIdInVariables(List.of(variable)).isEmpty()) {
             return new PlanApiData.WorkbookResult( "#560.008 global variable " + variable +" wasn't found");
         }
         // validate the plan

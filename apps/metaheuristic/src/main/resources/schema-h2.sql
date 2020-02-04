@@ -101,19 +101,19 @@ CREATE TABLE mh_data
 );
 
 CREATE INDEX mh_data_data_type_idx
-    ON mh_data (DATA_TYPE);
+    ON mh_variable (DATA_TYPE);
 
 CREATE INDEX mh_data_ref_id_ref_type_idx
-    ON mh_data (REF_ID, REF_TYPE);
+    ON mh_variable (REF_ID, REF_TYPE);
 
 CREATE INDEX mh_data_ref_type_idx
-    ON mh_data (REF_TYPE);
+    ON mh_variable (REF_TYPE);
 
 CREATE INDEX mh_data_pool_code_id_idx
-    ON mh_data (POOL_CODE);
+    ON mh_variable (POOL_CODE);
 
 CREATE UNIQUE INDEX mh_data_code_unq_idx
-    ON mh_data (CODE);
+    ON mh_variable (CODE);
 
 CREATE TABLE mh_experiment
 (

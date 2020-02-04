@@ -86,11 +86,12 @@ CREATE TABLE MH_LOG_DATA
   LOG_DATA    TEXT not null
 );
 
-CREATE TABLE MH_DATA
+CREATE TABLE MH_VARIABLE
 (
   ID            SERIAL PRIMARY KEY,
   VERSION       NUMERIC(5, 0) NOT NULL,
-  VAR           VARCHAR(250) not null,
+  IS_INITED     BOOLEAN default false not null,
+  NAME          VARCHAR(250) not null,
   CONTEXT_ID    VARCHAR(250),
   WORKBOOK_ID   NUMERIC(10, 0),
   UPLOAD_TS     TIMESTAMP DEFAULT to_timestamp(0),
@@ -99,17 +100,18 @@ CREATE TABLE MH_DATA
   PARAMS        TEXT not null
 );
 
-CREATE INDEX MH_DATA_WORKBOOK_ID_IDX
-    ON MH_DATA (WORKBOOK_ID);
+CREATE INDEX MH_VARIABLE_WORKBOOK_ID_IDX
+    ON mh_data (WORKBOOK_ID);
 
 CREATE INDEX MH_DATA_VAR_ID_IDX
-  ON MH_DATA (VAR);
+  ON mh_data (NAME);
 
-CREATE TABLE MH_GLOBAL_DATA
+--  its name is VARIABLE_GLOBAL, not GLOBAL_VARIABLE because I want these tables to be in the same spot in scheme
+CREATE TABLE MH_VARIABLE_GLOBAL
 (
     ID            SERIAL PRIMARY KEY,
     VERSION       NUMERIC(5, 0) NOT NULL,
-    VAR           VARCHAR(250) not null,
+    NAME          VARCHAR(250) not null,
     UPLOAD_TS     TIMESTAMP DEFAULT to_timestamp(0),
     DATA          OID,
     FILENAME      VARCHAR(150),

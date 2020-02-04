@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.launchpad.snippet;
 
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
-import ai.metaheuristic.ai.launchpad.beans.SnippetBinaryData;
-import ai.metaheuristic.ai.launchpad.repositories.SnippetBinaryDataRepository;
+import ai.metaheuristic.ai.launchpad.beans.SnippetData;
+import ai.metaheuristic.ai.launchpad.repositories.SnippetDataRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -50,13 +50,13 @@ import java.util.Optional;
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
-public class SnippetBinaryDataService {
+public class SnippetDataService {
     private final EntityManager em;
-    private final SnippetBinaryDataRepository snippetBinaryDataRepository;
+    private final SnippetDataRepository snippetDataRepository;
 
     public void storeToFile(String code, File trgFile) {
         try {
-            Blob blob = snippetBinaryDataRepository.getDataAsStreamByCode(code);
+            Blob blob = snippetDataRepository.getDataAsStreamByCode(code);
             if (blob==null) {
                 log.warn("#088.010 Binary data for code {} wasn't found", code);
                 throw new BinaryDataNotFoundException("#088.010 Binary data wasn't found, code: " + code);
@@ -74,14 +74,14 @@ public class SnippetBinaryDataService {
     }
 
     public void deleteBySnippetCode(String snippetCode) {
-        snippetBinaryDataRepository.deleteBySnippetCode(snippetCode);
+        snippetDataRepository.deleteBySnippetCode(snippetCode);
     }
 
-    public SnippetBinaryData save(InputStream is, long size, String snippetCode) {
+    public SnippetData save(InputStream is, long size, String snippetCode) {
         try {
-            SnippetBinaryData data = snippetBinaryDataRepository.findByCodeForUpdate(snippetCode);
+            SnippetData data = snippetDataRepository.findByCodeForUpdate(snippetCode);
             if (data == null) {
-                data = new SnippetBinaryData();
+                data = new SnippetData();
                 data.setSnippetCode(snippetCode);
                 data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.launchpad)));
             } else {
@@ -96,7 +96,7 @@ public class SnippetBinaryDataService {
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
             data.setData(blob);
 
-            snippetBinaryDataRepository.save(data);
+            snippetDataRepository.save(data);
 
             return data;
         }
@@ -107,22 +107,22 @@ public class SnippetBinaryDataService {
         }
     }
 
-    public void update(InputStream is, long size, SnippetBinaryData data) {
+    public void update(InputStream is, long size, SnippetData data) {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
         data.setData(blob);
 
-        snippetBinaryDataRepository.save(data);
+        snippetDataRepository.save(data);
     }
 
     public void deleteById(Long id) {
-        snippetBinaryDataRepository.deleteById(id);
+        snippetDataRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)
-    public Optional<SnippetBinaryData> findById(Long id) {
-        return snippetBinaryDataRepository.findById(id);
+    public Optional<SnippetData> findById(Long id) {
+        return snippetDataRepository.findById(id);
     }
 
 }

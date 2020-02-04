@@ -289,14 +289,14 @@ public abstract class PreparingPlan extends PreparingExperiment {
         byte[] bytes = "A resource for input pool".getBytes();
 
         try {
-            globalBinaryDataService.deleteByVariable(TEST_GLOBAL_VARIABLE);
+            globalVariableService.deleteByVariable(TEST_GLOBAL_VARIABLE);
         } catch (Throwable th) {
             log.error("error preparing variables", th);
         }
 
-        globalBinaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-01.txt");
-        globalBinaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-02.txt");
-        globalBinaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-03.txt");
+        globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-01.txt");
+        globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-02.txt");
+        globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-03.txt");
 
         workbookYaml = new WorkbookParamsYaml.WorkbookYaml();
         workbookYaml.poolCodes.computeIfAbsent(Consts.MH_WORKBOOK_INPUT_VARIABLE, o-> new ArrayList<>()).add(TEST_GLOBAL_VARIABLE);
@@ -365,7 +365,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             }
         }
         try {
-            globalBinaryDataService.deleteByVariable(TEST_GLOBAL_VARIABLE);
+            globalVariableService.deleteByVariable(TEST_GLOBAL_VARIABLE);
         } catch (Throwable th) {
             log.error("error", th);
         }

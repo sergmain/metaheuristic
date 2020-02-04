@@ -14,15 +14,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.binary_data;
+package ai.metaheuristic.ai.launchpad.variable;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
-import ai.metaheuristic.ai.launchpad.beans.BinaryData;
+import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable;
-import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
+import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.RequiredArgsConstructor;
@@ -57,23 +57,23 @@ import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
-public class BinaryDataService {
+public class VariableService {
 
     private final EntityManager em;
-    private final BinaryDataRepository binaryDataRepository;
+    private final VariableRepository variableRepository;
     private final Globals globals;
 
     @Transactional(readOnly = true)
-    public BinaryData getBinaryData(Long id) {
+    public Variable getBinaryData(Long id) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("this method intended to be only for test cases");
         }
         return getBinaryData(id, true);
     }
 
-    private BinaryData getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
+    private Variable getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
         try {
-            BinaryData data = binaryDataRepository.findById(id).orElse(null);
+            Variable data = variableRepository.findById(id).orElse(null);
             if (data==null) {
                 return null;
             }
@@ -88,7 +88,7 @@ public class BinaryDataService {
 
     public void storeToFile(String id, File trgFile) {
         try {
-            Blob blob = binaryDataRepository.getDataAsStreamByCode(Long.valueOf(id));
+            Blob blob = variableRepository.getDataAsStreamByCode(Long.valueOf(id));
             if (blob==null) {
                 log.warn("#087.010 Binary data for id {} wasn't found", id);
                 throw new BinaryDataNotFoundException("#087.010 Binary data wasn't found, code: " + id);
@@ -106,7 +106,7 @@ public class BinaryDataService {
     }
 
     public void deleteByWorkbookId(Long workbookId) {
-        binaryDataRepository.deleteByWorkbookId(workbookId);
+        variableRepository.deleteByWorkbookId(workbookId);
     }
 
     @Transactional(readOnly = true)
@@ -114,7 +114,7 @@ public class BinaryDataService {
         if (variables.isEmpty()) {
             return List.of();
         }
-        return binaryDataRepository.getIdAndStorageUrlInVarsForWorkbook(variables, workbookId);
+        return variableRepository.getIdAndStorageUrlInVarsForWorkbook(variables, workbookId);
     }
 
     @Transactional(readOnly = true)
@@ -122,7 +122,7 @@ public class BinaryDataService {
         if (variables.isEmpty()) {
             return List.of();
         }
-        return binaryDataRepository.getIdAndStorageUrlInVars(variables);
+        return variableRepository.getIdAndStorageUrlInVars(variables);
     }
 
 /*
@@ -132,12 +132,12 @@ public class BinaryDataService {
 */
 
     public void deleteByVariable(String variable) {
-        binaryDataRepository.deleteByVariable(variable);
+        variableRepository.deleteByVariable(variable);
     }
 
-    public BinaryData save(InputStream is, long size, String variable, String filename, Long workbookId, String contextId) {
+    public Variable save(InputStream is, long size, String variable, String filename, Long workbookId, String contextId) {
         try {
-            BinaryData data = new BinaryData();
+            Variable data = new Variable();
             data.setVariable(variable);
             data.setFilename(filename);
             data.setWorkbookId(workbookId);
@@ -148,7 +148,7 @@ public class BinaryDataService {
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
             data.setData(blob);
 
-            binaryDataRepository.save(data);
+            variableRepository.save(data);
 
             return data;
         }
@@ -160,16 +160,16 @@ public class BinaryDataService {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public BinaryData saveWithSpecificStorageUrl(String variable, String params) {
+    public Variable saveWithSpecificStorageUrl(String variable, String params) {
         try {
-            BinaryData data = new BinaryData();
+            Variable data = new Variable();
             data.setVariable(variable);
             data.setFilename(null);
             data.setWorkbookId(null);
             data.setParams(params);
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setData(null);
-            binaryDataRepository.save(data);
+            variableRepository.save(data);
 
             return data;
         }
@@ -182,36 +182,36 @@ public class BinaryDataService {
         }
     }
 
-    public void update(InputStream is, long size, BinaryData data) {
+    public void update(InputStream is, long size, Variable data) {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
         data.setData(blob);
 
-        binaryDataRepository.save(data);
+        variableRepository.save(data);
     }
 
-    public Page<BinaryData> findAll(Pageable pageable) {
-        return binaryDataRepository.findAll(pageable);
+    public Page<Variable> findAll(Pageable pageable) {
+        return variableRepository.findAll(pageable);
     }
 
     public void deleteById(Long id) {
-        binaryDataRepository.deleteById(id);
+        variableRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)
-    public Optional<BinaryData> findById(Long id) {
-        return binaryDataRepository.findById(id);
+    public Optional<Variable> findById(Long id) {
+        return variableRepository.findById(id);
     }
 
     @Transactional(readOnly = true)
     public Slice<SimpleVariable> getAllAsSimpleResources(Pageable pageable) {
-        return binaryDataRepository.getAllAsSimpleResources(pageable);
+        return variableRepository.getAllAsSimpleResources(pageable);
     }
 
     @Transactional(readOnly = true)
     public List<String> getFilenameByVariableAndWorkbookId(String variable, Long workbookId) {
-        return binaryDataRepository.findFilenameByVariableAndWorkbookId(variable, workbookId);
+        return variableRepository.findFilenameByVariableAndWorkbookId(variable, workbookId);
     }
 
     @Transactional(readOnly = true)
@@ -219,7 +219,7 @@ public class BinaryDataService {
         if (true) {
             throw new NotImplementedException("Need to re-write");
         }
-        return binaryDataRepository.findFilenameByVariableAndWorkbookId(batchId.toString(), workbookId);
+        return variableRepository.findFilenameByVariableAndWorkbookId(batchId.toString(), workbookId);
     }
 
     @Transactional(readOnly = true)
@@ -230,10 +230,10 @@ public class BinaryDataService {
         if (true) {
             throw new NotImplementedException("Need to re-write");
         }
-        return binaryDataRepository.getFilenamesForBatchIds(batchIds);
+        return variableRepository.getFilenamesForBatchIds(batchIds);
     }
 
-    public BinaryData storeInitialResource(File tempFile, String variable, String filename, Long workbookId, String contextId) {
+    public Variable storeInitialResource(File tempFile, String variable, String filename, Long workbookId, String contextId) {
         try {
             try (InputStream is = new FileInputStream(tempFile)) {
                 return save(is, tempFile.length(), variable, filename, workbookId, contextId);

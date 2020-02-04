@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.repo;
 
-import ai.metaheuristic.ai.launchpad.beans.GlobalBinaryData;
-import ai.metaheuristic.ai.launchpad.binary_data.GlobalBinaryDataService;
+import ai.metaheuristic.ai.launchpad.beans.GlobalVariable;
+import ai.metaheuristic.ai.launchpad.variable.GlobalVariableService;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,13 +37,13 @@ import static org.junit.Assert.*;
 public class TestGlobalBinaryDataRepository {
 
     @Autowired
-    private GlobalBinaryDataService globalBinaryDataService;
+    private GlobalVariableService globalVariableService;
 
-    private GlobalBinaryData d1 = null;
+    private GlobalVariable d1 = null;
     @After
     public void after() {
         if (d1!=null) {
-            globalBinaryDataService.deleteById(d1.id);
+            globalVariableService.deleteById(d1.id);
         }
     }
 
@@ -53,11 +53,11 @@ public class TestGlobalBinaryDataRepository {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        d1 = globalBinaryDataService.save(inputStream, bytes.length, "test-01","test-file.bin");
+        d1 = globalVariableService.save(inputStream, bytes.length, "test-01","test-file.bin");
 
         Timestamp ts = d1.getUploadTs();
 
-        GlobalBinaryData d2 = globalBinaryDataService.getBinaryData(d1.getId());
+        GlobalVariable d2 = globalVariableService.getBinaryData(d1.getId());
         assertNotNull(d2);
         assertEquals(d1, d2);
         assertArrayEquals(bytes, d2.bytes);
@@ -67,9 +67,9 @@ public class TestGlobalBinaryDataRepository {
 
         bytes = "another one very short data".getBytes();
         inputStream = new ByteArrayInputStream(bytes);
-        globalBinaryDataService.update(inputStream, bytes.length, d2);
+        globalVariableService.update(inputStream, bytes.length, d2);
 
-        d2 = globalBinaryDataService.getBinaryData(d2.getId());
+        d2 = globalVariableService.getBinaryData(d2.getId());
         assertNotNull(d2);
         assertNotEquals(ts, d2.getUploadTs());
         assertArrayEquals(bytes, d2.bytes);

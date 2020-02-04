@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
+import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
@@ -31,7 +31,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -53,7 +52,7 @@ public class ExperimentProcessService {
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
-    private final BinaryDataService binaryDataService;
+    private final VariableService variableService;
     private final WorkbookCache workbookCache;
 
     public PlanService.ProduceTaskResult produceTasks(
@@ -114,7 +113,7 @@ public class ExperimentProcessService {
         }
         else {
             if (!collectedInputs.containsKey(meta.getValue())) {
-                List<SimpleVariableAndStorageUrl> initialInputResourceCodes = binaryDataService.getIdInVariables(
+                List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(
                         Collections.singletonList(meta.getValue()), workbookId
                 );
 

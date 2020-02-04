@@ -7,13 +7,13 @@ alter table pilot_batch
 alter table pilot_batch
     add DATA_ID          NUMERIC(10, 0);
 
-alter table mh_data
+alter table mh_variable
     change WORKBOOK_ID REF_ID decimal null;
 
-alter table mh_data
+alter table mh_variable
     add   REF_TYPE    VARCHAR(15);
 
-update mh_data
+update mh_variable
 set
     ref_type = 'workbook'
 where ref_id is not null;

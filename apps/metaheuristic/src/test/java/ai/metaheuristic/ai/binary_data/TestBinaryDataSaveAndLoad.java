@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.binary_data;
 
-import ai.metaheuristic.ai.launchpad.beans.BinaryData;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
+import ai.metaheuristic.ai.launchpad.beans.Variable;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
+import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -56,10 +56,10 @@ public class TestBinaryDataSaveAndLoad {
     private static final String TEST_VARIABLE = "test-variable";
 
     @Autowired
-    private BinaryDataService binaryDataService;
+    private VariableService variableService;
 
     @Autowired
-    private BinaryDataRepository binaryDataRepository;
+    private VariableRepository variableRepository;
 
     private static final int ARRAY_SIZE = 1_000_000;
     private static final Random r = new Random();
@@ -67,7 +67,7 @@ public class TestBinaryDataSaveAndLoad {
     @Before
     public void before() {
         try {
-            binaryDataRepository.deleteByVariable(TEST_VARIABLE);
+            variableRepository.deleteByVariable(TEST_VARIABLE);
         } catch (Throwable e) {
             log.error("Error", e);
         }
@@ -76,7 +76,7 @@ public class TestBinaryDataSaveAndLoad {
     @After
     public void after() {
         try {
-            binaryDataRepository.deleteByVariable(TEST_VARIABLE);
+            variableRepository.deleteByVariable(TEST_VARIABLE);
         } catch (Throwable th) {
             log.error("Error while deleting test data", th);
         }
@@ -92,15 +92,15 @@ public class TestBinaryDataSaveAndLoad {
         File dataFile = new File(tempDir, DATA_FILE_BIN);
         FileUtils.writeByteArrayToFile(dataFile, bytes);
 
-        BinaryData binaryData = null;
+        Variable variable = null;
         try (InputStream is = new FileInputStream(dataFile)) {
-            binaryData = binaryDataService.save(is, dataFile.length(), TEST_VARIABLE, DATA_FILE_BIN, 1L,  "1,2,3");
+            variable = variableService.save(is, dataFile.length(), TEST_VARIABLE, DATA_FILE_BIN, 1L,  "1,2,3");
         }
-        assertNotNull(binaryData);
-        assertNotNull(binaryData.id);
+        assertNotNull(variable);
+        assertNotNull(variable.id);
 
         File trgFile = new File(tempDir, TRG_DATA_FILE_BIN);
-        binaryDataService.storeToFile(binaryData.id.toString(), trgFile);
+        variableService.storeToFile(variable.id.toString(), trgFile);
 
         assertTrue(FileUtils.contentEquals(dataFile, trgFile));
 

@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.launchpad;
 
-import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
+import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class ArtifactCleanerAtLaunchpad {
 
     private final WorkbookRepository workbookRepository;
     private final TaskRepository taskRepository;
-    private final BinaryDataRepository binaryDataRepository;
+    private final VariableRepository variableRepository;
 
     public void fixedDelay() {
         deleteOrphanTasks();
@@ -48,7 +48,7 @@ public class ArtifactCleanerAtLaunchpad {
     }
 
     private void deleteOrphanWorkbookData() {
-        deleteOrphanData(binaryDataRepository.findAllOrphanWorkbookData());
+        deleteOrphanData(variableRepository.findAllOrphanWorkbookData());
     }
 
     private void deleteOrphanData(List<Long> ids) {
@@ -58,7 +58,7 @@ public class ArtifactCleanerAtLaunchpad {
 
         // lets delete no more than 1000 record per call of ai.metaheuristic.ai.launchpad.ArtifactCleanerAtLaunchpad.deleteOrphanData()
         for (int i = 0; i < Math.min(ids.size(), 1000); i++) {
-            binaryDataRepository.deleteById(ids.get(i));
+            variableRepository.deleteById(ids.get(i));
         }
     }
 

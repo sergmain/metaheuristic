@@ -17,8 +17,8 @@ package ai.metaheuristic.ai.launchpad.launchpad_resource;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
-import ai.metaheuristic.ai.launchpad.beans.GlobalBinaryData;
-import ai.metaheuristic.ai.launchpad.binary_data.GlobalBinaryDataService;
+import ai.metaheuristic.ai.launchpad.beans.GlobalVariable;
+import ai.metaheuristic.ai.launchpad.variable.GlobalVariableService;
 import ai.metaheuristic.ai.launchpad.data.ResourceData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
@@ -45,11 +45,11 @@ import java.io.IOException;
 public class ResourceTopLevelService {
 
     private final Globals globals;
-    private final GlobalBinaryDataService globalBinaryDataService;
+    private final GlobalVariableService globalVariableService;
 
     public ResourceData.ResourcesResult getResources(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.resourceRowsLimit, pageable);
-        return new ResourceData.ResourcesResult(globalBinaryDataService.getAllAsSimpleResources(pageable));
+        return new ResourceData.ResourcesResult(globalVariableService.getAllAsSimpleResources(pageable));
     }
 
     public OperationStatusRest createResourceFromFile(MultipartFile file, String variable) {
@@ -79,7 +79,7 @@ public class ResourceTopLevelService {
             }
 
             try {
-                globalBinaryDataService.storeInitialResource(tempFile, variable, originFilename);
+                globalVariableService.storeInitialResource(tempFile, variable, originFilename);
             } catch (StoreNewFileException e) {
                 String es = "#172.040 An error while saving data to file, " + e.toString();
                 log.error(es, e);
@@ -106,7 +106,7 @@ public class ResourceTopLevelService {
         }
 
         try {
-            globalBinaryDataService.createGlobalVariableWithExternalStorage(variable, params);
+            globalVariableService.createGlobalVariableWithExternalStorage(variable, params);
         } catch (StoreNewFileException e) {
             String es = "#172.080 An error while saving data to file, " + e.toString();
             log.error(es, e);
@@ -116,7 +116,7 @@ public class ResourceTopLevelService {
     }
 
     public ResourceData.ResourceResult getResourceById(Long id) {
-        final SimpleVariable sv = globalBinaryDataService.getByIdAsSimpleResource(id);
+        final SimpleVariable sv = globalVariableService.getByIdAsSimpleResource(id);
         if (sv==null) {
             return new ResourceData.ResourceResult("#172.100 Resource wasn't found for id: " + id);
         }
@@ -124,11 +124,11 @@ public class ResourceTopLevelService {
     }
 
     public OperationStatusRest deleteResource(Long id) {
-        final GlobalBinaryData data = globalBinaryDataService.findById(id).orElse(null);
+        final GlobalVariable data = globalVariableService.findById(id).orElse(null);
         if (data==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.120 Resource wasn't found for id: " + id);
         }
-        globalBinaryDataService.deleteById(id);
+        globalVariableService.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

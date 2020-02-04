@@ -23,14 +23,14 @@ import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.launchpad.beans.BinaryData;
+import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippet;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
-import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
+import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
@@ -88,8 +88,8 @@ public class ResourceSplitterSnippet implements InternalSnippet {
     private final PlanService planService;
     private final PlanCache planCache;
     private final WorkbookService workbookService;
-    private final BinaryDataRepository binaryDataRepository;
-    private final BinaryDataService binaryDataService;
+    private final VariableRepository variableRepository;
+    private final VariableService variableService;
     private final WorkbookCache workbookCache;
     private final IdsRepository idsRepository;
 
@@ -112,9 +112,9 @@ public class ResourceSplitterSnippet implements InternalSnippet {
             throw new IllegalStateException("Too many input codes");
         }
         String inputCode = values.get(0);
-        BinaryData bd = binaryDataRepository.findById(Long.valueOf(inputCode)).orElse(null);
+        Variable bd = variableRepository.findById(Long.valueOf(inputCode)).orElse(null);
         if (bd==null) {
-            throw new IllegalStateException("BinaryData not found for code " + inputCode);
+            throw new IllegalStateException("Variable not found for code " + inputCode);
         }
         String originFilename = bd.filename;
         String ext = StrUtils.getExtension(originFilename);
@@ -234,7 +234,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
 //                attachments.add(code);
             }
 
-            binaryDataService.storeInitialResource(fileWithMapping.file, variable, originFilename, wb.getId(), contextId);
+            variableService.storeInitialResource(fileWithMapping.file, variable, originFilename, wb.getId(), contextId);
         });
 
         if (!isMainDocPresent.get()) {

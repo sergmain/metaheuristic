@@ -23,8 +23,8 @@ import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.*;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
+import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
@@ -58,7 +58,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -84,7 +83,7 @@ public class WorkbookService {
     private final Globals globals;
     private final WorkbookRepository workbookRepository;
     private final PlanCache planCache;
-    private final BinaryDataService binaryDataService;
+    private final VariableService variableService;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final StationCache stationCache;
@@ -183,7 +182,7 @@ public class WorkbookService {
 
         if (checkResources) {
             WorkbookParamsYaml resourceParam = wb.getWorkbookParamsYaml();
-            List<SimpleVariableAndStorageUrl> inputResourceCodes = binaryDataService.getIdInVariables(resourceParam.getAllPoolCodes());
+            List<SimpleVariableAndStorageUrl> inputResourceCodes = variableService.getIdInVariables(resourceParam.getAllPoolCodes());
             if (inputResourceCodes == null || inputResourceCodes.isEmpty()) {
                 result.planProducingStatus = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
                 return result;
@@ -478,7 +477,7 @@ public class WorkbookService {
         }
 
         WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
-        List<SimpleVariableAndStorageUrl> initialInputResourceCodes = binaryDataService.getIdInVariables(resourceParams.getAllPoolCodes());
+        List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(resourceParams.getAllPoolCodes());
         log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
 
         PlanService.ResourcePools pools = new PlanService.ResourcePools(initialInputResourceCodes);
@@ -600,7 +599,7 @@ public class WorkbookService {
     public void deleteWorkbook(Long workbookId, Long companyUniqueId) {
 //        experimentService.resetExperimentByWorkbookId(workbookId);
         applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.ExperimentResetEvent(workbookId));
-        binaryDataService.deleteByWorkbookId(workbookId);
+        variableService.deleteByWorkbookId(workbookId);
         Workbook workbook = workbookCache.findById(workbookId);
         if (workbook != null) {
             // unlock plan if this is the last workbook in the plan

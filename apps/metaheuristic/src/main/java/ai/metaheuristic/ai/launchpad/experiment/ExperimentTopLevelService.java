@@ -737,7 +737,7 @@ public class ExperimentTopLevelService {
                     "#285.510 can't find a plan with experiment code: " + experimentCode);
         }
 */
-        PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(p.id, resourcePoolCode, null, context);
+        PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(p.id, resourcePoolCode, context);
         if (workbookResultRest.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, workbookResultRest.errorMessages, workbookResultRest.infoMessages);
         }

@@ -26,11 +26,11 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "MH_DATA")
+@Table(name = "mh_variable")
 @Data
 @EqualsAndHashCode(of = {"id", "version"})
 @ToString(exclude={"data", "bytes"})
-public class BinaryData implements Serializable {
+public class Variable implements Serializable {
     private static final long serialVersionUID = 7768428475142175426L;
 
     @Id
@@ -40,8 +40,11 @@ public class BinaryData implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "VAR")
-    private String variable;
+    @Column(name = "IS_INITED")
+    public boolean inited;
+
+    @Column(name = "NAME")
+    private String name;
 
     /**
      * This field is initialized only for data resources which were produced while processing workbook.

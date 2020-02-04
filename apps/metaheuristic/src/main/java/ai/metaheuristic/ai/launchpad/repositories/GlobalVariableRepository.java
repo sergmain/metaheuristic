@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.repositories;
 
-import ai.metaheuristic.ai.launchpad.beans.GlobalBinaryData;
-import ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.launchpad.beans.GlobalVariable;
+import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -39,29 +39,29 @@ import java.util.List;
  */
 @Repository
 @Profile("launchpad")
-public interface GlobalBinaryDataRepository extends CrudRepository<GlobalBinaryData, Long> {
+public interface GlobalVariableRepository extends CrudRepository<GlobalVariable, Long> {
 
-    @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl(" +
+    @Query(value="select new ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl(" +
             "b.id, b.variable, b.params, b.filename ) " +
-            "from GlobalBinaryData b where b.variable in :vars")
+            "from GlobalVariable b where b.variable in :vars")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(List<String> vars);
 
-    List<GlobalBinaryData> findAllByVariable(String variable);
+    List<GlobalVariable> findAllByVariable(String variable);
 
-    @Query(value="select b.filename from GlobalBinaryData b where b.variable=:var")
+    @Query(value="select b.filename from GlobalVariable b where b.variable=:var")
     List<String> findFilenamesByVar(String var);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.data from GlobalBinaryData b where b.id=:id")
+    @Query(value="select b.data from GlobalVariable b where b.id=:id")
     Blob getDataAsStreamById(Long id);
 
     @Transactional
-    @Query(value="select b from GlobalBinaryData b where b.id=:id")
-    GlobalBinaryData findByIdForUpdate(Long id);
+    @Query(value="select b from GlobalVariable b where b.id=:id")
+    GlobalVariable findByIdForUpdate(Long id);
 
     @NonNull
     @Transactional(readOnly = true)
-    Page<GlobalBinaryData> findAll(@NonNull Pageable pageable);
+    Page<GlobalVariable> findAll(@NonNull Pageable pageable);
 
     @Transactional
     void deleteByVariable(String variable);
@@ -69,18 +69,18 @@ public interface GlobalBinaryDataRepository extends CrudRepository<GlobalBinaryD
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable(" +
             "b.id, b.version, b.variable, b.uploadTs, b.filename, b.params ) " +
-            "from GlobalBinaryData b " +
+            "from GlobalVariable b " +
             "order by b.uploadTs desc ")
     Slice<SimpleVariable> getAllAsSimpleResources(Pageable pageable);
 
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable(" +
-            "b.id, b.version, b.variable, b.uploadTs, b.filename, b.params ) " +
-            "from BinaryData b " +
+            "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
+            "from Variable b " +
             "where b.id=:id")
     SimpleVariable getByIdAsSimpleResource(Long id);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.id from GlobalBinaryData b")
+    @Query(value="select b.id from GlobalVariable b")
     List<Long> getAllIds();
 }

@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.launchpad.internal_snippet_lib.permute_variables_and_hyper_params;
 
-import ai.metaheuristic.ai.launchpad.beans.BinaryData;
+import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippet;
-import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
+import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PermuteVariablesAndHyperParamsSnippet implements InternalSnippet {
 
-    private final BinaryDataRepository binaryDataRepository;
+    private final VariableRepository variableRepository;
 
     public void process(Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
 
@@ -49,9 +49,9 @@ public class PermuteVariablesAndHyperParamsSnippet implements InternalSnippet {
             throw new IllegalStateException("Too many input codes");
         }
         String inputCode = values.get(0);
-        BinaryData bd = binaryDataRepository.findById(Long.valueOf(inputCode)).orElse(null);
+        Variable bd = variableRepository.findById(Long.valueOf(inputCode)).orElse(null);
         if (bd==null) {
-            throw new IllegalStateException("BinaryData not found for code " + inputCode);
+            throw new IllegalStateException("Variable not found for code " + inputCode);
         }
     }
 

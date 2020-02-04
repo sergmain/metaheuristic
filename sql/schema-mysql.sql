@@ -100,11 +100,12 @@ CREATE TABLE mh_log_data
   LOG_DATA    MEDIUMTEXT not null
 );
 
-CREATE TABLE mh_data
+CREATE TABLE mh_variable
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    VAR             VARCHAR(250) not null,
+    IS_INITED       BOOLEAN not null default false,
+    NAME            VARCHAR(250) not null,
     CONTEXT_ID      VARCHAR(250),
     WORKBOOK_ID     NUMERIC(10, 0),
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -113,17 +114,18 @@ CREATE TABLE mh_data
     PARAMS          MEDIUMTEXT not null
 );
 
-CREATE INDEX mh_data_workbook_id_idx
-  ON mh_data (WORKBOOK_ID);
+CREATE INDEX mh_variable_workbook_id_idx
+  ON mh_variable (WORKBOOK_ID);
 
-CREATE INDEX mh_data_var_id_idx
-    ON mh_data (VAR);
+CREATE INDEX mh_variable_name_idx
+    ON mh_variable (NAME);
 
-CREATE TABLE mh_global_data
+# its name is VARIABLE_GLOBAL, not GLOBAL_VARIABLE because I want these tables to be in the same spot in scheme
+CREATE TABLE mh_variable_global
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    VAR             VARCHAR(250) not null,
+    NAME            VARCHAR(250) not null,
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     DATA            LONGBLOB,
     FILENAME        VARCHAR(150),

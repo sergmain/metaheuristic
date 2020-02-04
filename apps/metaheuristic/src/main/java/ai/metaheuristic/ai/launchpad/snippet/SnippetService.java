@@ -61,7 +61,7 @@ public class SnippetService {
     private final Globals globals;
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
-    private final SnippetBinaryDataService snippetBinaryDataService;
+    private final SnippetDataService snippetDataService;
 
     public Snippet findByCode(String snippetCode) {
         Long id = snippetRepository.findIdByCode(snippetCode);
@@ -273,7 +273,7 @@ public class SnippetService {
         if (file != null) {
             try (InputStream inputStream = new FileInputStream(file)) {
                 String snippetCode = snippet.getCode();
-                snippetBinaryDataService.save(inputStream, snippetConfig.info.length, snippetCode);
+                snippetDataService.save(inputStream, snippetConfig.info.length, snippetCode);
             }
         }
     }

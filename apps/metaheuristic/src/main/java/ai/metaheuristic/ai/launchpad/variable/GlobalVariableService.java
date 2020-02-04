@@ -14,15 +14,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.binary_data;
+package ai.metaheuristic.ai.launchpad.variable;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
-import ai.metaheuristic.ai.launchpad.beans.GlobalBinaryData;
+import ai.metaheuristic.ai.launchpad.beans.GlobalVariable;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable;
-import ai.metaheuristic.ai.launchpad.repositories.GlobalBinaryDataRepository;
+import ai.metaheuristic.ai.launchpad.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.RequiredArgsConstructor;
@@ -56,23 +56,23 @@ import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
-public class GlobalBinaryDataService {
+public class GlobalVariableService {
 
     private final EntityManager em;
-    private final GlobalBinaryDataRepository globalBinaryDataRepository;
+    private final GlobalVariableRepository globalVariableRepository;
     private final Globals globals;
 
     @Transactional(readOnly = true)
-    public GlobalBinaryData getBinaryData(Long id) {
+    public GlobalVariable getBinaryData(Long id) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("this method intended to be only for test cases");
         }
         return getBinaryData(id, true);
     }
 
-    private GlobalBinaryData getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
+    private GlobalVariable getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
         try {
-            GlobalBinaryData data = globalBinaryDataRepository.findById(id).orElse(null);
+            GlobalVariable data = globalVariableRepository.findById(id).orElse(null);
             if (data==null) {
                 return null;
             }
@@ -87,7 +87,7 @@ public class GlobalBinaryDataService {
 
     public void storeToFile(Long id, File trgFile) {
         try {
-            Blob blob = globalBinaryDataRepository.getDataAsStreamById(id);
+            Blob blob = globalVariableRepository.getDataAsStreamById(id);
             if (blob==null) {
                 log.warn("#087.010 Binary data for id {} wasn't found", id);
                 throw new BinaryDataNotFoundException("#087.010 Binary data wasn't found, id: " + id);
@@ -109,16 +109,16 @@ public class GlobalBinaryDataService {
         if (variables.isEmpty()) {
             return List.of();
         }
-        return globalBinaryDataRepository.getIdAndStorageUrlInVars(variables);
+        return globalVariableRepository.getIdAndStorageUrlInVars(variables);
     }
 
     public void deleteByVariable(String variable) {
-        globalBinaryDataRepository.deleteByVariable(variable);
+        globalVariableRepository.deleteByVariable(variable);
     }
 
-    public GlobalBinaryData save(InputStream is, long size, String variable, String filename) {
+    public GlobalVariable save(InputStream is, long size, String variable, String filename) {
         try {
-            GlobalBinaryData data = new GlobalBinaryData();
+            GlobalVariable data = new GlobalVariable();
             data.setVariable(variable);
             data.setFilename(filename);
             data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
@@ -127,7 +127,7 @@ public class GlobalBinaryDataService {
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
             data.setData(blob);
 
-            globalBinaryDataRepository.save(data);
+            globalVariableRepository.save(data);
 
             return data;
         }
@@ -138,7 +138,7 @@ public class GlobalBinaryDataService {
         }
     }
 
-    public GlobalBinaryData storeInitialResource(File tempFile, String variable, String filename) {
+    public GlobalVariable storeInitialResource(File tempFile, String variable, String filename) {
         try {
             try (InputStream is = new FileInputStream(tempFile)) {
                 return save(is, tempFile.length(), variable, filename);
@@ -150,16 +150,16 @@ public class GlobalBinaryDataService {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public GlobalBinaryData createGlobalVariableWithExternalStorage(String variable, String params) {
+    public GlobalVariable createGlobalVariableWithExternalStorage(String variable, String params) {
 
         try {
-            GlobalBinaryData data = new GlobalBinaryData();
+            GlobalVariable data = new GlobalVariable();
             data.setVariable(variable);
             data.setFilename(null);
             data.setParams(params);
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setData(null);
-            globalBinaryDataRepository.save(data);
+            globalVariableRepository.save(data);
 
             return data;
         }
@@ -172,40 +172,40 @@ public class GlobalBinaryDataService {
         }
     }
 
-    public void update(InputStream is, long size, GlobalBinaryData data) {
+    public void update(InputStream is, long size, GlobalVariable data) {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
         data.setData(blob);
 
-        globalBinaryDataRepository.save(data);
+        globalVariableRepository.save(data);
     }
 
-    public Page<GlobalBinaryData> findAll(Pageable pageable) {
-        return globalBinaryDataRepository.findAll(pageable);
+    public Page<GlobalVariable> findAll(Pageable pageable) {
+        return globalVariableRepository.findAll(pageable);
     }
 
     public void deleteById(Long id) {
-        globalBinaryDataRepository.deleteById(id);
+        globalVariableRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)
-    public Optional<GlobalBinaryData> findById(Long id) {
-        return globalBinaryDataRepository.findById(id);
+    public Optional<GlobalVariable> findById(Long id) {
+        return globalVariableRepository.findById(id);
     }
 
     @Transactional(readOnly = true)
     public Slice<SimpleVariable> getAllAsSimpleResources(Pageable pageable) {
-        return globalBinaryDataRepository.getAllAsSimpleResources(pageable);
+        return globalVariableRepository.getAllAsSimpleResources(pageable);
     }
 
     @Transactional(readOnly = true)
     public SimpleVariable getByIdAsSimpleResource(Long id) {
-        return globalBinaryDataRepository.getByIdAsSimpleResource(id);
+        return globalVariableRepository.getByIdAsSimpleResource(id);
     }
 
     @Transactional(readOnly = true)
     public List<String> getFilenamesByVariable(String variable) {
-        return globalBinaryDataRepository.findFilenamesByVar(variable);
+        return globalVariableRepository.findFilenamesByVar(variable);
     }
 }

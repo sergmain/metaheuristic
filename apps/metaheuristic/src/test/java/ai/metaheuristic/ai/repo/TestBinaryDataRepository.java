@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.repo;
 
-import ai.metaheuristic.ai.launchpad.beans.BinaryData;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.beans.Variable;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,13 +37,13 @@ import static org.junit.Assert.*;
 public class TestBinaryDataRepository {
 
     @Autowired
-    private BinaryDataService binaryDataService;
+    private VariableService variableService;
 
-    private BinaryData d1 = null;
+    private Variable d1 = null;
     @After
     public void after() {
         if (d1!=null) {
-            binaryDataService.deleteById(d1.id);
+            variableService.deleteById(d1.id);
         }
     }
 
@@ -53,11 +53,11 @@ public class TestBinaryDataRepository {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        d1 = binaryDataService.save(inputStream, bytes.length, "test-01","test-file.bin", 10L, "1");
+        d1 = variableService.save(inputStream, bytes.length, "test-01","test-file.bin", 10L, "1");
 
         Timestamp ts = d1.getUploadTs();
 
-        BinaryData d2 = binaryDataService.getBinaryData(d1.getId());
+        Variable d2 = variableService.getBinaryData(d1.getId());
         assertNotNull(d2);
         assertEquals(d1, d2);
         assertArrayEquals(bytes, d2.bytes);
@@ -67,9 +67,9 @@ public class TestBinaryDataRepository {
 
         bytes = "another one very short data".getBytes();
         inputStream = new ByteArrayInputStream(bytes);
-        binaryDataService.update(inputStream, bytes.length, d2);
+        variableService.update(inputStream, bytes.length, d2);
 
-        d2 = binaryDataService.getBinaryData(d2.getId());
+        d2 = variableService.getBinaryData(d2.getId());
         assertNotNull(d2);
         assertNotEquals(ts, d2.getUploadTs());
         assertArrayEquals(bytes, d2.bytes);

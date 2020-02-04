@@ -53,7 +53,7 @@ public class SnippetTopLevelService {
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
     private final SnippetService snippetService;
-    private final SnippetBinaryDataService snippetBinaryDataService;
+    private final SnippetDataService snippetDataService;
 
     public SnippetData.SnippetsResult getSnippets() {
         SnippetData.SnippetsResult result = new SnippetData.SnippetsResult();
@@ -75,7 +75,7 @@ public class SnippetTopLevelService {
                     "#424.010 snippet wasn't found, planId: " + id);
         }
         snippetCache.delete(snippet.getId());
-        snippetBinaryDataService.deleteBySnippetCode(snippet.getCode());
+        snippetDataService.deleteBySnippetCode(snippet.getCode());
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

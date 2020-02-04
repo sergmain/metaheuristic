@@ -22,14 +22,14 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.LaunchpadCommandProcessor;
-import ai.metaheuristic.ai.launchpad.beans.BinaryData;
+import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetBinaryDataService;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetDataService;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
@@ -90,8 +90,8 @@ public class ServerService {
     private static final int STATION_COMM_VERSION = new StationCommParamsYaml().version;
 
     private final Globals globals;
-    private final BinaryDataService binaryDataService;
-    private final SnippetBinaryDataService snippetBinaryDataService;
+    private final VariableService variableService;
+    private final SnippetDataService snippetDataService;
     private final LaunchpadCommandProcessor launchpadCommandProcessor;
     private final StationCache stationCache;
     private final WorkbookRepository workbookRepository;
@@ -146,14 +146,14 @@ public class ServerService {
         if (resourceId==null) {
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.020 resourceId is null" );
         }
-        BinaryData binaryData = binaryDataService.findById(resourceId).orElse(null);
-        if (binaryData==null) {
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 BinaryData for resourceId "+resourceId+" wasn't found" );
+        Variable variable = variableService.findById(resourceId).orElse(null);
+        if (variable ==null) {
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable for resourceId "+resourceId+" wasn't found" );
         }
         if (true) {
             throw new NotImplementedException("Need to re-write a logic of storing resources from station");
         }
-        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(binaryData.getParams());
+        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(variable.getParams());
 
         File tempDir=null;
         try {
@@ -168,7 +168,7 @@ public class ServerService {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
             try (InputStream is = new FileInputStream(resFile)) {
-                binaryDataService.update(is, resFile.length(), binaryData);
+                variableService.update(is, resFile.length(), variable);
             }
         }
         catch (BinaryDataSaveException th) {
@@ -189,10 +189,10 @@ public class ServerService {
         finally {
             DirUtils.deleteAsync(tempDir);
         }
-        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(binaryData.getId(), true);
+        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(variable.getId(), true);
         return status== Enums.UploadResourceStatus.OK
                 ? OK_UPLOAD_RESULT
-                : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+binaryData.getId()+"");
+                : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+ variable.getId()+"");
     }
 
     private ResourceWithCleanerInfo getAbstractResourceResponseEntity(String chunkSize, int chunkNum, EnumsApi.BinaryDataType binaryDataType, String resourceId) {
@@ -202,11 +202,11 @@ public class ServerService {
         switch (binaryDataType) {
             case SNIPPET:
                 assetFile = ResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, resourceId, null);
-                dataSaver = snippetBinaryDataService::storeToFile;
+                dataSaver = snippetDataService::storeToFile;
                 break;
             case DATA:
                 assetFile = ResourceUtils.prepareDataFile(globals.launchpadTempDir, resourceId, null);
-                dataSaver = binaryDataService::storeToFile;
+                dataSaver = variableService::storeToFile;
                 break;
             default:
                 throw new IllegalStateException("#442.008 Unknown type of data: " + binaryDataType);

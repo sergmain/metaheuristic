@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
 import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
@@ -94,7 +94,7 @@ public class BatchTopLevelService {
     private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
 
     private final PlanService planService;
-    private final BinaryDataService binaryDataService;
+    private final VariableService variableService;
     private final BatchRepository batchRepository;
     private final BatchService batchService;
     private final BatchCache batchCache;
@@ -220,7 +220,7 @@ public class BatchTopLevelService {
             }
 
             try(InputStream is = new FileInputStream(dataFile)) {
-                binaryDataService.save(
+                variableService.save(
                         is, dataFile.length(), code,
                         originFilename, producingResult.workbook.getId(),
                         ""+idsRepository.save(new Ids()).id
@@ -357,7 +357,7 @@ public class BatchTopLevelService {
                 throw new NotImplementedException("need to re-write with using workbookId and find the first vatiable in workbook");
             }
             String dataId = "1";
-            binaryDataService.storeToFile(dataId, tempFile);
+            variableService.storeToFile(dataId, tempFile);
         } catch (BinaryDataNotFoundException e) {
             String msg = "#990.375 Error store data to temp file, data doesn't exist in db, batchId " + batchId +
                     ", file: " + tempFile.getPath();
@@ -406,7 +406,7 @@ public class BatchTopLevelService {
 
         try {
             // TODO 2020-01-30 need to re-write
-            binaryDataService.storeToFile(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), tempFile);
+            variableService.storeToFile(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), tempFile);
         } catch (BinaryDataNotFoundException e) {
             String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " +
                     taskParamYaml.taskYaml.outputResourceIds.values().iterator().next() +

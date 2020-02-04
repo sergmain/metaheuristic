@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.repositories;
 
-import ai.metaheuristic.ai.launchpad.beans.BinaryData;
-import ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.launchpad.beans.Variable;
+import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -41,51 +41,51 @@ import java.util.Optional;
  */
 @Repository
 @Profile("launchpad")
-public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
+public interface VariableRepository extends CrudRepository<Variable, Long> {
 
     @Transactional(readOnly = true)
-    @Query(nativeQuery = true, value = "select d.id from mh_data d where d.WORKBOOK_ID is not null and d.WORKBOOK_ID not in (select z.id from mh_workbook z)")
+    @Query(nativeQuery = true, value = "select d.id from mh_variable d where d.WORKBOOK_ID is not null and d.WORKBOOK_ID not in (select z.id from mh_workbook z)")
     List<Long> findAllOrphanWorkbookData();
 
-    @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl(" +
-            "b.id, b.variable, b.params, b.filename ) " +
-            "from BinaryData b where b.variable in :vars and " +
+    @Query(value="select new ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl(" +
+            "b.id, b.name, b.params, b.filename ) " +
+            "from Variable b where b.name in :vars and " +
             "b.workbookId=:workbookId")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVarsForWorkbook(List<String> vars, Long workbookId);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.workbookId, b.filename from BinaryData b " +
+    @Query(value="select b.workbookId, b.filename from Variable b " +
             "where b.workbookId in :ids ")
     List<Object[]> getFilenamesForBatchIds(Collection<Long> ids);
 
-    @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleVariableAndStorageUrl(" +
-            "b.id, b.variable, b.params, b.filename ) " +
-            "from BinaryData b where b.variable in :vars")
+    @Query(value="select new ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl(" +
+            "b.id, b.name, b.params, b.filename ) " +
+            "from Variable b where b.name in :vars")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(List<String> vars);
 
-    List<BinaryData> findAllByVariable(String variable);
+    List<Variable> findAllByVariable(String variable);
 
-    @Query(value="select b.filename from BinaryData b where b.variable=:var")
+    @Query(value="select b.filename from Variable b where b.name=:var")
     String findFilenameByVar(String var);
 
-    @Query(value="select b.filename from BinaryData b where b.variable=:variable and b.workbookId=:workbookId ")
+    @Query(value="select b.filename from Variable b where b.name=:variable and b.workbookId=:workbookId ")
     List<String> findFilenameByVariableAndWorkbookId(String variable, Long workbookId);
 
     @NonNull
     @Transactional(readOnly = true)
-    Optional<BinaryData> findById(@NonNull Long id);
+    Optional<Variable> findById(@NonNull Long id);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.data from BinaryData b where b.id=:id")
+    @Query(value="select b.data from Variable b where b.id=:id")
     Blob getDataAsStreamByCode(Long id);
 
     @Transactional
-    @Query(value="select b from BinaryData b where b.id=:id")
-    BinaryData findByIdForUpdate(Long id);
+    @Query(value="select b from Variable b where b.id=:id")
+    Variable findByIdForUpdate(Long id);
 
     @NonNull
     @Transactional(readOnly = true)
-    Page<BinaryData> findAll(@NonNull Pageable pageable);
+    Page<Variable> findAll(@NonNull Pageable pageable);
 
     @Transactional
     void deleteById(@NonNull Long id);
@@ -98,12 +98,12 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
 
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable(" +
-            "b.id, b.version, b.variable, b.uploadTs, b.filename, b.params ) " +
-            "from BinaryData b " +
+            "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
+            "from Variable b " +
             "order by b.uploadTs desc ")
     Slice<SimpleVariable> getAllAsSimpleResources(Pageable pageable);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.id from BinaryData b")
+    @Query(value="select b.id from Variable b")
     List<Long> getAllIds();
 }

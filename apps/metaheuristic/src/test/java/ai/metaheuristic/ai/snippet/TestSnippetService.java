@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.snippet;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetBinaryDataService;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetDataService;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
@@ -66,7 +66,7 @@ public class TestSnippetService {
     private SnippetCache snippetCache;
 
     @Autowired
-    private SnippetBinaryDataService snippetBinaryDataService;
+    private SnippetDataService snippetDataService;
 
     @Autowired
     private Globals globals;
@@ -117,7 +117,7 @@ public class TestSnippetService {
 
             mills = System.currentTimeMillis();
             log.info("Start binaryDataService.save() #2");
-            snippetBinaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, s.getCode());
+            snippetDataService.save(new ByteArrayInputStream(bytes), bytes.length, s.getCode());
             log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
         }
     }
@@ -133,7 +133,7 @@ public class TestSnippetService {
                 throwable.printStackTrace();
             }
             try {
-                snippetBinaryDataService.deleteBySnippetCode(snippet.getCode());
+                snippetDataService.deleteBySnippetCode(snippet.getCode());
             } catch (Throwable th) {
                 th.printStackTrace();
             }
