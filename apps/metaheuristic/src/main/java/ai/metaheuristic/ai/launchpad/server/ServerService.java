@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.launchpad.LaunchpadCommandProcessor;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.beans.Station;
@@ -171,7 +171,7 @@ public class ServerService {
                 variableService.update(is, resFile.length(), variable);
             }
         }
-        catch (BinaryDataSaveException th) {
+        catch (VariableSavingException th) {
             final String es = "#440.045 can't store the result, unrecoverable error with data. Error: " + th.toString();
             log.error(es, th);
             return new UploadResult(Enums.UploadResourceStatus.UNRECOVERABLE_ERROR, es);

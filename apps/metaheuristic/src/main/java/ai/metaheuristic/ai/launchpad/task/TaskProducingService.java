@@ -17,10 +17,15 @@
 package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
+import ai.metaheuristic.ai.launchpad.beans.Variable;
+import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
+import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetProcessor;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -46,10 +51,12 @@ public class TaskProducingService {
 
     private final TaskRepository taskRepository;
     private final SnippetService snippetService;
+    private final VariableService variableService;
     private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
+    private final InternalSnippetProcessor internalSnippetProcessor;
 
     @SuppressWarnings("Duplicates")
-    public PlanService.ProduceTaskResult produceTasks(
+    public PlanService.ProduceTaskResult produceTasksForProcess(
             boolean isPersist, Long planId, String contextId, PlanParamsYaml planParams, Long workbookId,
             PlanParamsYaml.Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
 
@@ -59,24 +66,37 @@ public class TaskProducingService {
 
         result.outputResourceCodes = new ArrayList<>();
 
-        // start processing the main process
         PlanParamsYaml.SnippetDefForPlan snDef = process.snippet;
-        Map<String, PlanParamsYaml.Variable> outputResourceIds = new HashMap<>();
-        for (PlanParamsYaml.Variable variable : process.output) {
-            String resourceId = "1L";
-            outputResourceIds.put(resourceId, variable);
-            result.outputResourceCodes.add(resourceId);
-            inputStorageUrls.put(resourceId, variable);
+        // start processing of process
+        if (process.snippet.context==EnumsApi.SnippetExecContext.external ) {
+            if (process.subProcesses!=null && CollectionUtils.isNotEmpty(process.subProcesses.processes)) {
+                return new PlanService.ProduceTaskResult(EnumsApi.PlanProducingStatus.EXTERNAL_SNIPPET_HAS_SUB_PROCESSES_ERROR);
+            }
+            Map<String, PlanParamsYaml.Variable> outputResourceIds = new HashMap<>();
+            for (PlanParamsYaml.Variable variable : process.output) {
+                Variable v = variableService.createUninitialized(variable.name, workbookId, contextId);
+                // resourceId is an Id of one part of Variable. Variable can contains unlimited number of resources
+                String resourceId = v.id.toString();
+                outputResourceIds.put(resourceId, variable);
+                result.outputResourceCodes.add(resourceId);
+                inputStorageUrls.put(resourceId, variable);
+            }
+            if (isPersist) {
+                Task t = createTaskInternal(planParams, workbookId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
+                if (t!=null) {
+                    result.taskIds.add(t.getId());
+                }
+            }
         }
-        if (isPersist) {
-            Task t = createTaskInternal(planParams, workbookId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
-            if (t!=null) {
-                result.taskIds.add(t.getId());
+        else {
+            // variables will be created while processing of internal snippet
+            List<InternalSnippetOutput> outputs = internalSnippetProcessor.process(snDef.code, planId, workbookId, contextId, null);
+
+            if (true) {
+                throw new NotImplementedException("not yet");
             }
         }
         // end processing the main process
-
-
 
         // start processing of sub-processes, if any
         if (true) {

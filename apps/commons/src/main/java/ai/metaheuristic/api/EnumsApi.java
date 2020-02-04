@@ -222,7 +222,8 @@ public class EnumsApi {
         PLAN_NOT_FOUND_ERROR,
         WRONG_FORMAT_OF_SNIPPET_CODE,
         ERROR,
-        TOO_MANY_TASKS_PER_PLAN_ERROR
+        TOO_MANY_TASKS_PER_PLAN_ERROR,
+        EXTERNAL_SNIPPET_HAS_SUB_PROCESSES_ERROR
     }
 
     public enum BinaryDataType { DATA, SNIPPET }

@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.variable;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.launchpad.beans.GlobalVariable;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable;
@@ -131,10 +131,10 @@ public class GlobalVariableService {
 
             return data;
         }
-        catch(BinaryDataSaveException | PessimisticLockingFailureException e) {
+        catch(VariableSavingException | PessimisticLockingFailureException e) {
             throw e;
         } catch(Throwable th) {
-            throw new BinaryDataSaveException("#087.070 error storing data to db - " + th.getMessage(), th);
+            throw new VariableSavingException("#087.070 error storing data to db - " + th.getMessage(), th);
         }
     }
 

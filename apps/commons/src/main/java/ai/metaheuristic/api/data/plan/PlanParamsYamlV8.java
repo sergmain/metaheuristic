@@ -78,11 +78,11 @@ public class PlanParamsYamlV8 implements BaseParams {
         public EnumsApi.DataSourcing sourcing;
         public GitInfo git;
         public DiskInfo disk;
-        public String variable;
+        public String name;
 
-        public VariableV8(EnumsApi.DataSourcing sourcing, String variable) {
+        public VariableV8(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;
-            this.variable = variable;
+            this.name = name;
         }
     }
 

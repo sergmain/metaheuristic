@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippet;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
@@ -105,7 +106,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         return wy;
     }
 
-    public void process(Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
+    public List<InternalSnippetOutput> process(Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
 
         List<String> values = taskParamsYaml.taskYaml.inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         if (values.size()>1) {
@@ -156,6 +157,10 @@ public class ResourceSplitterSnippet implements InternalSnippet {
                 log.warn("Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());
             }
         }
+        if (true) {
+            throw new NotImplementedException("not yet");
+        }
+        return null;
     }
 
     public void loadFilesFromDirAfterZip(Long planId, Long workbookId, String contextId, File srcDir, final Map<String, String> mapping) throws IOException {

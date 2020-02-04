@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.variable;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable;
@@ -138,7 +138,7 @@ public class VariableService {
     public Variable save(InputStream is, long size, String variable, String filename, Long workbookId, String contextId) {
         try {
             Variable data = new Variable();
-            data.setVariable(variable);
+            data.setName(variable);
             data.setFilename(filename);
             data.setWorkbookId(workbookId);
             data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
@@ -152,33 +152,30 @@ public class VariableService {
 
             return data;
         }
-        catch(BinaryDataSaveException | PessimisticLockingFailureException e) {
+        catch(VariableSavingException | PessimisticLockingFailureException e) {
             throw e;
         } catch(Throwable th) {
-            throw new BinaryDataSaveException("#087.070 error storing data to db - " + th.getMessage(), th);
+            throw new VariableSavingException("#087.070 error storing data to db - " + th.getMessage(), th);
         }
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public Variable saveWithSpecificStorageUrl(String variable, String params) {
+    public Variable createUninitialized(String variable, Long workbookId, String contextId) {
         try {
             Variable data = new Variable();
-            data.setVariable(variable);
-            data.setFilename(null);
-            data.setWorkbookId(null);
-            data.setParams(params);
+            data.inited = false;
+            data.setName(variable);
+            data.setWorkbookId(workbookId);
+            // right now this field isn't used
+//            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(dataSourcing)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-            data.setData(null);
+            data.setContextId(contextId);
             variableRepository.save(data);
-
             return data;
         }
-        catch(IllegalStateException e) {
+        catch(PessimisticLockingFailureException e) {
             throw e;
-        }
-        catch(Throwable th) {
-            log.error("#087.100 error storing data to db", th);
-            throw new RuntimeException("Error", th);
+        } catch(Throwable th) {
+            throw new VariableSavingException("#087.070 error storing data to db - " + th.getMessage(), th);
         }
     }
 

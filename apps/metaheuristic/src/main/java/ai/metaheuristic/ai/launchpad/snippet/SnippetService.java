@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.launchpad.snippet;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.data.SnippetData;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
@@ -245,7 +245,7 @@ public class SnippetService {
                     storeSnippet(snippetConfig, sum, file, snippet);
                 }
             }
-            catch(BinaryDataSaveException e) {
+            catch(VariableSavingException e) {
                 status = new SnippetApiData.SnippetConfigStatus(false, e.getMessage());
             }
             catch(Throwable th) {

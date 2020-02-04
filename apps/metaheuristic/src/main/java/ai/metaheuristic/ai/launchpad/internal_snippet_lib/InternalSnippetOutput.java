@@ -14,25 +14,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.exceptions;
+package ai.metaheuristic.ai.launchpad.internal_snippet_lib;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.Data;
 
 /**
  * @author Serge
- * Date: 5/3/2019
- * Time: 1:57 PM
+ * Date: 2/3/2020
+ * Time: 10:51 PM
  */
-@Slf4j
-public class BinaryDataSaveException  extends RuntimeException {
-
-    public BinaryDataSaveException(String message) {
-        super(message);
-        log.error(message);
-    }
-
-    public BinaryDataSaveException(String message, Throwable cause) {
-        super(message, cause);
-        log.error(message);
-    }
+@Data
+public class InternalSnippetOutput {
+    public String contextId;
+    public String resourceId;
 }

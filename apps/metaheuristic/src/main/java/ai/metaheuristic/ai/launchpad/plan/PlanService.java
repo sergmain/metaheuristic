@@ -46,6 +46,7 @@ import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -408,11 +409,17 @@ public class PlanService {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ProduceTaskResult {
         public EnumsApi.PlanProducingStatus status;
         public List<String> outputResourceCodes;
         public int numberOfTasks;
         public List<Long> taskIds = new ArrayList<>();
+
+        public ProduceTaskResult(EnumsApi.PlanProducingStatus status) {
+            this.status = status;
+        }
     }
 
     @Data

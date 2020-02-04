@@ -79,15 +79,15 @@ public class PlanParamsYaml implements BaseParams {
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.launchpad;
         public GitInfo git;
         public DiskInfo disk;
-        public String variable;
+        public String name;
 
-        public Variable(String variable) {
-            this.variable = variable;
+        public Variable(String name) {
+            this.name = name;
         }
 
-        public Variable(EnumsApi.DataSourcing sourcing, String variable) {
+        public Variable(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;
-            this.variable = variable;
+            this.name = name;
         }
     }
 

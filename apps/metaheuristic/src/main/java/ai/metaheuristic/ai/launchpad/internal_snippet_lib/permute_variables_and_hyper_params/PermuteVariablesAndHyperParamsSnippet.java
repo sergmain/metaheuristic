@@ -18,10 +18,12 @@ package ai.metaheuristic.ai.launchpad.internal_snippet_lib.permute_variables_and
 
 import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippet;
+import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
 import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +44,7 @@ public class PermuteVariablesAndHyperParamsSnippet implements InternalSnippet {
 
     private final VariableRepository variableRepository;
 
-    public void process(Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
+    public List<InternalSnippetOutput> process(Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
 
         List<String> values = taskParamsYaml.taskYaml.inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         if (values.size()>1) {
@@ -53,6 +55,10 @@ public class PermuteVariablesAndHyperParamsSnippet implements InternalSnippet {
         if (bd==null) {
             throw new IllegalStateException("Variable not found for code " + inputCode);
         }
+        if (true) {
+            throw new NotImplementedException("not yet");
+        }
+        return null;
     }
 
 }

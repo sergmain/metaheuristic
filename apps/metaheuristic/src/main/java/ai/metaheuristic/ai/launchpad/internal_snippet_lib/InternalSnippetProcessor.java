@@ -25,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * @author Serge
  * Date: 1/17/2020
@@ -39,13 +41,13 @@ public class InternalSnippetProcessor {
     public final ResourceSplitterSnippet resourceSplitterSnippet;
     public final PermuteVariablesAndHyperParamsSnippet permuteVariablesAndHyperParamsSnippet;
 
-    public void process(String snippetCode, Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
+    public List<InternalSnippetOutput> process(String snippetCode, Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
         switch(snippetCode) {
             case Consts.MH_RESOURCE_SPLITTER_SNIPPET:
-                resourceSplitterSnippet.process(planId, workbookId, contextId, taskParamsYaml);
+                return resourceSplitterSnippet.process(planId, workbookId, contextId, taskParamsYaml);
                 break;
             case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS:
-                permuteVariablesAndHyperParamsSnippet.process(planId, workbookId, contextId, taskParamsYaml);
+                return permuteVariablesAndHyperParamsSnippet.process(planId, workbookId, contextId, taskParamsYaml);
                 break;
         }
     }

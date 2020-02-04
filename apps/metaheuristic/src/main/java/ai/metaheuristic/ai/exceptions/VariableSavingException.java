@@ -14,17 +14,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.internal_snippet_lib;
+package ai.metaheuristic.ai.exceptions;
 
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
-
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Serge
- * Date: 2/1/2020
- * Time: 9:19 PM
+ * Date: 5/3/2019
+ * Time: 1:57 PM
  */
-public interface InternalSnippet {
-    List<InternalSnippetOutput> process(Long planId, Long workbookId, String contxtId, TaskParamsYaml taskParamsYaml);
+@Slf4j
+public class VariableSavingException extends RuntimeException {
+
+    public VariableSavingException(String message) {
+        super(message);
+        log.error(message);
+    }
+
+    public VariableSavingException(String message, Throwable cause) {
+        super(message, cause);
+        log.error(message);
+    }
 }

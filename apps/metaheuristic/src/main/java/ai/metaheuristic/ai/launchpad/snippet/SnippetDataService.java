@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.snippet;
 
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.launchpad.beans.SnippetData;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetDataRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
@@ -88,7 +88,7 @@ public class SnippetDataService {
                 DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
                 if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.launchpad) {
                     // this is an exception for the case when two resources have the same names but different pool codes
-                    throw new BinaryDataSaveException("#088.060 Sourcing must be launchpad, value in db: " + data.getParams());
+                    throw new VariableSavingException("#088.060 Sourcing must be launchpad, value in db: " + data.getParams());
                 }
             }
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
@@ -100,10 +100,10 @@ public class SnippetDataService {
 
             return data;
         }
-        catch(BinaryDataSaveException | PessimisticLockingFailureException e) {
+        catch(VariableSavingException | PessimisticLockingFailureException e) {
             throw e;
         } catch(Throwable th) {
-            throw new BinaryDataSaveException("#088.070 error storing data to db - " + th.getMessage(), th);
+            throw new VariableSavingException("#088.070 error storing data to db - " + th.getMessage(), th);
         }
     }
 

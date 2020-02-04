@@ -517,7 +517,7 @@ public class WorkbookService {
 
         for (PlanParamsYaml.Process process : planParams.plan.getProcesses()) {
             Monitoring.log("##026", Enums.Monitor.MEMORY);
-            PlanService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(isPersist, plan.getId(), contextId, planParams, workbookId, process, pools, parentTaskIds);
+            PlanService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasksForProcess(isPersist, plan.getId(), contextId, planParams, workbookId, process, pools, parentTaskIds);
             Monitoring.log("##027", Enums.Monitor.MEMORY);
 /*
                 case EXPERIMENT:
