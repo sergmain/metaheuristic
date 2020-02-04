@@ -328,7 +328,7 @@ public class PlanService {
                     return EnumsApi.PlanValidateStatus.PROCESS_PARAMS_EMPTY_ERROR;
                 }
                 for (PlanParamsYaml.Variable params : process.output) {
-                    if (S.b(params.variable)) {
+                    if (S.b(params.name)) {
                         return EnumsApi.PlanValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR;
                     }
                     if (params.sourcing==null) {

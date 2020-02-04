@@ -45,10 +45,10 @@ public class InternalSnippetProcessor {
         switch(snippetCode) {
             case Consts.MH_RESOURCE_SPLITTER_SNIPPET:
                 return resourceSplitterSnippet.process(planId, workbookId, contextId, taskParamsYaml);
-                break;
             case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS:
                 return permuteVariablesAndHyperParamsSnippet.process(planId, workbookId, contextId, taskParamsYaml);
-                break;
+            default:
+                throw new IllegalStateException("Unknown internal snippet: " + snippetCode);
         }
     }
 }

@@ -30,7 +30,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -92,62 +91,20 @@ public class TaskProducingService {
             // variables will be created while processing of internal snippet
             List<InternalSnippetOutput> outputs = internalSnippetProcessor.process(snDef.code, planId, workbookId, contextId, null);
 
+            // theoretically, internal snippet can be without subProcesses, i.e. a result aggregation snippet
             if (true) {
                 throw new NotImplementedException("not yet");
             }
+
+            if (process.subProcesses!=null && CollectionUtils.isNotEmpty(process.subProcesses.processes)) {
+                for (PlanParamsYaml.Process subProcess : process.subProcesses.processes) {
+
+                }
+            }
+
         }
         // end processing the main process
 
-        // start processing of sub-processes, if any
-        if (true) {
-            throw new NotImplementedException("Need to re-write according with latest version of PlanParamYaml");
-        }
-        if (false) {
-            PlanParamsYaml.SnippetDefForPlan snDef = process.snippet;
-            String normalizedSnippetCode = StrUtils.normalizeCode(snDef.code);
-/*
-            String normalizedPlanCode = StrUtils.normalizeCode(process.code);
-            String outputResourceCode = PlanUtils.getResourceCode(workbookId, normalizedPlanCode, normalizedSnippetCode, process.order, 0);
-*/
-            Map<String, PlanParamsYaml.Variable> outputResourceIds = new HashMap<>();
-            for (PlanParamsYaml.Variable variable : process.output) {
-                String resourceId = "1L";
-                outputResourceIds.put(resourceId, variable);
-                result.outputResourceCodes.add(resourceId);
-                inputStorageUrls.put(resourceId, variable);
-            }
-            if (isPersist) {
-                Task t = createTaskInternal(planParams, workbookId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
-                if (t!=null) {
-                    result.taskIds.add(t.getId());
-                }
-            }
-        } else {
-/*
-        if (process.parallelExec) {
-            for (int i = 0; i < process.snippets.size(); i++) {
-                PlanParamsYaml.SnippetDefForPlan snDef = process.snippets.get(i);
-*/
-                PlanParamsYaml.SnippetDefForPlan snDef = process.snippet;
-/*
-                String normalizedSnippetCode = StrUtils.normalizeCode(snDef.code);
-                String normalizedPlanCode = StrUtils.normalizeCode(process.code);
-                String outputResourceCode = PlanUtils.getResourceCode(workbookId, normalizedPlanCode, normalizedSnippetCode, process.order, i);
-*/
-                Map<String, PlanParamsYaml.Variable> outputResourceIds = new HashMap<>();
-                for (PlanParamsYaml.Variable variable : process.output) {
-                    String resourceId = "1L";
-                    outputResourceIds.put(resourceId, variable);
-                    result.outputResourceCodes.add(resourceId);
-                    inputStorageUrls.put(resourceId, variable);
-                }
-                if (isPersist) {
-                    Task t = createTaskInternal(planParams, workbookId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
-                    if (t!=null) {
-                        result.taskIds.add(t.getId());
-                    }
-                }
-        }
         result.status = EnumsApi.PlanProducingStatus.OK;
         result.numberOfTasks = result.outputResourceCodes.size();
 
@@ -165,7 +122,7 @@ public class TaskProducingService {
         TaskParamsYaml yaml = new TaskParamsYaml();
 
         collectedInputs.forEach((key, value) -> yaml.taskYaml.inputResourceIds.put(key, value));
-        outputResourceIds.forEach((key, value) -> yaml.taskYaml.outputResourceIds.put(value.variable, key));
+        outputResourceIds.forEach((key, value) -> yaml.taskYaml.outputResourceIds.put(value.name, key));
 
         yaml.taskYaml.realNames = mappingCodeToOriginalFilename;
 
@@ -173,7 +130,7 @@ public class TaskProducingService {
         Map<String, PlanParamsYaml.Variable> map = new HashMap<>();
         for (Map.Entry<String, PlanParamsYaml.Variable> entry : inputStorageUrls.entrySet()) {
             final PlanParamsYaml.Variable v = entry.getValue();
-            map.put(entry.getKey(), new PlanParamsYaml.Variable(v.sourcing, v.git, v.disk, v.variable));
+            map.put(entry.getKey(), new PlanParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name));
         }
         yaml.taskYaml.resourceStorageUrls = map;
 

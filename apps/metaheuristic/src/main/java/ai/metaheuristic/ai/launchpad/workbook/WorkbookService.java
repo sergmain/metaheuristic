@@ -540,7 +540,7 @@ public class WorkbookService {
 
             // this part of code replaces the code below
             for (PlanParamsYaml.Variable variable : process.output) {
-                pools.add(variable.variable, produceTaskResult.outputResourceCodes);
+                pools.add(variable.name, produceTaskResult.outputResourceCodes);
                 for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
                     pools.inputStorageUrls.put(outputResourceCode, variable);
                 }

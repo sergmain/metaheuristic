@@ -77,7 +77,7 @@ public class TestPlanParamsYamlCloning {
         PlanParamsYaml.Variable params = p1.output.get(0);
 
         assertEquals(EnumsApi.DataSourcing.launchpad, params.sourcing);
-        assertEquals("output-code", params.variable);
+        assertEquals("output-code", params.name);
 
         assertNotNull(p.metas);
         assertEquals(1, p1.metas.size());

@@ -125,12 +125,6 @@ public class VariableService {
         return variableRepository.getIdAndStorageUrlInVars(variables);
     }
 
-/*
-    public void deleteByCodeAndDataType(String code) {
-        binaryDataRepository.deleteByCodeAndDataType(code);
-    }
-*/
-
     public void deleteByVariable(String variable) {
         variableRepository.deleteByVariable(variable);
     }
@@ -138,6 +132,7 @@ public class VariableService {
     public Variable save(InputStream is, long size, String variable, String filename, Long workbookId, String contextId) {
         try {
             Variable data = new Variable();
+            data.inited = true;
             data.setName(variable);
             data.setFilename(filename);
             data.setWorkbookId(workbookId);
@@ -184,6 +179,7 @@ public class VariableService {
 
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
         data.setData(blob);
+        data.inited = true;
 
         variableRepository.save(data);
     }
