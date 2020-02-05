@@ -223,7 +223,7 @@ public class EnumsApi {
         WRONG_FORMAT_OF_SNIPPET_CODE,
         ERROR,
         TOO_MANY_TASKS_PER_PLAN_ERROR,
-        EXTERNAL_SNIPPET_HAS_SUB_PROCESSES_ERROR
+        TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR
     }
 
     public enum BinaryDataType { DATA, SNIPPET }

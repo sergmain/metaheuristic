@@ -6,9 +6,9 @@ plan:
   processes:
     - code: mh.resource-splitter
       name: mh.resource-splitter
-      context: internal
       snippets:
         - code: mh.resource-splitter
+          context: internal
       input:
         - variable: vocab
         - variable: dataset

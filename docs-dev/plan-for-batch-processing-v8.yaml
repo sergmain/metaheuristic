@@ -5,7 +5,7 @@ plan:
   processes:
     - code: mh.resource-splitter
       name: mh.resource-splitter
-      snippets:
+      snippet:
         - code: mh.resource-splitter
           context: internal
       input:
@@ -15,10 +15,10 @@ plan:
       subProcesses:
         exec: parallel
         processes:
-          - code: snippet-1
-            name: snippet-1
+          - code: process-item
+            name: process-item
             snippets:
-              - code: serg.fit:6.2
+              - code: process-item:1.0
             input:
               - variable: batch-item
             output:

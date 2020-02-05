@@ -414,7 +414,7 @@ public class PlanService {
     public static class ProduceTaskResult {
         public EnumsApi.PlanProducingStatus status;
         public List<String> outputResourceCodes;
-        public int numberOfTasks;
+        public int numberOfTasks=0;
         public List<Long> taskIds = new ArrayList<>();
 
         public ProduceTaskResult(EnumsApi.PlanProducingStatus status) {

@@ -519,16 +519,6 @@ public class WorkbookService {
             Monitoring.log("##026", Enums.Monitor.MEMORY);
             PlanService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasksForProcess(isPersist, plan.getId(), contextId, planParams, workbookId, process, pools, parentTaskIds);
             Monitoring.log("##027", Enums.Monitor.MEMORY);
-/*
-                case EXPERIMENT:
-                    Monitoring.log("##028", Enums.Monitor.MEMORY);
-                    produceTaskResult = experimentProcessService.produceTasks(isPersist, planParams, workbookId, process, pools, parentTaskIds);
-                    Monitoring.log("##029", Enums.Monitor.MEMORY);
-                    break;
-                default:
-                    throw new IllegalStateException("#701.200 Unknown process type");
-            }
-*/
             parentTaskIds.clear();
             parentTaskIds.addAll(produceTaskResult.taskIds);
 

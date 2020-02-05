@@ -16,11 +16,13 @@
 
 package ai.metaheuristic.ai.launchpad.task;
 
+import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetProcessor;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
@@ -53,6 +55,7 @@ public class TaskProducingService {
     private final VariableService variableService;
     private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
     private final InternalSnippetProcessor internalSnippetProcessor;
+    private final IdsRepository idsRepository;
 
     @SuppressWarnings("Duplicates")
     public PlanService.ProduceTaskResult produceTasksForProcess(
@@ -68,9 +71,6 @@ public class TaskProducingService {
         PlanParamsYaml.SnippetDefForPlan snDef = process.snippet;
         // start processing of process
         if (process.snippet.context==EnumsApi.SnippetExecContext.external ) {
-            if (process.subProcesses!=null && CollectionUtils.isNotEmpty(process.subProcesses.processes)) {
-                return new PlanService.ProduceTaskResult(EnumsApi.PlanProducingStatus.EXTERNAL_SNIPPET_HAS_SUB_PROCESSES_ERROR);
-            }
             Map<String, PlanParamsYaml.Variable> outputResourceIds = new HashMap<>();
             for (PlanParamsYaml.Variable variable : process.output) {
                 Variable v = variableService.createUninitialized(variable.name, workbookId, contextId);
@@ -86,6 +86,36 @@ public class TaskProducingService {
                     result.taskIds.add(t.getId());
                 }
             }
+
+            workbookGraphTopLevelService.addNewTasksToGraph(workbookId, parentTaskIds, result.taskIds);
+
+            result.numberOfTasks++;
+            if (process.subProcesses!=null && CollectionUtils.isNotEmpty(process.subProcesses.processes)) {
+                for (PlanParamsYaml.Process subProcess : process.subProcesses.processes) {
+                    // Right we don't support subProcesses in subProcesses. Need to collect more info about such cases
+                    if (subProcess.subProcesses!=null && CollectionUtils.isNotEmpty(subProcess.subProcesses.processes)) {
+                        return new PlanService.ProduceTaskResult(EnumsApi.PlanProducingStatus.TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR);
+                    }
+
+                    String ctxId = contextId + ','+ idsRepository.save(new Ids()).id;
+
+                    for (PlanParamsYaml.Variable variable : subProcess.output) {
+                        Variable v = variableService.createUninitialized(variable.name, workbookId, ctxId);
+                        // resourceId is an Id of one part of Variable. Variable can contains unlimited number of resources
+                        String resourceId = v.id.toString();
+                        outputResourceIds.put(resourceId, variable);
+                        result.outputResourceCodes.add(resourceId);
+                        inputStorageUrls.put(resourceId, variable);
+                    }
+                    if (isPersist) {
+                        Task t = createTaskInternal(planParams, workbookId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
+                        if (t!=null) {
+                            result.taskIds.add(t.getId());
+                        }
+                    }
+                    result.numberOfTasks++;
+                }
+            }
         }
         else {
             // variables will be created while processing of internal snippet
@@ -99,6 +129,8 @@ public class TaskProducingService {
             if (process.subProcesses!=null && CollectionUtils.isNotEmpty(process.subProcesses.processes)) {
                 for (PlanParamsYaml.Process subProcess : process.subProcesses.processes) {
 
+
+                    result.numberOfTasks++;
                 }
             }
 
@@ -106,10 +138,6 @@ public class TaskProducingService {
         // end processing the main process
 
         result.status = EnumsApi.PlanProducingStatus.OK;
-        result.numberOfTasks = result.outputResourceCodes.size();
-
-        workbookGraphTopLevelService.addNewTasksToGraph(workbookId, parentTaskIds, result.taskIds);
-
         return result;
     }
 
