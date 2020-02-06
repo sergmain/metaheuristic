@@ -258,25 +258,6 @@ public class PlanService {
         planCache.save(plan);
     }
 
-    public OperationStatusRest workbookTargetExecState(Long workbookId, EnumsApi.WorkbookExecState execState) {
-        PlanApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
-        if (result.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
-        }
-
-        final WorkbookImpl workbook = (WorkbookImpl) result.workbook;
-        final Plan plan = result.plan;
-        if (plan==null || workbook ==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#701.110 Error: (result.plan==null || result.workbook==null)");
-        }
-
-        if (workbook.execState!=execState.code) {
-            workbookFSM.toState(workbook.id, execState);
-            setLockedTo(plan.getId(), plan.getCompanyId(), true);
-        }
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
     public PlanApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, PlanImpl plan, Workbook workbook ) {
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
         if (isPersist && workbook.getExecState()!= EnumsApi.WorkbookExecState.PRODUCING.code) {

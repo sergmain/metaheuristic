@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.ai.launchpad.internal_snippet_lib;
 
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -26,5 +28,7 @@ import java.util.List;
  * Time: 9:19 PM
  */
 public interface InternalSnippet {
-    List<InternalSnippetOutput> process(Long planId, Long workbookId, String contxtId, TaskParamsYaml taskParamsYaml);
+    List<InternalSnippetOutput> process(
+            Long planId, Long workbookId, String contxtId, PlanParamsYaml.VariableDefinition variableDefinition,
+            Map<String, List<String>> inputResourceIds);
 }

@@ -360,7 +360,7 @@ public class PlanTopLevelService {
         if (status != null) {
             return status;
         }
-        status = planService.workbookTargetExecState(workbookId, execState);
+        status = workbookService.workbookTargetExecState(workbookId, execState);
         return status;
     }
 

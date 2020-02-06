@@ -112,6 +112,25 @@ public class WorkbookService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
+    public OperationStatusRest workbookTargetExecState(Long workbookId, EnumsApi.WorkbookExecState execState) {
+        PlanApiData.WorkbookResult result = getWorkbookExtended(workbookId);
+        if (result.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
+        }
+
+        final WorkbookImpl workbook = (WorkbookImpl) result.workbook;
+        final Plan plan = result.plan;
+        if (plan==null || workbook ==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#701.110 Error: (result.plan==null || result.workbook==null)");
+        }
+
+        if (workbook.execState!=execState.code) {
+            workbookFSM.toState(workbook.id, execState);
+            applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.PlanLockingEvent(plan.getId(), plan.getCompanyId(), true));
+        }
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
     public OperationStatusRest resetTask(Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {

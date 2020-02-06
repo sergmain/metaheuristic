@@ -23,22 +23,17 @@ import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
-import ai.metaheuristic.ai.launchpad.variable.VariableService;
+import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippet;
+import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
-import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
+import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -63,7 +58,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -80,21 +74,20 @@ import static ai.metaheuristic.ai.Consts.ZIP_EXT;
 @RequiredArgsConstructor
 public class ResourceSplitterSnippet implements InternalSnippet {
 
-    public static final String ATTACHMENTS_POOL_CODE = "attachments";
+    private static final String ATTACHMENTS_POOL_CODE = "attachments";
     private static final Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml", ".yml");
     private static final String CONFIG_FILE = "config.yaml";
     private static final List<String> EXCLUDE_FROM_MAPPING = List.of("config.yaml", "config.yml");
 
     private final Globals globals;
-    private final PlanService planService;
     private final PlanCache planCache;
-    private final WorkbookService workbookService;
     private final VariableRepository variableRepository;
     private final VariableService variableService;
     private final WorkbookCache workbookCache;
     private final IdsRepository idsRepository;
 
-    public static WorkbookParamsYaml.WorkbookYaml initWorkbookParamsYaml(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
+    public static WorkbookParamsYaml.WorkbookYaml initWorkbookParamsYaml(
+            String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
         WorkbookParamsYaml.WorkbookYaml wy = new WorkbookParamsYaml.WorkbookYaml();
         wy.preservePoolNames = true;
         wy.poolCodes.computeIfAbsent(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, o-> new ArrayList<>()).add(mainPoolCode);
@@ -106,9 +99,11 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         return wy;
     }
 
-    public List<InternalSnippetOutput> process(Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
+    public List<InternalSnippetOutput> process(
+            Long planId, Long workbookId, String contextId, PlanParamsYaml.VariableDefinition variableDefinition,
+            Map<String, List<String>> inputResourceIds) {
 
-        List<String> values = taskParamsYaml.taskYaml.inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        List<String> values = inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         if (values.size()>1) {
             throw new IllegalStateException("Too many input codes");
         }
@@ -214,6 +209,12 @@ public class ResourceSplitterSnippet implements InternalSnippet {
 
     private void createAndProcessTask(PlanImpl plan, Workbook wb, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile, String contextId) {
 
+        // TODO this method need to be re-written completely
+        if (true) {
+            throw new NotImplementedException("Need to re-write and use names of variables from snippet config");
+        }
+
+/*
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
         String mainPoolCode = String.format("%d-%s-%d", wb.getId(), Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
@@ -261,17 +262,25 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         workbookService.changeValidStatus(wb.getId(), true);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = planService.workbookTargetExecState(wb.getId(), EnumsApi.WorkbookExecState.PRODUCING);
+        OperationStatusRest operationStatus = workbookService.workbookTargetExecState(wb.getId(), EnumsApi.WorkbookExecState.PRODUCING);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
-        planService.createAllTasks();
-        operationStatus = planService.workbookTargetExecState(wb.getId(), EnumsApi.WorkbookExecState.STARTED);
+        if (true) {
+            throw new NotImplementedException("not yet");
+        }
+        // TODO 2020-02-05 at this point we have to create new tasks
+        //  do we need to invoke produceTasks() ?
+        workbookService.produceTasks(true, plan, wb.getId());
+//        planService.createAllTasks();
+
+        operationStatus = workbookService.workbookTargetExecState(wb.getId(), EnumsApi.WorkbookExecState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
+*/
     }
 
 

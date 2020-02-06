@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.data.SnippetData;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
@@ -29,6 +28,7 @@ import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -96,7 +96,7 @@ public class ExperimentTopLevelService {
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
     private final PlanTopLevelService planTopLevelService;
-    private final PlanService planService;
+    private final WorkbookService workbookService;
     private final WorkbookFSM workbookFSM;
     private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
@@ -778,7 +778,7 @@ public class ExperimentTopLevelService {
         if (experiment==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.560 can't find an experiment for code: " + experimentCode);
         }
-        OperationStatusRest status = planService.workbookTargetExecState(experiment.workbookId, execState);
+        OperationStatusRest status = workbookService.workbookTargetExecState(experiment.workbookId, execState);
         if (status.isErrorMessages()) {
             return status;
         }

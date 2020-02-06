@@ -137,7 +137,6 @@ public class ExperimentProcessService {
         long mills = System.currentTimeMillis();
         IntHolder intHolder = new IntHolder();
         experimentService.produceFeaturePermutations(isPersist, e, features, intHolder);
-        int numberOfFeatures = intHolder.value;
         log.info("produceFeaturePermutations() was done for " + (System.currentTimeMillis() - mills) + " ms.");
 
         Monitoring.log("##051", Enums.Monitor.MEMORY);

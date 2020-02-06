@@ -20,7 +20,7 @@ plan:
           - code: snippet-1
             name: snippet-1
             snippets:
-              - code: serg.fit:6.2
+              - code: fit:6.2
             input:
               - variable: batch-item
             output:

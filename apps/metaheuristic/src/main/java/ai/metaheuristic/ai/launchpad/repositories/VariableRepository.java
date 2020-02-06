@@ -63,7 +63,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
             "from Variable b where b.name in :vars")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(List<String> vars);
 
-    List<Variable> findAllByVariable(String variable);
+    List<Variable> findAllByName(String variableName);
 
     @Query(value="select b.filename from Variable b where b.name=:var")
     String findFilenameByVar(String var);
@@ -94,7 +94,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     void deleteByWorkbookId(Long workbookId);
 
     @Transactional
-    void deleteByVariable(String variable);
+    void deleteByName(String variable);
 
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable(" +

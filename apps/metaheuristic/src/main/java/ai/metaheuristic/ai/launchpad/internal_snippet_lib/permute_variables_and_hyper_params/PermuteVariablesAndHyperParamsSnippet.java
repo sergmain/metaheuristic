@@ -16,10 +16,12 @@
 
 package ai.metaheuristic.ai.launchpad.internal_snippet_lib.permute_variables_and_hyper_params;
 
+import ai.metaheuristic.ai.launchpad.beans.GlobalVariable;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippet;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
 import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -44,9 +47,11 @@ public class PermuteVariablesAndHyperParamsSnippet implements InternalSnippet {
 
     private final VariableRepository variableRepository;
 
-    public List<InternalSnippetOutput> process(Long planId, Long workbookId, String contextId, TaskParamsYaml taskParamsYaml) {
+    public List<InternalSnippetOutput> process(
+            Long planId, Long workbookId, String contextId, PlanParamsYaml.VariableDefinition variableDefinition,
+            Map<String, List<String>> inputResourceIds) {
 
-        List<String> values = taskParamsYaml.taskYaml.inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        List<String> values = inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         if (values.size()>1) {
             throw new IllegalStateException("Too many input codes");
         }

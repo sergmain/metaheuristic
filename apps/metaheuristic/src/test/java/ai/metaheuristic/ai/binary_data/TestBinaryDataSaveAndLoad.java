@@ -67,7 +67,7 @@ public class TestBinaryDataSaveAndLoad {
     @Before
     public void before() {
         try {
-            variableRepository.deleteByVariable(TEST_VARIABLE);
+            variableRepository.deleteByName(TEST_VARIABLE);
         } catch (Throwable e) {
             log.error("Error", e);
         }
@@ -76,7 +76,7 @@ public class TestBinaryDataSaveAndLoad {
     @After
     public void after() {
         try {
-            variableRepository.deleteByVariable(TEST_VARIABLE);
+            variableRepository.deleteByName(TEST_VARIABLE);
         } catch (Throwable th) {
             log.error("Error while deleting test data", th);
         }

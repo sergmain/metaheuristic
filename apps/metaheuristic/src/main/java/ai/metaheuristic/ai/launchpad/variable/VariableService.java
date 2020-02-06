@@ -126,7 +126,7 @@ public class VariableService {
     }
 
     public void deleteByVariable(String variable) {
-        variableRepository.deleteByVariable(variable);
+        variableRepository.deleteByName(variable);
     }
 
     public Variable save(InputStream is, long size, String variable, String filename, Long workbookId, String contextId) {
@@ -160,8 +160,9 @@ public class VariableService {
             data.inited = false;
             data.setName(variable);
             data.setWorkbookId(workbookId);
-            // right now this field isn't used
-//            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(dataSourcing)));
+            // TODO right now only DataSourcing.launchpad is supporting as internal variable.
+            //  the code has to be added for another type of sourcing
+            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setContextId(contextId);
             variableRepository.save(data);
