@@ -21,13 +21,13 @@ VALUES
 update mh_account
 set COMPANY_ID = 2;
 
-alter table mh_source_code
+alter table mh_plan
     add     COMPANY_ID      INT UNSIGNED;
 
-update mh_source_code
+update mh_plan
 set COMPANY_ID = 2;
 
-alter table mh_source_code modify COMPANY_ID int unsigned not null;
+alter table mh_plan modify COMPANY_ID int unsigned not null;
 
 alter table mh_atlas
     add     COMPANY_ID      INT UNSIGNED;
