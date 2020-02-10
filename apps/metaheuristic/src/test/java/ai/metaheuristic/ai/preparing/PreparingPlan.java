@@ -18,14 +18,14 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Company;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
-import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
@@ -41,7 +41,7 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV8;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +68,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public PlanCache planCache;
 
     @Autowired
-    public PlanRepository planRepository;
+    public SourceCodeRepository sourceCodeRepository;
 
     @Autowired
     public WorkbookRepository workbookRepository;
@@ -97,7 +97,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     @Autowired
     public WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
-    public PlanImpl plan = null;
+    public SourceCodeImpl plan = null;
     public Snippet s1 = null;
     public Snippet s2 = null;
     public Snippet s3 = null;
@@ -114,7 +114,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public static String getPlanV8() {
         PlanParamsYamlV8 planParamsYaml = new PlanParamsYamlV8();
         planParamsYaml.plan = new PlanParamsYamlV8.PlanYamlV8();
-        planParamsYaml.plan.code = "Plan for experiment";
+        planParamsYaml.plan.code = "SourceCode for experiment";
 //            global: global-var
 //            inline:
 //              mh.hyper-params:
@@ -271,8 +271,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
         s4 = createSnippet("snippet-04:1.1");
         s5 = createSnippet("snippet-05:1.1");
 
-        plan = new PlanImpl();
-        plan.setCode("test-plan-code");
+        plan = new SourceCodeImpl();
+        plan.setCode("test-sourceCode-code");
 
         String params = getPlanYamlAsString();
         plan.setParams(params);
@@ -280,9 +280,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
         plan.companyId = company.uniqueId;
 
 
-        Plan tempPlan = planRepository.findByCodeAndCompanyId(plan.getCode(), company.uniqueId);
-        if (tempPlan!=null) {
-            planCache.deleteById(tempPlan.getId());
+        SourceCode tempSourceCode = sourceCodeRepository.findByCodeAndCompanyId(plan.getCode(), company.uniqueId);
+        if (tempSourceCode !=null) {
+            planCache.deleteById(tempSourceCode.getId());
         }
         planCache.save(plan);
 

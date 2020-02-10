@@ -41,7 +41,7 @@ public class PlanRestController {
     private final PlanTopLevelService planTopLevelService;
     private final LaunchpadContextService launchpadContextService;
 
-    // ============= Plan =============
+    // ============= SourceCode =============
 
     @GetMapping("/plans")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")

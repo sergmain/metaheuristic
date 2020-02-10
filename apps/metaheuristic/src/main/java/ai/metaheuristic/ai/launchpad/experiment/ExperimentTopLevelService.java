@@ -667,7 +667,7 @@ public class ExperimentTopLevelService {
 
     public OperationStatusRest addExperiment(String experimentYamlAsStr) {
         if (StringUtils.isBlank(experimentYamlAsStr)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.370 plan yaml is empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.370 sourceCode yaml is empty");
         }
 
         ExperimentParamsYaml ppy;
@@ -724,17 +724,17 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.500 can't find an experiment for code: " + experimentCode);
         }
         if (experiment.workbookId!=null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.502 an experiment '"+experimentCode+"' was already bound to plan");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.502 an experiment '"+experimentCode+"' was already bound to sourceCode");
         }
         if (true) {
-            throw new NotImplementedException("Need to re-write logic of working with experiment and plan");
+            throw new NotImplementedException("Need to re-write logic of working with experiment and sourceCode");
         }
-        PlanImpl p = null;
+        SourceCodeImpl p = null;
 /*
         p = getPlanByExperimentCode(experimentCode);
         if (p==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.510 can't find a plan with experiment code: " + experimentCode);
+                    "#285.510 can't find a sourceCode with experiment code: " + experimentCode);
         }
 */
         PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(p.id, resourcePoolCode, context);
@@ -745,7 +745,7 @@ public class ExperimentTopLevelService {
         experimentService.bindExperimentToWorkbook(experiment.id, workbookResultRest.workbook.getId());
 
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,
-                "Binding an experiment '"+experimentCode+"' to plan '"+p.code+"' with using a resource '"+resourcePoolCode+"' was successful", null);
+                "Binding an experiment '"+experimentCode+"' to sourceCode '"+p.uid +"' with using a resource '"+resourcePoolCode+"' was successful", null);
     }
 
 

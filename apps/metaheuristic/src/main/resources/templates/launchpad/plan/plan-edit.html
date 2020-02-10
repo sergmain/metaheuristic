@@ -4,15 +4,15 @@
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">Edit the plan</h1>
+        <h1 class="widget-header">Edit the sourceCode</h1>
 
-        <!--/*@thymesVar id="plan" type="ai.metaheuristic.ai.launchpad.beans.PlanImpl"*/-->
-        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/launchpad/plan/plan-edit-commit}" accept-charset="UTF-8" id="station-form" name="f">
-            <input type="hidden" name="planId" th:value="${plan.id}"/>
+        <!--/*@thymesVar id="sourceCode" type="ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl"*/-->
+        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/launchpad/sourceCode/sourceCode-edit-commit}" accept-charset="UTF-8" id="station-form" name="f">
+            <input type="hidden" name="planId" th:value="${sourceCode.id}"/>
             <fieldset>
 
-                <label for="planYamlAsStr">Parameters of plan</label>
-                <textarea name="planYamlAsStr" id="planYamlAsStr" placeholder="Parameters of plan" cols="70" rows="15"
+                <label for="planYamlAsStr">Parameters of sourceCode</label>
+                <textarea name="planYamlAsStr" id="planYamlAsStr" placeholder="Parameters of sourceCode" cols="70" rows="15"
                           th:text="${planYamlAsStr}" maxlength="10000"></textarea>
                 <span class="pure-form-message">This is a required field.</span>
 
@@ -25,13 +25,13 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/plan/plan-validate/' + plan.id}">Validate</a>
+                            <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/sourceCode/sourceCode-validate/' + sourceCode.id}">Validate</a>
                         </td>
                         <td>
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="plans.html" th:href="${'/launchpad/plan/plans'}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="sourceCodes.html" th:href="${'/launchpad/sourceCode/sourceCodes'}">Cancel</a>
                         </td>
                     </tr>
                 </table>

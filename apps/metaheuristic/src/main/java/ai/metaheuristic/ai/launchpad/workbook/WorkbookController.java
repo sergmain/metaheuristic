@@ -69,7 +69,7 @@ public class WorkbookController {
                                 @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         model.addAttribute("result", workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(planId, pageable, context));
-        return "launchpad/plan/workbooks :: table";
+        return "launchpad/sourceCode/workbooks :: table";
     }
 
     @GetMapping(value = "/workbook-add/{planId}")
@@ -82,7 +82,7 @@ public class WorkbookController {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
-        result.plan = planResultRest.plan;
+        result.sourceCode = planResultRest.sourceCode;
         return "launchpad/plan/workbook-add";
     }
 

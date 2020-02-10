@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.*;
  * Time: 3:55 PM
  */
 
-// all urls in "/rest/v1/launchpad/plan" because of angular.
+// all urls in "/rest/v1/launchpad/sourceCode" because of angular.
 // need change angular code too but not know
 @RequestMapping("/rest/v1/launchpad/plan")
 @RestController

@@ -111,7 +111,7 @@ public class PlanParamsYamlUtilsV3
     public PlanParamsYamlV3 to(String s) {
         final PlanParamsYamlV3 p = getYaml().load(s);
         if (p.planYaml ==null) {
-            throw new IllegalStateException("#635.010 Plan Yaml is null");
+            throw new IllegalStateException("#635.010 SourceCode Yaml is null");
         }
         for (ProcessV3 process : p.planYaml.processes) {
             if (process.outputParams==null) {

@@ -4,13 +4,13 @@
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">Add new plan</h1>
+        <h1 class="widget-header">Add new sourceCode</h1>
 
-        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/launchpad/plan/plan-add-commit}" accept-charset="UTF-8" id="plan-form" name="f">
+        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/launchpad/sourceCode/sourceCode-add-commit}" accept-charset="UTF-8" id="sourceCode-form" name="f">
             <fieldset>
 
-                <label for="planYamlAsStr">Parameters of plan</label>
-                <textarea name="planYamlAsStr" id="planYamlAsStr" placeholder="Parameters of plan" cols="70" rows="15"
+                <label for="planYamlAsStr">Parameters of sourceCode</label>
+                <textarea name="planYamlAsStr" id="planYamlAsStr" placeholder="Parameters of sourceCode" cols="70" rows="15"
                           th:text="${planYamlAsStr}" maxlength="10000"></textarea>
                 <span class="pure-form-message">This is a required field.</span>
 
@@ -23,16 +23,16 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="plans.html" th:href="${'/launchpad/plan/plans'}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="sourceCodes.html" th:href="${'/launchpad/sourceCode/sourceCodes'}">Cancel</a>
                         </td>
                     </tr>
                 </table>
             </fieldset>
         </form>
 
-        <h2 class="widget-header">Upload plan from file </h2>
+        <h2 class="widget-header">Upload sourceCode from file </h2>
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-              th:action="@{/launchpad/plan/plan-upload-from-file}"
+              th:action="@{/launchpad/sourceCode/sourceCode-upload-from-file}"
         >
             <table>
                 <tr>

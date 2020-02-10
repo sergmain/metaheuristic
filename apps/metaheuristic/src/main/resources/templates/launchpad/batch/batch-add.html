@@ -12,7 +12,7 @@
         >
             <fieldset>
 
-                <label for="planId">List of plans</label>
+                <label for="planId">List of sourceCodes</label>
                 <select  id="planId" class="pure-input-medium" th:name="planId">
                     <option th:each="o : ${result.items}" th:value="${o.id}" th:text="${o.code} "></option>
                 </select>

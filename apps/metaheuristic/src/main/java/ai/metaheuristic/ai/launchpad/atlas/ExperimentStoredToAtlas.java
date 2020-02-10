@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.atlas;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -78,9 +78,9 @@ public class ExperimentStoredToAtlas {
     @EqualsAndHashCode(callSuper = false)
     @JsonIgnoreProperties(value = {"version", "clean"})
     @ToString(callSuper = true)
-    public static class PlanOnShelf extends PlanImpl {
-        public PlanOnShelf(Plan plan) {
-            BeanUtils.copyProperties(plan, this);
+    public static class PlanOnShelf extends SourceCodeImpl {
+        public PlanOnShelf(SourceCode sourceCode) {
+            BeanUtils.copyProperties(sourceCode, this);
         }
     }
 
@@ -123,9 +123,9 @@ public class ExperimentStoredToAtlas {
     public ExperimentOnShelf experiment;
     public List<TaskOnShelf> tasks = new ArrayList<>();
 
-    public ExperimentStoredToAtlas(Plan plan, Workbook workbook, Experiment experiment,List<Task> tasks) {
+    public ExperimentStoredToAtlas(SourceCode sourceCode, Workbook workbook, Experiment experiment, List<Task> tasks) {
 
-        this.plan = new PlanOnShelf(plan);
+        this.plan = new PlanOnShelf(sourceCode);
         this.workbook = new WorkbookOnShelf(workbook);
         this.experiment = new ExperimentOnShelf(experiment);
 

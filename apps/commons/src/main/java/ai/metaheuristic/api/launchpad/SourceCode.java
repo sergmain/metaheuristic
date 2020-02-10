@@ -22,14 +22,14 @@ package ai.metaheuristic.api.launchpad;
  * Time: 3:27 PM
  */
 // We need an interface because of not putting an implementation (which is Entity bean) here
-public interface Plan {
+public interface SourceCode {
     Long getId();
 
     Long getCompanyId();
 
     Integer getVersion();
 
-    String getCode();
+    String getUid();
 
     long getCreatedOn();
 
@@ -45,7 +45,7 @@ public interface Plan {
 
     void setVersion(Integer version);
 
-    void setCode(String code);
+    void setUid(String uid);
 
     void setCreatedOn(long createdOn);
 

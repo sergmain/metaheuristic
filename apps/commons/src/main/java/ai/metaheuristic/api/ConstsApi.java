@@ -29,7 +29,7 @@ public class ConstsApi {
     // name of inline variable
     public static final String MH_HYPER_PARAMS = "mh.hyper-params";
 
-    // === plan's meta
+    // === source code's meta
     //
     public static final String META_MH_RESULT_FILE_EXTENSION = "mh.result-file-extension";
 

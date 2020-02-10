@@ -49,7 +49,7 @@ public class TaskService {
     public void processResendTaskOutputResourceResult(String stationId, Enums.ResendTaskOutputResourceStatus status, long taskId) {
         switch(status) {
             case SEND_SCHEDULED:
-                log.info("#317.010 Station #{} scheduled the output resource of task #{} for sending. This is normal operation of plan", stationId, taskId);
+                log.info("#317.010 Station #{} scheduled the output resource of task #{} for sending. This is normal operation of sourceCode", stationId, taskId);
                 break;
             case RESOURCE_NOT_FOUND:
             case TASK_IS_BROKEN:
@@ -70,7 +70,7 @@ public class TaskService {
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
                 Enums.UploadResourceStatus uploadResourceStatus = taskPersistencer.setResultReceived(taskId, true);
                 if (uploadResourceStatus==Enums.UploadResourceStatus.OK) {
-                    log.info("#317.040 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of plan", taskId);
+                    log.info("#317.040 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", taskId);
                 }
                 else {
                     log.info("#317.050 can't update isCompleted field for task #{}", taskId);

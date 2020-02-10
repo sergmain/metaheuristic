@@ -46,7 +46,7 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class PlanController {
 
-    public static final String REDIRECT_LAUNCHPAD_PLAN_PLANS = "redirect:/launchpad/plan/plans";
+    public static final String REDIRECT_LAUNCHPAD_PLAN_PLANS = "redirect:/launchpad/sourceCode/plans";
 
     private final Globals globals;
     private final PlanTopLevelService planTopLevelService;
@@ -71,7 +71,7 @@ public class PlanController {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         PlanApiData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable, false, context);
         model.addAttribute("result", plansResultRest);
-        return "launchpad/plan/plans :: table";
+        return "launchpad/sourceCode/plans :: table";
     }
 
     @GetMapping(value = "/plan-add")
@@ -85,7 +85,7 @@ public class PlanController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#561.010 Can't edit plan while 'replicated' mode of asset is active");
+            redirectAttributes.addFlashAttribute("errorMessage", "#561.010 Can't edit sourceCode while 'replicated' mode of asset is active");
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         LaunchpadContext context = launchpadContextService.getContext(authentication);
@@ -94,7 +94,7 @@ public class PlanController {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
-        model.addAttribute("plan", planResultRest.plan);
+        model.addAttribute("plan", planResultRest.sourceCode);
         model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
         return "launchpad/plan/plan-edit";
     }
@@ -109,7 +109,7 @@ public class PlanController {
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
 
-        model.addAttribute("plan", planResultRest.plan);
+        model.addAttribute("plan", planResultRest.sourceCode);
         model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
         model.addAttribute("infoMessages", planResultRest.infoMessages);
         model.addAttribute("errorMessage", planResultRest.errorMessages);
@@ -148,20 +148,20 @@ public class PlanController {
         PlanApiData.PlanResult planResultRest = planTopLevelService.updatePlan(planId, planYamlAsStr, context);
         if (planResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", planResultRest.errorMessages);
-            return "redirect:/launchpad/plan/plan-edit/"+planResultRest.plan.getId();
+            return "redirect:/launchpad/plan/plan-edit/"+planResultRest.sourceCode.getId();
         }
 
         if (planResultRest.status== EnumsApi.PlanValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
-        return "redirect:/launchpad/plan/plan-edit/"+planResultRest.plan.getId();
+        return "redirect:/launchpad/plan/plan-edit/"+planResultRest.sourceCode.getId();
     }
 
     @GetMapping("/plan-delete/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#561.015 Can't delete plan while 'replicated' mode of asset is active");
+            redirectAttributes.addFlashAttribute("errorMessage", "#561.015 Can't delete sourceCode while 'replicated' mode of asset is active");
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         LaunchpadContext context = launchpadContextService.getContext(authentication);
@@ -170,7 +170,7 @@ public class PlanController {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
-        model.addAttribute("plan", planResultRest.plan);
+        model.addAttribute("plan", planResultRest.sourceCode);
         model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
         return "launchpad/plan/plan-delete";
     }
@@ -181,7 +181,7 @@ public class PlanController {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = planTopLevelService.deletePlanById(id, context);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.020 plan wasn't found, id: "+id) );
+            redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.020 sourceCode wasn't found, id: "+id) );
         }
         return REDIRECT_LAUNCHPAD_PLAN_PLANS;
     }
@@ -195,7 +195,7 @@ public class PlanController {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
-        model.addAttribute("plan", planResultRest.plan);
+        model.addAttribute("plan", planResultRest.sourceCode);
         model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
         return "launchpad/plan/plan-archive";
     }
@@ -206,7 +206,7 @@ public class PlanController {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = planTopLevelService.archivePlanById(id, context);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.030 plan wasn't found, id: "+id) );
+            redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.030 sourceCode wasn't found, id: "+id) );
         }
         return REDIRECT_LAUNCHPAD_PLAN_PLANS;
     }

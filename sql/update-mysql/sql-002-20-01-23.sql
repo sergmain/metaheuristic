@@ -25,7 +25,7 @@ CREATE INDEX mh_batch_workbook_id_idx ON mh_batch (WORKBOOK_ID);
 
 drop table mh_batch_workbook;
 
-drop table mh_variable;
+drop table mh_data;
 
 CREATE TABLE mh_variable
 (
@@ -66,9 +66,12 @@ truncate table mh_workbook;
 
 update mh_experiment set WORKBOOK_ID=null where 1=1;
 
-update mh_plan set IS_LOCKED=0 where 1=1;
+update mh_source_code set IS_LOCKED=0 where 1=1;
 
 alter table mh_task
     drop column PROCESS_TYPE;
+
+
+
 
 

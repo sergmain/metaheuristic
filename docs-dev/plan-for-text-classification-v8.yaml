@@ -1,5 +1,5 @@
 plan:
-  code: plan-for-batch-processing-1:0
+  code: sourceCode-for-batch-processing-1:0
   variables:
     globals: vocab
     runtime: dataset

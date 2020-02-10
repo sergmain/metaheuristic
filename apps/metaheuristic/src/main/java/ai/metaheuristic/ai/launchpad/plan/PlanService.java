@@ -21,13 +21,13 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.Company;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
-import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
@@ -36,12 +36,11 @@ import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -73,7 +72,7 @@ public class PlanService {
 
     private final WorkbookRepository workbookRepository;
     private final PlanCache planCache;
-    private final PlanRepository planRepository;
+    private final SourceCodeRepository sourceCodeRepository;
 
     private final WorkbookService workbookService;
     private final CommonProcessValidatorService commonProcessValidatorService;
@@ -103,9 +102,9 @@ public class PlanService {
         return getAvailablePlansForCompany(companyId, (f) -> true);
     }
 
-    private PlanData.PlansForCompany getAvailablePlansForCompany(Long companyUniqueId, final Function<Plan, Boolean> planFilter) {
+    private PlanData.PlansForCompany getAvailablePlansForCompany(Long companyUniqueId, final Function<SourceCode, Boolean> planFilter) {
         final PlanData.PlansForCompany plans = new PlanData.PlansForCompany();
-        plans.items = planRepository.findAllAsPlan(companyUniqueId).stream().filter(planFilter::apply).filter(o->{
+        plans.items = sourceCodeRepository.findAllAsPlan(companyUniqueId).stream().filter(planFilter::apply).filter(o->{
             if (!o.isValid()) {
                 return false;
             }
@@ -113,7 +112,7 @@ public class PlanService {
                 PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
                 return ppy.internalParams == null || !ppy.internalParams.archived;
             } catch (YAMLException e) {
-                final String es = "#995.010 Can't parse Plan params. It's broken or unknown version. Plan id: #" + o.getId();
+                final String es = "#995.010 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
                 plans.addErrorMessage(es);
                 log.error(es);
                 log.error("#995.015 Params:\n{}", o.getParams());
@@ -141,7 +140,7 @@ public class PlanService {
             }
 
             if (!groups.isEmpty()) {
-                List<Plan> commonPlans = planRepository.findAllAsPlan(Consts.ID_1).stream().filter(planFilter::apply).filter(o -> {
+                List<SourceCode> commonSourceCodes = sourceCodeRepository.findAllAsPlan(Consts.ID_1).stream().filter(planFilter::apply).filter(o -> {
                     if (!o.isValid()) {
                         return false;
                     }
@@ -153,7 +152,7 @@ public class PlanService {
                         }
                         return false;
                     } catch (YAMLException e) {
-                        final String es = "#995.033 Can't parse Plan params. It's broken or unknown version. Plan id: #" + o.getId();
+                        final String es = "#995.033 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
                         plans.addErrorMessage(es);
                         log.error(es);
                         log.error("#995.035 Params:\n{}", o.getParams());
@@ -161,7 +160,7 @@ public class PlanService {
                         return false;
                     }
                 }).collect(Collectors.toList());
-                plans.items.addAll(commonPlans);
+                plans.items.addAll(commonSourceCodes);
             }
         }
         plans.items.sort((o1, o2) -> Long.compare(o2.getId(), o1.getId()));
@@ -180,13 +179,13 @@ public class PlanService {
             log.info("#701.020 Start producing tasks");
         }
         for (WorkbookImpl workbook : workbooks) {
-            PlanImpl plan = planCache.findById(workbook.getPlanId());
+            SourceCodeImpl plan = planCache.findById(workbook.getPlanId());
             if (plan==null) {
                 workbookFSM.toStopped(workbook.id);
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
-            log.info("#701.030 Producing tasks for plan.code: {}, input resource pool: \n{}",plan.code, workbook.getParams());
+            log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}",plan.uid, workbook.getParams());
             produceAllTasks(true, plan, workbook);
             Monitoring.log("##022", Enums.Monitor.MEMORY);
         }
@@ -195,12 +194,12 @@ public class PlanService {
         }
     }
 
-    public PlanApiData.PlanValidation validateInternal(PlanImpl plan) {
+    public PlanApiData.PlanValidation validateInternal(SourceCodeImpl plan) {
         PlanApiData.PlanValidation planValidation = getPlanValidation(plan);
         setValidTo(plan, planValidation.status == EnumsApi.PlanValidateStatus.OK );
         if (plan.isValid() || planValidation.status==OK) {
             if (plan.isValid() && planValidation.status!=OK) {
-                log.error("#701.097 Need to investigate: (plan.isValid() && planValidation.status!=OK)");
+                log.error("#701.097 Need to investigate: (sourceCode.isValid() && planValidation.status!=OK)");
             }
             planValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
@@ -212,7 +211,7 @@ public class PlanService {
         return planValidation;
     }
 
-    private PlanApiData.PlanValidation getPlanValidation(PlanImpl plan) {
+    private PlanApiData.PlanValidation getPlanValidation(SourceCodeImpl plan) {
         final PlanApiData.PlanValidation planValidation = new PlanApiData.PlanValidation();
         try {
             planValidation.status = validate(plan);
@@ -225,20 +224,20 @@ public class PlanService {
 
     private final static Object syncObj = new Object();
 
-    private void setValidTo(Plan plan, boolean valid) {
+    private void setValidTo(SourceCode sourceCode, boolean valid) {
         synchronized (syncObj) {
-            PlanImpl p = planRepository.findByIdForUpdate(plan.getId(), plan.getCompanyId());
+            SourceCodeImpl p = sourceCodeRepository.findByIdForUpdate(sourceCode.getId(), sourceCode.getCompanyId());
             if (p!=null && p.isValid()!=valid) {
                 p.setValid(valid);
                 saveInternal(p);
             }
-            plan.setValid(valid);
+            sourceCode.setValid(valid);
         }
     }
 
     private void setLockedTo(Long planId, Long companyUniqueId, boolean locked) {
         synchronized (syncObj) {
-            PlanImpl p = planRepository.findByIdForUpdate(planId, companyUniqueId);
+            SourceCodeImpl p = sourceCodeRepository.findByIdForUpdate(planId, companyUniqueId);
             if (p!=null && p.isLocked()!=locked) {
                 p.setLocked(locked);
                 saveInternal(p);
@@ -246,7 +245,7 @@ public class PlanService {
         }
     }
 
-    private void saveInternal(PlanImpl plan) {
+    private void saveInternal(SourceCodeImpl plan) {
         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
         if (ppy.internalParams==null) {
             ppy.internalParams = new PlanParamsYaml.InternalParams();
@@ -258,7 +257,7 @@ public class PlanService {
         planCache.save(plan);
     }
 
-    public PlanApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, PlanImpl plan, Workbook workbook ) {
+    public PlanApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl plan, Workbook workbook ) {
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
         if (isPersist && workbook.getExecState()!= EnumsApi.WorkbookExecState.PRODUCING.code) {
             result.planValidateStatus = EnumsApi.PlanValidateStatus.ALREADY_PRODUCED_ERROR;
@@ -266,7 +265,7 @@ public class PlanService {
         }
         long mills = System.currentTimeMillis();
         result.planValidateStatus = validate(plan);
-        log.info("#701.150 Plan was validated for "+(System.currentTimeMillis() - mills) + " ms.");
+        log.info("#701.150 SourceCode was validated for "+(System.currentTimeMillis() - mills) + " ms.");
         if (result.planValidateStatus != EnumsApi.PlanValidateStatus.OK &&
                 result.planValidateStatus != EnumsApi.PlanValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
             log.error("#701.160 Can't produce tasks, error: {}", result.planValidateStatus);
@@ -284,7 +283,7 @@ public class PlanService {
         return result;
     }
 
-    public EnumsApi.PlanValidateStatus validate(PlanImpl plan) {
+    public EnumsApi.PlanValidateStatus validate(SourceCodeImpl plan) {
         if (plan==null) {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
@@ -319,7 +318,7 @@ public class PlanService {
             }
             lastProcess = process;
             if (S.b(process.code) || !StrUtils.isCodeOk(process.code)){
-                log.error("Error while validating plan {}", planYaml);
+                log.error("Error while validating sourceCode {}", planYaml);
                 return EnumsApi.PlanValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
             EnumsApi.PlanValidateStatus status;
@@ -331,8 +330,8 @@ public class PlanService {
         return EnumsApi.PlanValidateStatus.OK;
     }
 
-    private EnumsApi.PlanValidateStatus checkSnippets(Plan plan, PlanParamsYaml.Process process) {
-        YamlVersion v = YamlForVersioning.getYamlForVersion().load(plan.getParams());
+    private EnumsApi.PlanValidateStatus checkSnippets(SourceCode sourceCode, PlanParamsYaml.Process process) {
+        YamlVersion v = YamlForVersioning.getYamlForVersion().load(sourceCode.getParams());
 
         if (process.snippet!=null) {
             PlanParamsYaml.SnippetDefForPlan snDef = process.snippet;

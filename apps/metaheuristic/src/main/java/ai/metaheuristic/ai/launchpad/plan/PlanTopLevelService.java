@@ -18,11 +18,11 @@ package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.variable.GlobalVariableService;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
-import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -31,7 +31,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
@@ -71,7 +71,7 @@ public class PlanTopLevelService {
     private final Globals globals;
     private final PlanCache planCache;
     private final PlanService planService;
-    private final PlanRepository planRepository;
+    private final SourceCodeRepository sourceCodeRepository;
     private final WorkbookService workbookService;
     private final ApplicationEventPublisher publisher;
     private final WorkbookCache workbookCache;
@@ -82,17 +82,17 @@ public class PlanTopLevelService {
     }
 
     public PlanApiData.WorkbookResult addWorkbook(String planCode, String variable, LaunchpadContext context) {
-        return getWorkbookResult(variable, context, planRepository.findByCodeAndCompanyId(planCode, context.getCompanyId()));
+        return getWorkbookResult(variable, context, sourceCodeRepository.findByCodeAndCompanyId(planCode, context.getCompanyId()));
     }
 
-    private PlanApiData.WorkbookResult getWorkbookResult(String variable, LaunchpadContext context, PlanImpl plan) {
+    private PlanApiData.WorkbookResult getWorkbookResult(String variable, LaunchpadContext context, SourceCodeImpl plan) {
         if (S.b(variable)) {
             return new PlanApiData.WorkbookResult("#560.006 name of variable is empty");
         }
         if (globalVariableService.getIdInVariables(List.of(variable)).isEmpty()) {
             return new PlanApiData.WorkbookResult( "#560.008 global variable " + variable +" wasn't found");
         }
-        // validate the plan
+        // validate the sourceCode
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK) {
             PlanApiData.WorkbookResult r = new PlanApiData.WorkbookResult();
@@ -109,10 +109,10 @@ public class PlanTopLevelService {
 
     public PlanApiData.PlansResult getPlans(Pageable pageable, boolean isArchive, LaunchpadContext context) {
         pageable = ControllerUtils.fixPageSize(globals.planRowsLimit, pageable);
-        List<Plan> plans = planRepository.findAllByOrderByIdDesc(context.getCompanyId());
+        List<SourceCode> sourceCodes = sourceCodeRepository.findAllByOrderByIdDesc(context.getCompanyId());
         AtomicInteger count = new AtomicInteger();
 
-        List<Plan> activePlans = plans.stream()
+        List<SourceCode> activeSourceCodes = sourceCodes.stream()
                 .filter(o-> {
                     try {
                         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
@@ -123,40 +123,40 @@ public class PlanTopLevelService {
                         }
                         return b;
                     } catch (YAMLException e) {
-                        log.error("#560.020 Can't parse Plan params. It's broken or unknown version. Plan id: #{}", o.getId());
+                        log.error("#560.020 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #{}", o.getId());
                         log.error("#560.025 Params:\n{}", o.getParams());
                         log.error("#560.030 Error: {}", e.toString());
                         return false;
                     }
                 }).collect(Collectors.toList());
 
-        plans = activePlans.stream()
+        sourceCodes = activeSourceCodes.stream()
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .peek(o-> o.setParams(null))
                 .collect(Collectors.toList());
 
         PlanApiData.PlansResult plansResultRest = new PlanApiData.PlansResult();
-        plansResultRest.items = new PageImpl<>(plans, pageable, count.get());
+        plansResultRest.items = new PageImpl<>(sourceCodes, pageable, count.get());
         plansResultRest.assetMode = globals.assetMode;
 
         return plansResultRest;
     }
 
     public PlanApiData.PlanResult getPlan(Long planId, LaunchpadContext context) {
-        final PlanImpl plan = planCache.findById(planId);
+        final SourceCodeImpl plan = planCache.findById(planId);
         if (plan == null) {
             return new PlanApiData.PlanResult(
-                    "#560.050 plan wasn't found, planId: " + planId,
+                    "#560.050 sourceCode wasn't found, planId: " + planId,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
         return new PlanApiData.PlanResult(plan, plan.getPlanParamsYaml().origin);
     }
 
     public PlanApiData.PlanResult validatePlan(Long planId, LaunchpadContext context) {
-        final PlanImpl plan = planCache.findById(planId);
+        final SourceCodeImpl plan = planCache.findById(planId);
         if (plan == null) {
-            return new PlanApiData.PlanResult("#560.070 plan wasn't found, planId: " + planId,
+            return new PlanApiData.PlanResult("#560.070 sourceCode wasn't found, planId: " + planId,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
 
@@ -171,10 +171,10 @@ public class PlanTopLevelService {
     @SuppressWarnings("Duplicates")
     public PlanApiData.PlanResult addPlan(String sourceCode, LaunchpadContext context) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
-            return new PlanApiData.PlanResult("#560.085 Can't add a new plan while 'replicated' mode of asset is active");
+            return new PlanApiData.PlanResult("#560.085 Can't add a new sourceCode while 'replicated' mode of asset is active");
         }
         if (StringUtils.isBlank(sourceCode)) {
-            return new PlanApiData.PlanResult("#560.090 plan yaml is empty");
+            return new PlanApiData.PlanResult("#560.090 sourceCode yaml is empty");
         }
 
         PlanParamsYaml ppy;
@@ -186,14 +186,14 @@ public class PlanTopLevelService {
 
         final String code = ppy.plan.code;
         if (StringUtils.isBlank(code)) {
-            return new PlanApiData.PlanResult("#560.130 the code of plan is empty");
+            return new PlanApiData.PlanResult("#560.130 the code of sourceCode is empty");
         }
-        Plan f = planRepository.findByCodeAndCompanyId(code, context.getCompanyId());
+        SourceCode f = sourceCodeRepository.findByCodeAndCompanyId(code, context.getCompanyId());
         if (f!=null) {
-            return new PlanApiData.PlanResult("#560.150 the plan with such code already exists, code: " + code);
+            return new PlanApiData.PlanResult("#560.150 the sourceCode with such code already exists, code: " + code);
         }
 
-        PlanImpl plan = new PlanImpl();
+        SourceCodeImpl plan = new SourceCodeImpl();
         ppy.origin.source = sourceCode;
         ppy.origin.lang = EnumsApi.SourceCodeLang.yaml;
         ppy.internalParams.updatedOn = System.currentTimeMillis();
@@ -202,7 +202,7 @@ public class PlanTopLevelService {
 
         plan.companyId = context.getCompanyId();
         plan.createdOn = System.currentTimeMillis();
-        plan.code = ppy.plan.code;
+        plan.uid = ppy.plan.code;
         plan = planCache.save(plan);
 
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
@@ -216,32 +216,32 @@ public class PlanTopLevelService {
     @SuppressWarnings("Duplicates")
     public PlanApiData.PlanResult updatePlan(Long planId, String sourceCode, LaunchpadContext context) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
-            return new PlanApiData.PlanResult("#560.160 Can't update a plan while 'replicated' mode of asset is active");
+            return new PlanApiData.PlanResult("#560.160 Can't update a sourceCode while 'replicated' mode of asset is active");
         }
-        PlanImpl plan = planCache.findById(planId);
+        SourceCodeImpl plan = planCache.findById(planId);
         if (plan == null) {
             return new PlanApiData.PlanResult(
-                    "#560.010 plan wasn't found, planId: " + planId,
+                    "#560.010 sourceCode wasn't found, planId: " + planId,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
         if (StringUtils.isBlank(sourceCode)) {
-            return new PlanApiData.PlanResult("#560.170 plan yaml is empty");
+            return new PlanApiData.PlanResult("#560.170 sourceCode yaml is empty");
         }
 
         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
 
         final String code = ppy.plan.code;
         if (StringUtils.isBlank(code)) {
-            return new PlanApiData.PlanResult("#560.190 code of plan is empty");
+            return new PlanApiData.PlanResult("#560.190 code of sourceCode is empty");
         }
         if (StringUtils.isBlank(code)) {
-            return new PlanApiData.PlanResult("#560.210 plan is empty");
+            return new PlanApiData.PlanResult("#560.210 sourceCode is empty");
         }
-        Plan p = planRepository.findByCodeAndCompanyId(code, context.getCompanyId());
+        SourceCode p = sourceCodeRepository.findByCodeAndCompanyId(code, context.getCompanyId());
         if (p!=null && !p.getId().equals(plan.getId())) {
-            return new PlanApiData.PlanResult("#560.230 plan with such code already exists, code: " + code);
+            return new PlanApiData.PlanResult("#560.230 sourceCode with such code already exists, code: " + code);
         }
-        plan.code = code;
+        plan.uid = code;
 
         ppy.origin.source = sourceCode;
         ppy.origin.lang = EnumsApi.SourceCodeLang.yaml;
@@ -262,12 +262,12 @@ public class PlanTopLevelService {
     public OperationStatusRest deletePlanById(Long planId, LaunchpadContext context) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.240 Can't delete a plan while 'replicated' mode of asset is active");
+                    "#560.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
         }
-        Plan plan = planCache.findById(planId);
-        if (plan == null) {
+        SourceCode sourceCode = planCache.findById(planId);
+        if (sourceCode == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.250 plan wasn't found, planId: " + planId);
+                    "#560.250 sourceCode wasn't found, planId: " + planId);
         }
         planCache.deleteById(planId);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -276,12 +276,12 @@ public class PlanTopLevelService {
     public OperationStatusRest archivePlanById(Long id, LaunchpadContext context) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.260 Can't archive a plan while 'replicated' mode of asset is active");
+                    "#560.260 Can't archive a sourceCode while 'replicated' mode of asset is active");
         }
-        PlanImpl plan = planCache.findById(id);
+        SourceCodeImpl plan = planCache.findById(id);
         OperationStatusRest status = checkPlan(plan, context);
         if (status!=null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 plan wasn't found, planId: " + id+", " + status.getErrorMessagesAsStr());
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 sourceCode wasn't found, planId: " + id+", " + status.getErrorMessagesAsStr());
         }
         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
         if (ppy.internalParams==null) {
@@ -298,7 +298,7 @@ public class PlanTopLevelService {
     public OperationStatusRest uploadPlan(MultipartFile file, LaunchpadContext context) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.280 Can't upload plan while 'replicated' mode of asset is active");
+                    "#560.280 Can't upload sourceCode while 'replicated' mode of asset is active");
         }
 
         String originFilename = file.getOriginalFilename();
@@ -320,17 +320,17 @@ public class PlanTopLevelService {
 
         File tempDir=null;
         try {
-            tempDir = DirUtils.createTempDir("mh-plan-upload-");
+            tempDir = DirUtils.createTempDir("mh-sourceCode-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#560.350 can't create temporary directory in " + location);
             }
             final File planFile = new File(tempDir, "plans" + ext);
-            log.debug("Start storing an uploaded plan to disk");
+            log.debug("Start storing an uploaded sourceCode to disk");
             try(OutputStream os = new FileOutputStream(planFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
-            log.debug("Start loading plan into db");
+            log.debug("Start loading sourceCode into db");
             String yaml = FileUtils.readFileToString(planFile, StandardCharsets.UTF_8);
             PlanApiData.PlanResult result = addPlan(yaml, context);
 
@@ -385,18 +385,18 @@ public class PlanTopLevelService {
         }
         PlanData.PlansForCompany plansForCompany = planService.getPlan(context.getCompanyId(), wb.getPlanId());
         if (plansForCompany.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Plan wasn't found, " +
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 SourceCode wasn't found, " +
                     "companyId: "+context.getCompanyId()+", planId: " + wb.getPlanId()+", workbookId: " + wb.getId()+", error msg: " + plansForCompany.getErrorMessagesAsStr() );
         }
         return null;
     }
 
-    private OperationStatusRest checkPlan(Plan plan, LaunchpadContext context) {
-        if (plan==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 plan is null");
+    private OperationStatusRest checkPlan(SourceCode sourceCode, LaunchpadContext context) {
+        if (sourceCode ==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 sourceCode is null");
         }
-        if (!Objects.equals(plan.getCompanyId(), context.getCompanyId())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Access to plan is denied, planId: " + plan.getId() );
+        if (!Objects.equals(sourceCode.getCompanyId(), context.getCompanyId())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Access to sourceCode is denied, planId: " + sourceCode.getId() );
         }
         return null;
     }

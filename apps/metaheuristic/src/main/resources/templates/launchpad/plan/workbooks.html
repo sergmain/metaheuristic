@@ -2,7 +2,7 @@
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.plan.PlanApiData$WorkbooksResult"*/-->
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.sourceCode.PlanApiData$WorkbooksResult"*/-->
     <script>
         var table = function (html) {
             $('#table').html(html).find('.ajax-elem').each(function () {
@@ -20,7 +20,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/plan/workbooks-part/'+ [[${result.currentPlanId}]] , table);
+            $.post('/launchpad/sourceCode/workbooks-part/'+ [[${result.currentPlanId}]] , table);
         });
 
     </script>
@@ -28,7 +28,7 @@
     <h1 class="widget-header">Workbooks</h1>
 
     <a class="pure-button pure-button-primary" href="workbook-add.html"
-       th:href="${'/launchpad/plan/workbook-add/' + result.currentPlanId}">Add new workbook</a>
+       th:href="${'/launchpad/sourceCode/workbook-add/' + result.currentPlanId}">Add new workbook</a>
     <p></p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
@@ -38,7 +38,7 @@
             <th>Plan code</th>
             <th>Input pool codes</th>
             <th>Created on</th>
-            <th>Is plan valid</th>
+            <th>Is sourceCode valid</th>
             <th>Is workbook valid</th>
             <th>Exec state</th>
             <th>Completed on</th>
@@ -48,10 +48,10 @@
         <tbody>
         <tr th:each="i : ${result.instances}">
             <td th:text="${i.id}">#Id</td>
-            <td th:text="${result.plans.get(i.id).code}">Plan code</td>
+            <td th:text="${result.sourceCodes.get(i.id).code}">Plan code</td>
             <td><pre th:text="${i.params}">Input pool codes</pre></td>
             <td th:text="${#dates.format(i.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
-            <td th:text="${result.plans.get(i.id).valid}">Is plan valid</td>
+            <td th:text="${result.sourceCodes.get(i.id).valid}">Is sourceCode valid</td>
             <td th:text="${i.valid}">Is workbook valid</td>
             <td th:text="${T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).from(i.execState)}">Exec state</td>
             <td th:text="${#dates.format(i.completedOn, 'dd-MMM-yy HH:mm')}">Completed on</td>
@@ -59,21 +59,21 @@
                 <a class="pure-button pure-button-primary"
                    th:if="${i.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).NONE.code and
                    i.valid and
-                   result.plans.get(i.id).valid
+                   result.sourceCodes.get(i.id).valid
                    }"
-                   th:href="${'/launchpad/plan/workbook-target-exec-state/'+i.planId+'/producing/' + i.id}">Produce</a>
+                   th:href="${'/launchpad/sourceCode/workbook-target-exec-state/'+i.planId+'/producing/' + i.id}">Produce</a>
                 <a class="pure-button pure-button-primary"
                    th:if="${i.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).PRODUCED.code or
                    i.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).STOPPED.code}"
-                   th:href="${'/launchpad/plan/workbook-target-exec-state/'+i.planId+'/started/' + i.id}">Start</a>
+                   th:href="${'/launchpad/sourceCode/workbook-target-exec-state/'+i.planId+'/started/' + i.id}">Start</a>
                 <a class="pure-button pure-button-primary"
                    th:if="${i.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).STARTED.code}"
-                   th:href="${'/launchpad/plan/workbook-target-exec-state/'+i.planId+'/stopped/' + i.id}">Stop</a>
+                   th:href="${'/launchpad/sourceCode/workbook-target-exec-state/'+i.planId+'/stopped/' + i.id}">Stop</a>
             </td>
             <td><a class="pure-button pure-button-primary"
                    th:if="${not i.valid}"
-                   th:href="${'/launchpad/plan/workbook-validate/' + i.id}">Validate</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/workbook-delete/'+i.planId+'/' + i.id}">Delete</a></td>
+                   th:href="${'/launchpad/sourceCode/workbook-validate/' + i.id}">Validate</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/sourceCode/workbook-delete/'+i.planId+'/' + i.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="11">
@@ -82,17 +82,17 @@
                         <li class="table-nav-padding">
                             <span th:if='${result.instances.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.instances.first}'
-                               th:href="@{/launchpad/plan/workbooks-part/{id}(id=${result.currentPlanId},page=0,size=${result.instances.pageable.pageSize})}">« First</a>
+                               th:href="@{/launchpad/sourceCode/workbooks-part/{id}(id=${result.currentPlanId},page=0,size=${result.instances.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.instances.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.instances.hasPrevious()}'
-                               th:href="@{/launchpad/plan/workbooks-part/{id}(id=${result.currentPlanId},page=${result.instances.pageable.pageNumber - 1},size=${result.instances.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/launchpad/sourceCode/workbooks-part/{id}(id=${result.currentPlanId},page=${result.instances.pageable.pageNumber - 1},size=${result.instances.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.instances.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.instances.hasNext()}'
-                               th:href='@{/launchpad/plan/workbooks-part/{id}(id=${result.currentPlanId},page=${result.instances.pageable.pageNumber + 1},size=${result.instances.pageable.pageSize})}' title='Go to next page'>→</a>
+                               th:href='@{/launchpad/sourceCode/workbooks-part/{id}(id=${result.currentPlanId},page=${result.instances.pageable.pageNumber + 1},size=${result.instances.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>
@@ -102,6 +102,6 @@
     </table>
     <p></p>
 
-    <a class="pure-button pure-button-primary" href="plans.html" th:href="${'/launchpad/plan/plans'  }">To plans</a>
+    <a class="pure-button pure-button-primary" href="sourceCodes.html" th:href="${'/launchpad/sourceCode/sourceCodes'  }">To sourceCodes</a>
 
 </div>

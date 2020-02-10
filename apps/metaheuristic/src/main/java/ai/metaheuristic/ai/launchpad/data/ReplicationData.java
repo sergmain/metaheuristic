@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.data;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Company;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.AllArgsConstructor;
@@ -78,7 +78,7 @@ public class ReplicationData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PlanAsset extends BaseDataClass implements ReplicationAsset {
-        public PlanImpl plan;
+        public SourceCodeImpl plan;
         public PlanAsset(List<String> errorMessages) {
             addErrorMessages(errorMessages);
         }

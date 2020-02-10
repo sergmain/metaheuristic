@@ -19,8 +19,6 @@ package ai.metaheuristic.ai.launchpad.data;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.jgrapht.graph.DefaultEdge;
@@ -39,7 +37,7 @@ public class PlanData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class PlansForCompany extends BaseDataClass {
-        public List<Plan> items;
+        public List<ai.metaheuristic.api.launchpad.SourceCode> items;
     }
 
     @Data

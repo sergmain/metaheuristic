@@ -20,27 +20,27 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/plan/plans-part', table);
+            $.post('/launchpad/sourceCode/sourceCodes-part', table);
         });
 
     </script>
 
     <h1 class="widget-header">Plans</h1>
 
-    <a class="pure-button pure-button-primary" href="plan-add.html" th:href="@{/launchpad/plan/plan-add}"
+    <a class="pure-button pure-button-primary" href="sourceCode-add.html" th:href="@{/launchpad/sourceCode/sourceCode-add}"
        th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}"
-    >Add new plan</a>
+    >Add new sourceCode</a>
     <p class="alert alert-info" th:if="${result.assetMode==T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-        Creation of plans is disabled, assetMode is 'replicated'.</p>
+        Creation of sourceCodes is disabled, assetMode is 'replicated'.</p>
     <p></p>
 
 
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.plan.PlanApiData$PlansResult"*/-->
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.sourceCode.PlanApiData$PlansResult"*/-->
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>
             <th>Id</th>
-            <th>Code of plan</th>
+            <th>Code of sourceCode</th>
             <th>Created on</th>
             <th>Is valid?</th>
             <th>Is locked?</th>
@@ -50,19 +50,19 @@
         <tbody>
         <tr th:each="f : ${result.items}">
             <td th:text="${f.id}">#Id</td>
-            <td th:text="${f.code}">Code of plan</td>
+            <td th:text="${f.code}">Code of sourceCode</td>
             <td th:text="${#dates.format(f.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
             <td th:text="${f.valid}">Is valid?</td>
             <td th:text="${f.locked}">Is locked?</td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
                 <a class="pure-button pure-button-primary"
                    th:disabled="${f.locked}"
-                   th:href="${'/launchpad/plan/plan-edit/' + f.id}">Edit</a></td>
+                   th:href="${'/launchpad/sourceCode/sourceCode-edit/' + f.id}">Edit</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-                <a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/plan-delete/' + f.id}">Delete</a></td>
+                <a class="pure-button pure-button-primary" th:href="${'/launchpad/sourceCode/sourceCode-delete/' + f.id}">Delete</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-                <a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/plan-archive/' + f.id}">To archive</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/workbooks/' + f.id}">Workbooks</a></td>
+                <a class="pure-button pure-button-primary" th:href="${'/launchpad/sourceCode/sourceCode-archive/' + f.id}">To archive</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/sourceCode/workbooks/' + f.id}">Workbooks</a></td>
         </tr>
         <tr>
             <td th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated} ? 9 : 6">
@@ -71,17 +71,17 @@
                         <li class="table-nav-padding">
                             <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                               th:href="@{/launchpad/plan/plans-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                               th:href="@{/launchpad/sourceCode/sourceCodes-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                               th:href="@{/launchpad/plan/plans-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/launchpad/sourceCode/sourceCodes-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                               th:href='@{/launchpad/plan/plans-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
+                               th:href='@{/launchpad/sourceCode/sourceCodes-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>

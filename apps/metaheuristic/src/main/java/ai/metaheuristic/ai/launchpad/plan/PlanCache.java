@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.api.launchpad.SourceCode;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -32,29 +32,29 @@ import org.springframework.stereotype.Service;
 @Profile("launchpad")
 public class PlanCache {
 
-    private final PlanRepository planRepository;
+    private final SourceCodeRepository sourceCodeRepository;
 
-    public PlanCache(PlanRepository planRepository) {
-        this.planRepository = planRepository;
+    public PlanCache(SourceCodeRepository sourceCodeRepository) {
+        this.sourceCodeRepository = sourceCodeRepository;
     }
 
     @CacheEvict(value = {Consts.PLANS_CACHE}, key = "#result.id")
-    public PlanImpl save(PlanImpl plan) {
-        return planRepository.saveAndFlush(plan);
+    public SourceCodeImpl save(SourceCodeImpl plan) {
+        return sourceCodeRepository.saveAndFlush(plan);
     }
 
     @Cacheable(cacheNames = {Consts.PLANS_CACHE}, unless="#result==null")
-    public PlanImpl findById(Long id) {
-        return planRepository.findById(id).orElse(null);
+    public SourceCodeImpl findById(Long id) {
+        return sourceCodeRepository.findById(id).orElse(null);
     }
 
-    @CacheEvict(cacheNames = {Consts.PLANS_CACHE}, key = "#plan.id")
-    public void delete(Plan plan) {
-        if (plan==null || plan.getId()==null) {
+    @CacheEvict(cacheNames = {Consts.PLANS_CACHE}, key = "#sourceCode.id")
+    public void delete(SourceCode sourceCode) {
+        if (sourceCode ==null || sourceCode.getId()==null) {
             return;
         }
         try {
-            planRepository.deleteById(plan.getId());
+            sourceCodeRepository.deleteById(sourceCode.getId());
         } catch (ObjectOptimisticLockingFailureException e) {
             log.warn("Error", e);
         }
@@ -66,7 +66,7 @@ public class PlanCache {
             return;
         }
         try {
-            planRepository.deleteById(id);
+            sourceCodeRepository.deleteById(id);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.warn("Error", e);
         }

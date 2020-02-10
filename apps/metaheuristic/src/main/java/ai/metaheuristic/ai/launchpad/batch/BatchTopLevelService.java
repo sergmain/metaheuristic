@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
 import ai.metaheuristic.ai.launchpad.beans.Ids;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
@@ -180,21 +180,21 @@ public class BatchTopLevelService {
         if (plansForCompany.isErrorMessages()) {
             return new BatchData.UploadingStatus(plansForCompany.errorMessages);
         }
-        PlanImpl plan = plansForCompany.items.isEmpty() ? null : (PlanImpl) plansForCompany.items.get(0);
+        SourceCodeImpl plan = plansForCompany.items.isEmpty() ? null : (SourceCodeImpl) plansForCompany.items.get(0);
         if (plan==null) {
-            return new BatchData.UploadingStatus("#995.050 plan wasn't found, planId: " + planId);
+            return new BatchData.UploadingStatus("#995.050 sourceCode wasn't found, planId: " + planId);
         }
         if (!plan.getId().equals(planId)) {
-            return new BatchData.UploadingStatus("#995.038 Fatal error in configuration of plan, report to developers immediately");
+            return new BatchData.UploadingStatus("#995.038 Fatal error in configuration of sourceCode, report to developers immediately");
         }
         launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
 
-        // TODO 2019-07-06 Do we need to validate the plan here in case that there is another check?
+        // TODO 2019-07-06 Do we need to validate the sourceCode here in case that there is another check?
         //  2019-10-28 it's working so left it as is until an issue with this will be found
-        // validate the plan
+        // validate the sourceCode
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
-            return new BatchData.UploadingStatus("#995.060 validation of plan was failed, status: " + planValidation.status);
+            return new BatchData.UploadingStatus("#995.060 validation of sourceCode was failed, status: " + planValidation.status);
         }
 
         Batch b;

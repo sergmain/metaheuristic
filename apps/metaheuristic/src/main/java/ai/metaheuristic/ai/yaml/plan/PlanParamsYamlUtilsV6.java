@@ -101,7 +101,7 @@ public class PlanParamsYamlUtilsV6
     public PlanParamsYamlV6 to(String s) {
         final PlanParamsYamlV6 p = getYaml().load(s);
         if (p.planYaml ==null) {
-            throw new IllegalStateException("#635.010 Plan Yaml is null");
+            throw new IllegalStateException("#635.010 SourceCode Yaml is null");
         }
 
         // fix default values

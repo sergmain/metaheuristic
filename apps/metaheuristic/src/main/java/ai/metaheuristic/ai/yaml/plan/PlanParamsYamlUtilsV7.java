@@ -49,12 +49,12 @@ public class PlanParamsYamlUtilsV7
 /*
         PlanParamsYamlV8 p = new PlanParamsYamlV8();
         p.internalParams = new PlanParamsYamlV8.InternalParamsV8(v7.internalParams.archived, v7.internalParams.published, v7.internalParams.updatedOn, null);
-        p.plan = new PlanParamsYamlV8.PlanYamlV8();
+        p.sourceCode = new PlanParamsYamlV8.PlanYamlV8();
         if (v7.planYaml.metas!=null){
-            p.plan.metas = new ArrayList<>(v7.planYaml.metas);
+            p.sourceCode.metas = new ArrayList<>(v7.planYaml.metas);
         }
-        p.plan.clean = v7.planYaml.clean;
-        p.plan.processes = v7.planYaml.processes.stream().map(o-> {
+        p.sourceCode.clean = v7.planYaml.clean;
+        p.sourceCode.processes = v7.planYaml.processes.stream().map(o-> {
             PlanParamsYamlV8.ProcessV8 pr = new PlanParamsYamlV8.ProcessV8();
             pr.name = o.name;
             pr.code = o.code;
@@ -73,9 +73,9 @@ public class PlanParamsYamlUtilsV7
 
             return pr;
         }).collect(Collectors.toList());
-        p.plan.code = v7.planYaml.planCode;
+        p.sourceCode.code = v7.planYaml.planCode;
         if (v7.planYaml.ac!=null) {
-            p.plan.ac = new PlanParamsYamlV8.AccessControlV8(v7.planYaml.ac.groups);
+            p.sourceCode.ac = new PlanParamsYamlV8.AccessControlV8(v7.planYaml.ac.groups);
         }
         p.originYaml = v7.originYaml;
         p.checkIntegrity();
@@ -109,7 +109,7 @@ public class PlanParamsYamlUtilsV7
     public PlanParamsYamlV7 to(String s) {
         final PlanParamsYamlV7 p = getYaml().load(s);
         if (p.planYaml ==null) {
-            throw new IllegalStateException("#635.010 Plan Yaml is null");
+            throw new IllegalStateException("#635.010 SourceCode Yaml is null");
         }
 
         // fix of default values

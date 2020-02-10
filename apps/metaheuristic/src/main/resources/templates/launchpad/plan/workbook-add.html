@@ -4,19 +4,19 @@
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <p th:text="${'Plan code: ' + result.plan.code}"></p>
+        <p th:text="${'Plan code: ' + result.sourceCode.code}"></p>
         <p>&nbsp;</p>
 
 
         <h1 class="widget-header">New workbook with single input</h1>
 
-        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.plan.PlanApiData$PlanResult"*/-->
-        <form class="pure-form pure-form-stacked" action="#" th:method="POST" th:action="@{/launchpad/plan/workbook-add-commit}" accept-charset="UTF-8" id="workbook-add-form" name="f">
-            <input type="hidden" name="planId" th:value="${result.plan.id}"/>
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.sourceCode.PlanApiData$PlanResult"*/-->
+        <form class="pure-form pure-form-stacked" action="#" th:method="POST" th:action="@{/launchpad/sourceCode/workbook-add-commit}" accept-charset="UTF-8" id="workbook-add-form" name="f">
+            <input type="hidden" name="planId" th:value="${result.sourceCode.id}"/>
             <fieldset>
 
-                <label for="variable">Input variable for this plan</label>
-                <input name="variable" id="variable" type="text" placeholder="Input variable for this plan" th:name="variable">
+                <label for="variable">Input variable for this sourceCode</label>
+                <input name="variable" id="variable" type="text" placeholder="Input variable for this sourceCode" th:name="variable">
                 <span class="pure-form-message">This is a required field.</span>
 
                 <p>&nbsp;</p>
@@ -29,7 +29,7 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="workbooks.html" th:href="${'/launchpad/plan/workbooks/' + result.plan.id}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="workbooks.html" th:href="${'/launchpad/sourceCode/workbooks/' + result.sourceCode.id}">Cancel</a>
                         </td>
                     </tr>
                 </table>
@@ -38,7 +38,7 @@
 
         <p>&nbsp;</p>
 
-        <a class="pure-button pure-button-primary" href="workbooks.html" th:href="${'/launchpad/plan/workbooks/' + result.plan.id}">Cancel</a>
+        <a class="pure-button pure-button-primary" href="workbooks.html" th:href="${'/launchpad/sourceCode/workbooks/' + result.sourceCode.id}">Cancel</a>
 
 
     </div>

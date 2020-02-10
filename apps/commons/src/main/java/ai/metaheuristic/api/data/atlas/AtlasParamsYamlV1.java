@@ -32,7 +32,7 @@ public class AtlasParamsYamlV1 implements BaseParams {
     @Override
     public boolean checkIntegrity() {
         if (plan==null || workbook==null || experiment==null || tasks==null) {
-            throw new IllegalArgumentException("(plan==null || workbook==null || experiment==null || tasks==null)");
+            throw new IllegalArgumentException("(sourceCode==null || workbook==null || experiment==null || tasks==null)");
         }
         return true;
     }

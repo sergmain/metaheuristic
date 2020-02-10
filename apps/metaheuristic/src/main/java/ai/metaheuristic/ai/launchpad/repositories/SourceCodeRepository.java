@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.repositories;
 
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
+import ai.metaheuristic.api.launchpad.SourceCode;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -29,35 +29,35 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
+public interface SourceCodeRepository extends JpaRepository<SourceCodeImpl, Long> {
 
-    @Query(value="select p from PlanImpl p where p.id=:id and p.companyId=:companyUniqueId")
-    PlanImpl findByIdForUpdate(Long id, Long companyUniqueId);
-
-    @Transactional(readOnly = true)
-    @Query(value="select p from PlanImpl p where p.companyId=:companyUniqueId")
-    List<Plan> findAllAsPlan(Long companyUniqueId);
+    @Query(value="select p from SourceCodeImpl p where p.id=:id and p.companyId=:companyUniqueId")
+    SourceCodeImpl findByIdForUpdate(Long id, Long companyUniqueId);
 
     @Transactional(readOnly = true)
-    @Query(value="select p from PlanImpl p where p.companyId=:companyUniqueId order by p.id desc ")
-    List<Plan> findAllByOrderByIdDesc(Long companyUniqueId);
+    @Query(value="select p from SourceCodeImpl p where p.companyId=:companyUniqueId")
+    List<SourceCode> findAllAsPlan(Long companyUniqueId);
 
     @Transactional(readOnly = true)
-    @Query(value="select p from PlanImpl p where p.code=:code and p.companyId=:companyUniqueId")
-    PlanImpl findByCodeAndCompanyId(String code, Long companyUniqueId);
+    @Query(value="select p from SourceCodeImpl p where p.companyId=:companyUniqueId order by p.id desc ")
+    List<SourceCode> findAllByOrderByIdDesc(Long companyUniqueId);
+
+    @Transactional(readOnly = true)
+    @Query(value="select p from SourceCodeImpl p where p.uid=:code and p.companyId=:companyUniqueId")
+    SourceCodeImpl findByCodeAndCompanyId(String code, Long companyUniqueId);
 
 
     // for Experiment, that's why we don't use companyId in this query
     @Transactional(readOnly = true)
-    @Query(value="select p.id from PlanImpl p")
+    @Query(value="select p.id from SourceCodeImpl p")
     List<Long> findAllAsIds();
 
     @Transactional(readOnly = true)
-    @Query(value="select p.code from PlanImpl p")
+    @Query(value="select p.uid from SourceCodeImpl p")
     List<String> findAllPlanCodes();
 
     @Transactional(readOnly = true)
-    PlanImpl findByCode(String code);
+    SourceCodeImpl findByCode(String code);
 }
 
 

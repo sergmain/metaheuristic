@@ -27,7 +27,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -57,7 +57,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
     // TODO 2020.02.01 experiment as special process will be deleted. There will be only a standard snippet processing
 
     @Override
-    public EnumsApi.PlanValidateStatus validate(Plan plan, PlanParamsYaml.Process process, boolean isFirst) {
+    public EnumsApi.PlanValidateStatus validate(SourceCode sourceCode, PlanParamsYaml.Process process, boolean isFirst) {
         if (StringUtils.isBlank(process.code)) {
             return EnumsApi.PlanValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }
@@ -72,7 +72,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
         if (e.getWorkbookId()!=null) {
             Workbook workbook = workbookCache.findById(e.getWorkbookId());
             if (workbook != null) {
-                if (!plan.getId().equals(workbook.getPlanId())) {
+                if (!sourceCode.getId().equals(workbook.getPlanId())) {
                     return EnumsApi.PlanValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;
                 }
             }

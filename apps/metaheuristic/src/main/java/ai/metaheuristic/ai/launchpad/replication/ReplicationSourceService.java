@@ -20,13 +20,13 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.account.AccountCache;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Company;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
-import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
@@ -53,7 +53,7 @@ public class ReplicationSourceService {
     public final Globals globals;
     public final CompanyRepository companyRepository;
     public final AccountRepository accountRepository;
-    public final PlanRepository planRepository;
+    public final SourceCodeRepository sourceCodeRepository;
     public final SnippetRepository snippetRepository;
     public final PlanCache planCache;
     public final AccountCache accountCache;
@@ -79,9 +79,9 @@ public class ReplicationSourceService {
                 .collect(Collectors.toList()));
 
         res.snippets.addAll(snippetRepository.findAllSnippetCodes());
-        res.plans.addAll(planRepository.findAllAsIds().parallelStream()
+        res.plans.addAll(sourceCodeRepository.findAllAsIds().parallelStream()
                 .map(id->{
-                    PlanImpl plan = planCache.findById(id);
+                    SourceCodeImpl plan = planCache.findById(id);
                     PlanParamsYaml params = plan.getPlanParamsYaml();
                     if (params.internalParams!= null && params.internalParams.archived) {
                         return null;
@@ -89,7 +89,7 @@ public class ReplicationSourceService {
                     if (params.internalParams==null) {
                         log.warn("!!! params.internalParams is null. Need to investigate");
                     }
-                    return new ReplicationData.PlanShortAsset(plan.code, params.internalParams==null ? 0L : params.internalParams.updatedOn);
+                    return new ReplicationData.PlanShortAsset(plan.uid, params.internalParams==null ? 0L : params.internalParams.updatedOn);
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));
@@ -102,7 +102,7 @@ public class ReplicationSourceService {
     }
 
     public ReplicationData.PlanAsset getPlan(String planCode) {
-        ReplicationData.PlanAsset planAsset = new ReplicationData.PlanAsset(planRepository.findByCode(planCode));
+        ReplicationData.PlanAsset planAsset = new ReplicationData.PlanAsset(sourceCodeRepository.findByCode(planCode));
         return planAsset;
     }
 

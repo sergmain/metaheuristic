@@ -17,7 +17,7 @@
 package ai.metaheuristic.api.data.plan;
 
 import ai.metaheuristic.api.data.BaseDataClass;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.EnumsApi;
@@ -92,7 +92,7 @@ public class PlanApiData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class PlansResult extends BaseDataClass {
-        public Slice<Plan> items;
+        public Slice<SourceCode> items;
         public EnumsApi.LaunchpadAssetMode assetMode;
     }
 
@@ -100,7 +100,7 @@ public class PlanApiData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class PlanResult extends BaseDataClass {
-        public Plan plan;
+        public SourceCode sourceCode;
         public String planYamlAsStr;
         public EnumsApi.SourceCodeLang lang;
         public EnumsApi.PlanValidateStatus status = EnumsApi.PlanValidateStatus.NOT_VERIFIED_YET;
@@ -119,8 +119,8 @@ public class PlanApiData {
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public PlanResult(Plan plan, PlanParamsYaml.Origin origin) {
-            this.plan = plan;
+        public PlanResult(SourceCode sourceCode, PlanParamsYaml.Origin origin) {
+            this.sourceCode = sourceCode;
             this.planYamlAsStr = origin.source;
             this.lang = origin.lang;
         }
@@ -131,7 +131,7 @@ public class PlanApiData {
     public static class WorkbooksResult extends BaseDataClass {
         public Slice<Workbook> instances;
         public long currentPlanId;
-        public Map<Long, Plan> plans = new HashMap<>();
+        public Map<Long, SourceCode> plans = new HashMap<>();
 
     }
 
@@ -140,18 +140,18 @@ public class PlanApiData {
     @NoArgsConstructor
     public static class WorkbookResult extends BaseDataClass {
         public Workbook workbook;
-        public Plan plan;
+        public SourceCode sourceCode;
 
         public WorkbookResult(String errorMessage) {
             this.addErrorMessage(errorMessage);
         }
 
-        public WorkbookResult(Plan plan) {
-            this.plan = plan;
+        public WorkbookResult(SourceCode sourceCode) {
+            this.sourceCode = sourceCode;
         }
 
-        public WorkbookResult(Plan plan, Workbook workbook) {
-            this.plan = plan;
+        public WorkbookResult(SourceCode sourceCode, Workbook workbook) {
+            this.sourceCode = sourceCode;
             this.workbook = workbook;
         }
     }
@@ -167,7 +167,7 @@ public class PlanApiData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class PlanListResult extends BaseDataClass {
-        public Plan plan;
+        public SourceCode sourceCode;
         public long currentPlanId;
     }
 

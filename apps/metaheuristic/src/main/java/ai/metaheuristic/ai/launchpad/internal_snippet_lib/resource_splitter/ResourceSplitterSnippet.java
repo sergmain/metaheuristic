@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.beans.Ids;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippet;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
@@ -94,7 +94,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         if (attachmentCodes.isEmpty()) {
             return wy;
         }
-        // TODO 2020-01-24 need to re-write with using aliases from plan
+        // TODO 2020-01-24 need to re-write with using aliases from sourceCode
         wy.poolCodes.computeIfAbsent(ResourceSplitterSnippet.ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
         return wy;
     }
@@ -160,9 +160,9 @@ public class ResourceSplitterSnippet implements InternalSnippet {
 
     public void loadFilesFromDirAfterZip(Long planId, Long workbookId, String contextId, File srcDir, final Map<String, String> mapping) throws IOException {
 
-        PlanImpl plan = planCache.findById(planId);
+        SourceCodeImpl plan = planCache.findById(planId);
         if (plan==null) {
-            throw new IllegalStateException("#995.200 plan wasn't found, planId: " + planId);
+            throw new IllegalStateException("#995.200 sourceCode wasn't found, planId: " + planId);
         }
         Workbook wb = workbookCache.findById(workbookId);
         if (wb==null) {
@@ -207,7 +207,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
                 });
     }
 
-    private void createAndProcessTask(PlanImpl plan, Workbook wb, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile, String contextId) {
+    private void createAndProcessTask(SourceCodeImpl plan, Workbook wb, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile, String contextId) {
 
         // TODO this method need to be re-written completely
         if (true) {
@@ -247,10 +247,10 @@ public class ResourceSplitterSnippet implements InternalSnippet {
             throw new BatchResourceProcessingException("#995.180 main document wasn't found");
         }
 
-        PlanApiData.TaskProducingResultComplex countTasks = workbookService.produceTasks(false, plan, wb.getId());
+        PlanApiData.TaskProducingResultComplex countTasks = workbookService.produceTasks(false, sourceCode, wb.getId());
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             workbookService.changeValidStatus(wb.getId(), false);
-            throw new BatchResourceProcessingException("#995.220 validation of plan was failed, status: " + countTasks.planValidateStatus);
+            throw new BatchResourceProcessingException("#995.220 validation of sourceCode was failed, status: " + countTasks.planValidateStatus);
         }
 
         if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
@@ -272,7 +272,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         }
         // TODO 2020-02-05 at this point we have to create new tasks
         //  do we need to invoke produceTasks() ?
-        workbookService.produceTasks(true, plan, wb.getId());
+        workbookService.produceTasks(true, sourceCode, wb.getId());
 //        planService.createAllTasks();
 
         operationStatus = workbookService.workbookTargetExecState(wb.getId(), EnumsApi.WorkbookExecState.STARTED);

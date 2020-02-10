@@ -194,20 +194,20 @@ CREATE TABLE mh_snippet
 CREATE UNIQUE INDEX mh_snippet_snippet_code_unq_idx
     ON mh_snippet (SNIPPET_CODE);
 
-CREATE TABLE mh_plan
+CREATE TABLE mh_source_code
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
     COMPANY_ID      INT UNSIGNED    not null,
-    CODE            varchar(50)  NOT NULL,
+    UID             varchar(50)  NOT NULL,
     CREATED_ON    bigint NOT NULL,
     PARAMS        TEXT not null,
     IS_LOCKED      BOOLEAN not null default false,
     IS_VALID      BOOLEAN not null default false
 );
 
-CREATE UNIQUE INDEX mh_plan_code_unq_idx
-    ON mh_plan (CODE);
+CREATE UNIQUE INDEX mh_source_code_uid_unq_idx
+    ON mh_source_code (UID);
 
 CREATE TABLE mh_workbook
 (

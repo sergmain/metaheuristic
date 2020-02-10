@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchAndWorkbookExecStates;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
@@ -45,7 +45,7 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.S;
@@ -83,7 +83,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BatchService {
 
-    private static final String PLAN_NOT_FOUND = "Plan wasn't found";
+    private static final String PLAN_NOT_FOUND = "SourceCode wasn't found";
     private static final String IP_HOST = "IP: %s, host: %s";
     private static final String DELEMITER_2 = "\n====================================================================\n";
 
@@ -296,10 +296,10 @@ public class BatchService {
             Batch batch = batchCache.findById(batchId);
             String planCode = PLAN_NOT_FOUND;
             if (batch!=null) {
-                Plan plan = planCache.findById(batch.getPlanId());
+                SourceCode sourceCode = planCache.findById(batch.getPlanId());
                 boolean ok = true;
-                if (plan != null) {
-                    planCode = plan.getCode();
+                if (sourceCode != null) {
+                    planCode = sourceCode.getCode();
                 } else {
                     if (batch.execState != Enums.BatchExecState.Preparing.code) {
                         ok = false;
@@ -584,7 +584,7 @@ public class BatchService {
 
     @SuppressWarnings("deprecation")
     private String getActualExtension(Long planId) {
-        PlanImpl plan = planCache.findById(planId);
+        SourceCodeImpl plan = planCache.findById(planId);
         if (plan == null) {
             return (StringUtils.isNotBlank(globals.defaultResultFileExtension)
                     ? globals.defaultResultFileExtension

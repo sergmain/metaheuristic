@@ -42,7 +42,7 @@ public class PlanParamsYamlV8 implements BaseParams {
     public boolean checkIntegrity() {
         final boolean b = plan != null && !S.b(plan.code) && plan.processes != null;
         if (!b) {
-            throw new CheckIntegrityFailedException("(b = plan != null && !S.b(plan.code) && plan.processes != null) ");
+            throw new CheckIntegrityFailedException("(b = sourceCode != null && !S.b(sourceCode.code) && sourceCode.processes != null) ");
         }
         for (ProcessV8 process : plan.processes) {
             if (process.snippet==null) {

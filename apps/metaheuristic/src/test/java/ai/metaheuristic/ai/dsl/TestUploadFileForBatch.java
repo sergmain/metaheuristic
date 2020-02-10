@@ -62,7 +62,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
         PlanParamsYamlV8 planParamsYaml = new PlanParamsYamlV8();
 
         planParamsYaml.plan = new PlanParamsYamlV8.PlanYamlV8();
-        planParamsYaml.plan.code = "Plan for testing uploading batch file";
+        planParamsYaml.plan.code = "SourceCode for testing uploading batch file";
         {
             PlanParamsYamlV8.ProcessV8 p = new PlanParamsYamlV8.ProcessV8();
             p.name = "Plocess mh.resource-splitter";
@@ -133,7 +133,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
         assertTrue(plan.isValid());
 
         String planYamlAsString = getPlanYamlAsString();
-        System.out.println("actual plan yaml:\n" + planYamlAsString);
+        System.out.println("actual sourceCode yaml:\n" + planYamlAsString);
         PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsString);
         MockMultipartFile mockFile = new MockMultipartFile("random-name.txt", "file-for-batch-processing.xml", StandardCharsets.UTF_8.toString(), "content of file".getBytes());
 

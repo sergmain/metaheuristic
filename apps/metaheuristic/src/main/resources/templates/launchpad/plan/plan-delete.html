@@ -4,15 +4,15 @@
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">Delete the plan</h1>
+        <h1 class="widget-header">Delete the sourceCode</h1>
 
-        <!--/*@thymesVar id="plan" type="ai.metaheuristic.ai.launchpad.beans.PlanImpl"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${plan}">
+        <!--/*@thymesVar id="sourceCode" type="ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${sourceCode}">
             <fieldset>
-                <label for="code">Code of plan</label>
+                <label for="code">Code of sourceCode</label>
                 <pre id="code" th:text="*{code}" ></pre>
 
-                <label for="planYamlAsStr">Parameters of plan</label>
+                <label for="planYamlAsStr">Parameters of sourceCode</label>
                 <pre id="planYamlAsStr" th:text="${planYamlAsStr}" ></pre>
             </fieldset>
         </form>
@@ -20,9 +20,9 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${plan}" th:method="post" th:action="@{/launchpad/plan/plan-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${sourceCode}" th:method="post" th:action="@{/launchpad/sourceCode/sourceCode-delete-commit}"
                           accept-charset="UTF-8"
-                          id="plan-delete-commit"
+                          id="sourceCode-delete-commit"
                           name="f">
                         <input type="hidden" th:field="*{id}"/>
                         <fieldset>
@@ -34,7 +34,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/plan/plans}" accept-charset="UTF-8" id="plan-delete-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/sourceCode/sourceCodes}" accept-charset="UTF-8" id="sourceCode-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

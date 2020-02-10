@@ -106,9 +106,9 @@ public class AtlasService {
         if (workbook==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.05 can't find workbook for this experiment");
         }
-        PlanImpl plan = planCache.findById(workbook.getPlanId());
+        SourceCodeImpl plan = planCache.findById(workbook.getPlanId());
         if (plan==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.10 can't find plan for this experiment");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.10 can't find sourceCode for this experiment");
         }
 
         StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(plan, workbook, experiment);
@@ -175,7 +175,7 @@ public class AtlasService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public StoredToAtlasWithStatus toExperimentStoredToAtlas(PlanImpl plan, WorkbookImpl workbook, Experiment experiment) {
+    public StoredToAtlasWithStatus toExperimentStoredToAtlas(SourceCodeImpl plan, WorkbookImpl workbook, Experiment experiment) {
         AtlasParamsYaml atlasParamsYaml = new AtlasParamsYaml();
         atlasParamsYaml.createdOn = System.currentTimeMillis();
         atlasParamsYaml.plan = new AtlasParamsYaml.PlanWithParams(plan.id, plan.getParams());

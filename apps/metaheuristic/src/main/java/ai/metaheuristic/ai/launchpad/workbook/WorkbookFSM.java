@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.workbook;
 
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.launchpad.Workbook;
@@ -62,7 +62,7 @@ public class WorkbookFSM {
     }
 
     public void toStarted(Workbook workbook) {
-        PlanImpl plan = planCache.findById(workbook.getPlanId());
+        SourceCodeImpl plan = planCache.findById(workbook.getPlanId());
         if (plan == null) {
             toError(workbook.getId());
         }

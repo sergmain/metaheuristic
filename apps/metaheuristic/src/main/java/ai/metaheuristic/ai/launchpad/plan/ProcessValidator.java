@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.SourceCode;
 
 public interface ProcessValidator {
-    EnumsApi.PlanValidateStatus validate(Plan plan, PlanParamsYaml.Process process, boolean isFirst);
+    EnumsApi.PlanValidateStatus validate(SourceCode sourceCode, PlanParamsYaml.Process process, boolean isFirst);
 }

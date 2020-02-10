@@ -781,7 +781,7 @@ public class ExperimentService {
                             }
                             yaml.taskYaml.taskMl.setHyperParams(hyperParams.toSortedMap());
                         }
-                        // TODO need to implement an unit-test for a Plan without metas in experiment
+                        // TODO need to implement an unit-test for a SourceCode without metas in experiment
                         //  and check that features are correctly defined
                         // TODO 2019-07-17 right now it doesn't work
                         //  - you need to specify 'feature', dataset'(not sure about 'dataset') in metas

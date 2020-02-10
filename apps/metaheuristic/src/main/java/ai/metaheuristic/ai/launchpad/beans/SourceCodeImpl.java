@@ -17,7 +17,7 @@ package ai.metaheuristic.ai.launchpad.beans;
 
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.SourceCode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
@@ -26,9 +26,9 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "MH_PLAN")
+@Table(name = "MH_SOURCE_CODE")
 @Data
-public class PlanImpl implements Serializable, Plan {
+public class SourceCodeImpl implements Serializable, SourceCode {
     private static final long serialVersionUID = 6764501814772365639L;
 
     @Id
@@ -42,8 +42,8 @@ public class PlanImpl implements Serializable, Plan {
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
-    @Column(name = "CODE")
-    public String code;
+    @Column(name = "UID")
+    public String uid;
 
     @Column(name="CREATED_ON")
     public long createdOn;

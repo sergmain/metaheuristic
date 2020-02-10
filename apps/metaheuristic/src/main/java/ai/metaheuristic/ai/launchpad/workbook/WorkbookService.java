@@ -49,7 +49,7 @@ import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
@@ -119,14 +119,14 @@ public class WorkbookService {
         }
 
         final WorkbookImpl workbook = (WorkbookImpl) result.workbook;
-        final Plan plan = result.plan;
-        if (plan==null || workbook ==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#701.110 Error: (result.plan==null || result.workbook==null)");
+        final SourceCode sourceCode = result.sourceCode;
+        if (sourceCode ==null || workbook ==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#701.110 Error: (result.sourceCode==null || result.workbook==null)");
         }
 
         if (workbook.execState!=execState.code) {
             workbookFSM.toState(workbook.id, execState);
-            applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.PlanLockingEvent(plan.getId(), plan.getCompanyId(), true));
+            applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.PlanLockingEvent(sourceCode.getId(), sourceCode.getCompanyId(), true));
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -241,9 +241,9 @@ public class WorkbookService {
         if (workbook == null) {
             return new PlanApiData.WorkbookResult("#705.100 workbook wasn't found, workbookId: " + workbookId);
         }
-        PlanImpl plan = planCache.findById(workbook.getPlanId());
+        SourceCodeImpl plan = planCache.findById(workbook.getPlanId());
         if (plan == null) {
-            return new PlanApiData.WorkbookResult("#705.110 plan wasn't found, planId: " + workbook.getPlanId());
+            return new PlanApiData.WorkbookResult("#705.110 sourceCode wasn't found, planId: " + workbook.getPlanId());
         }
 
         if (!plan.getId().equals(workbook.getPlanId())) {
@@ -267,12 +267,12 @@ public class WorkbookService {
             WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(workbook.getParams());
             wpy.graph = null;
             workbook.setParams( WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
-            Plan plan = planCache.findById(workbook.getPlanId());
-            if (plan==null) {
+            SourceCode sourceCode = planCache.findById(workbook.getPlanId());
+            if (sourceCode ==null) {
                 log.warn("#705.130 Found workbook with wrong planId. planId: {}", workbook.getPlanId());
                 continue;
             }
-            result.plans.put(workbook.getId(), plan);
+            result.plans.put(workbook.getId(), sourceCode);
         }
         return result;
     }
@@ -484,7 +484,7 @@ public class WorkbookService {
         return ids;
     }
 
-    public PlanApiData.TaskProducingResultComplex produceTasks(boolean isPersist, PlanImpl plan, Long workbookId) {
+    public PlanApiData.TaskProducingResultComplex produceTasks(boolean isPersist, SourceCodeImpl plan, Long workbookId) {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
@@ -578,7 +578,7 @@ public class WorkbookService {
         return result;
     }
 
-    public PlanApiData.WorkbookResult createWorkbookInternal(@NonNull PlanImpl plan, String variable) {
+    public PlanApiData.WorkbookResult createWorkbookInternal(@NonNull SourceCodeImpl plan, String variable) {
         WorkbookParamsYaml.WorkbookYaml wrc = PlanUtils.asWorkbookParamsYaml(variable);
         PlanApiData.TaskProducingResultComplex producingResult = createWorkbook(plan.getId(), wrc);
         if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
@@ -588,7 +588,7 @@ public class WorkbookService {
         PlanApiData.TaskProducingResultComplex countTasks = produceTasks(false, plan, producingResult.workbook.getId());
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             changeValidStatus(producingResult.workbook.getId(), false);
-            return new PlanApiData.WorkbookResult("#560.077 plan producing was failed, status: " + countTasks.planProducingStatus);
+            return new PlanApiData.WorkbookResult("#560.077 sourceCode producing was failed, status: " + countTasks.planProducingStatus);
         }
 
         if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
@@ -611,7 +611,7 @@ public class WorkbookService {
         variableService.deleteByWorkbookId(workbookId);
         Workbook workbook = workbookCache.findById(workbookId);
         if (workbook != null) {
-            // unlock plan if this is the last workbook in the plan
+            // unlock sourceCode if this is the last workbook in the sourceCode
             List<Long> ids = workbookRepository.findIdsByPlanId(workbook.getPlanId());
             if (ids.size()==1) {
                 if (ids.get(0).equals(workbookId)) {

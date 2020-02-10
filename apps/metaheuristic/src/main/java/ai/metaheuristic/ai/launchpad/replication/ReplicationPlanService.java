@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.ai.launchpad.replication;
 
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
-import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -46,30 +46,30 @@ import java.util.List;
 public class ReplicationPlanService {
 
     public final ReplicationCoreService replicationCoreService;
-    public final PlanRepository planRepository;
+    public final SourceCodeRepository sourceCodeRepository;
     public final PlanCache planCache;
 
     @Data
     @AllArgsConstructor
     private static class PlanLoopEntry {
         public ReplicationData.PlanShortAsset planShort;
-        public PlanImpl plan;
+        public SourceCodeImpl plan;
     }
 
     public void syncPlans(List<ReplicationData.PlanShortAsset> actualPlans) {
         List<PlanLoopEntry> forUpdating = new ArrayList<>(actualPlans.size());
         LinkedList<ReplicationData.PlanShortAsset> forCreating = new LinkedList<>(actualPlans);
 
-        List<Long> ids = planRepository.findAllAsIds();
+        List<Long> ids = sourceCodeRepository.findAllAsIds();
         for (Long id : ids) {
-            PlanImpl p = planCache.findById(id);
+            SourceCodeImpl p = planCache.findById(id);
             if (p==null) {
                 continue;
             }
 
             boolean isDeleted = true;
             for (ReplicationData.PlanShortAsset actualPlan : actualPlans) {
-                if (actualPlan.code.equals(p.code)) {
+                if (actualPlan.code.equals(p.uid)) {
                     isDeleted = false;
                     if (actualPlan.updateOn != p.getPlanParamsYaml().internalParams.updatedOn) {
                         PlanLoopEntry planLoopEntry = new PlanLoopEntry(actualPlan, p);
@@ -82,7 +82,7 @@ public class ReplicationPlanService {
             if (isDeleted) {
                 planCache.deleteById(id);
             }
-            forCreating.removeIf(planShortAsset -> planShortAsset.code.equals(p.code));
+            forCreating.removeIf(planShortAsset -> planShortAsset.code.equals(p.uid));
         }
 
         forUpdating.parallelStream().forEach(this::updatePlan);
@@ -90,7 +90,7 @@ public class ReplicationPlanService {
     }
 
     private void updatePlan(PlanLoopEntry planLoopEntry) {
-        ReplicationData.PlanAsset planAsset = getPlanAsset(planLoopEntry.plan.code);
+        ReplicationData.PlanAsset planAsset = getPlanAsset(planLoopEntry.plan.uid);
         if (planAsset == null) {
             return;
         }
@@ -108,7 +108,7 @@ public class ReplicationPlanService {
             return;
         }
 
-        PlanImpl p = planRepository.findByCode(planShortAsset.code);
+        SourceCodeImpl p = sourceCodeRepository.findByCode(planShortAsset.code);
         if (p!=null) {
             return;
         }
@@ -120,7 +120,7 @@ public class ReplicationPlanService {
     private ReplicationData.PlanAsset getPlanAsset(String planCode) {
         ReplicationData.PlanAsset planAsset = requestPlanAsset(planCode);
         if (planAsset.isErrorMessages()) {
-            log.error("#308.020 Error while getting plan "+ planCode +", error: " + planAsset.getErrorMessagesAsStr());
+            log.error("#308.020 Error while getting sourceCode "+ planCode +", error: " + planAsset.getErrorMessagesAsStr());
             return null;
         }
         return planAsset;
@@ -128,7 +128,7 @@ public class ReplicationPlanService {
 
     private ReplicationData.PlanAsset requestPlanAsset(String planCode) {
         Object data = replicationCoreService.getData(
-                "/rest/v1/replication/plan", ReplicationData.PlanAsset.class,
+                "/rest/v1/replication/sourceCode", ReplicationData.PlanAsset.class,
                 (uri) -> Request.Post(uri)
                         .bodyForm(Form.form().add("planCode", planCode).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
