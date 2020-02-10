@@ -92,7 +92,7 @@ public class PlanParamsYaml implements BaseParams {
     }
 
     public static class SubProcesses {
-        public EnumsApi.PlanProcessExec exec;
+        public EnumsApi.PlanSubProcessLogic logic;
         public List<Process> processes;
     }
 

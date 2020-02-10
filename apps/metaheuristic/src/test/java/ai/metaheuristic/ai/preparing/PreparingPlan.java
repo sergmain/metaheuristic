@@ -155,7 +155,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             planParamsYaml.plan.processes.add(p);
 
             p.subProcesses = new PlanParamsYamlV8.SubProcessesV8();
-            p.subProcesses.exec = EnumsApi.PlanProcessExec.parallel;
+            p.subProcesses.logic = EnumsApi.PlanSubProcessLogic.and;
 
             PlanParamsYamlV8.ProcessV8 p1 = new PlanParamsYamlV8.ProcessV8();
             p1.name = "feature-processing-1";
@@ -203,7 +203,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             planParamsYaml.plan.processes.add(p);
 
             p.subProcesses = new PlanParamsYamlV8.SubProcessesV8();
-            p.subProcesses.exec = EnumsApi.PlanProcessExec.sequential;
+            p.subProcesses.logic = EnumsApi.PlanSubProcessLogic.sequential;
 
             PlanParamsYamlV8.ProcessV8 p1 = new PlanParamsYamlV8.ProcessV8();
             p1.name = "feature-processing-1";

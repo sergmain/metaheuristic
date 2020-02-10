@@ -22,7 +22,7 @@ import lombok.ToString;
 
 public class EnumsApi {
 
-    public enum PlanProcessExec { parallel, sequential}
+    public enum PlanSubProcessLogic { and, or, sequential}
 
     public enum SnippetExecContext { external, internal }
 

@@ -87,7 +87,7 @@ public class PlanParamsYamlV8 implements BaseParams {
     }
 
     public static class SubProcessesV8 {
-        public EnumsApi.PlanProcessExec exec;
+        public EnumsApi.PlanSubProcessLogic logic;
         public List<ProcessV8> processes;
     }
 
