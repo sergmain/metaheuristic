@@ -17,10 +17,16 @@
 package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,9 +35,38 @@ import java.util.List;
  * Time: 4:41 PM
  */
 public class PlanData {
+
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class PlansForCompany extends BaseDataClass {
         public List<Plan> items;
+    }
+
+    @Data
+    public static class SimpleTaskVertex {
+        public String contextId;
+
+        public String name;
+        public String code;
+        public PlanParamsYaml.SnippetDefForPlan snippet;
+        public List<PlanParamsYaml.SnippetDefForPlan> preSnippets;
+        public List<PlanParamsYaml.SnippetDefForPlan> postSnippets;
+
+        /**
+         * Timeout before terminating a process with snippet
+         * value in seconds
+         * null or 0 mean the infinite execution
+         */
+        public Long timeoutBeforeTerminate;
+        public final List<PlanParamsYaml.Variable> input = new ArrayList<>();
+        public final List<PlanParamsYaml.Variable> output = new ArrayList<>();
+        public List<Meta> metas = new ArrayList<>();
+    }
+
+    @Data
+    @EqualsAndHashCode(exclude = "graph")
+    public static class SourceCode {
+        public boolean clean;
+        public final DirectedAcyclicGraph<SimpleTaskVertex, DefaultEdge> graph = new DirectedAcyclicGraph<>(DefaultEdge.class);
     }
 }
