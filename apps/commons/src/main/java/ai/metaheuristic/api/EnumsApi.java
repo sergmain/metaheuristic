@@ -22,6 +22,8 @@ import lombok.ToString;
 
 public class EnumsApi {
 
+    public enum SourceCodeLang { yaml }
+
     public enum PlanSubProcessLogic { and, or, sequential}
 
     public enum SnippetExecContext { external, internal }

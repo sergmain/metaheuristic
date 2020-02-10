@@ -44,6 +44,7 @@ public class PlanParamsYamlUtilsV8
 
     @Override
     public PlanParamsYaml upgradeTo(PlanParamsYamlV8 v8, Long ... vars) {
+        v8.checkIntegrity();
         PlanParamsYaml p = new PlanParamsYaml();
         p.internalParams = new PlanParamsYaml.InternalParams(v8.internalParams.archived, v8.internalParams.published, v8.internalParams.updatedOn, null);
         p.plan = new PlanParamsYaml.PlanYaml();
@@ -73,7 +74,8 @@ public class PlanParamsYamlUtilsV8
         if (v8.plan.ac!=null) {
             p.plan.ac = new PlanParamsYaml.AccessControl(v8.plan.ac.groups);
         }
-        p.originYaml = v8.originYaml;
+        p.origin.source = v8.origin.source;
+        p.origin.lang = v8.origin.lang;
         p.checkIntegrity();
         return p;
     }

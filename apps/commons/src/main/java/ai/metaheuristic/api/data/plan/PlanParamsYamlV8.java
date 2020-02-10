@@ -173,9 +173,17 @@ public class PlanParamsYamlV8 implements BaseParams {
         public List<Meta> metas;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OriginV8 {
+        public String source;
+        public EnumsApi.SourceCodeLang lang;
+    }
+
     public final int version=8;
     public PlanYamlV8 plan;
-    public String originYaml;
+    public final OriginV8 origin = new OriginV8();
     public InternalParamsV8 internalParams;
 
 }

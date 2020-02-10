@@ -46,8 +46,8 @@ public class PlanData {
     public static class SimpleTaskVertex {
         public String contextId;
 
-        public String name;
-        public String code;
+        public String processName;
+        public String processCode;
         public PlanParamsYaml.SnippetDefForPlan snippet;
         public List<PlanParamsYaml.SnippetDefForPlan> preSnippets;
         public List<PlanParamsYaml.SnippetDefForPlan> postSnippets;
@@ -58,8 +58,8 @@ public class PlanData {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-        public final List<PlanParamsYaml.Variable> input = new ArrayList<>();
-        public final List<PlanParamsYaml.Variable> output = new ArrayList<>();
+        public final List<String> input = new ArrayList<>();
+        public final List<String> output = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
     }
 

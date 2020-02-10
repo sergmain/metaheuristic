@@ -150,8 +150,7 @@ public class PlanTopLevelService {
                     "#560.050 plan wasn't found, planId: " + planId,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
-        String yaml = plan.getPlanParamsYaml().originYaml;
-        return new PlanApiData.PlanResult(plan, yaml);
+        return new PlanApiData.PlanResult(plan, plan.getPlanParamsYaml().origin);
     }
 
     public PlanApiData.PlanResult validatePlan(Long planId, LaunchpadContext context) {
@@ -161,8 +160,7 @@ public class PlanTopLevelService {
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
 
-        String yaml = plan.getPlanParamsYaml().originYaml;
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, yaml);
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.getPlanParamsYaml().origin);
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         result.errorMessages = planValidation.errorMessages;
         result.infoMessages = planValidation.infoMessages;
@@ -171,17 +169,17 @@ public class PlanTopLevelService {
     }
 
     @SuppressWarnings("Duplicates")
-    public PlanApiData.PlanResult addPlan(String planYamlAsStr, LaunchpadContext context) {
+    public PlanApiData.PlanResult addPlan(String sourceCode, LaunchpadContext context) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new PlanApiData.PlanResult("#560.085 Can't add a new plan while 'replicated' mode of asset is active");
         }
-        if (StringUtils.isBlank(planYamlAsStr)) {
+        if (StringUtils.isBlank(sourceCode)) {
             return new PlanApiData.PlanResult("#560.090 plan yaml is empty");
         }
 
         PlanParamsYaml ppy;
         try {
-            ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsStr);
+            ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
         } catch (WrongVersionOfYamlFileException e) {
             return new PlanApiData.PlanResult("#560.110 An error parsing yaml: " + e.getMessage());
         }
@@ -196,7 +194,8 @@ public class PlanTopLevelService {
         }
 
         PlanImpl plan = new PlanImpl();
-        ppy.originYaml = planYamlAsStr;
+        ppy.origin.source = sourceCode;
+        ppy.origin.lang = EnumsApi.SourceCodeLang.yaml;
         ppy.internalParams.updatedOn = System.currentTimeMillis();
         String params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
         plan.setParams(params);
@@ -208,14 +207,14 @@ public class PlanTopLevelService {
 
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.getParams() );
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, ppy.origin );
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
         return result;
     }
 
     @SuppressWarnings("Duplicates")
-    public PlanApiData.PlanResult updatePlan(Long planId, String planYamlAsStr, LaunchpadContext context) {
+    public PlanApiData.PlanResult updatePlan(Long planId, String sourceCode, LaunchpadContext context) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new PlanApiData.PlanResult("#560.160 Can't update a plan while 'replicated' mode of asset is active");
         }
@@ -225,11 +224,11 @@ public class PlanTopLevelService {
                     "#560.010 plan wasn't found, planId: " + planId,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
-        if (StringUtils.isBlank(planYamlAsStr)) {
+        if (StringUtils.isBlank(sourceCode)) {
             return new PlanApiData.PlanResult("#560.170 plan yaml is empty");
         }
 
-        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsStr);
+        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
 
         final String code = ppy.plan.code;
         if (StringUtils.isBlank(code)) {
@@ -244,7 +243,8 @@ public class PlanTopLevelService {
         }
         plan.code = code;
 
-        ppy.originYaml = planYamlAsStr;
+        ppy.origin.source = sourceCode;
+        ppy.origin.lang = EnumsApi.SourceCodeLang.yaml;
         ppy.internalParams.updatedOn = System.currentTimeMillis();
         String params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
         plan.setParams(params);
@@ -253,7 +253,7 @@ public class PlanTopLevelService {
 
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.getParams() );
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, ppy.origin );
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
         return result;

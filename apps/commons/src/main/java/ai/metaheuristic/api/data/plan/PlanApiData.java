@@ -102,6 +102,7 @@ public class PlanApiData {
     public static class PlanResult extends BaseDataClass {
         public Plan plan;
         public String planYamlAsStr;
+        public EnumsApi.SourceCodeLang lang;
         public EnumsApi.PlanValidateStatus status = EnumsApi.PlanValidateStatus.NOT_VERIFIED_YET;
 
         public PlanResult(String errorMessage, EnumsApi.PlanValidateStatus status) {
@@ -118,9 +119,10 @@ public class PlanApiData {
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public PlanResult(Plan plan, String planYamlAsStr) {
+        public PlanResult(Plan plan, PlanParamsYaml.Origin origin) {
             this.plan = plan;
-            this.planYamlAsStr = planYamlAsStr;
+            this.planYamlAsStr = origin.source;
+            this.lang = origin.lang;
         }
     }
 
