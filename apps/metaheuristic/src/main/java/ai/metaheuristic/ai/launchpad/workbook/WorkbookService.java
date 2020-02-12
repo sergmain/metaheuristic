@@ -255,7 +255,7 @@ public class WorkbookService {
     }
 
     public SourceCodeApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, LaunchpadContext context) {
-        pageable = ControllerUtils.fixPageSize(globals.workbookRowsLimit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.execContextRowsLimit, pageable);
         SourceCodeApiData.WorkbooksResult result = new SourceCodeApiData.WorkbooksResult();
         result.instances = workbookRepository.findByPlanIdOrderByCreatedOnDesc(pageable, sourceCodeId);
         result.currentPlanId = sourceCodeId;

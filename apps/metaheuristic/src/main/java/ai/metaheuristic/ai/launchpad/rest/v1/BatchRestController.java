@@ -102,8 +102,8 @@ public class BatchRestController {
     }
 
     @PostMapping(value = "/batch-upload-from-file")
-    public OperationStatusRest uploadFile(final MultipartFile file, Long planId, Authentication authentication) {
-        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, planId, launchpadContextService.getContext(authentication));
+    public OperationStatusRest uploadFile(final MultipartFile file, Long sourceCodeId, Authentication authentication) {
+        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, launchpadContextService.getContext(authentication));
         if (uploadingStatus.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, uploadingStatus.getErrorMessages());
         }

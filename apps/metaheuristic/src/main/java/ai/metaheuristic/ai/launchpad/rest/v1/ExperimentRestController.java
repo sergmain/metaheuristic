@@ -155,8 +155,8 @@ public class ExperimentRestController {
         return experimentTopLevelService.uploadExperiment(file);
     }
 
-    @PostMapping("/bind-experiment-to-plan-with-resource")
-    public OperationStatusRest bindExperimentToPlanWithResource(String experimentCode, String resourcePoolCode, Authentication authentication) {
+    @PostMapping("/bind-experiment-to-source-code-with-resource")
+    public OperationStatusRest bindExperimentToSourceCodeWithResource(String experimentCode, String resourcePoolCode, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return experimentTopLevelService.bindExperimentToSourceCodeWithResource(experimentCode, resourcePoolCode, context);
     }

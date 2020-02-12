@@ -77,15 +77,15 @@ public class SourceCodeTopLevelService {
     private final WorkbookCache workbookCache;
     private final GlobalVariableService globalVariableService;
 
-    public SourceCodeApiData.WorkbookResult addWorkbook(Long planId, String variable, LaunchpadContext context) {
-        return getWorkbookResult(variable, context, sourceCodeCache.findById(planId));
+    public SourceCodeApiData.WorkbookResult addWorkbook(Long sourceCodeId, String variable, LaunchpadContext context) {
+        return getWorkbookResult(variable, context, sourceCodeCache.findById(sourceCodeId));
     }
 
-    public SourceCodeApiData.WorkbookResult addWorkbook(String planCode, String variable, LaunchpadContext context) {
-        return getWorkbookResult(variable, context, sourceCodeRepository.findByCodeAndCompanyId(planCode, context.getCompanyId()));
+    public SourceCodeApiData.WorkbookResult addWorkbook(String sourceCodeUid, String variable, LaunchpadContext context) {
+        return getWorkbookResult(variable, context, sourceCodeRepository.findByUidAndCompanyId(sourceCodeUid, context.getCompanyId()));
     }
 
-    private SourceCodeApiData.WorkbookResult getWorkbookResult(String variable, LaunchpadContext context, SourceCodeImpl plan) {
+    private SourceCodeApiData.WorkbookResult getWorkbookResult(String variable, LaunchpadContext context, SourceCodeImpl sourceCode) {
         if (S.b(variable)) {
             return new SourceCodeApiData.WorkbookResult("#560.006 name of variable is empty");
         }
@@ -93,22 +93,22 @@ public class SourceCodeTopLevelService {
             return new SourceCodeApiData.WorkbookResult( "#560.008 global variable " + variable +" wasn't found");
         }
         // validate the sourceCode
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(plan);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
         if (sourceCodeValidation.status != EnumsApi.SourceCodeValidateStatus.OK) {
             SourceCodeApiData.WorkbookResult r = new SourceCodeApiData.WorkbookResult();
             r.errorMessages = sourceCodeValidation.errorMessages;
             return r;
         }
 
-        OperationStatusRest status = checkPlan(plan, context);
+        OperationStatusRest status = checkSourceCode(sourceCode, context);
         if (status != null) {
             return new SourceCodeApiData.WorkbookResult( "#560.011 access denied: " + status.getErrorMessagesAsStr());
         }
-        return workbookService.createWorkbookInternal(plan, variable);
+        return workbookService.createWorkbookInternal(sourceCode, variable);
     }
 
     public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, LaunchpadContext context) {
-        pageable = ControllerUtils.fixPageSize(globals.planRowsLimit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.sourceCodeRowsLimit, pageable);
         List<SourceCode> sourceCodes = sourceCodeRepository.findAllByOrderByIdDesc(context.getCompanyId());
         AtomicInteger count = new AtomicInteger();
 
@@ -144,24 +144,24 @@ public class SourceCodeTopLevelService {
     }
 
     public SourceCodeApiData.SourceCodeResult getSourceCode(Long sourceCodeId, LaunchpadContext context) {
-        final SourceCodeImpl plan = sourceCodeCache.findById(sourceCodeId);
-        if (plan == null) {
+        final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+        if (sourceCode == null) {
             return new SourceCodeApiData.SourceCodeResult(
                     "#560.050 sourceCode wasn't found, sourceCodeId: " + sourceCodeId,
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
         }
-        return new SourceCodeApiData.SourceCodeResult(plan, plan.getSourceCodeParamsYaml().origin);
+        return new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeParamsYaml().origin);
     }
 
-    public SourceCodeApiData.SourceCodeResult validateSourceCode(Long planId, LaunchpadContext context) {
-        final SourceCodeImpl plan = sourceCodeCache.findById(planId);
-        if (plan == null) {
-            return new SourceCodeApiData.SourceCodeResult("#560.070 sourceCode wasn't found, planId: " + planId,
+    public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, LaunchpadContext context) {
+        final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+        if (sourceCode == null) {
+            return new SourceCodeApiData.SourceCodeResult("#560.070 sourceCode wasn't found, sourceCodeId: " + sourceCodeId,
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
         }
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(plan, plan.getSourceCodeParamsYaml().origin);
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(plan);
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeParamsYaml().origin);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
         result.errorMessages = sourceCodeValidation.errorMessages;
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.status = sourceCodeValidation.status;
@@ -169,17 +169,17 @@ public class SourceCodeTopLevelService {
     }
 
     @SuppressWarnings("Duplicates")
-    public SourceCodeApiData.SourceCodeResult addSourceCode(String sourceCode, LaunchpadContext context) {
+    public SourceCodeApiData.SourceCodeResult addSourceCode(String sourceCodeYamlAsStr, LaunchpadContext context) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new SourceCodeApiData.SourceCodeResult("#560.085 Can't add a new sourceCode while 'replicated' mode of asset is active");
         }
-        if (StringUtils.isBlank(sourceCode)) {
+        if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
             return new SourceCodeApiData.SourceCodeResult("#560.090 sourceCode yaml is empty");
         }
 
         SourceCodeParamsYaml ppy;
         try {
-            ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
+            ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
         } catch (WrongVersionOfYamlFileException e) {
             return new SourceCodeApiData.SourceCodeResult("#560.110 An error parsing yaml: " + e.getMessage());
         }
@@ -188,47 +188,47 @@ public class SourceCodeTopLevelService {
         if (StringUtils.isBlank(code)) {
             return new SourceCodeApiData.SourceCodeResult("#560.130 the code of sourceCode is empty");
         }
-        SourceCode f = sourceCodeRepository.findByCodeAndCompanyId(code, context.getCompanyId());
+        SourceCode f = sourceCodeRepository.findByUidAndCompanyId(code, context.getCompanyId());
         if (f!=null) {
             return new SourceCodeApiData.SourceCodeResult("#560.150 the sourceCode with such code already exists, code: " + code);
         }
 
-        SourceCodeImpl plan = new SourceCodeImpl();
-        ppy.origin.source = sourceCode;
+        SourceCodeImpl sourceCode = new SourceCodeImpl();
+        ppy.origin.source = sourceCodeYamlAsStr;
         ppy.origin.lang = EnumsApi.SourceCodeLang.yaml;
         ppy.internalParams.updatedOn = System.currentTimeMillis();
         String params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
-        plan.setParams(params);
+        sourceCode.setParams(params);
 
-        plan.companyId = context.getCompanyId();
-        plan.createdOn = System.currentTimeMillis();
-        plan.uid = ppy.source.code;
-        plan = sourceCodeCache.save(plan);
+        sourceCode.companyId = context.getCompanyId();
+        sourceCode.createdOn = System.currentTimeMillis();
+        sourceCode.uid = ppy.source.code;
+        sourceCode = sourceCodeCache.save(sourceCode);
 
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(plan);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(plan, ppy.origin );
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, ppy.origin );
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.errorMessages = sourceCodeValidation.errorMessages;
         return result;
     }
 
     @SuppressWarnings("Duplicates")
-    public SourceCodeApiData.SourceCodeResult updateSourceCode(Long planId, String sourceCode, LaunchpadContext context) {
+    public SourceCodeApiData.SourceCodeResult updateSourceCode(Long sourceCodeId, String sourceCodeYamlAsStr, LaunchpadContext context) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new SourceCodeApiData.SourceCodeResult("#560.160 Can't update a sourceCode while 'replicated' mode of asset is active");
         }
-        SourceCodeImpl plan = sourceCodeCache.findById(planId);
-        if (plan == null) {
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+        if (sourceCode == null) {
             return new SourceCodeApiData.SourceCodeResult(
-                    "#560.010 sourceCode wasn't found, planId: " + planId,
+                    "#560.010 sourceCode wasn't found, sourceCodeId: " + sourceCodeId,
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
         }
-        if (StringUtils.isBlank(sourceCode)) {
+        if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
             return new SourceCodeApiData.SourceCodeResult("#560.170 sourceCode yaml is empty");
         }
 
-        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
+        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
 
         final String code = ppy.source.code;
         if (StringUtils.isBlank(code)) {
@@ -237,61 +237,61 @@ public class SourceCodeTopLevelService {
         if (StringUtils.isBlank(code)) {
             return new SourceCodeApiData.SourceCodeResult("#560.210 sourceCode is empty");
         }
-        SourceCode p = sourceCodeRepository.findByCodeAndCompanyId(code, context.getCompanyId());
-        if (p!=null && !p.getId().equals(plan.getId())) {
+        SourceCode p = sourceCodeRepository.findByUidAndCompanyId(code, context.getCompanyId());
+        if (p!=null && !p.getId().equals(sourceCode.getId())) {
             return new SourceCodeApiData.SourceCodeResult("#560.230 sourceCode with such code already exists, code: " + code);
         }
-        plan.uid = code;
+        sourceCode.uid = code;
 
-        ppy.origin.source = sourceCode;
+        ppy.origin.source = sourceCodeYamlAsStr;
         ppy.origin.lang = EnumsApi.SourceCodeLang.yaml;
         ppy.internalParams.updatedOn = System.currentTimeMillis();
         String params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
-        plan.setParams(params);
+        sourceCode.setParams(params);
 
-        plan = sourceCodeCache.save(plan);
+        sourceCode = sourceCodeCache.save(sourceCode);
 
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(plan);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(plan, ppy.origin );
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, ppy.origin );
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.errorMessages = sourceCodeValidation.errorMessages;
         return result;
     }
 
-    public OperationStatusRest deleteSourceCodeById(Long planId, LaunchpadContext context) {
+    public OperationStatusRest deleteSourceCodeById(Long sourceCodeId, LaunchpadContext context) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
         }
-        SourceCode sourceCode = sourceCodeCache.findById(planId);
+        SourceCode sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.250 sourceCode wasn't found, planId: " + planId);
+                    "#560.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
         }
-        sourceCodeCache.deleteById(planId);
+        sourceCodeCache.deleteById(sourceCodeId);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest archiveSourceCodeById(Long id, LaunchpadContext context) {
+    public OperationStatusRest archiveSourceCodeById(Long sourceCodeId, LaunchpadContext context) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.260 Can't archive a sourceCode while 'replicated' mode of asset is active");
         }
-        SourceCodeImpl plan = sourceCodeCache.findById(id);
-        OperationStatusRest status = checkPlan(plan, context);
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+        OperationStatusRest status = checkSourceCode(sourceCode, context);
         if (status!=null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 sourceCode wasn't found, planId: " + id+", " + status.getErrorMessagesAsStr());
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId+", " + status.getErrorMessagesAsStr());
         }
-        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
+        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode.getParams());
         if (ppy.internalParams==null) {
             ppy.internalParams = new SourceCodeParamsYaml.InternalParams();
         }
         ppy.internalParams.archived = true;
         ppy.internalParams.updatedOn = System.currentTimeMillis();
-        plan.setParams(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
+        sourceCode.setParams(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
 
-        sourceCodeCache.save(plan);
+        sourceCodeCache.save(sourceCode);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -325,13 +325,13 @@ public class SourceCodeTopLevelService {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#560.350 can't create temporary directory in " + location);
             }
-            final File planFile = new File(tempDir, "plans" + ext);
+            final File sourceCodeFile = new File(tempDir, "source-codes" + ext);
             log.debug("Start storing an uploaded sourceCode to disk");
-            try(OutputStream os = new FileOutputStream(planFile)) {
+            try(OutputStream os = new FileOutputStream(sourceCodeFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
             log.debug("Start loading sourceCode into db");
-            String yaml = FileUtils.readFileToString(planFile, StandardCharsets.UTF_8);
+            String yaml = FileUtils.readFileToString(sourceCodeFile, StandardCharsets.UTF_8);
             SourceCodeApiData.SourceCodeResult result = addSourceCode(yaml, context);
 
             if (result.isErrorMessages()) {
@@ -342,7 +342,7 @@ public class SourceCodeTopLevelService {
         catch (Throwable e) {
             log.error("Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.370 can't load plans, Error: " + e.toString());
+                    "#560.370 can't load source codes, Error: " + e.toString());
         }
         finally {
             DirUtils.deleteAsync(tempDir);
@@ -375,28 +375,28 @@ public class SourceCodeTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private OperationStatusRest checkWorkbook(Long workbookId, LaunchpadContext context) {
-        if (workbookId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 workbookId is null");
+    private OperationStatusRest checkWorkbook(Long execContextId, LaunchpadContext context) {
+        if (execContextId==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 execContextId is null");
         }
-        ExecContext wb = workbookCache.findById(workbookId);
+        ExecContext wb = workbookCache.findById(execContextId);
         if (wb==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, workbookId: " + workbookId );
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
         }
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeService.getSourceCode(context.getCompanyId(), wb.getPlanId());
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeService.getSourceCode(context.getCompanyId(), wb.getSourceCodeId());
         if (sourceCodesForCompany.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 SourceCode wasn't found, " +
-                    "companyId: "+context.getCompanyId()+", planId: " + wb.getPlanId()+", workbookId: " + wb.getId()+", error msg: " + sourceCodesForCompany.getErrorMessagesAsStr() );
+                    "companyId: "+context.getCompanyId()+", sourceCodeId: " + wb.getSourceCodeId()+", execContextId: " + wb.getId()+", error msg: " + sourceCodesForCompany.getErrorMessagesAsStr() );
         }
         return null;
     }
 
-    private OperationStatusRest checkPlan(SourceCode sourceCode, LaunchpadContext context) {
+    private OperationStatusRest checkSourceCode(SourceCode sourceCode, LaunchpadContext context) {
         if (sourceCode ==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 sourceCode is null");
         }
         if (!Objects.equals(sourceCode.getCompanyId(), context.getCompanyId())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Access to sourceCode is denied, planId: " + sourceCode.getId() );
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Access to sourceCode is denied, sourceCodeId: " + sourceCode.getId() );
         }
         return null;
     }

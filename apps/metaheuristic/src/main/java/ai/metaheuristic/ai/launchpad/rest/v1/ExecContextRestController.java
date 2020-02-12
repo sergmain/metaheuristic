@@ -41,12 +41,12 @@ import org.springframework.web.bind.annotation.*;
 
 // all urls in "/rest/v1/launchpad/sourceCode" because of angular.
 // need change angular code too but not know
-@RequestMapping("/rest/v1/launchpad/plan")
+@RequestMapping("/rest/v1/launchpad/source-code")
 @RestController
 @Profile("launchpad")
 @CrossOrigin
 @RequiredArgsConstructor
-public class WorkbookRestController {
+public class ExecContextRestController {
 
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final WorkbookTopLevelService workbookTopLevelService;
@@ -59,25 +59,25 @@ public class WorkbookRestController {
         public Long workbookId;
     }
 
-    @GetMapping("/workbooks/{planId}")
+    @GetMapping("/workbooks/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
-    public SourceCodeApiData.WorkbooksResult workbooks(@PathVariable Long planId,
+    public SourceCodeApiData.WorkbooksResult workbooks(@PathVariable Long sourceCodeId,
                                                        @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(planId, pageable, context);
+        return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context);
     }
 
     /**
-     * create ExecContext by planCode
+     * create ExecContext by uid
      * useful for creating ExecContext from command-line with cURL
      *
      * @return
      */
-    @PostMapping("/plan-code-workbook-add-commit")
+    @PostMapping("/source-code-exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SimpleWorkbookAddingResult workbookAddCommit(String planCode, String variable, Authentication authentication) {
+    public SimpleWorkbookAddingResult workbookAddCommit(String sourceCode, String variable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.WorkbookResult workbookResult = sourceCodeTopLevelService.addWorkbook(planCode, variable, context);
+        SourceCodeApiData.WorkbookResult workbookResult = sourceCodeTopLevelService.addWorkbook(sourceCode, variable, context);
         return new SimpleWorkbookAddingResult(workbookResult.execContext.getId());
     }
 

@@ -39,8 +39,8 @@ public class SourceCodeCache {
     }
 
     @CacheEvict(value = {Consts.SOURCE_CODES_CACHE}, key = "#result.id")
-    public SourceCodeImpl save(SourceCodeImpl plan) {
-        return sourceCodeRepository.saveAndFlush(plan);
+    public SourceCodeImpl save(SourceCodeImpl sourceCode) {
+        return sourceCodeRepository.save(sourceCode);
     }
 
     @Cacheable(cacheNames = {Consts.SOURCE_CODES_CACHE}, unless="#result==null")

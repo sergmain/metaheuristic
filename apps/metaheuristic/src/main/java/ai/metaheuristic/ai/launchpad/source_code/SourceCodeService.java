@@ -90,10 +90,10 @@ public class SourceCodeService {
         return getAvailableSourceCodesForCompany(context.getCompanyId());
     }
 
-    public SourceCodeData.SourceCodesForCompany getSourceCode(Long companyId, Long planId) {
-        SourceCodeData.SourceCodesForCompany availableSourceCodesForCompany = getAvailableSourceCodesForCompany(companyId, (o) -> o.getId().equals(planId));
+    public SourceCodeData.SourceCodesForCompany getSourceCode(Long companyId, Long sourceCodeId) {
+        SourceCodeData.SourceCodesForCompany availableSourceCodesForCompany = getAvailableSourceCodesForCompany(companyId, (o) -> o.getId().equals(sourceCodeId));
         if (availableSourceCodesForCompany.items.size()>1) {
-            log.error("!!!!!!!!!!!!!!!! error in code -  (plansForBatchResult.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
+            log.error("!!!!!!!!!!!!!!!! error in code -  (sourceCodeForBatchResult.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
         }
         return availableSourceCodesForCompany;
     }
@@ -102,9 +102,9 @@ public class SourceCodeService {
         return getAvailableSourceCodesForCompany(companyId, (f) -> true);
     }
 
-    private SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(Long companyUniqueId, final Function<SourceCode, Boolean> planFilter) {
-        final SourceCodeData.SourceCodesForCompany plans = new SourceCodeData.SourceCodesForCompany();
-        plans.items = sourceCodeRepository.findAllAsSourceCode(companyUniqueId).stream().filter(planFilter::apply).filter(o->{
+    private SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(Long companyUniqueId, final Function<SourceCode, Boolean> sourceCodeFilter) {
+        final SourceCodeData.SourceCodesForCompany sourceCodesForCompany = new SourceCodeData.SourceCodesForCompany();
+        sourceCodesForCompany.items = sourceCodeRepository.findAllAsSourceCode(companyUniqueId).stream().filter(sourceCodeFilter::apply).filter(o->{
             if (!o.isValid()) {
                 return false;
             }
@@ -113,7 +113,7 @@ public class SourceCodeService {
                 return ppy.internalParams == null || !ppy.internalParams.archived;
             } catch (YAMLException e) {
                 final String es = "#995.010 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
-                plans.addErrorMessage(es);
+                sourceCodesForCompany.addErrorMessage(es);
                 log.error(es);
                 log.error("#995.015 Params:\n{}", o.getParams());
                 log.error("#995.020 Error: {}", e.toString());
@@ -132,15 +132,15 @@ public class SourceCodeService {
                 }
             } catch (YAMLException e) {
                 final String es = "#995.025 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
-                plans.addErrorMessage(es);
+                sourceCodesForCompany.addErrorMessage(es);
                 log.error(es);
                 log.error("#995.027 Params:\n{}", company.getParams());
                 log.error("#995.030 Error: {}", e.toString());
-                return plans;
+                return sourceCodesForCompany;
             }
 
             if (!groups.isEmpty()) {
-                List<SourceCode> commonSourceCodes = sourceCodeRepository.findAllAsSourceCode(Consts.ID_1).stream().filter(planFilter::apply).filter(o -> {
+                List<SourceCode> commonSourceCodes = sourceCodeRepository.findAllAsSourceCode(Consts.ID_1).stream().filter(sourceCodeFilter::apply).filter(o -> {
                     if (!o.isValid()) {
                         return false;
                     }
@@ -153,19 +153,19 @@ public class SourceCodeService {
                         return false;
                     } catch (YAMLException e) {
                         final String es = "#995.033 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
-                        plans.addErrorMessage(es);
+                        sourceCodesForCompany.addErrorMessage(es);
                         log.error(es);
                         log.error("#995.035 Params:\n{}", o.getParams());
                         log.error("#995.037 Error: {}", e.toString());
                         return false;
                     }
                 }).collect(Collectors.toList());
-                plans.items.addAll(commonSourceCodes);
+                sourceCodesForCompany.items.addAll(commonSourceCodes);
             }
         }
-        plans.items.sort((o1, o2) -> Long.compare(o2.getId(), o1.getId()));
+        sourceCodesForCompany.items.sort((o1, o2) -> Long.compare(o2.getId(), o1.getId()));
 
-        return plans;
+        return sourceCodesForCompany;
     }
 
     // TODO 2019.05.19 add reporting of producing of tasks
@@ -179,14 +179,14 @@ public class SourceCodeService {
             log.info("#701.020 Start producing tasks");
         }
         for (ExecContextImpl workbook : workbooks) {
-            SourceCodeImpl plan = sourceCodeCache.findById(workbook.getPlanId());
-            if (plan==null) {
+            SourceCodeImpl sourceCode = sourceCodeCache.findById(workbook.getSourceCodeId());
+            if (sourceCode==null) {
                 workbookFSM.toStopped(workbook.id);
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
-            log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}",plan.uid, workbook.getParams());
-            produceAllTasks(true, plan, workbook);
+            log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}",sourceCode.uid, workbook.getParams());
+            produceAllTasks(true, sourceCode, workbook);
             Monitoring.log("##022", Enums.Monitor.MEMORY);
         }
         if (!workbooks.isEmpty()) {
@@ -194,11 +194,11 @@ public class SourceCodeService {
         }
     }
 
-    public SourceCodeApiData.SourceCodeValidation validateInternal(SourceCodeImpl plan) {
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = getPlanValidation(plan);
-        setValidTo(plan, sourceCodeValidation.status == EnumsApi.SourceCodeValidateStatus.OK );
-        if (plan.isValid() || sourceCodeValidation.status==OK) {
-            if (plan.isValid() && sourceCodeValidation.status!=OK) {
+    public SourceCodeApiData.SourceCodeValidation validateInternal(SourceCodeImpl sourceCode) {
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = getSourceCodesValidation(sourceCode);
+        setValidTo(sourceCode, sourceCodeValidation.status == EnumsApi.SourceCodeValidateStatus.OK );
+        if (sourceCode.isValid() || sourceCodeValidation.status==OK) {
+            if (sourceCode.isValid() && sourceCodeValidation.status!=OK) {
                 log.error("#701.097 Need to investigate: (sourceCode.isValid() && sourceCodeValidation.status!=OK)");
             }
             sourceCodeValidation.infoMessages = Collections.singletonList("Validation result: OK");
@@ -211,10 +211,10 @@ public class SourceCodeService {
         return sourceCodeValidation;
     }
 
-    private SourceCodeApiData.SourceCodeValidation getPlanValidation(SourceCodeImpl plan) {
+    private SourceCodeApiData.SourceCodeValidation getSourceCodesValidation(SourceCodeImpl sourceCode) {
         final SourceCodeApiData.SourceCodeValidation sourceCodeValidation = new SourceCodeApiData.SourceCodeValidation();
         try {
-            sourceCodeValidation.status = validate(plan);
+            sourceCodeValidation.status = validate(sourceCode);
         } catch (YAMLException e) {
             sourceCodeValidation.addErrorMessage("#701.090 Error while parsing yaml config, " + e.toString());
             sourceCodeValidation.status = EnumsApi.SourceCodeValidateStatus.YAML_PARSING_ERROR;
@@ -235,9 +235,9 @@ public class SourceCodeService {
         }
     }
 
-    private void setLockedTo(Long planId, Long companyUniqueId, boolean locked) {
+    private void setLockedTo(Long sourceCodeId, Long companyUniqueId, boolean locked) {
         synchronized (syncObj) {
-            SourceCodeImpl p = sourceCodeRepository.findByIdForUpdate(planId, companyUniqueId);
+            SourceCodeImpl p = sourceCodeRepository.findByIdForUpdate(sourceCodeId, companyUniqueId);
             if (p!=null && p.isLocked()!=locked) {
                 p.setLocked(locked);
                 saveInternal(p);
@@ -245,26 +245,26 @@ public class SourceCodeService {
         }
     }
 
-    private void saveInternal(SourceCodeImpl plan) {
-        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
+    private void saveInternal(SourceCodeImpl sourceCode) {
+        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode.getParams());
         if (ppy.internalParams==null) {
             ppy.internalParams = new SourceCodeParamsYaml.InternalParams();
         }
         ppy.internalParams.updatedOn = System.currentTimeMillis();
         String params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
-        plan.setParams(params);
+        sourceCode.setParams(params);
 
-        sourceCodeCache.save(plan);
+        sourceCodeCache.save(sourceCode);
     }
 
-    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl plan, ExecContext execContext) {
+    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl sourceCode, ExecContext execContext) {
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist && execContext.getExecState()!= EnumsApi.WorkbookExecState.PRODUCING.code) {
             result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.ALREADY_PRODUCED_ERROR;
             return result;
         }
         long mills = System.currentTimeMillis();
-        result.sourceCodeValidateStatus = validate(plan);
+        result.sourceCodeValidateStatus = validate(sourceCode);
         log.info("#701.150 SourceCode was validated for "+(System.currentTimeMillis() - mills) + " ms.");
         if (result.sourceCodeValidateStatus != EnumsApi.SourceCodeValidateStatus.OK &&
                 result.sourceCodeValidateStatus != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
@@ -276,25 +276,25 @@ public class SourceCodeService {
         }
         Monitoring.log("##022", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        result = workbookService.produceTasks(isPersist, plan, execContext.getId());
-        log.info("#701.170 PlanService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
+        result = workbookService.produceTasks(isPersist, sourceCode, execContext.getId());
+        log.info("#701.170 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 
         return result;
     }
 
-    public EnumsApi.SourceCodeValidateStatus validate(SourceCodeImpl plan) {
-        if (plan==null) {
+    public EnumsApi.SourceCodeValidateStatus validate(SourceCodeImpl sourceCode) {
+        if (sourceCode==null) {
             return EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
-        if (StringUtils.isBlank(plan.uid)) {
+        if (StringUtils.isBlank(sourceCode.uid)) {
             return EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_UID_EMPTY_ERROR;
         }
-        if (StringUtils.isBlank(plan.getParams())) {
+        if (StringUtils.isBlank(sourceCode.getParams())) {
             return EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_PARAMS_EMPTY_ERROR;
         }
-        SourceCodeParamsYaml planParams = plan.getSourceCodeParamsYaml();
-        SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = planParams.source;
+        SourceCodeParamsYaml sourceCodeParamsYaml = sourceCode.getSourceCodeParamsYaml();
+        SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = sourceCodeParamsYaml.source;
         if (sourceCodeYaml.getProcesses().isEmpty()) {
             return EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
@@ -322,7 +322,7 @@ public class SourceCodeService {
                 return EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
             EnumsApi.SourceCodeValidateStatus status;
-            status = checkSnippets(plan, process);
+            status = checkSnippets(sourceCode, process);
             if (status!=OK) {
                 return status;
             }
@@ -370,7 +370,7 @@ public class SourceCodeService {
         return OK;
     }
 
-    private EnumsApi.SourceCodeValidateStatus checkRequiredVersionOfTaskParams(int planParamsVersion, SourceCodeParamsYaml.Process process, SourceCodeParamsYaml.SnippetDefForSourceCode snDef) {
+    private EnumsApi.SourceCodeValidateStatus checkRequiredVersionOfTaskParams(int sourceCodeYamlAsStr, SourceCodeParamsYaml.Process process, SourceCodeParamsYaml.SnippetDefForSourceCode snDef) {
         if (StringUtils.isNotBlank(snDef.code)) {
             Long  snippetId = snippetRepository.findIdByCode(snDef.code);
             if (snippetId == null) {
@@ -382,7 +382,7 @@ public class SourceCodeService {
             log.error("#177.060 snippet wasn't found for code: {}, process: {}", snDef.code, process);
             return EnumsApi.SourceCodeValidateStatus.SNIPPET_NOT_FOUND_ERROR;
         }
-        if (!commonProcessValidatorService.checkRequiredVersion(planParamsVersion, snDef)) {
+        if (!commonProcessValidatorService.checkRequiredVersion(sourceCodeYamlAsStr, snDef)) {
             return EnumsApi.SourceCodeValidateStatus.VERSION_OF_SNIPPET_IS_TOO_LOW_ERROR;
         }
         return OK;

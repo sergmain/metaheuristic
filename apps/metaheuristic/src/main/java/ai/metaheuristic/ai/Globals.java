@@ -112,11 +112,11 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.atlas-experiment-table-rows-limit'), 5, 100, 20) }")
     public int atlasExperimentRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.plan-table-rows-limit'), 5, 50, 10) }")
-    public int planRowsLimit;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.source-code-table-rows-limit'), 5, 50, 10) }")
+    public int sourceCodeRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.workbook-table-rows-limit'), 5, 50, 20) }")
-    public int workbookRowsLimit;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.exec-context-table-rows-limit'), 5, 50, 20) }")
+    public int execContextRowsLimit;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.station-table-rows-limit'), 5, 100, 50) }")
     public int stationRowsLimit;
@@ -472,8 +472,8 @@ public class Globals {
         log.info("'\tchunkSize: {}", chunkSize);
         log.info("'\tresourceRowsLimit: {}", resourceRowsLimit);
         log.info("'\texperimentRowsLimit: {}", experimentRowsLimit);
-        log.info("'\tplanRowsLimit: {}", planRowsLimit);
-        log.info("'\tworkbookRowsLimit: {}", workbookRowsLimit);
+        log.info("'\tplanRowsLimit: {}", sourceCodeRowsLimit);
+        log.info("'\tworkbookRowsLimit: {}", execContextRowsLimit);
         log.info("'\tstationRowsLimit: {}", stationRowsLimit);
         log.info("'\taccountRowsLimit: {}", accountRowsLimit);
         log.info("'\tisStationEnabled: {}", isStationEnabled);

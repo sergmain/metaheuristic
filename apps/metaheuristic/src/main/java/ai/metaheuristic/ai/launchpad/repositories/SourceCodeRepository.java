@@ -21,6 +21,7 @@ import ai.metaheuristic.api.launchpad.SourceCode;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +30,7 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface SourceCodeRepository extends JpaRepository<SourceCodeImpl, Long> {
+public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Long> {
 
     @Query(value="select p from SourceCodeImpl p where p.id=:id and p.companyId=:companyUniqueId")
     SourceCodeImpl findByIdForUpdate(Long id, Long companyUniqueId);
@@ -43,8 +44,8 @@ public interface SourceCodeRepository extends JpaRepository<SourceCodeImpl, Long
     List<SourceCode> findAllByOrderByIdDesc(Long companyUniqueId);
 
     @Transactional(readOnly = true)
-    @Query(value="select p from SourceCodeImpl p where p.uid=:code and p.companyId=:companyUniqueId")
-    SourceCodeImpl findByCodeAndCompanyId(String code, Long companyUniqueId);
+    @Query(value="select p from SourceCodeImpl p where p.uid=:uid and p.companyId=:companyUniqueId")
+    SourceCodeImpl findByUidAndCompanyId(String uid, Long companyUniqueId);
 
 
     // for Experiment, that's why we don't use companyId in this query

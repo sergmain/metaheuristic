@@ -52,7 +52,7 @@ public class SourceCodeRestController {
 
     @GetMapping("/source-codes-archived-only")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public SourceCodeApiData.SourceCodesResult plansArchivedOnly(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
+    public SourceCodeApiData.SourceCodesResult sourceCodeArchivedOnly(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.getSourceCodes(pageable, true, context);
     }

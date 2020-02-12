@@ -280,7 +280,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         plan.companyId = company.uniqueId;
 
 
-        SourceCode tempSourceCode = sourceCodeRepository.findByCodeAndCompanyId(plan.getCode(), company.uniqueId);
+        SourceCode tempSourceCode = sourceCodeRepository.findByUidAndCompanyId(plan.getCode(), company.uniqueId);
         if (tempSourceCode !=null) {
             sourceCodeCache.deleteById(tempSourceCode.getId());
         }
