@@ -19,7 +19,7 @@ import ai.metaheuristic.ai.launchpad.ArtifactCleanerAtLaunchpad;
 import ai.metaheuristic.ai.launchpad.RoundRobinForLaunchpad;
 import ai.metaheuristic.ai.launchpad.batch.BatchService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.replication.ReplicationService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
 import ai.metaheuristic.ai.station.*;
@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.station.actors.DownloadResourceActor;
 import ai.metaheuristic.ai.station.actors.DownloadSnippetActor;
 import ai.metaheuristic.ai.station.actors.UploadResourceActor;
 import ai.metaheuristic.ai.station.env.EnvService;
-import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -53,7 +52,7 @@ public class Schedulers {
 
         private final Globals globals;
         private final WorkbookSchedulerService workbookSchedulerService;
-        private final PlanService planService;
+        private final SourceCodeService sourceCodeService;
         private final ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad;
         private final ExperimentService experimentService;
         private final BatchService batchService;
@@ -118,7 +117,7 @@ public class Schedulers {
                 return;
             }
             log.info("Invoking planService.createAllTasks()");
-            planService.createAllTasks();
+            sourceCodeService.createAllTasks();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.artifact-cleaner'), 30, 300, 60)*1000 }")

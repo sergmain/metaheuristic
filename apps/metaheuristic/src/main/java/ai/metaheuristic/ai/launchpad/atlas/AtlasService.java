@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentCache;
-import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasTaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
@@ -59,7 +59,7 @@ import java.util.Collections;
 public class AtlasService {
 
     private final Globals globals;
-    private final PlanCache planCache;
+    private final SourceCodeCache sourceCodeCache;
     private final ExperimentCache experimentCache;
     private final ExperimentRepository experimentRepository;
     private final TaskRepository taskRepository;
@@ -106,7 +106,7 @@ public class AtlasService {
         if (workbook==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.05 can't find workbook for this experiment");
         }
-        SourceCodeImpl plan = planCache.findById(workbook.getPlanId());
+        SourceCodeImpl plan = sourceCodeCache.findById(workbook.getPlanId());
         if (plan==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.10 can't find sourceCode for this experiment");
         }

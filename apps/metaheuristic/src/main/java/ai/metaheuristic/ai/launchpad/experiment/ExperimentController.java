@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.launchpad.experiment;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
-import ai.metaheuristic.ai.launchpad.plan.PlanController;
-import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeController;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -62,7 +62,7 @@ public class ExperimentController {
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
     private final ExperimentCache experimentCache;
-    private final PlanTopLevelService planTopLevelService;
+    private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final LaunchpadContextService launchpadContextService;
 
     @GetMapping("/experiments")
@@ -174,10 +174,10 @@ public class ExperimentController {
     public String workbookTargetExecState(@PathVariable Long experimentId, @PathVariable String state,
                                           @PathVariable Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = planTopLevelService.changeWorkbookExecState(state, id, context);
+        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeWorkbookExecState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+            return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         return "redirect:/launchpad/experiment/experiment-info/" + experimentId;
     }
@@ -299,7 +299,7 @@ public class ExperimentController {
         if (experiment.workbookId!=null) {
             Workbook wb = workbookCache.findById(experiment.workbookId);
             if (wb != null) {
-                OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(experiment.workbookId, context);
+                OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteWorkbookById(experiment.workbookId, context);
                 if (operationStatusRest.isErrorMessages()) {
                     redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
                     return REDIRECT_LAUNCHPAD_EXPERIMENTS;

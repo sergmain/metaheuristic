@@ -30,8 +30,8 @@ import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
-import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeUtils;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
@@ -93,7 +93,7 @@ public class BatchTopLevelService {
     private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[/\\\\A-Za-z0-9._-]*$";
     private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
 
-    private final PlanService planService;
+    private final SourceCodeService sourceCodeService;
     private final VariableService variableService;
     private final BatchRepository batchRepository;
     private final BatchService batchService;
@@ -176,7 +176,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
-        PlanData.PlansForCompany plansForCompany = planService.getPlan(context.getCompanyId(), planId);
+        PlanData.PlansForCompany plansForCompany = sourceCodeService.getPlan(context.getCompanyId(), planId);
         if (plansForCompany.isErrorMessages()) {
             return new BatchData.UploadingStatus(plansForCompany.errorMessages);
         }
@@ -192,7 +192,7 @@ public class BatchTopLevelService {
         // TODO 2019-07-06 Do we need to validate the sourceCode here in case that there is another check?
         //  2019-10-28 it's working so left it as is until an issue with this will be found
         // validate the sourceCode
-        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
+        PlanApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
             return new BatchData.UploadingStatus("#995.060 validation of sourceCode was failed, status: " + planValidation.status);
         }
@@ -213,7 +213,7 @@ public class BatchTopLevelService {
 
             String code = ResourceUtils.toResourceCode(originFilename);
 
-            WorkbookParamsYaml.WorkbookYaml workbookYaml = PlanUtils.asWorkbookParamsYaml(code);
+            WorkbookParamsYaml.WorkbookYaml workbookYaml = SourceCodeUtils.asWorkbookParamsYaml(code);
             producingResult = workbookService.createWorkbook(planId, workbookYaml, false);
             if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
                 throw new BatchResourceProcessingException("#995.075 Error creating workbook: " + producingResult.planProducingStatus);
@@ -233,7 +233,7 @@ public class BatchTopLevelService {
             b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
             b = batchCache.save(b);
 
-            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), plan.getCode(), null, b.id, producingResult.workbook.getId(), context );
+            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), plan.uid, null, b.id, producingResult.workbook.getId(), context );
 
             final Batch batch = batchService.changeStateToPreparing(b.id);
             // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed

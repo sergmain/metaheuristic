@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
@@ -676,7 +676,7 @@ public class ExperimentService {
     }
 
     @SuppressWarnings("Duplicates")
-    PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
+    SourceCodeService.ProduceTaskResult result = new SourceCodeService.ProduceTaskResult();
 
     @Data
     @AllArgsConstructor

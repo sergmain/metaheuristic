@@ -64,7 +64,7 @@ public class TestCountOfTasks extends PreparingPlan {
 
         assertFalse(planParamsYaml.plan.processes.isEmpty());
 
-        EnumsApi.PlanValidateStatus status = planService.validate(plan);
+        EnumsApi.PlanValidateStatus status = sourceCodeService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
         PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
@@ -83,7 +83,7 @@ public class TestCountOfTasks extends PreparingPlan {
         assertTrue(tasks01.isEmpty());
 
         long mills = System.currentTimeMillis();
-        result = planService.produceAllTasks(false, plan, workbook);
+        result = sourceCodeService.produceAllTasks(false, plan, workbook);
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
@@ -93,7 +93,7 @@ public class TestCountOfTasks extends PreparingPlan {
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
-        result = planService.produceAllTasks(true, plan, workbook);
+        result = sourceCodeService.produceAllTasks(true, plan, workbook);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
         workbook = (WorkbookImpl)result.workbook;
@@ -110,7 +110,7 @@ public class TestCountOfTasks extends PreparingPlan {
         assertFalse(tasks.isEmpty());
         assertEquals(numberOfTasks, tasks.size());
 
-        result = planService.produceAllTasks(false, plan, workbook);
+        result = sourceCodeService.produceAllTasks(false, plan, workbook);
         List<Object[]> tasks03 = taskCollector.getTasks(workbook);
         assertFalse(tasks03.isEmpty());
         assertEquals(numberOfTasks, tasks.size());

@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.data.SnippetData;
-import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
@@ -95,7 +95,7 @@ public class ExperimentTopLevelService {
     private final ExperimentCache experimentCache;
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
-    private final PlanTopLevelService planTopLevelService;
+    private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final WorkbookService workbookService;
     private final WorkbookFSM workbookFSM;
     private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
@@ -737,7 +737,7 @@ public class ExperimentTopLevelService {
                     "#285.510 can't find a sourceCode with experiment code: " + experimentCode);
         }
 */
-        PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(p.id, resourcePoolCode, context);
+        PlanApiData.WorkbookResult workbookResultRest = sourceCodeTopLevelService.addWorkbook(p.id, resourcePoolCode, context);
         if (workbookResultRest.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, workbookResultRest.errorMessages, workbookResultRest.infoMessages);
         }

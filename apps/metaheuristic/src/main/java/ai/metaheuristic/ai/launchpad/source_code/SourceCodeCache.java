@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.plan;
+package ai.metaheuristic.ai.launchpad.source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.launchpad.SourceCode;
@@ -30,11 +30,11 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @Profile("launchpad")
-public class PlanCache {
+public class SourceCodeCache {
 
     private final SourceCodeRepository sourceCodeRepository;
 
-    public PlanCache(SourceCodeRepository sourceCodeRepository) {
+    public SourceCodeCache(SourceCodeRepository sourceCodeRepository) {
         this.sourceCodeRepository = sourceCodeRepository;
     }
 

@@ -80,7 +80,7 @@ public abstract class FeatureMethods extends PreparingPlan {
     }
 
     protected void produceTasks() {
-        EnumsApi.PlanValidateStatus status = planService.validate(plan);
+        EnumsApi.PlanValidateStatus status = sourceCodeService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
         PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
@@ -104,7 +104,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
-        result = planService.produceAllTasks(true, plan, workbook);
+        result = sourceCodeService.produceAllTasks(true, plan, workbook);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
         workbook = (WorkbookImpl)result.workbook;

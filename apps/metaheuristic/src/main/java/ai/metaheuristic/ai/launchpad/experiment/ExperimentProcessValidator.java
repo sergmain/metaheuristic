@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
-import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
+import ai.metaheuristic.ai.launchpad.source_code.ProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;

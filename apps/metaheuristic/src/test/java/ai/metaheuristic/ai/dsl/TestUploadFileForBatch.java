@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.launchpad.batch.BatchCache;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
-import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
@@ -91,7 +91,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
     @Autowired
     private BatchCache batchCache;
     @Autowired
-    private PlanTopLevelService planTopLevelService;
+    private SourceCodeTopLevelService sourceCodeTopLevelService;
 
     private BatchData.UploadingStatus uploadingStatus = null;
 
@@ -127,9 +127,9 @@ public class TestUploadFileForBatch extends PreparingPlan {
         final LaunchpadContext context = new LaunchpadContext(a, company);
 
 
-        PlanApiData.PlanResult planResult = planTopLevelService.validatePlan(plan.id, context);
+        PlanApiData.PlanResult planResult = sourceCodeTopLevelService.validatePlan(plan.id, context);
         assertEquals(EnumsApi.PlanValidateStatus.OK, planResult.status);
-        plan = planCache.findById(plan.id);
+        plan = sourceCodeCache.findById(plan.id);
         assertTrue(plan.isValid());
 
         String planYamlAsString = getPlanYamlAsString();

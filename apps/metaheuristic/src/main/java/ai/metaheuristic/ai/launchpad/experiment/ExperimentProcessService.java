@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -55,9 +55,9 @@ public class ExperimentProcessService {
     private final VariableService variableService;
     private final WorkbookCache workbookCache;
 
-    public PlanService.ProduceTaskResult produceTasks(
+    public SourceCodeService.ProduceTaskResult produceTasks(
             boolean isPersist, PlanParamsYaml planParams, Long workbookId,
-            PlanParamsYaml.Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
+            PlanParamsYaml.Process process, SourceCodeService.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
         Map<String, PlanParamsYaml.Variable> inputStorageUrls = pools.inputStorageUrls;
@@ -71,7 +71,7 @@ public class ExperimentProcessService {
             e = experimentCache.findById(experimentId);
         }
 
-        PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
+        SourceCodeService.ProduceTaskResult result = new SourceCodeService.ProduceTaskResult();
         if (e==null) {
             result.status = EnumsApi.PlanProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
             return result;
@@ -117,7 +117,7 @@ public class ExperimentProcessService {
                         Collections.singletonList(meta.getValue()), workbookId
                 );
 
-                PlanService.ResourcePools metaPools = new PlanService.ResourcePools(initialInputResourceCodes);
+                SourceCodeService.ResourcePools metaPools = new SourceCodeService.ResourcePools(initialInputResourceCodes);
                 if (metaPools.status != EnumsApi.PlanProducingStatus.OK) {
                     log.warn("#714.020 (metaPools.status != EnumsApi.PlanProducingStatus.OK), metaPools.status {}", metaPools.status);
                     result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;

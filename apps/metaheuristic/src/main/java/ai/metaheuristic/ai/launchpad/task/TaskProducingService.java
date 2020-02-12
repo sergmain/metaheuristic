@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetProcessor;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
@@ -58,13 +58,13 @@ public class TaskProducingService {
     private final IdsRepository idsRepository;
 
     @SuppressWarnings("Duplicates")
-    public PlanService.ProduceTaskResult produceTasksForProcess(
+    public SourceCodeService.ProduceTaskResult produceTasksForProcess(
             boolean isPersist, Long planId, String contextId, PlanParamsYaml planParams, Long workbookId,
-            PlanParamsYaml.Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
+            PlanParamsYaml.Process process, SourceCodeService.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, PlanParamsYaml.Variable> inputStorageUrls = new HashMap<>(pools.inputStorageUrls);
 
-        PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
+        SourceCodeService.ProduceTaskResult result = new SourceCodeService.ProduceTaskResult();
 
         result.outputResourceCodes = new ArrayList<>();
 
@@ -94,7 +94,7 @@ public class TaskProducingService {
                 for (PlanParamsYaml.Process subProcess : process.subProcesses.processes) {
                     // Right we don't support subProcesses in subProcesses. Need to collect more info about such cases
                     if (subProcess.subProcesses!=null && CollectionUtils.isNotEmpty(subProcess.subProcesses.processes)) {
-                        return new PlanService.ProduceTaskResult(EnumsApi.PlanProducingStatus.TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR);
+                        return new SourceCodeService.ProduceTaskResult(EnumsApi.PlanProducingStatus.TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR);
                     }
 
                     String ctxId = contextId + ','+ idsRepository.save(new Ids()).id;

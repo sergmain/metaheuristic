@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.replication;
 
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
-import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -47,7 +47,7 @@ public class ReplicationPlanService {
 
     public final ReplicationCoreService replicationCoreService;
     public final SourceCodeRepository sourceCodeRepository;
-    public final PlanCache planCache;
+    public final SourceCodeCache sourceCodeCache;
 
     @Data
     @AllArgsConstructor
@@ -62,7 +62,7 @@ public class ReplicationPlanService {
 
         List<Long> ids = sourceCodeRepository.findAllAsIds();
         for (Long id : ids) {
-            SourceCodeImpl p = planCache.findById(id);
+            SourceCodeImpl p = sourceCodeCache.findById(id);
             if (p==null) {
                 continue;
             }
@@ -80,7 +80,7 @@ public class ReplicationPlanService {
             }
 
             if (isDeleted) {
-                planCache.deleteById(id);
+                sourceCodeCache.deleteById(id);
             }
             forCreating.removeIf(planShortAsset -> planShortAsset.code.equals(p.uid));
         }
@@ -99,7 +99,7 @@ public class ReplicationPlanService {
         planLoopEntry.plan.locked = planAsset.plan.locked;
         planLoopEntry.plan.valid = planAsset.plan.valid;
 
-        planCache.save(planLoopEntry.plan);
+        sourceCodeCache.save(planLoopEntry.plan);
     }
 
     private void createPlan(ReplicationData.PlanShortAsset planShortAsset) {
@@ -114,7 +114,7 @@ public class ReplicationPlanService {
         }
 
         planAsset.plan.id=null;
-        planCache.save(planAsset.plan);
+        sourceCodeCache.save(planAsset.plan);
     }
 
     private ReplicationData.PlanAsset getPlanAsset(String planCode) {

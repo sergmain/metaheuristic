@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.plan;
+package ai.metaheuristic.ai.launchpad.source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
@@ -68,10 +68,10 @@ import static ai.metaheuristic.api.EnumsApi.PlanValidateStatus.OK;
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
-public class PlanService {
+public class SourceCodeService {
 
     private final WorkbookRepository workbookRepository;
-    private final PlanCache planCache;
+    private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
 
     private final WorkbookService workbookService;
@@ -179,7 +179,7 @@ public class PlanService {
             log.info("#701.020 Start producing tasks");
         }
         for (WorkbookImpl workbook : workbooks) {
-            SourceCodeImpl plan = planCache.findById(workbook.getPlanId());
+            SourceCodeImpl plan = sourceCodeCache.findById(workbook.getPlanId());
             if (plan==null) {
                 workbookFSM.toStopped(workbook.id);
                 continue;
@@ -254,7 +254,7 @@ public class PlanService {
         String params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
         plan.setParams(params);
 
-        planCache.save(plan);
+        sourceCodeCache.save(plan);
     }
 
     public PlanApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl plan, Workbook workbook ) {
@@ -287,7 +287,7 @@ public class PlanService {
         if (plan==null) {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
-        if (StringUtils.isBlank(plan.getCode())) {
+        if (StringUtils.isBlank(plan.uid)) {
             return EnumsApi.PlanValidateStatus.PLAN_CODE_EMPTY_ERROR;
         }
         if (StringUtils.isBlank(plan.getParams())) {

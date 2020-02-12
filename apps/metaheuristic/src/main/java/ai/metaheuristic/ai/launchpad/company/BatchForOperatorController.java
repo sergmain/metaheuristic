@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -58,7 +58,7 @@ public class BatchForOperatorController {
 
     private final BatchTopLevelService batchTopLevelService;
     private final LaunchpadContextService launchpadContextService;
-    private final PlanService planService;
+    private final SourceCodeService sourceCodeService;
 
     @GetMapping("/company-batches/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
@@ -106,7 +106,7 @@ public class BatchForOperatorController {
     @GetMapping(value = "/company-batch-add/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String batchAdd(Model model, @PathVariable Long companyUniqueId) {
-        PlanData.PlansForCompany plans = planService.getAvailablePlansForCompany(companyUniqueId);
+        PlanData.PlansForCompany plans = sourceCodeService.getAvailablePlansForCompany(companyUniqueId);
         ControllerUtils.addMessagesToModel(model, plans);
         model.addAttribute("result", plans);
         model.addAttribute("companyUniqueId", companyUniqueId);

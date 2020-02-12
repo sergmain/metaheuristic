@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.plan;
+package ai.metaheuristic.ai.launchpad.source_code;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
@@ -66,11 +66,11 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @Profile("launchpad")
 @Service
 @RequiredArgsConstructor
-public class PlanTopLevelService {
+public class SourceCodeTopLevelService {
 
     private final Globals globals;
-    private final PlanCache planCache;
-    private final PlanService planService;
+    private final SourceCodeCache sourceCodeCache;
+    private final SourceCodeService sourceCodeService;
     private final SourceCodeRepository sourceCodeRepository;
     private final WorkbookService workbookService;
     private final ApplicationEventPublisher publisher;
@@ -78,7 +78,7 @@ public class PlanTopLevelService {
     private final GlobalVariableService globalVariableService;
 
     public PlanApiData.WorkbookResult addWorkbook(Long planId, String variable, LaunchpadContext context) {
-        return getWorkbookResult(variable, context, planCache.findById(planId));
+        return getWorkbookResult(variable, context, sourceCodeCache.findById(planId));
     }
 
     public PlanApiData.WorkbookResult addWorkbook(String planCode, String variable, LaunchpadContext context) {
@@ -93,7 +93,7 @@ public class PlanTopLevelService {
             return new PlanApiData.WorkbookResult( "#560.008 global variable " + variable +" wasn't found");
         }
         // validate the sourceCode
-        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
+        PlanApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK) {
             PlanApiData.WorkbookResult r = new PlanApiData.WorkbookResult();
             r.errorMessages = planValidation.errorMessages;
@@ -144,7 +144,7 @@ public class PlanTopLevelService {
     }
 
     public PlanApiData.PlanResult getPlan(Long planId, LaunchpadContext context) {
-        final SourceCodeImpl plan = planCache.findById(planId);
+        final SourceCodeImpl plan = sourceCodeCache.findById(planId);
         if (plan == null) {
             return new PlanApiData.PlanResult(
                     "#560.050 sourceCode wasn't found, planId: " + planId,
@@ -154,14 +154,14 @@ public class PlanTopLevelService {
     }
 
     public PlanApiData.PlanResult validatePlan(Long planId, LaunchpadContext context) {
-        final SourceCodeImpl plan = planCache.findById(planId);
+        final SourceCodeImpl plan = sourceCodeCache.findById(planId);
         if (plan == null) {
             return new PlanApiData.PlanResult("#560.070 sourceCode wasn't found, planId: " + planId,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
 
         PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.getPlanParamsYaml().origin);
-        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
+        PlanApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
         result.errorMessages = planValidation.errorMessages;
         result.infoMessages = planValidation.infoMessages;
         result.status = planValidation.status;
@@ -203,9 +203,9 @@ public class PlanTopLevelService {
         plan.companyId = context.getCompanyId();
         plan.createdOn = System.currentTimeMillis();
         plan.uid = ppy.plan.code;
-        plan = planCache.save(plan);
+        plan = sourceCodeCache.save(plan);
 
-        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
+        PlanApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
 
         PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, ppy.origin );
         result.infoMessages = planValidation.infoMessages;
@@ -218,7 +218,7 @@ public class PlanTopLevelService {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             return new PlanApiData.PlanResult("#560.160 Can't update a sourceCode while 'replicated' mode of asset is active");
         }
-        SourceCodeImpl plan = planCache.findById(planId);
+        SourceCodeImpl plan = sourceCodeCache.findById(planId);
         if (plan == null) {
             return new PlanApiData.PlanResult(
                     "#560.010 sourceCode wasn't found, planId: " + planId,
@@ -249,9 +249,9 @@ public class PlanTopLevelService {
         String params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
         plan.setParams(params);
 
-        plan = planCache.save(plan);
+        plan = sourceCodeCache.save(plan);
 
-        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
+        PlanApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
 
         PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, ppy.origin );
         result.infoMessages = planValidation.infoMessages;
@@ -264,12 +264,12 @@ public class PlanTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
         }
-        SourceCode sourceCode = planCache.findById(planId);
+        SourceCode sourceCode = sourceCodeCache.findById(planId);
         if (sourceCode == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.250 sourceCode wasn't found, planId: " + planId);
         }
-        planCache.deleteById(planId);
+        sourceCodeCache.deleteById(planId);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -278,7 +278,7 @@ public class PlanTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.260 Can't archive a sourceCode while 'replicated' mode of asset is active");
         }
-        SourceCodeImpl plan = planCache.findById(id);
+        SourceCodeImpl plan = sourceCodeCache.findById(id);
         OperationStatusRest status = checkPlan(plan, context);
         if (status!=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 sourceCode wasn't found, planId: " + id+", " + status.getErrorMessagesAsStr());
@@ -291,7 +291,7 @@ public class PlanTopLevelService {
         ppy.internalParams.updatedOn = System.currentTimeMillis();
         plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
 
-        planCache.save(plan);
+        sourceCodeCache.save(plan);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -383,7 +383,7 @@ public class PlanTopLevelService {
         if (wb==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 Workbook wasn't found, workbookId: " + workbookId );
         }
-        PlanData.PlansForCompany plansForCompany = planService.getPlan(context.getCompanyId(), wb.getPlanId());
+        PlanData.PlansForCompany plansForCompany = sourceCodeService.getPlan(context.getCompanyId(), wb.getPlanId());
         if (plansForCompany.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 SourceCode wasn't found, " +
                     "companyId: "+context.getCompanyId()+", planId: " + wb.getPlanId()+", workbookId: " + wb.getId()+", error msg: " + plansForCompany.getErrorMessagesAsStr() );

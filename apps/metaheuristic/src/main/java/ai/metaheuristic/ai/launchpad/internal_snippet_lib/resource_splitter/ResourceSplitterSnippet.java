@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippet;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
-import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
@@ -80,7 +80,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
     private static final List<String> EXCLUDE_FROM_MAPPING = List.of("config.yaml", "config.yml");
 
     private final Globals globals;
-    private final PlanCache planCache;
+    private final SourceCodeCache sourceCodeCache;
     private final VariableRepository variableRepository;
     private final VariableService variableService;
     private final WorkbookCache workbookCache;
@@ -160,7 +160,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
 
     public void loadFilesFromDirAfterZip(Long planId, Long workbookId, String contextId, File srcDir, final Map<String, String> mapping) throws IOException {
 
-        SourceCodeImpl plan = planCache.findById(planId);
+        SourceCodeImpl plan = sourceCodeCache.findById(planId);
         if (plan==null) {
             throw new IllegalStateException("#995.200 sourceCode wasn't found, planId: " + planId);
         }

@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.launchpad.workbook;
 
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
-import ai.metaheuristic.ai.launchpad.plan.PlanController;
-import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeController;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
@@ -47,7 +47,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 public class WorkbookController {
 
-    private final PlanTopLevelService planTopLevelService;
+    private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final WorkbookTopLevelService workbookTopLevelService;
     private final LaunchpadContextService launchpadContextService;
 
@@ -77,10 +77,10 @@ public class WorkbookController {
     public String workbookAdd(@ModelAttribute("result") PlanApiData.PlanResult result,
                               @PathVariable Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(planId, context);
+        PlanApiData.PlanResult planResultRest = sourceCodeTopLevelService.getPlan(planId, context);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
-            return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+            return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         result.sourceCode = planResultRest.sourceCode;
         return "launchpad/plan/workbook-add";
@@ -90,7 +90,7 @@ public class WorkbookController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String workbookAddCommit(Long planId, String variable, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(planId, variable, context);
+        PlanApiData.WorkbookResult workbookResultRest = sourceCodeTopLevelService.addWorkbook(planId, variable, context);
         if (workbookResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", workbookResultRest.errorMessages);
         }
@@ -105,7 +105,7 @@ public class WorkbookController {
         PlanApiData.WorkbookResult result = workbookTopLevelService.getWorkbookExtendedForDeletion(workbookId, context);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
-            return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+            return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         model.addAttribute("result", result);
         return "launchpad/plan/workbook-delete";
@@ -116,10 +116,10 @@ public class WorkbookController {
     public String workbookDeleteCommit(Long planId, Long workbookId,
                                        final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(workbookId, context);
+        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteWorkbookById(workbookId, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+            return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         return "redirect:/launchpad/plan/workbooks/"+ planId;
     }
@@ -129,10 +129,10 @@ public class WorkbookController {
     public String workbookTargetExecState(@PathVariable Long planId, @PathVariable String state, @PathVariable Long id,
                                           final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = planTopLevelService.changeWorkbookExecState(state, id, context);
+        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeWorkbookExecState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+            return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         return "redirect:/launchpad/plan/workbooks/" + planId;
     }

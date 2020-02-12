@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.plan;
 
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -34,13 +34,13 @@ public class TestResourcePools {
 
     @Test
     public void testResourcePools() {
-        PlanService.ResourcePools p = new PlanService.ResourcePools();
+        SourceCodeService.ResourcePools p = new SourceCodeService.ResourcePools();
         new ArrayList<>();
         p.collectedInputs.put("aaa", new ArrayList<>(List.of("a1", "a2", "a3")));
         p.inputStorageUrls = new HashMap<>();
         p.inputStorageUrls.put("aaa", new PlanParamsYaml.Variable("aaa"));
 
-        PlanService.ResourcePools p1 = new PlanService.ResourcePools();
+        SourceCodeService.ResourcePools p1 = new SourceCodeService.ResourcePools();
         p1.collectedInputs.put("aaa", new ArrayList<>(List.of("a4")));
         p1.collectedInputs.put("bbb", new ArrayList<>(List.of("b1", "b2", "b3")));
         p1.inputStorageUrls = new HashMap<>();

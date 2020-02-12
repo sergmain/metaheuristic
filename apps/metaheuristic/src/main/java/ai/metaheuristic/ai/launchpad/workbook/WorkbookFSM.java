@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.workbook;
 
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.launchpad.Workbook;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ public class WorkbookFSM {
 
     private final WorkbookSyncService workbookSyncService;
     private final WorkbookCache workbookCache;
-    private final PlanCache planCache;
+    private final SourceCodeCache sourceCodeCache;
 
     public void toState(Long workbookId, EnumsApi.WorkbookExecState state) {
         workbookSyncService.getWithSync(workbookId, workbook -> {
@@ -62,7 +62,7 @@ public class WorkbookFSM {
     }
 
     public void toStarted(Workbook workbook) {
-        SourceCodeImpl plan = planCache.findById(workbook.getPlanId());
+        SourceCodeImpl plan = sourceCodeCache.findById(workbook.getPlanId());
         if (plan == null) {
             toError(workbook.getId());
         }

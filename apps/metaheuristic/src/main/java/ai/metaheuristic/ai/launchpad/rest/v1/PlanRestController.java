@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.rest.v1;
 
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
-import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class PlanRestController {
 
-    private final PlanTopLevelService planTopLevelService;
+    private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final LaunchpadContextService launchpadContextService;
 
     // ============= SourceCode =============
@@ -47,63 +47,63 @@ public class PlanRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public PlanApiData.PlansResult plans(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return planTopLevelService.getPlans(pageable, false, context);
+        return sourceCodeTopLevelService.getPlans(pageable, false, context);
     }
 
     @GetMapping("/plans-archived-only")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public PlanApiData.PlansResult plansArchivedOnly(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return planTopLevelService.getPlans(pageable, true, context);
+        return sourceCodeTopLevelService.getPlans(pageable, true, context);
     }
 
     @GetMapping(value = "/plan/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public PlanApiData.PlanResult edit(@PathVariable Long id, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return planTopLevelService.getPlan(id, context);
+        return sourceCodeTopLevelService.getPlan(id, context);
     }
 
     @GetMapping(value = "/plan-validate/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public PlanApiData.PlanResult validate(@PathVariable Long id, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return planTopLevelService.validatePlan(id, context);
+        return sourceCodeTopLevelService.validatePlan(id, context);
     }
 
     @PostMapping("/plan-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public PlanApiData.PlanResult addFormCommit(@RequestParam(name = "planYaml") String planYamlAsStr, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return planTopLevelService.addPlan(planYamlAsStr, context);
+        return sourceCodeTopLevelService.addPlan(planYamlAsStr, context);
     }
 
     @PostMapping("/plan-edit-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public PlanApiData.PlanResult editFormCommit(Long planId, @RequestParam(name = "planYaml") String planYamlAsStr, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return planTopLevelService.updatePlan(planId, planYamlAsStr, context);
+        return sourceCodeTopLevelService.updatePlan(planId, planYamlAsStr, context);
     }
 
     @PostMapping("/plan-delete-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(Long id, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return planTopLevelService.deletePlanById(id, context);
+        return sourceCodeTopLevelService.deletePlanById(id, context);
     }
 
     @PostMapping("/plan-archive-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest archiveCommit(Long id, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return planTopLevelService.archivePlanById(id, context);
+        return sourceCodeTopLevelService.archivePlanById(id, context);
     }
 
     @PostMapping(value = "/plan-upload-from-file")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest uploadPlan(final MultipartFile file, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return planTopLevelService.uploadPlan(file, context);
+        return sourceCodeTopLevelService.uploadPlan(file, context);
     }
 
 }

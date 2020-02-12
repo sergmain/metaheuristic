@@ -29,9 +29,9 @@ import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.task.TaskProducingService;
-import ai.metaheuristic.ai.launchpad.plan.PlanCache;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
-import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeUtils;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
@@ -82,7 +82,7 @@ public class WorkbookService {
 
     private final Globals globals;
     private final WorkbookRepository workbookRepository;
-    private final PlanCache planCache;
+    private final SourceCodeCache sourceCodeCache;
     private final VariableService variableService;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
@@ -241,7 +241,7 @@ public class WorkbookService {
         if (workbook == null) {
             return new PlanApiData.WorkbookResult("#705.100 workbook wasn't found, workbookId: " + workbookId);
         }
-        SourceCodeImpl plan = planCache.findById(workbook.getPlanId());
+        SourceCodeImpl plan = sourceCodeCache.findById(workbook.getPlanId());
         if (plan == null) {
             return new PlanApiData.WorkbookResult("#705.110 sourceCode wasn't found, planId: " + workbook.getPlanId());
         }
@@ -267,7 +267,7 @@ public class WorkbookService {
             WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(workbook.getParams());
             wpy.graph = null;
             workbook.setParams( WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
-            SourceCode sourceCode = planCache.findById(workbook.getPlanId());
+            SourceCode sourceCode = sourceCodeCache.findById(workbook.getPlanId());
             if (sourceCode ==null) {
                 log.warn("#705.130 Found workbook with wrong planId. planId: {}", workbook.getPlanId());
                 continue;
@@ -499,7 +499,7 @@ public class WorkbookService {
         List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(resourceParams.getAllPoolCodes());
         log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
 
-        PlanService.ResourcePools pools = new PlanService.ResourcePools(initialInputResourceCodes);
+        SourceCodeService.ResourcePools pools = new SourceCodeService.ResourcePools(initialInputResourceCodes);
         if (pools.status!= EnumsApi.PlanProducingStatus.OK) {
             return new PlanApiData.TaskProducingResultComplex(pools.status);
         }
@@ -536,7 +536,7 @@ public class WorkbookService {
 
         for (PlanParamsYaml.Process process : planParams.plan.getProcesses()) {
             Monitoring.log("##026", Enums.Monitor.MEMORY);
-            PlanService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasksForProcess(isPersist, plan.getId(), contextId, planParams, workbookId, process, pools, parentTaskIds);
+            SourceCodeService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasksForProcess(isPersist, plan.getId(), contextId, planParams, workbookId, process, pools, parentTaskIds);
             Monitoring.log("##027", Enums.Monitor.MEMORY);
             parentTaskIds.clear();
             parentTaskIds.addAll(produceTaskResult.taskIds);
@@ -579,7 +579,7 @@ public class WorkbookService {
     }
 
     public PlanApiData.WorkbookResult createWorkbookInternal(@NonNull SourceCodeImpl plan, String variable) {
-        WorkbookParamsYaml.WorkbookYaml wrc = PlanUtils.asWorkbookParamsYaml(variable);
+        WorkbookParamsYaml.WorkbookYaml wrc = SourceCodeUtils.asWorkbookParamsYaml(variable);
         PlanApiData.TaskProducingResultComplex producingResult = createWorkbook(plan.getId(), wrc);
         if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             return new PlanApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.planProducingStatus);

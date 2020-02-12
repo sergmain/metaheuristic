@@ -22,10 +22,9 @@ import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.data.PlanData;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +60,7 @@ public class BatchController {
 
     private final BatchTopLevelService batchTopLevelService;
     private final LaunchpadContextService launchpadContextService;
-    private final PlanService planService;
+    private final SourceCodeService sourceCodeService;
 
     @GetMapping("/index")
     public String index() {
@@ -98,7 +97,7 @@ public class BatchController {
     @GetMapping(value = "/batch-add")
     public String batchAdd(Model model, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanData.PlansForCompany plans = planService.getAvailablePlansForCompany(context);
+        PlanData.PlansForCompany plans = sourceCodeService.getAvailablePlansForCompany(context);
         ControllerUtils.addMessagesToModel(model, plans);
         model.addAttribute("result", plans);
         return "launchpad/batch/batch-add";

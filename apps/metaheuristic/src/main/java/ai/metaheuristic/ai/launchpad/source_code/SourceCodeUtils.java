@@ -14,17 +14,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.plan;
+package ai.metaheuristic.ai.launchpad.source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV1;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 
-public class PlanUtils {
+public class SourceCodeUtils {
 
     public static String getResourceCode(Long workbookId, String processCode, String snippetName, int processOrder, int snippetIdx) {
         return String.format("%d-%d-%s-%s-%d", workbookId, processOrder, snippetName, processCode, snippetIdx);

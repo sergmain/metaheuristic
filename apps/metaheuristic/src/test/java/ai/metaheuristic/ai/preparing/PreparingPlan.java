@@ -22,8 +22,8 @@ import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.company.CompanyTopLevelService;
-import ai.metaheuristic.ai.launchpad.plan.PlanCache;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -65,7 +65,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public CompanyTopLevelService companyTopLevelService;
 
     @Autowired
-    public PlanCache planCache;
+    public SourceCodeCache sourceCodeCache;
 
     @Autowired
     public SourceCodeRepository sourceCodeRepository;
@@ -77,7 +77,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public WorkbookCache workbookCache;
 
     @Autowired
-    public PlanService planService;
+    public SourceCodeService sourceCodeService;
 
     @Autowired
     public SnippetCache snippetCache;
@@ -282,9 +282,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
         SourceCode tempSourceCode = sourceCodeRepository.findByCodeAndCompanyId(plan.getCode(), company.uniqueId);
         if (tempSourceCode !=null) {
-            planCache.deleteById(tempSourceCode.getId());
+            sourceCodeCache.deleteById(tempSourceCode.getId());
         }
-        planCache.save(plan);
+        sourceCodeCache.save(plan);
 
         byte[] bytes = "A resource for input pool".getBytes();
 
@@ -333,7 +333,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public void afterPreparingPlan() {
         if (plan!=null && plan.getId()!=null) {
             try {
-                planCache.deleteById(plan.getId());
+                sourceCodeCache.deleteById(plan.getId());
             } catch (Throwable th) {
                 log.error("Error while planCache.deleteById()", th);
             }
@@ -375,7 +375,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
         assertFalse(planParamsYaml.plan.processes.isEmpty());
 
-        EnumsApi.PlanValidateStatus status = planService.validate(plan);
+        EnumsApi.PlanValidateStatus status = sourceCodeService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
         TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
@@ -392,7 +392,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
-        result = planService.produceAllTasks(true, plan, this.workbook);
+        result = sourceCodeService.produceAllTasks(true, plan, this.workbook);
         experiment = experimentCache.findById(experiment.id);
         this.workbook = (WorkbookImpl)result.workbook;
         assertEquals(result.numberOfTasks, taskRepository.findAllTaskIdsByWorkbookId(workbook.id).size());

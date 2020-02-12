@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
-import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
@@ -55,7 +55,7 @@ public class ReplicationSourceService {
     public final AccountRepository accountRepository;
     public final SourceCodeRepository sourceCodeRepository;
     public final SnippetRepository snippetRepository;
-    public final PlanCache planCache;
+    public final SourceCodeCache sourceCodeCache;
     public final AccountCache accountCache;
     public final CompanyCache companyCache;
 
@@ -81,7 +81,7 @@ public class ReplicationSourceService {
         res.snippets.addAll(snippetRepository.findAllSnippetCodes());
         res.plans.addAll(sourceCodeRepository.findAllAsIds().parallelStream()
                 .map(id->{
-                    SourceCodeImpl plan = planCache.findById(id);
+                    SourceCodeImpl plan = sourceCodeCache.findById(id);
                     PlanParamsYaml params = plan.getPlanParamsYaml();
                     if (params.internalParams!= null && params.internalParams.archived) {
                         return null;
