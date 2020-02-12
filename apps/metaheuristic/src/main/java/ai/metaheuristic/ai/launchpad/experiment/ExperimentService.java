@@ -18,10 +18,10 @@ package ai.metaheuristic.ai.launchpad.experiment;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
@@ -44,8 +44,8 @@ import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -242,7 +242,7 @@ public class ExperimentService {
                 log.warn("#179.020 This shouldn't be happened");
                 continue;
             }
-            WorkbookImpl wb = workbookCache.findById(e.workbookId);
+            ExecContextImpl wb = workbookCache.findById(e.workbookId);
             if (wb==null) {
                 log.info("#179.030 Can't calc max values and export to atlas because workbookId is null");
                 continue;
@@ -548,7 +548,7 @@ public class ExperimentService {
         if (experiment.workbookId==null) {
             return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.050 workbookId is null");
         }
-        WorkbookImpl workbook = workbookCache.findById(experiment.workbookId);
+        ExecContextImpl workbook = workbookCache.findById(experiment.workbookId);
 
         ExperimentParamsYaml.ExperimentFeature experimentFeature = experiment.getExperimentParamsYaml().getFeature(featureId);
         if (experimentFeature == null) {
@@ -709,8 +709,8 @@ public class ExperimentService {
         int totalVariants = features.size() * calcTotalVariants * 2;
 
         if (totalVariants > globals.maxTasksPerWorkbook) {
-            log.error("#179.090 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
-                                "Allowed maximum number of tasks per workbook: " + globals.maxTasksPerWorkbook +", tasks in this workbook: " + totalVariants);
+            log.error("#179.090 number of tasks for this execContext exceeded the allowed maximum number. ExecContext was created but its status is 'not valid'. " +
+                                "Allowed maximum number of tasks per execContext: " + globals.maxTasksPerWorkbook +", tasks in this execContext: " + totalVariants);
             return TOO_MANY_TASKS_PER_SOURCE_CODE_ERROR;
         }
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
@@ -735,7 +735,7 @@ public class ExperimentService {
         long prevMills = System.currentTimeMillis();
         try {
             eventMulticaster.addApplicationListener(listener);
-            Workbook wb = workbookCache.findById(workbookId);
+            ExecContext wb = workbookCache.findById(workbookId);
             if (wb==null) {
                 return EnumsApi.SourceCodeProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
             }

@@ -48,8 +48,8 @@ public class WorkbookTopLevelService {
     private final WorkbookService workbookService;
     private final SourceCodeCache sourceCodeCache;
 
-    public SourceCodeApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDesc(Long planId, Pageable pageable, LaunchpadContext context) {
-        return workbookService.getWorkbooksOrderByCreatedOnDescResult(planId, pageable, context);
+    public SourceCodeApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, LaunchpadContext context) {
+        return workbookService.getWorkbooksOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
     }
 
     public SourceCodeApiData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam, LaunchpadContext context) {
@@ -57,21 +57,21 @@ public class WorkbookTopLevelService {
         return new SourceCodeApiData.TaskProducingResult(
                 result.getStatus()== EnumsApi.TaskProducingStatus.OK
                         ? new ArrayList<>()
-                        : List.of("Error of creating workbook, " +
+                        : List.of("Error of creating execContext, " +
                         "validation status: " + result.getSourceCodeValidateStatus()+", producing status: " + result.getSourceCodeProducingStatus()),
                 result.sourceCodeValidateStatus,
                 result.sourceCodeProducingStatus,
-                result.workbook.getId()
+                result.execContext.getId()
         );
     }
 
     public SourceCodeApiData.WorkbookResult getWorkbookExtendedForDeletion(Long workbookId, LaunchpadContext context) {
         SourceCodeApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
 
-        // don't show actual graph for this workbook
-        WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(result.workbook .getParams());
+        // don't show actual graph for this execContext
+        WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.getParams());
         wpy.graph = null;
-        result.workbook .setParams( WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
+        result.execContext.setParams( WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
 
         return result;
     }

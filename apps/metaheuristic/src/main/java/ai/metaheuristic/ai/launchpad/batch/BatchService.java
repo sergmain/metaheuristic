@@ -23,9 +23,9 @@ import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchAndWorkbookExecStates;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
@@ -47,7 +47,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -240,7 +240,7 @@ public class BatchService {
         }
     }
 
-    private static String getMainDocumentPoolCode(WorkbookImpl workbook) {
+    private static String getMainDocumentPoolCode(ExecContextImpl workbook) {
         WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
         List<String> codes = resourceParams.workbookYaml.poolCodes.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH);
         if (codes.isEmpty()) {
@@ -262,16 +262,16 @@ public class BatchService {
                 public enum WorkbookExecState {
                     ERROR(-2),          // some error in configuration
                     UNKNOWN(-1),        // unknown state
-                    NONE(0),            // just created workbook
+                    NONE(0),            // just created execContext
                     PRODUCING(1),       // producing was just started
                     PRODUCED(2),        // producing was finished
                     STARTED(3),         // started
                     STOPPED(4),         // stopped
                     FINISHED(5),        // finished
                     DOESNT_EXIST(6),    // doesn't exist. this state is needed at station side to reconcile list of experiments
-                    EXPORTING_TO_ATLAS(7),    // workbook is marked as needed to be exported to atlas
-                    EXPORTING_TO_ATLAS_WAS_STARTED(8),    // workbook is marked as needed to be exported to atlas and export was started
-                    EXPORTED_TO_ATLAS(9);    // workbook was exported to atlas
+                    EXPORTING_TO_ATLAS(7),    // execContext is marked as needed to be exported to atlas
+                    EXPORTING_TO_ATLAS_WAS_STARTED(8),    // execContext is marked as needed to be exported to atlas and export was started
+                    EXPORTED_TO_ATLAS(9);    // execContext was exported to atlas
 */
 
                 if (execStates.workbookState != EnumsApi.WorkbookExecState.ERROR.code && execStates.workbookState != EnumsApi.WorkbookExecState.FINISHED.code) {
@@ -382,7 +382,7 @@ public class BatchService {
         return batchParams.batchStatus;
     }
 
-    private String getStatusForError(Long batchId, Workbook wb, String mainDocument, Task task, SnippetApiData.SnippetExec snippetExec, String stationIpAndHost) {
+    private String getStatusForError(Long batchId, ExecContext wb, String mainDocument, Task task, SnippetApiData.SnippetExec snippetExec, String stationIpAndHost) {
 
         final String header =
                 "#990.210 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
@@ -441,7 +441,7 @@ public class BatchService {
 
         Long workbookId = batch.workbookId;
         if (workbookId==null) {
-            bs.getGeneralStatus().add("#990.250 Batch #"+batchId+" wasn't linked to Workbook", '\n');
+            bs.getGeneralStatus().add("#990.250 Batch #"+batchId+" wasn't linked to ExecContext", '\n');
             bs.ok = true;
             return bs;
         }
@@ -459,10 +459,10 @@ public class BatchService {
     public boolean prepareStatus(BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir, Long batchId, BatchStatusProcessor bs, Long workbookId) {
         if (true) {
             throw new NotImplementedException("Previous version was using list of workbooks and in this method " +
-                    "data was prepared only for one task (there was one task for one workbook)." +
-                    "Not we have only one workbook with a number of tasks. So need to re-write to use taskId or something like that.");
+                    "data was prepared only for one task (there was one task for one execContext)." +
+                    "Not we have only one execContext with a number of tasks. So need to re-write to use taskId or something like that.");
         }
-        WorkbookImpl wb = workbookCache.findById(workbookId);
+        ExecContextImpl wb = workbookCache.findById(workbookId);
         if (wb == null) {
             String msg = "#990.260 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
             bs.getGeneralStatus().add(msg, '\n');

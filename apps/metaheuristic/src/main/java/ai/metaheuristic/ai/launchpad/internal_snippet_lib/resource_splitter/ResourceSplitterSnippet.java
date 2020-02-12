@@ -35,7 +35,7 @@ import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -164,9 +164,9 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         if (plan==null) {
             throw new IllegalStateException("#995.200 sourceCode wasn't found, planId: " + planId);
         }
-        Workbook wb = workbookCache.findById(workbookId);
+        ExecContext wb = workbookCache.findById(workbookId);
         if (wb==null) {
-            throw new IllegalStateException("#995.202 workbook wasn't found, workbookId: " + workbookId);
+            throw new IllegalStateException("#995.202 execContext wasn't found, workbookId: " + workbookId);
         }
 
         if (true) {
@@ -207,7 +207,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
                 });
     }
 
-    private void createAndProcessTask(SourceCodeImpl plan, Workbook wb, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile, String contextId) {
+    private void createAndProcessTask(SourceCodeImpl plan, ExecContext wb, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile, String contextId) {
 
         // TODO this method need to be re-written completely
         if (true) {
@@ -256,8 +256,8 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
             workbookService.changeValidStatus(wb.getId(), false);
             throw new BatchResourceProcessingException(
-                    "#995.220 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
-                            "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook +", tasks in this workbook:  " + countTasks.numberOfTasks);
+                    "#995.220 number of tasks for this execContext exceeded the allowed maximum number. ExecContext was created but its status is 'not valid'. " +
+                            "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook +", tasks in this execContext:  " + countTasks.numberOfTasks);
         }
         workbookService.changeValidStatus(wb.getId(), true);
 

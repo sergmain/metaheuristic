@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.repositories;
 
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -31,36 +31,36 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
+public interface WorkbookRepository extends CrudRepository<ExecContextImpl, Long> {
 
-    @Query(value="select e from WorkbookImpl e where e.id=:id")
-    WorkbookImpl findByIdForUpdate(Long id);
+    @Query(value="select e from ExecContextImpl e where e.id=:id")
+    ExecContextImpl findByIdForUpdate(Long id);
 
     @Transactional(readOnly = true)
-    @Query(value="select w.id, w.execState from WorkbookImpl w ")
+    @Query(value="select w.id, w.execState from ExecContextImpl w ")
     List<Object[]> findAllExecStates();
 
     @Transactional(readOnly = true)
-    @Query(value="select w.id from WorkbookImpl w")
+    @Query(value="select w.id from ExecContextImpl w")
     List<Long> findAllIds();
 
     @Transactional(readOnly = true)
-    @Query(value="select e.id from WorkbookImpl e where e.execState=:execState order by e.createdOn asc ")
+    @Query(value="select e.id from ExecContextImpl e where e.execState=:execState order by e.createdOn asc ")
     List<Long> findByExecStateOrderByCreatedOnAsc(int execState);
 
     @Transactional
-    List<WorkbookImpl> findByExecState(int execState);
+    List<ExecContextImpl> findByExecState(int execState);
 
     @Transactional(readOnly = true)
-    @Query(value="select e.id from WorkbookImpl e where e.execState=:execState")
+    @Query(value="select e.id from ExecContextImpl e where e.execState=:execState")
     List<Long> findIdsByExecState(int execState);
 
     @Transactional(readOnly = true)
-    @Query(value="select e.id from WorkbookImpl e where e.planId=:planId")
+    @Query(value="select e.id from ExecContextImpl e where e.sourceCodeId=:planId")
     List<Long> findIdsByPlanId(Long planId);
 
     @Transactional(readOnly = true)
-    Slice<Workbook> findByPlanIdOrderByCreatedOnDesc(Pageable pageable, Long planId);
+    Slice<ExecContext> findByPlanIdOrderByCreatedOnDesc(Pageable pageable, Long planId);
 
 }
 

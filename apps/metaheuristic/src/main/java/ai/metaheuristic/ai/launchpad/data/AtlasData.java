@@ -24,7 +24,7 @@ import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -57,7 +57,7 @@ public class AtlasData {
     public static class ExperimentInfo {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentApiData.ExperimentFeatureData> features;
-        public Workbook workbook;
+        public ExecContext execContext;
         public EnumsApi.WorkbookExecState workbookExecState;
     }
 

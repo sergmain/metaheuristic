@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookOperationStatusWithTaskList;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
@@ -62,7 +62,7 @@ public class TestGraph extends PreparingPlan {
     public void test() {
 
         SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
-        workbook = (WorkbookImpl)result.workbook;
+        workbook = (ExecContextImpl)result.execContext;
 
         assertNotNull(workbook);
 
@@ -116,7 +116,7 @@ public class TestGraph extends PreparingPlan {
         assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
     }
 
-    public void setExecState(WorkbookImpl workbook, Long id, EnumsApi.TaskExecState execState) {
+    public void setExecState(ExecContextImpl workbook, Long id, EnumsApi.TaskExecState execState) {
         TaskImpl t1 = new TaskImpl();
         t1.id = id;
         t1.execState = execState.value;

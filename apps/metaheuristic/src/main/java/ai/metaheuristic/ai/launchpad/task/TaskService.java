@@ -63,7 +63,7 @@ public class TaskService {
                 WorkbookOperationStatusWithTaskList workbookOperationStatusWithTaskList =
                         workbookGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.workbookId, task.id);
                 if (workbookOperationStatusWithTaskList==null) {
-                    log.warn("#317.030 Workbook for this task was already deleted");
+                    log.warn("#317.030 ExecContext for this task was already deleted");
                     return;
                 }
                 break;

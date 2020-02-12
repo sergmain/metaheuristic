@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.workbook;
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -61,13 +61,13 @@ public class WorkbookFSM {
         });
     }
 
-    public void toStarted(Workbook workbook) {
-        SourceCodeImpl plan = sourceCodeCache.findById(workbook.getPlanId());
+    public void toStarted(ExecContext execContext) {
+        SourceCodeImpl plan = sourceCodeCache.findById(execContext.getPlanId());
         if (plan == null) {
-            toError(workbook.getId());
+            toError(execContext.getId());
         }
         else {
-            toStarted(workbook.getId());
+            toStarted(execContext.getId());
         }
     }
 

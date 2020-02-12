@@ -41,7 +41,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * Time: 3:53 PM
  */
 @Controller
-@RequestMapping("/launchpad/plan")
+@RequestMapping("/launchpad/source-code")
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
@@ -53,37 +53,37 @@ public class WorkbookController {
 
     // ============= Workbooks =============
 
-    @GetMapping("/workbooks/{planId}")
+    @GetMapping("/workbooks/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
-    public String workbooks(Model model, @PathVariable Long planId, @PageableDefault(size = 5) Pageable pageable,
+    public String workbooks(Model model, @PathVariable Long sourceCodeId, @PageableDefault(size = 5) Pageable pageable,
                             @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        model.addAttribute("result", workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(planId, pageable, context));
-        return "launchpad/plan/workbooks";
+        model.addAttribute("result", workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context));
+        return "launchpad/source-code/workbooks";
     }
 
     // for AJAX
-    @PostMapping("/workbooks-part/{planId}")
+    @PostMapping("/workbooks-part/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
-    public String workbooksPart(Model model, @PathVariable Long planId,
+    public String workbooksPart(Model model, @PathVariable Long sourceCodeId,
                                 @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        model.addAttribute("result", workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(planId, pageable, context));
-        return "launchpad/sourceCode/workbooks :: table";
+        model.addAttribute("result", workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context));
+        return "launchpad/source-code/workbooks :: table";
     }
 
-    @GetMapping(value = "/workbook-add/{planId}")
+    @GetMapping(value = "/workbook-add/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String workbookAdd(@ModelAttribute("result") SourceCodeApiData.PlanResult result,
-                              @PathVariable Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+    public String workbookAdd(@ModelAttribute("result") SourceCodeApiData.SourceCodeResult result,
+                              @PathVariable Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.PlanResult planResultRest = sourceCodeTopLevelService.getPlan(planId, context);
-        if (planResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
-            return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(sourceCodeId, context);
+        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
-        result.sourceCode = planResultRest.sourceCode;
-        return "launchpad/plan/workbook-add";
+        result.sourceCode = sourceCodeResultRest.sourceCode;
+        return "launchpad/source-code/workbook-add";
     }
 
     @PostMapping("/workbook-add-commit")
@@ -94,10 +94,10 @@ public class WorkbookController {
         if (workbookResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", workbookResultRest.errorMessages);
         }
-        return "redirect:/launchpad/plan/workbooks/" + planId;
+        return "redirect:/launchpad/source-code/workbooks/" + planId;
     }
 
-    @GetMapping("/workbook-delete/{planId}/{workbookId}")
+    @GetMapping("/workbook-delete/{sourceCodeId}/{workbookId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String workbookDelete(Model model, @PathVariable Long planId, @PathVariable Long workbookId,
                                  final RedirectAttributes redirectAttributes, Authentication authentication) {
@@ -105,10 +105,10 @@ public class WorkbookController {
         SourceCodeApiData.WorkbookResult result = workbookTopLevelService.getWorkbookExtendedForDeletion(workbookId, context);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
-            return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+            return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
         model.addAttribute("result", result);
-        return "launchpad/plan/workbook-delete";
+        return "launchpad/source-code/workbook-delete";
     }
 
     @PostMapping("/workbook-delete-commit")
@@ -119,22 +119,22 @@ public class WorkbookController {
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteWorkbookById(workbookId, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+            return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
-        return "redirect:/launchpad/plan/workbooks/"+ planId;
+        return "redirect:/launchpad/source-code/workbooks/"+ planId;
     }
 
-    @GetMapping("/workbook-target-exec-state/{planId}/{state}/{id}")
+    @GetMapping("/workbook-target-exec-state/{sourceCodeId}/{state}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String workbookTargetExecState(@PathVariable Long planId, @PathVariable String state, @PathVariable Long id,
+    public String workbookTargetExecState(@PathVariable Long sourceCodeId, @PathVariable String state, @PathVariable Long id,
                                           final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeWorkbookExecState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+            return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
-        return "redirect:/launchpad/plan/workbooks/" + planId;
+        return "redirect:/launchpad/source-code/workbooks/" + sourceCodeId;
     }
 
 

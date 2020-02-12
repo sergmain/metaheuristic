@@ -39,7 +39,7 @@ public class ArtifactCleanerAtLaunchpad {
 
     public void fixedDelay() {
         deleteOrphanTasks();
-//# select count(*) from aiai.mh_data d where d.ref_type='workbook' and d.REF_ID not in (select z.id from aiai.mh_workbook z)
+//# select count(*) from aiai.mh_data d where d.ref_type='execContext' and d.REF_ID not in (select z.id from aiai.mh_workbook z)
         deleteOrphanWorkbookData();
 
 //select count(*) from aiai.mh_workbook w, aiai.mh_plan p

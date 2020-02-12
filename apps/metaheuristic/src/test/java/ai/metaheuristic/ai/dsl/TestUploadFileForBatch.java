@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -127,8 +127,8 @@ public class TestUploadFileForBatch extends PreparingPlan {
         final LaunchpadContext context = new LaunchpadContext(a, company);
 
 
-        SourceCodeApiData.PlanResult planResult = sourceCodeTopLevelService.validatePlan(plan.id, context);
-        assertEquals(EnumsApi.SourceCodeValidateStatus.OK, planResult.status);
+        SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeTopLevelService.validateSourceCode(plan.id, context);
+        assertEquals(EnumsApi.SourceCodeValidateStatus.OK, sourceCodeResult.status);
         plan = sourceCodeCache.findById(plan.id);
         assertTrue(plan.isValid());
 

@@ -1,0 +1,45 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+     layout:decorate="~{layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <p th:text="${'Plan code: ' + result.sourceCode.code}"></p>
+        <p>&nbsp;</p>
+
+
+        <h1 class="widget-header">New execContext with single input</h1>
+
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.sourceCode.PlanApiData$PlanResult"*/-->
+        <form class="pure-form pure-form-stacked" action="#" th:method="POST" th:action="@{/launchpad/source-code/execContext-add-commit}" accept-charset="UTF-8" id="execContext-add-form" name="f">
+            <input type="hidden" name="planId" th:value="${result.sourceCode.id}"/>
+            <fieldset>
+
+                <label for="variable">Input variable for this sourceCode</label>
+                <input name="variable" id="variable" type="text" placeholder="Input variable for this sourceCode" th:name="variable">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <p>&nbsp;</p>
+                <table>
+                    <tr>
+                        <td>
+                            <button type="submit" class="pure-button pure-button-primary">Create</button>
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td>
+                            <a class="pure-button pure-button-primary" href="workbooks.html" th:href="${'/launchpad/source-code/workbooks/' + result.sourceCode.id}">Cancel</a>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+
+        <p>&nbsp;</p>
+
+        <a class="pure-button pure-button-primary" href="workbooks.html" th:href="${'/launchpad/source-code/workbooks/' + result.sourceCode.id}">Cancel</a>
+
+
+    </div>
+</div>

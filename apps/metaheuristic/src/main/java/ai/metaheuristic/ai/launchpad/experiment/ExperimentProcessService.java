@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.experiment;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
@@ -89,7 +89,7 @@ public class ExperimentProcessService {
 
         List<String> features;
         if (meta==null) {
-            WorkbookImpl workbook = workbookCache.findById(workbookId);
+            ExecContextImpl workbook = workbookCache.findById(workbookId);
             if (workbook==null) {
                 result.status = EnumsApi.SourceCodeProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
                 return result;

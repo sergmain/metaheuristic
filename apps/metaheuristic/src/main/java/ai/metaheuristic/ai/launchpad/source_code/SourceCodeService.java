@@ -21,8 +21,8 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.Company;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
@@ -34,14 +34,14 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.SourceCode;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
@@ -104,7 +104,7 @@ public class SourceCodeService {
 
     private SourceCodeData.PlansForCompany getAvailablePlansForCompany(Long companyUniqueId, final Function<SourceCode, Boolean> planFilter) {
         final SourceCodeData.PlansForCompany plans = new SourceCodeData.PlansForCompany();
-        plans.items = sourceCodeRepository.findAllAsPlan(companyUniqueId).stream().filter(planFilter::apply).filter(o->{
+        plans.items = sourceCodeRepository.findAllAsSourceCode(companyUniqueId).stream().filter(planFilter::apply).filter(o->{
             if (!o.isValid()) {
                 return false;
             }
@@ -140,7 +140,7 @@ public class SourceCodeService {
             }
 
             if (!groups.isEmpty()) {
-                List<SourceCode> commonSourceCodes = sourceCodeRepository.findAllAsPlan(Consts.ID_1).stream().filter(planFilter::apply).filter(o -> {
+                List<SourceCode> commonSourceCodes = sourceCodeRepository.findAllAsSourceCode(Consts.ID_1).stream().filter(planFilter::apply).filter(o -> {
                     if (!o.isValid()) {
                         return false;
                     }
@@ -173,12 +173,12 @@ public class SourceCodeService {
     public synchronized void createAllTasks() {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
-        List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
+        List<ExecContextImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
         Monitoring.log("##020", Enums.Monitor.MEMORY);
         if (!workbooks.isEmpty()) {
             log.info("#701.020 Start producing tasks");
         }
-        for (WorkbookImpl workbook : workbooks) {
+        for (ExecContextImpl workbook : workbooks) {
             SourceCodeImpl plan = sourceCodeCache.findById(workbook.getPlanId());
             if (plan==null) {
                 workbookFSM.toStopped(workbook.id);
@@ -257,9 +257,9 @@ public class SourceCodeService {
         sourceCodeCache.save(plan);
     }
 
-    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl plan, Workbook workbook ) {
+    public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl plan, ExecContext execContext) {
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
-        if (isPersist && workbook.getExecState()!= EnumsApi.WorkbookExecState.PRODUCING.code) {
+        if (isPersist && execContext.getExecState()!= EnumsApi.WorkbookExecState.PRODUCING.code) {
             result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.ALREADY_PRODUCED_ERROR;
             return result;
         }
@@ -270,13 +270,13 @@ public class SourceCodeService {
                 result.sourceCodeValidateStatus != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
             log.error("#701.160 Can't produce tasks, error: {}", result.sourceCodeValidateStatus);
             if(isPersist) {
-                workbookFSM.toStopped(workbook.getId());
+                workbookFSM.toStopped(execContext.getId());
             }
             return result;
         }
         Monitoring.log("##022", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        result = workbookService.produceTasks(isPersist, plan, workbook.getId());
+        result = workbookService.produceTasks(isPersist, plan, execContext.getId());
         log.info("#701.170 PlanService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 

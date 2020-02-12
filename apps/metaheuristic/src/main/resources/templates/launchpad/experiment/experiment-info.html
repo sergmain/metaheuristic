@@ -29,28 +29,28 @@
             <td width="50">&nbsp;</td>
             <td valign="top">
                 <a class="pure-button pure-button-primary" href="#"
-                   th:if="${experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).NONE.code}"
-                   th:href="${'/launchpad/experiment/workbook-target-exec-state/'+experiment.id+'/producing/' + experimentResult.workbook.id}">Produce tasks</a>
+                   th:if="${experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).NONE.code}"
+                   th:href="${'/launchpad/experiment/execContext-target-exec-state/'+experiment.id+'/producing/' + experimentResult.execContext.id}">Produce tasks</a>
                 <a class="pure-button pure-button-primary" href="#"
-                   th:if="${experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).PRODUCED.code or
-                   experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).STOPPED.code}"
-                   th:href="${'/launchpad/experiment/workbook-target-exec-state/'+experiment.id+'/started/' + experimentResult.workbook.id}">Start</a>
+                   th:if="${experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).PRODUCED.code or
+                   experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).STOPPED.code}"
+                   th:href="${'/launchpad/experiment/execContext-target-exec-state/'+experiment.id+'/started/' + experimentResult.execContext.id}">Start</a>
                 <a class="pure-button pure-button-primary" href="#"
-                   th:if="${experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).STARTED.code}"
-                   th:href="${'/launchpad/experiment/workbook-target-exec-state/'+experiment.id+'/stopped/' + experimentResult.workbook.id}">Stop</a>
+                   th:if="${experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).STARTED.code}"
+                   th:href="${'/launchpad/experiment/execContext-target-exec-state/'+experiment.id+'/stopped/' + experimentResult.execContext.id}">Stop</a>
             </td>
             <td width="20">&nbsp; </td>
             <td valign="top">
                 <a class="pure-button table-nav-button-fill pure-button-primary" href="#"
-                   th:if="${experimentResult.workbook.execState!=T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).EXPORTING_TO_ATLAS_WAS_STARTED.code and
-                   experimentResult.workbook.execState!=T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).EXPORTING_TO_ATLAS.code}"
+                   th:if="${experimentResult.execContext.execState!=T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).EXPORTING_TO_ATLAS_WAS_STARTED.code and
+                   experimentResult.execContext.execState!=T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).EXPORTING_TO_ATLAS.code}"
                    th:href="${'/launchpad/experiment/experiment-to-atlas/'+ experiment.id }">Export to Atlas</a>
             </td>
             <td width="20">&nbsp; </td>
             <td valign="top">
                 <a class="pure-button table-nav-button-fill pure-button-primary" href="#"
-                   th:if="${experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).FINISHED.code}"
-                   th:href="${'/launchpad/experiment/task-reset-all-broken/' + experimentResult.workbook.id +'/'+ experiment.id }">Reset broken tasks</a>
+                   th:if="${experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).FINISHED.code}"
+                   th:href="${'/launchpad/experiment/task-reset-all-broken/' + experimentResult.execContext.id +'/'+ experiment.id }">Reset broken tasks</a>
             </td>
             <td width="20">&nbsp; </td>
             <td valign="top">

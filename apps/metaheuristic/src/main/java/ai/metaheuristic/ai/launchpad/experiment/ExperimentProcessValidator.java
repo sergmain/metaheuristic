@@ -27,8 +27,8 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.api.launchpad.SourceCode;
-import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
@@ -70,9 +70,9 @@ public class ExperimentProcessValidator implements ProcessValidator {
             return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
         }
         if (e.getWorkbookId()!=null) {
-            Workbook workbook = workbookCache.findById(e.getWorkbookId());
-            if (workbook != null) {
-                if (!sourceCode.getId().equals(workbook.getPlanId())) {
+            ExecContext execContext = workbookCache.findById(e.getWorkbookId());
+            if (execContext != null) {
+                if (!sourceCode.getId().equals(execContext.getPlanId())) {
                     return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;
                 }
             }

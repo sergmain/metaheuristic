@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.workbook;
 
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -45,26 +45,26 @@ public class WorkbookGraphTopLevelService {
     private final WorkbookSyncService workbookSyncService;
     private final TaskPersistencer taskPersistencer;
 
-    // section 'workbook graph methods'
+    // section 'execContext graph methods'
 
     // read-only operations with graph
-    public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
+    public List<WorkbookParamsYaml.TaskVertex> findAll(ExecContextImpl workbook) {
         return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAll(workbook));
     }
 
-    public List<WorkbookParamsYaml.TaskVertex> findLeafs(WorkbookImpl workbook) {
+    public List<WorkbookParamsYaml.TaskVertex> findLeafs(ExecContextImpl workbook) {
         return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findLeafs(workbook));
     }
 
-    public Set<WorkbookParamsYaml.TaskVertex> findDescendants(WorkbookImpl workbook, Long taskId) {
+    public Set<WorkbookParamsYaml.TaskVertex> findDescendants(ExecContextImpl workbook, Long taskId) {
         return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findDescendants(workbook, taskId));
     }
 
-    public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(WorkbookImpl workbook) {
+    public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(ExecContextImpl workbook) {
         return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAllForAssigning(workbook));
     }
 
-    public List<WorkbookParamsYaml.TaskVertex> findAllBroken(WorkbookImpl workbook) {
+    public List<WorkbookParamsYaml.TaskVertex> findAllBroken(ExecContextImpl workbook) {
         return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAllBroken(workbook));
     }
 
@@ -76,7 +76,7 @@ public class WorkbookGraphTopLevelService {
         });
     }
 
-    private WorkbookOperationStatusWithTaskList updateTaskExecStateWithoutSync(WorkbookImpl workbook, Long taskId, int execState) {
+    private WorkbookOperationStatusWithTaskList updateTaskExecStateWithoutSync(ExecContextImpl workbook, Long taskId, int execState) {
         taskPersistencer.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
         final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecState(workbook, taskId, execState);
         taskPersistencer.updateTasksStateInDb(status);
@@ -107,7 +107,7 @@ public class WorkbookGraphTopLevelService {
         });
     }
 
-    // end of section 'workbook graph methods'
+    // end of section 'execContext graph methods'
 
 
 

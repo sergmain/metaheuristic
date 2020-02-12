@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -177,7 +177,7 @@ public class ExperimentController {
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeWorkbookExecState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+            return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
         return "redirect:/launchpad/experiment/experiment-info/" + experimentId;
     }
@@ -297,7 +297,7 @@ public class ExperimentController {
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
         if (experiment.workbookId!=null) {
-            Workbook wb = workbookCache.findById(experiment.workbookId);
+            ExecContext wb = workbookCache.findById(experiment.workbookId);
             if (wb != null) {
                 OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteWorkbookById(experiment.workbookId, context);
                 if (operationStatusRest.isErrorMessages()) {

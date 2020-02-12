@@ -336,9 +336,9 @@ public class StationTaskService {
             // TODO 2019-10-24 need to optimize
             List<StationTask> tasks = findAllByCompletedIsFalse(launchpadUrl);
             for (StationTask task : tasks) {
-                // we don't need new task because workbook for this task is active
-                // i.e. there is a non-completed task with active workbook
-                // if workbook wasn't active we would need a new task
+                // we don't need new task because execContext for this task is active
+                // i.e. there is a non-completed task with active execContext
+                // if execContext wasn't active we would need a new task
                 if (currentExecState.isStarted(task.launchpadUrl, task.workbookId)) {
                     return false;
                 }

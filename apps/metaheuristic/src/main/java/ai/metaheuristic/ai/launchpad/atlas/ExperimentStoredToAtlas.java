@@ -19,9 +19,9 @@ package ai.metaheuristic.ai.launchpad.atlas;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
@@ -89,9 +89,9 @@ public class ExperimentStoredToAtlas {
     @EqualsAndHashCode(callSuper = false)
     @JsonIgnoreProperties(value = {"version"})
     @ToString(callSuper = true)
-    public static class WorkbookOnShelf extends WorkbookImpl {
-        public WorkbookOnShelf(Workbook workbook) {
-            BeanUtils.copyProperties(workbook, this);
+    public static class WorkbookOnShelf extends ExecContextImpl {
+        public WorkbookOnShelf(ExecContext execContext) {
+            BeanUtils.copyProperties(execContext, this);
         }
     }
 
@@ -123,10 +123,10 @@ public class ExperimentStoredToAtlas {
     public ExperimentOnShelf experiment;
     public List<TaskOnShelf> tasks = new ArrayList<>();
 
-    public ExperimentStoredToAtlas(SourceCode sourceCode, Workbook workbook, Experiment experiment, List<Task> tasks) {
+    public ExperimentStoredToAtlas(SourceCode sourceCode, ExecContext execContext, Experiment experiment, List<Task> tasks) {
 
         this.plan = new PlanOnShelf(sourceCode);
-        this.workbook = new WorkbookOnShelf(workbook);
+        this.workbook = new WorkbookOnShelf(execContext);
         this.experiment = new ExperimentOnShelf(experiment);
 
         if (CollectionUtils.isNotEmpty(tasks)) {

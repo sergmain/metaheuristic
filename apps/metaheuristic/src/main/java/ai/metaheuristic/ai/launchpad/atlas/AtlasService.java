@@ -102,16 +102,16 @@ public class AtlasService {
         if (experiment==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.02 can't find experiment for id: " + experimentId);
         }
-        WorkbookImpl workbook = workbookCache.findById(experiment.workbookId);
+        ExecContextImpl workbook = workbookCache.findById(experiment.workbookId);
         if (workbook==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.05 can't find workbook for this experiment");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.05 can't find execContext for this experiment");
         }
-        SourceCodeImpl plan = sourceCodeCache.findById(workbook.getPlanId());
-        if (plan==null) {
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(workbook.getSourceCodeId());
+        if (sourceCode==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.10 can't find sourceCode for this experiment");
         }
 
-        StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(plan, workbook, experiment);
+        StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(sourceCode, workbook, experiment);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.errorMessages);
         }
@@ -139,7 +139,7 @@ public class AtlasService {
         a.description = epy.experimentYaml.description;
         a.code = epy.experimentYaml.code;
         a.createdOn = System.currentTimeMillis();
-        a.companyId = plan.companyId;
+        a.companyId = sourceCode.companyId;
         final Atlas atlas = atlasRepository.save(a);
 
         // store all tasks' results
@@ -175,7 +175,7 @@ public class AtlasService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public StoredToAtlasWithStatus toExperimentStoredToAtlas(SourceCodeImpl plan, WorkbookImpl workbook, Experiment experiment) {
+    public StoredToAtlasWithStatus toExperimentStoredToAtlas(SourceCodeImpl plan, ExecContextImpl workbook, Experiment experiment) {
         AtlasParamsYaml atlasParamsYaml = new AtlasParamsYaml();
         atlasParamsYaml.createdOn = System.currentTimeMillis();
         atlasParamsYaml.plan = new AtlasParamsYaml.PlanWithParams(plan.id, plan.getParams());

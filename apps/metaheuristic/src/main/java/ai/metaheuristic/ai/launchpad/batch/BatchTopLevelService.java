@@ -216,24 +216,24 @@ public class BatchTopLevelService {
             WorkbookParamsYaml.WorkbookYaml workbookYaml = SourceCodeUtils.asWorkbookParamsYaml(code);
             producingResult = workbookService.createWorkbook(planId, workbookYaml, false);
             if (producingResult.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
-                throw new BatchResourceProcessingException("#995.075 Error creating workbook: " + producingResult.sourceCodeProducingStatus);
+                throw new BatchResourceProcessingException("#995.075 Error creating execContext: " + producingResult.sourceCodeProducingStatus);
             }
 
             try(InputStream is = new FileInputStream(dataFile)) {
                 variableService.save(
                         is, dataFile.length(), code,
-                        originFilename, producingResult.workbook.getId(),
+                        originFilename, producingResult.execContext.getId(),
                         ""+idsRepository.save(new Ids()).id
                 );
             }
 
-            b = new Batch(planId, producingResult.workbook.getId(), Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());
+            b = new Batch(planId, producingResult.execContext.getId(), Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());
             BatchParamsYaml bpy = new BatchParamsYaml();
             bpy.username = context.account.username;
             b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
             b = batchCache.save(b);
 
-            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), plan.uid, null, b.id, producingResult.workbook.getId(), context );
+            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), plan.uid, null, b.id, producingResult.execContext.getId(), context );
 
             final Batch batch = batchService.changeStateToPreparing(b.id);
             // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed
@@ -251,7 +251,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#995.120 can't load file, error: " + th.getMessage()+", class: " + th.getClass());
         }
         //noinspection UnnecessaryLocalVariable
-        BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, producingResult.workbook.getId());
+        BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, producingResult.execContext.getId());
         return uploadingStatus;
     }
 
@@ -354,7 +354,7 @@ public class BatchTopLevelService {
 
         try {
             if (true) {
-                throw new NotImplementedException("need to re-write with using workbookId and find the first vatiable in workbook");
+                throw new NotImplementedException("need to re-write with using workbookId and find the first vatiable in execContext");
             }
             String dataId = "1";
             variableService.storeToFile(dataId, tempFile);
@@ -375,8 +375,8 @@ public class BatchTopLevelService {
     private boolean prepareZip(BatchService.PrepareZipData prepareZipData, File zipDir ) {
         if (true) {
             throw new NotImplementedException("Previous version was using list of workbooks and in this method " +
-                    "data was prepared only for one task (there was one task for one workbook)." +
-                    "Not we have only one workbook with a number of tasks. So need to re-write to use taskId or something like that.");
+                    "data was prepared only for one task (there was one task for one execContext)." +
+                    "Not we have only one execContext with a number of tasks. So need to re-write to use taskId or something like that.");
         }
         final TaskParamsYaml taskParamYaml;
         try {

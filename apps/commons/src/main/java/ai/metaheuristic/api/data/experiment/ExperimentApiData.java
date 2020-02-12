@@ -20,7 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.task.TaskApiData;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -213,7 +213,7 @@ public class ExperimentApiData {
     public static class ExperimentExtendedResult {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeatureData> features;
-        public Workbook workbook;
+        public ExecContext execContext;
         public EnumsApi.WorkbookExecState workbookExecState;
     }
 
@@ -268,7 +268,7 @@ public class ExperimentApiData {
     public static class ExperimentInfoResult {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeatureData> features;
-        public Workbook workbook;
+        public ExecContext execContext;
         public EnumsApi.WorkbookExecState workbookExecState;
     }
 

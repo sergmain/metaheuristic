@@ -46,7 +46,7 @@ public class PermuteVariablesAndHyperParamsSnippet implements InternalSnippet {
     private final VariableRepository variableRepository;
 
     public List<InternalSnippetOutput> process(
-            Long planId, Long workbookId, String contextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long workbookId, String contextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             Map<String, List<String>> inputResourceIds) {
 
         List<String> values = inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());

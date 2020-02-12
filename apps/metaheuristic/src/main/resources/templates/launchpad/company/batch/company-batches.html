@@ -60,7 +60,7 @@
             </td>
             <td th:text="${r.batch.deleted}">Is deleted</td>
             <td>
-                <div th:text="${r.planCode}" class="no-wrap">Plan code</div>
+                <div th:text="${r.getSourceCodeUid}" class="no-wrap">Plan code</div>
                 <div th:text="${r.uploadedFileName}" class="no-wrap">File name</div>
             </td>
             <td th:text="${r.execStateStr}">Exec state as string</td>

@@ -49,9 +49,9 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -61,9 +61,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.ArrayList;
@@ -98,13 +96,13 @@ public class WorkbookService {
     private final IdsRepository idsRepository;
 
     public OperationStatusRest resetBrokenTasks(Long workbookId) {
-        final WorkbookImpl workbook = workbookCache.findById(workbookId);
+        final ExecContextImpl workbook = workbookCache.findById(workbookId);
         if (workbook==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.003 Can't find workbook with id #"+workbookId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.003 Can't find execContext with id #"+workbookId);
         }
         List<WorkbookParamsYaml.TaskVertex> vertices = workbookGraphTopLevelService.findAllBroken(workbook);
         if (vertices==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.005 Can't find workbook with id #"+workbookId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.005 Can't find execContext with id #"+workbookId);
         }
         for (WorkbookParamsYaml.TaskVertex vertex : vertices) {
             resetTask(vertex.taskId);
@@ -118,10 +116,10 @@ public class WorkbookService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
         }
 
-        final WorkbookImpl workbook = (WorkbookImpl) result.workbook;
+        final ExecContextImpl workbook = (ExecContextImpl) result.execContext;
         final SourceCode sourceCode = result.sourceCode;
         if (sourceCode ==null || workbook ==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#701.110 Error: (result.sourceCode==null || result.workbook==null)");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#701.110 Error: (result.sourceCode==null || result.execContext==null)");
         }
 
         if (workbook.execState!=execState.code) {
@@ -152,7 +150,7 @@ public class WorkbookService {
             if (withTaskList == null) {
                 taskPersistencer.finishTaskAsBrokenOrError(taskId, EnumsApi.TaskExecState.BROKEN);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#705.020 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
+                        "#705.020 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any execContext");
             }
 
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
@@ -160,7 +158,7 @@ public class WorkbookService {
             }
             taskPersistencer.updateTasksStateInDb(withTaskList);
 
-            WorkbookImpl workbook = workbookCache.findById(task.workbookId);
+            ExecContextImpl workbook = workbookCache.findById(task.workbookId);
             if (workbook.execState != EnumsApi.WorkbookExecState.STARTED.code) {
                 workbookFSM.toState(workbook.id, EnumsApi.WorkbookExecState.STARTED);
             }
@@ -169,7 +167,7 @@ public class WorkbookService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public long getCountUnfinishedTasks(WorkbookImpl workbook) {
+    public long getCountUnfinishedTasks(ExecContextImpl workbook) {
         return getCountUnfinishedTasks(workbook.id);
     }
 
@@ -188,7 +186,7 @@ public class WorkbookService {
     public SourceCodeApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookYaml workbookYaml, boolean checkResources) {
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
 
-        WorkbookImpl wb = new WorkbookImpl();
+        ExecContextImpl wb = new ExecContextImpl();
         wb.setPlanId(planId);
         wb.setCreatedOn(System.currentTimeMillis());
         wb.setExecState(EnumsApi.WorkbookExecState.NONE.code);
@@ -208,7 +206,7 @@ public class WorkbookService {
             }
         }
 
-        result.workbook = workbookCache.save(wb);
+        result.execContext = workbookCache.save(wb);
         result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;
 
         return result;
@@ -237,9 +235,9 @@ public class WorkbookService {
         if (workbookId==null) {
             return new SourceCodeApiData.WorkbookResult("#705.090 workbookId is null");
         }
-        WorkbookImpl workbook = workbookCache.findById(workbookId);
+        ExecContextImpl workbook = workbookCache.findById(workbookId);
         if (workbook == null) {
-            return new SourceCodeApiData.WorkbookResult("#705.100 workbook wasn't found, workbookId: " + workbookId);
+            return new SourceCodeApiData.WorkbookResult("#705.100 execContext wasn't found, workbookId: " + workbookId);
         }
         SourceCodeImpl plan = sourceCodeCache.findById(workbook.getPlanId());
         if (plan == null) {
@@ -248,7 +246,7 @@ public class WorkbookService {
 
         if (!plan.getId().equals(workbook.getPlanId())) {
             changeValidStatus(workbookId, false);
-            return new SourceCodeApiData.WorkbookResult("#705.120 planId doesn't match to workbook.planId, planId: " + workbook.getPlanId()+", workbook.planId: " + workbook.getPlanId());
+            return new SourceCodeApiData.WorkbookResult("#705.120 planId doesn't match to execContext.planId, planId: " + workbook.getPlanId()+", execContext.planId: " + workbook.getPlanId());
         }
 
         //noinspection UnnecessaryLocalVariable
@@ -256,23 +254,22 @@ public class WorkbookService {
         return result;
     }
 
-    public SourceCodeApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDescResult(
-            @PathVariable Long planId, @PageableDefault(size = 5) Pageable pageable, LaunchpadContext context) {
+    public SourceCodeApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, LaunchpadContext context) {
         pageable = ControllerUtils.fixPageSize(globals.workbookRowsLimit, pageable);
         SourceCodeApiData.WorkbooksResult result = new SourceCodeApiData.WorkbooksResult();
-        result.instances = workbookRepository.findByPlanIdOrderByCreatedOnDesc(pageable, planId);
-        result.currentPlanId = planId;
+        result.instances = workbookRepository.findByPlanIdOrderByCreatedOnDesc(pageable, sourceCodeId);
+        result.currentPlanId = sourceCodeId;
 
-        for (Workbook workbook : result.instances) {
-            WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(workbook.getParams());
+        for (ExecContext execContext : result.instances) {
+            WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(execContext.getParams());
             wpy.graph = null;
-            workbook.setParams( WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
-            SourceCode sourceCode = sourceCodeCache.findById(workbook.getPlanId());
+            execContext.setParams( WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
+            SourceCode sourceCode = sourceCodeCache.findById(execContext.getPlanId());
             if (sourceCode ==null) {
-                log.warn("#705.130 Found workbook with wrong planId. planId: {}", workbook.getPlanId());
+                log.warn("#705.130 Found execContext with wrong sourceCodeId. sourceCodeId: {}", execContext.getPlanId());
                 continue;
             }
-            result.plans.put(workbook.getId(), sourceCode);
+            result.plans.put(execContext.getId(), sourceCode);
         }
         return result;
     }
@@ -294,18 +291,18 @@ public class WorkbookService {
         }
 
         List<Long> workbookIds;
-        // find task in specific workbook ( i.e. workbookId==null)?
+        // find task in specific execContext ( i.e. workbookId==null)?
         if (workbookId==null) {
             workbookIds = workbookRepository.findByExecStateOrderByCreatedOnAsc(EnumsApi.WorkbookExecState.STARTED.code);
         }
         else {
-            WorkbookImpl workbook = workbookCache.findById(workbookId);
+            ExecContextImpl workbook = workbookCache.findById(workbookId);
             if (workbook==null) {
-                log.warn("#705.170 Workbook wasn't found for id: {}", workbookId);
+                log.warn("#705.170 ExecContext wasn't found for id: {}", workbookId);
                 return null;
             }
             if (workbook.getExecState()!= EnumsApi.WorkbookExecState.STARTED.code) {
-                log.warn("#705.180 Workbook wasn't started. Current exec state: {}", EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
+                log.warn("#705.180 ExecContext wasn't started. Current exec state: {}", EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
                 return null;
             }
             workbookIds = List.of(workbook.id);
@@ -348,7 +345,7 @@ public class WorkbookService {
         if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
             return null;
         }
-        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+        ExecContextImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
         if (workbook==null) {
             return null;
         }
@@ -489,9 +486,9 @@ public class WorkbookService {
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
 
-        WorkbookImpl workbook = workbookCache.findById(workbookId);
+        ExecContextImpl workbook = workbookCache.findById(workbookId);
         if (workbook == null) {
-            log.error("#701.175 Can't find workbook #{}", workbookId);
+            log.error("#701.175 Can't find execContext #{}", workbookId);
             return new SourceCodeApiData.TaskProducingResultComplex(EnumsApi.SourceCodeValidateStatus.WORKBOOK_NOT_FOUND_ERROR);
         }
 
@@ -569,7 +566,7 @@ public class WorkbookService {
         if (isPersist) {
             workbookFSM.toProduced(workbookId);
         }
-        result.workbook = workbookCache.findById(workbookId);
+        result.execContext = workbookCache.findById(workbookId);
         result.sourceCodeYaml = planParams.source;
         result.numberOfTasks = numberOfTasks;
         result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.OK;
@@ -582,25 +579,25 @@ public class WorkbookService {
         WorkbookParamsYaml.WorkbookYaml wrc = SourceCodeUtils.asWorkbookParamsYaml(variable);
         SourceCodeApiData.TaskProducingResultComplex producingResult = createWorkbook(plan.getId(), wrc);
         if (producingResult.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
-            return new SourceCodeApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.sourceCodeProducingStatus);
+            return new SourceCodeApiData.WorkbookResult("#560.072 Error creating execContext: " + producingResult.sourceCodeProducingStatus);
         }
 
-        SourceCodeApiData.TaskProducingResultComplex countTasks = produceTasks(false, plan, producingResult.workbook.getId());
+        SourceCodeApiData.TaskProducingResultComplex countTasks = produceTasks(false, plan, producingResult.execContext.getId());
         if (countTasks.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
-            changeValidStatus(producingResult.workbook.getId(), false);
+            changeValidStatus(producingResult.execContext.getId(), false);
             return new SourceCodeApiData.WorkbookResult("#560.077 sourceCode producing was failed, status: " + countTasks.sourceCodeProducingStatus);
         }
 
         if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
-            changeValidStatus(producingResult.workbook.getId(), false);
-            return new SourceCodeApiData.WorkbookResult("#560.081 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
-                    "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook + ", tasks in this workbook:  " + countTasks.numberOfTasks);
+            changeValidStatus(producingResult.execContext.getId(), false);
+            return new SourceCodeApiData.WorkbookResult("#560.081 number of tasks for this execContext exceeded the allowed maximum number. ExecContext was created but its status is 'not valid'. " +
+                    "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook + ", tasks in this execContext:  " + countTasks.numberOfTasks);
         }
 
         SourceCodeApiData.WorkbookResult result = new SourceCodeApiData.WorkbookResult(plan);
-        result.workbook = producingResult.workbook;
+        result.execContext = producingResult.execContext;
 
-        changeValidStatus(producingResult.workbook.getId(), true);
+        changeValidStatus(producingResult.execContext.getId(), true);
 
         return result;
     }
@@ -609,15 +606,15 @@ public class WorkbookService {
 //        experimentService.resetExperimentByWorkbookId(workbookId);
         applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.ExperimentResetEvent(workbookId));
         variableService.deleteByWorkbookId(workbookId);
-        Workbook workbook = workbookCache.findById(workbookId);
-        if (workbook != null) {
-            // unlock sourceCode if this is the last workbook in the sourceCode
-            List<Long> ids = workbookRepository.findIdsByPlanId(workbook.getPlanId());
+        ExecContext execContext = workbookCache.findById(workbookId);
+        if (execContext != null) {
+            // unlock sourceCode if this is the last execContext in the sourceCode
+            List<Long> ids = workbookRepository.findIdsByPlanId(execContext.getPlanId());
             if (ids.size()==1) {
                 if (ids.get(0).equals(workbookId)) {
-                    if (workbook.getPlanId() != null) {
-//                        setLockedTo(workbook.getPlanId(), companyUniqueId, false);
-                        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.PlanLockingEvent(workbook.getPlanId(), companyUniqueId, false));
+                    if (execContext.getPlanId() != null) {
+//                        setLockedTo(execContext.getPlanId(), companyUniqueId, false);
+                        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.PlanLockingEvent(execContext.getPlanId(), companyUniqueId, false));
                     }
                 }
                 else {

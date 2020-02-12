@@ -44,7 +44,7 @@ import java.util.Optional;
 public interface VariableRepository extends CrudRepository<Variable, Long> {
 
     @Transactional(readOnly = true)
-    @Query(nativeQuery = true, value = "select d.id from mh_variable d where d.WORKBOOK_ID is not null and d.WORKBOOK_ID not in (select z.id from mh_workbook z)")
+    @Query(nativeQuery = true, value = "select d.id from mh_variable d where d.WORKBOOK_ID is not null and d.WORKBOOK_ID not in (select z.id from mh_exec_context z)")
     List<Long> findAllOrphanWorkbookData();
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl(" +

@@ -64,7 +64,7 @@ public final class BatchData {
     @AllArgsConstructor
     public static class ProcessResourceItem {
         public Batch batch;
-        public String planCode;
+        public String sourceCodeUid;
         public String execStateStr;
         public int execState;
         public boolean ok;

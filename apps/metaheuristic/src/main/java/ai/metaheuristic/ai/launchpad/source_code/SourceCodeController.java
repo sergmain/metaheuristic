@@ -40,121 +40,121 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 @Controller
-@RequestMapping("/launchpad/plan")
+@RequestMapping("/launchpad/source-code")
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
 public class SourceCodeController {
 
-    public static final String REDIRECT_LAUNCHPAD_PLAN_PLANS = "redirect:/launchpad/sourceCode/plans";
+    public static final String REDIRECT_LAUNCHPAD_SOURCE_CODES = "redirect:/launchpad/source-code/source-codes";
 
     private final Globals globals;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final LaunchpadContextService launchpadContextService;
 
-    @GetMapping("/plans")
+    @GetMapping("/source-codes")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public String plans(Model model, @PageableDefault(size = 5) Pageable pageable,
+    public String sourceCodes(Model model, @PageableDefault(size = 5) Pageable pageable,
                         @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                         @ModelAttribute("errorMessage") final ArrayList<String> errorMessage, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.PlansResult plansResultRest = sourceCodeTopLevelService.getPlans(pageable, false, context);
-        ControllerUtils.addMessagesToModel(model, plansResultRest);
-        model.addAttribute("result", plansResultRest);
-        return "launchpad/plan/plans";
+        SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeTopLevelService.getSourceCodes(pageable, false, context);
+        ControllerUtils.addMessagesToModel(model, sourceCodesResultRest);
+        model.addAttribute("result", sourceCodesResultRest);
+        return "launchpad/source-code/source-codes";
     }
 
     // for AJAX
-    @PostMapping("/plans-part")
+    @PostMapping("/source-codes-part")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public String plansPart(Model model, @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
+    public String sourceCodesPart(Model model, @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.PlansResult plansResultRest = sourceCodeTopLevelService.getPlans(pageable, false, context);
-        model.addAttribute("result", plansResultRest);
-        return "launchpad/sourceCode/plans :: table";
+        SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeTopLevelService.getSourceCodes(pageable, false, context);
+        model.addAttribute("result", sourceCodesResultRest);
+        return "launchpad/source-code/source-codes :: table";
     }
 
-    @GetMapping(value = "/plan-add")
+    @GetMapping(value = "/source-code-add")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String add(Model model) {
-        model.addAttribute("planYamlAsStr", "");
-        return "launchpad/plan/plan-add";
+        model.addAttribute("sourceCodeYamlAsStr", "");
+        return "launchpad/source-code/source-code-add";
     }
 
-    @GetMapping(value = "/plan-edit/{id}")
+    @GetMapping(value = "/source-code-edit/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             redirectAttributes.addFlashAttribute("errorMessage", "#561.010 Can't edit sourceCode while 'replicated' mode of asset is active");
-            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+            return REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.PlanResult planResultRest = sourceCodeTopLevelService.getPlan(id, context);
-        if (planResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
+        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            return REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
-        model.addAttribute("plan", planResultRest.sourceCode);
-        model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
+        model.addAttribute("source-code", sourceCodeResultRest.sourceCode);
+        model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
         return "launchpad/plan/plan-edit";
     }
 
-    @GetMapping(value = "/plan-validate/{id}")
+    @GetMapping(value = "/source-code-validate/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.PlanResult planResultRest = sourceCodeTopLevelService.validatePlan(id, context);
-        if (planResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.validateSourceCode(id, context);
+        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            return REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
 
-        model.addAttribute("plan", planResultRest.sourceCode);
-        model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
-        model.addAttribute("infoMessages", planResultRest.infoMessages);
-        model.addAttribute("errorMessage", planResultRest.errorMessages);
-        return "launchpad/plan/plan-edit";
+        model.addAttribute("sourceCode", sourceCodeResultRest.sourceCode);
+        model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
+        model.addAttribute("infoMessages", sourceCodeResultRest.infoMessages);
+        model.addAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+        return "launchpad/source-code/source-code-edit";
     }
 
     @PostMapping(value = "/plan-upload-from-file")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String uploadPlan(final MultipartFile file, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.uploadPlan(file, context);
+        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.uploadSourceCode(file, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
-        return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        return REDIRECT_LAUNCHPAD_SOURCE_CODES;
     }
 
     @PostMapping("/plan-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String addFormCommit(String planYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.PlanResult planResultRest = sourceCodeTopLevelService.addPlan(planYamlAsStr, context);
-        if (planResultRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.addSourceCode(planYamlAsStr, context);
+        if (sourceCodeResultRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
         }
-        if (planResultRest.status== EnumsApi.SourceCodeValidateStatus.OK ) {
+        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
-        return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        return REDIRECT_LAUNCHPAD_SOURCE_CODES;
     }
 
     @PostMapping("/plan-edit-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String editFormCommit(Model model, Long planId, String planYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.PlanResult planResultRest = sourceCodeTopLevelService.updatePlan(planId, planYamlAsStr, context);
-        if (planResultRest.isErrorMessages()) {
-            model.addAttribute("errorMessage", planResultRest.errorMessages);
-            return "redirect:/launchpad/plan/plan-edit/"+planResultRest.sourceCode.getId();
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.updateSourceCode(planId, planYamlAsStr, context);
+        if (sourceCodeResultRest.isErrorMessages()) {
+            model.addAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            return "redirect:/launchpad/plan/plan-edit/"+ sourceCodeResultRest.sourceCode.getId();
         }
 
-        if (planResultRest.status== EnumsApi.SourceCodeValidateStatus.OK ) {
+        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
-        return "redirect:/launchpad/plan/plan-edit/"+planResultRest.sourceCode.getId();
+        return "redirect:/launchpad/plan/plan-edit/"+ sourceCodeResultRest.sourceCode.getId();
     }
 
     @GetMapping("/plan-delete/{id}")
@@ -162,16 +162,16 @@ public class SourceCodeController {
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
             redirectAttributes.addFlashAttribute("errorMessage", "#561.015 Can't delete sourceCode while 'replicated' mode of asset is active");
-            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+            return REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.PlanResult planResultRest = sourceCodeTopLevelService.getPlan(id, context);
-        if (planResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
+        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            return REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
-        model.addAttribute("plan", planResultRest.sourceCode);
-        model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
+        model.addAttribute("plan", sourceCodeResultRest.sourceCode);
+        model.addAttribute("planYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
         return "launchpad/plan/plan-delete";
     }
 
@@ -179,24 +179,24 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deletePlanById(id, context);
+        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteSourceCodeById(id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.020 sourceCode wasn't found, id: "+id) );
         }
-        return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        return REDIRECT_LAUNCHPAD_SOURCE_CODES;
     }
 
     @GetMapping("/plan-archive/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public String archive(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.PlanResult planResultRest = sourceCodeTopLevelService.getPlan(id, context);
-        if (planResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
+        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            return REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
-        model.addAttribute("plan", planResultRest.sourceCode);
-        model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
+        model.addAttribute("plan", sourceCodeResultRest.sourceCode);
+        model.addAttribute("planYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
         return "launchpad/plan/plan-archive";
     }
 
@@ -204,11 +204,11 @@ public class SourceCodeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String archiveCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.archivePlanById(id, context);
+        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.archiveSourceCodeById(id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.030 sourceCode wasn't found, id: "+id) );
         }
-        return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        return REDIRECT_LAUNCHPAD_SOURCE_CODES;
     }
 
 }

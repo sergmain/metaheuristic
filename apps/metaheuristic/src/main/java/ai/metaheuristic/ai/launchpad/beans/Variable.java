@@ -47,10 +47,10 @@ public class Variable implements Serializable {
     private String name;
 
     /**
-     * This field is initialized only for data resources which were produced while processing workbook.
+     * This field is initialized only for data resources which were produced while processing execContext.
      * The data resource which is using as input resources must not have workbookId.
      * Also this field is used as refId for deleting any resources which were produced
-     * while workbook was processed.
+     * while execContext was processed.
      */
     @Column(name = "WORKBOOK_ID")
     private Long workbookId;

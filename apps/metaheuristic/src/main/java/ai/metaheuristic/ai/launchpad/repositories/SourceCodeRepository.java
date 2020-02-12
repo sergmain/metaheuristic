@@ -36,7 +36,7 @@ public interface SourceCodeRepository extends JpaRepository<SourceCodeImpl, Long
 
     @Transactional(readOnly = true)
     @Query(value="select p from SourceCodeImpl p where p.companyId=:companyUniqueId")
-    List<SourceCode> findAllAsPlan(Long companyUniqueId);
+    List<SourceCode> findAllAsSourceCode(Long companyUniqueId);
 
     @Transactional(readOnly = true)
     @Query(value="select p from SourceCodeImpl p where p.companyId=:companyUniqueId order by p.id desc ")
@@ -54,10 +54,10 @@ public interface SourceCodeRepository extends JpaRepository<SourceCodeImpl, Long
 
     @Transactional(readOnly = true)
     @Query(value="select p.uid from SourceCodeImpl p")
-    List<String> findAllPlanCodes();
+    List<String> findAllSourceCodeUids();
 
     @Transactional(readOnly = true)
-    SourceCodeImpl findByCode(String code);
+    SourceCodeImpl findByUid(String uid);
 }
 
 

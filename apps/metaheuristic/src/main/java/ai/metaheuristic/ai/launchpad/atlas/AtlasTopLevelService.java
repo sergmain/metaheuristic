@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.atlas;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Atlas;
 import ai.metaheuristic.ai.launchpad.beans.AtlasTask;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
@@ -278,7 +278,7 @@ public class AtlasTopLevelService {
             return new AtlasData.ExperimentDataOnly("#422.140 experiment wasn't found, experimentId: " + atlasId);
         }
         if (ypywc.atlasParams.workbook == null) {
-            return new AtlasData.ExperimentDataOnly("#422.150 experiment has broken ref to workbook, experimentId: " + atlasId);
+            return new AtlasData.ExperimentDataOnly("#422.150 experiment has broken ref to execContext, experimentId: " + atlasId);
         }
         if (ypywc.atlasParams.workbook.workbookId==null ) {
             return new AtlasData.ExperimentDataOnly("#422.160 experiment wasn't startet yet, experimentId: " + atlasId);
@@ -328,7 +328,7 @@ public class AtlasTopLevelService {
             return new AtlasData.ExperimentInfoExtended("#422.190 experiment wasn't found, experimentId: " + atlasId);
         }
         if (ypywc.atlasParams.workbook == null) {
-            return new AtlasData.ExperimentInfoExtended("#422.200 experiment has broken ref to workbook, experimentId: " + atlasId);
+            return new AtlasData.ExperimentInfoExtended("#422.200 experiment has broken ref to execContext, experimentId: " + atlasId);
         }
         if (ypywc.atlasParams.workbook.workbookId==null ) {
             return new AtlasData.ExperimentInfoExtended("#422.210 experiment wasn't startet yet, experimentId: " + atlasId);
@@ -365,7 +365,7 @@ public class AtlasTopLevelService {
         }
         result.atlas = atlas;
 
-        WorkbookImpl workbook = new WorkbookImpl();
+        ExecContextImpl workbook = new ExecContextImpl();
         workbook.setParams(ypywc.atlasParams.workbook.workbookParams);
         workbook.id = ypywc.atlasParams.workbook.workbookId;
         workbook.execState = ypywc.atlasParams.workbook.execState;
@@ -376,7 +376,7 @@ public class AtlasTopLevelService {
                 .stream()
                 .map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
 
-        experimentInfoResult.workbook = workbook;
+        experimentInfoResult.execContext = workbook;
         experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.execState);
 
         result.experiment = experiment;
@@ -715,7 +715,7 @@ public class AtlasTopLevelService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
-        WorkbookImpl workbook = new WorkbookImpl();
+        ExecContextImpl workbook = new ExecContextImpl();
         workbook.setParams( ypywc.atlasParams.workbook.workbookParams);
         workbook.id = ypywc.atlasParams.workbook.workbookId;
         workbook.execState = ypywc.atlasParams.workbook.execState;
@@ -767,7 +767,7 @@ public class AtlasTopLevelService {
 
         ExperimentFeature feature = ypywc.getFeature(featureId);
 
-        WorkbookImpl workbook = new WorkbookImpl();
+        ExecContextImpl workbook = new ExecContextImpl();
         workbook.setParams(ypywc.atlasParams.workbook.workbookParams);
         workbook.id = ypywc.atlasParams.workbook.workbookId;
         workbook.execState = ypywc.atlasParams.workbook.execState;

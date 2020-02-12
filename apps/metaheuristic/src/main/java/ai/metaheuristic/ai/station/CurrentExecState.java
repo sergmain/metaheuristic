@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Profile("station")
 public class CurrentExecState {
 
-    // this is a map for holding the current status of Workbook, Not a task
+    // this is a map for holding the current status of ExecContext, Not a task
     private final Map<String, Map<Long, EnumsApi.WorkbookExecState>> workbookState = new HashMap<>();
 
     private Map<String, AtomicBoolean> isInit = new HashMap<>();
@@ -41,7 +41,7 @@ public class CurrentExecState {
     public void register(String launchpadUrl, List<LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus> statuses) {
         synchronized(workbookState) {
             isInit.computeIfAbsent(launchpadUrl, v -> new AtomicBoolean()).set(true);
-            // statuses==null when there isn't any workbook
+            // statuses==null when there isn't any execContext
             if (statuses==null) {
                 workbookState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).clear();
                 return;

@@ -15,7 +15,7 @@ alter table mh_variable
 
 update mh_variable
 set
-    ref_type = 'workbook'
+    ref_type = 'execContext'
 where ref_id is not null;
 
 

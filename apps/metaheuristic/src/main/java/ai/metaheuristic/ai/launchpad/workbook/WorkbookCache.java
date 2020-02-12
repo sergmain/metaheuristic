@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.workbook;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,23 +46,23 @@ public class WorkbookCache {
     }
 
     @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#result.id")
-    public WorkbookImpl save(WorkbookImpl workbook) {
+    public ExecContextImpl save(ExecContextImpl workbook) {
         if (workbook==null) {
             return null;
         }
-        log.debug("#461.010 save workbook, id: #{}, workbook: {}", workbook.id, workbook);
+        log.debug("#461.010 save execContext, id: #{}, execContext: {}", workbook.id, workbook);
         return workbookRepository.save(workbook);
     }
 
     @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#workbook.id")
-    public void delete(WorkbookImpl workbook) {
+    public void delete(ExecContextImpl workbook) {
         if (workbook==null || workbook.id==null) {
             return;
         }
         try {
             workbookRepository.delete(workbook);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#461.030 Error deleting of workbook by object, {}", e.toString());
+            log.error("#461.030 Error deleting of execContext by object, {}", e.toString());
         }
     }
 
@@ -79,7 +79,7 @@ public class WorkbookCache {
         try {
             workbookRepository.deleteById(workbookId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#461.050 Error deleting of workbook by id, {}", e.toString());
+            log.error("#461.050 Error deleting of execContext by id, {}", e.toString());
         }
     }
 
@@ -91,12 +91,12 @@ public class WorkbookCache {
         try {
             workbookRepository.deleteById(workbookId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#461.070 Error deleting of workbook by id, {}", e.toString());
+            log.error("#461.070 Error deleting of execContext by id, {}", e.toString());
         }
     }
 
     @Cacheable(cacheNames = {Consts.WORKBOOK_CACHE}, unless="#result==null")
-    public WorkbookImpl findById(Long id) {
+    public ExecContextImpl findById(Long id) {
         return workbookRepository.findById(id).orElse(null);
     }
 }

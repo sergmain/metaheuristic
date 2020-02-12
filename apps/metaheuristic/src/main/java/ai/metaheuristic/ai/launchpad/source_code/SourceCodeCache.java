@@ -38,17 +38,17 @@ public class SourceCodeCache {
         this.sourceCodeRepository = sourceCodeRepository;
     }
 
-    @CacheEvict(value = {Consts.PLANS_CACHE}, key = "#result.id")
+    @CacheEvict(value = {Consts.SOURCE_CODES_CACHE}, key = "#result.id")
     public SourceCodeImpl save(SourceCodeImpl plan) {
         return sourceCodeRepository.saveAndFlush(plan);
     }
 
-    @Cacheable(cacheNames = {Consts.PLANS_CACHE}, unless="#result==null")
+    @Cacheable(cacheNames = {Consts.SOURCE_CODES_CACHE}, unless="#result==null")
     public SourceCodeImpl findById(Long id) {
         return sourceCodeRepository.findById(id).orElse(null);
     }
 
-    @CacheEvict(cacheNames = {Consts.PLANS_CACHE}, key = "#sourceCode.id")
+    @CacheEvict(cacheNames = {Consts.SOURCE_CODES_CACHE}, key = "#sourceCode.id")
     public void delete(SourceCode sourceCode) {
         if (sourceCode ==null || sourceCode.getId()==null) {
             return;
@@ -60,7 +60,7 @@ public class SourceCodeCache {
         }
     }
 
-    @CacheEvict(cacheNames = {Consts.PLANS_CACHE}, key = "#id")
+    @CacheEvict(cacheNames = {Consts.SOURCE_CODES_CACHE}, key = "#id")
     public void deleteById(Long id) {
         if (id==null) {
             return;

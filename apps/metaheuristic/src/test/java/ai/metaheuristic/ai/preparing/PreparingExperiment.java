@@ -38,7 +38,7 @@ import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -98,7 +98,7 @@ public abstract class PreparingExperiment {
     public Station station = null;
     public String stationIdAsStr;
 
-    public Workbook workbook = null;
+    public ExecContext execContext = null;
     public Experiment experiment = null;
     public boolean isCorrectInit = true;
 
@@ -259,9 +259,9 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
         }
-        if (workbook!=null) {
+        if (execContext !=null) {
             try {
-                taskRepository.deleteByWorkbookId(workbook.getId());
+                taskRepository.deleteByWorkbookId(execContext.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

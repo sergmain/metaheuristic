@@ -209,15 +209,14 @@ CREATE TABLE mh_source_code
 CREATE UNIQUE INDEX mh_source_code_uid_unq_idx
     ON mh_source_code (UID);
 
-CREATE TABLE mh_workbook
+CREATE TABLE mh_exec_context
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    PLAN_ID       NUMERIC(10, 0) NOT NULL,
-    CREATED_ON    bigint NOT NULL,
-    COMPLETED_ON  bigint,
+    SOURCE_CODE_ID  NUMERIC(10, 0) NOT NULL,
+    CREATED_ON      bigint NOT NULL,
+    COMPLETED_ON    bigint,
     INPUT_RESOURCE_PARAM  LONGTEXT NOT NULL,
-    PRODUCING_ORDER integer NOT NULL,
     IS_VALID      BOOLEAN not null default false,
     EXEC_STATE   smallint not null default 0
 );

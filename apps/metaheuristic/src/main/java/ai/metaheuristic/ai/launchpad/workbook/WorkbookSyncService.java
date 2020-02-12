@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.workbook;
 
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -44,7 +44,7 @@ public class WorkbookSyncService {
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
     @SuppressWarnings("Duplicates")
-    <T> T getWithSync(Long workbookId, Function<WorkbookImpl, T> function) {
+    <T> T getWithSync(Long workbookId, Function<ExecContextImpl, T> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();
@@ -56,7 +56,7 @@ public class WorkbookSyncService {
         synchronized (obj) {
             obj.incrementAndGet();
             try {
-                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+                ExecContextImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
                 return workbook == null ? null : function.apply(workbook);
             } finally {
                 try {
@@ -73,7 +73,7 @@ public class WorkbookSyncService {
     }
 
     @SuppressWarnings("Duplicates")
-    <T> T getWithSyncReadOnly(WorkbookImpl workbook, Supplier<T> function) {
+    <T> T getWithSyncReadOnly(ExecContextImpl workbook, Supplier<T> function) {
         if (workbook==null) {
             return null;
         }

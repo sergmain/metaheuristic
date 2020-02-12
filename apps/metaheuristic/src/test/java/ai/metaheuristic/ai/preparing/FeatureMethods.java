@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
@@ -84,7 +84,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
         SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
-        workbook = (WorkbookImpl)result.workbook;
+        workbook = (ExecContextImpl)result.execContext;
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.NONE.code, workbook.getExecState());
@@ -95,19 +95,19 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, producingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
-        List<Object[]> tasks01 = taskCollector.getTasks(result.workbook);
+        List<Object[]> tasks01 = taskCollector.getTasks(result.execContext);
         assertTrue(tasks01.isEmpty());
 
         long mills;
 
-        List<Object[]> tasks02 = taskCollector.getTasks(result.workbook);
+        List<Object[]> tasks02 = taskCollector.getTasks(result.execContext);
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
         result = sourceCodeService.produceAllTasks(true, plan, workbook);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        workbook = (WorkbookImpl)result.workbook;
+        workbook = (ExecContextImpl)result.execContext;
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, workbook.getExecState());
 

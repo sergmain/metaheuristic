@@ -19,7 +19,7 @@ package ai.metaheuristic.api.data.source_code;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -67,7 +67,7 @@ public class SourceCodeApiData {
         public EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.NOT_PRODUCING_YET_ERROR;
         public List<Task> tasks = new ArrayList<>();
         public SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml;
-        public Workbook workbook;
+        public ExecContext execContext;
         public int numberOfTasks;
 
         public EnumsApi.TaskProducingStatus getStatus() {
@@ -91,7 +91,7 @@ public class SourceCodeApiData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class PlansResult extends BaseDataClass {
+    public static class SourceCodesResult extends BaseDataClass {
         public Slice<SourceCode> items;
         public EnumsApi.LaunchpadAssetMode assetMode;
     }
@@ -99,29 +99,29 @@ public class SourceCodeApiData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class PlanResult extends BaseDataClass {
+    public static class SourceCodeResult extends BaseDataClass {
         public SourceCode sourceCode;
-        public String planYamlAsStr;
+        public String sourceCodeYamlAsStr;
         public EnumsApi.SourceCodeLang lang;
         public EnumsApi.SourceCodeValidateStatus status = EnumsApi.SourceCodeValidateStatus.NOT_VERIFIED_YET;
 
-        public PlanResult(String errorMessage, EnumsApi.SourceCodeValidateStatus status) {
+        public SourceCodeResult(String errorMessage, EnumsApi.SourceCodeValidateStatus status) {
             this.status = status;
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public PlanResult(List<String> errorMessage, EnumsApi.SourceCodeValidateStatus status) {
+        public SourceCodeResult(List<String> errorMessage, EnumsApi.SourceCodeValidateStatus status) {
             this.status = status;
             this.errorMessages = errorMessage;
         }
 
-        public PlanResult(String errorMessage) {
+        public SourceCodeResult(String errorMessage) {
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public PlanResult(SourceCode sourceCode, SourceCodeParamsYaml.Origin origin) {
+        public SourceCodeResult(SourceCode sourceCode, SourceCodeParamsYaml.Origin origin) {
             this.sourceCode = sourceCode;
-            this.planYamlAsStr = origin.source;
+            this.sourceCodeYamlAsStr = origin.source;
             this.lang = origin.lang;
         }
     }
@@ -129,7 +129,7 @@ public class SourceCodeApiData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class WorkbooksResult extends BaseDataClass {
-        public Slice<Workbook> instances;
+        public Slice<ExecContext> instances;
         public long currentPlanId;
         public Map<Long, SourceCode> plans = new HashMap<>();
 
@@ -139,7 +139,7 @@ public class SourceCodeApiData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class WorkbookResult extends BaseDataClass {
-        public Workbook workbook;
+        public ExecContext execContext;
         public SourceCode sourceCode;
 
         public WorkbookResult(String errorMessage) {
@@ -150,9 +150,9 @@ public class SourceCodeApiData {
             this.sourceCode = sourceCode;
         }
 
-        public WorkbookResult(SourceCode sourceCode, Workbook workbook) {
+        public WorkbookResult(SourceCode sourceCode, ExecContext execContext) {
             this.sourceCode = sourceCode;
-            this.workbook = workbook;
+            this.execContext = execContext;
         }
     }
 

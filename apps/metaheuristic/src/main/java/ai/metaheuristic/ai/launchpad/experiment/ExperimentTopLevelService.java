@@ -42,8 +42,8 @@ import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
@@ -159,7 +159,7 @@ public class ExperimentTopLevelService {
 
     public ExperimentApiData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentId, Long featureId, String[] params, Pageable pageable) {
         Experiment experiment= experimentCache.findById(experimentId);
-        WorkbookImpl workbook = workbookCache.findById(experiment.workbookId);
+        ExecContextImpl workbook = workbookCache.findById(experiment.workbookId);
 
         ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
 
@@ -203,9 +203,9 @@ public class ExperimentTopLevelService {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.070 experiment wasn't startet yet, experimentId: " + experimentId);
         }
 
-        WorkbookImpl workbook = workbookCache.findById(experiment.getWorkbookId());
+        ExecContextImpl workbook = workbookCache.findById(experiment.getWorkbookId());
         if (workbook == null) {
-            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to workbook, experimentId: " + experimentId);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to execContext, experimentId: " + experimentId);
         }
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         for (ExperimentParamsYaml.HyperParam hyperParams : epy.experimentYaml.hyperParams) {
@@ -225,7 +225,7 @@ public class ExperimentTopLevelService {
         ExperimentApiData.ExperimentInfoResult experimentInfoResult = new ExperimentApiData.ExperimentInfoResult();
         final List<ExperimentParamsYaml.ExperimentFeature> experimentFeatures = epy.processing.features;
         experimentInfoResult.features = experimentFeatures.stream().map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
-        experimentInfoResult.workbook = workbook;
+        experimentInfoResult.execContext = workbook;
         experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.getExecState());
         result.experiment = ExperimentService.asExperimentData(experiment);
         result.experimentInfo = experimentInfoResult;
@@ -706,7 +706,7 @@ public class ExperimentTopLevelService {
 
         if (experiment.workbookId==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.420 This experiment isn't bound to Workbook");
+                    "#285.420 This experiment isn't bound to ExecContext");
         }
         workbookFSM.toExportingToAtlas(experiment.workbookId);
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Exporting of experiment was successfully started", null);
@@ -742,7 +742,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, workbookResultRest.errorMessages, workbookResultRest.infoMessages);
         }
 
-        experimentService.bindExperimentToWorkbook(experiment.id, workbookResultRest.workbook.getId());
+        experimentService.bindExperimentToWorkbook(experiment.id, workbookResultRest.execContext.getId());
 
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,
                 "Binding an experiment '"+experimentCode+"' to sourceCode '"+p.uid +"' with using a resource '"+resourcePoolCode+"' was successful", null);
@@ -762,7 +762,7 @@ public class ExperimentTopLevelService {
         if (experiment==null || experiment.workbookId==null) {
             return EnumsApi.WorkbookExecState.UNKNOWN;
         }
-        Workbook wb = workbookCache.findById(experiment.workbookId);
+        ExecContext wb = workbookCache.findById(experiment.workbookId);
         return EnumsApi.WorkbookExecState.toState(wb.getExecState());
     }
 

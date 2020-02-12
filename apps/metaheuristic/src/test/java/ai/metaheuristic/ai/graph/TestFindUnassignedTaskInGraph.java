@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.graph;
 
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.EnumsApi;
@@ -61,7 +61,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
     public void test() {
 
         SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
-        workbook = (WorkbookImpl)result.workbook;
+        workbook = (ExecContextImpl)result.execContext;
 
         assertNotNull(workbook);
 

@@ -46,7 +46,7 @@ import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -455,8 +455,8 @@ public class ServerService {
         return new LaunchpadCommParamsYaml.ReAssignStationId(s.getId(), sessionId);
     }
 
-    private static LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus to(Workbook workbook) {
-        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(workbook.getId(), EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
+    private static LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus to(ExecContext execContext) {
+        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(execContext.getId(), EnumsApi.WorkbookExecState.toState(execContext.getExecState()));
     }
 
     private static LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus toSimpleStatus(Long workbookId, Integer execSate) {

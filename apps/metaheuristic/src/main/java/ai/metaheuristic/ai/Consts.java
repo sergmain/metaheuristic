@@ -74,7 +74,7 @@ public class Consts {
     public static final String PARAMS_YAML_MASK = "params-v%d.yaml";
     public static final String TASK_YAML = "task.yaml";
 
-    public static final String MH_WORKBOOK_INPUT_VARIABLE = "mh.workbook-input-variable";
+    public static final String MH_WORKBOOK_INPUT_VARIABLE = "mh.execContext-input-variable";
     public static final String ML_MODEL_BIN = "ml_model.bin";
     public static final String LOCALHOST_IP = "127.0.0.1";
 
@@ -91,7 +91,7 @@ public class Consts {
     public static final String STATIONS_CACHE = "stations";
     public static final String BATCHES_CACHE = "batches";
     public static final String EXPERIMENTS_CACHE = "experiments";
-    public static final String PLANS_CACHE = "plans";
+    public static final String SOURCE_CODES_CACHE = "sources";
     public static final String SNIPPETS_CACHE = "snippets";
 
     public static final String MAIN_DOCUMENT_POOL_CODE_FOR_BATCH = "mainDocument";

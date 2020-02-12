@@ -63,8 +63,6 @@ truncate table mh_batch;
 
 truncate table mh_task;
 
-truncate table mh_workbook;
-
 update mh_experiment set WORKBOOK_ID=null where 1=1;
 
 update mh_plan set IS_LOCKED=0 where 1=1;

@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.launchpad.workbook;
 
 import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
+import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.api.EnumsApi;
@@ -57,14 +57,14 @@ public class WorkbookSchedulerService {
     private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
     public void updateWorkbookStatuses(boolean needReconciliation) {
-        List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
-        for (WorkbookImpl workbook : workbooks) {
+        List<ExecContextImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
+        for (ExecContextImpl workbook : workbooks) {
             updateWorkbookStatus(workbook.id, needReconciliation);
         }
 
         List<Long> workbooksIds = workbookRepository.findIdsByExecState(EnumsApi.WorkbookExecState.EXPORTING_TO_ATLAS.code);
         for (Long workbookId : workbooksIds) {
-            log.info("Start exporting workbook #{} to atlas", workbookId);
+            log.info("Start exporting execContext #{} to atlas", workbookId);
             OperationStatusRest status;
             try {
                 status = atlasService.storeExperimentToAtlas(workbookId);
@@ -74,7 +74,7 @@ public class WorkbookSchedulerService {
             }
 
             if (status.status==EnumsApi.OperationStatus.OK) {
-                log.info("Exporting of workbook #{} was finished", workbookId);
+                log.info("Exporting of execContext #{} was finished", workbookId);
             } else {
                 workbookFSM.toError(workbookId);
                 log.error("Error exporting experiment to atlas, workbookID #{}\n{}", workbookId, status.getErrorMessagesAsStr());
@@ -84,9 +84,9 @@ public class WorkbookSchedulerService {
 
     /**
      *
-     * @param workbookId Workbook Id
+     * @param workbookId ExecContext Id
      * @param needReconciliation
-     * @return WorkbookImpl updated workbook
+     * @return ExecContextImpl updated execContext
      */
     public void updateWorkbookStatus(Long workbookId, boolean needReconciliation) {
 
@@ -96,7 +96,7 @@ public class WorkbookSchedulerService {
             reconcileStates(workbookId);
             countUnfinishedTasks = workbookService.getCountUnfinishedTasks(workbookId);
             if (countUnfinishedTasks==0) {
-                log.info("Workbook #{} was finished", workbookId);
+                log.info("ExecContext #{} was finished", workbookId);
                 workbookFSM.toFinished(workbookId);
             }
         }

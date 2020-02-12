@@ -256,16 +256,16 @@ public class EnumsApi {
     public enum WorkbookExecState {
         ERROR(-2),          // some error in configuration
         UNKNOWN(-1),        // unknown state
-        NONE(0),            // just created workbook
+        NONE(0),            // just created execContext
         PRODUCING(1),       // producing was just started
         PRODUCED(2),        // producing was finished
         STARTED(3),         // started
         STOPPED(4),         // stopped
         FINISHED(5),        // finished
         DOESNT_EXIST(6),    // doesn't exist. this state is needed at station side to reconcile list of tasks
-        EXPORTING_TO_ATLAS(7),    // workbook is marked as needed to be exported to atlas
-        EXPORTING_TO_ATLAS_WAS_STARTED(8),    // workbook is marked as needed to be exported to atlas and export was started
-        EXPORTED_TO_ATLAS(9);    // workbook was exported to atlas
+        EXPORTING_TO_ATLAS(7),    // execContext is marked as needed to be exported to atlas
+        EXPORTING_TO_ATLAS_WAS_STARTED(8),    // execContext is marked as needed to be exported to atlas and export was started
+        EXPORTED_TO_ATLAS(9);    // execContext was exported to atlas
 
         public int code;
 

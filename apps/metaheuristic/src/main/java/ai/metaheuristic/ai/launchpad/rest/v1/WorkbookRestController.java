@@ -68,8 +68,8 @@ public class WorkbookRestController {
     }
 
     /**
-     * create Workbook by planCode
-     * useful for creating Workbook from command-line with cURL
+     * create ExecContext by planCode
+     * useful for creating ExecContext from command-line with cURL
      *
      * @return
      */
@@ -78,7 +78,7 @@ public class WorkbookRestController {
     public SimpleWorkbookAddingResult workbookAddCommit(String planCode, String variable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.WorkbookResult workbookResult = sourceCodeTopLevelService.addWorkbook(planCode, variable, context);
-        return new SimpleWorkbookAddingResult(workbookResult.workbook.getId());
+        return new SimpleWorkbookAddingResult(workbookResult.execContext.getId());
     }
 
     /**
