@@ -78,8 +78,8 @@ public class ExperimentStoredToAtlas {
     @EqualsAndHashCode(callSuper = false)
     @JsonIgnoreProperties(value = {"version", "clean"})
     @ToString(callSuper = true)
-    public static class PlanOnShelf extends SourceCodeImpl {
-        public PlanOnShelf(SourceCode sourceCode) {
+    public static class SourceCodeOnShelf extends SourceCodeImpl {
+        public SourceCodeOnShelf(SourceCode sourceCode) {
             BeanUtils.copyProperties(sourceCode, this);
         }
     }
@@ -89,8 +89,8 @@ public class ExperimentStoredToAtlas {
     @EqualsAndHashCode(callSuper = false)
     @JsonIgnoreProperties(value = {"version"})
     @ToString(callSuper = true)
-    public static class WorkbookOnShelf extends ExecContextImpl {
-        public WorkbookOnShelf(ExecContext execContext) {
+    public static class ExecContextOnShelf extends ExecContextImpl {
+        public ExecContextOnShelf(ExecContext execContext) {
             BeanUtils.copyProperties(execContext, this);
         }
     }
@@ -118,15 +118,15 @@ public class ExperimentStoredToAtlas {
         }
     }
 
-    public PlanOnShelf plan;
-    public WorkbookOnShelf workbook;
+    public SourceCodeOnShelf sourceCode;
+    public ExecContextOnShelf execContext;
     public ExperimentOnShelf experiment;
     public List<TaskOnShelf> tasks = new ArrayList<>();
 
     public ExperimentStoredToAtlas(SourceCode sourceCode, ExecContext execContext, Experiment experiment, List<Task> tasks) {
 
-        this.plan = new PlanOnShelf(sourceCode);
-        this.workbook = new WorkbookOnShelf(execContext);
+        this.sourceCode = new SourceCodeOnShelf(sourceCode);
+        this.execContext = new ExecContextOnShelf(execContext);
         this.experiment = new ExperimentOnShelf(experiment);
 
         if (CollectionUtils.isNotEmpty(tasks)) {

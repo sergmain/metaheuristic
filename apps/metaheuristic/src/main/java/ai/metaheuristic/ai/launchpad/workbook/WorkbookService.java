@@ -524,7 +524,7 @@ public class WorkbookService {
         }
 
         Monitoring.log("##025", Enums.Monitor.MEMORY);
-        SourceCodeParamsYaml planParams = plan.getPlanParamsYaml();
+        SourceCodeParamsYaml planParams = plan.getSourceCodeParamsYaml();
 
         int idx = Consts.PROCESS_ORDER_START_VALUE;
         List<Long> parentTaskIds = new ArrayList<>();

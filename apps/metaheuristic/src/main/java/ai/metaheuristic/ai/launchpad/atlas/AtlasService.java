@@ -115,7 +115,7 @@ public class AtlasService {
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.errorMessages);
         }
-        if (!workbookId.equals(stored.atlasParamsYamlWithCache.atlasParams.workbook.workbookId)) {
+        if (!workbookId.equals(stored.atlasParamsYamlWithCache.atlasParams.execContext.execContextId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment can't be stored, workbookId is different");
         }
         // TODO 2019-07-13 need to re-write this check
@@ -175,11 +175,11 @@ public class AtlasService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public StoredToAtlasWithStatus toExperimentStoredToAtlas(SourceCodeImpl plan, ExecContextImpl workbook, Experiment experiment) {
+    public StoredToAtlasWithStatus toExperimentStoredToAtlas(SourceCodeImpl sourceCode, ExecContextImpl workbook, Experiment experiment) {
         AtlasParamsYaml atlasParamsYaml = new AtlasParamsYaml();
         atlasParamsYaml.createdOn = System.currentTimeMillis();
-        atlasParamsYaml.plan = new AtlasParamsYaml.PlanWithParams(plan.id, plan.getParams());
-        atlasParamsYaml.workbook = new AtlasParamsYaml.WorkbookWithParams(workbook.id, workbook.getParams(), EnumsApi.WorkbookExecState.EXPORTED_TO_ATLAS.code);
+        atlasParamsYaml.sourceCode = new AtlasParamsYaml.SourceCodeWithParams(sourceCode.id, sourceCode.getParams());
+        atlasParamsYaml.execContext = new AtlasParamsYaml.ExecContextWithParams(workbook.id, workbook.getParams(), EnumsApi.WorkbookExecState.EXPORTED_TO_ATLAS.code);
         atlasParamsYaml.experiment = new AtlasParamsYaml.ExperimentWithParams(experiment.id, experiment.getParams());
         atlasParamsYaml.taskIds = taskRepository.findAllTaskIdsByWorkbookId(workbook.getId());
 

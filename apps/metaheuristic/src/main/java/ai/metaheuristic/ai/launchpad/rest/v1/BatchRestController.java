@@ -86,9 +86,9 @@ public class BatchRestController {
     }
 
     @GetMapping(value = "/batch-add")
-    public SourceCodeData.PlansForCompany batchAdd(Authentication authentication) {
+    public SourceCodeData.SourceCodesForCompany batchAdd(Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return sourceCodeService.getAvailablePlansForCompany(context);
+        return sourceCodeService.getAvailableSourceCodesForCompany(context);
     }
 
     @GetMapping("/batch-delete/{batchId}")

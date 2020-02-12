@@ -81,7 +81,7 @@ public class PlanParamsYamlUtilsV5
 
     @Override
     public PlanParamsYamlUtilsV6 nextUtil() {
-        return (PlanParamsYamlUtilsV6)PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(6);
+        return (PlanParamsYamlUtilsV6) SourceCodeParamsYamlUtils.BASE_YAML_UTILS.getForVersion(6);
     }
 
     @Override

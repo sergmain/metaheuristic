@@ -71,7 +71,7 @@ public class ReplicationPlanService {
             for (ReplicationData.PlanShortAsset actualPlan : actualPlans) {
                 if (actualPlan.code.equals(p.uid)) {
                     isDeleted = false;
-                    if (actualPlan.updateOn != p.getPlanParamsYaml().internalParams.updatedOn) {
+                    if (actualPlan.updateOn != p.getSourceCodeParamsYaml().internalParams.updatedOn) {
                         PlanLoopEntry planLoopEntry = new PlanLoopEntry(actualPlan, p);
                         forUpdating.add(planLoopEntry);
                     }

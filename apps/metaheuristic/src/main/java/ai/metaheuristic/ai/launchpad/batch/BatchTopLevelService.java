@@ -159,7 +159,7 @@ public class BatchTopLevelService {
         return result;
     }
 
-    public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long planId, final LaunchpadContext context) {
+    public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final LaunchpadContext context) {
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
             return new BatchData.UploadingStatus("#995.040 name of uploaded file is null or blank");
@@ -176,15 +176,15 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
-        SourceCodeData.PlansForCompany plansForCompany = sourceCodeService.getPlan(context.getCompanyId(), planId);
-        if (plansForCompany.isErrorMessages()) {
-            return new BatchData.UploadingStatus(plansForCompany.errorMessages);
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeService.getSourceCode(context.getCompanyId(), sourceCodeId);
+        if (sourceCodesForCompany.isErrorMessages()) {
+            return new BatchData.UploadingStatus(sourceCodesForCompany.errorMessages);
         }
-        SourceCodeImpl plan = plansForCompany.items.isEmpty() ? null : (SourceCodeImpl) plansForCompany.items.get(0);
-        if (plan==null) {
-            return new BatchData.UploadingStatus("#995.050 sourceCode wasn't found, planId: " + planId);
+        SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
+        if (sourceCode==null) {
+            return new BatchData.UploadingStatus("#995.050 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
         }
-        if (!plan.getId().equals(planId)) {
+        if (!sourceCode.getId().equals(sourceCodeId)) {
             return new BatchData.UploadingStatus("#995.038 Fatal error in configuration of sourceCode, report to developers immediately");
         }
         launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
@@ -192,9 +192,9 @@ public class BatchTopLevelService {
         // TODO 2019-07-06 Do we need to validate the sourceCode here in case that there is another check?
         //  2019-10-28 it's working so left it as is until an issue with this will be found
         // validate the sourceCode
-        SourceCodeApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
-        if (planValidation.status != EnumsApi.SourceCodeValidateStatus.OK ) {
-            return new BatchData.UploadingStatus("#995.060 validation of sourceCode was failed, status: " + planValidation.status);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
+        if (sourceCodeValidation.status != EnumsApi.SourceCodeValidateStatus.OK ) {
+            return new BatchData.UploadingStatus("#995.060 validation of sourceCode was failed, status: " + sourceCodeValidation.status);
         }
 
         Batch b;
@@ -214,7 +214,7 @@ public class BatchTopLevelService {
             String code = ResourceUtils.toResourceCode(originFilename);
 
             WorkbookParamsYaml.WorkbookYaml workbookYaml = SourceCodeUtils.asWorkbookParamsYaml(code);
-            producingResult = workbookService.createWorkbook(planId, workbookYaml, false);
+            producingResult = workbookService.createWorkbook(sourceCodeId, workbookYaml, false);
             if (producingResult.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
                 throw new BatchResourceProcessingException("#995.075 Error creating execContext: " + producingResult.sourceCodeProducingStatus);
             }
@@ -227,13 +227,13 @@ public class BatchTopLevelService {
                 );
             }
 
-            b = new Batch(planId, producingResult.execContext.getId(), Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());
+            b = new Batch(sourceCodeId, producingResult.execContext.getId(), Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());
             BatchParamsYaml bpy = new BatchParamsYaml();
             bpy.username = context.account.username;
             b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
             b = batchCache.save(b);
 
-            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), plan.uid, null, b.id, producingResult.execContext.getId(), context );
+            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_CREATED, context.getCompanyId(), sourceCode.uid, null, b.id, producingResult.execContext.getId(), context );
 
             final Batch batch = batchService.changeStateToPreparing(b.id);
             // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed

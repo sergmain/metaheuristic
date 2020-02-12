@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
-import ai.metaheuristic.ai.yaml.source_code.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -74,7 +74,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
             planParamsYaml.source.processes.add(p);
         }
 
-        String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
+        String yaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
         System.out.println("TestUploadFileForBatch.getPlanYamlAsString yaml:\n" + yaml);
         return yaml;
     }
@@ -134,7 +134,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
 
         String planYamlAsString = getPlanYamlAsString();
         System.out.println("actual sourceCode yaml:\n" + planYamlAsString);
-        SourceCodeParamsYaml sourceCodeParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsString);
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsString);
         MockMultipartFile mockFile = new MockMultipartFile("random-name.txt", "file-for-batch-processing.xml", StandardCharsets.UTF_8.toString(), "content of file".getBytes());
 
         uploadingStatus = batchTopLevelService.batchUploadFromFile(mockFile, plan.getId(), context);

@@ -33,7 +33,7 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.source_code.TaskCollector;
-import ai.metaheuristic.ai.yaml.source_code.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.PlanParamsYamlUtilsV8;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -240,7 +240,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
             p.subProcesses.processes = List.of(p1, p2);
         }
-        final PlanParamsYamlUtilsV8 forVersion = (PlanParamsYamlUtilsV8) PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(8);
+        final PlanParamsYamlUtilsV8 forVersion = (PlanParamsYamlUtilsV8) SourceCodeParamsYamlUtils.BASE_YAML_UTILS.getForVersion(8);
         String yaml = forVersion.toString(planParamsYaml);
         return yaml;
     }
@@ -372,7 +372,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     }
 
     public TaskProducingResultComplex produceTasksForTest() {
-        SourceCodeParamsYaml sourceCodeParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
         assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
         EnumsApi.SourceCodeValidateStatus status = sourceCodeService.validate(plan);

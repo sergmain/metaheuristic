@@ -51,7 +51,7 @@ public class Batch implements Serializable {
 
     @NotNull
     @Column(name = "PLAN_ID")
-    public Long planId;
+    public Long sourceCodeId;
 
     @Column(name = "WORKBOOK_ID")
     public Long workbookId;
@@ -68,8 +68,8 @@ public class Batch implements Serializable {
     @Column(name = "IS_DELETED")
     public boolean deleted;
 
-    public Batch(Long planId, Long workbookId, Enums.BatchExecState state, Long accountId, Long companyId ) {
-        this.planId = planId;
+    public Batch(Long sourceCodeId, Long workbookId, Enums.BatchExecState state, Long accountId, Long companyId ) {
+        this.sourceCodeId = sourceCodeId;
         this.workbookId = workbookId;
         this.accountId = accountId;
         this.companyId = companyId;

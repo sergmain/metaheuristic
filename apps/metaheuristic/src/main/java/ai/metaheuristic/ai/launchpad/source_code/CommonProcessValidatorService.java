@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.source_code;
 
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
-import ai.metaheuristic.ai.yaml.source_code.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class CommonProcessValidatorService {
     private final SnippetService snippetService;
 
     public boolean checkRequiredVersion(int planParamsVersion, SourceCodeParamsYaml.SnippetDefForSourceCode snDef) {
-        int taskParamsYamlVersion = PlanParamsYamlUtils.getRequiredVertionOfTaskParamsYaml(planParamsVersion);
+        int taskParamsYamlVersion = SourceCodeParamsYamlUtils.getRequiredVertionOfTaskParamsYaml(planParamsVersion);
         boolean ok = snippetService.isSnippetVersionOk(taskParamsYamlVersion, snDef);
         if (!ok) {
             log.error("#175.030 Version of snippet {} is too low, required version: {}", snDef.code, taskParamsYamlVersion);

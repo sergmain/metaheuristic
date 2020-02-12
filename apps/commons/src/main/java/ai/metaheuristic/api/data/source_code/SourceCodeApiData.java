@@ -159,7 +159,7 @@ public class SourceCodeApiData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class PlanValidation extends BaseDataClass {
+    public static class SourceCodeValidation extends BaseDataClass {
         public EnumsApi.SourceCodeValidateStatus status;
     }
 

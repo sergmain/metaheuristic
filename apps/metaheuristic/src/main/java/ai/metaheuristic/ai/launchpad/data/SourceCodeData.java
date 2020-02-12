@@ -36,7 +36,8 @@ public class SourceCodeData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class PlansForCompany extends BaseDataClass {
+    public static class SourceCodesForCompany extends BaseDataClass {
+        // it must be full name of class, i.e. with packages
         public List<ai.metaheuristic.api.launchpad.SourceCode> items;
     }
 

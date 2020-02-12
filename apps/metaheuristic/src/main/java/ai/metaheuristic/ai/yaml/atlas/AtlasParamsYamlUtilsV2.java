@@ -51,8 +51,8 @@ public class AtlasParamsYamlUtilsV2
         src.checkIntegrity();
         AtlasParamsYaml trg = new AtlasParamsYaml();
         trg.createdOn = src.createdOn;
-        trg.plan = new AtlasParamsYaml.PlanWithParams(src.plan.planId, src.plan.planParams);
-        trg.workbook = new AtlasParamsYaml.WorkbookWithParams(src.workbook.workbookId, src.workbook.workbookParams, src.workbook.execState);
+        trg.sourceCode = new AtlasParamsYaml.SourceCodeWithParams(src.plan.planId, src.plan.planParams);
+        trg.execContext = new AtlasParamsYaml.ExecContextWithParams(src.workbook.workbookId, src.workbook.workbookParams, src.workbook.execState);
         trg.experiment = new AtlasParamsYaml.ExperimentWithParams(src.experiment.experimentId, src.experiment.experimentParams);
         trg.taskIds = src.taskIds;
 

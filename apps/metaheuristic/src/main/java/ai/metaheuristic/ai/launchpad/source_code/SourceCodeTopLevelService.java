@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.ai.yaml.source_code.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -93,10 +93,10 @@ public class SourceCodeTopLevelService {
             return new SourceCodeApiData.WorkbookResult( "#560.008 global variable " + variable +" wasn't found");
         }
         // validate the sourceCode
-        SourceCodeApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
-        if (planValidation.status != EnumsApi.SourceCodeValidateStatus.OK) {
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(plan);
+        if (sourceCodeValidation.status != EnumsApi.SourceCodeValidateStatus.OK) {
             SourceCodeApiData.WorkbookResult r = new SourceCodeApiData.WorkbookResult();
-            r.errorMessages = planValidation.errorMessages;
+            r.errorMessages = sourceCodeValidation.errorMessages;
             return r;
         }
 
@@ -115,7 +115,7 @@ public class SourceCodeTopLevelService {
         List<SourceCode> activeSourceCodes = sourceCodes.stream()
                 .filter(o-> {
                     try {
-                        SourceCodeParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
+                        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
                         boolean b = ppy.internalParams == null || !ppy.internalParams.archived;
                         b = isArchive != b;
                         if (b) {
@@ -150,7 +150,7 @@ public class SourceCodeTopLevelService {
                     "#560.050 sourceCode wasn't found, sourceCodeId: " + sourceCodeId,
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
         }
-        return new SourceCodeApiData.SourceCodeResult(plan, plan.getPlanParamsYaml().origin);
+        return new SourceCodeApiData.SourceCodeResult(plan, plan.getSourceCodeParamsYaml().origin);
     }
 
     public SourceCodeApiData.SourceCodeResult validateSourceCode(Long planId, LaunchpadContext context) {
@@ -160,11 +160,11 @@ public class SourceCodeTopLevelService {
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
         }
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(plan, plan.getPlanParamsYaml().origin);
-        SourceCodeApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
-        result.errorMessages = planValidation.errorMessages;
-        result.infoMessages = planValidation.infoMessages;
-        result.status = planValidation.status;
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(plan, plan.getSourceCodeParamsYaml().origin);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(plan);
+        result.errorMessages = sourceCodeValidation.errorMessages;
+        result.infoMessages = sourceCodeValidation.infoMessages;
+        result.status = sourceCodeValidation.status;
         return result;
     }
 
@@ -179,7 +179,7 @@ public class SourceCodeTopLevelService {
 
         SourceCodeParamsYaml ppy;
         try {
-            ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
+            ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
         } catch (WrongVersionOfYamlFileException e) {
             return new SourceCodeApiData.SourceCodeResult("#560.110 An error parsing yaml: " + e.getMessage());
         }
@@ -197,7 +197,7 @@ public class SourceCodeTopLevelService {
         ppy.origin.source = sourceCode;
         ppy.origin.lang = EnumsApi.SourceCodeLang.yaml;
         ppy.internalParams.updatedOn = System.currentTimeMillis();
-        String params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
+        String params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
         plan.setParams(params);
 
         plan.companyId = context.getCompanyId();
@@ -205,11 +205,11 @@ public class SourceCodeTopLevelService {
         plan.uid = ppy.source.code;
         plan = sourceCodeCache.save(plan);
 
-        SourceCodeApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(plan);
 
         SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(plan, ppy.origin );
-        result.infoMessages = planValidation.infoMessages;
-        result.errorMessages = planValidation.errorMessages;
+        result.infoMessages = sourceCodeValidation.infoMessages;
+        result.errorMessages = sourceCodeValidation.errorMessages;
         return result;
     }
 
@@ -228,7 +228,7 @@ public class SourceCodeTopLevelService {
             return new SourceCodeApiData.SourceCodeResult("#560.170 sourceCode yaml is empty");
         }
 
-        SourceCodeParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
+        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
 
         final String code = ppy.source.code;
         if (StringUtils.isBlank(code)) {
@@ -246,16 +246,16 @@ public class SourceCodeTopLevelService {
         ppy.origin.source = sourceCode;
         ppy.origin.lang = EnumsApi.SourceCodeLang.yaml;
         ppy.internalParams.updatedOn = System.currentTimeMillis();
-        String params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
+        String params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
         plan.setParams(params);
 
         plan = sourceCodeCache.save(plan);
 
-        SourceCodeApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(plan);
 
         SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(plan, ppy.origin );
-        result.infoMessages = planValidation.infoMessages;
-        result.errorMessages = planValidation.errorMessages;
+        result.infoMessages = sourceCodeValidation.infoMessages;
+        result.errorMessages = sourceCodeValidation.errorMessages;
         return result;
     }
 
@@ -283,13 +283,13 @@ public class SourceCodeTopLevelService {
         if (status!=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 sourceCode wasn't found, planId: " + id+", " + status.getErrorMessagesAsStr());
         }
-        SourceCodeParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
+        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
         if (ppy.internalParams==null) {
             ppy.internalParams = new SourceCodeParamsYaml.InternalParams();
         }
         ppy.internalParams.archived = true;
         ppy.internalParams.updatedOn = System.currentTimeMillis();
-        plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
+        plan.setParams(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
 
         sourceCodeCache.save(plan);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -383,10 +383,10 @@ public class SourceCodeTopLevelService {
         if (wb==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, workbookId: " + workbookId );
         }
-        SourceCodeData.PlansForCompany plansForCompany = sourceCodeService.getPlan(context.getCompanyId(), wb.getPlanId());
-        if (plansForCompany.isErrorMessages()) {
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeService.getSourceCode(context.getCompanyId(), wb.getPlanId());
+        if (sourceCodesForCompany.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 SourceCode wasn't found, " +
-                    "companyId: "+context.getCompanyId()+", planId: " + wb.getPlanId()+", workbookId: " + wb.getId()+", error msg: " + plansForCompany.getErrorMessagesAsStr() );
+                    "companyId: "+context.getCompanyId()+", planId: " + wb.getPlanId()+", workbookId: " + wb.getId()+", error msg: " + sourceCodesForCompany.getErrorMessagesAsStr() );
         }
         return null;
     }

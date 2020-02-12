@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.yaml.source_code.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.junit.Test;
@@ -54,8 +54,8 @@ public class TestProcess {
         sourceCodeYaml.processes.add(p);
         sourceCodeParamsYaml.source = sourceCodeYaml;
 
-        String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(sourceCodeParamsYaml);
-        SourceCodeParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(s);
+        String s = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sourceCodeParamsYaml);
+        SourceCodeParamsYaml planParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(s);
         SourceCodeYaml sourceCodeYamlV21 = planParams.source;
 
         SourceCodeParamsYaml.Process p1 = sourceCodeYamlV21.getProcesses().get(0);

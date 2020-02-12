@@ -294,12 +294,12 @@ public class BatchService {
         List<Object[]> batchInfos = variableService.getFilenamesForBatchIds(batchIds.getContent());
         for (Long batchId : batchIds) {
             Batch batch = batchCache.findById(batchId);
-            String planCode = SOURCE_CODE_NOT_FOUND;
+            String uid = SOURCE_CODE_NOT_FOUND;
             if (batch!=null) {
-                SourceCode sourceCode = sourceCodeCache.findById(batch.getPlanId());
+                SourceCode sourceCode = sourceCodeCache.findById(batch.getSourceCodeId());
                 boolean ok = true;
                 if (sourceCode != null) {
-                    planCode = sourceCode.getUid();
+                    uid = sourceCode.getUid();
                 } else {
                     if (batch.execState != Enums.BatchExecState.Preparing.code) {
                         ok = false;
@@ -310,7 +310,7 @@ public class BatchService {
 //                Account account = accountCache.findByUsername()
                 BatchParamsYaml bpy = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.params);
                 items.add(new BatchData.ProcessResourceItem(
-                        batch, planCode, execStateStr, batch.execState, ok, filename,
+                        batch, uid, execStateStr, batch.execState, ok, filename,
                         S.b(bpy.username) ? "accountId #"+batch.accountId : bpy.username ));
             }
         }
@@ -479,7 +479,7 @@ public class BatchService {
             bs.getGeneralStatus().add(msg, '\n');
             return false;
         }
-        final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
+        final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getSourceCodeId());
 
         List<WorkbookParamsYaml.TaskVertex> taskVertices;
         try {
@@ -583,16 +583,16 @@ public class BatchService {
     }
 
     @SuppressWarnings("deprecation")
-    private String getActualExtension(Long planId) {
-        SourceCodeImpl plan = sourceCodeCache.findById(planId);
-        if (plan == null) {
+    private String getActualExtension(Long sourceCodeId) {
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+        if (sourceCode == null) {
             return (StringUtils.isNotBlank(globals.defaultResultFileExtension)
                     ? globals.defaultResultFileExtension
                     : ".bin");
         }
 
-        SourceCodeParamsYaml planParams = plan.getPlanParamsYaml();
-        final Meta meta = MetaUtils.getMeta(planParams.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION, Consts.RESULT_FILE_EXTENSION);
+        SourceCodeParamsYaml sourceCodeParams = sourceCode.getSourceCodeParamsYaml();
+        final Meta meta = MetaUtils.getMeta(sourceCodeParams.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION, Consts.RESULT_FILE_EXTENSION);
 
         return meta != null && StringUtils.isNotBlank(meta.getValue())
                 ? meta.getValue()

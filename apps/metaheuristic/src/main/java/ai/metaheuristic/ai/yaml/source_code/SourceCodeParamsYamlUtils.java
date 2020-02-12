@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
 
-public class PlanParamsYamlUtils {
+public class SourceCodeParamsYamlUtils {
 
     // Map of minimum required version of TaskParamsYaml related to version of SourceCodeParamsYaml
     // key - version of SourceCodeParamsYaml

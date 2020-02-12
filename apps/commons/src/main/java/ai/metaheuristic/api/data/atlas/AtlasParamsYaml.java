@@ -31,7 +31,7 @@ public class AtlasParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        if (plan==null || workbook==null || experiment==null || taskIds==null) {
+        if (sourceCode ==null || execContext ==null || experiment==null || taskIds==null) {
             throw new IllegalArgumentException("(sourceCode==null || execContext==null || experiment==null || taskIds==null)");
         }
         return true;
@@ -41,9 +41,9 @@ public class AtlasParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class PlanWithParams {
-        public Long planId;
-        public String planParams;
+    public static class SourceCodeWithParams {
+        public Long sourceCodeId;
+        public String sourceCodeParams;
     }
 
     @Data
@@ -59,16 +59,16 @@ public class AtlasParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class WorkbookWithParams {
-        public Long workbookId;
-        public String workbookParams;
+    public static class ExecContextWithParams {
+        public Long execContextId;
+        public String execContextParams;
         public int execState;
     }
 
     public long createdOn;
-    public final int version = 2;
-    public PlanWithParams plan;
-    public WorkbookWithParams workbook;
+    public final int version = 3;
+    public SourceCodeWithParams sourceCode;
+    public ExecContextWithParams execContext;
     public ExperimentWithParams experiment;
     public List<Long> taskIds = new ArrayList<>();
 }

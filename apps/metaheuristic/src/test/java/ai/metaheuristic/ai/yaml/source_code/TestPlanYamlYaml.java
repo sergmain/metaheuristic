@@ -28,7 +28,7 @@ public class TestPlanYamlYaml {
 
     @Test
     public void testVersion() {
-        assertEquals( new SourceCodeParamsYaml().version, PlanParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+        assertEquals( new SourceCodeParamsYaml().version, SourceCodeParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
     }
 
     @Test
@@ -36,7 +36,7 @@ public class TestPlanYamlYaml {
         String yaml = PreparingPlan.getPlanV8();
         System.out.println(yaml);
         assertFalse(yaml.startsWith("!!"));
-        SourceCodeParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        SourceCodeParamsYaml planParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         SourceCodeParamsYaml.SourceCodeYaml py = planParams.source;
 
         assertNotNull(py);
@@ -56,7 +56,7 @@ public class TestPlanYamlYaml {
         SourceCodeParamsYaml sourceCodeParamsYaml = new SourceCodeParamsYaml();
         sourceCodeParamsYaml.source = sourceCodeYaml;
 
-        String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(sourceCodeParamsYaml);
+        String s = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sourceCodeParamsYaml);
 
         System.out.println(s);
     }

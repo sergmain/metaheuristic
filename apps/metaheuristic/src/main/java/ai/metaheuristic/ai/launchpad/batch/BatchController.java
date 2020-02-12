@@ -97,9 +97,9 @@ public class BatchController {
     @GetMapping(value = "/batch-add")
     public String batchAdd(Model model, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeData.PlansForCompany plans = sourceCodeService.getAvailablePlansForCompany(context);
-        ControllerUtils.addMessagesToModel(model, plans);
-        model.addAttribute("result", plans);
+        SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeService.getAvailableSourceCodesForCompany(context);
+        ControllerUtils.addMessagesToModel(model, sourceCodes);
+        model.addAttribute("result", sourceCodes);
         return "launchpad/batch/batch-add";
     }
 
@@ -128,9 +128,9 @@ public class BatchController {
     }
 
     @PostMapping(value = "/batch-upload-from-file")
-    public String uploadFile(final MultipartFile file, Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+    public String uploadFile(final MultipartFile file, Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, planId, context);
+        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
         if (uploadingStatus.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.errorMessages);
         }

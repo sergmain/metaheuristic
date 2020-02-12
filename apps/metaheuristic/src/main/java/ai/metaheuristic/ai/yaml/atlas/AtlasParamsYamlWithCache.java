@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.yaml.atlas;
 
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.source_code.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
@@ -72,7 +72,7 @@ public class AtlasParamsYamlWithCache {
             synchronized (this) {
                 if (sourceCodeParamsYaml ==null) {
                     //noinspection UnnecessaryLocalVariable
-                    SourceCodeParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.plan.planParams);
+                    SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.sourceCode.sourceCodeParams);
                     sourceCodeParamsYaml = ppy;
                 }
             }
@@ -99,7 +99,7 @@ public class AtlasParamsYamlWithCache {
             synchronized (this) {
                 if (workbookParamsYaml==null) {
                     //noinspection UnnecessaryLocalVariable
-                    WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.workbook.workbookParams);
+                    WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.execContext.execContextParams);
                     workbookParamsYaml = wpy;
                 }
             }

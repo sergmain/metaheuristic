@@ -34,7 +34,7 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.source_code.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -86,30 +86,30 @@ public class SourceCodeService {
         setLockedTo(event.planId, event.companyUniqueId, event.lock);
     }
 
-    public SourceCodeData.PlansForCompany getAvailablePlansForCompany(LaunchpadContext context) {
-        return getAvailablePlansForCompany(context.getCompanyId());
+    public SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(LaunchpadContext context) {
+        return getAvailableSourceCodesForCompany(context.getCompanyId());
     }
 
-    public SourceCodeData.PlansForCompany getPlan(Long companyId, Long planId) {
-        SourceCodeData.PlansForCompany availablePlansForCompany = getAvailablePlansForCompany(companyId, (o) -> o.getId().equals(planId));
-        if (availablePlansForCompany.items.size()>1) {
+    public SourceCodeData.SourceCodesForCompany getSourceCode(Long companyId, Long planId) {
+        SourceCodeData.SourceCodesForCompany availableSourceCodesForCompany = getAvailableSourceCodesForCompany(companyId, (o) -> o.getId().equals(planId));
+        if (availableSourceCodesForCompany.items.size()>1) {
             log.error("!!!!!!!!!!!!!!!! error in code -  (plansForBatchResult.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
         }
-        return availablePlansForCompany;
+        return availableSourceCodesForCompany;
     }
 
-    public SourceCodeData.PlansForCompany getAvailablePlansForCompany(Long companyId) {
-        return getAvailablePlansForCompany(companyId, (f) -> true);
+    public SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(Long companyId) {
+        return getAvailableSourceCodesForCompany(companyId, (f) -> true);
     }
 
-    private SourceCodeData.PlansForCompany getAvailablePlansForCompany(Long companyUniqueId, final Function<SourceCode, Boolean> planFilter) {
-        final SourceCodeData.PlansForCompany plans = new SourceCodeData.PlansForCompany();
+    private SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(Long companyUniqueId, final Function<SourceCode, Boolean> planFilter) {
+        final SourceCodeData.SourceCodesForCompany plans = new SourceCodeData.SourceCodesForCompany();
         plans.items = sourceCodeRepository.findAllAsSourceCode(companyUniqueId).stream().filter(planFilter::apply).filter(o->{
             if (!o.isValid()) {
                 return false;
             }
             try {
-                SourceCodeParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
+                SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
                 return ppy.internalParams == null || !ppy.internalParams.archived;
             } catch (YAMLException e) {
                 final String es = "#995.010 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
@@ -145,7 +145,7 @@ public class SourceCodeService {
                         return false;
                     }
                     try {
-                        SourceCodeParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
+                        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
                         if (ppy.source.ac!=null) {
                             String[] arr = StringUtils.split(ppy.source.ac.groups, ',');
                             return Stream.of(arr).map(String::strip).anyMatch(groups::contains);
@@ -194,32 +194,32 @@ public class SourceCodeService {
         }
     }
 
-    public SourceCodeApiData.PlanValidation validateInternal(SourceCodeImpl plan) {
-        SourceCodeApiData.PlanValidation planValidation = getPlanValidation(plan);
-        setValidTo(plan, planValidation.status == EnumsApi.SourceCodeValidateStatus.OK );
-        if (plan.isValid() || planValidation.status==OK) {
-            if (plan.isValid() && planValidation.status!=OK) {
-                log.error("#701.097 Need to investigate: (sourceCode.isValid() && planValidation.status!=OK)");
+    public SourceCodeApiData.SourceCodeValidation validateInternal(SourceCodeImpl plan) {
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = getPlanValidation(plan);
+        setValidTo(plan, sourceCodeValidation.status == EnumsApi.SourceCodeValidateStatus.OK );
+        if (plan.isValid() || sourceCodeValidation.status==OK) {
+            if (plan.isValid() && sourceCodeValidation.status!=OK) {
+                log.error("#701.097 Need to investigate: (sourceCode.isValid() && sourceCodeValidation.status!=OK)");
             }
-            planValidation.infoMessages = Collections.singletonList("Validation result: OK");
+            sourceCodeValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
         else {
-            final String es = "#701.100 Validation error: " + planValidation.status;
+            final String es = "#701.100 Validation error: " + sourceCodeValidation.status;
             log.error(es);
-            planValidation.addErrorMessage(es);
+            sourceCodeValidation.addErrorMessage(es);
         }
-        return planValidation;
+        return sourceCodeValidation;
     }
 
-    private SourceCodeApiData.PlanValidation getPlanValidation(SourceCodeImpl plan) {
-        final SourceCodeApiData.PlanValidation planValidation = new SourceCodeApiData.PlanValidation();
+    private SourceCodeApiData.SourceCodeValidation getPlanValidation(SourceCodeImpl plan) {
+        final SourceCodeApiData.SourceCodeValidation sourceCodeValidation = new SourceCodeApiData.SourceCodeValidation();
         try {
-            planValidation.status = validate(plan);
+            sourceCodeValidation.status = validate(plan);
         } catch (YAMLException e) {
-            planValidation.addErrorMessage("#701.090 Error while parsing yaml config, " + e.toString());
-            planValidation.status = EnumsApi.SourceCodeValidateStatus.YAML_PARSING_ERROR;
+            sourceCodeValidation.addErrorMessage("#701.090 Error while parsing yaml config, " + e.toString());
+            sourceCodeValidation.status = EnumsApi.SourceCodeValidateStatus.YAML_PARSING_ERROR;
         }
-        return planValidation;
+        return sourceCodeValidation;
     }
 
     private final static Object syncObj = new Object();
@@ -246,12 +246,12 @@ public class SourceCodeService {
     }
 
     private void saveInternal(SourceCodeImpl plan) {
-        SourceCodeParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
+        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
         if (ppy.internalParams==null) {
             ppy.internalParams = new SourceCodeParamsYaml.InternalParams();
         }
         ppy.internalParams.updatedOn = System.currentTimeMillis();
-        String params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
+        String params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
         plan.setParams(params);
 
         sourceCodeCache.save(plan);
@@ -293,7 +293,7 @@ public class SourceCodeService {
         if (StringUtils.isBlank(plan.getParams())) {
             return EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_PARAMS_EMPTY_ERROR;
         }
-        SourceCodeParamsYaml planParams = plan.getPlanParamsYaml();
+        SourceCodeParamsYaml planParams = plan.getSourceCodeParamsYaml();
         SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = planParams.source;
         if (sourceCodeYaml.getProcesses().isEmpty()) {
             return EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR;

@@ -277,16 +277,16 @@ public class AtlasTopLevelService {
         if (ypywc.atlasParams.experiment == null) {
             return new AtlasData.ExperimentDataOnly("#422.140 experiment wasn't found, experimentId: " + atlasId);
         }
-        if (ypywc.atlasParams.workbook == null) {
+        if (ypywc.atlasParams.execContext == null) {
             return new AtlasData.ExperimentDataOnly("#422.150 experiment has broken ref to execContext, experimentId: " + atlasId);
         }
-        if (ypywc.atlasParams.workbook.workbookId==null ) {
+        if (ypywc.atlasParams.execContext.execContextId ==null ) {
             return new AtlasData.ExperimentDataOnly("#422.160 experiment wasn't startet yet, experimentId: " + atlasId);
         }
 
         ExperimentApiData.ExperimentData experiment = new ExperimentApiData.ExperimentData();
         experiment.id = ypywc. atlasParams.experiment.experimentId;
-        experiment.workbookId = ypywc.atlasParams.workbook.workbookId;
+        experiment.workbookId = ypywc.atlasParams.execContext.execContextId;
 
         ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
         experiment.code = epy.experimentYaml.code;
@@ -327,16 +327,16 @@ public class AtlasTopLevelService {
         if (ypywc.atlasParams.experiment == null) {
             return new AtlasData.ExperimentInfoExtended("#422.190 experiment wasn't found, experimentId: " + atlasId);
         }
-        if (ypywc.atlasParams.workbook == null) {
+        if (ypywc.atlasParams.execContext == null) {
             return new AtlasData.ExperimentInfoExtended("#422.200 experiment has broken ref to execContext, experimentId: " + atlasId);
         }
-        if (ypywc.atlasParams.workbook.workbookId==null ) {
+        if (ypywc.atlasParams.execContext.execContextId ==null ) {
             return new AtlasData.ExperimentInfoExtended("#422.210 experiment wasn't startet yet, experimentId: " + atlasId);
         }
 
         ExperimentApiData.ExperimentData experiment = new ExperimentApiData.ExperimentData();
         experiment.id = ypywc. atlasParams.experiment.experimentId;
-        experiment.workbookId = ypywc.atlasParams.workbook.workbookId;
+        experiment.workbookId = ypywc.atlasParams.execContext.execContextId;
 
         ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
         experiment.code = epy.experimentYaml.code;
@@ -366,9 +366,9 @@ public class AtlasTopLevelService {
         result.atlas = atlas;
 
         ExecContextImpl workbook = new ExecContextImpl();
-        workbook.setParams(ypywc.atlasParams.workbook.workbookParams);
-        workbook.id = ypywc.atlasParams.workbook.workbookId;
-        workbook.execState = ypywc.atlasParams.workbook.execState;
+        workbook.setParams(ypywc.atlasParams.execContext.execContextParams);
+        workbook.id = ypywc.atlasParams.execContext.execContextId;
+        workbook.execState = ypywc.atlasParams.execContext.execState;
         List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphTopLevelService.findAll(workbook);
 
         AtlasData.ExperimentInfo experimentInfoResult = new AtlasData.ExperimentInfo();
@@ -716,9 +716,9 @@ public class AtlasTopLevelService {
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
         ExecContextImpl workbook = new ExecContextImpl();
-        workbook.setParams( ypywc.atlasParams.workbook.workbookParams);
-        workbook.id = ypywc.atlasParams.workbook.workbookId;
-        workbook.execState = ypywc.atlasParams.workbook.execState;
+        workbook.setParams( ypywc.atlasParams.execContext.execContextParams);
+        workbook.id = ypywc.atlasParams.execContext.execContextId;
+        workbook.execState = ypywc.atlasParams.execContext.execState;
         List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphTopLevelService.findAll(workbook);
 
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
@@ -768,9 +768,9 @@ public class AtlasTopLevelService {
         ExperimentFeature feature = ypywc.getFeature(featureId);
 
         ExecContextImpl workbook = new ExecContextImpl();
-        workbook.setParams(ypywc.atlasParams.workbook.workbookParams);
-        workbook.id = ypywc.atlasParams.workbook.workbookId;
-        workbook.execState = ypywc.atlasParams.workbook.execState;
+        workbook.setParams(ypywc.atlasParams.execContext.execContextParams);
+        workbook.id = ypywc.atlasParams.execContext.execContextId;
+        workbook.execState = ypywc.atlasParams.execContext.execState;
         List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphTopLevelService.findAll(workbook);
 
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();

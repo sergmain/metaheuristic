@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.launchpad.beans;
 
-import ai.metaheuristic.ai.yaml.source_code.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -80,12 +80,12 @@ public class SourceCodeImpl implements Serializable, SourceCode {
     }
 
     @JsonIgnore
-    public SourceCodeParamsYaml getPlanParamsYaml() {
+    public SourceCodeParamsYaml getSourceCodeParamsYaml() {
         if (ppy ==null) {
             synchronized (this) {
                 if (ppy ==null) {
                     //noinspection UnnecessaryLocalVariable
-                    SourceCodeParamsYaml temp = PlanParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    SourceCodeParamsYaml temp = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(params);
                     ppy = temp;
                 }
             }
@@ -95,6 +95,6 @@ public class SourceCodeImpl implements Serializable, SourceCode {
 
     @JsonIgnore
     public void updateParams(SourceCodeParamsYaml ppy) {
-        params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
+        params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
     }
 }
