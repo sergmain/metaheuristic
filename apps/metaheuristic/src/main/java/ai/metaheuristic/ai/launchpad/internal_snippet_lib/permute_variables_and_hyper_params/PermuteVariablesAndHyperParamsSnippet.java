@@ -16,13 +16,11 @@
 
 package ai.metaheuristic.ai.launchpad.internal_snippet_lib.permute_variables_and_hyper_params;
 
-import ai.metaheuristic.ai.launchpad.beans.GlobalVariable;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippet;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
 import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
@@ -48,7 +46,7 @@ public class PermuteVariablesAndHyperParamsSnippet implements InternalSnippet {
     private final VariableRepository variableRepository;
 
     public List<InternalSnippetOutput> process(
-            Long planId, Long workbookId, String contextId, PlanParamsYaml.VariableDefinition variableDefinition,
+            Long planId, Long workbookId, String contextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             Map<String, List<String>> inputResourceIds) {
 
         List<String> values = inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());

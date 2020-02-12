@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV6;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV7;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV6;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV7;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.process.ProcessV6;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 public class PlanParamsYamlUtilsV6
-        extends AbstractParamsYamlUtils<PlanParamsYamlV6, PlanParamsYamlV7, PlanParamsYamlUtilsV7, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<SourceCodeParamsYamlV6, SourceCodeParamsYamlV7, PlanParamsYamlUtilsV7, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -45,30 +45,30 @@ public class PlanParamsYamlUtilsV6
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(PlanParamsYamlV6.class);
+        return YamlUtils.init(SourceCodeParamsYamlV6.class);
     }
 
     @Override
-    public PlanParamsYamlV7 upgradeTo(PlanParamsYamlV6 v6, Long ... vars) {
-        PlanParamsYamlV7 p = new PlanParamsYamlV7();
-        p.internalParams = new PlanParamsYamlV7.InternalParamsV7(v6.internalParams != null && v6.internalParams.archived, true, 0L, null);
-        p.planYaml = new PlanParamsYamlV7.PlanYamlV7();
+    public SourceCodeParamsYamlV7 upgradeTo(SourceCodeParamsYamlV6 v6, Long ... vars) {
+        SourceCodeParamsYamlV7 p = new SourceCodeParamsYamlV7();
+        p.internalParams = new SourceCodeParamsYamlV7.InternalParamsV7(v6.internalParams != null && v6.internalParams.archived, true, 0L, null);
+        p.planYaml = new SourceCodeParamsYamlV7.PlanYamlV7();
         if (v6.planYaml.metas!=null){
             p.planYaml.metas = new ArrayList<>(v6.planYaml.metas);
         }
         p.planYaml.clean = v6.planYaml.clean;
         p.planYaml.processes = v6.planYaml.processes.stream().map( o-> {
-            PlanParamsYamlV7.ProcessV7 pr = new PlanParamsYamlV7.ProcessV7();
+            SourceCodeParamsYamlV7.ProcessV7 pr = new SourceCodeParamsYamlV7.ProcessV7();
             BeanUtils.copyProperties(o, pr, "snippets", "preSnippets", "postSnippets");
-            pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new PlanParamsYamlV7.SnippetDefForPlanV7(d.code, d.params)).collect(Collectors.toList()) : null;
-            pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new PlanParamsYamlV7.SnippetDefForPlanV7(d.code, d.params)).collect(Collectors.toList()) : null;
-            pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new PlanParamsYamlV7.SnippetDefForPlanV7(d.code, d.params)).collect(Collectors.toList()) : null;
+            pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new SourceCodeParamsYamlV7.SnippetDefForPlanV7(d.code, d.params)).collect(Collectors.toList()) : null;
+            pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new SourceCodeParamsYamlV7.SnippetDefForPlanV7(d.code, d.params)).collect(Collectors.toList()) : null;
+            pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new SourceCodeParamsYamlV7.SnippetDefForPlanV7(d.code, d.params)).collect(Collectors.toList()) : null;
             pr.metas = o.metas;
             return pr;
         }).collect(Collectors.toList());
         p.planYaml.planCode = v6.planYaml.planCode;
         if (v6.planYaml.ac!=null) {
-            p.planYaml.ac = new PlanParamsYamlV7.AccessControlV7(v6.planYaml.ac.groups);
+            p.planYaml.ac = new SourceCodeParamsYamlV7.AccessControlV7(v6.planYaml.ac.groups);
         }
         p.originYaml = toString(v6);
         p.checkIntegrity();
@@ -93,13 +93,13 @@ public class PlanParamsYamlUtilsV6
     }
 
     @Override
-    public String toString(PlanParamsYamlV6 planYaml) {
+    public String toString(SourceCodeParamsYamlV6 planYaml) {
         return getYaml().dump(planYaml);
     }
 
     @Override
-    public PlanParamsYamlV6 to(String s) {
-        final PlanParamsYamlV6 p = getYaml().load(s);
+    public SourceCodeParamsYamlV6 to(String s) {
+        final SourceCodeParamsYamlV6 p = getYaml().load(s);
         if (p.planYaml ==null) {
             throw new IllegalStateException("#635.010 SourceCode Yaml is null");
         }
@@ -111,7 +111,7 @@ public class PlanParamsYamlUtilsV6
             }
         }
         if (p.internalParams==null) {
-            p.internalParams = new PlanApiData.PlanInternalParamsYaml();
+            p.internalParams = new SourceCodeApiData.PlanInternalParamsYaml();
         }
         return p;
     }

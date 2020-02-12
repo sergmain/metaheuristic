@@ -30,8 +30,8 @@ import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
 import org.apache.commons.lang3.NotImplementedException;
 import org.junit.After;
@@ -89,9 +89,9 @@ public class TestPlanService extends PreparingPlan {
 
     @Test
     public void testCreateTasks() {
-        PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
+        SourceCodeParamsYaml sourceCodeParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
 
-        PlanApiData.TaskProducingResultComplex result = produceTasksForTest();
+        SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();
         List<Object[]> tasks = taskCollector.getTasks(workbook);
 
         assertNotNull(result);
@@ -100,7 +100,7 @@ public class TestPlanService extends PreparingPlan {
         assertFalse(tasks.isEmpty());
 
         int taskNumber = 0;
-        for (PlanParamsYaml.Process process : planParamsYaml.plan.processes) {
+        for (SourceCodeParamsYaml.Process process : sourceCodeParamsYaml.source.processes) {
             if (process.subProcesses!=null) {
                 if (true) {
                     throw new NotImplementedException("Need to calc number of tasks for parallel case");

@@ -43,7 +43,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
@@ -591,8 +591,8 @@ public class BatchService {
                     : ".bin");
         }
 
-        PlanParamsYaml planParams = plan.getPlanParamsYaml();
-        final Meta meta = MetaUtils.getMeta(planParams.plan.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION, Consts.RESULT_FILE_EXTENSION);
+        SourceCodeParamsYaml planParams = plan.getPlanParamsYaml();
+        final Meta meta = MetaUtils.getMeta(planParams.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION, Consts.RESULT_FILE_EXTENSION);
 
         return meta != null && StringUtils.isNotBlank(meta.getValue())
                 ? meta.getValue()

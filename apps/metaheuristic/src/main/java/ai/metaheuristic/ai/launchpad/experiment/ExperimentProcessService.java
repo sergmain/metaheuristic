@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,11 +56,11 @@ public class ExperimentProcessService {
     private final WorkbookCache workbookCache;
 
     public SourceCodeService.ProduceTaskResult produceTasks(
-            boolean isPersist, PlanParamsYaml planParams, Long workbookId,
-            PlanParamsYaml.Process process, SourceCodeService.ResourcePools pools, List<Long> parentTaskIds) {
+            boolean isPersist, SourceCodeParamsYaml planParams, Long workbookId,
+            SourceCodeParamsYaml.Process process, SourceCodeService.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
-        Map<String, PlanParamsYaml.Variable> inputStorageUrls = pools.inputStorageUrls;
+        Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls = pools.inputStorageUrls;
 
         Long experimentId = experimentRepository.findIdByCode(process.code);
         Experiment e;
@@ -73,7 +73,7 @@ public class ExperimentProcessService {
 
         SourceCodeService.ProduceTaskResult result = new SourceCodeService.ProduceTaskResult();
         if (e==null) {
-            result.status = EnumsApi.PlanProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
+            result.status = EnumsApi.SourceCodeProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
             return result;
         }
 
@@ -91,13 +91,13 @@ public class ExperimentProcessService {
         if (meta==null) {
             WorkbookImpl workbook = workbookCache.findById(workbookId);
             if (workbook==null) {
-                result.status = EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
+                result.status = EnumsApi.SourceCodeProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
                 return result;
             }
             WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
             List<String> list = resourceParams.workbookYaml.getPoolCodes().get(FEATURE_POOL_CODE_TYPE);
             if (CollectionUtils.isEmpty(list)) {
-                result.status = EnumsApi.PlanProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
+                result.status = EnumsApi.SourceCodeProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
                 return result;
             }
             features = new ArrayList<>();
@@ -105,7 +105,7 @@ public class ExperimentProcessService {
                 List<String> newResources = collectedInputs.get(poolCode);
                 if (newResources==null) {
                     log.warn("#714.010 Can't find input resource for poolCode {}", poolCode);
-                    result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                    result.status = EnumsApi.SourceCodeProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
                 features.addAll(newResources);
@@ -118,9 +118,9 @@ public class ExperimentProcessService {
                 );
 
                 SourceCodeService.ResourcePools metaPools = new SourceCodeService.ResourcePools(initialInputResourceCodes);
-                if (metaPools.status != EnumsApi.PlanProducingStatus.OK) {
-                    log.warn("#714.020 (metaPools.status != EnumsApi.PlanProducingStatus.OK), metaPools.status {}", metaPools.status);
-                    result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                if (metaPools.status != EnumsApi.SourceCodeProducingStatus.OK) {
+                    log.warn("#714.020 (metaPools.status != EnumsApi.SourceCodeProducingStatus.OK), metaPools.status {}", metaPools.status);
+                    result.status = EnumsApi.SourceCodeProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
                 pools.merge(metaPools);
@@ -129,7 +129,7 @@ public class ExperimentProcessService {
             features = collectedInputs.get(meta.getValue());
             if (features==null) {
                 log.warn("#714.030 Can't find input resource for meta.value {}", meta.getValue());
-                result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                result.status = EnumsApi.SourceCodeProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                 return result;
             }
         }
@@ -141,12 +141,12 @@ public class ExperimentProcessService {
 
         Monitoring.log("##051", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        EnumsApi.PlanProducingStatus status = experimentService.produceTasks(
+        EnumsApi.SourceCodeProducingStatus status = experimentService.produceTasks(
                 isPersist, planParams, workbookId, process, e, collectedInputs, inputStorageUrls, intHolder, parentTaskIds);
 
         log.info("experimentService.produceTasks() was done for " + (System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##071", Enums.Monitor.MEMORY);
-        if (status!= EnumsApi.PlanProducingStatus.OK) {
+        if (status!= EnumsApi.SourceCodeProducingStatus.OK) {
             log.error("Tasks weren't produced successfully.");
         }
 

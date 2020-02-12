@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +52,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     public List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            String resourceId, PlanParamsYaml.Variable dataStorageParams) {
+            String resourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
 
         // process it only if the launchpad has already sent its config
         if (launchpad.context.chunkSize != null) {
@@ -87,7 +87,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     @Override
     public File getOutputResourceFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, String outputResourceCode, PlanParamsYaml.Variable dataStorageParams) {
+            StationTask task, String outputResourceCode, SourceCodeParamsYaml.Variable dataStorageParams) {
 
         //noinspection UnnecessaryLocalVariable
         File resultDataFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputResourceCode);

@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.ai.preparing.PreparingPlan;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -28,7 +28,7 @@ public class TestPlanYamlYaml {
 
     @Test
     public void testVersion() {
-        assertEquals( new PlanParamsYaml().version, PlanParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+        assertEquals( new SourceCodeParamsYaml().version, PlanParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
     }
 
     @Test
@@ -36,8 +36,8 @@ public class TestPlanYamlYaml {
         String yaml = PreparingPlan.getPlanV8();
         System.out.println(yaml);
         assertFalse(yaml.startsWith("!!"));
-        PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
-        PlanParamsYaml.PlanYaml py = planParams.plan;
+        SourceCodeParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        SourceCodeParamsYaml.SourceCodeYaml py = planParams.source;
 
         assertNotNull(py);
         assertNotNull(py.processes);
@@ -46,17 +46,17 @@ public class TestPlanYamlYaml {
 
     @Test
     public void testYaml_2() {
-        PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
+        SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = new SourceCodeParamsYaml.SourceCodeYaml();
 
-        PlanParamsYaml.Process p1 = new PlanParamsYaml.Process();
+        SourceCodeParamsYaml.Process p1 = new SourceCodeParamsYaml.Process();
         p1.name="experiment";
 
-        planYaml.processes = Collections.singletonList(p1);
+        sourceCodeYaml.processes = Collections.singletonList(p1);
 
-        PlanParamsYaml planParamsYaml = new PlanParamsYaml();
-        planParamsYaml.plan = planYaml;
+        SourceCodeParamsYaml sourceCodeParamsYaml = new SourceCodeParamsYaml();
+        sourceCodeParamsYaml.source = sourceCodeYaml;
 
-        String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
+        String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(sourceCodeParamsYaml);
 
         System.out.println(s);
     }

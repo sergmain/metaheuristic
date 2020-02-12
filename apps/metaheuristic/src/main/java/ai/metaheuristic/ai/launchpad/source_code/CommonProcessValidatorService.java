@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.source_code;
 
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -32,7 +32,7 @@ public class CommonProcessValidatorService {
 
     private final SnippetService snippetService;
 
-    public boolean checkRequiredVersion(int planParamsVersion, PlanParamsYaml.SnippetDefForPlan snDef) {
+    public boolean checkRequiredVersion(int planParamsVersion, SourceCodeParamsYaml.SnippetDefForSourceCode snDef) {
         int taskParamsYamlVersion = PlanParamsYamlUtils.getRequiredVertionOfTaskParamsYaml(planParamsVersion);
         boolean ok = snippetService.isSnippetVersionOk(taskParamsYamlVersion, snDef);
         if (!ok) {

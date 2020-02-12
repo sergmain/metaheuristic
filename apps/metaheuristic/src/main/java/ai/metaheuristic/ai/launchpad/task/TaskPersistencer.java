@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.commons.S;
@@ -230,7 +230,7 @@ public class TaskPersistencer {
                 if (true) {
                     throw new NotImplementedException("output resourceIds are a list");
                 }
-                final PlanParamsYaml.Variable variable = yaml.taskYaml.resourceStorageUrls.get(yaml.taskYaml.outputResourceIds.values().iterator().next());
+                final SourceCodeParamsYaml.Variable variable = yaml.taskYaml.resourceStorageUrls.get(yaml.taskYaml.outputResourceIds.values().iterator().next());
 
                 if (variable.sourcing == EnumsApi.DataSourcing.disk) {
                     task.setCompleted(true);

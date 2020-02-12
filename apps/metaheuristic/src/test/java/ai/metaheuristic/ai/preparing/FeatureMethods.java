@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.launchpad.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,19 +80,19 @@ public abstract class FeatureMethods extends PreparingPlan {
     }
 
     protected void produceTasks() {
-        EnumsApi.PlanValidateStatus status = sourceCodeService.validate(plan);
-        assertEquals(EnumsApi.PlanValidateStatus.OK, status);
+        EnumsApi.SourceCodeValidateStatus status = sourceCodeService.validate(plan);
+        assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
         workbook = (WorkbookImpl)result.workbook;
-        assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
+        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
-        EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook.id);
+        EnumsApi.SourceCodeProducingStatus producingStatus = workbookService.toProducing(workbook.id);
         workbook = workbookCache.findById(workbook.id);
-        assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
+        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, producingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
         List<Object[]> tasks01 = taskCollector.getTasks(result.workbook);
@@ -108,7 +108,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
         workbook = (WorkbookImpl)result.workbook;
-        assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
+        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, workbook.getExecState());
 
         experiment = experimentCache.findById(experiment.getId());

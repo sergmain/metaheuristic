@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -60,7 +60,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
     @Test
     public void test() {
 
-        PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
         workbook = (WorkbookImpl)result.workbook;
 
         assertNotNull(workbook);

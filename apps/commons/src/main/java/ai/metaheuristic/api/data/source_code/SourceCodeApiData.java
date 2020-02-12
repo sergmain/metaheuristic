@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data.plan;
+package ai.metaheuristic.api.data.source_code;
 
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.launchpad.SourceCode;
@@ -29,7 +29,7 @@ import org.springframework.data.domain.Slice;
 
 import java.util.*;
 
-public class PlanApiData {
+public class SourceCodeApiData {
 
     @Data
     @AllArgsConstructor
@@ -44,48 +44,48 @@ public class PlanApiData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TaskProducingResult extends BaseDataClass {
-        public EnumsApi.PlanProducingStatus planProducingStatus;
-        public EnumsApi.PlanValidateStatus planValidateStatus;
+        public EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus;
+        public EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus;
         public int numberOfTasks = 0;
         public Long workbookId = null;
 
         public TaskProducingResult(
-                List<String> errorMessages, EnumsApi.PlanValidateStatus planValidateStatus,
-                EnumsApi.PlanProducingStatus planProducingStatus,
+                List<String> errorMessages, EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus,
+                EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus,
                 Long workbookId ) {
             this.workbookId = workbookId;
             this.errorMessages = errorMessages;
-            this.planValidateStatus = planValidateStatus;
-            this.planProducingStatus = planProducingStatus;
+            this.sourceCodeValidateStatus = sourceCodeValidateStatus;
+            this.sourceCodeProducingStatus = sourceCodeProducingStatus;
         }
     }
 
     @Data
     @NoArgsConstructor
     public static class TaskProducingResultComplex {
-        public EnumsApi.PlanValidateStatus planValidateStatus = EnumsApi.PlanValidateStatus.NOT_VALIDATED_YET_ERROR;
-        public EnumsApi.PlanProducingStatus planProducingStatus = EnumsApi.PlanProducingStatus.NOT_PRODUCING_YET_ERROR;
+        public EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.NOT_VALIDATED_YET_ERROR;
+        public EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.NOT_PRODUCING_YET_ERROR;
         public List<Task> tasks = new ArrayList<>();
-        public PlanParamsYaml.PlanYaml planYaml;
+        public SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml;
         public Workbook workbook;
         public int numberOfTasks;
 
         public EnumsApi.TaskProducingStatus getStatus() {
-            if (planValidateStatus != EnumsApi.PlanValidateStatus.OK) {
+            if (sourceCodeValidateStatus != EnumsApi.SourceCodeValidateStatus.OK) {
                 return EnumsApi.TaskProducingStatus.VERIFY_ERROR;
             }
-            if (planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
+            if (sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
                 return EnumsApi.TaskProducingStatus.PRODUCING_ERROR;
             }
             return EnumsApi.TaskProducingStatus.OK;
         }
 
-        public TaskProducingResultComplex(EnumsApi.PlanProducingStatus planProducingStatus) {
-            this.planProducingStatus = planProducingStatus;
+        public TaskProducingResultComplex(EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus) {
+            this.sourceCodeProducingStatus = sourceCodeProducingStatus;
         }
 
-        public TaskProducingResultComplex(EnumsApi.PlanValidateStatus planValidateStatus) {
-            this.planValidateStatus = planValidateStatus;
+        public TaskProducingResultComplex(EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus) {
+            this.sourceCodeValidateStatus = sourceCodeValidateStatus;
         }
     }
 
@@ -103,14 +103,14 @@ public class PlanApiData {
         public SourceCode sourceCode;
         public String planYamlAsStr;
         public EnumsApi.SourceCodeLang lang;
-        public EnumsApi.PlanValidateStatus status = EnumsApi.PlanValidateStatus.NOT_VERIFIED_YET;
+        public EnumsApi.SourceCodeValidateStatus status = EnumsApi.SourceCodeValidateStatus.NOT_VERIFIED_YET;
 
-        public PlanResult(String errorMessage, EnumsApi.PlanValidateStatus status) {
+        public PlanResult(String errorMessage, EnumsApi.SourceCodeValidateStatus status) {
             this.status = status;
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public PlanResult(List<String> errorMessage, EnumsApi.PlanValidateStatus status) {
+        public PlanResult(List<String> errorMessage, EnumsApi.SourceCodeValidateStatus status) {
             this.status = status;
             this.errorMessages = errorMessage;
         }
@@ -119,7 +119,7 @@ public class PlanApiData {
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public PlanResult(SourceCode sourceCode, PlanParamsYaml.Origin origin) {
+        public PlanResult(SourceCode sourceCode, SourceCodeParamsYaml.Origin origin) {
             this.sourceCode = sourceCode;
             this.planYamlAsStr = origin.source;
             this.lang = origin.lang;
@@ -160,7 +160,7 @@ public class PlanApiData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class PlanValidation extends BaseDataClass {
-        public EnumsApi.PlanValidateStatus status;
+        public EnumsApi.SourceCodeValidateStatus status;
     }
 
     @Data

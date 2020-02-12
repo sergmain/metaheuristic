@@ -44,14 +44,14 @@ public class StationCommParamsYaml implements BaseParams {
     @Override
     public boolean checkIntegrity() {
 /*
-        final boolean b = planYaml != null && planYaml.planCode != null && !planYaml.planCode.isBlank() &&
-                planYaml.processes != null;
+        final boolean b = sourceCodeYaml != null && sourceCodeYaml.planCode != null && !sourceCodeYaml.planCode.isBlank() &&
+                sourceCodeYaml.processes != null;
         if (!b) {
             throw new IllegalArgumentException(
-                    "(boolean b = planYaml != null && planYaml.planCode != null && " +
-                            "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
+                    "(boolean b = sourceCodeYaml != null && sourceCodeYaml.planCode != null && " +
+                            "!sourceCodeYaml.planCode.isBlank() && sourceCodeYaml.processes != null) ");
         }
-        for (ProcessV5 process : planYaml.processes) {
+        for (ProcessV5 process : sourceCodeYaml.processes) {
             if (process.snippets == null || process.snippets.size() == 0) {
                 throw new IllegalArgumentException("(process.snippets==null || process.snippets.size()==0) ");
             }

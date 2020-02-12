@@ -33,7 +33,7 @@ import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -100,7 +100,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
     }
 
     public List<InternalSnippetOutput> process(
-            Long planId, Long workbookId, String contextId, PlanParamsYaml.VariableDefinition variableDefinition,
+            Long planId, Long workbookId, String contextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             Map<String, List<String>> inputResourceIds) {
 
         List<String> values = inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
@@ -247,10 +247,10 @@ public class ResourceSplitterSnippet implements InternalSnippet {
             throw new BatchResourceProcessingException("#995.180 main document wasn't found");
         }
 
-        PlanApiData.TaskProducingResultComplex countTasks = workbookService.produceTasks(false, sourceCode, wb.getId());
-        if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
+        SourceCodeApiData.TaskProducingResultComplex countTasks = workbookService.produceTasks(false, sourceCode, wb.getId());
+        if (countTasks.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
             workbookService.changeValidStatus(wb.getId(), false);
-            throw new BatchResourceProcessingException("#995.220 validation of sourceCode was failed, status: " + countTasks.planValidateStatus);
+            throw new BatchResourceProcessingException("#995.220 validation of sourceCode was failed, status: " + countTasks.sourceCodeValidateStatus);
         }
 
         if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {

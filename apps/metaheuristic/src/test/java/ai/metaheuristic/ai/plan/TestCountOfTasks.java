@@ -24,8 +24,8 @@ import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Test;
@@ -60,21 +60,21 @@ public class TestCountOfTasks extends PreparingPlan {
     @Test
     public void testCountNumberOfTasks() {
         log.info("Start TestCountOfTasks.testCountNumberOfTasks()");
-        PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
+        SourceCodeParamsYaml sourceCodeParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
 
-        assertFalse(planParamsYaml.plan.processes.isEmpty());
+        assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
-        EnumsApi.PlanValidateStatus status = sourceCodeService.validate(plan);
-        assertEquals(EnumsApi.PlanValidateStatus.OK, status);
+        EnumsApi.SourceCodeValidateStatus status = sourceCodeService.validate(plan);
+        assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
         workbook = (WorkbookImpl)result.workbook;
-        assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
+        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
-        EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook.id);
+        EnumsApi.SourceCodeProducingStatus producingStatus = workbookService.toProducing(workbook.id);
         workbook = workbookCache.findById(this.workbook.id);
         assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
@@ -86,7 +86,7 @@ public class TestCountOfTasks extends PreparingPlan {
         result = sourceCodeService.produceAllTasks(false, plan, workbook);
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
+        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         int numberOfTasks = result.numberOfTasks;
 
         List<Object[]> tasks02 = taskCollector.getTasks(result.workbook);
@@ -97,7 +97,7 @@ public class TestCountOfTasks extends PreparingPlan {
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
         workbook = (WorkbookImpl)result.workbook;
-        assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
+        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, workbook.getExecState());
 
         experiment = experimentCache.findById(experiment.getId());
@@ -116,7 +116,7 @@ public class TestCountOfTasks extends PreparingPlan {
         assertEquals(numberOfTasks, tasks.size());
 
         int taskNumber = 0;
-        for (PlanParamsYaml.Process process : planParamsYaml.plan.processes) {
+        for (SourceCodeParamsYaml.Process process : sourceCodeParamsYaml.source.processes) {
             if (process.subProcesses!=null) {
                 if (true) {
                     throw new NotImplementedException("Need to calc number of tasks for parallel case");

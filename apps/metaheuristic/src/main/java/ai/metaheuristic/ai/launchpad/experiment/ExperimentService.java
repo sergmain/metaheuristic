@@ -39,7 +39,7 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
@@ -82,7 +82,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.EnumsApi.PlanProducingStatus.TOO_MANY_TASKS_PER_PLAN_ERROR;
+import static ai.metaheuristic.api.EnumsApi.SourceCodeProducingStatus.TOO_MANY_TASKS_PER_SOURCE_CODE_ERROR;
 import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
 
 @SuppressWarnings("DuplicatedCode")
@@ -685,10 +685,10 @@ public class ExperimentService {
         public String snippetCode;
     }
 
-    public EnumsApi.PlanProducingStatus produceTasks(
-            boolean isPersist, PlanParamsYaml planParams, Long workbookId, PlanParamsYaml.Process process,
+    public EnumsApi.SourceCodeProducingStatus produceTasks(
+            boolean isPersist, SourceCodeParamsYaml planParams, Long workbookId, SourceCodeParamsYaml.Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
-            Map<String, PlanParamsYaml.Variable> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
+            Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         if (StringUtils.isBlank(epy.experimentYaml.fitSnippet)|| StringUtils.isBlank(epy.experimentYaml.predictSnippet)) {
@@ -711,7 +711,7 @@ public class ExperimentService {
         if (totalVariants > globals.maxTasksPerWorkbook) {
             log.error("#179.090 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                                 "Allowed maximum number of tasks per workbook: " + globals.maxTasksPerWorkbook +", tasks in this workbook: " + totalVariants);
-            return TOO_MANY_TASKS_PER_PLAN_ERROR;
+            return TOO_MANY_TASKS_PER_SOURCE_CODE_ERROR;
         }
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
@@ -737,7 +737,7 @@ public class ExperimentService {
             eventMulticaster.addApplicationListener(listener);
             Workbook wb = workbookCache.findById(workbookId);
             if (wb==null) {
-                return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
+                return EnumsApi.SourceCodeProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
             }
             AtomicLong id = new AtomicLong(0);
             AtomicLong taskIdForEmulation = new AtomicLong(0);
@@ -755,7 +755,7 @@ public class ExperimentService {
                     List<Long> prevParentTaskIds = new ArrayList<>(parentTaskIds);
                     for (ExperimentSnippetItem snippetItem : experimentSnippets) {
                         if (boolHolder.get()) {
-                            return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
+                            return EnumsApi.SourceCodeProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
                         }
                         prevTask = task;
 
@@ -819,12 +819,12 @@ public class ExperimentService {
                             type = EnumsApi.ExperimentTaskType.PREDICT;
 
                             // TODO 2019.05.02 add implementation of disk storage for models
-                            yaml.taskYaml.resourceStorageUrls.put(modelFilename, new PlanParamsYaml.Variable("mode"));
+                            yaml.taskYaml.resourceStorageUrls.put(modelFilename, new SourceCodeParamsYaml.Variable("mode"));
 //                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                         } else {
                             throw new IllegalStateException("#179.130 Not supported type of snippet encountered, type: " + snippet.getType());
                         }
-                        for (PlanParamsYaml.Variable variable : process.output) {
+                        for (SourceCodeParamsYaml.Variable variable : process.output) {
                             String resourceId = "1L";
                             yaml.taskYaml.resourceStorageUrls.put(resourceId, variable);
                         }
@@ -848,7 +848,7 @@ public class ExperimentService {
                         yaml.taskYaml.snippet = TaskParamsUtils.toSnippetConfig(snippet.getSnippetConfig(true));
                         yaml.taskYaml.preSnippets = new ArrayList<>();
                         if (process.getPreSnippets() != null) {
-                            for (PlanParamsYaml.SnippetDefForPlan snDef : process.getPreSnippets()) {
+                            for (SourceCodeParamsYaml.SnippetDefForSourceCode snDef : process.getPreSnippets()) {
                                 yaml.taskYaml.preSnippets.add(snippetService.getSnippetConfig(snDef));
                             }
                         }
@@ -865,11 +865,11 @@ public class ExperimentService {
                             }
                         }
                         if (process.getPostSnippets()!=null) {
-                            for (PlanParamsYaml.SnippetDefForPlan snDef : process.getPostSnippets()) {
+                            for (SourceCodeParamsYaml.SnippetDefForSourceCode snDef : process.getPostSnippets()) {
                                 yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(snDef));
                             }
                         }
-                        yaml.taskYaml.clean = planParams.plan.clean;
+                        yaml.taskYaml.clean = planParams.source.clean;
                         yaml.taskYaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
                         String currTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);
@@ -889,7 +889,7 @@ public class ExperimentService {
                         if (isPersist) {
                             task = taskPersistencer.setParams(task.getId(), currTaskParams);
                             if (task == null) {
-                                return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
+                                return EnumsApi.SourceCodeProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
                             workbookGraphTopLevelService.addNewTasksToGraph(workbookId, prevParentTaskIds, taskIds);
                         }
@@ -910,7 +910,7 @@ public class ExperimentService {
             Experiment experimentTemp = experimentRepository.findByIdForUpdate(experiment.getId());
             if (experimentTemp == null) {
                 log.warn("#179.160 Experiment for id {} doesn't exist anymore", experiment.getId());
-                return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
+                return EnumsApi.SourceCodeProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
             }
             epy.processing.setNumberOfTask(totalVariants);
             epy.processing.setAllTaskProduced(true);
@@ -919,7 +919,7 @@ public class ExperimentService {
             //noinspection UnusedAssignment
             experimentTemp = experimentCache.save(experimentTemp);
         }
-        return EnumsApi.PlanProducingStatus.OK;
+        return EnumsApi.SourceCodeProducingStatus.OK;
     }
 
     public Snippet getSnippet(Map<String, Snippet> localCache, String snippetCode) {

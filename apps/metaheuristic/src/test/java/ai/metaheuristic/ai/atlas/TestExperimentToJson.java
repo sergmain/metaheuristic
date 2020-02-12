@@ -22,15 +22,13 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
-import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -58,7 +56,7 @@ public class TestExperimentToJson extends PreparingPlan {
     public void toExperimentStoredToAtlasToYaml() {
 
         //noinspection unused
-        PlanApiData.TaskProducingResultComplex result = produceTasksForTest();
+        SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();
 
         assertNotNull(experiment);
         assertNotNull(experiment.getId());

@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +58,7 @@ public class DiskResourceProvider implements ResourceProvider {
     public List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            String resourceId, PlanParamsYaml.Variable dataStorageParams) {
+            String resourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
 
         if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.disk) {
             throw new ResourceProviderException("#015.018 Wrong type of sourcing of data storage" + dataStorageParams.sourcing);
@@ -122,7 +122,7 @@ public class DiskResourceProvider implements ResourceProvider {
     @Override
     public File getOutputResourceFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, String outputResourceId, PlanParamsYaml.Variable dataStorageParams) {
+            StationTask task, String outputResourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
 
         EnvYaml env = envService.getEnvYaml();
         DiskStorage diskStorage = env.findDiskStorageByCode(dataStorageParams.disk.code);

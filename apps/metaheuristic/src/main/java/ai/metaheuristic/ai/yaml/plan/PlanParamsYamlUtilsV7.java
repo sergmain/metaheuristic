@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV7;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV8;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV7;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV8;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -31,7 +31,7 @@ import org.yaml.snakeyaml.Yaml;
  * Time: 12:10 AM
  */
 public class PlanParamsYamlUtilsV7
-        extends AbstractParamsYamlUtils<PlanParamsYamlV7, PlanParamsYamlV8, PlanParamsYamlUtilsV8, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<SourceCodeParamsYamlV7, SourceCodeParamsYamlV8, PlanParamsYamlUtilsV8, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -40,22 +40,22 @@ public class PlanParamsYamlUtilsV7
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(PlanParamsYamlV7.class);
+        return YamlUtils.init(SourceCodeParamsYamlV7.class);
     }
 
     @Override
-    public PlanParamsYamlV8 upgradeTo(PlanParamsYamlV7 v7, Long ... vars) {
+    public SourceCodeParamsYamlV8 upgradeTo(SourceCodeParamsYamlV7 v7, Long ... vars) {
         throw new UpgradeNotSupportedException();
 /*
-        PlanParamsYamlV8 p = new PlanParamsYamlV8();
-        p.internalParams = new PlanParamsYamlV8.InternalParamsV8(v7.internalParams.archived, v7.internalParams.published, v7.internalParams.updatedOn, null);
-        p.sourceCode = new PlanParamsYamlV8.PlanYamlV8();
-        if (v7.planYaml.metas!=null){
-            p.sourceCode.metas = new ArrayList<>(v7.planYaml.metas);
+        SourceCodeParamsYamlV8 p = new SourceCodeParamsYamlV8();
+        p.internalParams = new SourceCodeParamsYamlV8.InternalParamsV8(v7.internalParams.archived, v7.internalParams.published, v7.internalParams.updatedOn, null);
+        p.sourceCode = new SourceCodeParamsYamlV8.SourceCodeV8();
+        if (v7.sourceCodeYaml.metas!=null){
+            p.sourceCode.metas = new ArrayList<>(v7.sourceCodeYaml.metas);
         }
-        p.sourceCode.clean = v7.planYaml.clean;
-        p.sourceCode.processes = v7.planYaml.processes.stream().map(o-> {
-            PlanParamsYamlV8.ProcessV8 pr = new PlanParamsYamlV8.ProcessV8();
+        p.sourceCode.clean = v7.sourceCodeYaml.clean;
+        p.sourceCode.processes = v7.sourceCodeYaml.processes.stream().map(o-> {
+            SourceCodeParamsYamlV8.ProcessV8 pr = new SourceCodeParamsYamlV8.ProcessV8();
             pr.name = o.name;
             pr.code = o.code;
             pr.type = o.type;
@@ -66,16 +66,16 @@ public class PlanParamsYamlUtilsV7
             pr.outputResourceCode = o.outputResourceCode;
             pr.order = o.order;
 
-            pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new PlanParamsYamlV8.SnippetDefForPlanV8(d.code, d.params, EnumsApi.SnippetExecContext.external)).collect(Collectors.toList()) : null;
-            pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new PlanParamsYamlV8.SnippetDefForPlanV8(d.code, d.params, EnumsApi.SnippetExecContext.external)).collect(Collectors.toList()) : null;
-            pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new PlanParamsYamlV8.SnippetDefForPlanV8(d.code, d.params, EnumsApi.SnippetExecContext.external)).collect(Collectors.toList()) : null;
+            pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new SourceCodeParamsYamlV8.SnippetDefForPlanV8(d.code, d.params, EnumsApi.SnippetExecContext.external)).collect(Collectors.toList()) : null;
+            pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new SourceCodeParamsYamlV8.SnippetDefForPlanV8(d.code, d.params, EnumsApi.SnippetExecContext.external)).collect(Collectors.toList()) : null;
+            pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new SourceCodeParamsYamlV8.SnippetDefForPlanV8(d.code, d.params, EnumsApi.SnippetExecContext.external)).collect(Collectors.toList()) : null;
             pr.metas = o.metas;
 
             return pr;
         }).collect(Collectors.toList());
-        p.sourceCode.code = v7.planYaml.planCode;
-        if (v7.planYaml.ac!=null) {
-            p.sourceCode.ac = new PlanParamsYamlV8.AccessControlV8(v7.planYaml.ac.groups);
+        p.sourceCode.code = v7.sourceCodeYaml.planCode;
+        if (v7.sourceCodeYaml.ac!=null) {
+            p.sourceCode.ac = new SourceCodeParamsYamlV8.AccessControlV8(v7.sourceCodeYaml.ac.groups);
         }
         p.originYaml = v7.originYaml;
         p.checkIntegrity();
@@ -101,25 +101,25 @@ public class PlanParamsYamlUtilsV7
     }
 
     @Override
-    public String toString(PlanParamsYamlV7 planYaml) {
+    public String toString(SourceCodeParamsYamlV7 planYaml) {
         return getYaml().dump(planYaml);
     }
 
     @Override
-    public PlanParamsYamlV7 to(String s) {
-        final PlanParamsYamlV7 p = getYaml().load(s);
+    public SourceCodeParamsYamlV7 to(String s) {
+        final SourceCodeParamsYamlV7 p = getYaml().load(s);
         if (p.planYaml ==null) {
             throw new IllegalStateException("#635.010 SourceCode Yaml is null");
         }
 
         // fix of default values
-        for (PlanParamsYamlV7.ProcessV7 process : p.planYaml.processes) {
+        for (SourceCodeParamsYamlV7.ProcessV7 process : p.planYaml.processes) {
             if (process.outputParams==null) {
                 process.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             }
         }
         if (p.internalParams==null) {
-            p.internalParams = new PlanParamsYamlV7.InternalParamsV7();
+            p.internalParams = new SourceCodeParamsYamlV7.InternalParamsV7();
         }
         return p;
     }

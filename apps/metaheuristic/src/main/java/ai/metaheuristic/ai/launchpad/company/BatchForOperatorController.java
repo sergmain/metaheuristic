@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
-import ai.metaheuristic.ai.launchpad.data.PlanData;
+import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -106,7 +106,7 @@ public class BatchForOperatorController {
     @GetMapping(value = "/company-batch-add/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String batchAdd(Model model, @PathVariable Long companyUniqueId) {
-        PlanData.PlansForCompany plans = sourceCodeService.getAvailablePlansForCompany(companyUniqueId);
+        SourceCodeData.PlansForCompany plans = sourceCodeService.getAvailablePlansForCompany(companyUniqueId);
         ControllerUtils.addMessagesToModel(model, plans);
         model.addAttribute("result", plans);
         model.addAttribute("companyUniqueId", companyUniqueId);

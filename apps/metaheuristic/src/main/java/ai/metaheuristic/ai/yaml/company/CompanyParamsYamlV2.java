@@ -17,13 +17,9 @@
 package ai.metaheuristic.ai.yaml.company;
 
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 /**
  * @author Serge

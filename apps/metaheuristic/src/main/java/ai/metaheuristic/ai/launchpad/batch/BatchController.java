@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
-import ai.metaheuristic.ai.launchpad.data.PlanData;
+import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -97,7 +97,7 @@ public class BatchController {
     @GetMapping(value = "/batch-add")
     public String batchAdd(Model model, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanData.PlansForCompany plans = sourceCodeService.getAvailablePlansForCompany(context);
+        SourceCodeData.PlansForCompany plans = sourceCodeService.getAvailablePlansForCompany(context);
         ControllerUtils.addMessagesToModel(model, plans);
         model.addAttribute("result", plans);
         return "launchpad/batch/batch-add";

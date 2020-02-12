@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data.plan;
+package ai.metaheuristic.api.data.source_code;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -37,15 +37,15 @@ import java.util.Map;
  * Time: 9:01 PM
  */
 @Data
-public class PlanParamsYaml implements BaseParams {
+public class SourceCodeParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        final boolean b = plan != null && !S.b(plan.code) && plan.processes != null;
+        final boolean b = source != null && !S.b(source.code) && source.processes != null;
         if (!b) {
             throw new CheckIntegrityFailedException("(b = sourceCode != null && !S.b(sourceCode.code) && sourceCode.processes != null) ");
         }
-        for (Process process : plan.processes) {
+        for (Process process : source.processes) {
             if (process.snippet==null) {
                 throw new CheckIntegrityFailedException("(process.snippet==null)");
             }
@@ -57,16 +57,16 @@ public class PlanParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SnippetDefForPlan {
+    public static class SnippetDefForSourceCode {
         public String code;
         public String params;
         public EnumsApi.SnippetExecContext context = EnumsApi.SnippetExecContext.external;
 
-        public SnippetDefForPlan(String code) {
+        public SnippetDefForSourceCode(String code) {
             this.code = code;
         }
 
-        public SnippetDefForPlan(String code, EnumsApi.SnippetExecContext context) {
+        public SnippetDefForSourceCode(String code, EnumsApi.SnippetExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -92,7 +92,7 @@ public class PlanParamsYaml implements BaseParams {
     }
 
     public static class SubProcesses {
-        public EnumsApi.PlanSubProcessLogic logic;
+        public EnumsApi.SourceCodeSubProcessLogic logic;
         public List<Process> processes;
     }
 
@@ -109,9 +109,9 @@ public class PlanParamsYaml implements BaseParams {
 
         public String name;
         public String code;
-        public SnippetDefForPlan snippet;
-        public List<SnippetDefForPlan> preSnippets;
-        public List<SnippetDefForPlan> postSnippets;
+        public SnippetDefForSourceCode snippet;
+        public List<SnippetDefForSourceCode> preSnippets;
+        public List<SnippetDefForSourceCode> postSnippets;
 
         /**
          * Timeout before terminating a process with snippet
@@ -147,7 +147,7 @@ public class PlanParamsYaml implements BaseParams {
 
     @Data
     @ToString
-    public static class PlanYaml {
+    public static class SourceCodeYaml {
         public VariableDefinition variables;
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
@@ -187,7 +187,7 @@ public class PlanParamsYaml implements BaseParams {
     }
 
     public final int version=8;
-    public PlanYaml plan;
+    public SourceCodeYaml source;
     public final Origin origin = new Origin();
     public InternalParams internalParams;
 

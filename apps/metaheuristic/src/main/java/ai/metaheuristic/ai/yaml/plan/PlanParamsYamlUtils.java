@@ -15,15 +15,15 @@
  */
 package ai.metaheuristic.ai.yaml.plan;
 
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 
 import java.util.Map;
 
 public class PlanParamsYamlUtils {
 
-    // Map of minimum required version of TaskParamsYaml related to version of PlanParamsYaml
-    // key - version of PlanParamsYaml
+    // Map of minimum required version of TaskParamsYaml related to version of SourceCodeParamsYaml
+    // key - version of SourceCodeParamsYaml
     // value - version of TaskParamsYaml
     private static final Map<Integer, Integer> MIN_TASK_PARAMS_YAML_VERSION = Map.of(
             1, 1,
@@ -39,7 +39,7 @@ public class PlanParamsYamlUtils {
     public static int getRequiredVertionOfTaskParamsYaml(int planParamsYamlVersion) {
         Integer version = MIN_TASK_PARAMS_YAML_VERSION.get(planParamsYamlVersion);
         if (version==null) {
-            throw new IllegalStateException("unknown version of PlanParamsYaml, version: " + planParamsYamlVersion);
+            throw new IllegalStateException("unknown version of SourceCodeParamsYaml, version: " + planParamsYamlVersion);
         }
         return version;
     }
@@ -54,7 +54,7 @@ public class PlanParamsYamlUtils {
     private static final PlanParamsYamlUtilsV8 YAML_UTILS_V_8 = new PlanParamsYamlUtilsV8();
     private static final PlanParamsYamlUtilsV8 DEFAULT_UTILS = YAML_UTILS_V_8;
 
-    public static final BaseYamlUtils<PlanParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<SourceCodeParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
                     2, YAML_UTILS_V_2,

@@ -24,7 +24,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -71,7 +71,7 @@ public class SnippetService {
         return snippetCache.findById(id);
     }
 
-    public boolean isSnippetVersionOk(int requiredVersion, PlanParamsYaml.SnippetDefForPlan snDef) {
+    public boolean isSnippetVersionOk(int requiredVersion, SourceCodeParamsYaml.SnippetDefForSourceCode snDef) {
         TaskParamsYaml.SnippetConfig sc = getSnippetConfig(snDef);
         return sc != null && (sc.skipParams || requiredVersion <= SnippetCoreUtils.getTaskParamsVersion(sc.metas));
     }
@@ -108,7 +108,7 @@ public class SnippetService {
         return list;
     }
 
-    public TaskParamsYaml.SnippetConfig getSnippetConfig(PlanParamsYaml.SnippetDefForPlan snippetDef) {
+    public TaskParamsYaml.SnippetConfig getSnippetConfig(SourceCodeParamsYaml.SnippetDefForSourceCode snippetDef) {
         TaskParamsYaml.SnippetConfig snippetConfig = null;
         if(StringUtils.isNotBlank(snippetDef.code)) {
             Snippet snippet = findByCode(snippetDef.code);

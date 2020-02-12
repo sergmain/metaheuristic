@@ -45,8 +45,8 @@ import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.SourceCode;
@@ -113,7 +113,7 @@ public class WorkbookService {
     }
 
     public OperationStatusRest workbookTargetExecState(Long workbookId, EnumsApi.WorkbookExecState execState) {
-        PlanApiData.WorkbookResult result = getWorkbookExtended(workbookId);
+        SourceCodeApiData.WorkbookResult result = getWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
         }
@@ -181,12 +181,12 @@ public class WorkbookService {
         return workbookSyncService.getWithSync(workbookId, workbookGraphService::findAll);
     }
 
-    public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookYaml workbookYaml) {
+    public SourceCodeApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookYaml workbookYaml) {
         return createWorkbook(planId, workbookYaml, true);
     }
 
-    public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookYaml workbookYaml, boolean checkResources) {
-        PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
+    public SourceCodeApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml.WorkbookYaml workbookYaml, boolean checkResources) {
+        SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
 
         WorkbookImpl wb = new WorkbookImpl();
         wb.setPlanId(planId);
@@ -203,13 +203,13 @@ public class WorkbookService {
             WorkbookParamsYaml resourceParam = wb.getWorkbookParamsYaml();
             List<SimpleVariableAndStorageUrl> inputResourceCodes = variableService.getIdInVariables(resourceParam.getAllPoolCodes());
             if (inputResourceCodes == null || inputResourceCodes.isEmpty()) {
-                result.planProducingStatus = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
+                result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
                 return result;
             }
         }
 
         result.workbook = workbookCache.save(wb);
-        result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
+        result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;
 
         return result;
     }
@@ -222,44 +222,44 @@ public class WorkbookService {
         });
     }
 
-    public EnumsApi.PlanProducingStatus toProducing(Long workbookId) {
+    public EnumsApi.SourceCodeProducingStatus toProducing(Long workbookId) {
         return workbookSyncService.getWithSync(workbookId, workbook -> {
             if (workbook.execState == EnumsApi.WorkbookExecState.PRODUCING.code) {
-                return EnumsApi.PlanProducingStatus.OK;
+                return EnumsApi.SourceCodeProducingStatus.OK;
             }
             workbook.setExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
             workbookCache.save(workbook);
-            return EnumsApi.PlanProducingStatus.OK;
+            return EnumsApi.SourceCodeProducingStatus.OK;
         });
     }
 
-    public PlanApiData.WorkbookResult getWorkbookExtended(Long workbookId) {
+    public SourceCodeApiData.WorkbookResult getWorkbookExtended(Long workbookId) {
         if (workbookId==null) {
-            return new PlanApiData.WorkbookResult("#705.090 workbookId is null");
+            return new SourceCodeApiData.WorkbookResult("#705.090 workbookId is null");
         }
         WorkbookImpl workbook = workbookCache.findById(workbookId);
         if (workbook == null) {
-            return new PlanApiData.WorkbookResult("#705.100 workbook wasn't found, workbookId: " + workbookId);
+            return new SourceCodeApiData.WorkbookResult("#705.100 workbook wasn't found, workbookId: " + workbookId);
         }
         SourceCodeImpl plan = sourceCodeCache.findById(workbook.getPlanId());
         if (plan == null) {
-            return new PlanApiData.WorkbookResult("#705.110 sourceCode wasn't found, planId: " + workbook.getPlanId());
+            return new SourceCodeApiData.WorkbookResult("#705.110 sourceCode wasn't found, planId: " + workbook.getPlanId());
         }
 
         if (!plan.getId().equals(workbook.getPlanId())) {
             changeValidStatus(workbookId, false);
-            return new PlanApiData.WorkbookResult("#705.120 planId doesn't match to workbook.planId, planId: " + workbook.getPlanId()+", workbook.planId: " + workbook.getPlanId());
+            return new SourceCodeApiData.WorkbookResult("#705.120 planId doesn't match to workbook.planId, planId: " + workbook.getPlanId()+", workbook.planId: " + workbook.getPlanId());
         }
 
         //noinspection UnnecessaryLocalVariable
-        PlanApiData.WorkbookResult result = new PlanApiData.WorkbookResult(plan, workbook);
+        SourceCodeApiData.WorkbookResult result = new SourceCodeApiData.WorkbookResult(plan, workbook);
         return result;
     }
 
-    public PlanApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDescResult(
+    public SourceCodeApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDescResult(
             @PathVariable Long planId, @PageableDefault(size = 5) Pageable pageable, LaunchpadContext context) {
         pageable = ControllerUtils.fixPageSize(globals.workbookRowsLimit, pageable);
-        PlanApiData.WorkbooksResult result = new PlanApiData.WorkbooksResult();
+        SourceCodeApiData.WorkbooksResult result = new SourceCodeApiData.WorkbooksResult();
         result.instances = workbookRepository.findByPlanIdOrderByCreatedOnDesc(pageable, planId);
         result.currentPlanId = planId;
 
@@ -484,7 +484,7 @@ public class WorkbookService {
         return ids;
     }
 
-    public PlanApiData.TaskProducingResultComplex produceTasks(boolean isPersist, SourceCodeImpl plan, Long workbookId) {
+    public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, SourceCodeImpl plan, Long workbookId) {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
@@ -492,7 +492,7 @@ public class WorkbookService {
         WorkbookImpl workbook = workbookCache.findById(workbookId);
         if (workbook == null) {
             log.error("#701.175 Can't find workbook #{}", workbookId);
-            return new PlanApiData.TaskProducingResultComplex(EnumsApi.PlanValidateStatus.WORKBOOK_NOT_FOUND_ERROR);
+            return new SourceCodeApiData.TaskProducingResultComplex(EnumsApi.SourceCodeValidateStatus.WORKBOOK_NOT_FOUND_ERROR);
         }
 
         WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
@@ -500,8 +500,8 @@ public class WorkbookService {
         log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
 
         SourceCodeService.ResourcePools pools = new SourceCodeService.ResourcePools(initialInputResourceCodes);
-        if (pools.status!= EnumsApi.PlanProducingStatus.OK) {
-            return new PlanApiData.TaskProducingResultComplex(pools.status);
+        if (pools.status!= EnumsApi.SourceCodeProducingStatus.OK) {
+            return new SourceCodeApiData.TaskProducingResultComplex(pools.status);
         }
 
         if (resourceParams.workbookYaml.preservePoolNames) {
@@ -519,7 +519,7 @@ public class WorkbookService {
                     collectedInputs.put(newKey, value);
                 });
             } catch (BreakFromForEachException e) {
-                return new PlanApiData.TaskProducingResultComplex(EnumsApi.PlanProducingStatus.ERROR);
+                return new SourceCodeApiData.TaskProducingResultComplex(EnumsApi.SourceCodeProducingStatus.ERROR);
             }
 
             pools.collectedInputs.clear();
@@ -527,14 +527,14 @@ public class WorkbookService {
         }
 
         Monitoring.log("##025", Enums.Monitor.MEMORY);
-        PlanParamsYaml planParams = plan.getPlanParamsYaml();
+        SourceCodeParamsYaml planParams = plan.getPlanParamsYaml();
 
         int idx = Consts.PROCESS_ORDER_START_VALUE;
         List<Long> parentTaskIds = new ArrayList<>();
         int numberOfTasks=0;
         String contextId = "" + idsRepository.save(new Ids()).id;
 
-        for (PlanParamsYaml.Process process : planParams.plan.getProcesses()) {
+        for (SourceCodeParamsYaml.Process process : planParams.source.getProcesses()) {
             Monitoring.log("##026", Enums.Monitor.MEMORY);
             SourceCodeService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasksForProcess(isPersist, plan.getId(), contextId, planParams, workbookId, process, pools, parentTaskIds);
             Monitoring.log("##027", Enums.Monitor.MEMORY);
@@ -542,13 +542,13 @@ public class WorkbookService {
             parentTaskIds.addAll(produceTaskResult.taskIds);
 
             numberOfTasks += produceTaskResult.numberOfTasks;
-            if (produceTaskResult.status != EnumsApi.PlanProducingStatus.OK) {
-                return new PlanApiData.TaskProducingResultComplex(produceTaskResult.status);
+            if (produceTaskResult.status != EnumsApi.SourceCodeProducingStatus.OK) {
+                return new SourceCodeApiData.TaskProducingResultComplex(produceTaskResult.status);
             }
             Monitoring.log("##030", Enums.Monitor.MEMORY);
 
             // this part of code replaces the code below
-            for (PlanParamsYaml.Variable variable : process.output) {
+            for (SourceCodeParamsYaml.Variable variable : process.output) {
                 pools.add(variable.name, produceTaskResult.outputResourceCodes);
                 for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
                     pools.inputStorageUrls.put(outputResourceCode, variable);
@@ -565,39 +565,39 @@ public class WorkbookService {
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }
 
-        PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
+        SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist) {
             workbookFSM.toProduced(workbookId);
         }
         result.workbook = workbookCache.findById(workbookId);
-        result.planYaml = planParams.plan;
+        result.sourceCodeYaml = planParams.source;
         result.numberOfTasks = numberOfTasks;
-        result.planValidateStatus = EnumsApi.PlanValidateStatus.OK;
-        result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
+        result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.OK;
+        result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;
 
         return result;
     }
 
-    public PlanApiData.WorkbookResult createWorkbookInternal(@NonNull SourceCodeImpl plan, String variable) {
+    public SourceCodeApiData.WorkbookResult createWorkbookInternal(@NonNull SourceCodeImpl plan, String variable) {
         WorkbookParamsYaml.WorkbookYaml wrc = SourceCodeUtils.asWorkbookParamsYaml(variable);
-        PlanApiData.TaskProducingResultComplex producingResult = createWorkbook(plan.getId(), wrc);
-        if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
-            return new PlanApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
+        SourceCodeApiData.TaskProducingResultComplex producingResult = createWorkbook(plan.getId(), wrc);
+        if (producingResult.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
+            return new SourceCodeApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.sourceCodeProducingStatus);
         }
 
-        PlanApiData.TaskProducingResultComplex countTasks = produceTasks(false, plan, producingResult.workbook.getId());
-        if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
+        SourceCodeApiData.TaskProducingResultComplex countTasks = produceTasks(false, plan, producingResult.workbook.getId());
+        if (countTasks.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
             changeValidStatus(producingResult.workbook.getId(), false);
-            return new PlanApiData.WorkbookResult("#560.077 sourceCode producing was failed, status: " + countTasks.planProducingStatus);
+            return new SourceCodeApiData.WorkbookResult("#560.077 sourceCode producing was failed, status: " + countTasks.sourceCodeProducingStatus);
         }
 
         if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
             changeValidStatus(producingResult.workbook.getId(), false);
-            return new PlanApiData.WorkbookResult("#560.081 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
+            return new SourceCodeApiData.WorkbookResult("#560.081 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                     "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook + ", tasks in this workbook:  " + countTasks.numberOfTasks);
         }
 
-        PlanApiData.WorkbookResult result = new PlanApiData.WorkbookResult(plan);
+        SourceCodeApiData.WorkbookResult result = new SourceCodeApiData.WorkbookResult(plan);
         result.workbook = producingResult.workbook;
 
         changeValidStatus(producingResult.workbook.getId(), true);

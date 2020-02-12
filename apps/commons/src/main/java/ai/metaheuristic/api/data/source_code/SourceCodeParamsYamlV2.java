@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data.plan;
+package ai.metaheuristic.api.data.source_code;
 
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
@@ -30,14 +30,14 @@ import java.util.List;
  * Time: 8:58 PM
  */
 @Data
-public class PlanParamsYamlV2 implements BaseParams {
+public class SourceCodeParamsYamlV2 implements BaseParams {
     @Override
     public boolean checkIntegrity() {
         return true;
     }
 
     @Data
-    public static class PlanYamlV2 {
+    public static class SourceCodeYamlV2 {
         public List<ProcessV2> processes = new ArrayList<>();
         public boolean clean = false;
         public List<Meta> metas;
@@ -56,7 +56,7 @@ public class PlanParamsYamlV2 implements BaseParams {
     }
 
     public final int version=2;
-    public PlanYamlV2 planYaml;
-    public PlanApiData.PlanInternalParamsYaml internalParams;
+    public SourceCodeYamlV2 planYaml;
+    public SourceCodeApiData.PlanInternalParamsYaml internalParams;
 
 }

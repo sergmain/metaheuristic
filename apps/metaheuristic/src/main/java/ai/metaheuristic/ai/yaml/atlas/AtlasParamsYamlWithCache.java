@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,7 +38,7 @@ public class AtlasParamsYamlWithCache {
     public AtlasParamsYaml atlasParams = null;
 
     // for caching
-    private PlanParamsYaml planParamsYaml = null;
+    private SourceCodeParamsYaml sourceCodeParamsYaml = null;
     private ExperimentParamsYaml experimentParamsYaml = null;
     private WorkbookParamsYaml workbookParamsYaml = null;
 
@@ -67,17 +67,17 @@ public class AtlasParamsYamlWithCache {
         return paramByIndex;
     }
 
-    public PlanParamsYaml getPlanParamsYaml() {
-        if (planParamsYaml==null) {
+    public SourceCodeParamsYaml getSourceCodeParamsYaml() {
+        if (sourceCodeParamsYaml ==null) {
             synchronized (this) {
-                if (planParamsYaml==null) {
+                if (sourceCodeParamsYaml ==null) {
                     //noinspection UnnecessaryLocalVariable
-                    PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.plan.planParams);
-                    planParamsYaml = ppy;
+                    SourceCodeParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.plan.planParams);
+                    sourceCodeParamsYaml = ppy;
                 }
             }
         }
-        return planParamsYaml;
+        return sourceCodeParamsYaml;
     };
 
     public ExperimentParamsYaml getExperimentParamsYaml() {

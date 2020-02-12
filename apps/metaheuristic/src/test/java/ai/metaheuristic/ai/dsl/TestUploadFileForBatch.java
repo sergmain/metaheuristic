@@ -29,9 +29,9 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV8;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV8;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Test;
@@ -59,19 +59,19 @@ public class TestUploadFileForBatch extends PreparingPlan {
 
     @Override
     public String getPlanYamlAsString() {
-        PlanParamsYamlV8 planParamsYaml = new PlanParamsYamlV8();
+        SourceCodeParamsYamlV8 planParamsYaml = new SourceCodeParamsYamlV8();
 
-        planParamsYaml.plan = new PlanParamsYamlV8.PlanYamlV8();
-        planParamsYaml.plan.code = "SourceCode for testing uploading batch file";
+        planParamsYaml.source = new SourceCodeParamsYamlV8.SourceCodeV8();
+        planParamsYaml.source.code = "SourceCode for testing uploading batch file";
         {
-            PlanParamsYamlV8.ProcessV8 p = new PlanParamsYamlV8.ProcessV8();
+            SourceCodeParamsYamlV8.ProcessV8 p = new SourceCodeParamsYamlV8.ProcessV8();
             p.name = "Plocess mh.resource-splitter";
             p.code = "process-mh.resource-splitter";
 
-            p.snippet = new PlanParamsYamlV8.SnippetDefForPlanV8(Consts.MH_RESOURCE_SPLITTER_SNIPPET, EnumsApi.SnippetExecContext.internal);
-            p.output.add( new PlanParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad,"batch-array"));
+            p.snippet = new SourceCodeParamsYamlV8.SnippetDefForPlanV8(Consts.MH_RESOURCE_SPLITTER_SNIPPET, EnumsApi.SnippetExecContext.internal);
+            p.output.add( new SourceCodeParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad,"batch-array"));
 
-            planParamsYaml.plan.processes.add(p);
+            planParamsYaml.source.processes.add(p);
         }
 
         String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
@@ -127,14 +127,14 @@ public class TestUploadFileForBatch extends PreparingPlan {
         final LaunchpadContext context = new LaunchpadContext(a, company);
 
 
-        PlanApiData.PlanResult planResult = sourceCodeTopLevelService.validatePlan(plan.id, context);
-        assertEquals(EnumsApi.PlanValidateStatus.OK, planResult.status);
+        SourceCodeApiData.PlanResult planResult = sourceCodeTopLevelService.validatePlan(plan.id, context);
+        assertEquals(EnumsApi.SourceCodeValidateStatus.OK, planResult.status);
         plan = sourceCodeCache.findById(plan.id);
         assertTrue(plan.isValid());
 
         String planYamlAsString = getPlanYamlAsString();
         System.out.println("actual sourceCode yaml:\n" + planYamlAsString);
-        PlanParamsYaml planParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsString);
+        SourceCodeParamsYaml sourceCodeParamsYaml = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsString);
         MockMultipartFile mockFile = new MockMultipartFile("random-name.txt", "file-for-batch-processing.xml", StandardCharsets.UTF_8.toString(), "content of file".getBytes());
 
         uploadingStatus = batchTopLevelService.batchUploadFromFile(mockFile, plan.getId(), context);

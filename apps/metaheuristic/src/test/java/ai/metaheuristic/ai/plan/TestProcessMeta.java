@@ -17,9 +17,8 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,13 +37,13 @@ public class TestProcessMeta {
 
     @Test
     public void testProcessMeta() {
-        PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
-        planYaml.code = "test-process-for-meta";
+        SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = new SourceCodeParamsYaml.SourceCodeYaml();
+        sourceCodeYaml.code = "test-process-for-meta";
         {
-            PlanParamsYaml.Process p = new PlanParamsYaml.Process();
+            SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
             p.name = "experiment";
             p.code = "test-experiment-code-01";
-            p.output.add(new PlanParamsYaml.Variable("model"));
+            p.output.add(new SourceCodeParamsYaml.Variable("model"));
 
             p.metas.addAll(
                     Arrays.asList(
@@ -54,19 +53,19 @@ public class TestProcessMeta {
                     )
             );
 
-            planYaml.processes.add(p);
+            sourceCodeYaml.processes.add(p);
         }
-        PlanParamsYaml planParamsYaml = new PlanParamsYaml();
-        planParamsYaml.plan = planYaml;
+        SourceCodeParamsYaml sourceCodeParamsYaml = new SourceCodeParamsYaml();
+        sourceCodeParamsYaml.source = sourceCodeYaml;
 
-        String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
+        String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(sourceCodeParamsYaml);
 
         System.out.println(s);
 
-        PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(s);
-        PlanParamsYaml.PlanYaml yaml1 = planParams.plan;
+        SourceCodeParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(s);
+        SourceCodeParamsYaml.SourceCodeYaml yaml1 = planParams.source;
 
-        Assert.assertEquals(planYaml, yaml1);
+        Assert.assertEquals(sourceCodeYaml, yaml1);
 
     }
 

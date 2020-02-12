@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV5;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV6;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV5;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV6;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.process.ProcessV5;
 import ai.metaheuristic.api.launchpad.process.ProcessV6;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 public class PlanParamsYamlUtilsV5
-        extends AbstractParamsYamlUtils<PlanParamsYamlV5, PlanParamsYamlV6, PlanParamsYamlUtilsV6, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<SourceCodeParamsYamlV5, SourceCodeParamsYamlV6, PlanParamsYamlUtilsV6, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -47,14 +47,14 @@ public class PlanParamsYamlUtilsV5
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(PlanParamsYamlV5.class);
+        return YamlUtils.init(SourceCodeParamsYamlV5.class);
     }
 
     @Override
-    public PlanParamsYamlV6 upgradeTo(PlanParamsYamlV5 pV5, Long ... vars) {
-        PlanParamsYamlV6 p = new PlanParamsYamlV6();
+    public SourceCodeParamsYamlV6 upgradeTo(SourceCodeParamsYamlV5 pV5, Long ... vars) {
+        SourceCodeParamsYamlV6 p = new SourceCodeParamsYamlV6();
         p.internalParams = pV5.internalParams;
-        p.planYaml = new PlanParamsYamlV6.PlanYamlV6();
+        p.planYaml = new SourceCodeParamsYamlV6.SourceCodeYamlV6();
         if (pV5.planYaml.metas!=null){
             p.planYaml.metas = new ArrayList<>(pV5.planYaml.metas);
         }
@@ -91,13 +91,13 @@ public class PlanParamsYamlUtilsV5
     }
 
     @Override
-    public String toString(PlanParamsYamlV5 planYaml) {
+    public String toString(SourceCodeParamsYamlV5 planYaml) {
         return getYaml().dump(planYaml);
     }
 
     @Override
-    public PlanParamsYamlV5 to(String s) {
-        final PlanParamsYamlV5 p = getYaml().load(s);
+    public SourceCodeParamsYamlV5 to(String s) {
+        final SourceCodeParamsYamlV5 p = getYaml().load(s);
         if (p.planYaml ==null) {
             throw new IllegalStateException("#635.010 SourceCode Yaml is null");
         }
@@ -109,7 +109,7 @@ public class PlanParamsYamlUtilsV5
             }
         }
         if (p.internalParams==null) {
-            p.internalParams = new PlanApiData.PlanInternalParamsYaml();
+            p.internalParams = new SourceCodeApiData.PlanInternalParamsYaml();
         }
         return p;
     }

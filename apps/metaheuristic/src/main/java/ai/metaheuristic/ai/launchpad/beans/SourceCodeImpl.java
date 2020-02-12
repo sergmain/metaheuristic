@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.launchpad.beans;
 
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -70,22 +70,22 @@ public class SourceCodeImpl implements Serializable, SourceCode {
 
     @Transient
     @JsonIgnore
-    private PlanParamsYaml ppy = null;
+    private SourceCodeParamsYaml ppy = null;
 
     // for controlling of SnakeYaml
     @SuppressWarnings("unused")
     @Transient
-    private PlanParamsYaml getPpy(){
+    private SourceCodeParamsYaml getPpy(){
         return ppy;
     }
 
     @JsonIgnore
-    public PlanParamsYaml getPlanParamsYaml() {
+    public SourceCodeParamsYaml getPlanParamsYaml() {
         if (ppy ==null) {
             synchronized (this) {
                 if (ppy ==null) {
                     //noinspection UnnecessaryLocalVariable
-                    PlanParamsYaml temp = PlanParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    SourceCodeParamsYaml temp = PlanParamsYamlUtils.BASE_YAML_UTILS.to(params);
                     ppy = temp;
                 }
             }
@@ -94,7 +94,7 @@ public class SourceCodeImpl implements Serializable, SourceCode {
     }
 
     @JsonIgnore
-    public void updateParams(PlanParamsYaml ppy) {
+    public void updateParams(SourceCodeParamsYaml ppy) {
         params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
     }
 }

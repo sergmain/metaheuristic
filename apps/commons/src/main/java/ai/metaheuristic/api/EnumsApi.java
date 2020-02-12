@@ -24,7 +24,7 @@ public class EnumsApi {
 
     public enum SourceCodeLang { yaml }
 
-    public enum PlanSubProcessLogic { and, or, sequential}
+    public enum SourceCodeSubProcessLogic { and, or, sequential}
 
     public enum SnippetExecContext { external, internal }
 
@@ -163,13 +163,13 @@ public class EnumsApi {
         }
     }
 
-    public enum PlanValidateStatus { OK, NOT_VERIFIED_YET,
-        PLAN_NOT_FOUND_ERROR,
+    public enum SourceCodeValidateStatus { OK, NOT_VERIFIED_YET,
+        SOURCE_CODE_NOT_FOUND_ERROR,
         WORKBOOK_NOT_FOUND_ERROR,
         YAML_PARSING_ERROR,
         ALREADY_PRODUCED_ERROR,
         NOT_VALIDATED_YET_ERROR,
-        PLAN_CODE_EMPTY_ERROR,
+        SOURCE_CODE_UID_EMPTY_ERROR,
         WORKBOOK_DOESNT_EXIST_ERROR,
         NO_INPUT_POOL_CODE_ERROR,
         NO_ANY_PROCESSES_ERROR,
@@ -177,7 +177,7 @@ public class EnumsApi {
         OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
         NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR,
         SNIPPET_NOT_DEFINED_ERROR,
-        PLAN_PARAMS_EMPTY_ERROR,
+        SOURCE_CODE_PARAMS_EMPTY_ERROR,
         PROCESS_PARAMS_EMPTY_ERROR,
         SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR,
         PROCESS_CODE_NOT_FOUND_ERROR,
@@ -211,20 +211,20 @@ public class EnumsApi {
         INTERNAL_SNIPPET_NOT_FOUND_ERROR
     }
 
-    public enum PlanProducingStatus {
+    public enum SourceCodeProducingStatus {
         OK,
         NOT_PRODUCING_YET_ERROR,
         EXPERIMENT_NOT_FOUND_BY_CODE_ERROR,
         PRODUCING_OF_EXPERIMENT_ERROR,
         INPUT_POOL_CODE_DOESNT_EXIST_ERROR,
         INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR,
-        PLAN_CODE_ALREADY_EXIST_ERROR,
+        SOURCE_CODE_UID_ALREADY_EXIST_ERROR,
         META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR,
         WORKBOOK_NOT_FOUND_ERROR,
-        PLAN_NOT_FOUND_ERROR,
+        SOURCE_CODE_NOT_FOUND_ERROR,
         WRONG_FORMAT_OF_SNIPPET_CODE,
         ERROR,
-        TOO_MANY_TASKS_PER_PLAN_ERROR,
+        TOO_MANY_TASKS_PER_SOURCE_CODE_ERROR,
         TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR
     }
 

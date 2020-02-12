@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,7 +27,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Arrays;
 
-import static ai.metaheuristic.api.data.plan.PlanParamsYaml.PlanYaml;
+import static ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml.SourceCodeYaml;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -38,8 +38,8 @@ public class TestProcess {
 
     @Test
     public void testProcessMeta() {
-        PlanParamsYaml.Process p = new PlanParamsYaml.Process();
-        p.snippet = new PlanParamsYaml.SnippetDefForPlan("some-snippet:1.0");
+        SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
+        p.snippet = new SourceCodeParamsYaml.SnippetDefForSourceCode("some-snippet:1.0");
 
         p.metas.addAll(
                 Arrays.asList(
@@ -48,17 +48,17 @@ public class TestProcess {
                         new Meta("feature", "feature", null)
                 )
         );
-        PlanParamsYaml planParamsYaml = new PlanParamsYaml();
-        PlanYaml planYaml = new PlanYaml();
-        planYaml.code = "test-process-for-meta";
-        planYaml.processes.add(p);
-        planParamsYaml.plan = planYaml;
+        SourceCodeParamsYaml sourceCodeParamsYaml = new SourceCodeParamsYaml();
+        SourceCodeYaml sourceCodeYaml = new SourceCodeParamsYaml.SourceCodeYaml();
+        sourceCodeYaml.code = "test-process-for-meta";
+        sourceCodeYaml.processes.add(p);
+        sourceCodeParamsYaml.source = sourceCodeYaml;
 
-        String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
-        PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(s);
-        PlanYaml planYamlV21 = planParams.plan;
+        String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(sourceCodeParamsYaml);
+        SourceCodeParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(s);
+        SourceCodeYaml sourceCodeYamlV21 = planParams.source;
 
-        PlanParamsYaml.Process p1 = planYamlV21.getProcesses().get(0);
+        SourceCodeParamsYaml.Process p1 = sourceCodeYamlV21.getProcesses().get(0);
 
         assertNotNull(p.getMeta("dataset"));
         assertEquals("dataset-processing", p.getMeta("dataset").getValue());

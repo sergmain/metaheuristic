@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.launchpad.source_code.SourceCodeController;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -74,11 +74,11 @@ public class WorkbookController {
 
     @GetMapping(value = "/workbook-add/{planId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String workbookAdd(@ModelAttribute("result") PlanApiData.PlanResult result,
+    public String workbookAdd(@ModelAttribute("result") SourceCodeApiData.PlanResult result,
                               @PathVariable Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanApiData.PlanResult planResultRest = sourceCodeTopLevelService.getPlan(planId, context);
-        if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
+        SourceCodeApiData.PlanResult planResultRest = sourceCodeTopLevelService.getPlan(planId, context);
+        if (planResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
@@ -90,7 +90,7 @@ public class WorkbookController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String workbookAddCommit(Long planId, String variable, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanApiData.WorkbookResult workbookResultRest = sourceCodeTopLevelService.addWorkbook(planId, variable, context);
+        SourceCodeApiData.WorkbookResult workbookResultRest = sourceCodeTopLevelService.addWorkbook(planId, variable, context);
         if (workbookResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", workbookResultRest.errorMessages);
         }
@@ -102,7 +102,7 @@ public class WorkbookController {
     public String workbookDelete(Model model, @PathVariable Long planId, @PathVariable Long workbookId,
                                  final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        PlanApiData.WorkbookResult result = workbookTopLevelService.getWorkbookExtendedForDeletion(workbookId, context);
+        SourceCodeApiData.WorkbookResult result = workbookTopLevelService.getWorkbookExtendedForDeletion(workbookId, context);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return SourceCodeController.REDIRECT_LAUNCHPAD_PLAN_PLANS;

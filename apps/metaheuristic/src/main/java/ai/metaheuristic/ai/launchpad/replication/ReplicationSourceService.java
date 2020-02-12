@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -82,7 +82,7 @@ public class ReplicationSourceService {
         res.plans.addAll(sourceCodeRepository.findAllAsIds().parallelStream()
                 .map(id->{
                     SourceCodeImpl plan = sourceCodeCache.findById(id);
-                    PlanParamsYaml params = plan.getPlanParamsYaml();
+                    SourceCodeParamsYaml params = plan.getPlanParamsYaml();
                     if (params.internalParams!= null && params.internalParams.archived) {
                         return null;
                     }

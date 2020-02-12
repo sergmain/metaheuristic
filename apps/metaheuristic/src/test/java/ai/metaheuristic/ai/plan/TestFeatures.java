@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +45,7 @@ public class TestFeatures extends PreparingPlan {
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
         //noinspection unused
-        PlanApiData.TaskProducingResultComplex result = produceTasksForTest();
+        SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();
         log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();

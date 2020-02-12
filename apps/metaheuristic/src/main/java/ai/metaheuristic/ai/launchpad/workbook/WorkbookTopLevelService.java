@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.launchpad.source_code.SourceCodeUtils;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,25 +48,25 @@ public class WorkbookTopLevelService {
     private final WorkbookService workbookService;
     private final SourceCodeCache sourceCodeCache;
 
-    public PlanApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDesc(Long planId, Pageable pageable, LaunchpadContext context) {
+    public SourceCodeApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDesc(Long planId, Pageable pageable, LaunchpadContext context) {
         return workbookService.getWorkbooksOrderByCreatedOnDescResult(planId, pageable, context);
     }
 
-    public PlanApiData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam, LaunchpadContext context) {
-        final PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(planId, SourceCodeUtils.parseToWorkbookParamsYaml(inputResourceParam));
-        return new PlanApiData.TaskProducingResult(
+    public SourceCodeApiData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam, LaunchpadContext context) {
+        final SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(planId, SourceCodeUtils.parseToWorkbookParamsYaml(inputResourceParam));
+        return new SourceCodeApiData.TaskProducingResult(
                 result.getStatus()== EnumsApi.TaskProducingStatus.OK
                         ? new ArrayList<>()
                         : List.of("Error of creating workbook, " +
-                        "validation status: " + result.getPlanValidateStatus()+", producing status: " + result.getPlanProducingStatus()),
-                result.planValidateStatus,
-                result.planProducingStatus,
+                        "validation status: " + result.getSourceCodeValidateStatus()+", producing status: " + result.getSourceCodeProducingStatus()),
+                result.sourceCodeValidateStatus,
+                result.sourceCodeProducingStatus,
                 result.workbook.getId()
         );
     }
 
-    public PlanApiData.WorkbookResult getWorkbookExtendedForDeletion(Long workbookId, LaunchpadContext context) {
-        PlanApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
+    public SourceCodeApiData.WorkbookResult getWorkbookExtendedForDeletion(Long workbookId, LaunchpadContext context) {
+        SourceCodeApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
 
         // don't show actual graph for this workbook
         WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(result.workbook .getParams());
@@ -76,9 +76,9 @@ public class WorkbookTopLevelService {
         return result;
     }
 
-    public PlanApiData.WorkbookResult getWorkbookExtended(Long workbookId) {
+    public SourceCodeApiData.WorkbookResult getWorkbookExtended(Long workbookId) {
         //noinspection UnnecessaryLocalVariable
-        PlanApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
+        SourceCodeApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
         return result;
     }
 

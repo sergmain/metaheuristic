@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data.plan;
+package ai.metaheuristic.api.data.source_code;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -35,7 +35,7 @@ import java.util.List;
  * Time: 8:58 PM
  */
 @Data
-public class PlanParamsYamlV7 implements BaseParams {
+public class SourceCodeParamsYamlV7 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
@@ -43,8 +43,8 @@ public class PlanParamsYamlV7 implements BaseParams {
                 planYaml.processes != null;
         if (!b) {
             throw new IllegalArgumentException(
-                    "(boolean b = planYaml != null && planYaml.planCode != null && " +
-                            "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
+                    "(boolean b = sourceCodeYaml != null && sourceCodeYaml.planCode != null && " +
+                            "!sourceCodeYaml.planCode.isBlank() && sourceCodeYaml.processes != null) ");
         }
         for (ProcessV7 process : planYaml.processes) {
             if (process.type==EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0)) {

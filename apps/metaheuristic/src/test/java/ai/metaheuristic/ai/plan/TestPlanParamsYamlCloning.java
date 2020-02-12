@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.junit.Test;
 
 import java.util.List;
@@ -34,26 +34,26 @@ public class TestPlanParamsYamlCloning {
 
     @Test
     public void cloneProcess() {
-        PlanParamsYaml.Process p = new PlanParamsYaml.Process();
+        SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
         p.name = "name";
         p.code = "code";
-        p.snippet = new PlanParamsYaml.SnippetDefForPlan("snippet-code", "snippet-params", EnumsApi.SnippetExecContext.external);
+        p.snippet = new SourceCodeParamsYaml.SnippetDefForSourceCode("snippet-code", "snippet-params", EnumsApi.SnippetExecContext.external);
         p.preSnippets = List.of(
-                new PlanParamsYaml.SnippetDefForPlan("pre1-code", "pre1-params", EnumsApi.SnippetExecContext.external),
-                new PlanParamsYaml.SnippetDefForPlan("pre2-code", "pre2-params", EnumsApi.SnippetExecContext.external)
+                new SourceCodeParamsYaml.SnippetDefForSourceCode("pre1-code", "pre1-params", EnumsApi.SnippetExecContext.external),
+                new SourceCodeParamsYaml.SnippetDefForSourceCode("pre2-code", "pre2-params", EnumsApi.SnippetExecContext.external)
         );
         p.postSnippets = List.of(
-                new PlanParamsYaml.SnippetDefForPlan("post1-code", "post1-params", EnumsApi.SnippetExecContext.external),
-                new PlanParamsYaml.SnippetDefForPlan("post2-code", "post2-params", EnumsApi.SnippetExecContext.external),
-                new PlanParamsYaml.SnippetDefForPlan("post3-code", "post3-params", EnumsApi.SnippetExecContext.external)
+                new SourceCodeParamsYaml.SnippetDefForSourceCode("post1-code", "post1-params", EnumsApi.SnippetExecContext.external),
+                new SourceCodeParamsYaml.SnippetDefForSourceCode("post2-code", "post2-params", EnumsApi.SnippetExecContext.external),
+                new SourceCodeParamsYaml.SnippetDefForSourceCode("post3-code", "post3-params", EnumsApi.SnippetExecContext.external)
         ) ;
 
         p.timeoutBeforeTerminate = 120L;
 
-        p.output.add( new PlanParamsYaml.Variable("output-code"));
+        p.output.add( new SourceCodeParamsYaml.Variable("output-code"));
         p.metas.add(new Meta("key", "value", "ext"));
 
-        PlanParamsYaml.Process p1 = p.clone();
+        SourceCodeParamsYaml.Process p1 = p.clone();
 
         assertEquals("name", p1.name);
         assertEquals("code", p1.code);
@@ -74,7 +74,7 @@ public class TestPlanParamsYamlCloning {
 
         assertNotNull(p1.output);
         assertEquals(1, p1.output.size());
-        PlanParamsYaml.Variable params = p1.output.get(0);
+        SourceCodeParamsYaml.Variable params = p1.output.get(0);
 
         assertEquals(EnumsApi.DataSourcing.launchpad, params.sourcing);
         assertEquals("output-code", params.name);

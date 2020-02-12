@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -45,42 +45,42 @@ public class PlanRestController {
 
     @GetMapping("/plans")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public PlanApiData.PlansResult plans(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
+    public SourceCodeApiData.PlansResult plans(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.getPlans(pageable, false, context);
     }
 
     @GetMapping("/plans-archived-only")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public PlanApiData.PlansResult plansArchivedOnly(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
+    public SourceCodeApiData.PlansResult plansArchivedOnly(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.getPlans(pageable, true, context);
     }
 
     @GetMapping(value = "/plan/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public PlanApiData.PlanResult edit(@PathVariable Long id, Authentication authentication) {
+    public SourceCodeApiData.PlanResult edit(@PathVariable Long id, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.getPlan(id, context);
     }
 
     @GetMapping(value = "/plan-validate/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
-    public PlanApiData.PlanResult validate(@PathVariable Long id, Authentication authentication) {
+    public SourceCodeApiData.PlanResult validate(@PathVariable Long id, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.validatePlan(id, context);
     }
 
     @PostMapping("/plan-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public PlanApiData.PlanResult addFormCommit(@RequestParam(name = "planYaml") String planYamlAsStr, Authentication authentication) {
+    public SourceCodeApiData.PlanResult addFormCommit(@RequestParam(name = "sourceCodeYaml") String planYamlAsStr, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.addPlan(planYamlAsStr, context);
     }
 
     @PostMapping("/plan-edit-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public PlanApiData.PlanResult editFormCommit(Long planId, @RequestParam(name = "planYaml") String planYamlAsStr, Authentication authentication) {
+    public SourceCodeApiData.PlanResult editFormCommit(Long planId, @RequestParam(name = "sourceCodeYaml") String planYamlAsStr, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.updatePlan(planId, planYamlAsStr, context);
     }

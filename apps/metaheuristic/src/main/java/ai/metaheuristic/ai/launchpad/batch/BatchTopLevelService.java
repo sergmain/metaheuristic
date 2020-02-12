@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
-import ai.metaheuristic.ai.launchpad.data.PlanData;
+import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeUtils;
@@ -42,7 +42,7 @@ import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -176,7 +176,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
-        PlanData.PlansForCompany plansForCompany = sourceCodeService.getPlan(context.getCompanyId(), planId);
+        SourceCodeData.PlansForCompany plansForCompany = sourceCodeService.getPlan(context.getCompanyId(), planId);
         if (plansForCompany.isErrorMessages()) {
             return new BatchData.UploadingStatus(plansForCompany.errorMessages);
         }
@@ -192,13 +192,13 @@ public class BatchTopLevelService {
         // TODO 2019-07-06 Do we need to validate the sourceCode here in case that there is another check?
         //  2019-10-28 it's working so left it as is until an issue with this will be found
         // validate the sourceCode
-        PlanApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
-        if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
+        SourceCodeApiData.PlanValidation planValidation = sourceCodeService.validateInternal(plan);
+        if (planValidation.status != EnumsApi.SourceCodeValidateStatus.OK ) {
             return new BatchData.UploadingStatus("#995.060 validation of sourceCode was failed, status: " + planValidation.status);
         }
 
         Batch b;
-        PlanApiData.TaskProducingResultComplex producingResult;
+        SourceCodeApiData.TaskProducingResultComplex producingResult;
         try {
             // tempDir will be deleted in processing thread
             File tempDir = DirUtils.createTempDir("batch-file-upload-");
@@ -215,8 +215,8 @@ public class BatchTopLevelService {
 
             WorkbookParamsYaml.WorkbookYaml workbookYaml = SourceCodeUtils.asWorkbookParamsYaml(code);
             producingResult = workbookService.createWorkbook(planId, workbookYaml, false);
-            if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
-                throw new BatchResourceProcessingException("#995.075 Error creating workbook: " + producingResult.planProducingStatus);
+            if (producingResult.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
+                throw new BatchResourceProcessingException("#995.075 Error creating workbook: " + producingResult.sourceCodeProducingStatus);
             }
 
             try(InputStream is = new FileInputStream(dataFile)) {

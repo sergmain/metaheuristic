@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.jgrapht.graph.DefaultEdge;
@@ -32,7 +32,7 @@ import java.util.List;
  * Date: 1/18/2020
  * Time: 4:41 PM
  */
-public class PlanData {
+public class SourceCodeData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -46,9 +46,9 @@ public class PlanData {
 
         public String processName;
         public String processCode;
-        public PlanParamsYaml.SnippetDefForPlan snippet;
-        public List<PlanParamsYaml.SnippetDefForPlan> preSnippets;
-        public List<PlanParamsYaml.SnippetDefForPlan> postSnippets;
+        public SourceCodeParamsYaml.SnippetDefForSourceCode snippet;
+        public List<SourceCodeParamsYaml.SnippetDefForSourceCode> preSnippets;
+        public List<SourceCodeParamsYaml.SnippetDefForSourceCode> postSnippets;
 
         /**
          * Timeout before terminating a process with snippet

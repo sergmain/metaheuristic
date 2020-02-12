@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.sourcing.DiskInfo;
@@ -38,14 +38,14 @@ public class TestResourcePools {
         new ArrayList<>();
         p.collectedInputs.put("aaa", new ArrayList<>(List.of("a1", "a2", "a3")));
         p.inputStorageUrls = new HashMap<>();
-        p.inputStorageUrls.put("aaa", new PlanParamsYaml.Variable("aaa"));
+        p.inputStorageUrls.put("aaa", new SourceCodeParamsYaml.Variable("aaa"));
 
         SourceCodeService.ResourcePools p1 = new SourceCodeService.ResourcePools();
         p1.collectedInputs.put("aaa", new ArrayList<>(List.of("a4")));
         p1.collectedInputs.put("bbb", new ArrayList<>(List.of("b1", "b2", "b3")));
         p1.inputStorageUrls = new HashMap<>();
         DiskInfo diskInfo = new DiskInfo("*", "dir-code", null);
-        p1.inputStorageUrls.put("bbb", new PlanParamsYaml.Variable(SOURCING_DISK_PARAMS.sourcing, null, diskInfo, "bbb"));
+        p1.inputStorageUrls.put("bbb", new SourceCodeParamsYaml.Variable(SOURCING_DISK_PARAMS.sourcing, null, diskInfo, "bbb"));
 
         p.merge(p1);
 
@@ -62,7 +62,7 @@ public class TestResourcePools {
         assertTrue(p.collectedInputs.get("bbb").contains("b3"));
 
         assertEquals(2, p.inputStorageUrls.keySet().size());
-        PlanParamsYaml.Variable variable = p.inputStorageUrls.get("aaa");
+        SourceCodeParamsYaml.Variable variable = p.inputStorageUrls.get("aaa");
         assertEquals(new DataStorageParams(EnumsApi.DataSourcing.launchpad).sourcing, variable.sourcing);
 
         variable = p.inputStorageUrls.get("bbb");

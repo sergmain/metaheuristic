@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetDataService;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
@@ -75,7 +75,7 @@ public class TestSnippetService {
 
     @Test
     public void test() {
-        PlanParamsYaml.SnippetDefForPlan sd = new PlanParamsYaml.SnippetDefForPlan();
+        SourceCodeParamsYaml.SnippetDefForSourceCode sd = new SourceCodeParamsYaml.SnippetDefForSourceCode();
         sd.code = TEST_SNIPPET;
         sd.params = null;
         TaskParamsYaml.SnippetConfig sc = snippetService.getSnippetConfig(sd);

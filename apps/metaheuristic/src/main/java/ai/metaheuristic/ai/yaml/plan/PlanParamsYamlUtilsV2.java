@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV2;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV3;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV2;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV3;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.process.ProcessV2;
 import ai.metaheuristic.api.launchpad.process.ProcessV3;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 public class PlanParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<PlanParamsYamlV2, PlanParamsYamlV3, PlanParamsYamlUtilsV3, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<SourceCodeParamsYamlV2, SourceCodeParamsYamlV3, PlanParamsYamlUtilsV3, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -46,14 +46,14 @@ public class PlanParamsYamlUtilsV2
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(PlanParamsYamlV2.class);
+        return YamlUtils.init(SourceCodeParamsYamlV2.class);
     }
 
     @Override
-    public PlanParamsYamlV3 upgradeTo(PlanParamsYamlV2 yaml, Long ... vars) {
-        PlanParamsYamlV3 p = new PlanParamsYamlV3();
+    public SourceCodeParamsYamlV3 upgradeTo(SourceCodeParamsYamlV2 yaml, Long ... vars) {
+        SourceCodeParamsYamlV3 p = new SourceCodeParamsYamlV3();
         p.internalParams = yaml.internalParams;
-        p.planYaml = new PlanParamsYamlV3.PlanYamlV3();
+        p.planYaml = new SourceCodeParamsYamlV3.PlanYamlV3();
         p.planYaml.clean = yaml.planYaml.clean;
         p.planYaml.processes = yaml.planYaml.processes
                 .stream()
@@ -90,13 +90,13 @@ public class PlanParamsYamlUtilsV2
     }
 
     @Override
-    public String toString(PlanParamsYamlV2 planYaml) {
+    public String toString(SourceCodeParamsYamlV2 planYaml) {
         return getYaml().dump(planYaml);
     }
 
     @Override
-    public PlanParamsYamlV2 to(String s) {
-        final PlanParamsYamlV2 p = getYaml().load(s);
+    public SourceCodeParamsYamlV2 to(String s) {
+        final SourceCodeParamsYamlV2 p = getYaml().load(s);
         for (ProcessV2 process : p.planYaml.processes) {
             if (process.outputParams==null) {
                 process.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);

@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
-import ai.metaheuristic.ai.launchpad.data.PlanData;
+import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
@@ -86,7 +86,7 @@ public class BatchRestController {
     }
 
     @GetMapping(value = "/batch-add")
-    public PlanData.PlansForCompany batchAdd(Authentication authentication) {
+    public SourceCodeData.PlansForCompany batchAdd(Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return sourceCodeService.getAvailablePlansForCompany(context);
     }

@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookOperationStatusWithTaskLis
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,7 +61,7 @@ public class TestGraph extends PreparingPlan {
     @Test
     public void test() {
 
-        PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
         workbook = (WorkbookImpl)result.workbook;
 
         assertNotNull(workbook);

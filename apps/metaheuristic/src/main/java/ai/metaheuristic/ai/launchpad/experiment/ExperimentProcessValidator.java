@@ -26,7 +26,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.S;
@@ -57,67 +57,67 @@ public class ExperimentProcessValidator implements ProcessValidator {
     // TODO 2020.02.01 experiment as special process will be deleted. There will be only a standard snippet processing
 
     @Override
-    public EnumsApi.PlanValidateStatus validate(SourceCode sourceCode, PlanParamsYaml.Process process, boolean isFirst) {
+    public EnumsApi.SourceCodeValidateStatus validate(SourceCode sourceCode, SourceCodeParamsYaml.Process process, boolean isFirst) {
         if (StringUtils.isBlank(process.code)) {
-            return EnumsApi.PlanValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
+            return EnumsApi.SourceCodeValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }
         Long experimentId = experimentRepository.findIdByCode(process.code);
         if (experimentId==null) {
-            return EnumsApi.PlanValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
+            return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
         }
         Experiment e = experimentCache.findById(experimentId);
         if (e==null) {
-            return EnumsApi.PlanValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
+            return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
         }
         if (e.getWorkbookId()!=null) {
             Workbook workbook = workbookCache.findById(e.getWorkbookId());
             if (workbook != null) {
                 if (!sourceCode.getId().equals(workbook.getPlanId())) {
-                    return EnumsApi.PlanValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;
+                    return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;
                 }
             }
             else {
-                return EnumsApi.PlanValidateStatus.WORKBOOK_DOESNT_EXIST_ERROR;
+                return EnumsApi.SourceCodeValidateStatus.WORKBOOK_DOESNT_EXIST_ERROR;
             }
         }
         ExperimentParamsYaml epy = e.getExperimentParamsYaml();
 
         if (StringUtils.isBlank(epy.experimentYaml.fitSnippet) || StringUtils.isBlank(epy.experimentYaml.predictSnippet)) {
-            return EnumsApi.PlanValidateStatus.EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR;
+            return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR;
         }
         Snippet s = snippetRepository.findByCode(epy.experimentYaml.fitSnippet);
         if (s==null) {
-            return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+            return EnumsApi.SourceCodeValidateStatus.SNIPPET_NOT_FOUND_ERROR;
         }
 
         Snippet predictSnippet = snippetRepository.findByCode(epy.experimentYaml.fitSnippet);
         if (predictSnippet==null) {
-            return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+            return EnumsApi.SourceCodeValidateStatus.SNIPPET_NOT_FOUND_ERROR;
         }
         boolean isFittingDetection = MetaUtils.isTrue(predictSnippet.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
         if (isFittingDetection) {
             if (S.b(epy.experimentYaml.checkFittingSnippet)) {
-                return EnumsApi.PlanValidateStatus.FITTING_SNIPPET_NOT_FOUND_ERROR;
+                return EnumsApi.SourceCodeValidateStatus.FITTING_SNIPPET_NOT_FOUND_ERROR;
             }
             Snippet fittingSnippet = snippetRepository.findByCode(epy.experimentYaml.checkFittingSnippet);
             if (fittingSnippet==null) {
-                return EnumsApi.PlanValidateStatus.FITTING_SNIPPET_NOT_FOUND_ERROR;
+                return EnumsApi.SourceCodeValidateStatus.FITTING_SNIPPET_NOT_FOUND_ERROR;
             }
 
         }
         if (!isFirst) {
             if (process.metas == null || process.metas.isEmpty()) {
-                return EnumsApi.PlanValidateStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
+                return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
             }
 
             Meta m1 = process.getMeta("dataset");
             if (m1 == null || StringUtils.isBlank(m1.getValue())) {
-                return EnumsApi.PlanValidateStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
+                return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
             }
 
             Meta m3 = process.getMeta("feature");
             if (m3 == null || StringUtils.isBlank(m3.getValue())) {
-                return EnumsApi.PlanValidateStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
+                return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
             }
         }
         return null;

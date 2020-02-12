@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data.plan;
+package ai.metaheuristic.api.data.source_code;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -36,15 +36,15 @@ import java.util.Map;
  * $Date:
  */
 @Data
-public class PlanParamsYamlV8 implements BaseParams {
+public class SourceCodeParamsYamlV8 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        final boolean b = plan != null && !S.b(plan.code) && plan.processes != null;
+        final boolean b = source != null && !S.b(source.code) && source.processes != null;
         if (!b) {
             throw new CheckIntegrityFailedException("(b = sourceCode != null && !S.b(sourceCode.code) && sourceCode.processes != null) ");
         }
-        for (ProcessV8 process : plan.processes) {
+        for (ProcessV8 process : source.processes) {
             if (process.snippet==null) {
                 throw new CheckIntegrityFailedException("(process.snippet==null)");
             }
@@ -87,7 +87,7 @@ public class PlanParamsYamlV8 implements BaseParams {
     }
 
     public static class SubProcessesV8 {
-        public EnumsApi.PlanSubProcessLogic logic;
+        public EnumsApi.SourceCodeSubProcessLogic logic;
         public List<ProcessV8> processes;
     }
 
@@ -142,7 +142,7 @@ public class PlanParamsYamlV8 implements BaseParams {
 
     @Data
     @ToString
-    public static class PlanYamlV8 {
+    public static class SourceCodeV8 {
         public VariableDefinitionV8 variables;
         public List<ProcessV8> processes = new ArrayList<>();
         public boolean clean = false;
@@ -182,7 +182,7 @@ public class PlanParamsYamlV8 implements BaseParams {
     }
 
     public final int version=8;
-    public PlanYamlV8 plan;
+    public SourceCodeV8 source;
     public final OriginV8 origin = new OriginV8();
     public InternalParamsV8 internalParams;
 

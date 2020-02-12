@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data.plan;
+package ai.metaheuristic.api.data.source_code;
 
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.launchpad.process.ProcessV4;
+import ai.metaheuristic.api.launchpad.process.ProcessV1;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -30,34 +30,25 @@ import java.util.List;
  * Time: 8:58 PM
  */
 @Data
-public class PlanParamsYamlV4 implements BaseParams {
+public class SourceCodeParamsYamlV1 implements BaseParams {
+    public List<ProcessV1> processes = new ArrayList<>();
+    public boolean clean = false;
+    public List<Meta> metas;
+
+    public Meta getMeta(String key) {
+        if (metas == null) {
+            return null;
+        }
+        for (Meta meta : metas) {
+            if (meta.key.equals(key)) {
+                return meta;
+            }
+        }
+        return null;
+    }
 
     @Override
     public boolean checkIntegrity() {
         return true;
     }
-
-    @Data
-    public static class PlanYamlV4 {
-        public List<ProcessV4> processes = new ArrayList<>();
-        public boolean clean = false;
-        public List<Meta> metas;
-
-        public Meta getMeta(String key) {
-            if (metas == null) {
-                return null;
-            }
-            for (Meta meta : metas) {
-                if (meta.key.equals(key)) {
-                    return meta;
-                }
-            }
-            return null;
-        }
-    }
-
-    public final int version=4;
-    public PlanYamlV4 planYaml;
-    public PlanApiData.PlanInternalParamsYaml internalParams;
-
 }

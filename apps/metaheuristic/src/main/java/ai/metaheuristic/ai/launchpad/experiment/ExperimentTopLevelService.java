@@ -39,7 +39,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
@@ -737,7 +737,7 @@ public class ExperimentTopLevelService {
                     "#285.510 can't find a sourceCode with experiment code: " + experimentCode);
         }
 */
-        PlanApiData.WorkbookResult workbookResultRest = sourceCodeTopLevelService.addWorkbook(p.id, resourcePoolCode, context);
+        SourceCodeApiData.WorkbookResult workbookResultRest = sourceCodeTopLevelService.addWorkbook(p.id, resourcePoolCode, context);
         if (workbookResultRest.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, workbookResultRest.errorMessages, workbookResultRest.infoMessages);
         }

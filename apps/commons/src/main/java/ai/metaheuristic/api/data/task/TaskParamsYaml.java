@@ -19,8 +19,7 @@ package ai.metaheuristic.api.data.task;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
@@ -127,7 +126,7 @@ public class TaskParamsYaml implements BaseParams {
         public List<SnippetConfig> postSnippets;
         public Map<String, List<String>> inputResourceIds = new HashMap<>();
         public Map<String, String> outputResourceIds = new HashMap<>();
-        public Map<String, PlanParamsYaml.Variable> resourceStorageUrls = new HashMap<>();
+        public Map<String, SourceCodeParamsYaml.Variable> resourceStorageUrls = new HashMap<>();
         public TaskMachineLearning taskMl;
         public boolean clean = false;
         public EnumsApi.SnippetExecContext context;
