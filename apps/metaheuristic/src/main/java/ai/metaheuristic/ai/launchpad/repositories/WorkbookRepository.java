@@ -56,11 +56,11 @@ public interface WorkbookRepository extends CrudRepository<ExecContextImpl, Long
     List<Long> findIdsByExecState(int execState);
 
     @Transactional(readOnly = true)
-    @Query(value="select e.id from ExecContextImpl e where e.sourceCodeId=:planId")
-    List<Long> findIdsByPlanId(Long planId);
+    @Query(value="select e.id from ExecContextImpl e where e.sourceCodeId=:sourceCodeId")
+    List<Long> findIdsBysourceCodeId(Long sourceCodeId);
 
     @Transactional(readOnly = true)
-    Slice<ExecContext> findByPlanIdOrderByCreatedOnDesc(Pageable pageable, Long planId);
+    Slice<ExecContext> findBySourceCodeIdOrderByCreatedOnDesc(Pageable pageable, Long sourceCodeId);
 
 }
 

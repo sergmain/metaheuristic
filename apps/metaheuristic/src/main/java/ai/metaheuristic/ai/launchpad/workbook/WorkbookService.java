@@ -609,7 +609,7 @@ public class WorkbookService {
         ExecContext execContext = workbookCache.findById(workbookId);
         if (execContext != null) {
             // unlock sourceCode if this is the last execContext in the sourceCode
-            List<Long> ids = workbookRepository.findIdsByPlanId(execContext.getPlanId());
+            List<Long> ids = workbookRepository.findIdsBysourceCodeId(execContext.getPlanId());
             if (ids.size()==1) {
                 if (ids.get(0).equals(workbookId)) {
                     if (execContext.getPlanId() != null) {
