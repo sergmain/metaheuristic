@@ -59,7 +59,7 @@ public class TaskProducingService {
 
     @SuppressWarnings("Duplicates")
     public SourceCodeService.ProduceTaskResult produceTasksForProcess(
-            boolean isPersist, Long planId, String contextId, SourceCodeParamsYaml planParams, Long workbookId,
+            boolean isPersist, Long sourceCodeId, String internalContextId, SourceCodeParamsYaml planParams, Long execContextId,
             SourceCodeParamsYaml.Process process, SourceCodeService.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls = new HashMap<>(pools.inputStorageUrls);
@@ -73,7 +73,7 @@ public class TaskProducingService {
         if (process.snippet.context==EnumsApi.SnippetExecContext.external ) {
             Map<String, SourceCodeParamsYaml.Variable> outputResourceIds = new HashMap<>();
             for (SourceCodeParamsYaml.Variable variable : process.output) {
-                Variable v = variableService.createUninitialized(variable.name, workbookId, contextId);
+                Variable v = variableService.createUninitialized(variable.name, execContextId, internalContextId);
                 // resourceId is an Id of one part of Variable. Variable can contains unlimited number of resources
                 String resourceId = v.id.toString();
                 outputResourceIds.put(resourceId, variable);
@@ -81,13 +81,13 @@ public class TaskProducingService {
                 inputStorageUrls.put(resourceId, variable);
             }
             if (isPersist) {
-                Task t = createTaskInternal(planParams, workbookId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
+                Task t = createTaskInternal(planParams, execContextId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
                 if (t!=null) {
                     result.taskIds.add(t.getId());
                 }
             }
 
-            workbookGraphTopLevelService.addNewTasksToGraph(workbookId, parentTaskIds, result.taskIds);
+            workbookGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, result.taskIds);
 
             result.numberOfTasks++;
             if (process.subProcesses!=null && CollectionUtils.isNotEmpty(process.subProcesses.processes)) {
@@ -97,10 +97,10 @@ public class TaskProducingService {
                         return new SourceCodeService.ProduceTaskResult(EnumsApi.SourceCodeProducingStatus.TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR);
                     }
 
-                    String ctxId = contextId + ','+ idsRepository.save(new Ids()).id;
+                    String ctxId = internalContextId + ','+ idsRepository.save(new Ids()).id;
 
                     for (SourceCodeParamsYaml.Variable variable : subProcess.output) {
-                        Variable v = variableService.createUninitialized(variable.name, workbookId, ctxId);
+                        Variable v = variableService.createUninitialized(variable.name, execContextId, ctxId);
                         // resourceId is an Id of one part of Variable. Variable can contains unlimited number of resources
                         String resourceId = v.id.toString();
                         outputResourceIds.put(resourceId, variable);
@@ -108,7 +108,7 @@ public class TaskProducingService {
                         inputStorageUrls.put(resourceId, variable);
                     }
                     if (isPersist) {
-                        Task t = createTaskInternal(planParams, workbookId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
+                        Task t = createTaskInternal(planParams, execContextId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
                         if (t!=null) {
                             result.taskIds.add(t.getId());
                         }
@@ -119,7 +119,7 @@ public class TaskProducingService {
         }
         else {
             // variables will be created while processing of internal snippet
-            List<InternalSnippetOutput> outputs = internalSnippetProcessor.process(snDef.code, planId, workbookId, contextId, null);
+            List<InternalSnippetOutput> outputs = internalSnippetProcessor.process(snDef.code, sourceCodeId, execContextId, internalContextId, null);
 
             // theoretically, internal snippet can be without subProcesses, i.e. a result aggregation snippet
             if (true) {

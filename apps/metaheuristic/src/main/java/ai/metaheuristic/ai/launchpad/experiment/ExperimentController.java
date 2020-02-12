@@ -346,11 +346,11 @@ public class ExperimentController {
         return "redirect:/launchpad/experiment/experiment-info/"+experimentId;
     }
 
-    @PostMapping("/bind-experiment-to-plan-with-resource")
-    public String bindExperimentToPlanWithResource(Long experimentId, String experimentCode, String resourcePoolCode,
-                                                   final RedirectAttributes redirectAttributes, Authentication authentication) {
+    @PostMapping("/bind-experiment-to-source-code-with-resource")
+    public String bindExperimentToSourceCodeWithResource(Long experimentId, String experimentCode, String resourcePoolCode,
+                                                         final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        OperationStatusRest status = experimentTopLevelService.bindExperimentToPlanWithResource(experimentCode, resourcePoolCode, context);
+        OperationStatusRest status = experimentTopLevelService.bindExperimentToSourceCodeWithResource(experimentCode, resourcePoolCode, context);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }

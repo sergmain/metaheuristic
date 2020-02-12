@@ -686,7 +686,7 @@ public class ExperimentService {
     }
 
     public EnumsApi.SourceCodeProducingStatus produceTasks(
-            boolean isPersist, SourceCodeParamsYaml planParams, Long workbookId, SourceCodeParamsYaml.Process process,
+            boolean isPersist, SourceCodeParamsYaml sourceCodeParams, Long workbookId, SourceCodeParamsYaml.Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
             Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
 
@@ -869,7 +869,7 @@ public class ExperimentService {
                                 yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(snDef));
                             }
                         }
-                        yaml.taskYaml.clean = planParams.source.clean;
+                        yaml.taskYaml.clean = sourceCodeParams.source.clean;
                         yaml.taskYaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
                         String currTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);

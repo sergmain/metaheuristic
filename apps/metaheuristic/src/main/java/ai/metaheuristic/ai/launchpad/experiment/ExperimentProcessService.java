@@ -56,7 +56,7 @@ public class ExperimentProcessService {
     private final WorkbookCache workbookCache;
 
     public SourceCodeService.ProduceTaskResult produceTasks(
-            boolean isPersist, SourceCodeParamsYaml planParams, Long workbookId,
+            boolean isPersist, SourceCodeParamsYaml sourceCodeParams, Long execContextId,
             SourceCodeParamsYaml.Process process, SourceCodeService.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
@@ -80,7 +80,7 @@ public class ExperimentProcessService {
         if (!isPersist) {
             e = e.clone();
         }
-        e.setWorkbookId(workbookId);
+        e.setWorkbookId(execContextId);
         if (isPersist) {
             e = experimentCache.save(e);
         }
@@ -89,7 +89,7 @@ public class ExperimentProcessService {
 
         List<String> features;
         if (meta==null) {
-            ExecContextImpl workbook = workbookCache.findById(workbookId);
+            ExecContextImpl workbook = workbookCache.findById(execContextId);
             if (workbook==null) {
                 result.status = EnumsApi.SourceCodeProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
                 return result;
@@ -114,7 +114,7 @@ public class ExperimentProcessService {
         else {
             if (!collectedInputs.containsKey(meta.getValue())) {
                 List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(
-                        Collections.singletonList(meta.getValue()), workbookId
+                        Collections.singletonList(meta.getValue()), execContextId
                 );
 
                 SourceCodeService.ResourcePools metaPools = new SourceCodeService.ResourcePools(initialInputResourceCodes);
@@ -142,7 +142,7 @@ public class ExperimentProcessService {
         Monitoring.log("##051", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
         EnumsApi.SourceCodeProducingStatus status = experimentService.produceTasks(
-                isPersist, planParams, workbookId, process, e, collectedInputs, inputStorageUrls, intHolder, parentTaskIds);
+                isPersist, sourceCodeParams, execContextId, process, e, collectedInputs, inputStorageUrls, intHolder, parentTaskIds);
 
         log.info("experimentService.produceTasks() was done for " + (System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##071", Enums.Monitor.MEMORY);

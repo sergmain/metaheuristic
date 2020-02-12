@@ -118,12 +118,12 @@ public class ReplicationCompanyService {
     }
 
     private ReplicationData.CompanyAsset getCompanyAsset(Long uniqueId) {
-        ReplicationData.CompanyAsset planAsset = requestCompanyAsset(uniqueId);
-        if (planAsset.isErrorMessages()) {
-            log.error("#308.020 Error while getting company with uniqueId "+ uniqueId +", error: " + planAsset.getErrorMessagesAsStr());
+        ReplicationData.CompanyAsset companyAsset = requestCompanyAsset(uniqueId);
+        if (companyAsset.isErrorMessages()) {
+            log.error("#308.020 Error while getting company with uniqueId "+ uniqueId +", error: " + companyAsset.getErrorMessagesAsStr());
             return null;
         }
-        return planAsset;
+        return companyAsset;
     }
 
     private ReplicationData.CompanyAsset requestCompanyAsset(Long uniqueId) {

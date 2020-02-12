@@ -40,7 +40,7 @@ public class ReplicationService {
     public final ReplicationCompanyService replicationCompanyService;
     public final ReplicationAccountService replicationAccountService;
     public final ReplicationSnippetService replicationSnippetService;
-    public final ReplicationPlanService replicationPlanService;
+    public final ReplicationSourceCodeService replicationSourceCodeService;
 
     public void sync() {
         if (globals.assetMode!= EnumsApi.LaunchpadAssetMode.replicated) {
@@ -52,7 +52,7 @@ public class ReplicationService {
             return;
         }
         replicationSnippetService.syncSnippets(assetStateResponse.snippets);
-        replicationPlanService.syncPlans(assetStateResponse.sourceCodes);
+        replicationSourceCodeService.syncSourceCodes(assetStateResponse.sourceCodes);
         replicationCompanyService.syncCompanies(assetStateResponse.companies);
         replicationAccountService.syncAccounts(assetStateResponse.usernames);
     }

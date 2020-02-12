@@ -82,8 +82,8 @@ public class SourceCodeService {
 
     @Async
     @EventListener
-    public void handleAsync(LaunchpadInternalEvent.PlanLockingEvent event) {
-        setLockedTo(event.planId, event.companyUniqueId, event.lock);
+    public void handleAsync(LaunchpadInternalEvent.SourceCodeLockingEvent event) {
+        setLockedTo(event.sourceCodeId, event.companyUniqueId, event.lock);
     }
 
     public SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(LaunchpadContext context) {

@@ -28,6 +28,6 @@ import java.util.Map;
  */
 public interface InternalSnippet {
     List<InternalSnippetOutput> process(
-            Long planId, Long workbookId, String contxtId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             Map<String, List<String>> inputResourceIds);
 }

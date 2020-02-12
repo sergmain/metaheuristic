@@ -100,7 +100,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
     }
 
     public List<InternalSnippetOutput> process(
-            Long planId, Long workbookId, String contextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             Map<String, List<String>> inputResourceIds) {
 
         List<String> values = inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
@@ -131,11 +131,11 @@ public class ResourceSplitterSnippet implements InternalSnippet {
                 log.debug("Start unzipping archive");
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(planId, workbookId, contextId, tempDir, mapping);
+                loadFilesFromDirAfterZip(sourceCodeId, execContextId, internalContextId, tempDir, mapping);
             }
             else {
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(planId, workbookId, contextId, tempDir, Map.of(dataFile.getName(), originFilename));
+                loadFilesFromDirAfterZip(sourceCodeId, execContextId, internalContextId, tempDir, Map.of(dataFile.getName(), originFilename));
             }
         }
         catch(Throwable th) {
@@ -158,19 +158,19 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         return null;
     }
 
-    public void loadFilesFromDirAfterZip(Long planId, Long workbookId, String contextId, File srcDir, final Map<String, String> mapping) throws IOException {
+    public void loadFilesFromDirAfterZip(Long sourceCodeId, Long execContextId, String internalContextId, File srcDir, final Map<String, String> mapping) throws IOException {
 
-        SourceCodeImpl plan = sourceCodeCache.findById(planId);
-        if (plan==null) {
-            throw new IllegalStateException("#995.200 sourceCode wasn't found, planId: " + planId);
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+        if (sourceCode==null) {
+            throw new IllegalStateException("#995.200 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
         }
-        ExecContext wb = workbookCache.findById(workbookId);
+        ExecContext wb = workbookCache.findById(execContextId);
         if (wb==null) {
-            throw new IllegalStateException("#995.202 execContext wasn't found, workbookId: " + workbookId);
+            throw new IllegalStateException("#995.202 execContext wasn't found, execContextId: " + execContextId);
         }
 
         if (true) {
-            throw new NotImplementedException("need to use real contextId");
+            throw new NotImplementedException("need to use real internalContextId");
         }
         final AtomicBoolean isEmpty = new AtomicBoolean(true);
         Files.list(srcDir.toPath())
@@ -181,7 +181,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
                 .forEach( dataFilePath ->  {
                     isEmpty.set(false);
                     File file = dataFilePath.toFile();
-                    String ctxId = contextId+"," + idsRepository.save(new Ids()).id;
+                    String ctxId = internalContextId+"," + idsRepository.save(new Ids()).id;
                     try {
                         if (file.isDirectory()) {
                             final File mainDocFile = getMainDocumentFileFromConfig(file, mapping);
@@ -192,10 +192,10 @@ public class ResourceSplitterSnippet implements InternalSnippet {
                                         final String actualFileName = mapping.get(currFileName);
                                         return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
                                     });
-                            createAndProcessTask(plan, wb, files, mainDocFile, ctxId);
+                            createAndProcessTask(sourceCode, wb, files, mainDocFile, ctxId);
                         } else {
                             String actualFileName = mapping.get(file.getName());
-                            createAndProcessTask(plan, wb, Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), file, ctxId);
+                            createAndProcessTask(sourceCode, wb, Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), file, ctxId);
                         }
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;
@@ -207,7 +207,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
                 });
     }
 
-    private void createAndProcessTask(SourceCodeImpl plan, ExecContext wb, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile, String contextId) {
+    private void createAndProcessTask(SourceCodeImpl sourceCode, ExecContext ec, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile, String contextId) {
 
         // TODO this method need to be re-written completely
         if (true) {
@@ -217,8 +217,8 @@ public class ResourceSplitterSnippet implements InternalSnippet {
 /*
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
-        String mainPoolCode = String.format("%d-%s-%d", wb.getId(), Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
-        String attachPoolCode = String.format("%d-%s-%d", wb.getId(), ATTACHMENTS_POOL_CODE, nanoTime);
+        String mainPoolCode = String.format("%d-%s-%d", ec.getId(), Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
+        String attachPoolCode = String.format("%d-%s-%d", ec.getId(), ATTACHMENTS_POOL_CODE, nanoTime);
         final AtomicBoolean isMainDocPresent = new AtomicBoolean(false);
         AtomicReference<String> mainDocFilename = new AtomicReference<>();
         dataFiles.forEach( fileWithMapping -> {
@@ -240,29 +240,29 @@ public class ResourceSplitterSnippet implements InternalSnippet {
 //                attachments.add(code);
             }
 
-            variableService.storeInitialResource(fileWithMapping.file, variable, originFilename, wb.getId(), contextId);
+            variableService.storeInitialResource(fileWithMapping.file, variable, originFilename, ec.getId(), contextId);
         });
 
         if (!isMainDocPresent.get()) {
             throw new BatchResourceProcessingException("#995.180 main document wasn't found");
         }
 
-        SourceCodeApiData.TaskProducingResultComplex countTasks = workbookService.produceTasks(false, sourceCode, wb.getId());
+        SourceCodeApiData.TaskProducingResultComplex countTasks = workbookService.produceTasks(false, sourceCode, ec.getId());
         if (countTasks.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
-            workbookService.changeValidStatus(wb.getId(), false);
+            workbookService.changeValidStatus(ec.getId(), false);
             throw new BatchResourceProcessingException("#995.220 validation of sourceCode was failed, status: " + countTasks.sourceCodeValidateStatus);
         }
 
         if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
-            workbookService.changeValidStatus(wb.getId(), false);
+            workbookService.changeValidStatus(ec.getId(), false);
             throw new BatchResourceProcessingException(
                     "#995.220 number of tasks for this execContext exceeded the allowed maximum number. ExecContext was created but its status is 'not valid'. " +
                             "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook +", tasks in this execContext:  " + countTasks.numberOfTasks);
         }
-        workbookService.changeValidStatus(wb.getId(), true);
+        workbookService.changeValidStatus(ec.getId(), true);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = workbookService.workbookTargetExecState(wb.getId(), EnumsApi.WorkbookExecState.PRODUCING);
+        OperationStatusRest operationStatus = workbookService.workbookTargetExecState(ec.getId(), EnumsApi.WorkbookExecState.PRODUCING);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
@@ -272,10 +272,10 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         }
         // TODO 2020-02-05 at this point we have to create new tasks
         //  do we need to invoke produceTasks() ?
-        workbookService.produceTasks(true, sourceCode, wb.getId());
-//        planService.createAllTasks();
+        workbookService.produceTasks(true, sourceCode, ec.getId());
+//        sourceCodeService.createAllTasks();
 
-        operationStatus = workbookService.workbookTargetExecState(wb.getId(), EnumsApi.WorkbookExecState.STARTED);
+        operationStatus = workbookService.workbookTargetExecState(ec.getId(), EnumsApi.WorkbookExecState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());

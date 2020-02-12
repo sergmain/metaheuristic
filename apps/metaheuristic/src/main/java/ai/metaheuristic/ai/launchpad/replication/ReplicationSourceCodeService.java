@@ -43,7 +43,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Profile("launchpad")
-public class ReplicationPlanService {
+public class ReplicationSourceCodeService {
 
     public final ReplicationCoreService replicationCoreService;
     public final SourceCodeRepository sourceCodeRepository;
@@ -51,14 +51,14 @@ public class ReplicationPlanService {
 
     @Data
     @AllArgsConstructor
-    private static class PlanLoopEntry {
-        public ReplicationData.SourceCodeShortAsset planShort;
-        public SourceCodeImpl plan;
+    private static class SourceCodeLoopEntry {
+        public ReplicationData.SourceCodeShortAsset sourceCodeShort;
+        public SourceCodeImpl sourceCode;
     }
 
-    public void syncPlans(List<ReplicationData.SourceCodeShortAsset> actualPlans) {
-        List<PlanLoopEntry> forUpdating = new ArrayList<>(actualPlans.size());
-        LinkedList<ReplicationData.SourceCodeShortAsset> forCreating = new LinkedList<>(actualPlans);
+    public void syncSourceCodes(List<ReplicationData.SourceCodeShortAsset> actualSourceCodes) {
+        List<SourceCodeLoopEntry> forUpdating = new ArrayList<>(actualSourceCodes.size());
+        LinkedList<ReplicationData.SourceCodeShortAsset> forCreating = new LinkedList<>(actualSourceCodes);
 
         List<Long> ids = sourceCodeRepository.findAllAsIds();
         for (Long id : ids) {
@@ -68,12 +68,12 @@ public class ReplicationPlanService {
             }
 
             boolean isDeleted = true;
-            for (ReplicationData.SourceCodeShortAsset actualPlan : actualPlans) {
-                if (actualPlan.uid.equals(p.uid)) {
+            for (ReplicationData.SourceCodeShortAsset actualSourceCode : actualSourceCodes) {
+                if (actualSourceCode.uid.equals(p.uid)) {
                     isDeleted = false;
-                    if (actualPlan.updateOn != p.getSourceCodeParamsYaml().internalParams.updatedOn) {
-                        PlanLoopEntry planLoopEntry = new PlanLoopEntry(actualPlan, p);
-                        forUpdating.add(planLoopEntry);
+                    if (actualSourceCode.updateOn != p.getSourceCodeParamsYaml().internalParams.updatedOn) {
+                        SourceCodeLoopEntry sourceCodeLoopEntry = new SourceCodeLoopEntry(actualSourceCode, p);
+                        forUpdating.add(sourceCodeLoopEntry);
                     }
                     break;
                 }
@@ -85,30 +85,30 @@ public class ReplicationPlanService {
             forCreating.removeIf(sourceCodeShortAsset -> sourceCodeShortAsset.uid.equals(p.uid));
         }
 
-        forUpdating.parallelStream().forEach(this::updatePlan);
-        forCreating.parallelStream().forEach(this::createPlan);
+        forUpdating.parallelStream().forEach(this::updateSourceCode);
+        forCreating.parallelStream().forEach(this::createSourceCode);
     }
 
-    private void updatePlan(PlanLoopEntry planLoopEntry) {
-        ReplicationData.SourceCodeAsset sourceCodeAsset = getPlanAsset(planLoopEntry.plan.uid);
+    private void updateSourceCode(SourceCodeLoopEntry sourceCodeLoopEntry) {
+        ReplicationData.SourceCodeAsset sourceCodeAsset = getSourceCodeAsset(sourceCodeLoopEntry.sourceCode.uid);
         if (sourceCodeAsset == null) {
             return;
         }
 
-        planLoopEntry.plan.setParams( sourceCodeAsset.sourceCode.getParams() );
-        planLoopEntry.plan.locked = sourceCodeAsset.sourceCode.locked;
-        planLoopEntry.plan.valid = sourceCodeAsset.sourceCode.valid;
+        sourceCodeLoopEntry.sourceCode.setParams( sourceCodeAsset.sourceCode.getParams() );
+        sourceCodeLoopEntry.sourceCode.locked = sourceCodeAsset.sourceCode.locked;
+        sourceCodeLoopEntry.sourceCode.valid = sourceCodeAsset.sourceCode.valid;
 
-        sourceCodeCache.save(planLoopEntry.plan);
+        sourceCodeCache.save(sourceCodeLoopEntry.sourceCode);
     }
 
-    private void createPlan(ReplicationData.SourceCodeShortAsset sourceCodeShortAsset) {
-        ReplicationData.SourceCodeAsset sourceCodeAsset = getPlanAsset(sourceCodeShortAsset.uid);
+    private void createSourceCode(ReplicationData.SourceCodeShortAsset sourceCodeShortAsset) {
+        ReplicationData.SourceCodeAsset sourceCodeAsset = getSourceCodeAsset(sourceCodeShortAsset.uid);
         if (sourceCodeAsset == null) {
             return;
         }
 
-        SourceCodeImpl p = sourceCodeRepository.findByCode(sourceCodeShortAsset.uid);
+        SourceCodeImpl p = sourceCodeRepository.findByUid(sourceCodeShortAsset.uid);
         if (p!=null) {
             return;
         }
@@ -117,20 +117,20 @@ public class ReplicationPlanService {
         sourceCodeCache.save(sourceCodeAsset.sourceCode);
     }
 
-    private ReplicationData.SourceCodeAsset getPlanAsset(String planCode) {
-        ReplicationData.SourceCodeAsset sourceCodeAsset = requestPlanAsset(planCode);
+    private ReplicationData.SourceCodeAsset getSourceCodeAsset(String sourceCodeUid) {
+        ReplicationData.SourceCodeAsset sourceCodeAsset = requestSourceCodeAsset(sourceCodeUid);
         if (sourceCodeAsset.isErrorMessages()) {
-            log.error("#308.020 Error while getting sourceCode "+ planCode +", error: " + sourceCodeAsset.getErrorMessagesAsStr());
+            log.error("#308.020 Error while getting sourceCodeUid "+ sourceCodeUid +", error: " + sourceCodeAsset.getErrorMessagesAsStr());
             return null;
         }
         return sourceCodeAsset;
     }
 
-    private ReplicationData.SourceCodeAsset requestPlanAsset(String planCode) {
+    private ReplicationData.SourceCodeAsset requestSourceCodeAsset(String uid) {
         Object data = replicationCoreService.getData(
-                "/rest/v1/replication/sourceCode", ReplicationData.SourceCodeAsset.class,
+                "/rest/v1/replication/source-code", ReplicationData.SourceCodeAsset.class,
                 (uri) -> Request.Post(uri)
-                        .bodyForm(Form.form().add("planCode", planCode).build(), StandardCharsets.UTF_8)
+                        .bodyForm(Form.form().add("uid", uid).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );

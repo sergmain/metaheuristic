@@ -158,7 +158,7 @@ public class ExperimentRestController {
     @PostMapping("/bind-experiment-to-plan-with-resource")
     public OperationStatusRest bindExperimentToPlanWithResource(String experimentCode, String resourcePoolCode, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return experimentTopLevelService.bindExperimentToPlanWithResource(experimentCode, resourcePoolCode, context);
+        return experimentTopLevelService.bindExperimentToSourceCodeWithResource(experimentCode, resourcePoolCode, context);
     }
 
     @PostMapping("/produce-tasks")

@@ -39,8 +39,8 @@ public class LaunchpadInternalEvent {
 
     @Data
     @AllArgsConstructor
-    public static class PlanLockingEvent {
-        public Long planId;
+    public static class SourceCodeLockingEvent {
+        public Long sourceCodeId;
         public Long companyUniqueId;
         public boolean lock;
     }

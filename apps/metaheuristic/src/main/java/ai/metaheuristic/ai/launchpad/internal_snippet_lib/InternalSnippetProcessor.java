@@ -42,12 +42,12 @@ public class InternalSnippetProcessor {
     public final ResourceSplitterSnippet resourceSplitterSnippet;
     public final PermuteVariablesAndHyperParamsSnippet permuteVariablesAndHyperParamsSnippet;
 
-    public List<InternalSnippetOutput> process(String snippetCode, Long planId, Long workbookId, String contextId, Map<String, List<String>> inputResourceIds) {
+    public List<InternalSnippetOutput> process(String snippetCode, Long sourceCodeId, Long execContextId, String internalContextId, Map<String, List<String>> inputResourceIds) {
         switch(snippetCode) {
             case Consts.MH_RESOURCE_SPLITTER_SNIPPET:
-                return resourceSplitterSnippet.process(planId, workbookId, contextId, inputResourceIds);
+                return resourceSplitterSnippet.process(sourceCodeId, execContextId, internalContextId, inputResourceIds);
             case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS:
-                return permuteVariablesAndHyperParamsSnippet.process(planId, workbookId, contextId, inputResourceIds);
+                return permuteVariablesAndHyperParamsSnippet.process(sourceCodeId, execContextId, internalContextId, inputResourceIds);
             default:
                 throw new IllegalStateException("Unknown internal snippet: " + snippetCode);
         }

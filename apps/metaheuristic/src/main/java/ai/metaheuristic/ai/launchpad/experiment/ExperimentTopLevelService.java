@@ -641,13 +641,13 @@ public class ExperimentTopLevelService {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#285.340 can't create temporary directory in " + location);
             }
-            final File planFile = new File(tempDir, "experiment" + ext);
+            final File experimentFile = new File(tempDir, "experiment" + ext);
             log.debug("Start storing an uploaded experiment to disk");
-            try(OutputStream os = new FileOutputStream(planFile)) {
+            try(OutputStream os = new FileOutputStream(experimentFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
             log.debug("Start loading experiment into db");
-            String yaml = FileUtils.readFileToString(planFile, StandardCharsets.UTF_8);
+            String yaml = FileUtils.readFileToString(experimentFile, StandardCharsets.UTF_8);
             OperationStatusRest result = addExperiment(yaml);
 
             if (result.isErrorMessages()) {
@@ -658,7 +658,7 @@ public class ExperimentTopLevelService {
         catch (Throwable e) {
             log.error("#285.350 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.360 can't load plans, Error: " + e.toString());
+                    "#285.360 can't load source codes, Error: " + e.toString());
         }
         finally {
             DirUtils.deleteAsync(tempDir);
@@ -667,7 +667,7 @@ public class ExperimentTopLevelService {
 
     public OperationStatusRest addExperiment(String experimentYamlAsStr) {
         if (StringUtils.isBlank(experimentYamlAsStr)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.370 sourceCode yaml is empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.370 source code yaml is empty");
         }
 
         ExperimentParamsYaml ppy;
@@ -712,7 +712,7 @@ public class ExperimentTopLevelService {
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Exporting of experiment was successfully started", null);
     }
 
-    public OperationStatusRest bindExperimentToPlanWithResource(String experimentCode, String resourcePoolCode, LaunchpadContext context) {
+    public OperationStatusRest bindExperimentToSourceCodeWithResource(String experimentCode, String resourcePoolCode, LaunchpadContext context) {
         if (resourcePoolCode==null || resourcePoolCode.isBlank()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.480 resource pool code is blank");
         }
@@ -731,7 +731,7 @@ public class ExperimentTopLevelService {
         }
         SourceCodeImpl p = null;
 /*
-        p = getPlanByExperimentCode(experimentCode);
+        p = getSourceCodeByExperimentCode(experimentCode);
         if (p==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.510 can't find a sourceCode with experiment code: " + experimentCode);

@@ -124,7 +124,7 @@ public class WorkbookService {
 
         if (workbook.execState!=execState.code) {
             workbookFSM.toState(workbook.id, execState);
-            applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.PlanLockingEvent(sourceCode.getId(), sourceCode.getCompanyId(), true));
+            applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.SourceCodeLockingEvent(sourceCode.getId(), sourceCode.getCompanyId(), true));
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -614,7 +614,7 @@ public class WorkbookService {
                 if (ids.get(0).equals(workbookId)) {
                     if (execContext.getPlanId() != null) {
 //                        setLockedTo(execContext.getPlanId(), companyUniqueId, false);
-                        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.PlanLockingEvent(execContext.getPlanId(), companyUniqueId, false));
+                        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.SourceCodeLockingEvent(execContext.getPlanId(), companyUniqueId, false));
                     }
                 }
                 else {

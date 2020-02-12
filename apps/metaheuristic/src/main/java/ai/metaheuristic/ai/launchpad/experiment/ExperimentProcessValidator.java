@@ -72,7 +72,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
         if (e.getWorkbookId()!=null) {
             ExecContext execContext = workbookCache.findById(e.getWorkbookId());
             if (execContext != null) {
-                if (!sourceCode.getId().equals(execContext.getPlanId())) {
+                if (!sourceCode.getId().equals(execContext.getSourceCodeId())) {
                     return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;
                 }
             }
