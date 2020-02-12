@@ -187,7 +187,7 @@ public class WorkbookService {
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
 
         ExecContextImpl wb = new ExecContextImpl();
-        wb.setPlanId(planId);
+        wb.setSourceCodeId(planId);
         wb.setCreatedOn(System.currentTimeMillis());
         wb.setExecState(EnumsApi.WorkbookExecState.NONE.code);
         wb.setCompletedOn(null);
@@ -239,14 +239,14 @@ public class WorkbookService {
         if (workbook == null) {
             return new SourceCodeApiData.WorkbookResult("#705.100 execContext wasn't found, workbookId: " + workbookId);
         }
-        SourceCodeImpl plan = sourceCodeCache.findById(workbook.getPlanId());
+        SourceCodeImpl plan = sourceCodeCache.findById(workbook.getSourceCodeId());
         if (plan == null) {
-            return new SourceCodeApiData.WorkbookResult("#705.110 sourceCode wasn't found, planId: " + workbook.getPlanId());
+            return new SourceCodeApiData.WorkbookResult("#705.110 sourceCode wasn't found, planId: " + workbook.getSourceCodeId());
         }
 
-        if (!plan.getId().equals(workbook.getPlanId())) {
+        if (!plan.getId().equals(workbook.getSourceCodeId())) {
             changeValidStatus(workbookId, false);
-            return new SourceCodeApiData.WorkbookResult("#705.120 planId doesn't match to execContext.planId, planId: " + workbook.getPlanId()+", execContext.planId: " + workbook.getPlanId());
+            return new SourceCodeApiData.WorkbookResult("#705.120 planId doesn't match to execContext.planId, planId: " + workbook.getSourceCodeId()+", execContext.planId: " + workbook.getSourceCodeId());
         }
 
         //noinspection UnnecessaryLocalVariable
@@ -257,16 +257,16 @@ public class WorkbookService {
     public SourceCodeApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, LaunchpadContext context) {
         pageable = ControllerUtils.fixPageSize(globals.execContextRowsLimit, pageable);
         SourceCodeApiData.WorkbooksResult result = new SourceCodeApiData.WorkbooksResult();
-        result.instances = workbookRepository.findByPlanIdOrderByCreatedOnDesc(pageable, sourceCodeId);
+        result.instances = workbookRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
         result.currentPlanId = sourceCodeId;
 
         for (ExecContext execContext : result.instances) {
             WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(execContext.getParams());
             wpy.graph = null;
             execContext.setParams( WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
-            SourceCode sourceCode = sourceCodeCache.findById(execContext.getPlanId());
+            SourceCode sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
             if (sourceCode ==null) {
-                log.warn("#705.130 Found execContext with wrong sourceCodeId. sourceCodeId: {}", execContext.getPlanId());
+                log.warn("#705.130 Found execContext with wrong sourceCodeId. sourceCodeId: {}", execContext.getSourceCodeId());
                 continue;
             }
             result.plans.put(execContext.getId(), sourceCode);
@@ -602,29 +602,29 @@ public class WorkbookService {
         return result;
     }
 
-    public void deleteWorkbook(Long workbookId, Long companyUniqueId) {
-//        experimentService.resetExperimentByWorkbookId(workbookId);
-        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.ExperimentResetEvent(workbookId));
-        variableService.deleteByWorkbookId(workbookId);
-        ExecContext execContext = workbookCache.findById(workbookId);
+    public void deleteWorkbook(Long execContextId, Long companyUniqueId) {
+//        experimentService.resetExperimentByWorkbookId(execContextId);
+        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.ExperimentResetEvent(execContextId));
+        variableService.deleteByWorkbookId(execContextId);
+        ExecContext execContext = workbookCache.findById(execContextId);
         if (execContext != null) {
             // unlock sourceCode if this is the last execContext in the sourceCode
-            List<Long> ids = workbookRepository.findIdsBysourceCodeId(execContext.getPlanId());
+            List<Long> ids = workbookRepository.findIdsBysourceCodeId(execContext.getSourceCodeId());
             if (ids.size()==1) {
-                if (ids.get(0).equals(workbookId)) {
-                    if (execContext.getPlanId() != null) {
-//                        setLockedTo(execContext.getPlanId(), companyUniqueId, false);
-                        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.SourceCodeLockingEvent(execContext.getPlanId(), companyUniqueId, false));
+                if (ids.get(0).equals(execContextId)) {
+                    if (execContext.getSourceCodeId() != null) {
+//                        setLockedTo(execContext.getSourceCodeId(), companyUniqueId, false);
+                        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, false));
                     }
                 }
                 else {
-                    log.warn("#701.300 unexpected state, workbookId: {}, ids: {}, ", workbookId, ids);
+                    log.warn("#701.300 unexpected state, execContextId: {}, ids: {}, ", execContextId, ids);
                 }
             }
             else if (ids.isEmpty()) {
-                log.warn("#701.310 unexpected state, workbookId: {}, ids is empty", workbookId);
+                log.warn("#701.310 unexpected state, execContextId: {}, ids is empty", execContextId);
             }
-            workbookCache.deleteById(workbookId);
+            workbookCache.deleteById(execContextId);
         }
     }
 

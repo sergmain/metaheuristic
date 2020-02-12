@@ -62,7 +62,7 @@ public class WorkbookFSM {
     }
 
     public void toStarted(ExecContext execContext) {
-        SourceCodeImpl plan = sourceCodeCache.findById(execContext.getPlanId());
+        SourceCodeImpl plan = sourceCodeCache.findById(execContext.getSourceCodeId());
         if (plan == null) {
             toError(execContext.getId());
         }

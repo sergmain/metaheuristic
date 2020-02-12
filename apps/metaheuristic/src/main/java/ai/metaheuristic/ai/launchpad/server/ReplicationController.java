@@ -49,10 +49,10 @@ public class ReplicationController {
         return replicationSourceService.getSnippet(snippetCode);
     }
 
-    @PostMapping(value="/plan")
+    @PostMapping(value="/source-code")
     public @ResponseBody
-    ReplicationData.SourceCodeAsset getPlan(@RequestParam String planCode) {
-        return replicationSourceService.getPlan(planCode);
+    ReplicationData.SourceCodeAsset getPlan(@RequestParam String uid) {
+        return replicationSourceService.getSourceCode(uid);
     }
 
     @PostMapping(value="/company")
