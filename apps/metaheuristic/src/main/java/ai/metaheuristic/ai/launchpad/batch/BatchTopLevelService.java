@@ -275,7 +275,7 @@ public class BatchTopLevelService {
             }
         }
         else {
-            workbookService.deleteWorkbook(batch.workbookId, companyUniqueId);
+            workbookService.deleteWorkbook(batch.execContextId, companyUniqueId);
             batchCache.deleteById(batch.id);
         }
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
@@ -349,7 +349,7 @@ public class BatchTopLevelService {
         File resultDir = DirUtils.createTempDir("prepare-origin-file-");
         resource.toClean.add(resultDir);
 
-        String originFilename = batchService.getUploadedFilename(batchId, batch.workbookId);
+        String originFilename = batchService.getUploadedFilename(batchId, batch.execContextId);
         File tempFile = File.createTempFile("batch-origin-file-", ".bin", resultDir);
 
         try {

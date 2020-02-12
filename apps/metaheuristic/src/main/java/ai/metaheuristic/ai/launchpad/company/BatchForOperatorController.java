@@ -106,9 +106,9 @@ public class BatchForOperatorController {
     @GetMapping(value = "/company-batch-add/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String batchAdd(Model model, @PathVariable Long companyUniqueId) {
-        SourceCodeData.SourceCodesForCompany plans = sourceCodeService.getAvailableSourceCodesForCompany(companyUniqueId);
-        ControllerUtils.addMessagesToModel(model, plans);
-        model.addAttribute("result", plans);
+        SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeService.getAvailableSourceCodesForCompany(companyUniqueId);
+        ControllerUtils.addMessagesToModel(model, sourceCodes);
+        model.addAttribute("result", sourceCodes);
         model.addAttribute("companyUniqueId", companyUniqueId);
         return "launchpad/company/batch/company-batch-add";
     }
@@ -149,10 +149,10 @@ public class BatchForOperatorController {
     public String uploadFile(
             final MultipartFile file,
             @PathVariable Long companyUniqueId,
-            Long planId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+            Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         // create context with putting current user to specific company
         LaunchpadContext context = launchpadContextService.getContext(authentication, companyUniqueId);
-        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, planId, context);
+        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
         if (uploadingStatus.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.errorMessages);
         }

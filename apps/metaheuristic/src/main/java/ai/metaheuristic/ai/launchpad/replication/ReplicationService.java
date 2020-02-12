@@ -52,7 +52,7 @@ public class ReplicationService {
             return;
         }
         replicationSnippetService.syncSnippets(assetStateResponse.snippets);
-        replicationPlanService.syncPlans(assetStateResponse.plans);
+        replicationPlanService.syncPlans(assetStateResponse.sourceCodes);
         replicationCompanyService.syncCompanies(assetStateResponse.companies);
         replicationAccountService.syncAccounts(assetStateResponse.usernames);
     }

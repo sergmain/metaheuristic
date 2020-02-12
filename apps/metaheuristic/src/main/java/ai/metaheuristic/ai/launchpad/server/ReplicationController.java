@@ -50,7 +50,8 @@ public class ReplicationController {
     }
 
     @PostMapping(value="/plan")
-    public @ResponseBody ReplicationData.PlanAsset getPlan(@RequestParam String planCode) {
+    public @ResponseBody
+    ReplicationData.SourceCodeAsset getPlan(@RequestParam String planCode) {
         return replicationSourceService.getPlan(planCode);
     }
 

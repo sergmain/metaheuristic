@@ -21,3 +21,24 @@ CREATE TABLE mh_exec_context
     IS_VALID      BOOLEAN not null default false,
     EXEC_STATE   smallint not null default 0
 );
+
+drop table mh_batch;
+
+create table mh_batch
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    COMPANY_ID      INT UNSIGNED    not null,
+    ACCOUNT_ID      INT UNSIGNED,
+    SOURCE_CODE_ID         NUMERIC(10, 0) NOT NULL,
+    EXEC_CONTEXT_ID     NUMERIC(10, 0),
+    DATA_ID         NUMERIC(10, 0),
+    CREATED_ON      bigint         NOT NULL,
+    EXEC_STATE      tinyint(1) not null default 0,
+    PARAMS          MEDIUMTEXT,
+    IS_DELETED      BOOLEAN not null default false
+);
+
+CREATE INDEX mh_batch_exec_context_id_idx
+    ON mh_batch (EXEC_CONTEXT_ID);
+

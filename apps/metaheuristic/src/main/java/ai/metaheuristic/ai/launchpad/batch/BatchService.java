@@ -437,9 +437,9 @@ public class BatchService {
     public BatchStatusProcessor prepareStatusAndData(Batch batch, BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir) {
         Long batchId = batch.id;
         final BatchStatusProcessor bs = new BatchStatusProcessor();
-        bs.originArchiveName = getUploadedFilename(batchId, batch.workbookId);
+        bs.originArchiveName = getUploadedFilename(batchId, batch.execContextId);
 
-        Long workbookId = batch.workbookId;
+        Long workbookId = batch.execContextId;
         if (workbookId==null) {
             bs.getGeneralStatus().add("#990.250 Batch #"+batchId+" wasn't linked to ExecContext", '\n');
             bs.ok = true;

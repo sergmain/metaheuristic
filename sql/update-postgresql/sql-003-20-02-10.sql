@@ -20,3 +20,23 @@ CREATE TABLE MH_EXEC_CONTEXT
     IS_VALID          BOOLEAN not null default false,
     EXEC_STATE        smallint not null default 0
 );
+
+drop table MH_BATCH;
+
+create table MH_BATCH
+(
+    ID                SERIAL PRIMARY KEY,
+    VERSION           NUMERIC(5, 0)  NOT NULL,
+    COMPANY_ID        NUMERIC(10, 0) NOT NULL,
+    ACCOUNT_ID        NUMERIC(10, 0),
+    SOURCE_CODE_ID           NUMERIC(10, 0) NOT NULL,
+    EXEC_CONTEXT_ID       NUMERIC(10, 0),
+    DATA_ID           NUMERIC(10, 0),
+    CREATED_ON        bigint         NOT NULL,
+    EXEC_STATE        smallint not null default 0,
+    PARAMS            TEXT,
+    IS_DELETED        BOOLEAN not null default false
+);
+
+CREATE INDEX MH_BATCH_EXEC_CONTEXT_ID_IDX
+    ON MH_BATCH (EXEC_CONTEXT_ID);

@@ -59,8 +59,6 @@ CREATE TABLE MH_VARIABLE_GLOBAL
     PARAMS        TEXT not null
 );
 
-truncate table mh_batch;
-
 truncate table mh_task;
 
 update mh_experiment set WORKBOOK_ID=null where 1=1;

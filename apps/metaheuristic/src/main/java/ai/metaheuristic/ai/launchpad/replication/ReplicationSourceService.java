@@ -79,7 +79,7 @@ public class ReplicationSourceService {
                 .collect(Collectors.toList()));
 
         res.snippets.addAll(snippetRepository.findAllSnippetCodes());
-        res.plans.addAll(sourceCodeRepository.findAllAsIds().parallelStream()
+        res.sourceCodes.addAll(sourceCodeRepository.findAllAsIds().parallelStream()
                 .map(id->{
                     SourceCodeImpl plan = sourceCodeCache.findById(id);
                     SourceCodeParamsYaml params = plan.getSourceCodeParamsYaml();
@@ -89,7 +89,7 @@ public class ReplicationSourceService {
                     if (params.internalParams==null) {
                         log.warn("!!! params.internalParams is null. Need to investigate");
                     }
-                    return new ReplicationData.PlanShortAsset(plan.uid, params.internalParams==null ? 0L : params.internalParams.updatedOn);
+                    return new ReplicationData.SourceCodeShortAsset(plan.uid, params.internalParams==null ? 0L : params.internalParams.updatedOn);
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));
@@ -101,9 +101,9 @@ public class ReplicationSourceService {
         return snippetAsset;
     }
 
-    public ReplicationData.PlanAsset getPlan(String planCode) {
-        ReplicationData.PlanAsset planAsset = new ReplicationData.PlanAsset(sourceCodeRepository.findByCode(planCode));
-        return planAsset;
+    public ReplicationData.SourceCodeAsset getPlan(String planCode) {
+        ReplicationData.SourceCodeAsset sourceCodeAsset = new ReplicationData.SourceCodeAsset(sourceCodeRepository.findByCode(planCode));
+        return sourceCodeAsset;
     }
 
     public ReplicationData.CompanyAsset getCompany(long uniqueId) {

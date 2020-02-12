@@ -52,13 +52,13 @@ public class ReplicationPlanService {
     @Data
     @AllArgsConstructor
     private static class PlanLoopEntry {
-        public ReplicationData.PlanShortAsset planShort;
+        public ReplicationData.SourceCodeShortAsset planShort;
         public SourceCodeImpl plan;
     }
 
-    public void syncPlans(List<ReplicationData.PlanShortAsset> actualPlans) {
+    public void syncPlans(List<ReplicationData.SourceCodeShortAsset> actualPlans) {
         List<PlanLoopEntry> forUpdating = new ArrayList<>(actualPlans.size());
-        LinkedList<ReplicationData.PlanShortAsset> forCreating = new LinkedList<>(actualPlans);
+        LinkedList<ReplicationData.SourceCodeShortAsset> forCreating = new LinkedList<>(actualPlans);
 
         List<Long> ids = sourceCodeRepository.findAllAsIds();
         for (Long id : ids) {
@@ -68,8 +68,8 @@ public class ReplicationPlanService {
             }
 
             boolean isDeleted = true;
-            for (ReplicationData.PlanShortAsset actualPlan : actualPlans) {
-                if (actualPlan.code.equals(p.uid)) {
+            for (ReplicationData.SourceCodeShortAsset actualPlan : actualPlans) {
+                if (actualPlan.uid.equals(p.uid)) {
                     isDeleted = false;
                     if (actualPlan.updateOn != p.getSourceCodeParamsYaml().internalParams.updatedOn) {
                         PlanLoopEntry planLoopEntry = new PlanLoopEntry(actualPlan, p);
@@ -82,7 +82,7 @@ public class ReplicationPlanService {
             if (isDeleted) {
                 sourceCodeCache.deleteById(id);
             }
-            forCreating.removeIf(planShortAsset -> planShortAsset.code.equals(p.uid));
+            forCreating.removeIf(sourceCodeShortAsset -> sourceCodeShortAsset.uid.equals(p.uid));
         }
 
         forUpdating.parallelStream().forEach(this::updatePlan);
@@ -90,54 +90,54 @@ public class ReplicationPlanService {
     }
 
     private void updatePlan(PlanLoopEntry planLoopEntry) {
-        ReplicationData.PlanAsset planAsset = getPlanAsset(planLoopEntry.plan.uid);
-        if (planAsset == null) {
+        ReplicationData.SourceCodeAsset sourceCodeAsset = getPlanAsset(planLoopEntry.plan.uid);
+        if (sourceCodeAsset == null) {
             return;
         }
 
-        planLoopEntry.plan.setParams( planAsset.plan.getParams() );
-        planLoopEntry.plan.locked = planAsset.plan.locked;
-        planLoopEntry.plan.valid = planAsset.plan.valid;
+        planLoopEntry.plan.setParams( sourceCodeAsset.sourceCode.getParams() );
+        planLoopEntry.plan.locked = sourceCodeAsset.sourceCode.locked;
+        planLoopEntry.plan.valid = sourceCodeAsset.sourceCode.valid;
 
         sourceCodeCache.save(planLoopEntry.plan);
     }
 
-    private void createPlan(ReplicationData.PlanShortAsset planShortAsset) {
-        ReplicationData.PlanAsset planAsset = getPlanAsset(planShortAsset.code);
-        if (planAsset == null) {
+    private void createPlan(ReplicationData.SourceCodeShortAsset sourceCodeShortAsset) {
+        ReplicationData.SourceCodeAsset sourceCodeAsset = getPlanAsset(sourceCodeShortAsset.uid);
+        if (sourceCodeAsset == null) {
             return;
         }
 
-        SourceCodeImpl p = sourceCodeRepository.findByCode(planShortAsset.code);
+        SourceCodeImpl p = sourceCodeRepository.findByCode(sourceCodeShortAsset.uid);
         if (p!=null) {
             return;
         }
 
-        planAsset.plan.id=null;
-        sourceCodeCache.save(planAsset.plan);
+        sourceCodeAsset.sourceCode.id=null;
+        sourceCodeCache.save(sourceCodeAsset.sourceCode);
     }
 
-    private ReplicationData.PlanAsset getPlanAsset(String planCode) {
-        ReplicationData.PlanAsset planAsset = requestPlanAsset(planCode);
-        if (planAsset.isErrorMessages()) {
-            log.error("#308.020 Error while getting sourceCode "+ planCode +", error: " + planAsset.getErrorMessagesAsStr());
+    private ReplicationData.SourceCodeAsset getPlanAsset(String planCode) {
+        ReplicationData.SourceCodeAsset sourceCodeAsset = requestPlanAsset(planCode);
+        if (sourceCodeAsset.isErrorMessages()) {
+            log.error("#308.020 Error while getting sourceCode "+ planCode +", error: " + sourceCodeAsset.getErrorMessagesAsStr());
             return null;
         }
-        return planAsset;
+        return sourceCodeAsset;
     }
 
-    private ReplicationData.PlanAsset requestPlanAsset(String planCode) {
+    private ReplicationData.SourceCodeAsset requestPlanAsset(String planCode) {
         Object data = replicationCoreService.getData(
-                "/rest/v1/replication/sourceCode", ReplicationData.PlanAsset.class,
+                "/rest/v1/replication/sourceCode", ReplicationData.SourceCodeAsset.class,
                 (uri) -> Request.Post(uri)
                         .bodyForm(Form.form().add("planCode", planCode).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
-            return new ReplicationData.PlanAsset(((ReplicationData.AssetAcquiringError) data).errorMessages);
+            return new ReplicationData.SourceCodeAsset(((ReplicationData.AssetAcquiringError) data).errorMessages);
         }
-        ReplicationData.PlanAsset response = (ReplicationData.PlanAsset) data;
+        ReplicationData.SourceCodeAsset response = (ReplicationData.SourceCodeAsset) data;
         return response;
     }
 

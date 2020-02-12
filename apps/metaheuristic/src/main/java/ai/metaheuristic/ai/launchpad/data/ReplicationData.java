@@ -77,9 +77,9 @@ public class ReplicationData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class PlanAsset extends BaseDataClass implements ReplicationAsset {
-        public SourceCodeImpl plan;
-        public PlanAsset(List<String> errorMessages) {
+    public static class SourceCodeAsset extends BaseDataClass implements ReplicationAsset {
+        public SourceCodeImpl sourceCode;
+        public SourceCodeAsset(List<String> errorMessages) {
             addErrorMessages(errorMessages);
         }
     }
@@ -98,9 +98,9 @@ public class ReplicationData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    @EqualsAndHashCode(of = "code")
-    public static class PlanShortAsset {
-        public String code;
+    @EqualsAndHashCode(of = "uid")
+    public static class SourceCodeShortAsset {
+        public String uid;
         public long updateOn;
     }
 
@@ -127,7 +127,7 @@ public class ReplicationData {
     @NoArgsConstructor
     public static class AssetStateResponse extends BaseDataClass implements ReplicationAsset {
         public final List<String> snippets = new ArrayList<>();
-        public final List<PlanShortAsset> plans = new ArrayList<>();
+        public final List<SourceCodeShortAsset> sourceCodes = new ArrayList<>();
         public final List<CompanyShortAsset> companies = new ArrayList<>();
         public final List<AccountShortAsset> usernames = new ArrayList<>();
 
