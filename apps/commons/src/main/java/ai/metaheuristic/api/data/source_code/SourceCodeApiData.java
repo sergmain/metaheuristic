@@ -128,29 +128,29 @@ public class SourceCodeApiData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class WorkbooksResult extends BaseDataClass {
+    public static class ExecContextsResult extends BaseDataClass {
         public Slice<ExecContext> instances;
-        public long currentPlanId;
-        public Map<Long, SourceCode> plans = new HashMap<>();
+        public long currentSourceCodeId;
+        public Map<Long, SourceCode> sourceCodes = new HashMap<>();
 
     }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class WorkbookResult extends BaseDataClass {
+    public static class ExecContextResult extends BaseDataClass {
         public ExecContext execContext;
         public SourceCode sourceCode;
 
-        public WorkbookResult(String errorMessage) {
+        public ExecContextResult(String errorMessage) {
             this.addErrorMessage(errorMessage);
         }
 
-        public WorkbookResult(SourceCode sourceCode) {
+        public ExecContextResult(SourceCode sourceCode) {
             this.sourceCode = sourceCode;
         }
 
-        public WorkbookResult(SourceCode sourceCode, ExecContext execContext) {
+        public ExecContextResult(SourceCode sourceCode, ExecContext execContext) {
             this.sourceCode = sourceCode;
             this.execContext = execContext;
         }

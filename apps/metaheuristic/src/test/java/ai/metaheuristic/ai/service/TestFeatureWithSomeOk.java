@@ -44,7 +44,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         workbookFSM.toStarted(workbook);
         workbook = workbookCache.findById(workbook.getId());
-        assertEquals(EnumsApi.WorkbookExecState.STARTED.code, workbook.getExecState());
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getExecState());
 
         getTaskAndAssignToStation_mustBeNewTask();
 

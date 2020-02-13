@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CurrentExecState {
 
     // this is a map for holding the current status of ExecContext, Not a task
-    private final Map<String, Map<Long, EnumsApi.WorkbookExecState>> workbookState = new HashMap<>();
+    private final Map<String, Map<Long, EnumsApi.ExecContextState>> workbookState = new HashMap<>();
 
     private Map<String, AtomicBoolean> isInit = new HashMap<>();
 
@@ -63,21 +63,21 @@ public class CurrentExecState {
         }
     }
 
-    EnumsApi.WorkbookExecState getState(String host, long workbookId) {
+    EnumsApi.ExecContextState getState(String host, long workbookId) {
         synchronized(workbookState) {
             if (!isInited(host)) {
-                return EnumsApi.WorkbookExecState.UNKNOWN;
+                return EnumsApi.ExecContextState.UNKNOWN;
             }
-            return workbookState.getOrDefault(host, Collections.emptyMap()).getOrDefault(workbookId, EnumsApi.WorkbookExecState.DOESNT_EXIST);
+            return workbookState.getOrDefault(host, Collections.emptyMap()).getOrDefault(workbookId, EnumsApi.ExecContextState.DOESNT_EXIST);
         }
     }
 
-    boolean isState(String launchpadUrl, long workbookId, EnumsApi.WorkbookExecState state) {
-        EnumsApi.WorkbookExecState currState = getState(launchpadUrl, workbookId);
+    boolean isState(String launchpadUrl, long workbookId, EnumsApi.ExecContextState state) {
+        EnumsApi.ExecContextState currState = getState(launchpadUrl, workbookId);
         return currState!=null && currState==state;
     }
 
     boolean isStarted(String launchpadUrl, long workbookId) {
-        return isState(launchpadUrl, workbookId, EnumsApi.WorkbookExecState.STARTED);
+        return isState(launchpadUrl, workbookId, EnumsApi.ExecContextState.STARTED);
     }
 }

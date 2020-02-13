@@ -58,7 +58,7 @@ public class AtlasData {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentApiData.ExperimentFeatureData> features;
         public ExecContext execContext;
-        public EnumsApi.WorkbookExecState workbookExecState;
+        public EnumsApi.ExecContextState execContextState;
     }
 
     @Data

@@ -45,34 +45,34 @@ public class LaunchpadInternalEvent {
         public boolean lock;
     }
 
-    public static class WorkbookDeletionEvent extends ApplicationEvent {
-        public Long workbookId;
+    public static class ExecContextDeletionEvent extends ApplicationEvent {
+        public Long execContextId;
 
         /**
          * Create a new ApplicationEvent.
          *
          * @param source the object on which the event initially occurred (never {@code null})
          */
-        public WorkbookDeletionEvent(Object source, Long workbookId) {
+        public ExecContextDeletionEvent(Object source, Long execContextId) {
             super(source);
-            this.workbookId = workbookId;
+            this.execContextId = execContextId;
         }
     }
 
-    @EqualsAndHashCode(of = "workbookId")
-    public static class WorkbookDeletionListener implements ApplicationListener<WorkbookDeletionEvent> {
-        private long workbookId;
+    @EqualsAndHashCode(of = "execContextId")
+    public static class ExecContextDeletionListener implements ApplicationListener<ExecContextDeletionEvent> {
+        private long execContextId;
 
         private Consumer<Long> consumer;
 
-        public WorkbookDeletionListener(long workbookId, Consumer<Long> consumer) {
-            this.workbookId = workbookId;
+        public ExecContextDeletionListener(long execContextId, Consumer<Long> consumer) {
+            this.execContextId = execContextId;
             this.consumer = consumer;
         }
 
         @Override
-        public void onApplicationEvent( WorkbookDeletionEvent event) {
-            consumer.accept(event.workbookId);
+        public void onApplicationEvent( ExecContextDeletionEvent event) {
+            consumer.accept(event.execContextId);
         }
     }
 }

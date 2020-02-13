@@ -26,44 +26,23 @@ public class SourceCodeParamsYamlUtils {
     // key - version of SourceCodeParamsYaml
     // value - version of TaskParamsYaml
     private static final Map<Integer, Integer> MIN_TASK_PARAMS_YAML_VERSION = Map.of(
-            1, 1,
-            2, 1,
-            3, 2,
-            4, 2,
-            5, 2,
-            6, 2,
-            7, 2,
-            8, 5
+            1, 5
     );
 
-    public static int getRequiredVertionOfTaskParamsYaml(int planParamsYamlVersion) {
-        Integer version = MIN_TASK_PARAMS_YAML_VERSION.get(planParamsYamlVersion);
+    public static int getRequiredVertionOfTaskParamsYaml(int sourceCodeParamsYamlVersion) {
+        Integer version = MIN_TASK_PARAMS_YAML_VERSION.get(sourceCodeParamsYamlVersion);
         if (version==null) {
-            throw new IllegalStateException("unknown version of SourceCodeParamsYaml, version: " + planParamsYamlVersion);
+            throw new IllegalStateException("unknown version of SourceCodeParamsYaml, version: " + sourceCodeParamsYamlVersion);
         }
         return version;
     }
 
-    private static final PlanParamsYamlUtilsV1 YAML_UTILS_V_1 = new PlanParamsYamlUtilsV1();
-    private static final PlanParamsYamlUtilsV2 YAML_UTILS_V_2 = new PlanParamsYamlUtilsV2();
-    private static final PlanParamsYamlUtilsV3 YAML_UTILS_V_3 = new PlanParamsYamlUtilsV3();
-    private static final PlanParamsYamlUtilsV4 YAML_UTILS_V_4 = new PlanParamsYamlUtilsV4();
-    private static final PlanParamsYamlUtilsV5 YAML_UTILS_V_5 = new PlanParamsYamlUtilsV5();
-    private static final PlanParamsYamlUtilsV6 YAML_UTILS_V_6 = new PlanParamsYamlUtilsV6();
-    private static final PlanParamsYamlUtilsV7 YAML_UTILS_V_7 = new PlanParamsYamlUtilsV7();
-    private static final PlanParamsYamlUtilsV8 YAML_UTILS_V_8 = new PlanParamsYamlUtilsV8();
-    private static final PlanParamsYamlUtilsV8 DEFAULT_UTILS = YAML_UTILS_V_8;
+    private static final SourceCodeParamsYamlUtilsV1 YAML_UTILS_V_1 = new SourceCodeParamsYamlUtilsV1();
+    private static final SourceCodeParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
     public static final BaseYamlUtils<SourceCodeParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2,
-                    3, YAML_UTILS_V_3,
-                    4, YAML_UTILS_V_4,
-                    5, YAML_UTILS_V_5,
-                    6, YAML_UTILS_V_6,
-                    7, YAML_UTILS_V_7,
-                    8, YAML_UTILS_V_8
+                    1, YAML_UTILS_V_1
             ),
             DEFAULT_UTILS
     );

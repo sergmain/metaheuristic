@@ -174,7 +174,7 @@ public class ExperimentController {
     public String workbookTargetExecState(@PathVariable Long experimentId, @PathVariable String state,
                                           @PathVariable Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeWorkbookExecState(state, id, context);
+        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeExecContextState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
             return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
@@ -299,7 +299,7 @@ public class ExperimentController {
         if (experiment.workbookId!=null) {
             ExecContext wb = workbookCache.findById(experiment.workbookId);
             if (wb != null) {
-                OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteWorkbookById(experiment.workbookId, context);
+                OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteExecContextById(experiment.workbookId, context);
                 if (operationStatusRest.isErrorMessages()) {
                     redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
                     return REDIRECT_LAUNCHPAD_EXPERIMENTS;

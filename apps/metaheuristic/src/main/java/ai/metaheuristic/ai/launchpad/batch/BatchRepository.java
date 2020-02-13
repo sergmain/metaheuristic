@@ -73,7 +73,7 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
         Finished(4, "Finished"),
         Archived(5, "Archived") ;
 
-    public enum WorkbookExecState {
+    public enum ExecContextState {
         ERROR(-2),          // some error in configuration
         UNKNOWN(-1),        // unknown state
         NONE(0),            // just created execContext
@@ -93,7 +93,7 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
         boolean isFinished = false;
         for (Integer execState : workbookRepository.findWorkbookExecStateByBatchId(batch.id)) {
             isFinished = true;
-            if (execState != EnumsApi.WorkbookExecState.ERROR.code && execState != EnumsApi.WorkbookExecState.FINISHED.code) {
+            if (execState != EnumsApi.ExecContextState.ERROR.code && execState != EnumsApi.ExecContextState.FINISHED.code) {
                 break;
             }
 */

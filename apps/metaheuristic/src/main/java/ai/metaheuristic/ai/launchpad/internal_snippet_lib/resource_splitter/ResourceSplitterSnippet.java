@@ -262,7 +262,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         workbookService.changeValidStatus(ec.getId(), true);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = workbookService.workbookTargetExecState(ec.getId(), EnumsApi.WorkbookExecState.PRODUCING);
+        OperationStatusRest operationStatus = workbookService.workbookTargetExecState(ec.getId(), EnumsApi.ExecContextState.PRODUCING);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
@@ -275,7 +275,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         workbookService.produceTasks(true, sourceCode, ec.getId());
 //        sourceCodeService.createAllTasks();
 
-        operationStatus = workbookService.workbookTargetExecState(ec.getId(), EnumsApi.WorkbookExecState.STARTED);
+        operationStatus = workbookService.workbookTargetExecState(ec.getId(), EnumsApi.ExecContextState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());

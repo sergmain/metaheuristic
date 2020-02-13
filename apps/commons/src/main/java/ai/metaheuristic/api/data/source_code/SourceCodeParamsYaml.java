@@ -186,7 +186,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public EnumsApi.SourceCodeLang lang;
     }
 
-    public final int version=8;
+    public final int version=1;
     public SourceCodeYaml source;
     public final Origin origin = new Origin();
     public InternalParams internalParams;

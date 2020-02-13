@@ -179,7 +179,7 @@ public class AtlasService {
         AtlasParamsYaml atlasParamsYaml = new AtlasParamsYaml();
         atlasParamsYaml.createdOn = System.currentTimeMillis();
         atlasParamsYaml.sourceCode = new AtlasParamsYaml.SourceCodeWithParams(sourceCode.id, sourceCode.getParams());
-        atlasParamsYaml.execContext = new AtlasParamsYaml.ExecContextWithParams(workbook.id, workbook.getParams(), EnumsApi.WorkbookExecState.EXPORTED_TO_ATLAS.code);
+        atlasParamsYaml.execContext = new AtlasParamsYaml.ExecContextWithParams(workbook.id, workbook.getParams(), EnumsApi.ExecContextState.EXPORTED_TO_ATLAS.code);
         atlasParamsYaml.experiment = new AtlasParamsYaml.ExperimentWithParams(experiment.id, experiment.getParams());
         atlasParamsYaml.taskIds = taskRepository.findAllTaskIdsByWorkbookId(workbook.getId());
 

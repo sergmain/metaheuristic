@@ -41,7 +41,7 @@
             <th>Is batch consistent?</th>
             <th>Is deleted?</th>
             <th>
-                <div class="no-wrap">Plan code</div>
+                <div class="no-wrap">Source code</div>
                 <div class="no-wrap">File name</div>
             </th>
             <th>Exec state</th>
@@ -60,7 +60,7 @@
             </td>
             <td th:text="${r.batch.deleted}">Is deleted</td>
             <td>
-                <div th:text="${r.getSourceCodeUid}" class="no-wrap">Plan code</div>
+                <div th:text="${r.getSourceCodeUid}" class="no-wrap">Source code</div>
                 <div th:text="${r.uploadedFileName}" class="no-wrap">File name</div>
             </td>
             <td th:text="${r.execStateStr}">Exec state as string</td>

@@ -172,7 +172,7 @@ public class ExperimentRestController {
     }
 
     @GetMapping("/processing-status/{experimentCode}")
-    public EnumsApi.WorkbookExecState getExperimentProcessingStatus(@PathVariable String experimentCode) {
+    public EnumsApi.ExecContextState getExperimentProcessingStatus(@PathVariable String experimentCode) {
         return experimentTopLevelService.getExperimentProcessingStatus(experimentCode);
     }
 

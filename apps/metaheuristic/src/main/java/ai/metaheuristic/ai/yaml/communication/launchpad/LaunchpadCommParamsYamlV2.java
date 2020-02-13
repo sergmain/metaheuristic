@@ -108,7 +108,7 @@ public class LaunchpadCommParamsYamlV2 implements BaseParams {
         @NoArgsConstructor
         public static class SimpleStatus {
             public long workbookId;
-            public EnumsApi.WorkbookExecState state;
+            public EnumsApi.ExecContextState state;
         }
 
         public List<SimpleStatus> statuses;

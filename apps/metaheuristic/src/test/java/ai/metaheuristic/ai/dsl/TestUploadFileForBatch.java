@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV8;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV1;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Test;
@@ -59,17 +59,17 @@ public class TestUploadFileForBatch extends PreparingPlan {
 
     @Override
     public String getPlanYamlAsString() {
-        SourceCodeParamsYamlV8 planParamsYaml = new SourceCodeParamsYamlV8();
+        SourceCodeParamsYamlV1 planParamsYaml = new SourceCodeParamsYamlV1();
 
-        planParamsYaml.source = new SourceCodeParamsYamlV8.SourceCodeV8();
+        planParamsYaml.source = new SourceCodeParamsYamlV1.SourceCodeV8();
         planParamsYaml.source.code = "SourceCode for testing uploading batch file";
         {
-            SourceCodeParamsYamlV8.ProcessV8 p = new SourceCodeParamsYamlV8.ProcessV8();
+            SourceCodeParamsYamlV1.ProcessV8 p = new SourceCodeParamsYamlV1.ProcessV8();
             p.name = "Plocess mh.resource-splitter";
             p.code = "process-mh.resource-splitter";
 
-            p.snippet = new SourceCodeParamsYamlV8.SnippetDefForPlanV8(Consts.MH_RESOURCE_SPLITTER_SNIPPET, EnumsApi.SnippetExecContext.internal);
-            p.output.add( new SourceCodeParamsYamlV8.VariableV8(EnumsApi.DataSourcing.launchpad,"batch-array"));
+            p.snippet = new SourceCodeParamsYamlV1.SnippetDefForPlanV8(Consts.MH_RESOURCE_SPLITTER_SNIPPET, EnumsApi.SnippetExecContext.internal);
+            p.output.add( new SourceCodeParamsYamlV1.VariableV8(EnumsApi.DataSourcing.launchpad,"batch-array"));
 
             planParamsYaml.source.processes.add(p);
         }

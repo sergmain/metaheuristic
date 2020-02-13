@@ -61,8 +61,8 @@ public class ExecContextRestController {
 
     @GetMapping("/workbooks/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
-    public SourceCodeApiData.WorkbooksResult workbooks(@PathVariable Long sourceCodeId,
-                                                       @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
+    public SourceCodeApiData.ExecContextsResult workbooks(@PathVariable Long sourceCodeId,
+                                                          @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context);
     }
@@ -77,43 +77,43 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SimpleWorkbookAddingResult workbookAddCommit(String sourceCode, String variable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.WorkbookResult workbookResult = sourceCodeTopLevelService.addWorkbook(sourceCode, variable, context);
-        return new SimpleWorkbookAddingResult(workbookResult.execContext.getId());
+        SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addWorkbook(sourceCode, variable, context);
+        return new SimpleWorkbookAddingResult(execContextResult.execContext.getId());
     }
 
     /**
      * Only one parameter has to be used - either poolCode or inputResourceParams
      */
-    @PostMapping("/workbook-add-commit")
+    @PostMapping("/exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SourceCodeApiData.WorkbookResult workbookAddCommit(Long planId, String poolCode, Authentication authentication) {
+    public SourceCodeApiData.ExecContextResult workbookAddCommit(Long sourceCodeId, String variable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         //noinspection UnnecessaryLocalVariable
-        SourceCodeApiData.WorkbookResult workbookResult = sourceCodeTopLevelService.addWorkbook(planId, poolCode, context);
-        return workbookResult;
+        SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addWorkbook(sourceCodeId, variable, context);
+        return execContextResult;
     }
 
-    @GetMapping(value = "/workbook/{planId}/{workbookId}")
+    @GetMapping(value = "/workbook/{sourceCodeId}/{execContextId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SourceCodeApiData.WorkbookResult workbookEdit(@SuppressWarnings("unused") @PathVariable Long planId, @PathVariable Long workbookId) {
-        return workbookTopLevelService.getWorkbookExtended(workbookId);
+    public SourceCodeApiData.ExecContextResult workbookEdit(@SuppressWarnings("unused") @PathVariable Long sourceCodeId, @PathVariable Long execContextId) {
+        return workbookTopLevelService.getWorkbookExtended(execContextId);
     }
 
     @SuppressWarnings("unused")
     @PostMapping("/workbook-delete-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public OperationStatusRest workbookDeleteCommit(Long planId, Long workbookId, Authentication authentication) {
+    public OperationStatusRest workbookDeleteCommit(Long sourceCodeId, Long execContextId, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return sourceCodeTopLevelService.deleteWorkbookById(workbookId, context);
+        return sourceCodeTopLevelService.deleteExecContextById(execContextId, context);
     }
 
-    @GetMapping("/workbook-target-exec-state/{planId}/{state}/{id}")
+    @GetMapping("/workbook-target-exec-state/{sourceCodeId}/{state}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public OperationStatusRest workbookTargetExecState(
-            @SuppressWarnings("unused") @PathVariable Long planId, @PathVariable String state,
+    public OperationStatusRest execContextTargetExecState(
+            @SuppressWarnings("unused") @PathVariable Long sourceCodeId, @PathVariable String state,
             @PathVariable Long id, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return sourceCodeTopLevelService.changeWorkbookExecState(state, id, context);
+        return sourceCodeTopLevelService.changeExecContextState(state, id, context);
     }
 
 }

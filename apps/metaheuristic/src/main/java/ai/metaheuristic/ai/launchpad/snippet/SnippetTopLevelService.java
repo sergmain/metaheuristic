@@ -72,7 +72,7 @@ public class SnippetTopLevelService {
         final Snippet snippet = snippetCache.findById(id);
         if (snippet == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#424.010 snippet wasn't found, planId: " + id);
+                    "#424.010 snippet wasn't found, snippetId: " + id);
         }
         snippetCache.delete(snippet.getId());
         snippetDataService.deleteBySnippetCode(snippet.getCode());

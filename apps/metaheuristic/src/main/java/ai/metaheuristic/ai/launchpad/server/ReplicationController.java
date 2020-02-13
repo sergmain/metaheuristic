@@ -51,7 +51,7 @@ public class ReplicationController {
 
     @PostMapping(value="/source-code")
     public @ResponseBody
-    ReplicationData.SourceCodeAsset getPlan(@RequestParam String uid) {
+    ReplicationData.SourceCodeAsset getSourceCode(@RequestParam String uid) {
         return replicationSourceService.getSourceCode(uid);
     }
 

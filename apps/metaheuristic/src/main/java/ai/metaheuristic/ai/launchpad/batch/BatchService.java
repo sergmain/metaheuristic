@@ -259,7 +259,7 @@ public class BatchService {
             boolean isFinished = true;
             for (BatchAndWorkbookExecStates execStates : map.get(batchId)) {
 /*
-                public enum WorkbookExecState {
+                public enum ExecContextState {
                     ERROR(-2),          // some error in configuration
                     UNKNOWN(-1),        // unknown state
                     NONE(0),            // just created execContext
@@ -274,7 +274,7 @@ public class BatchService {
                     EXPORTED_TO_ATLAS(9);    // execContext was exported to atlas
 */
 
-                if (execStates.workbookState != EnumsApi.WorkbookExecState.ERROR.code && execStates.workbookState != EnumsApi.WorkbookExecState.FINISHED.code) {
+                if (execStates.workbookState != EnumsApi.ExecContextState.ERROR.code && execStates.workbookState != EnumsApi.ExecContextState.FINISHED.code) {
                     isFinished = false;
                     break;
                 }
@@ -543,7 +543,7 @@ public class BatchService {
                 break;
         }
 
-        if (wb.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
+        if (wb.getExecState() != EnumsApi.ExecContextState.FINISHED.code) {
             bs.getProgressStatus().add("#990.360 " + mainDocument + ", Task hasn't completed yet, " +
                             "batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + ", " +

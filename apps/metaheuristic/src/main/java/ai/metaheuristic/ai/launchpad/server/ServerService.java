@@ -456,11 +456,11 @@ public class ServerService {
     }
 
     private static LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus to(ExecContext execContext) {
-        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(execContext.getId(), EnumsApi.WorkbookExecState.toState(execContext.getExecState()));
+        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(execContext.getId(), EnumsApi.ExecContextState.toState(execContext.getExecState()));
     }
 
     private static LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus toSimpleStatus(Long workbookId, Integer execSate) {
-        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(workbookId, EnumsApi.WorkbookExecState.toState(execSate));
+        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(workbookId, EnumsApi.ExecContextState.toState(execSate));
     }
 
 }

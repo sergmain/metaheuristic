@@ -22,11 +22,11 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * @author Serge
- * Date: 8/29/2019
+ * Date: 10/03/2019
  * Time: 6:02 PM
  */
 public class BatchParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<BatchParamsYamlV1, BatchParamsYamlV2, BatchParamsYamlUtilsV2, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<BatchParamsYamlV1, BatchParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -39,31 +39,34 @@ public class BatchParamsYamlUtilsV1
     }
 
     @Override
-    public BatchParamsYamlV2 upgradeTo(BatchParamsYamlV1 v1, Long ... vars) {
-        v1.checkIntegrity();
-        BatchParamsYamlV2 t = new BatchParamsYamlV2();
-        if( v1.batchStatus!=null ) {
-            t.batchStatus = new BatchParamsYamlV2.BatchStatusV2();
-            t.batchStatus.ok = v1.batchStatus.ok;
-            t.batchStatus.status = v1.batchStatus.status;
+    public BatchParamsYaml upgradeTo(BatchParamsYamlV1 v2, Long ... vars) {
+        v2.checkIntegrity();
+        BatchParamsYaml t = new BatchParamsYaml();
+        if( v2.batchStatus!=null ) {
+            t.batchStatus = new BatchParamsYaml.BatchStatus();
+            t.batchStatus.ok = v2.batchStatus.ok;
+            t.batchStatus.status = v2.batchStatus.status;
         }
-        t.ok = v1.ok;
+        t.ok = v2.ok;
+        t.username = v2.username;
         t.checkIntegrity();
         return t;
     }
 
     @Override
     public Void downgradeTo(Void yaml) {
+        // not supported
         return null;
     }
 
     @Override
-    public BatchParamsYamlUtilsV2 nextUtil() {
-        return (BatchParamsYamlUtilsV2) BatchParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
     public Void prevUtil() {
+        // not supported
         return null;
     }
 

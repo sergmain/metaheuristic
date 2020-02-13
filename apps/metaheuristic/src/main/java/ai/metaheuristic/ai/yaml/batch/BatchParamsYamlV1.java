@@ -17,20 +17,18 @@
 package ai.metaheuristic.ai.yaml.batch;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
+ *
  * @author Serge
- * Date: 8/29/2019
+ * Date: 12/21/2019
  * Time: 6:00 PM
  */
 @Data
@@ -44,21 +42,9 @@ public class BatchParamsYamlV1 implements BaseParams {
     }
 
     @Data
-    public static class TaskStatusV1 {
-        public long taskId;
-        public long stationId;
-        public String ip;
-        public String host;
-        public String execResults;
-        public EnumsApi.TaskExecState state;
-    }
-
-    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BatchStatusV1 {
-        public final Map<String, String> renameTo = new HashMap<>();
-        public String originArchiveName = Consts.RESULT_ZIP;
         // must be public for yaml's marshalling
         public boolean ok = false;
         // must be public for yaml's marshalling
@@ -66,6 +52,7 @@ public class BatchParamsYamlV1 implements BaseParams {
     }
 
     public BatchStatusV1 batchStatus;
-    public List<TaskStatusV1> taskStatuses;
+    public String username;
     public boolean ok = false;
+
 }

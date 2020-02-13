@@ -377,7 +377,7 @@ public class AtlasTopLevelService {
                 .map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
 
         experimentInfoResult.execContext = workbook;
-        experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.execState);
+        experimentInfoResult.execContextState = EnumsApi.ExecContextState.toState(workbook.execState);
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;

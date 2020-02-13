@@ -40,7 +40,7 @@ public class WorkbookFSM {
     private final WorkbookCache workbookCache;
     private final SourceCodeCache sourceCodeCache;
 
-    public void toState(Long workbookId, EnumsApi.WorkbookExecState state) {
+    public void toState(Long workbookId, EnumsApi.ExecContextState state) {
         workbookSyncService.getWithSync(workbookId, workbook -> {
             if (workbook.execState!=state.code) {
                 workbook.setExecState(state.code);
@@ -50,7 +50,7 @@ public class WorkbookFSM {
         });
     }
 
-    private void toStateWithCompletion(Long workbookId, EnumsApi.WorkbookExecState state) {
+    private void toStateWithCompletion(Long workbookId, EnumsApi.ExecContextState state) {
         workbookSyncService.getWithSync(workbookId, workbook -> {
             if (workbook.execState!=state.code || workbook.completedOn==null) {
                 workbook.setCompletedOn(System.currentTimeMillis());
@@ -62,8 +62,8 @@ public class WorkbookFSM {
     }
 
     public void toStarted(ExecContext execContext) {
-        SourceCodeImpl plan = sourceCodeCache.findById(execContext.getSourceCodeId());
-        if (plan == null) {
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
+        if (sourceCode == null) {
             toError(execContext.getId());
         }
         else {
@@ -72,31 +72,31 @@ public class WorkbookFSM {
     }
 
     public void toStopped(Long workbookId) {
-        toState(workbookId, EnumsApi.WorkbookExecState.STOPPED);
+        toState(workbookId, EnumsApi.ExecContextState.STOPPED);
     }
 
     public void toStarted(Long workbookId) {
-        toState(workbookId, EnumsApi.WorkbookExecState.STARTED);
+        toState(workbookId, EnumsApi.ExecContextState.STARTED);
     }
 
     public void toProduced(Long workbookId) {
-        toState(workbookId, EnumsApi.WorkbookExecState.PRODUCED);
+        toState(workbookId, EnumsApi.ExecContextState.PRODUCED);
     }
 
     public void toFinished(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.FINISHED);
+        toStateWithCompletion(workbookId, EnumsApi.ExecContextState.FINISHED);
     }
 
     public void toExportingToAtlas(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.EXPORTING_TO_ATLAS);
+        toStateWithCompletion(workbookId, EnumsApi.ExecContextState.EXPORTING_TO_ATLAS);
     }
 
     public void toExportingToAtlasStarted(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.EXPORTING_TO_ATLAS_WAS_STARTED);
+        toStateWithCompletion(workbookId, EnumsApi.ExecContextState.EXPORTING_TO_ATLAS_WAS_STARTED);
     }
 
     public void toError(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.ERROR);
+        toStateWithCompletion(workbookId, EnumsApi.ExecContextState.ERROR);
     }
 
 

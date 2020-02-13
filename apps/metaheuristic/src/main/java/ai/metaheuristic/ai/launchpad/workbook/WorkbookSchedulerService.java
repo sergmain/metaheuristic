@@ -57,12 +57,12 @@ public class WorkbookSchedulerService {
     private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
 
     public void updateWorkbookStatuses(boolean needReconciliation) {
-        List<ExecContextImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
+        List<ExecContextImpl> workbooks = workbookRepository.findByExecState(EnumsApi.ExecContextState.STARTED.code);
         for (ExecContextImpl workbook : workbooks) {
             updateWorkbookStatus(workbook.id, needReconciliation);
         }
 
-        List<Long> workbooksIds = workbookRepository.findIdsByExecState(EnumsApi.WorkbookExecState.EXPORTING_TO_ATLAS.code);
+        List<Long> workbooksIds = workbookRepository.findIdsByExecState(EnumsApi.ExecContextState.EXPORTING_TO_ATLAS.code);
         for (Long workbookId : workbooksIds) {
             log.info("Start exporting execContext #{} to atlas", workbookId);
             OperationStatusRest status;

@@ -59,7 +59,7 @@ public class TaskProducingService {
 
     @SuppressWarnings("Duplicates")
     public SourceCodeService.ProduceTaskResult produceTasksForProcess(
-            boolean isPersist, Long sourceCodeId, String internalContextId, SourceCodeParamsYaml planParams, Long execContextId,
+            boolean isPersist, Long sourceCodeId, String internalContextId, SourceCodeParamsYaml sourceCodeParams, Long execContextId,
             SourceCodeParamsYaml.Process process, SourceCodeService.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls = new HashMap<>(pools.inputStorageUrls);
@@ -81,7 +81,7 @@ public class TaskProducingService {
                 inputStorageUrls.put(resourceId, variable);
             }
             if (isPersist) {
-                Task t = createTaskInternal(planParams, execContextId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
+                Task t = createTaskInternal(sourceCodeParams, execContextId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
                 if (t!=null) {
                     result.taskIds.add(t.getId());
                 }
@@ -108,7 +108,7 @@ public class TaskProducingService {
                         inputStorageUrls.put(resourceId, variable);
                     }
                     if (isPersist) {
-                        Task t = createTaskInternal(planParams, execContextId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
+                        Task t = createTaskInternal(sourceCodeParams, execContextId, process, outputResourceIds, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
                         if (t!=null) {
                             result.taskIds.add(t.getId());
                         }
@@ -143,7 +143,7 @@ public class TaskProducingService {
 
     @SuppressWarnings("Duplicates")
     private TaskImpl createTaskInternal(
-            SourceCodeParamsYaml planParams, Long workbookId, SourceCodeParamsYaml.Process process,
+            SourceCodeParamsYaml sourceCodeParams, Long workbookId, SourceCodeParamsYaml.Process process,
             Map<String, SourceCodeParamsYaml.Variable> outputResourceIds,
             SourceCodeParamsYaml.SnippetDefForSourceCode snDef, Map<String, List<String>> collectedInputs, Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls,
             Map<String, String> mappingCodeToOriginalFilename) {
@@ -179,7 +179,7 @@ public class TaskProducingService {
                 yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(postSnippet));
             }
         }
-        yaml.taskYaml.clean = planParams.source.clean;
+        yaml.taskYaml.clean = sourceCodeParams.source.clean;
         yaml.taskYaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
         String taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);

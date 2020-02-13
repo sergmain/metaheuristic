@@ -60,7 +60,7 @@ public class TaskAssetPreparer {
 
         // delete all orphan tasks
         stationTaskService.findAll().forEach(task -> {
-            if (EnumsApi.WorkbookExecState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.workbookId)) {
+            if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.workbookId)) {
                 stationTaskService.delete(task.launchpadUrl, task.taskId);
                 log.info("Deleted orphan task #{}", task.taskId);
             }
@@ -82,7 +82,7 @@ public class TaskAssetPreparer {
             }
             Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 
-            if (EnumsApi.WorkbookExecState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.workbookId)) {
+            if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.workbookId)) {
                 stationTaskService.delete(task.launchpadUrl, task.taskId);
                 log.info("Deleted orphan task {}", task);
                 continue;

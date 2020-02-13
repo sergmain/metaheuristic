@@ -20,14 +20,15 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/source-code/sourceCodes-part', table);
+            $.post('/launchpad/source-code/source-codes-part', table);
         });
 
     </script>
 
-    <h1 class="widget-header">Plans</h1>
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.source_code.SourceCodeApiData$SourceCodesResult"*/-->
+    <h1 class="widget-header">Source codes</h1>
 
-    <a class="pure-button pure-button-primary" href="sourceCode-add.html" th:href="@{/launchpad/source-code/sourceCode-add}"
+    <a class="pure-button pure-button-primary" href="source-code-add.html" th:href="@{/launchpad/source-code/source-code-add}"
        th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}"
     >Add new sourceCode</a>
     <p class="alert alert-info" th:if="${result.assetMode==T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
@@ -35,7 +36,6 @@
     <p></p>
 
 
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.sourceCode.PlanApiData$PlansResult"*/-->
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>
@@ -59,10 +59,10 @@
                    th:disabled="${f.locked}"
                    th:href="${'/launchpad/source-code/sourceCode-edit/' + f.id}">Edit</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-                <a class="pure-button pure-button-primary" th:href="${'/launchpad/source-code/sourceCode-delete/' + f.id}">Delete</a></td>
+                <a class="pure-button pure-button-primary" th:href="${'/launchpad/source-code/source-code-delete/' + f.id}">Delete</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-                <a class="pure-button pure-button-primary" th:href="${'/launchpad/source-code/sourceCode-archive/' + f.id}">To archive</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/source-code/workbooks/' + f.id}">Workbooks</a></td>
+                <a class="pure-button pure-button-primary" th:href="${'/launchpad/source-code/source-code-archive/' + f.id}">To archive</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/source-code/exec-contexts/' + f.id}">Exec contexts</a></td>
         </tr>
         <tr>
             <td th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated} ? 9 : 6">

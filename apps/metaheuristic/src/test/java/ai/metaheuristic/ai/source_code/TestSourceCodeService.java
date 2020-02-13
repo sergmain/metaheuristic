@@ -126,7 +126,7 @@ public class TestSourceCodeService extends PreparingPlan {
         workbookFSM.toStarted(workbook);
         workbook = workbookCache.findById(workbook.getId());
 
-        assertEquals(EnumsApi.WorkbookExecState.STARTED.code, workbook.getExecState());
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getExecState());
         {
             LaunchpadCommParamsYaml.AssignedTask simpleTask =
                     workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());

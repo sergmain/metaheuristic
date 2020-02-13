@@ -28,13 +28,11 @@ import java.util.Map;
 public class BatchParamsYamlUtils {
 
     private static final BatchParamsYamlUtilsV1 YAML_UTILS_V_1 = new BatchParamsYamlUtilsV1();
-    private static final BatchParamsYamlUtilsV2 YAML_UTILS_V_2 = new BatchParamsYamlUtilsV2();
-    private static final BatchParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final BatchParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
     public static final BaseYamlUtils<BatchParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
+                    1, YAML_UTILS_V_1
             ),
             DEFAULT_UTILS
     );

@@ -253,7 +253,7 @@ public class EnumsApi {
         }
     }
 
-    public enum WorkbookExecState {
+    public enum ExecContextState {
         ERROR(-2),          // some error in configuration
         UNKNOWN(-1),        // unknown state
         NONE(0),            // just created execContext
@@ -269,11 +269,11 @@ public class EnumsApi {
 
         public int code;
 
-        WorkbookExecState(int code) {
+        ExecContextState(int code) {
             this.code = code;
         }
 
-        public static WorkbookExecState toState(int code) {
+        public static ExecContextState toState(int code) {
             switch (code) {
                 case -2:
                     return ERROR;
@@ -307,7 +307,7 @@ public class EnumsApi {
 
         public static String from(int code) {
             //noinspection unused
-            WorkbookExecState state = toState(code);
+            ExecContextState state = toState(code);
             return state.toString();
         }
     }

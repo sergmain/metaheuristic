@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.yaml.communication.launchpad;
 
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
@@ -40,21 +39,6 @@ public class LaunchpadCommParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-/*
-        final boolean b = sourceCodeYaml != null && sourceCodeYaml.planCode != null && !sourceCodeYaml.planCode.isBlank() &&
-                sourceCodeYaml.processes != null;
-        if (!b) {
-            throw new IllegalArgumentException(
-                    "(boolean b = sourceCodeYaml != null && sourceCodeYaml.planCode != null && " +
-                            "!sourceCodeYaml.planCode.isBlank() && sourceCodeYaml.processes != null) ");
-        }
-        for (ProcessV5 process : sourceCodeYaml.processes) {
-            if (process.snippets == null || process.snippets.size() == 0) {
-                throw new IllegalArgumentException("(process.snippets==null || process.snippets.size()==0) ");
-            }
-        }
-*/
-
         return true;
     }
 
@@ -127,7 +111,7 @@ public class LaunchpadCommParamsYaml implements BaseParams {
         @NoArgsConstructor
         public static class SimpleStatus {
             public long workbookId;
-            public EnumsApi.WorkbookExecState state;
+            public EnumsApi.ExecContextState state;
         }
 
         public List<SimpleStatus> statuses;

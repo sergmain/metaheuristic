@@ -173,7 +173,7 @@ public class SourceCodeService {
     public synchronized void createAllTasks() {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
-        List<ExecContextImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
+        List<ExecContextImpl> workbooks = workbookRepository.findByExecState(EnumsApi.ExecContextState.PRODUCING.code);
         Monitoring.log("##020", Enums.Monitor.MEMORY);
         if (!workbooks.isEmpty()) {
             log.info("#701.020 Start producing tasks");
@@ -259,7 +259,7 @@ public class SourceCodeService {
 
     public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl sourceCode, ExecContext execContext) {
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
-        if (isPersist && execContext.getExecState()!= EnumsApi.WorkbookExecState.PRODUCING.code) {
+        if (isPersist && execContext.getExecState()!= EnumsApi.ExecContextState.PRODUCING.code) {
             result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.ALREADY_PRODUCED_ERROR;
             return result;
         }

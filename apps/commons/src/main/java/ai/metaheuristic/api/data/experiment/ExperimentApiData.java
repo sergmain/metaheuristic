@@ -214,7 +214,7 @@ public class ExperimentApiData {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeatureData> features;
         public ExecContext execContext;
-        public EnumsApi.WorkbookExecState workbookExecState;
+        public EnumsApi.ExecContextState execContextState;
     }
 
     @Data
@@ -269,7 +269,7 @@ public class ExperimentApiData {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeatureData> features;
         public ExecContext execContext;
-        public EnumsApi.WorkbookExecState workbookExecState;
+        public EnumsApi.ExecContextState execContextState;
     }
 
     @Data

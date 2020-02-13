@@ -54,7 +54,7 @@ public class ArtifactCleanerAtStation {
 
             List<StationTask> all = stationTaskService.findAll(launchpadUrl);
             for (StationTask task : all) {
-                if (currentExecState.isState(launchpadUrl, task.workbookId, EnumsApi.WorkbookExecState.DOESNT_EXIST)) {
+                if (currentExecState.isState(launchpadUrl, task.workbookId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
                     log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), launchpadUrl);
                     stationTaskService.delete(launchpadUrl, task.getTaskId());
                     continue;

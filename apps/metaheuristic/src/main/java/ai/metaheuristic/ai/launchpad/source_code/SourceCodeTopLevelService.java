@@ -77,32 +77,32 @@ public class SourceCodeTopLevelService {
     private final WorkbookCache workbookCache;
     private final GlobalVariableService globalVariableService;
 
-    public SourceCodeApiData.WorkbookResult addWorkbook(Long sourceCodeId, String variable, LaunchpadContext context) {
+    public SourceCodeApiData.ExecContextResult addWorkbook(Long sourceCodeId, String variable, LaunchpadContext context) {
         return getWorkbookResult(variable, context, sourceCodeCache.findById(sourceCodeId));
     }
 
-    public SourceCodeApiData.WorkbookResult addWorkbook(String sourceCodeUid, String variable, LaunchpadContext context) {
+    public SourceCodeApiData.ExecContextResult addWorkbook(String sourceCodeUid, String variable, LaunchpadContext context) {
         return getWorkbookResult(variable, context, sourceCodeRepository.findByUidAndCompanyId(sourceCodeUid, context.getCompanyId()));
     }
 
-    private SourceCodeApiData.WorkbookResult getWorkbookResult(String variable, LaunchpadContext context, SourceCodeImpl sourceCode) {
+    private SourceCodeApiData.ExecContextResult getWorkbookResult(String variable, LaunchpadContext context, SourceCodeImpl sourceCode) {
         if (S.b(variable)) {
-            return new SourceCodeApiData.WorkbookResult("#560.006 name of variable is empty");
+            return new SourceCodeApiData.ExecContextResult("#560.006 name of variable is empty");
         }
         if (globalVariableService.getIdInVariables(List.of(variable)).isEmpty()) {
-            return new SourceCodeApiData.WorkbookResult( "#560.008 global variable " + variable +" wasn't found");
+            return new SourceCodeApiData.ExecContextResult( "#560.008 global variable " + variable +" wasn't found");
         }
         // validate the sourceCode
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
         if (sourceCodeValidation.status != EnumsApi.SourceCodeValidateStatus.OK) {
-            SourceCodeApiData.WorkbookResult r = new SourceCodeApiData.WorkbookResult();
+            SourceCodeApiData.ExecContextResult r = new SourceCodeApiData.ExecContextResult();
             r.errorMessages = sourceCodeValidation.errorMessages;
             return r;
         }
 
         OperationStatusRest status = checkSourceCode(sourceCode, context);
         if (status != null) {
-            return new SourceCodeApiData.WorkbookResult( "#560.011 access denied: " + status.getErrorMessagesAsStr());
+            return new SourceCodeApiData.ExecContextResult( "#560.011 access denied: " + status.getErrorMessagesAsStr());
         }
         return workbookService.createWorkbookInternal(sourceCode, variable);
     }
@@ -351,9 +351,9 @@ public class SourceCodeTopLevelService {
 
     // ========= ExecContext specific =============
 
-    public OperationStatusRest changeWorkbookExecState(String state, Long workbookId, LaunchpadContext context) {
-        EnumsApi.WorkbookExecState execState = EnumsApi.WorkbookExecState.valueOf(state.toUpperCase());
-        if (execState==EnumsApi.WorkbookExecState.UNKNOWN) {
+    public OperationStatusRest changeExecContextState(String state, Long workbookId, LaunchpadContext context) {
+        EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.valueOf(state.toUpperCase());
+        if (execState== EnumsApi.ExecContextState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
         }
         OperationStatusRest status = checkWorkbook(workbookId, context);
@@ -364,13 +364,13 @@ public class SourceCodeTopLevelService {
         return status;
     }
 
-    public OperationStatusRest deleteWorkbookById(Long workbookId, LaunchpadContext context) {
-        OperationStatusRest status = checkWorkbook(workbookId, context);
+    public OperationStatusRest deleteExecContextById(Long execContextId, LaunchpadContext context) {
+        OperationStatusRest status = checkWorkbook(execContextId, context);
         if (status != null) {
             return status;
         }
-        publisher.publishEvent( new LaunchpadInternalEvent.WorkbookDeletionEvent(this, workbookId) );
-        workbookService.deleteWorkbook(workbookId, context.getCompanyId());
+        publisher.publishEvent( new LaunchpadInternalEvent.ExecContextDeletionEvent(this, execContextId) );
+        workbookService.deleteWorkbook(execContextId, context.getCompanyId());
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

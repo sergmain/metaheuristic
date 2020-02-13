@@ -48,12 +48,12 @@ public class WorkbookTopLevelService {
     private final WorkbookService workbookService;
     private final SourceCodeCache sourceCodeCache;
 
-    public SourceCodeApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, LaunchpadContext context) {
+    public SourceCodeApiData.ExecContextsResult getWorkbooksOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, LaunchpadContext context) {
         return workbookService.getWorkbooksOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
     }
 
-    public SourceCodeApiData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam, LaunchpadContext context) {
-        final SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(planId, SourceCodeUtils.parseToWorkbookParamsYaml(inputResourceParam));
+    public SourceCodeApiData.TaskProducingResult createExecContext(Long sourceCodeId, String inputResourceParam, LaunchpadContext context) {
+        final SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(sourceCodeId, SourceCodeUtils.parseToWorkbookParamsYaml(inputResourceParam));
         return new SourceCodeApiData.TaskProducingResult(
                 result.getStatus()== EnumsApi.TaskProducingStatus.OK
                         ? new ArrayList<>()
@@ -65,8 +65,8 @@ public class WorkbookTopLevelService {
         );
     }
 
-    public SourceCodeApiData.WorkbookResult getWorkbookExtendedForDeletion(Long workbookId, LaunchpadContext context) {
-        SourceCodeApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
+    public SourceCodeApiData.ExecContextResult getExecContextExtendedForDeletion(Long workbookId, LaunchpadContext context) {
+        SourceCodeApiData.ExecContextResult result = workbookService.getWorkbookExtended(workbookId);
 
         // don't show actual graph for this execContext
         WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.getParams());
@@ -76,9 +76,9 @@ public class WorkbookTopLevelService {
         return result;
     }
 
-    public SourceCodeApiData.WorkbookResult getWorkbookExtended(Long workbookId) {
+    public SourceCodeApiData.ExecContextResult getWorkbookExtended(Long execContextId) {
         //noinspection UnnecessaryLocalVariable
-        SourceCodeApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
+        SourceCodeApiData.ExecContextResult result = workbookService.getWorkbookExtended(execContextId);
         return result;
     }
 

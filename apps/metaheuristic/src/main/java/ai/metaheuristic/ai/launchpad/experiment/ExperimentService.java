@@ -247,7 +247,7 @@ public class ExperimentService {
                 log.info("#179.030 Can't calc max values and export to atlas because workbookId is null");
                 continue;
             }
-            if (wb.execState!=EnumsApi.WorkbookExecState.FINISHED.code) {
+            if (wb.execState!= EnumsApi.ExecContextState.FINISHED.code) {
                 continue;
             }
             ExperimentParamsYaml epy = e.getExperimentParamsYaml();
@@ -728,8 +728,8 @@ public class ExperimentService {
                 boolHolder.set(true);
             }
         };
-        final LaunchpadInternalEvent.WorkbookDeletionListener listener =
-                new LaunchpadInternalEvent.WorkbookDeletionListener(workbookId, longConsumer);
+        final LaunchpadInternalEvent.ExecContextDeletionListener listener =
+                new LaunchpadInternalEvent.ExecContextDeletionListener(workbookId, longConsumer);
 
         int processed = 0;
         long prevMills = System.currentTimeMillis();

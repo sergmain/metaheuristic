@@ -17,7 +17,7 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
-    public enum AssetType { company, account, snippet, plan }
+    public enum AssetType { company, account, snippet, source}
 
     public enum SnippetState {
         none, ok, ready, not_found,

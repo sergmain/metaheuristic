@@ -13,8 +13,8 @@
                 <input name="code" id="code" type="text" placeholder="code" th:field="*{code}">
                 <span class="pure-form-message">This is a required field.</span>
 
-                <label for="planYamlAsStr">Parameters of sourceCode</label>
-                <pre id="planYamlAsStr"  th:text="${planYamlAsStr}"></pre>
+                <label for="sourceCodeYamlAsStr">Parameters of sourceCode</label>
+                <pre id="sourceCodeYamlAsStr"  th:text="${sourceCodeYamlAsStr}"></pre>
                 <span class="pure-form-message">This is a required field.</span>
             </fieldset>
         </form>
@@ -22,7 +22,7 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${sourceCode}" th:method="post" th:action="@{/launchpad/source-code/sourceCode-archive-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${sourceCode}" th:method="post" th:action="@{/launchpad/source-code/source-code-archive-commit}"
                           accept-charset="UTF-8"
                           id="sourceCode-archive-commit"
                           name="f">

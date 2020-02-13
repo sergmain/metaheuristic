@@ -139,10 +139,4 @@ public class ReplicationData {
             addErrorMessages(errorMessages);
         }
     }
-
-    @Data
-    public static class AssetStateRequest {
-        public final Map<Enums.AssetType, Long> assetTimestamp = new HashMap<>();
-    }
-
 }

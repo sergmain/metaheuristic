@@ -6,15 +6,15 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Upload file for processing</h1>
 
-        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.SourceCodeData.PlansForBatchResult"*/-->
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.SourceCodeData$SourceCodesForCompany"*/-->
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
               th:action="@{/launchpad/batch/batch-upload-from-file}"
         >
             <fieldset>
 
-                <label for="planId">List of sourceCodes</label>
-                <select  id="planId" class="pure-input-medium" th:name="planId">
-                    <option th:each="o : ${result.items}" th:value="${o.id}" th:text="${o.code} "></option>
+                <label for="sourceCodeId">List of source codes</label>
+                <select  id="sourceCodeId" class="pure-input-medium" th:name="sourceCodeId">
+                    <option th:each="o : ${result.items}" th:value="${o.id}" th:text="${o.uid} "></option>
                 </select>
                 <span class="pure-form-message">This is a required field.</span>
 

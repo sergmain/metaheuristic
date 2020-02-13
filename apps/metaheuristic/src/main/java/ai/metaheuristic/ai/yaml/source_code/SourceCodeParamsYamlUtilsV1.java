@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.yaml.source_code;
 
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV8;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV1;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -29,34 +29,34 @@ import java.util.stream.Collectors;
 /**
  * @author Serge
  */
-public class PlanParamsYamlUtilsV8
-        extends AbstractParamsYamlUtils<SourceCodeParamsYamlV8, SourceCodeParamsYaml, Void, Void, Void, Void> {
+public class SourceCodeParamsYamlUtilsV1
+        extends AbstractParamsYamlUtils<SourceCodeParamsYamlV1, SourceCodeParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 8;
+        return 1;
     }
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(SourceCodeParamsYamlV8.class);
+        return YamlUtils.init(SourceCodeParamsYamlV1.class);
     }
 
     @Override
-    public SourceCodeParamsYaml upgradeTo(SourceCodeParamsYamlV8 v8, Long ... vars) {
-        v8.checkIntegrity();
+    public SourceCodeParamsYaml upgradeTo(SourceCodeParamsYamlV1 v1, Long ... vars) {
+        v1.checkIntegrity();
         SourceCodeParamsYaml p = new SourceCodeParamsYaml();
-        p.internalParams = new SourceCodeParamsYaml.InternalParams(v8.internalParams.archived, v8.internalParams.published, v8.internalParams.updatedOn, null);
+        p.internalParams = new SourceCodeParamsYaml.InternalParams(v1.internalParams.archived, v1.internalParams.published, v1.internalParams.updatedOn, null);
         p.source = new SourceCodeParamsYaml.SourceCodeYaml();
-        if (v8.source.metas!=null){
-            p.source.metas = new ArrayList<>(v8.source.metas);
+        if (v1.source.metas!=null){
+            p.source.metas = new ArrayList<>(v1.source.metas);
         }
-        if (v8.source.variables!=null) {
-            p.source.variables = new SourceCodeParamsYaml.VariableDefinition(v8.source.variables.global, v8.source.variables.runtime);
-            v8.source.variables.inline.forEach(p.source.variables.inline::put);
+        if (v1.source.variables!=null) {
+            p.source.variables = new SourceCodeParamsYaml.VariableDefinition(v1.source.variables.global, v1.source.variables.runtime);
+            v1.source.variables.inline.forEach(p.source.variables.inline::put);
         }
-        p.source.clean = v8.source.clean;
-        p.source.processes = v8.source.processes.stream().map(o-> {
+        p.source.clean = v1.source.clean;
+        p.source.processes = v1.source.processes.stream().map(o-> {
             SourceCodeParamsYaml.Process pr = new SourceCodeParamsYaml.Process();
             pr.name = o.name;
             pr.code = o.code;
@@ -70,12 +70,12 @@ public class PlanParamsYamlUtilsV8
 
             return pr;
         }).collect(Collectors.toList());
-        p.source.code = v8.source.code;
-        if (v8.source.ac!=null) {
-            p.source.ac = new SourceCodeParamsYaml.AccessControl(v8.source.ac.groups);
+        p.source.code = v1.source.code;
+        if (v1.source.ac!=null) {
+            p.source.ac = new SourceCodeParamsYaml.AccessControl(v1.source.ac.groups);
         }
-        p.origin.source = v8.origin.source;
-        p.origin.lang = v8.origin.lang;
+        p.origin.source = v1.origin.source;
+        p.origin.lang = v1.origin.lang;
         p.checkIntegrity();
         return p;
     }
@@ -98,19 +98,19 @@ public class PlanParamsYamlUtilsV8
     }
 
     @Override
-    public String toString(SourceCodeParamsYamlV8 planParamsYaml) {
-        return getYaml().dump(planParamsYaml);
+    public String toString(SourceCodeParamsYamlV1 sourceCodeParamsYaml) {
+        return getYaml().dump(sourceCodeParamsYaml);
     }
 
     @Override
-    public SourceCodeParamsYamlV8 to(String s) {
-        final SourceCodeParamsYamlV8 p = getYaml().load(s);
+    public SourceCodeParamsYamlV1 to(String s) {
+        final SourceCodeParamsYamlV1 p = getYaml().load(s);
         if (p.source ==null) {
             throw new IllegalStateException("#635.010 SourceCode Yaml is null");
         }
 
         if (p.internalParams==null) {
-            p.internalParams = new SourceCodeParamsYamlV8.InternalParamsV8();
+            p.internalParams = new SourceCodeParamsYamlV1.InternalParamsV1();
         }
         return p;
     }

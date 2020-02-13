@@ -44,11 +44,11 @@ public class WorkbookSyncService {
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
     @SuppressWarnings("Duplicates")
-    <T> T getWithSync(Long workbookId, Function<ExecContextImpl, T> function) {
+    <T> T getWithSync(Long execContextId, Function<ExecContextImpl, T> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();
-            obj = syncMap.computeIfAbsent(workbookId, o -> new AtomicInteger());
+            obj = syncMap.computeIfAbsent(execContextId, o -> new AtomicInteger());
         } finally {
             writeLock.unlock();
         }
@@ -56,13 +56,13 @@ public class WorkbookSyncService {
         synchronized (obj) {
             obj.incrementAndGet();
             try {
-                ExecContextImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+                ExecContextImpl workbook = workbookRepository.findByIdForUpdate(execContextId);
                 return workbook == null ? null : function.apply(workbook);
             } finally {
                 try {
                     writeLock.lock();
                     if (obj.get() == 1) {
-                        syncMap.remove(workbookId);
+                        syncMap.remove(execContextId);
                     }
                     obj.decrementAndGet();
                 } finally {

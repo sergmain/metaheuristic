@@ -226,7 +226,7 @@ public class ExperimentTopLevelService {
         final List<ExperimentParamsYaml.ExperimentFeature> experimentFeatures = epy.processing.features;
         experimentInfoResult.features = experimentFeatures.stream().map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
         experimentInfoResult.execContext = workbook;
-        experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.getExecState());
+        experimentInfoResult.execContextState = EnumsApi.ExecContextState.toState(workbook.getExecState());
         result.experiment = ExperimentService.asExperimentData(experiment);
         result.experimentInfo = experimentInfoResult;
 
@@ -737,12 +737,12 @@ public class ExperimentTopLevelService {
                     "#285.510 can't find a sourceCode with experiment code: " + experimentCode);
         }
 */
-        SourceCodeApiData.WorkbookResult workbookResultRest = sourceCodeTopLevelService.addWorkbook(p.id, resourcePoolCode, context);
-        if (workbookResultRest.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, workbookResultRest.errorMessages, workbookResultRest.infoMessages);
+        SourceCodeApiData.ExecContextResult execContextResultRest = sourceCodeTopLevelService.addWorkbook(p.id, resourcePoolCode, context);
+        if (execContextResultRest.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, execContextResultRest.errorMessages, execContextResultRest.infoMessages);
         }
 
-        experimentService.bindExperimentToWorkbook(experiment.id, workbookResultRest.execContext.getId());
+        experimentService.bindExperimentToWorkbook(experiment.id, execContextResultRest.execContext.getId());
 
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,
                 "Binding an experiment '"+experimentCode+"' to sourceCode '"+p.uid +"' with using a resource '"+resourcePoolCode+"' was successful", null);
@@ -751,26 +751,26 @@ public class ExperimentTopLevelService {
 
 
     public OperationStatusRest produceTasks(String experimentCode) {
-        return changeExecStateTo(experimentCode, EnumsApi.WorkbookExecState.PRODUCING);
+        return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.PRODUCING);
     }
 
-    public EnumsApi.WorkbookExecState getExperimentProcessingStatus(String experimentCode) {
+    public EnumsApi.ExecContextState getExperimentProcessingStatus(String experimentCode) {
         if (experimentCode==null || experimentCode.isBlank()) {
-            return EnumsApi.WorkbookExecState.UNKNOWN;
+            return EnumsApi.ExecContextState.UNKNOWN;
         }
         Experiment experiment = experimentRepository.findByCode(experimentCode);
         if (experiment==null || experiment.workbookId==null) {
-            return EnumsApi.WorkbookExecState.UNKNOWN;
+            return EnumsApi.ExecContextState.UNKNOWN;
         }
         ExecContext wb = workbookCache.findById(experiment.workbookId);
-        return EnumsApi.WorkbookExecState.toState(wb.getExecState());
+        return EnumsApi.ExecContextState.toState(wb.getExecState());
     }
 
     public OperationStatusRest startProcessingOfTasks(String experimentCode) {
-        return changeExecStateTo(experimentCode, EnumsApi.WorkbookExecState.STARTED);
+        return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.STARTED);
     }
 
-    private OperationStatusRest changeExecStateTo(String experimentCode, EnumsApi.WorkbookExecState execState) {
+    private OperationStatusRest changeExecStateTo(String experimentCode, EnumsApi.ExecContextState execState) {
         if (experimentCode==null || experimentCode.isBlank()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.550 experiment code is blank");
         }
