@@ -51,7 +51,7 @@ public class LaunchpadEventYamlUtilsV1
         if (src.batchData!=null) {
             trg.batchData = new LaunchpadEventYaml.BatchEventData();
             trg.batchData.batchId = src.batchData.batchId;
-            trg.batchData.workbookId = src.batchData.workbookId;
+            trg.batchData.execContextId = src.batchData.workbookId;
             trg.batchData.username = src.batchData.username;
             trg.batchData.size = src.batchData.size;
             trg.batchData.filename = src.batchData.filename;
@@ -61,7 +61,7 @@ public class LaunchpadEventYamlUtilsV1
             trg.taskData = new LaunchpadEventYaml.TaskEventData();
             trg.taskData.stationId = src.taskData.stationId;
             trg.taskData.taskId = src.taskData.taskId;
-            trg.taskData.workbookId = src.taskData.workbookId;
+            trg.taskData.execContextId = src.taskData.workbookId;
         }
         trg.checkIntegrity();
         return trg;

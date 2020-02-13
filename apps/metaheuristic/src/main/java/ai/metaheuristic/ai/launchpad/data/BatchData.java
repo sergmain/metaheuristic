@@ -41,7 +41,7 @@ public final class BatchData {
     @AllArgsConstructor
     public static class UploadingStatus extends BaseDataClass {
         public Long batchId;
-        public Long workbookId;
+        public Long execContextId;
 
         public UploadingStatus(String errorMessage) {
             addErrorMessage(errorMessage);

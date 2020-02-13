@@ -53,7 +53,7 @@ public class ConsoleFormAtlasService {
     }
 
     @Transactional
-    public ConsoleOutputStoredToAtlas collectConsoleOutputs(long workbookId) {
+    public ConsoleOutputStoredToAtlas collectConsoleOutputs(Long execContextId) {
 
         File tempDir = DirUtils.createTempDir("store-console-");
         if (tempDir == null) {
@@ -62,7 +62,7 @@ public class ConsoleFormAtlasService {
         try {
             File output = File.createTempFile("output-", ".txt", tempDir);
 
-            try (Stream<Task> stream = taskRepository.findAllByWorkbookIdAsStream(workbookId);
+            try (Stream<Task> stream = taskRepository.findAllByExecContextIdAsStream(execContextId);
                  final OutputStream os = new FileOutputStream(output);
                  final PrintWriter pw = new PrintWriter(os, false, StandardCharsets.UTF_8)
             ) {

@@ -47,7 +47,7 @@ public class ExperimentApiData {
     public static class ExperimentData {
         public Long id;
         public Integer version;
-        public Long workbookId;
+        public Long execContextId;
         public String code;
         public String name;
         public String description;

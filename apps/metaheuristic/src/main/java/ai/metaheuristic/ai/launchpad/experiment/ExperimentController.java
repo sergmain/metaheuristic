@@ -296,10 +296,10 @@ public class ExperimentController {
                     "#285.260 experiment wasn't found, experimentId: " + id);
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
-        if (experiment.workbookId!=null) {
-            ExecContext wb = execContextCache.findById(experiment.workbookId);
+        if (experiment.execContextId !=null) {
+            ExecContext wb = execContextCache.findById(experiment.execContextId);
             if (wb != null) {
-                OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteExecContextById(experiment.workbookId, context);
+                OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteExecContextById(experiment.execContextId, context);
                 if (operationStatusRest.isErrorMessages()) {
                     redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
                     return REDIRECT_LAUNCHPAD_EXPERIMENTS;

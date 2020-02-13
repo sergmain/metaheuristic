@@ -87,11 +87,11 @@ public class Consts {
 
     public static final String COMPANIES_CACHE = "companies";
     public static final String ACCOUNTS_CACHE = "accounts";
-    public static final String WORKBOOK_CACHE = "workbooks";
+    public static final String EXEC_CONTEXT_CACHE = "exec_contexts";
     public static final String STATIONS_CACHE = "stations";
     public static final String BATCHES_CACHE = "batches";
     public static final String EXPERIMENTS_CACHE = "experiments";
-    public static final String SOURCE_CODES_CACHE = "sources";
+    public static final String SOURCE_CODES_CACHE = "source_codes";
     public static final String SNIPPETS_CACHE = "snippets";
 
     public static final String MAIN_DOCUMENT_POOL_CODE_FOR_BATCH = "mainDocument";

@@ -31,13 +31,13 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface WorkbookRepository extends CrudRepository<ExecContextImpl, Long> {
+public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
 
     @Query(value="select e from ExecContextImpl e where e.id=:id")
     ExecContextImpl findByIdForUpdate(Long id);
 
     @Transactional(readOnly = true)
-    @Query(value="select w.id, w.execState from ExecContextImpl w ")
+    @Query(value="select w.id, w.state from ExecContextImpl w ")
     List<Object[]> findAllExecStates();
 
     @Transactional(readOnly = true)
@@ -45,14 +45,14 @@ public interface WorkbookRepository extends CrudRepository<ExecContextImpl, Long
     List<Long> findAllIds();
 
     @Transactional(readOnly = true)
-    @Query(value="select e.id from ExecContextImpl e where e.execState=:execState order by e.createdOn asc ")
-    List<Long> findByExecStateOrderByCreatedOnAsc(int execState);
+    @Query(value="select e.id from ExecContextImpl e where e.state=:execState order by e.createdOn asc ")
+    List<Long> findByStateOrderByCreatedOnAsc(int execState);
 
     @Transactional
     List<ExecContextImpl> findByExecState(int execState);
 
     @Transactional(readOnly = true)
-    @Query(value="select e.id from ExecContextImpl e where e.execState=:execState")
+    @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
     List<Long> findIdsByExecState(int execState);
 
     @Transactional(readOnly = true)

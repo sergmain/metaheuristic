@@ -38,7 +38,7 @@ public class TaskCollector {
 
     @Transactional
     public List<Object[]> getTasks(ExecContext execContext) {
-        try (Stream<Object[]> stream = taskRepository.findByWorkbookId(execContext.getId()) ) {
+        try (Stream<Object[]> stream = taskRepository.findByExecContextId(execContext.getId()) ) {
             return stream.collect(Collectors.toList());
         }
     }

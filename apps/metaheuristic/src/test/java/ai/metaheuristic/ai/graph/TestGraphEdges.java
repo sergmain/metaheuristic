@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,7 +58,7 @@ public class TestGraphEdges extends PreparingPlan {
     @Test
     public void test() {
 
-        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createWorkbook(plan.getId(), workbookYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(plan.getId(), execContextYaml);
         workbook = (ExecContextImpl)result.execContext;
 
         assertNotNull(workbook);
@@ -76,18 +76,18 @@ public class TestGraphEdges extends PreparingPlan {
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         workbook = execContextCache.findById(workbook.id);
 
-        List<WorkbookParamsYaml.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(workbook);
+        List<ExecContextParamsYaml.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(workbook);
 
         assertEquals(3, leafs.size());
-        assertTrue(leafs.contains(new WorkbookParamsYaml.TaskVertex(21L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new WorkbookParamsYaml.TaskVertex(22L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new WorkbookParamsYaml.TaskVertex(23L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextParamsYaml.TaskVertex(21L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextParamsYaml.TaskVertex(22L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextParamsYaml.TaskVertex(23L, EnumsApi.TaskExecState.NONE)));
 
         osr = execContextGraphTopLevelService.addNewTasksToGraph( workbook.id,List.of(21L), List.of(311L, 312L, 313L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         workbook = execContextCache.findById(workbook.id);
 
-        Set<WorkbookParamsYaml.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(workbook, 1L);
+        Set<ExecContextParamsYaml.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(workbook, 1L);
         assertEquals(6, descendands.size());
 
         descendands = execContextGraphTopLevelService.findDescendants(workbook, 21L);

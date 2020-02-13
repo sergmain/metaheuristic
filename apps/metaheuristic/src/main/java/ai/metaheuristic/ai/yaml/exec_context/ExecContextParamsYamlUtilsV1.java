@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.workbook;
+package ai.metaheuristic.ai.yaml.exec_context;
 
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV1;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV2;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -28,8 +28,8 @@ import org.yaml.snakeyaml.Yaml;
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class WorkbookParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<WorkbookParamsYamlV1, WorkbookParamsYamlV2, WorkbookParamsYamlUtilsV2, Void, Void, Void> {
+public class ExecContextParamsYamlUtilsV1
+        extends AbstractParamsYamlUtils<ExecContextParamsYamlV1, ExecContextParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -38,45 +38,46 @@ public class WorkbookParamsYamlUtilsV1
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(WorkbookParamsYamlV1.class);
+        return YamlUtils.init(ExecContextParamsYamlV1.class);
     }
 
     @Override
-    public WorkbookParamsYamlV2 upgradeTo(WorkbookParamsYamlV1 workbookParams, Long ... vars) {
-        WorkbookParamsYamlV2 t = new WorkbookParamsYamlV2();
-        BeanUtils.copyProperties(workbookParams, t.workbookYaml);
-        if (workbookParams.poolCodes!=null) {
-            t.workbookYaml.poolCodes.putAll(workbookParams.poolCodes);
+    public ExecContextParamsYaml upgradeTo(ExecContextParamsYamlV1 yaml, Long ... vars) {
+        ExecContextParamsYaml t = new ExecContextParamsYaml();
+
+        // right now we don't need to convert Graph because it has only one version of structure
+        // so just copying of graph field is Ok
+        BeanUtils.copyProperties(yaml.execContextYaml, t.execContextYaml);
+        if (yaml.execContextYaml.variables!=null) {
+            t.execContextYaml.variables.putAll(yaml.execContextYaml.variables);
         }
+        t.graph = yaml.graph;
         return t;
     }
 
     @Override
     public Void downgradeTo(Void yaml) {
-        // there isn't any prev version
         return null;
     }
 
     @Override
-    public WorkbookParamsYamlUtilsV2 nextUtil() {
-        return (WorkbookParamsYamlUtilsV2)WorkbookParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
     public Void prevUtil() {
-        // there isn't any prev version
         return null;
     }
 
     @Override
-    public String toString(WorkbookParamsYamlV1 yaml) {
+    public String toString(ExecContextParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @Override
-    public WorkbookParamsYamlV1 to(String s) {
-        //noinspection UnnecessaryLocalVariable
-        final WorkbookParamsYamlV1 p = getYaml().load(s);
+    public ExecContextParamsYamlV1 to(String s) {
+        final ExecContextParamsYamlV1 p = getYaml().load(s);
         return p;
     }
 

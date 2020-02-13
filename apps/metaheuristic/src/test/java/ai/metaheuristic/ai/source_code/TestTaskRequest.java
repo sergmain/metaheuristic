@@ -111,7 +111,7 @@ public class TestTaskRequest extends FeatureMethods {
             assertNotNull(task);
             assertTrue(task.isCompleted);
 
-            execContextSchedulerService.updateWorkbookStatus(workbook.id,true);
+            execContextSchedulerService.updateExecContextStatus(workbook.id,true);
             workbook = execContextCache.findById(workbook.id);
         }
         {

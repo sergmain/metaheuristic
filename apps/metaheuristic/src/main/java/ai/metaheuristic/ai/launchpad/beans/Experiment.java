@@ -46,7 +46,7 @@ public class Experiment implements Serializable, Cloneable {
     public Integer version;
 
     @Column(name = "WORKBOOK_ID")
-    public Long workbookId;
+    public Long execContextId;
 
     @Column(name = "CODE")
     public String code;

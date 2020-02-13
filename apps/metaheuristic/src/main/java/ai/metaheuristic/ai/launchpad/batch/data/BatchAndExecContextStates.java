@@ -14,23 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.beans;
+package ai.metaheuristic.ai.launchpad.batch.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import java.io.Serializable;
-
+/**
+ * !! this class is the top-level class
+ * !! because it's using in spring's repository implementation
+ *
+ * @author Serge
+ * Date: 12/10/2019
+ * Time: 3:56 PM
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskSimple implements Serializable {
-    private static final long serialVersionUID = 8143805222407343487L;
-
-    public long id;
-
-    @Column(name = "WORKBOOK_ID")
-    public long workbookId;
+public class BatchAndExecContextStates {
+    public Long batchId;
+    public Long execContextId;
+    public int batchState;
+    public int execContextState;
 }

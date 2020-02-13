@@ -105,9 +105,9 @@ public class TestUploadFileForBatch extends PreparingPlan {
                     log.error("Error", th);
                 }
             }
-            if (uploadingStatus.workbookId!=null) {
+            if (uploadingStatus.execContextId !=null) {
                 try {
-                    execContextCache.deleteById(uploadingStatus.workbookId);
+                    execContextCache.deleteById(uploadingStatus.execContextId);
                 } catch (Throwable th) {
                     log.error("Error", th);
                 }
@@ -140,7 +140,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
         uploadingStatus = batchTopLevelService.batchUploadFromFile(mockFile, plan.getId(), context);
         assertFalse(uploadingStatus.getErrorMessagesAsStr(), uploadingStatus.isErrorMessages());
         assertNotNull(uploadingStatus.batchId);
-        assertNotNull(uploadingStatus.workbookId);
+        assertNotNull(uploadingStatus.execContextId);
 
     }
 

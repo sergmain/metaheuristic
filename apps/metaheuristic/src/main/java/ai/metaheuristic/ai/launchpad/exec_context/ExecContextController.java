@@ -51,30 +51,30 @@ public class ExecContextController {
     private final ExecContextTopLevelService execContextTopLevelService;
     private final LaunchpadContextService launchpadContextService;
 
-    // ============= Workbooks =============
+    // ============= Exec contexts =============
 
-    @GetMapping("/workbooks/{sourceCodeId}")
+    @GetMapping("/exec-contexts/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
-    public String workbooks(Model model, @PathVariable Long sourceCodeId, @PageableDefault(size = 5) Pageable pageable,
+    public String execContexts(Model model, @PathVariable Long sourceCodeId, @PageableDefault(size = 5) Pageable pageable,
                             @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        model.addAttribute("result", execContextTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context));
-        return "launchpad/source-code/workbooks";
+        model.addAttribute("result", execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context));
+        return "launchpad/source-code/exec-contexts";
     }
 
     // for AJAX
-    @PostMapping("/workbooks-part/{sourceCodeId}")
+    @PostMapping("/exec-contexts-part/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
-    public String workbooksPart(Model model, @PathVariable Long sourceCodeId,
+    public String execContextPart(Model model, @PathVariable Long sourceCodeId,
                                 @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        model.addAttribute("result", execContextTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context));
-        return "launchpad/source-code/workbooks :: table";
+        model.addAttribute("result", execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context));
+        return "launchpad/source-code/exec-contexts :: table";
     }
 
-    @GetMapping(value = "/workbook-add/{sourceCodeId}")
+    @GetMapping(value = "/exec-context-add/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String workbookAdd(@ModelAttribute("result") SourceCodeApiData.SourceCodeResult result,
+    public String execContextAdd(@ModelAttribute("result") SourceCodeApiData.SourceCodeResult result,
                               @PathVariable Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(sourceCodeId, context);
@@ -83,23 +83,23 @@ public class ExecContextController {
             return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
         result.sourceCode = sourceCodeResultRest.sourceCode;
-        return "launchpad/source-code/workbook-add";
+        return "launchpad/source-code/exec-context-add";
     }
 
     @PostMapping("/source-code-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String workbookAddCommit(Long sourceCodeId, String variable, final RedirectAttributes redirectAttributes, Authentication authentication) {
+    public String execContextAddCommit(Long sourceCodeId, String variable, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.ExecContextResult execContextResultRest = sourceCodeTopLevelService.addWorkbook(sourceCodeId, variable, context);
+        SourceCodeApiData.ExecContextResult execContextResultRest = sourceCodeTopLevelService.addExecContext(sourceCodeId, variable, context);
         if (execContextResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", execContextResultRest.errorMessages);
         }
-        return "redirect:/launchpad/source-code/workbooks/" + sourceCodeId;
+        return "redirect:/launchpad/source-code/exec-contexts/" + sourceCodeId;
     }
 
-    @GetMapping("/workbook-delete/{sourceCodeId}/{execContextId}")
+    @GetMapping("/exec-context-delete/{sourceCodeId}/{execContextId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String workbookDelete(Model model, @PathVariable Long sourceCodeId, @PathVariable Long execContextId,
+    public String execContextDelete(Model model, @PathVariable Long sourceCodeId, @PathVariable Long execContextId,
                                  final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.ExecContextResult result = execContextTopLevelService.getExecContextExtendedForDeletion(execContextId, context);
@@ -108,12 +108,12 @@ public class ExecContextController {
             return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
         model.addAttribute("result", result);
-        return "launchpad/source-code/workbook-delete";
+        return "launchpad/source-code/exec-context-delete";
     }
 
     @PostMapping("/exec-context-delete-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String workbookDeleteCommit(Long sourceCodeId, Long execContextId,
+    public String execContextDeleteCommit(Long sourceCodeId, Long execContextId,
                                        final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteExecContextById(execContextId, context);
@@ -121,12 +121,12 @@ public class ExecContextController {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
             return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
-        return "redirect:/launchpad/source-code/workbooks/"+ sourceCodeId;
+        return "redirect:/launchpad/source-code/exec-contexts/"+ sourceCodeId;
     }
 
-    @GetMapping("/workbook-target-exec-state/{sourceCodeId}/{state}/{id}")
+    @GetMapping("/exec-context-target-state/{sourceCodeId}/{state}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String workbookTargetExecState(@PathVariable Long sourceCodeId, @PathVariable String state, @PathVariable Long id,
+    public String execContextTargetState(@PathVariable Long sourceCodeId, @PathVariable String state, @PathVariable Long id,
                                           final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeExecContextState(state, id, context);
@@ -134,7 +134,7 @@ public class ExecContextController {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
             return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
-        return "redirect:/launchpad/source-code/workbooks/" + sourceCodeId;
+        return "redirect:/launchpad/source-code/exec-contexts/" + sourceCodeId;
     }
 
 

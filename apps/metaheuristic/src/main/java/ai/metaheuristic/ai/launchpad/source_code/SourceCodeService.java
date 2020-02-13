@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
@@ -70,7 +70,7 @@ import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 @RequiredArgsConstructor
 public class SourceCodeService {
 
-    private final WorkbookRepository workbookRepository;
+    private final ExecContextRepository execContextRepository;
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
 
@@ -173,7 +173,7 @@ public class SourceCodeService {
     public synchronized void createAllTasks() {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
-        List<ExecContextImpl> workbooks = workbookRepository.findByExecState(EnumsApi.ExecContextState.PRODUCING.code);
+        List<ExecContextImpl> workbooks = execContextRepository.findByExecState(EnumsApi.ExecContextState.PRODUCING.code);
         Monitoring.log("##020", Enums.Monitor.MEMORY);
         if (!workbooks.isEmpty()) {
             log.info("#701.020 Start producing tasks");

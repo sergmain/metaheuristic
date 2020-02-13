@@ -44,7 +44,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -213,8 +213,8 @@ public class BatchTopLevelService {
 
             String code = ResourceUtils.toResourceCode(originFilename);
 
-            WorkbookParamsYaml.WorkbookYaml workbookYaml = SourceCodeUtils.asWorkbookParamsYaml(code);
-            producingResult = execContextService.createWorkbook(sourceCodeId, workbookYaml, false);
+            ExecContextParamsYaml.ExecContextYaml execContextYaml = SourceCodeUtils.asExecContextParamsYaml(code);
+            producingResult = execContextService.createExecContext(sourceCodeId, execContextYaml, false);
             if (producingResult.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
                 throw new BatchResourceProcessingException("#995.075 Error creating execContext: " + producingResult.sourceCodeProducingStatus);
             }
@@ -275,7 +275,7 @@ public class BatchTopLevelService {
             }
         }
         else {
-            execContextService.deleteWorkbook(batch.execContextId, companyUniqueId);
+            execContextService.deleteExecContext(batch.execContextId, companyUniqueId);
             batchCache.deleteById(batch.id);
         }
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
@@ -354,7 +354,7 @@ public class BatchTopLevelService {
 
         try {
             if (true) {
-                throw new NotImplementedException("need to re-write with using workbookId and find the first vatiable in execContext");
+                throw new NotImplementedException("need to re-write with using execContextId and find the first vatiable in execContext");
             }
             String dataId = "1";
             variableService.storeToFile(dataId, tempFile);
@@ -374,7 +374,7 @@ public class BatchTopLevelService {
 
     private boolean prepareZip(BatchService.PrepareZipData prepareZipData, File zipDir ) {
         if (true) {
-            throw new NotImplementedException("Previous version was using list of workbooks and in this method " +
+            throw new NotImplementedException("Previous version was using list of exec contexts and in this method " +
                     "data was prepared only for one task (there was one task for one execContext)." +
                     "Not we have only one execContext with a number of tasks. So need to re-write to use taskId or something like that.");
         }
@@ -386,7 +386,7 @@ public class BatchTopLevelService {
                     "#990.350 " + prepareZipData.mainDocument + ", " +
                             "Task has broken data in params, status: " + EnumsApi.TaskExecState.from(prepareZipData.task.getExecState()) +
                             ", batchId:" + prepareZipData.batchId +
-                            ", workbookId: " + prepareZipData.workbookId + ", " +
+                            ", execContextId: " + prepareZipData.execContextId + ", " +
                             "taskId: " + prepareZipData.task.getId(), '\n');
             return false;
         }

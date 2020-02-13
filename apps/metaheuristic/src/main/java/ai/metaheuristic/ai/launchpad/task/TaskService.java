@@ -61,7 +61,7 @@ public class TaskService {
                 }
                 taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
                 ExecContextOperationStatusWithTaskList execContextOperationStatusWithTaskList =
-                        execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.workbookId, task.id);
+                        execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.execContextId, task.id);
                 if (execContextOperationStatusWithTaskList ==null) {
                     log.warn("#317.030 ExecContext for this task was already deleted");
                     return;

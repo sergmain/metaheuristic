@@ -90,38 +90,38 @@ public class AtlasService {
         return result;
     }
 
-    public OperationStatusRest storeExperimentToAtlas(Long workbookId) {
-        execContextFSM.toExportingToAtlasStarted(workbookId);
-        Long experimentId = experimentRepository.findIdByWorkbookId(workbookId);
+    public OperationStatusRest storeExperimentToAtlas(Long execContextId) {
+        execContextFSM.toExportingToAtlasStarted(execContextId);
+        Long experimentId = experimentRepository.findIdByExecContextId(execContextId);
 
         if (experimentId==null ) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Can't find experiment for workbookId #" + workbookId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Can't find experiment for execContextId #" + execContextId);
         }
 
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.02 can't find experiment for id: " + experimentId);
         }
-        ExecContextImpl workbook = execContextCache.findById(experiment.workbookId);
-        if (workbook==null) {
+        ExecContextImpl execContext = execContextCache.findById(experiment.execContextId);
+        if (execContext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.05 can't find execContext for this experiment");
         }
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(workbook.getSourceCodeId());
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
         if (sourceCode==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.10 can't find sourceCode for this experiment");
         }
 
-        StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(sourceCode, workbook, experiment);
+        StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(sourceCode, execContext, experiment);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.errorMessages);
         }
-        if (!workbookId.equals(stored.atlasParamsYamlWithCache.atlasParams.execContext.execContextId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment can't be stored, workbookId is different");
+        if (!execContextId.equals(stored.atlasParamsYamlWithCache.atlasParams.execContext.execContextId)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment can't be stored, execContextId is different");
         }
         // TODO 2019-07-13 need to re-write this check
 /*
-        String poolCode = getPoolCodeForExperiment(workbookId, experimentId);
-        List<SimpleVariableAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), workbookId);
+        String poolCode = getPoolCodeForExperiment(execContextId, experimentId);
+        List<SimpleVariableAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), execContextId);
         if (!codes.isEmpty()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment already stored");
         }
@@ -171,17 +171,17 @@ public class AtlasService {
                 });
 
 
-        execContextFSM.toFinished(workbookId);
+        execContextFSM.toFinished(execContextId);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public StoredToAtlasWithStatus toExperimentStoredToAtlas(SourceCodeImpl sourceCode, ExecContextImpl workbook, Experiment experiment) {
+    public StoredToAtlasWithStatus toExperimentStoredToAtlas(SourceCodeImpl sourceCode, ExecContextImpl execContext, Experiment experiment) {
         AtlasParamsYaml atlasParamsYaml = new AtlasParamsYaml();
         atlasParamsYaml.createdOn = System.currentTimeMillis();
         atlasParamsYaml.sourceCode = new AtlasParamsYaml.SourceCodeWithParams(sourceCode.id, sourceCode.getParams());
-        atlasParamsYaml.execContext = new AtlasParamsYaml.ExecContextWithParams(workbook.id, workbook.getParams(), EnumsApi.ExecContextState.EXPORTED_TO_ATLAS.code);
+        atlasParamsYaml.execContext = new AtlasParamsYaml.ExecContextWithParams(execContext.id, execContext.getParams(), EnumsApi.ExecContextState.EXPORTED_TO_ATLAS.code);
         atlasParamsYaml.experiment = new AtlasParamsYaml.ExperimentWithParams(experiment.id, experiment.getParams());
-        atlasParamsYaml.taskIds = taskRepository.findAllTaskIdsByWorkbookId(workbook.getId());
+        atlasParamsYaml.taskIds = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());
 
         StoredToAtlasWithStatus result = new StoredToAtlasWithStatus();
         result.atlasParamsYamlWithCache = new AtlasParamsYamlWithCache( atlasParamsYaml );

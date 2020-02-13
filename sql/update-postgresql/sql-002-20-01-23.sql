@@ -34,18 +34,18 @@ CREATE TABLE MH_VARIABLE
     IS_INITED     BOOLEAN default false not null,
     NAME          VARCHAR(250) not null,
     CONTEXT_ID    VARCHAR(250),
-    WORKBOOK_ID   NUMERIC(10, 0),
+    EXEC_CONTEXT_ID   NUMERIC(10, 0),
     UPLOAD_TS     TIMESTAMP DEFAULT to_timestamp(0),
     DATA          OID,
     FILENAME      VARCHAR(150),
     PARAMS        TEXT not null
 );
 
-CREATE INDEX MH_VARIABLE_WORKBOOK_ID_IDX
-    ON mh_data (WORKBOOK_ID);
+CREATE INDEX MH_VARIABLE_EXEC_CONTEXT_ID_IDX
+    ON MH_VARIABLE (EXEC_CONTEXT_ID);
 
 CREATE INDEX MH_DATA_VAR_ID_IDX
-    ON mh_data (NAME);
+    ON MH_VARIABLE (NAME);
 
 --  its name is VARIABLE_GLOBAL, not GLOBAL_VARIABLE because I want these tables to be in the same spot in scheme
 CREATE TABLE MH_VARIABLE_GLOBAL

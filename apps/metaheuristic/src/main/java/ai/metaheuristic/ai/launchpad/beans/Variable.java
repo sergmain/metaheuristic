@@ -48,12 +48,12 @@ public class Variable implements Serializable {
 
     /**
      * This field is initialized only for data resources which were produced while processing execContext.
-     * The data resource which is using as input resources must not have workbookId.
+     * The data resource which is using as input resources must not have execContextId.
      * Also this field is used as refId for deleting any resources which were produced
      * while execContext was processed.
      */
-    @Column(name = "WORKBOOK_ID")
-    private Long workbookId;
+    @Column(name = "EXEC_CONTEXT_ID")
+    private Long execContextId;
 
     @Column(name = "CONTEXT_ID")
     private String contextId;

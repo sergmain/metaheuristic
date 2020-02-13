@@ -79,7 +79,7 @@ public class TestSourceCodeService extends PreparingPlan {
     public void afterTestPlanService() {
         if (workbook!=null) {
             try {
-                taskRepository.deleteByWorkbookId(workbook.getId());
+                taskRepository.deleteByExecContextId(workbook.getId());
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -141,7 +141,7 @@ public class TestSourceCodeService extends PreparingPlan {
             assertNull(simpleTask2);
 
             storeExecResult(simpleTask);
-            execContextSchedulerService.updateWorkbookStatuses(true);
+            execContextSchedulerService.updateExecContextStatuses(true);
         }
         {
             LaunchpadCommParamsYaml.AssignedTask simpleTask20 =
@@ -157,7 +157,7 @@ public class TestSourceCodeService extends PreparingPlan {
             assertNull(simpleTask21);
 
             storeExecResult(simpleTask20);
-            execContextSchedulerService.updateWorkbookStatuses(true);
+            execContextSchedulerService.updateExecContextStatuses(true);
         }
         {
             LaunchpadCommParamsYaml.AssignedTask simpleTask30 =
@@ -174,7 +174,7 @@ public class TestSourceCodeService extends PreparingPlan {
             assertNull(simpleTask31);
 
             storeExecResult(simpleTask30);
-            execContextSchedulerService.updateWorkbookStatuses(true);
+            execContextSchedulerService.updateExecContextStatuses(true);
         }
         {
             LaunchpadCommParamsYaml.AssignedTask simpleTask32 =
@@ -185,7 +185,7 @@ public class TestSourceCodeService extends PreparingPlan {
             Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
             assertNotNull(task32);
             storeExecResult(simpleTask32);
-            execContextSchedulerService.updateWorkbookStatuses(true);
+            execContextSchedulerService.updateExecContextStatuses(true);
         }
         int j;
         long prevValue = execContextService.getCountUnfinishedTasks(workbook);
@@ -201,7 +201,7 @@ public class TestSourceCodeService extends PreparingPlan {
             Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
             assertNotNull(loopTask);
             storeExecResult(loopSimpleTask);
-            execContextSchedulerService.updateWorkbookStatus( workbook.id, true);
+            execContextSchedulerService.updateExecContextStatus( workbook.id, true);
             workbook = execContextCache.findById(workbook.id);
 
             final long count = execContextService.getCountUnfinishedTasks(workbook);
@@ -222,7 +222,7 @@ public class TestSourceCodeService extends PreparingPlan {
 
         taskPersistencer.storeExecResult(r, t -> {
             if (t!=null) {
-                execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
+                execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getWorkbookId(), t.getId(), t.getExecState());
             }
         });
         taskPersistencer.setResultReceived(simpleTask.getTaskId(), true);

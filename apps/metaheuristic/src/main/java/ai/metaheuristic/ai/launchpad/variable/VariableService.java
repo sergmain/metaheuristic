@@ -105,8 +105,8 @@ public class VariableService {
         }
     }
 
-    public void deleteByWorkbookId(Long workbookId) {
-        variableRepository.deleteByWorkbookId(workbookId);
+    public void deleteByExecContextId(Long execContextId) {
+        variableRepository.deleteByExecContextId(execContextId);
     }
 
     @Transactional(readOnly = true)
@@ -204,8 +204,8 @@ public class VariableService {
     }
 
     @Transactional(readOnly = true)
-    public List<String> getFilenameByVariableAndWorkbookId(String variable, Long workbookId) {
-        return variableRepository.findFilenameByVariableAndWorkbookId(variable, workbookId);
+    public List<String> getFilenameByVariableAndExecContextId(String variable, Long execContextId) {
+        return variableRepository.findFilenameByVariableAndWorkbookId(variable, execContextId);
     }
 
     @Transactional(readOnly = true)

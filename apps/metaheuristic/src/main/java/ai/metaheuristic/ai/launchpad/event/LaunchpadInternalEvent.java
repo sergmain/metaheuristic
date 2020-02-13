@@ -34,7 +34,7 @@ public class LaunchpadInternalEvent {
     @Data
     @AllArgsConstructor
     public static class ExperimentResetEvent {
-        public Long workbookId;
+        public Long execContextId;
     }
 
     @Data

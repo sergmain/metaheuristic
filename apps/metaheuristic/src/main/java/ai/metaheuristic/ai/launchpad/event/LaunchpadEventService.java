@@ -69,20 +69,20 @@ public class LaunchpadEventService {
     private final CompanyRepository companyRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    public void publishWorkbookLockingEvent(EnumsApi.LaunchpadEventType event, Long stationId, Long taskId, Long workbookId) {
+    public void publishExecContextLockingEvent(EnumsApi.LaunchpadEventType event, Long stationId, Long taskId, Long execContextId) {
         if (!globals.isEventEnabled) {
             return;
         }
         LaunchpadEventYaml.TaskEventData taskEventData = new LaunchpadEventYaml.TaskEventData();
         taskEventData.stationId = stationId;
         taskEventData.taskId = taskId;
-        taskEventData.workbookId = workbookId;
+        taskEventData.execContextId = execContextId;
         applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, taskEventData));
     }
 
     public void publishBatchEvent(
             EnumsApi.LaunchpadEventType event, Long companyUniqueId, String filename,
-            Long size, Long batchId, Long workbookId, LaunchpadContext launchpadContext) {
+            Long size, Long batchId, Long execContextId, LaunchpadContext launchpadContext) {
         if (!globals.isEventEnabled) {
             return;
         }
@@ -93,7 +93,7 @@ public class LaunchpadEventService {
         batchEventData.filename = filename;
         batchEventData.size = size;
         batchEventData.batchId = batchId;
-        batchEventData.workbookId = workbookId;
+        batchEventData.execContextId = execContextId;
         String contextId = null;
         if (launchpadContext!=null) {
             batchEventData.companyId = launchpadContext.getCompanyId();
@@ -103,14 +103,14 @@ public class LaunchpadEventService {
         applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, companyUniqueId, contextId, batchEventData));
     }
 
-    public void publishTaskEvent(EnumsApi.LaunchpadEventType event, Long stationId, Long taskId, Long workbookId) {
+    public void publishTaskEvent(EnumsApi.LaunchpadEventType event, Long stationId, Long taskId, Long execContextId) {
         if (!globals.isEventEnabled) {
             return;
         }
         LaunchpadEventYaml.TaskEventData taskEventData = new LaunchpadEventYaml.TaskEventData();
         taskEventData.stationId = stationId;
         taskEventData.taskId = taskId;
-        taskEventData.workbookId = workbookId;
+        taskEventData.execContextId = execContextId;
         applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, taskEventData));
     }
 

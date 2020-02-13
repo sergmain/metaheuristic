@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.exec_context;
 
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 @Profile("launchpad")
 public class ExecContextSyncService {
 
-    private final WorkbookRepository workbookRepository;
+    private final ExecContextRepository execContextRepository;
 
     private static final ConcurrentHashMap<Long, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
@@ -56,8 +56,8 @@ public class ExecContextSyncService {
         synchronized (obj) {
             obj.incrementAndGet();
             try {
-                ExecContextImpl workbook = workbookRepository.findByIdForUpdate(execContextId);
-                return workbook == null ? null : function.apply(workbook);
+                ExecContextImpl execContext = execContextRepository.findByIdForUpdate(execContextId);
+                return execContext == null ? null : function.apply(execContext);
             } finally {
                 try {
                     writeLock.lock();
@@ -73,14 +73,14 @@ public class ExecContextSyncService {
     }
 
     @SuppressWarnings("Duplicates")
-    <T> T getWithSyncReadOnly(ExecContextImpl workbook, Supplier<T> function) {
-        if (workbook==null) {
+    <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> function) {
+        if (execContext==null) {
             return null;
         }
         final AtomicInteger obj;
         try {
             writeLock.lock();
-            obj = syncMap.computeIfAbsent(workbook.id, o -> new AtomicInteger());
+            obj = syncMap.computeIfAbsent(execContext.id, o -> new AtomicInteger());
         } finally {
             writeLock.unlock();
         }
@@ -93,7 +93,7 @@ public class ExecContextSyncService {
                 try {
                     writeLock.lock();
                     if (obj.get() == 1) {
-                        syncMap.remove(workbook.id);
+                        syncMap.remove(execContext.id);
                     }
                     obj.decrementAndGet();
                 } finally {

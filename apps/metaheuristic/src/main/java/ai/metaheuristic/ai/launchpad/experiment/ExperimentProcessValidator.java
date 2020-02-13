@@ -77,7 +77,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
                 }
             }
             else {
-                return EnumsApi.SourceCodeValidateStatus.WORKBOOK_DOESNT_EXIST_ERROR;
+                return EnumsApi.SourceCodeValidateStatus.EXEC_CONTEXT_DOESNT_EXIST_ERROR;
             }
         }
         ExperimentParamsYaml epy = e.getExperimentParamsYaml();

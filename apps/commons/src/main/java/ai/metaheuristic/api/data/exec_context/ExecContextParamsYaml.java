@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data.workbook;
+package ai.metaheuristic.api.data.exec_context;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -30,11 +30,16 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class WorkbookParamsYaml implements BaseParams {
+public class ExecContextParamsYaml implements BaseParams {
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
 
     @Data
-    public static class WorkbookYaml {
-        public Map<String, List<String>> poolCodes = new HashMap<>();
+    public static class ExecContextYaml {
+        public Map<String, List<String>> variables = new HashMap<>();
 
         public boolean preservePoolNames;
     }
@@ -48,19 +53,14 @@ public class WorkbookParamsYaml implements BaseParams {
         public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
     }
 
-    public final int version = 2;
-    public WorkbookYaml workbookYaml = new WorkbookYaml();
+    public final int version = 1;
+    public ExecContextYaml execContextYaml = new ExecContextYaml();
     public String graph;
-
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
 
     @JsonIgnore
     public List<String> getAllPoolCodes() {
         List<String> codes = new ArrayList<>();
-        workbookYaml.poolCodes.values().forEach(codes::addAll);
+        execContextYaml.variables.values().forEach(codes::addAll);
         return codes;
     }
 }

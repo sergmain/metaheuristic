@@ -48,7 +48,7 @@ public class LaunchpadEventYaml implements BaseParams {
         public String filename;
         public String username;
         public Long batchId;
-        public Long workbookId;
+        public Long execContextId;
 
         // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
         public Long companyId;
@@ -58,6 +58,6 @@ public class LaunchpadEventYaml implements BaseParams {
     public static class TaskEventData {
         public Long stationId;
         public Long taskId;
-        public Long workbookId;
+        public Long execContextId;
     }
 }

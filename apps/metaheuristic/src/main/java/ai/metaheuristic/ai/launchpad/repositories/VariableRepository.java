@@ -44,18 +44,18 @@ import java.util.Optional;
 public interface VariableRepository extends CrudRepository<Variable, Long> {
 
     @Transactional(readOnly = true)
-    @Query(nativeQuery = true, value = "select d.id from mh_variable d where d.WORKBOOK_ID is not null and d.WORKBOOK_ID not in (select z.id from mh_exec_context z)")
+    @Query(nativeQuery = true, value = "select d.id from mh_variable d where d.EXEC_CONTEXT_ID is not null and d.EXEC_CONTEXT_ID not in (select z.id from mh_exec_context z)")
     List<Long> findAllOrphanWorkbookData();
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl(" +
             "b.id, b.name, b.params, b.filename ) " +
             "from Variable b where b.name in :vars and " +
-            "b.workbookId=:workbookId")
+            "b.execContextId=:workbookId")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVarsForWorkbook(List<String> vars, Long workbookId);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.workbookId, b.filename from Variable b " +
-            "where b.workbookId in :ids ")
+    @Query(value="select b.execContextId, b.filename from Variable b " +
+            "where b.execContextId in :ids ")
     List<Object[]> getFilenamesForBatchIds(Collection<Long> ids);
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl(" +
@@ -68,7 +68,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Query(value="select b.filename from Variable b where b.name=:var")
     String findFilenameByVar(String var);
 
-    @Query(value="select b.filename from Variable b where b.name=:variable and b.workbookId=:workbookId ")
+    @Query(value="select b.filename from Variable b where b.name=:variable and b.execContextId=:workbookId ")
     List<String> findFilenameByVariableAndWorkbookId(String variable, Long workbookId);
 
     @NonNull
@@ -91,7 +91,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     void deleteById(@NonNull Long id);
 
     @Transactional
-    void deleteByWorkbookId(Long workbookId);
+    void deleteByExecContextId(Long workbookId);
 
     @Transactional
     void deleteByName(String variable);

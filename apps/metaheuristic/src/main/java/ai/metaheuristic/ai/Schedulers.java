@@ -80,7 +80,7 @@ public class Schedulers {
                 if ((System.currentTimeMillis()- prevReconciliationTime) > TIMEOUT_BETWEEN_RECONCILIATION) {
                     needReconciliation = true;
                 }
-                execContextSchedulerService.updateWorkbookStatuses(needReconciliation);
+                execContextSchedulerService.updateExecContextStatuses(needReconciliation);
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("!!! need to investigate. Error while updateWorkbookStatuses()",e);
             } catch (Throwable th) {

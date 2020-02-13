@@ -110,7 +110,7 @@ public class StationService {
             return;
         }
         synchronized (StationSyncHolder.stationGlobalSync) {
-            stationTaskService.createTask(launchpadUrl, task.taskId, task.workbookId, task.params);
+            stationTaskService.createTask(launchpadUrl, task.taskId, task.execContextId, task.params);
         }
     }
 

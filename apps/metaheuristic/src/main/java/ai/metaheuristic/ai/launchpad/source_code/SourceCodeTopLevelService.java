@@ -77,11 +77,11 @@ public class SourceCodeTopLevelService {
     private final ExecContextCache execContextCache;
     private final GlobalVariableService globalVariableService;
 
-    public SourceCodeApiData.ExecContextResult addWorkbook(Long sourceCodeId, String variable, LaunchpadContext context) {
+    public SourceCodeApiData.ExecContextResult addExecContext(Long sourceCodeId, String variable, LaunchpadContext context) {
         return getWorkbookResult(variable, context, sourceCodeCache.findById(sourceCodeId));
     }
 
-    public SourceCodeApiData.ExecContextResult addWorkbook(String sourceCodeUid, String variable, LaunchpadContext context) {
+    public SourceCodeApiData.ExecContextResult addExecContext(String sourceCodeUid, String variable, LaunchpadContext context) {
         return getWorkbookResult(variable, context, sourceCodeRepository.findByUidAndCompanyId(sourceCodeUid, context.getCompanyId()));
     }
 
@@ -104,7 +104,7 @@ public class SourceCodeTopLevelService {
         if (status != null) {
             return new SourceCodeApiData.ExecContextResult( "#560.011 access denied: " + status.getErrorMessagesAsStr());
         }
-        return execContextService.createWorkbookInternal(sourceCode, variable);
+        return execContextService.createExecContextInternal(sourceCode, variable);
     }
 
     public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, LaunchpadContext context) {
@@ -360,7 +360,7 @@ public class SourceCodeTopLevelService {
         if (status != null) {
             return status;
         }
-        status = execContextService.workbookTargetExecState(workbookId, execState);
+        status = execContextService.execContextTargetState(workbookId, execState);
         return status;
     }
 
@@ -370,7 +370,7 @@ public class SourceCodeTopLevelService {
             return status;
         }
         publisher.publishEvent( new LaunchpadInternalEvent.ExecContextDeletionEvent(this, execContextId) );
-        execContextService.deleteWorkbook(execContextId, context.getCompanyId());
+        execContextService.deleteExecContext(execContextId, context.getCompanyId());
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

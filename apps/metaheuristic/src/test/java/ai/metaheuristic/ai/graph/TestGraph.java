@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.data.workbook.WorkbookParamsYaml.TaskVertex;
+import static ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml.TaskVertex;
 import static org.junit.Assert.*;
 
 /**
@@ -61,7 +61,7 @@ public class TestGraph extends PreparingPlan {
     @Test
     public void test() {
 
-        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createWorkbook(plan.getId(), workbookYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(plan.getId(), execContextYaml);
         workbook = (ExecContextImpl)result.execContext;
 
         assertNotNull(workbook);
@@ -120,7 +120,7 @@ public class TestGraph extends PreparingPlan {
         TaskImpl t1 = new TaskImpl();
         t1.id = id;
         t1.execState = execState.value;
-        execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id, t1.id, t1.execState );
+        execContextGraphTopLevelService.updateTaskExecStateByExecContextId(workbook.id, t1.id, t1.execState );
     }
 
 }

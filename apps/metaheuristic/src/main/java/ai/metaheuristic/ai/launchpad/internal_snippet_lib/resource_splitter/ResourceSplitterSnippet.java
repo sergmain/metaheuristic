@@ -34,7 +34,7 @@ import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -86,16 +86,16 @@ public class ResourceSplitterSnippet implements InternalSnippet {
     private final ExecContextCache execContextCache;
     private final IdsRepository idsRepository;
 
-    public static WorkbookParamsYaml.WorkbookYaml initWorkbookParamsYaml(
+    public static ExecContextParamsYaml.ExecContextYaml initWorkbookParamsYaml(
             String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
-        WorkbookParamsYaml.WorkbookYaml wy = new WorkbookParamsYaml.WorkbookYaml();
+        ExecContextParamsYaml.ExecContextYaml wy = new ExecContextParamsYaml.ExecContextYaml();
         wy.preservePoolNames = true;
-        wy.poolCodes.computeIfAbsent(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, o-> new ArrayList<>()).add(mainPoolCode);
+        wy.variables.computeIfAbsent(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, o-> new ArrayList<>()).add(mainPoolCode);
         if (attachmentCodes.isEmpty()) {
             return wy;
         }
         // TODO 2020-01-24 need to re-write with using aliases from sourceCode
-        wy.poolCodes.computeIfAbsent(ResourceSplitterSnippet.ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
+        wy.variables.computeIfAbsent(ResourceSplitterSnippet.ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
         return wy;
     }
 

@@ -20,11 +20,11 @@ import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,65 +50,65 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ExecContextSchedulerService {
 
     private final ExecContextService execContextService;
-    private final WorkbookRepository workbookRepository;
+    private final ExecContextRepository execContextRepository;
     private final TaskRepository taskRepository;
     private final AtlasService atlasService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
-    public void updateWorkbookStatuses(boolean needReconciliation) {
-        List<ExecContextImpl> workbooks = workbookRepository.findByExecState(EnumsApi.ExecContextState.STARTED.code);
-        for (ExecContextImpl workbook : workbooks) {
-            updateWorkbookStatus(workbook.id, needReconciliation);
+    public void updateExecContextStatuses(boolean needReconciliation) {
+        List<ExecContextImpl> execContexts = execContextRepository.findByExecState(EnumsApi.ExecContextState.STARTED.code);
+        for (ExecContextImpl execContext : execContexts) {
+            updateExecContextStatus(execContext.id, needReconciliation);
         }
 
-        List<Long> workbooksIds = workbookRepository.findIdsByExecState(EnumsApi.ExecContextState.EXPORTING_TO_ATLAS.code);
-        for (Long workbookId : workbooksIds) {
-            log.info("Start exporting execContext #{} to atlas", workbookId);
+        List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.EXPORTING_TO_ATLAS.code);
+        for (Long execContextId : execContextIds) {
+            log.info("Start exporting execContext #{} to atlas", execContextId);
             OperationStatusRest status;
             try {
-                status = atlasService.storeExperimentToAtlas(workbookId);
+                status = atlasService.storeExperimentToAtlas(execContextId);
             } catch (Exception e) {
-                execContextFSM.toError(workbookId);
+                execContextFSM.toError(execContextId);
                 continue;
             }
 
             if (status.status==EnumsApi.OperationStatus.OK) {
-                log.info("Exporting of execContext #{} was finished", workbookId);
+                log.info("Exporting of execContext #{} was finished", execContextId);
             } else {
-                execContextFSM.toError(workbookId);
-                log.error("Error exporting experiment to atlas, workbookID #{}\n{}", workbookId, status.getErrorMessagesAsStr());
+                execContextFSM.toError(execContextId);
+                log.error("Error exporting experiment to atlas, execContextId #{}\n{}", execContextId, status.getErrorMessagesAsStr());
             }
         }
     }
 
     /**
      *
-     * @param workbookId ExecContext Id
+     * @param execContextId ExecContext Id
      * @param needReconciliation
      * @return ExecContextImpl updated execContext
      */
-    public void updateWorkbookStatus(Long workbookId, boolean needReconciliation) {
+    public void updateExecContextStatus(Long execContextId, boolean needReconciliation) {
 
-        long countUnfinishedTasks = execContextService.getCountUnfinishedTasks(workbookId);
+        long countUnfinishedTasks = execContextService.getCountUnfinishedTasks(execContextId);
         if (countUnfinishedTasks==0) {
             // workaround for situation when states in graph and db are different
-            reconcileStates(workbookId);
-            countUnfinishedTasks = execContextService.getCountUnfinishedTasks(workbookId);
+            reconcileStates(execContextId);
+            countUnfinishedTasks = execContextService.getCountUnfinishedTasks(execContextId);
             if (countUnfinishedTasks==0) {
-                log.info("ExecContext #{} was finished", workbookId);
-                execContextFSM.toFinished(workbookId);
+                log.info("ExecContext #{} was finished", execContextId);
+                execContextFSM.toFinished(execContextId);
             }
         }
         else {
             if (needReconciliation) {
-                reconcileStates(workbookId);
+                reconcileStates(execContextId);
             }
         }
     }
 
-    public void reconcileStates(Long workbookId) {
-        List<Object[]> list = taskRepository.findAllExecStateByWorkbookId(workbookId);
+    public void reconcileStates(Long execContextId) {
+        List<Object[]> list = taskRepository.findAllExecStateByExecContextId(execContextId);
 
         // Reconcile states in db and in graph
         Map<Long, Integer> states = new HashMap<>(list.size()+1);
@@ -121,7 +121,7 @@ public class ExecContextSchedulerService {
         ConcurrentHashMap<Long, Integer> taskStates = new ConcurrentHashMap<>();
         AtomicBoolean isNullState = new AtomicBoolean(false);
 
-        List<WorkbookParamsYaml.TaskVertex> vertices = execContextService.findAllVertices(workbookId);
+        List<ExecContextParamsYaml.TaskVertex> vertices = execContextService.findAllVertices(execContextId);
         vertices.stream().parallel().forEach(tv -> {
             Integer state = states.get(tv.taskId);
             if (state==null) {
@@ -137,10 +137,10 @@ public class ExecContextSchedulerService {
 
         if (isNullState.get()) {
             log.info("#705.052 Found non-created task, graph consistency is failed");
-            execContextFSM.toError(workbookId);
+            execContextFSM.toError(execContextId);
         }
         else {
-            execContextGraphTopLevelService.updateTaskExecStates(workbookId, taskStates);
+            execContextGraphTopLevelService.updateTaskExecStates(execContextId, taskStates);
         }
 
         // fix actual state of tasks (can be as a result of OptimisticLockingException)
@@ -165,7 +165,7 @@ public class ExecContextSchedulerService {
                             }
                         }
                         else if (task.resultReceived && task.isCompleted) {
-                            execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(workbookId, task.id, EnumsApi.TaskExecState.OK.value);
+                            execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, task.id, EnumsApi.TaskExecState.OK.value);
                         }
                     }
                 });

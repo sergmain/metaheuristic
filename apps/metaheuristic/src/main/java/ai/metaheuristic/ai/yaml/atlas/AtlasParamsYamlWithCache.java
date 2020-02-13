@@ -19,11 +19,11 @@ package ai.metaheuristic.ai.yaml.atlas;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -40,7 +40,7 @@ public class AtlasParamsYamlWithCache {
     // for caching
     private SourceCodeParamsYaml sourceCodeParamsYaml = null;
     private ExperimentParamsYaml experimentParamsYaml = null;
-    private WorkbookParamsYaml workbookParamsYaml = null;
+    private ExecContextParamsYaml execContextParamsYaml = null;
 
     public ExperimentParamsYaml.ExperimentFeature getFeature(Long featureId) {
         return getExperimentParamsYaml().processing.features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
@@ -94,17 +94,17 @@ public class AtlasParamsYamlWithCache {
     };
 
 
-    public WorkbookParamsYaml getWorkbookParamsYaml() {
-        if (workbookParamsYaml==null) {
+    public ExecContextParamsYaml getExecContextParamsYaml() {
+        if (execContextParamsYaml ==null) {
             synchronized (this) {
-                if (workbookParamsYaml==null) {
+                if (execContextParamsYaml ==null) {
                     //noinspection UnnecessaryLocalVariable
-                    WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.execContext.execContextParams);
-                    workbookParamsYaml = wpy;
+                    ExecContextParamsYaml wpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.execContext.execContextParams);
+                    execContextParamsYaml = wpy;
                 }
             }
         }
-        return workbookParamsYaml;
+        return execContextParamsYaml;
     };
 
     public AtlasParamsYamlWithCache(AtlasParamsYaml atlasParams) {

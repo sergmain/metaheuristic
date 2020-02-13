@@ -100,8 +100,8 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.launchpad.dir' )) }")
     public File launchpadDir;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.max-tasks-per-workbook'), 1, 100000, 5000) }")
-    public int maxTasksPerWorkbook;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.max-tasks-per-exec-context'), 1, 100000, 5000) }")
+    public int maxTasksPerExecContext;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.resource-table-rows-limit'), 5, 100, 20) }")
     public int resourceRowsLimit;
@@ -473,7 +473,7 @@ public class Globals {
         log.info("'\tresourceRowsLimit: {}", resourceRowsLimit);
         log.info("'\texperimentRowsLimit: {}", experimentRowsLimit);
         log.info("'\tplanRowsLimit: {}", sourceCodeRowsLimit);
-        log.info("'\tworkbookRowsLimit: {}", execContextRowsLimit);
+        log.info("'\texecContextRowsLimit: {}", execContextRowsLimit);
         log.info("'\tstationRowsLimit: {}", stationRowsLimit);
         log.info("'\taccountRowsLimit: {}", accountRowsLimit);
         log.info("'\tisStationEnabled: {}", isStationEnabled);

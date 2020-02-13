@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -91,11 +91,11 @@ public class ExperimentProcessService {
         if (meta==null) {
             ExecContextImpl workbook = execContextCache.findById(execContextId);
             if (workbook==null) {
-                result.status = EnumsApi.SourceCodeProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
+                result.status = EnumsApi.SourceCodeProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
                 return result;
             }
-            WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
-            List<String> list = resourceParams.workbookYaml.getPoolCodes().get(FEATURE_POOL_CODE_TYPE);
+            ExecContextParamsYaml resourceParams = workbook.getExecContextParamsYaml();
+            List<String> list = resourceParams.execContextYaml.getVariables().get(FEATURE_POOL_CODE_TYPE);
             if (CollectionUtils.isEmpty(list)) {
                 result.status = EnumsApi.SourceCodeProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
                 return result;

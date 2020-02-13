@@ -34,15 +34,15 @@ CREATE TABLE mh_variable
     IS_INITED       BOOLEAN not null default false,
     NAME            VARCHAR(250) not null,
     CONTEXT_ID      VARCHAR(250),
-    WORKBOOK_ID     NUMERIC(10, 0),
+    EXEC_CONTEXT_ID     NUMERIC(10, 0),
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     DATA            LONGBLOB,
     FILENAME        VARCHAR(150),
     PARAMS          MEDIUMTEXT not null
 );
 
-CREATE INDEX mh_variable_workbook_id_idx
-    ON mh_variable (WORKBOOK_ID);
+CREATE INDEX mh_variable_exec_context_id_idx
+    ON mh_variable (EXEC_CONTEXT_ID);
 
 CREATE INDEX mh_variable_name_idx
     ON mh_variable (NAME);

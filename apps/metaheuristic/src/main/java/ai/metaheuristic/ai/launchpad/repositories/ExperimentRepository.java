@@ -42,7 +42,7 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
     Experiment findByIdForUpdate(Long id);
 
     @Transactional(readOnly = true)
-    @Query(value="select e.id from Experiment e where e.workbookId is not null")
+    @Query(value="select e.id from Experiment e where e.execContextId is not null")
     List<Long> findAllIds();
 
     @Transactional(readOnly = true)
@@ -53,12 +53,12 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
     Slice<Long> findAllByOrderByIdDesc(Pageable pageable);
 
     @Transactional(readOnly = true)
-    @Query(value="select e.id from Experiment e where e.workbookId=:workbookId")
-    Long findIdByWorkbookId(long workbookId);
+    @Query(value="select e.id from Experiment e where e.execContextId=:execContextId")
+    Long findIdByExecContextId(long execContextId);
 
     @Transactional
-    @Query(value="select e from Experiment e where e.workbookId=:workbookId")
-    Experiment findByWorkbookIdForUpdate(Long workbookId);
+    @Query(value="select e from Experiment e where e.execContextId=:execContextId")
+    Experiment findByWorkbookIdForUpdate(Long execContextId);
 
     @Override
     @Transactional(readOnly = true)

@@ -36,7 +36,7 @@ public interface Task {
 
     String getMetrics();
 
-    long getWorkbookId();
+    Long getExecContextId();
 
     int getExecState();
 
@@ -62,7 +62,7 @@ public interface Task {
 
     void setMetrics(String metrics);
 
-    void setWorkbookId(long workbookId);
+    void setExecContextId(Long execContextId);
 
     void setExecState(int execState);
 

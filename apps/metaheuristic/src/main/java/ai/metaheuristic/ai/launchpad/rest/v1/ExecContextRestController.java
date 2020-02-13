@@ -64,7 +64,7 @@ public class ExecContextRestController {
     public SourceCodeApiData.ExecContextsResult workbooks(@PathVariable Long sourceCodeId,
                                                           @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return execContextTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context);
+        return execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context);
     }
 
     /**
@@ -77,7 +77,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SimpleWorkbookAddingResult workbookAddCommit(String sourceCode, String variable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addWorkbook(sourceCode, variable, context);
+        SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addExecContext(sourceCode, variable, context);
         return new SimpleWorkbookAddingResult(execContextResult.execContext.getId());
     }
 
@@ -89,14 +89,14 @@ public class ExecContextRestController {
     public SourceCodeApiData.ExecContextResult workbookAddCommit(Long sourceCodeId, String variable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         //noinspection UnnecessaryLocalVariable
-        SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addWorkbook(sourceCodeId, variable, context);
+        SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addExecContext(sourceCodeId, variable, context);
         return execContextResult;
     }
 
     @GetMapping(value = "/workbook/{sourceCodeId}/{execContextId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SourceCodeApiData.ExecContextResult workbookEdit(@SuppressWarnings("unused") @PathVariable Long sourceCodeId, @PathVariable Long execContextId) {
-        return execContextTopLevelService.getWorkbookExtended(execContextId);
+        return execContextTopLevelService.getExecContextExtended(execContextId);
     }
 
     @SuppressWarnings("unused")

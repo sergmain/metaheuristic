@@ -33,7 +33,7 @@ import java.io.Serializable;
 public class TaskProgress implements Serializable {
     private static final long serialVersionUID = -4322434254825989313L;
 
-    public Long workbookId;
+    public Long execContextId;
     public long count;
     public int execState;
     public boolean isCompleted;

@@ -13,27 +13,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package ai.metaheuristic.ai.yaml.exec_context;
 
-package ai.metaheuristic.ai.launchpad.batch.data;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.Map;
 
-/**
- * !! this class is the top-level class
- * !! because it's using in spring's repository implementation
- *
- * @author Serge
- * Date: 12/10/2019
- * Time: 3:56 PM
- */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class BatchAndWorkbookExecStates {
-    public Long batchId;
-    public Long workbookId;
-    public int batchState;
-    public int workbookState;
+public class ExecContextParamsYamlUtils {
+
+
+    private static final ExecContextParamsYamlUtilsV1 YAML_UTILS_V_1 = new ExecContextParamsYamlUtilsV1();
+    private static final ExecContextParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+
+    public static final BaseYamlUtils<ExecContextParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(1, YAML_UTILS_V_1
+            ),
+            DEFAULT_UTILS
+    );
+
 }

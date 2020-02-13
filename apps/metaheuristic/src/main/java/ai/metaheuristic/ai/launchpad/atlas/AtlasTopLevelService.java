@@ -40,7 +40,7 @@ import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -286,7 +286,7 @@ public class AtlasTopLevelService {
 
         ExperimentApiData.ExperimentData experiment = new ExperimentApiData.ExperimentData();
         experiment.id = ypywc. atlasParams.experiment.experimentId;
-        experiment.workbookId = ypywc.atlasParams.execContext.execContextId;
+        experiment.execContextId = ypywc.atlasParams.execContext.execContextId;
 
         ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
         experiment.code = epy.experimentYaml.code;
@@ -300,7 +300,7 @@ public class AtlasTopLevelService {
         experiment.hyperParams = epy.experimentYaml.hyperParams;
 
         AtlasData.ExperimentDataOnly result = new AtlasData.ExperimentDataOnly();
-        if (experiment.getWorkbookId() == null) {
+        if (experiment.getExecContextId() == null) {
             result.addInfoMessage("Launch is disabled, dataset isn't assigned");
         }
 
@@ -336,7 +336,7 @@ public class AtlasTopLevelService {
 
         ExperimentApiData.ExperimentData experiment = new ExperimentApiData.ExperimentData();
         experiment.id = ypywc. atlasParams.experiment.experimentId;
-        experiment.workbookId = ypywc.atlasParams.execContext.execContextId;
+        experiment.execContextId = ypywc.atlasParams.execContext.execContextId;
 
         ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
         experiment.code = epy.experimentYaml.code;
@@ -360,24 +360,24 @@ public class AtlasTopLevelService {
         }
 
         AtlasData.ExperimentInfoExtended result = new AtlasData.ExperimentInfoExtended();
-        if (experiment.getWorkbookId() == null) {
+        if (experiment.getExecContextId() == null) {
             result.addInfoMessage("Launch is disabled, dataset isn't assigned");
         }
         result.atlas = atlas;
 
-        ExecContextImpl workbook = new ExecContextImpl();
-        workbook.setParams(ypywc.atlasParams.execContext.execContextParams);
-        workbook.id = ypywc.atlasParams.execContext.execContextId;
-        workbook.execState = ypywc.atlasParams.execContext.execState;
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
+        ExecContextImpl execContext = new ExecContextImpl();
+        execContext.setParams(ypywc.atlasParams.execContext.execContextParams);
+        execContext.id = ypywc.atlasParams.execContext.execContextId;
+        execContext.state = ypywc.atlasParams.execContext.execState;
+        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         AtlasData.ExperimentInfo experimentInfoResult = new AtlasData.ExperimentInfo();
         experimentInfoResult.features = ypywc.getExperimentParamsYaml().processing.features
                 .stream()
                 .map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
 
-        experimentInfoResult.execContext = workbook;
-        experimentInfoResult.execContextState = EnumsApi.ExecContextState.toState(workbook.execState);
+        experimentInfoResult.execContext = execContext;
+        experimentInfoResult.execContextState = EnumsApi.ExecContextState.toState(execContext.state);
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;
@@ -715,11 +715,11 @@ public class AtlasTopLevelService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
-        ExecContextImpl workbook = new ExecContextImpl();
-        workbook.setParams( ypywc.atlasParams.execContext.execContextParams);
-        workbook.id = ypywc.atlasParams.execContext.execContextId;
-        workbook.execState = ypywc.atlasParams.execContext.execState;
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
+        ExecContextImpl execContext = new ExecContextImpl();
+        execContext.setParams( ypywc.atlasParams.execContext.execContextParams);
+        execContext.id = ypywc.atlasParams.execContext.execContextId;
+        execContext.state = ypywc.atlasParams.execContext.execState;
+        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
@@ -767,11 +767,11 @@ public class AtlasTopLevelService {
 
         ExperimentFeature feature = ypywc.getFeature(featureId);
 
-        ExecContextImpl workbook = new ExecContextImpl();
-        workbook.setParams(ypywc.atlasParams.execContext.execContextParams);
-        workbook.id = ypywc.atlasParams.execContext.execContextId;
-        workbook.execState = ypywc.atlasParams.execContext.execState;
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
+        ExecContextImpl execContext = new ExecContextImpl();
+        execContext.setParams(ypywc.atlasParams.execContext.execContextParams);
+        execContext.id = ypywc.atlasParams.execContext.execContextId;
+        execContext.state = ypywc.atlasParams.execContext.execState;
+        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
         result.tasks = findTasks(atlasId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);

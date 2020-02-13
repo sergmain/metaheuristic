@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.batch;
 
-import ai.metaheuristic.ai.launchpad.batch.data.BatchAndWorkbookExecStates;
+import ai.metaheuristic.ai.launchpad.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchExecStatus;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
 import org.springframework.context.annotation.Profile;
@@ -91,16 +91,16 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     batch.execState != Enums.BatchExecState.Error.code &&
     batch.execState != Enums.BatchExecState.Archived.code) {
         boolean isFinished = false;
-        for (Integer execState : workbookRepository.findWorkbookExecStateByBatchId(batch.id)) {
+        for (Integer execState : execContextRepository.findExecContextStateByBatchId(batch.id)) {
             isFinished = true;
             if (execState != EnumsApi.ExecContextState.ERROR.code && execState != EnumsApi.ExecContextState.FINISHED.code) {
                 break;
             }
 */
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.launchpad.batch.data.BatchAndWorkbookExecStates(b.id, w.id, b.execState, w.execState) " +
+    @Query(value="select new ai.metaheuristic.ai.launchpad.batch.data.BatchAndExecContextStates(b.id, w.id, b.execState, w.state) " +
             "from Batch b, ExecContextImpl w " +
             "where b.execContextId=w.id and b.execState=3")
-    List<BatchAndWorkbookExecStates> findAllUnfinished();
+    List<BatchAndExecContextStates> findAllUnfinished();
 
 }

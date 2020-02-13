@@ -15,8 +15,8 @@
  */
 package ai.metaheuristic.ai.launchpad.beans;
 
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.launchpad.ExecContext;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -63,20 +63,20 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "IS_VALID")
     public boolean valid;
 
-    @Column(name = "EXEC_STATE")
-    public int execState;
+    @Column(name = "STATE")
+    public int state;
 
     @Transient
     @JsonIgnore
-    private WorkbookParamsYaml wpy = null;
+    private ExecContextParamsYaml wpy = null;
 
     @JsonIgnore
-    public WorkbookParamsYaml getWorkbookParamsYaml() {
+    public ExecContextParamsYaml getExecContextParamsYaml() {
         if (wpy ==null) {
             synchronized (this) {
                 if (wpy ==null) {
                     //noinspection UnnecessaryLocalVariable
-                    WorkbookParamsYaml temp = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
                     wpy = temp;
                 }
             }
@@ -85,7 +85,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
     }
 
     @JsonIgnore
-    public void updateParams(WorkbookParamsYaml wpy) {
-        params = WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy);
+    public void updateParams(ExecContextParamsYaml wpy) {
+        params = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(wpy);
     }
 }

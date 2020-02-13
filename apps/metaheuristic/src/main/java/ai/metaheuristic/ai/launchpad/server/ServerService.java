@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetDataService;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
@@ -94,7 +94,7 @@ public class ServerService {
     private final SnippetDataService snippetDataService;
     private final LaunchpadCommandProcessor launchpadCommandProcessor;
     private final StationCache stationCache;
-    private final WorkbookRepository workbookRepository;
+    private final ExecContextRepository execContextRepository;
     private final StationsRepository stationsRepository;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
@@ -288,7 +288,7 @@ public class ServerService {
 
     private LaunchpadCommParamsYaml.WorkbookStatus getWorkbookStatuses() {
         return new LaunchpadCommParamsYaml.WorkbookStatus(
-                workbookRepository.findAllExecStates()
+                execContextRepository.findAllExecStates()
                         .stream()
                         .map(o -> ServerService.toSimpleStatus((Long)o[0], (Integer)o[1]))
                         .collect(Collectors.toList()));

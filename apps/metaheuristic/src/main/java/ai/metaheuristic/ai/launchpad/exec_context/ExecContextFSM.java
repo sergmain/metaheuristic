@@ -40,22 +40,22 @@ public class ExecContextFSM {
     private final ExecContextCache execContextCache;
     private final SourceCodeCache sourceCodeCache;
 
-    public void toState(Long workbookId, EnumsApi.ExecContextState state) {
-        execContextSyncService.getWithSync(workbookId, workbook -> {
-            if (workbook.execState!=state.code) {
-                workbook.setExecState(state.code);
-                execContextCache.save(workbook);
+    public void toState(Long execContextId, EnumsApi.ExecContextState state) {
+        execContextSyncService.getWithSync(execContextId, execContext -> {
+            if (execContext.state !=state.code) {
+                execContext.setExecState(state.code);
+                execContextCache.save(execContext);
             }
             return null;
         });
     }
 
-    private void toStateWithCompletion(Long workbookId, EnumsApi.ExecContextState state) {
-        execContextSyncService.getWithSync(workbookId, workbook -> {
-            if (workbook.execState!=state.code || workbook.completedOn==null) {
-                workbook.setCompletedOn(System.currentTimeMillis());
-                workbook.setExecState(state.code);
-                execContextCache.save(workbook);
+    private void toStateWithCompletion(Long execContextId, EnumsApi.ExecContextState state) {
+        execContextSyncService.getWithSync(execContextId, execContext -> {
+            if (execContext.state !=state.code || execContext.completedOn==null) {
+                execContext.setCompletedOn(System.currentTimeMillis());
+                execContext.setExecState(state.code);
+                execContextCache.save(execContext);
             }
             return null;
         });
@@ -71,32 +71,32 @@ public class ExecContextFSM {
         }
     }
 
-    public void toStopped(Long workbookId) {
-        toState(workbookId, EnumsApi.ExecContextState.STOPPED);
+    public void toStopped(Long execContextId) {
+        toState(execContextId, EnumsApi.ExecContextState.STOPPED);
     }
 
-    public void toStarted(Long workbookId) {
-        toState(workbookId, EnumsApi.ExecContextState.STARTED);
+    public void toStarted(Long execContextId) {
+        toState(execContextId, EnumsApi.ExecContextState.STARTED);
     }
 
-    public void toProduced(Long workbookId) {
-        toState(workbookId, EnumsApi.ExecContextState.PRODUCED);
+    public void toProduced(Long execContextId) {
+        toState(execContextId, EnumsApi.ExecContextState.PRODUCED);
     }
 
-    public void toFinished(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.ExecContextState.FINISHED);
+    public void toFinished(Long execContextId) {
+        toStateWithCompletion(execContextId, EnumsApi.ExecContextState.FINISHED);
     }
 
-    public void toExportingToAtlas(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.ExecContextState.EXPORTING_TO_ATLAS);
+    public void toExportingToAtlas(Long execContextId) {
+        toStateWithCompletion(execContextId, EnumsApi.ExecContextState.EXPORTING_TO_ATLAS);
     }
 
-    public void toExportingToAtlasStarted(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.ExecContextState.EXPORTING_TO_ATLAS_WAS_STARTED);
+    public void toExportingToAtlasStarted(Long execContextId) {
+        toStateWithCompletion(execContextId, EnumsApi.ExecContextState.EXPORTING_TO_ATLAS_WAS_STARTED);
     }
 
-    public void toError(Long workbookId) {
-        toStateWithCompletion(workbookId, EnumsApi.ExecContextState.ERROR);
+    public void toError(Long execContextId) {
+        toStateWithCompletion(execContextId, EnumsApi.ExecContextState.ERROR);
     }
 
 

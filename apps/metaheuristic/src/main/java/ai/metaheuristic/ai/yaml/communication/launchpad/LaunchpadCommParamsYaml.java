@@ -71,7 +71,7 @@ public class LaunchpadCommParamsYaml implements BaseParams {
     public static class AssignedTask {
         public String params;
         public Long taskId;
-        public Long workbookId;
+        public Long execContextId;
     }
 
     @Data

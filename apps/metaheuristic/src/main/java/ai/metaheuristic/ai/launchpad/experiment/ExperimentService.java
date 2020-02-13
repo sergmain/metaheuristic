@@ -43,7 +43,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.commons.CommonConsts;
@@ -109,7 +109,7 @@ public class ExperimentService {
     @Async
     @EventListener
     public void handleAsync(LaunchpadInternalEvent.ExperimentResetEvent event) {
-        resetExperimentByWorkbookId(event.workbookId);
+        resetExperimentByWorkbookId(event.execContextId);
     }
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
@@ -137,7 +137,7 @@ public class ExperimentService {
         ed.id = e.id;
         ed.version = e.version;
         ed.code = e.code;
-        ed.workbookId = e.workbookId;
+        ed.execContextId = e.execContextId;
         ed.name = params.experimentYaml.name;
         ed.seed = params.experimentYaml.seed;
         ed.description = params.experimentYaml.description;
@@ -156,7 +156,7 @@ public class ExperimentService {
         ed.id = e.id;
         ed.version = e.version;
         ed.code = e.code;
-        ed.workbookId = e.workbookId;
+        ed.execContextId = e.execContextId;
         ed.name = params.experimentYaml.name;
         ed.seed = params.experimentYaml.seed;
         ed.description = params.experimentYaml.description;
@@ -170,7 +170,7 @@ public class ExperimentService {
 
     public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(
             ExperimentFeature experimentFeature,
-            List<WorkbookParamsYaml.TaskVertex> taskVertices,
+            List<ExecContextParamsYaml.TaskVertex> taskVertices,
             List<ExperimentTaskFeature> taskFeatures) {
         final ExperimentApiData.ExperimentFeatureData featureData = new ExperimentApiData.ExperimentFeatureData();
         BeanUtils.copyProperties(experimentFeature, featureData);
@@ -238,16 +238,16 @@ public class ExperimentService {
                 log.warn("#179.010 Experiment wasn't found for id: {}", experimentId);
                 continue;
             }
-            if (e.workbookId==null) {
+            if (e.execContextId ==null) {
                 log.warn("#179.020 This shouldn't be happened");
                 continue;
             }
-            ExecContextImpl wb = execContextCache.findById(e.workbookId);
+            ExecContextImpl wb = execContextCache.findById(e.execContextId);
             if (wb==null) {
                 log.info("#179.030 Can't calc max values and export to atlas because workbookId is null");
                 continue;
             }
-            if (wb.execState!= EnumsApi.ExecContextState.FINISHED.code) {
+            if (wb.state != EnumsApi.ExecContextState.FINISHED.code) {
                 continue;
             }
             ExperimentParamsYaml epy = e.getExperimentParamsYaml();
@@ -545,10 +545,10 @@ public class ExperimentService {
     }
 
     public ExperimentApiData.ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, Long featureId ) {
-        if (experiment.workbookId==null) {
+        if (experiment.execContextId ==null) {
             return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.050 workbookId is null");
         }
-        ExecContextImpl workbook = execContextCache.findById(experiment.workbookId);
+        ExecContextImpl workbook = execContextCache.findById(experiment.execContextId);
 
         ExperimentParamsYaml.ExperimentFeature experimentFeature = experiment.getExperimentParamsYaml().getFeature(featureId);
         if (experimentFeature == null) {
@@ -603,7 +603,7 @@ public class ExperimentService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
+        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
 
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
@@ -737,7 +737,7 @@ public class ExperimentService {
             eventMulticaster.addApplicationListener(listener);
             ExecContext wb = execContextCache.findById(workbookId);
             if (wb==null) {
-                return EnumsApi.SourceCodeProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
+                return EnumsApi.SourceCodeProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
             }
             AtomicLong id = new AtomicLong(0);
             AtomicLong taskIdForEmulation = new AtomicLong(0);
@@ -755,7 +755,7 @@ public class ExperimentService {
                     List<Long> prevParentTaskIds = new ArrayList<>(parentTaskIds);
                     for (ExperimentSnippetItem snippetItem : experimentSnippets) {
                         if (boolHolder.get()) {
-                            return EnumsApi.SourceCodeProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
+                            return EnumsApi.SourceCodeProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
                         }
                         prevTask = task;
 

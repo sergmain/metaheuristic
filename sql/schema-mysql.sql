@@ -107,15 +107,15 @@ CREATE TABLE mh_variable
     IS_INITED       BOOLEAN not null default false,
     NAME            VARCHAR(250) not null,
     CONTEXT_ID      VARCHAR(250),
-    WORKBOOK_ID     NUMERIC(10, 0),
+    EXEC_CONTEXT_ID     NUMERIC(10, 0),
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     DATA            LONGBLOB,
     FILENAME        VARCHAR(150),
     PARAMS          MEDIUMTEXT not null
 );
 
-CREATE INDEX mh_variable_workbook_id_idx
-  ON mh_variable (WORKBOOK_ID);
+CREATE INDEX mh_variable_exec_context_id_idx
+  ON mh_variable (EXEC_CONTEXT_ID);
 
 CREATE INDEX mh_variable_name_idx
     ON mh_variable (NAME);
@@ -168,7 +168,6 @@ CREATE TABLE mh_task
     COMPLETED_ON   bigint,
     SNIPPET_EXEC_RESULTS  MEDIUMTEXT,
     METRICS      MEDIUMTEXT,
-    TASK_ORDER   smallint not null,
     WORKBOOK_ID          NUMERIC(10, 0)   NOT NULL,
     EXEC_STATE        tinyint(1) not null default 0,
     IS_RESULT_RECEIVED  tinyint(1) not null default 0,
@@ -217,8 +216,8 @@ CREATE TABLE mh_exec_context
     CREATED_ON      bigint NOT NULL,
     COMPLETED_ON    bigint,
     INPUT_RESOURCE_PARAM  LONGTEXT NOT NULL,
-    IS_VALID      BOOLEAN not null default false,
-    EXEC_STATE   smallint not null default 0
+    IS_VALID        BOOLEAN not null default false,
+    STATE           smallint not null default 0
 );
 
 CREATE TABLE mh_atlas

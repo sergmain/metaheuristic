@@ -41,7 +41,7 @@ import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.commons.CommonConsts;
@@ -159,14 +159,14 @@ public class ExperimentTopLevelService {
 
     public ExperimentApiData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentId, Long featureId, String[] params, Pageable pageable) {
         Experiment experiment= experimentCache.findById(experimentId);
-        ExecContextImpl workbook = execContextCache.findById(experiment.workbookId);
+        ExecContextImpl workbook = execContextCache.findById(experiment.execContextId);
 
         ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
 
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
         tasksResult.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
+        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
 
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.tasksResult = tasksResult;
@@ -221,7 +221,7 @@ public class ExperimentTopLevelService {
             result.addInfoMessage("#285.090 A launch is disabled, dataset isn't assigned");
         }
 
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
+        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
         ExperimentApiData.ExperimentInfoResult experimentInfoResult = new ExperimentApiData.ExperimentInfoResult();
         final List<ExperimentParamsYaml.ExperimentFeature> experimentFeatures = epy.processing.features;
         experimentInfoResult.features = experimentFeatures.stream().map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
@@ -704,11 +704,11 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.410 can't find experiment for id: " + id);
         }
 
-        if (experiment.workbookId==null) {
+        if (experiment.execContextId ==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.420 This experiment isn't bound to ExecContext");
         }
-        execContextFSM.toExportingToAtlas(experiment.workbookId);
+        execContextFSM.toExportingToAtlas(experiment.execContextId);
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Exporting of experiment was successfully started", null);
     }
 
@@ -723,7 +723,7 @@ public class ExperimentTopLevelService {
         if (experiment==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.500 can't find an experiment for code: " + experimentCode);
         }
-        if (experiment.workbookId!=null) {
+        if (experiment.execContextId !=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.502 an experiment '"+experimentCode+"' was already bound to sourceCode");
         }
         if (true) {
@@ -737,7 +737,7 @@ public class ExperimentTopLevelService {
                     "#285.510 can't find a sourceCode with experiment code: " + experimentCode);
         }
 */
-        SourceCodeApiData.ExecContextResult execContextResultRest = sourceCodeTopLevelService.addWorkbook(p.id, resourcePoolCode, context);
+        SourceCodeApiData.ExecContextResult execContextResultRest = sourceCodeTopLevelService.addExecContext(p.id, resourcePoolCode, context);
         if (execContextResultRest.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, execContextResultRest.errorMessages, execContextResultRest.infoMessages);
         }
@@ -759,10 +759,10 @@ public class ExperimentTopLevelService {
             return EnumsApi.ExecContextState.UNKNOWN;
         }
         Experiment experiment = experimentRepository.findByCode(experimentCode);
-        if (experiment==null || experiment.workbookId==null) {
+        if (experiment==null || experiment.execContextId ==null) {
             return EnumsApi.ExecContextState.UNKNOWN;
         }
-        ExecContext wb = execContextCache.findById(experiment.workbookId);
+        ExecContext wb = execContextCache.findById(experiment.execContextId);
         return EnumsApi.ExecContextState.toState(wb.getExecState());
     }
 
@@ -778,7 +778,7 @@ public class ExperimentTopLevelService {
         if (experiment==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.560 can't find an experiment for code: " + experimentCode);
         }
-        OperationStatusRest status = execContextService.workbookTargetExecState(experiment.workbookId, execState);
+        OperationStatusRest status = execContextService.execContextTargetState(experiment.execContextId, execState);
         if (status.isErrorMessages()) {
             return status;
         }

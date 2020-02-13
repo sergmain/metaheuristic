@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.yaml;
 
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ public class TestInputResourceParams {
     public void test() throws IOException {
 
         String str = IOUtils.resourceToString("/yaml/input_resource_params/input-resource-params.yaml", StandardCharsets.UTF_8);
-        WorkbookParamsYaml yaml = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(str);
+        ExecContextParamsYaml yaml = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(str);
 
 /*
     poolCodes:
@@ -43,12 +43,12 @@ public class TestInputResourceParams {
             - eee
 */
 
-        assertTrue(yaml.workbookYaml.poolCodes.containsKey("aaaa"));
-        assertTrue(yaml.workbookYaml.poolCodes.containsKey("dddd"));
+        assertTrue(yaml.execContextYaml.variables.containsKey("aaaa"));
+        assertTrue(yaml.execContextYaml.variables.containsKey("dddd"));
 
-        assertTrue(yaml.workbookYaml.poolCodes.get("aaaa").contains("bbb"));
-        assertTrue(yaml.workbookYaml.poolCodes.get("aaaa").contains("ccc"));
-        assertTrue(yaml.workbookYaml.poolCodes.get("dddd").contains("eee"));
+        assertTrue(yaml.execContextYaml.variables.get("aaaa").contains("bbb"));
+        assertTrue(yaml.execContextYaml.variables.get("aaaa").contains("ccc"));
+        assertTrue(yaml.execContextYaml.variables.get("dddd").contains("eee"));
 
     }
 }

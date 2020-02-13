@@ -16,7 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.workbook;
 
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -30,6 +31,6 @@ public class TestWorkbookParams {
 
     @Test
     public void testVersion() {
-        assertEquals( new WorkbookParamsYaml().version, WorkbookParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+        assertEquals( new ExecContextParamsYaml().version, ExecContextParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
     }
 }

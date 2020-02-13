@@ -17,7 +17,7 @@ package ai.metaheuristic.ai.launchpad;
 
 import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class ArtifactCleanerAtLaunchpad {
 
-    private final WorkbookRepository workbookRepository;
+    private final ExecContextRepository execContextRepository;
     private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
 
@@ -63,7 +63,7 @@ public class ArtifactCleanerAtLaunchpad {
     }
 
     private void deleteOrphanTasks() {
-        List<Long> ids = workbookRepository.findAllIds();;
+        List<Long> ids = execContextRepository.findAllIds();;
         int page = 0;
         final AtomicBoolean isFound = new AtomicBoolean();
         do {

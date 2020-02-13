@@ -19,7 +19,7 @@ CREATE TABLE mh_exec_context
     COMPLETED_ON    bigint,
     INPUT_RESOURCE_PARAM  LONGTEXT NOT NULL,
     IS_VALID      BOOLEAN not null default false,
-    EXEC_STATE   smallint not null default 0
+    STATE   smallint not null default 0
 );
 
 drop table mh_batch;
@@ -41,4 +41,9 @@ create table mh_batch
 
 CREATE INDEX mh_batch_exec_context_id_idx
     ON mh_batch (EXEC_CONTEXT_ID);
+
+alter table mh_task
+    drop column TASK_ORDER;
+
+
 

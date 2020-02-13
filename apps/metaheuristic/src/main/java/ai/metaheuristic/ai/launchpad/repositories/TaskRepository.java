@@ -47,15 +47,15 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     Page<TaskImpl> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
-    @Query(value="select t.id from TaskImpl t where t.workbookId=:workbookId")
-    List<Long> findAllTaskIdsByWorkbookId(Long workbookId);
+    @Query(value="select t.id from TaskImpl t where t.execContextId=:execContextId")
+    List<Long> findAllTaskIdsByExecContextId(Long execContextId);
 
     @Transactional
-    @Query(value="select t from TaskImpl t where t.workbookId=:workbookId")
-    Stream<Task> findAllByWorkbookIdAsStream(Long workbookId);
+    @Query(value="select t from TaskImpl t where t.execContextId=:workbookId")
+    Stream<Task> findAllByExecContextIdAsStream(Long workbookId);
 
     @Transactional(readOnly = true)
-    @Query(value="select t.id, t.workbookId from TaskImpl t")
+    @Query(value="select t.id, t.execContextId from TaskImpl t")
     List<Object[]> findAllAsTaskSimple(Pageable pageable);
 
     @Transactional(readOnly = true)
@@ -72,27 +72,27 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Object[]> findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(Long stationId);
 
     @Transactional(readOnly = true)
-    @Query(value="select t.id, t.execState from TaskImpl t where t.workbookId=:workbookId")
-    List<Object[]> findAllExecStateByWorkbookId(Long workbookId);
+    @Query(value="select t.id, t.execState from TaskImpl t where t.execContextId=:workbookId")
+    List<Object[]> findAllExecStateByExecContextId(Long workbookId);
 
     @Transactional
-    void deleteByWorkbookId(Long workbookId);
+    void deleteByExecContextId(Long execContextId);
 
     @Transactional
-    @Query(value="select t.id, t.params from TaskImpl t where t.workbookId=:workbookId")
-    Stream<Object[]> findByWorkbookId(Long workbookId);
+    @Query(value="select t.id, t.params from TaskImpl t where t.execContextId=:execContextId")
+    Stream<Object[]> findByExecContextId(Long execContextId);
 
     @Transactional
-    @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId and t.id in :ids ")
-    List<Task> findForAssigning(Long workbookId, List<Long> ids);
+    @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.execContextId=:execContextId and t.id in :ids ")
+    List<Task> findForAssigning(Long execContextId, List<Long> ids);
 
     @Transactional(readOnly = true)
     @Query("SELECT t.id FROM TaskImpl t where t.stationId=:stationId and t.isCompleted=false")
     List<Long> findAnyActiveForStationId(Pageable limit, Long stationId);
 
     @Transactional(readOnly = true)
-    @Query("SELECT t FROM TaskImpl t where t.workbookId=:workbookId and t.execState = :execState ")
-    List<TaskImpl> findTasksByExecState(Long workbookId, int execState);
+    @Query("SELECT t FROM TaskImpl t where t.execContextId=:execContextId and t.execState = :execState ")
+    List<TaskImpl> findTasksByExecState(Long execContextId, int execState);
 
     @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.stationId=:stationId and t.resultReceived=false and " +
@@ -115,18 +115,18 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
             "from ( "+
             "           SELECT count(*) count, t.TASK_ORDER "+
             "           FROM MH_TASK t  "+
-            "           where t.WORKBOOK_ID =:workbookId "+
+            "           where t.WORKBOOK_ID =:execContextId "+
             "           group by t.TASK_ORDER "+
             "     ) z "+
             "order by z.TASK_ORDER asc")
-    List<Object[]> getCountPerOrder(Long workbookId);
+    List<Object[]> getCountPerOrder(Long execContextId);
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.beans.TaskProgress(" +
-            "t.workbookId, count(*), t.execState, t.isCompleted, t.resultReceived ) " +
-            "from TaskImpl t where t.workbookId=:workbookId " +
-            "group by t.workbookId, t.execState, t.isCompleted, t.resultReceived "
+            "t.execContextId, count(*), t.execState, t.isCompleted, t.resultReceived ) " +
+            "from TaskImpl t where t.execContextId=:execContextId " +
+            "group by t.execContextId, t.execState, t.isCompleted, t.resultReceived "
     )
-    List<TaskProgress> getTaskProgress(Long workbookId);
+    List<TaskProgress> getTaskProgress(Long execContextId);
 
 }
 

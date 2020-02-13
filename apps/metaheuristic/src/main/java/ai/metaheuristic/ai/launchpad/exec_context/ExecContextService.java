@@ -33,7 +33,7 @@ import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeUtils;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -42,13 +42,13 @@ import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
@@ -79,7 +79,7 @@ import java.util.stream.Collectors;
 public class ExecContextService {
 
     private final Globals globals;
-    private final WorkbookRepository workbookRepository;
+    private final ExecContextRepository execContextRepository;
     private final SourceCodeCache sourceCodeCache;
     private final VariableService variableService;
     private final TaskRepository taskRepository;
@@ -95,35 +95,35 @@ public class ExecContextService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final IdsRepository idsRepository;
 
-    public OperationStatusRest resetBrokenTasks(Long workbookId) {
-        final ExecContextImpl workbook = execContextCache.findById(workbookId);
-        if (workbook==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.003 Can't find execContext with id #"+workbookId);
+    public OperationStatusRest resetBrokenTasks(Long execContextId) {
+        final ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.003 Can't find execContext with id #"+execContextId);
         }
-        List<WorkbookParamsYaml.TaskVertex> vertices = execContextGraphTopLevelService.findAllBroken(workbook);
+        List<ExecContextParamsYaml.TaskVertex> vertices = execContextGraphTopLevelService.findAllBroken(execContext);
         if (vertices==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.005 Can't find execContext with id #"+workbookId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.005 Can't find execContext with id #"+execContextId);
         }
-        for (WorkbookParamsYaml.TaskVertex vertex : vertices) {
+        for (ExecContextParamsYaml.TaskVertex vertex : vertices) {
             resetTask(vertex.taskId);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest workbookTargetExecState(Long workbookId, EnumsApi.ExecContextState execState) {
-        SourceCodeApiData.ExecContextResult result = getWorkbookExtended(workbookId);
+    public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState) {
+        SourceCodeApiData.ExecContextResult result = getExecContextExtended(execContextId);
         if (result.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
         }
 
-        final ExecContextImpl workbook = (ExecContextImpl) result.execContext;
+        final ExecContextImpl execContext = (ExecContextImpl) result.execContext;
         final SourceCode sourceCode = result.sourceCode;
-        if (sourceCode ==null || workbook ==null) {
+        if (sourceCode ==null || execContext ==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#701.110 Error: (result.sourceCode==null || result.execContext==null)");
         }
 
-        if (workbook.execState!=execState.code) {
-            execContextFSM.toState(workbook.id, execState);
+        if (execContext.state !=execState.code) {
+            execContextFSM.toState(execContext.id, execState);
             applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.SourceCodeLockingEvent(sourceCode.getId(), sourceCode.getCompanyId(), true));
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -139,14 +139,14 @@ public class ExecContextService {
         // TODO 2019-11-03 need to investigate why without this call nothing is working
         Task t = taskPersistencer.resetTask(task.id);
         if (t==null) {
-            ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.getWorkbookId(), task.id);
+            ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.getExecContextId(), task.id);
             taskPersistencer.updateTasksStateInDb(withTaskList);
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.030 Can't re-run task #" + taskId + ", see log for more information");
             }
         }
         else {
-            ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(task.workbookId, task.id);
+            ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(task.execContextId, task.id);
             if (withTaskList == null) {
                 taskPersistencer.finishTaskAsBrokenOrError(taskId, EnumsApi.TaskExecState.BROKEN);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -158,47 +158,47 @@ public class ExecContextService {
             }
             taskPersistencer.updateTasksStateInDb(withTaskList);
 
-            ExecContextImpl workbook = execContextCache.findById(task.workbookId);
-            if (workbook.execState != EnumsApi.ExecContextState.STARTED.code) {
-                execContextFSM.toState(workbook.id, EnumsApi.ExecContextState.STARTED);
+            ExecContextImpl execContext = execContextCache.findById(task.execContextId);
+            if (execContext.state != EnumsApi.ExecContextState.STARTED.code) {
+                execContextFSM.toState(execContext.id, EnumsApi.ExecContextState.STARTED);
             }
         }
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public long getCountUnfinishedTasks(ExecContextImpl workbook) {
-        return getCountUnfinishedTasks(workbook.id);
+    public long getCountUnfinishedTasks(ExecContextImpl execContext) {
+        return getCountUnfinishedTasks(execContext.id);
     }
 
-    public Long getCountUnfinishedTasks(Long workbookId) {
-        return execContextSyncService.getWithSync(workbookId, execContextGraphService::getCountUnfinishedTasks);
+    public Long getCountUnfinishedTasks(Long execContextId) {
+        return execContextSyncService.getWithSync(execContextId, execContextGraphService::getCountUnfinishedTasks);
     }
 
-    public List<WorkbookParamsYaml.TaskVertex> findAllVertices(Long workbookId) {
-        return execContextSyncService.getWithSync(workbookId, execContextGraphService::findAll);
+    public List<ExecContextParamsYaml.TaskVertex> findAllVertices(Long execContextId) {
+        return execContextSyncService.getWithSync(execContextId, execContextGraphService::findAll);
     }
 
-    public SourceCodeApiData.TaskProducingResultComplex createWorkbook(Long sourceCodeId, WorkbookParamsYaml.WorkbookYaml workbookYaml) {
-        return createWorkbook(sourceCodeId, workbookYaml, true);
+    public SourceCodeApiData.TaskProducingResultComplex createExecContext(Long sourceCodeId, ExecContextParamsYaml.ExecContextYaml execContextYaml) {
+        return createExecContext(sourceCodeId, execContextYaml, true);
     }
 
-    public SourceCodeApiData.TaskProducingResultComplex createWorkbook(Long sourceCodeId, WorkbookParamsYaml.WorkbookYaml workbookYaml, boolean checkResources) {
+    public SourceCodeApiData.TaskProducingResultComplex createExecContext(Long sourceCodeId, ExecContextParamsYaml.ExecContextYaml execContextYaml, boolean checkResources) {
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
 
-        ExecContextImpl wb = new ExecContextImpl();
-        wb.setSourceCodeId(sourceCodeId);
-        wb.setCreatedOn(System.currentTimeMillis());
-        wb.setExecState(EnumsApi.ExecContextState.NONE.code);
-        wb.setCompletedOn(null);
-        WorkbookParamsYaml params = new WorkbookParamsYaml();
-        params.workbookYaml = workbookYaml;
+        ExecContextImpl ec = new ExecContextImpl();
+        ec.setSourceCodeId(sourceCodeId);
+        ec.setCreatedOn(System.currentTimeMillis());
+        ec.setExecState(EnumsApi.ExecContextState.NONE.code);
+        ec.setCompletedOn(null);
+        ExecContextParamsYaml params = new ExecContextParamsYaml();
+        params.execContextYaml = execContextYaml;
         params.graph = ExecContextGraphService.EMPTY_GRAPH;
-        wb.updateParams(params);
-        wb.setValid(true);
+        ec.updateParams(params);
+        ec.setValid(true);
 
         if (checkResources) {
-            WorkbookParamsYaml resourceParam = wb.getWorkbookParamsYaml();
+            ExecContextParamsYaml resourceParam = ec.getExecContextParamsYaml();
             List<SimpleVariableAndStorageUrl> inputResourceCodes = variableService.getIdInVariables(resourceParam.getAllPoolCodes());
             if (inputResourceCodes == null || inputResourceCodes.isEmpty()) {
                 result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
@@ -206,32 +206,32 @@ public class ExecContextService {
             }
         }
 
-        result.execContext = execContextCache.save(wb);
+        result.execContext = execContextCache.save(ec);
         result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;
 
         return result;
     }
 
     public Void changeValidStatus(Long execContextId, boolean status) {
-        return execContextSyncService.getWithSync(execContextId, workbook -> {
-            workbook.setValid(status);
-            execContextCache.save(workbook);
+        return execContextSyncService.getWithSync(execContextId, execContext -> {
+            execContext.setValid(status);
+            execContextCache.save(execContext);
             return null;
         });
     }
 
-    public EnumsApi.SourceCodeProducingStatus toProducing(Long workbookId) {
-        return execContextSyncService.getWithSync(workbookId, workbook -> {
-            if (workbook.execState == EnumsApi.ExecContextState.PRODUCING.code) {
+    public EnumsApi.SourceCodeProducingStatus toProducing(Long execContextId) {
+        return execContextSyncService.getWithSync(execContextId, execContext -> {
+            if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
                 return EnumsApi.SourceCodeProducingStatus.OK;
             }
-            workbook.setExecState(EnumsApi.ExecContextState.PRODUCING.code);
-            execContextCache.save(workbook);
+            execContext.setExecState(EnumsApi.ExecContextState.PRODUCING.code);
+            execContextCache.save(execContext);
             return EnumsApi.SourceCodeProducingStatus.OK;
         });
     }
 
-    public SourceCodeApiData.ExecContextResult getWorkbookExtended(Long execContextId) {
+    public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
         if (execContextId==null) {
             return new SourceCodeApiData.ExecContextResult("#705.090 execContextId is null");
         }
@@ -254,16 +254,16 @@ public class ExecContextService {
         return result;
     }
 
-    public SourceCodeApiData.ExecContextsResult getWorkbooksOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, LaunchpadContext context) {
+    public SourceCodeApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, LaunchpadContext context) {
         pageable = ControllerUtils.fixPageSize(globals.execContextRowsLimit, pageable);
         SourceCodeApiData.ExecContextsResult result = new SourceCodeApiData.ExecContextsResult();
-        result.instances = workbookRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
+        result.instances = execContextRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
         result.currentSourceCodeId = sourceCodeId;
 
         for (ExecContext execContext : result.instances) {
-            WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(execContext.getParams());
+            ExecContextParamsYaml wpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.getParams());
             wpy.graph = null;
-            execContext.setParams( WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
+            execContext.setParams( ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
             SourceCode sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
             if (sourceCode ==null) {
                 log.warn("#705.130 Found execContext with wrong sourceCodeId. sourceCodeId: {}", execContext.getSourceCodeId());
@@ -276,7 +276,7 @@ public class ExecContextService {
 
     // TODO 2019.08.27 is it good to synchronize the whole method?
     //  but it's working actually
-    public synchronized LaunchpadCommParamsYaml.AssignedTask getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long workbookId) {
+    public synchronized LaunchpadCommParamsYaml.AssignedTask getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long execContextId) {
 
         final Station station = stationCache.findById(stationId);
         if (station == null) {
@@ -290,22 +290,22 @@ public class ExecContextService {
             return null;
         }
 
-        List<Long> workbookIds;
-        // find task in specific execContext ( i.e. workbookId==null)?
-        if (workbookId==null) {
-            workbookIds = workbookRepository.findByExecStateOrderByCreatedOnAsc(EnumsApi.ExecContextState.STARTED.code);
+        List<Long> execContextIds;
+        // find task in specific execContext ( i.e. execContextId==null)?
+        if (execContextId==null) {
+            execContextIds = execContextRepository.findByStateOrderByCreatedOnAsc(EnumsApi.ExecContextState.STARTED.code);
         }
         else {
-            ExecContextImpl workbook = execContextCache.findById(workbookId);
-            if (workbook==null) {
-                log.warn("#705.170 ExecContext wasn't found for id: {}", workbookId);
+            ExecContextImpl execContext = execContextCache.findById(execContextId);
+            if (execContext==null) {
+                log.warn("#705.170 ExecContext wasn't found for id: {}", execContextId);
                 return null;
             }
-            if (workbook.getExecState()!= EnumsApi.ExecContextState.STARTED.code) {
-                log.warn("#705.180 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(workbook.getExecState()));
+            if (execContext.getExecState()!= EnumsApi.ExecContextState.STARTED.code) {
+                log.warn("#705.180 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getExecState()));
                 return null;
             }
-            workbookIds = List.of(workbook.id);
+            execContextIds = List.of(execContext.id);
         }
 
         StationStatusYaml ss;
@@ -317,7 +317,7 @@ public class ExecContextService {
             return null;
         }
 
-        for (Long wbId : workbookIds) {
+        for (Long wbId : execContextIds) {
             LaunchpadCommParamsYaml.AssignedTask result = findUnassignedTaskAndAssign(wbId, station, ss, isAcceptOnlySigned);
             if (result!=null) {
                 return result;
@@ -328,7 +328,7 @@ public class ExecContextService {
 
     private final Map<Long, LongHolder> bannedSince = new HashMap<>();
 
-    public static List<Long> getIdsForSearch(List<WorkbookParamsYaml.TaskVertex> vertices, int page, int pageSize) {
+    public static List<Long> getIdsForSearch(List<ExecContextParamsYaml.TaskVertex> vertices, int page, int pageSize) {
         final int fromIndex = page * pageSize;
         if (vertices.size()== fromIndex) {
             return List.of();
@@ -339,24 +339,24 @@ public class ExecContextService {
                 .collect(Collectors.toList());
     }
 
-    private LaunchpadCommParamsYaml.AssignedTask findUnassignedTaskAndAssign(Long workbookId, Station station, StationStatusYaml ss, boolean isAcceptOnlySigned) {
+    private LaunchpadCommParamsYaml.AssignedTask findUnassignedTaskAndAssign(Long execContextId, Station station, StationStatusYaml ss, boolean isAcceptOnlySigned) {
 
         LongHolder longHolder = bannedSince.computeIfAbsent(station.getId(), o -> new LongHolder(0));
         if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
             return null;
         }
-        ExecContextImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
-        if (workbook==null) {
+        ExecContextImpl execContext = execContextRepository.findByIdForUpdate(execContextId);
+        if (execContext==null) {
             return null;
         }
-        final List<WorkbookParamsYaml.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(workbook);
+        final List<ExecContextParamsYaml.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext);
         final StationStatusYaml stationStatus = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
 
         int page = 0;
         Task resultTask = null;
         String resultTaskParams = null;
         List<Task> tasks;
-        while ((tasks = getAllByStationIdIsNullAndWorkbookIdAndIdIn(workbookId, vertices, page++)).size()>0) {
+        while ((tasks = getAllByStationIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
             for (Task task : tasks) {
                 final TaskParamsYaml taskParamYaml;
                 try {
@@ -437,7 +437,7 @@ public class ExecContextService {
 
         LaunchpadCommParamsYaml.AssignedTask assignedTask = new LaunchpadCommParamsYaml.AssignedTask();
         assignedTask.setTaskId(resultTask.getId());
-        assignedTask.setWorkbookId(workbookId);
+        assignedTask.setExecContextId(execContextId);
         assignedTask.setParams(resultTaskParams);
 
         resultTask.setAssignedOn(System.currentTimeMillis());
@@ -446,8 +446,8 @@ public class ExecContextService {
         resultTask.setResultResourceScheduledOn(0);
 
         taskRepository.save((TaskImpl)resultTask);
-        execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(workbookId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
-        launchpadEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), workbookId);
+        execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
+        launchpadEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), execContextId);
 
         return assignedTask;
     }
@@ -459,12 +459,12 @@ public class ExecContextService {
         return List.of();
     }
 
-    private List<Task> getAllByStationIdIsNullAndWorkbookIdAndIdIn(Long workbookId, List<WorkbookParamsYaml.TaskVertex> vertices, int page) {
+    private List<Task> getAllByStationIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextParamsYaml.TaskVertex> vertices, int page) {
         final List<Long> idsForSearch = getIdsForSearch(vertices, page, 20);
         if (idsForSearch.isEmpty()) {
             return List.of();
         }
-        return taskRepository.findForAssigning(workbookId, idsForSearch);
+        return taskRepository.findForAssigning(execContextId, idsForSearch);
     }
 
     public List<Long> storeAllConsoleResults(List<StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results) {
@@ -474,7 +474,7 @@ public class ExecContextService {
             ids.add(result.taskId);
             taskPersistencer.storeExecResult(result, t -> {
                 if (t!=null) {
-                    execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
+                    execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState());
                 }
             });
         }
@@ -486,13 +486,13 @@ public class ExecContextService {
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
 
-        ExecContextImpl workbook = execContextCache.findById(execContextId);
-        if (workbook == null) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext == null) {
             log.error("#701.175 Can't find execContext #{}", execContextId);
-            return new SourceCodeApiData.TaskProducingResultComplex(EnumsApi.SourceCodeValidateStatus.WORKBOOK_NOT_FOUND_ERROR);
+            return new SourceCodeApiData.TaskProducingResultComplex(EnumsApi.SourceCodeValidateStatus.EXEC_CONTEXT_NOT_FOUND_ERROR);
         }
 
-        WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
+        ExecContextParamsYaml resourceParams = execContext.getExecContextParamsYaml();
         List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(resourceParams.getAllPoolCodes());
         log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
 
@@ -501,11 +501,11 @@ public class ExecContextService {
             return new SourceCodeApiData.TaskProducingResultComplex(pools.status);
         }
 
-        if (resourceParams.workbookYaml.preservePoolNames) {
+        if (resourceParams.execContextYaml.preservePoolNames) {
             final Map<String, List<String>> collectedInputs = new HashMap<>();
             try {
                 pools.collectedInputs.forEach( (key, value) -> {
-                    String newKey = resourceParams.workbookYaml.poolCodes.entrySet().stream()
+                    String newKey = resourceParams.execContextYaml.variables.entrySet().stream()
                             .filter(entry -> entry.getValue().contains(key))
                             .findFirst()
                             .map(Map.Entry::getKey)
@@ -575,9 +575,9 @@ public class ExecContextService {
         return result;
     }
 
-    public SourceCodeApiData.ExecContextResult createWorkbookInternal(@NonNull SourceCodeImpl sourceCode, String variable) {
-        WorkbookParamsYaml.WorkbookYaml wrc = SourceCodeUtils.asWorkbookParamsYaml(variable);
-        SourceCodeApiData.TaskProducingResultComplex producingResult = createWorkbook(sourceCode.getId(), wrc);
+    public SourceCodeApiData.ExecContextResult createExecContextInternal(@NonNull SourceCodeImpl sourceCode, String variable) {
+        ExecContextParamsYaml.ExecContextYaml wrc = SourceCodeUtils.asExecContextParamsYaml(variable);
+        SourceCodeApiData.TaskProducingResultComplex producingResult = createExecContext(sourceCode.getId(), wrc);
         if (producingResult.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
             return new SourceCodeApiData.ExecContextResult("#560.072 Error creating execContext: " + producingResult.sourceCodeProducingStatus);
         }
@@ -588,10 +588,10 @@ public class ExecContextService {
             return new SourceCodeApiData.ExecContextResult("#560.077 sourceCode producing was failed, status: " + countTasks.sourceCodeProducingStatus);
         }
 
-        if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
+        if (globals.maxTasksPerExecContext < countTasks.numberOfTasks) {
             changeValidStatus(producingResult.execContext.getId(), false);
             return new SourceCodeApiData.ExecContextResult("#560.081 number of tasks for this execContext exceeded the allowed maximum number. ExecContext was created but its status is 'not valid'. " +
-                    "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook + ", tasks in this execContext:  " + countTasks.numberOfTasks);
+                    "Allowed maximum number of tasks: " + globals.maxTasksPerExecContext + ", tasks in this execContext:  " + countTasks.numberOfTasks);
         }
 
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(sourceCode);
@@ -602,14 +602,14 @@ public class ExecContextService {
         return result;
     }
 
-    public void deleteWorkbook(Long execContextId, Long companyUniqueId) {
-//        experimentService.resetExperimentByWorkbookId(execContextId);
+    public void deleteExecContext(Long execContextId, Long companyUniqueId) {
+//        experimentService.resetExperimentByExecContextId(execContextId);
         applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.ExperimentResetEvent(execContextId));
-        variableService.deleteByWorkbookId(execContextId);
+        variableService.deleteByExecContextId(execContextId);
         ExecContext execContext = execContextCache.findById(execContextId);
         if (execContext != null) {
             // unlock sourceCode if this is the last execContext in the sourceCode
-            List<Long> ids = workbookRepository.findIdsBysourceCodeId(execContext.getSourceCodeId());
+            List<Long> ids = execContextRepository.findIdsBysourceCodeId(execContext.getSourceCodeId());
             if (ids.size()==1) {
                 if (ids.get(0).equals(execContextId)) {
                     if (execContext.getSourceCodeId() != null) {

@@ -261,7 +261,7 @@ public abstract class PreparingExperiment {
         }
         if (execContext !=null) {
             try {
-                taskRepository.deleteByWorkbookId(execContext.getId());
+                taskRepository.deleteByExecContextId(execContext.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

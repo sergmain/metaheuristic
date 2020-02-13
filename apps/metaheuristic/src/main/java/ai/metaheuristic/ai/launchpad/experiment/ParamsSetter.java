@@ -45,7 +45,7 @@ public class ParamsSetter {
         taskParams = new LinkedHashSet<>();
 
         size.value = 0;
-        try (Stream<Object[]> stream = taskRepository.findByWorkbookId(workbookId) ) {
+        try (Stream<Object[]> stream = taskRepository.findByExecContextId(workbookId) ) {
             stream
                     .forEach(o -> {
                         if (taskParams.contains((String) o[1])) {

@@ -83,7 +83,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         EnumsApi.SourceCodeValidateStatus status = sourceCodeService.validate(plan);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createWorkbook(plan.getId(), workbookYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(plan.getId(), execContextYaml);
         workbook = (ExecContextImpl)result.execContext;
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertNotNull(workbook);

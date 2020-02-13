@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
-import ai.metaheuristic.ai.launchpad.batch.data.BatchAndWorkbookExecStates;
+import ai.metaheuristic.ai.launchpad.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.launchpad.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.launchpad.beans.Batch;
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
@@ -44,7 +44,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.ExecContext;
@@ -240,24 +240,24 @@ public class BatchService {
         }
     }
 
-    private static String getMainDocumentPoolCode(ExecContextImpl workbook) {
-        WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
-        List<String> codes = resourceParams.workbookYaml.poolCodes.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH);
+    private static String getMainDocumentPoolCode(ExecContextImpl execContext) {
+        ExecContextParamsYaml resourceParams = execContext.getExecContextParamsYaml();
+        List<String> codes = resourceParams.execContextYaml.variables.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH);
         if (codes.isEmpty()) {
-            throw new IllegalStateException("#990.080 Main document section is missed. inputResourceParams:\n" + workbook.getParams());
+            throw new IllegalStateException("#990.080 Main document section is missed. inputResourceParams:\n" + execContext.getParams());
         }
         if (codes.size()>1) {
-            throw new IllegalStateException("#990.090 Main document section contains more than one main document. inputResourceParams:\n" + workbook.getParams());
+            throw new IllegalStateException("#990.090 Main document section contains more than one main document. inputResourceParams:\n" + execContext.getParams());
         }
         return codes.get(0);
     }
 
     public void updateBatchStatuses() {
-        List<BatchAndWorkbookExecStates> statuses = batchRepository.findAllUnfinished();
-        Map<Long, List<BatchAndWorkbookExecStates>> map = statuses.parallelStream().collect(Collectors.groupingBy(status -> status.batchId));
+        List<BatchAndExecContextStates> statuses = batchRepository.findAllUnfinished();
+        Map<Long, List<BatchAndExecContextStates>> map = statuses.parallelStream().collect(Collectors.groupingBy(status -> status.batchId));
         for (Long batchId : map.keySet()) {
             boolean isFinished = true;
-            for (BatchAndWorkbookExecStates execStates : map.get(batchId)) {
+            for (BatchAndExecContextStates execStates : map.get(batchId)) {
 /*
                 public enum ExecContextState {
                     ERROR(-2),          // some error in configuration
@@ -274,7 +274,7 @@ public class BatchService {
                     EXPORTED_TO_ATLAS(9);    // execContext was exported to atlas
 */
 
-                if (execStates.workbookState != EnumsApi.ExecContextState.ERROR.code && execStates.workbookState != EnumsApi.ExecContextState.FINISHED.code) {
+                if (execStates.execContextState != EnumsApi.ExecContextState.ERROR.code && execStates.execContextState != EnumsApi.ExecContextState.FINISHED.code) {
                     isFinished = false;
                     break;
                 }
@@ -382,10 +382,10 @@ public class BatchService {
         return batchParams.batchStatus;
     }
 
-    private String getStatusForError(Long batchId, ExecContext wb, String mainDocument, Task task, SnippetApiData.SnippetExec snippetExec, String stationIpAndHost) {
+    private String getStatusForError(Long batchId, ExecContext ec, String mainDocument, Task task, SnippetApiData.SnippetExec snippetExec, String stationIpAndHost) {
 
         final String header =
-                "#990.210 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                "#990.210 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", execContextId: " + ec.getId() + ", " +
                 "taskId: " + task.getId() + "\n" +
                 "stationId: " + task.getStationId() + "\n" +
                 stationIpAndHost + "\n\n";
@@ -431,7 +431,7 @@ public class BatchService {
         public File zipDir;
         public String mainDocument;
         public Long batchId;
-        public Long workbookId;
+        public Long execContextId;
     }
 
     public BatchStatusProcessor prepareStatusAndData(Batch batch, BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir) {
@@ -439,53 +439,53 @@ public class BatchService {
         final BatchStatusProcessor bs = new BatchStatusProcessor();
         bs.originArchiveName = getUploadedFilename(batchId, batch.execContextId);
 
-        Long workbookId = batch.execContextId;
-        if (workbookId==null) {
+        Long execContextId = batch.execContextId;
+        if (execContextId==null) {
             bs.getGeneralStatus().add("#990.250 Batch #"+batchId+" wasn't linked to ExecContext", '\n');
             bs.ok = true;
             return bs;
         }
         if (true) {
             throw new NotImplementedException("need to re-write algo of collecting of statuses. " +
-                    "Old version was using list of workbooks but new one must use a list of tasks");
+                    "Old version was using list of exec contexts but new one must use a list of tasks");
         }
 
-        bs.ok = prepareStatus(prepareZip, zipDir, batchId, bs, workbookId);
+        bs.ok = prepareStatus(prepareZip, zipDir, batchId, bs, execContextId);
         initBatchStatus(bs);
 
         return bs;
     }
 
-    public boolean prepareStatus(BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir, Long batchId, BatchStatusProcessor bs, Long workbookId) {
+    public boolean prepareStatus(BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir, Long batchId, BatchStatusProcessor bs, Long execContextId) {
         if (true) {
-            throw new NotImplementedException("Previous version was using list of workbooks and in this method " +
+            throw new NotImplementedException("Previous version was using list of exec contexts and in this method " +
                     "data was prepared only for one task (there was one task for one execContext)." +
                     "Not we have only one execContext with a number of tasks. So need to re-write to use taskId or something like that.");
         }
-        ExecContextImpl wb = execContextCache.findById(workbookId);
+        ExecContextImpl wb = execContextCache.findById(execContextId);
         if (wb == null) {
-            String msg = "#990.260 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
+            String msg = "#990.260 Batch #" + batchId + " contains broken execContextId - #" + execContextId;
             bs.getGeneralStatus().add(msg, '\n');
             log.warn(msg);
             return false;
         }
         String mainDocumentPoolCode = getMainDocumentPoolCode(wb);
 
-        final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode, workbookId);
+        final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode, execContextId);
         if (fullMainDocument == null) {
             String msg = "#990.270 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
-                    "batchId: " + batchId + ", workbookId: " + workbookId;
+                    "batchId: " + batchId + ", execContextId: " + execContextId;
             log.warn(msg);
             bs.getGeneralStatus().add(msg, '\n');
             return false;
         }
         final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getSourceCodeId());
 
-        List<WorkbookParamsYaml.TaskVertex> taskVertices;
+        List<ExecContextParamsYaml.TaskVertex> taskVertices;
         try {
             taskVertices = execContextGraphTopLevelService.findLeafs(wb);
         } catch (ObjectOptimisticLockingFailureException e) {
-            String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
+            String msg = "#990.167 Can't find tasks for execContextId #" + wb.getId() + ", error: " + e.getMessage();
             log.warn(msg);
             bs.getGeneralStatus().add(msg,'\n');
             return false;
@@ -498,7 +498,7 @@ public class BatchService {
         }
         if (taskVertices.size() > 1) {
             String msg = "#990.300 " + mainDocument + ", Can't download file because there are more than one task " +
-                    "at the final state, batchId: " + batchId + ", workbookId: " + wb.getId();
+                    "at the final state, batchId: " + batchId + ", execContextId: " + wb.getId();
             log.info(msg);
             bs.getGeneralStatus().add(msg,'\n');
             return false;
@@ -517,7 +517,7 @@ public class BatchService {
             snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
         } catch (YAMLException e) {
             bs.getGeneralStatus().add("#990.310 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                    ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                    ", batchId:" + batchId + ", execContextId: " + wb.getId() + ", " +
                     "taskId: " + task.getId(),'\n');
             return false;
         }
@@ -530,7 +530,7 @@ public class BatchService {
             case NONE:
             case IN_PROGRESS:
                 bs.getProgressStatus().add("#990.320 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                                ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                                ", batchId:" + batchId + ", execContextId: " + wb.getId() + ", " +
                                 "taskId: " + task.getId() + ", stationId: " + task.getStationId() +
                                 ", " + stationIpAndHost
                         ,'\n');
@@ -545,36 +545,36 @@ public class BatchService {
 
         if (wb.getExecState() != EnumsApi.ExecContextState.FINISHED.code) {
             bs.getProgressStatus().add("#990.360 " + mainDocument + ", Task hasn't completed yet, " +
-                            "batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                            "batchId:" + batchId + ", execContextId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + ", " +
                             "stationId: " + task.getStationId() + ", " + stationIpAndHost
                     ,'\n');
             return true;
         }
 
-        PrepareZipData prepareZipData = new PrepareZipData(bs, task, zipDir, mainDocument, batchId, workbookId);
+        PrepareZipData prepareZipData = new PrepareZipData(bs, task, zipDir, mainDocument, batchId, execContextId);
         boolean isOk = prepareZip.apply(prepareZipData, zipDir);
         if (!isOk) {
             return false;
         }
 
-        String msg = "#990.380 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", workbookId: " + workbookId +
+        String msg = "#990.380 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", execContextId: " + execContextId +
                 ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
         bs.getOkStatus().add(msg,'\n');
         return true;
     }
 
-    private String getMainDocumentFilenameForPoolCode(String mainDocumentPoolCode, Long workbookId) {
-        final List<String> filename = variableService.getFilenameByVariableAndWorkbookId(mainDocumentPoolCode, workbookId);
+    private String getMainDocumentFilenameForPoolCode(String mainDocumentPoolCode, Long execContextId) {
+        final List<String> filename = variableService.getFilenameByVariableAndExecContextId(mainDocumentPoolCode, execContextId);
         if (filename==null || filename.isEmpty() || StringUtils.isBlank(filename.get(0))) {
-            log.error("#990.390 Filename is blank for poolCode: {}, workbookId: {}", mainDocumentPoolCode, workbookId);
+            log.error("#990.390 Filename is blank for poolCode: {}, execContextId: {}", mainDocumentPoolCode, execContextId);
             return null;
         }
         return filename.get(0);
     }
 
-    public String getUploadedFilename(Long batchId, Long workbookId) {
-        final List<String> filename = variableService.findFilenameByBatchId(batchId, workbookId);
+    public String getUploadedFilename(Long batchId, Long execContextId) {
+        final List<String> filename = variableService.findFilenameByBatchId(batchId, execContextId);
         if (filename==null || filename.isEmpty() || S.b(filename.get(0))) {
             log.error("#990.392 Filename is blank for batchId: {}, will be used default name - result.zip", batchId);
             return Consts.RESULT_ZIP;

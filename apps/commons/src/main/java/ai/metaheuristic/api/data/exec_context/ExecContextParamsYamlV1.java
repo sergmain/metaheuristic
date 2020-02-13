@@ -14,31 +14,45 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data.workbook;
+package ai.metaheuristic.api.data.exec_context;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Data
-public class WorkbookParamsYamlV2 implements BaseParams {
-
-    @Data
-    public static class WorkbookYamlV2 {
-        public Map<String, List<String>> poolCodes = new HashMap<>();
-
-        public boolean preservePoolNames;
-    }
-
-    public final int version = 2;
-    public WorkbookYamlV2 workbookYaml = new WorkbookYamlV2();
-    public String graph;
+public class ExecContextParamsYamlV1 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
         return true;
     }
+
+    @Data
+    public static class ExecContextYamlV1 {
+        public Map<String, List<String>> variables = new HashMap<>();
+
+        public boolean preservePoolNames;
+    }
+
+    @Data
+    @EqualsAndHashCode(of = "taskId")
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TaskVertex {
+        public Long taskId;
+        public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
+    }
+
+    public final int version = 1;
+    public ExecContextYamlV1 execContextYaml = new ExecContextYamlV1();
+    public String graph;
+
 }

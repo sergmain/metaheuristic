@@ -8,7 +8,7 @@ alter table pilot_batch
     add DATA_ID          NUMERIC(10, 0);
 
 alter table mh_variable
-    change WORKBOOK_ID REF_ID decimal null;
+    change EXEC_CONTEXT_ID REF_ID decimal null;
 
 alter table mh_variable
     add   REF_TYPE    VARCHAR(15);

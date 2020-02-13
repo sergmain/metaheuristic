@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.exec_context;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -39,64 +39,64 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExecContextCache {
 
-    private final WorkbookRepository workbookRepository;
+    private final ExecContextRepository execContextRepository;
 
-    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, allEntries = true)
+    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
     public void clearCache() {
     }
 
-    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#result.id")
-    public ExecContextImpl save(ExecContextImpl workbook) {
-        if (workbook==null) {
+    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
+    public ExecContextImpl save(ExecContextImpl execContext) {
+        if (execContext==null) {
             return null;
         }
-        log.debug("#461.010 save execContext, id: #{}, execContext: {}", workbook.id, workbook);
-        return workbookRepository.save(workbook);
+        log.debug("#461.010 save execContext, id: #{}, execContext: {}", execContext.id, execContext);
+        return execContextRepository.save(execContext);
     }
 
-    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#workbook.id")
-    public void delete(ExecContextImpl workbook) {
-        if (workbook==null || workbook.id==null) {
+    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")
+    public void delete(ExecContextImpl execContext) {
+        if (execContext ==null || execContext.id==null) {
             return;
         }
         try {
-            workbookRepository.delete(workbook);
+            execContextRepository.delete(execContext);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#461.030 Error deleting of execContext by object, {}", e.toString());
         }
     }
 
-    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#id")
+    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#id")
     public void evictById(Long id) {
         //
     }
 
-    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#workbookId")
-    public void delete(Long workbookId) {
-        if (workbookId==null) {
+    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
+    public void delete(Long execContextId) {
+        if (execContextId ==null) {
             return;
         }
         try {
-            workbookRepository.deleteById(workbookId);
+            execContextRepository.deleteById(execContextId);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#461.050 Error deleting of execContext by id, {}", e.toString());
         }
     }
 
-    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#workbookId")
-    public void deleteById(Long workbookId) {
-        if (workbookId==null) {
+    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
+    public void deleteById(Long execContextId) {
+        if (execContextId ==null) {
             return;
         }
         try {
-            workbookRepository.deleteById(workbookId);
+            execContextRepository.deleteById(execContextId);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#461.070 Error deleting of execContext by id, {}", e.toString());
         }
     }
 
-    @Cacheable(cacheNames = {Consts.WORKBOOK_CACHE}, unless="#result==null")
+    @Cacheable(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, unless="#result==null")
     public ExecContextImpl findById(Long id) {
-        return workbookRepository.findById(id).orElse(null);
+        return execContextRepository.findById(id).orElse(null);
     }
 }

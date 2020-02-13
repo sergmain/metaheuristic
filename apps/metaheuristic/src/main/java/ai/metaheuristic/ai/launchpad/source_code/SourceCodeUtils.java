@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.launchpad.source_code;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV1;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV1;
 
 import java.util.ArrayList;
 
@@ -29,17 +29,18 @@ public class SourceCodeUtils {
         return String.format("%d-%d-%s-%s-%d", workbookId, processOrder, snippetName, processCode, snippetIdx);
     }
 
-    public static WorkbookParamsYaml.WorkbookYaml parseToWorkbookParamsYaml(String inputResourceParams) {
+    public static ExecContextParamsYaml.ExecContextYaml parseToExecContextParamsYaml(String inputResourceParams) {
         // we're using V1 because inputResourceParams has a user-generated value in format of V1
-        WorkbookParamsYamlV1 v1 = (WorkbookParamsYamlV1) WorkbookParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1).to(inputResourceParams);
-        WorkbookParamsYaml.WorkbookYaml wrc = new WorkbookParamsYaml.WorkbookYaml();
-        wrc.poolCodes.putAll(v1.poolCodes);
+        ExecContextParamsYamlV1 v1 = (ExecContextParamsYamlV1) ExecContextParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1).to(inputResourceParams);
+        ExecContextParamsYaml.ExecContextYaml wrc = new ExecContextParamsYaml.ExecContextYaml();
+        // ???
+        wrc.variables.putAll(v1.poolCodes);
         return wrc;
     }
 
-    public static WorkbookParamsYaml.WorkbookYaml asWorkbookParamsYaml(String variable) {
-        WorkbookParamsYaml.WorkbookYaml wrc = new WorkbookParamsYaml.WorkbookYaml();
-        wrc.poolCodes.computeIfAbsent(Consts.MH_WORKBOOK_INPUT_VARIABLE, o->new ArrayList<>()).add(variable);
+    public static ExecContextParamsYaml.ExecContextYaml asExecContextParamsYaml(String variable) {
+        ExecContextParamsYaml.ExecContextYaml wrc = new ExecContextParamsYaml.ExecContextYaml();
+        wrc.variables.computeIfAbsent(Consts.MH_WORKBOOK_INPUT_VARIABLE, o->new ArrayList<>()).add(variable);
         return wrc;
     }
 

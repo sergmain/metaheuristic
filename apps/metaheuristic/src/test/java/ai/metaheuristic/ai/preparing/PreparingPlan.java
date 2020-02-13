@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
@@ -40,7 +40,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV1;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
@@ -71,7 +71,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public SourceCodeRepository sourceCodeRepository;
 
     @Autowired
-    public WorkbookRepository workbookRepository;
+    public ExecContextRepository execContextRepository;
 
     @Autowired
     public ExecContextCache execContextCache;
@@ -105,7 +105,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public Snippet s5 = null;
     public ExecContextImpl workbook = null;
 
-    public WorkbookParamsYaml.WorkbookYaml workbookYaml;
+    public ExecContextParamsYaml.ExecContextYaml execContextYaml;
 
     public Company company;
 
@@ -298,8 +298,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
         globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-02.txt");
         globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-03.txt");
 
-        workbookYaml = new WorkbookParamsYaml.WorkbookYaml();
-        workbookYaml.poolCodes.computeIfAbsent(Consts.MH_WORKBOOK_INPUT_VARIABLE, o-> new ArrayList<>()).add(TEST_GLOBAL_VARIABLE);
+        execContextYaml = new ExecContextParamsYaml.ExecContextYaml();
+        execContextYaml.variables.computeIfAbsent(Consts.MH_WORKBOOK_INPUT_VARIABLE, o-> new ArrayList<>()).add(TEST_GLOBAL_VARIABLE);
     }
 
     private Snippet createSnippet(String snippetCode) {
@@ -352,12 +352,12 @@ public abstract class PreparingPlan extends PreparingExperiment {
         deleteSnippet(s5);
         if (workbook!=null) {
             try {
-                workbookRepository.deleteById(workbook.getId());
+                execContextRepository.deleteById(workbook.getId());
             } catch (Throwable th) {
                 log.error("Error while workbookRepository.deleteById()", th);
             }
             try {
-                taskRepository.deleteByWorkbookId(workbook.getId());
+                taskRepository.deleteByExecContextId(workbook.getId());
             } catch (ObjectOptimisticLockingFailureException th) {
                 //
             } catch (Throwable th) {
@@ -378,7 +378,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         EnumsApi.SourceCodeValidateStatus status = sourceCodeService.validate(plan);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        TaskProducingResultComplex result = execContextService.createWorkbook(plan.getId(), workbookYaml);
+        TaskProducingResultComplex result = execContextService.createExecContext(plan.getId(), execContextYaml);
         workbook = (ExecContextImpl)result.execContext;
 
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
@@ -395,7 +395,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         result = sourceCodeService.produceAllTasks(true, plan, this.workbook);
         experiment = experimentCache.findById(experiment.id);
         this.workbook = (ExecContextImpl)result.execContext;
-        assertEquals(result.numberOfTasks, taskRepository.findAllTaskIdsByWorkbookId(workbook.id).size());
+        assertEquals(result.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(workbook.id).size());
         assertEquals(result.numberOfTasks, execContextService.getCountUnfinishedTasks(workbook));
 
 
