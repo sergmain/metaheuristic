@@ -653,13 +653,13 @@ public class ExperimentService {
         ExperimentParamsYaml epy = e.getExperimentParamsYaml();
         epy.processing = new ExperimentProcessing();
         e.updateParams(epy);
-        e.setWorkbookId(null);
+        e.setExecContextId(null);
 
         //noinspection UnusedAssignment
         e = experimentCache.save(e);
     }
 
-    public void bindExperimentToWorkbook(Long experimentId, Long workbookId) {
+    public void bindExperimentToWorkbook(Long experimentId, Long execContextId) {
 
         Experiment e = experimentRepository.findByIdForUpdate(experimentId);
         if (e==null) {
@@ -669,7 +669,7 @@ public class ExperimentService {
         ExperimentParamsYaml epy = e.getExperimentParamsYaml();
         epy.processing = new ExperimentProcessing();
         e.updateParams(epy);
-        e.setWorkbookId(workbookId);
+        e.setExecContextId(execContextId);
 
         //noinspection UnusedAssignment
         e = experimentCache.save(e);
@@ -686,7 +686,7 @@ public class ExperimentService {
     }
 
     public EnumsApi.SourceCodeProducingStatus produceTasks(
-            boolean isPersist, SourceCodeParamsYaml sourceCodeParams, Long workbookId, SourceCodeParamsYaml.Process process,
+            boolean isPersist, SourceCodeParamsYaml sourceCodeParams, Long execContextId, SourceCodeParamsYaml.Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
             Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
 
@@ -708,34 +708,34 @@ public class ExperimentService {
         // feature has the real value only when isPersist==true
         int totalVariants = features.size() * calcTotalVariants * 2;
 
-        if (totalVariants > globals.maxTasksPerWorkbook) {
+        if (totalVariants > globals.maxTasksPerExecContext) {
             log.error("#179.090 number of tasks for this execContext exceeded the allowed maximum number. ExecContext was created but its status is 'not valid'. " +
-                                "Allowed maximum number of tasks per execContext: " + globals.maxTasksPerWorkbook +", tasks in this execContext: " + totalVariants);
+                                "Allowed maximum number of tasks per execContext: " + globals.maxTasksPerExecContext +", tasks in this execContext: " + totalVariants);
             return TOO_MANY_TASKS_PER_SOURCE_CODE_ERROR;
         }
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
         final Map<String, Snippet> localCache = new HashMap<>();
         final IntHolder size = new IntHolder();
-        final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, workbookId, experiment, size);
+        final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, execContextId, experiment, size);
 
         numberOfTasks.value = 0;
 
         log.debug("total size of tasks' params received from db is {} bytes", size.value);
         final AtomicBoolean boolHolder = new AtomicBoolean();
         final Consumer<Long> longConsumer = o -> {
-            if (workbookId.equals(o)) {
+            if (execContextId.equals(o)) {
                 boolHolder.set(true);
             }
         };
         final LaunchpadInternalEvent.ExecContextDeletionListener listener =
-                new LaunchpadInternalEvent.ExecContextDeletionListener(workbookId, longConsumer);
+                new LaunchpadInternalEvent.ExecContextDeletionListener(execContextId, longConsumer);
 
         int processed = 0;
         long prevMills = System.currentTimeMillis();
         try {
             eventMulticaster.addApplicationListener(listener);
-            ExecContext wb = execContextCache.findById(workbookId);
+            ExecContext wb = execContextCache.findById(execContextId);
             if (wb==null) {
                 return EnumsApi.SourceCodeProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
             }
@@ -762,7 +762,7 @@ public class ExperimentService {
                         // create empty task. we need task id for initialization
                         task = new TaskImpl();
                         task.setParams("");
-                        task.setWorkbookId(workbookId);
+                        task.setExecContextId(execContextId);
                         if (isPersist) {
                             task = taskRepository.save(task);
                         }
@@ -837,7 +837,7 @@ public class ExperimentService {
 
                         ExperimentTaskFeature tef = new ExperimentTaskFeature();
                         tef.id = id.incrementAndGet();
-                        tef.setWorkbookId(workbookId);
+                        tef.setWorkbookId(execContextId);
                         tef.setTaskId(task.getId());
                         tef.setFeatureId(feature.id);
                         tef.setTaskType(type.value);
@@ -891,7 +891,7 @@ public class ExperimentService {
                             if (task == null) {
                                 return EnumsApi.SourceCodeProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
-                            execContextGraphTopLevelService.addNewTasksToGraph(workbookId, prevParentTaskIds, taskIds);
+                            execContextGraphTopLevelService.addNewTasksToGraph(execContextId, prevParentTaskIds, taskIds);
                         }
                         prevParentTaskIds = taskIds;
                     }

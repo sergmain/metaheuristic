@@ -189,7 +189,7 @@ public class ExecContextService {
         ExecContextImpl ec = new ExecContextImpl();
         ec.setSourceCodeId(sourceCodeId);
         ec.setCreatedOn(System.currentTimeMillis());
-        ec.setExecState(EnumsApi.ExecContextState.NONE.code);
+        ec.setState(EnumsApi.ExecContextState.NONE.code);
         ec.setCompletedOn(null);
         ExecContextParamsYaml params = new ExecContextParamsYaml();
         params.execContextYaml = execContextYaml;
@@ -225,7 +225,7 @@ public class ExecContextService {
             if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
                 return EnumsApi.SourceCodeProducingStatus.OK;
             }
-            execContext.setExecState(EnumsApi.ExecContextState.PRODUCING.code);
+            execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
             execContextCache.save(execContext);
             return EnumsApi.SourceCodeProducingStatus.OK;
         });
@@ -301,8 +301,8 @@ public class ExecContextService {
                 log.warn("#705.170 ExecContext wasn't found for id: {}", execContextId);
                 return null;
             }
-            if (execContext.getExecState()!= EnumsApi.ExecContextState.STARTED.code) {
-                log.warn("#705.180 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getExecState()));
+            if (execContext.getState()!= EnumsApi.ExecContextState.STARTED.code) {
+                log.warn("#705.180 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getState()));
                 return null;
             }
             execContextIds = List.of(execContext.id);

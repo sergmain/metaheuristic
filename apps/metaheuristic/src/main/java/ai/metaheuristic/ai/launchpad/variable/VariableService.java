@@ -129,16 +129,16 @@ public class VariableService {
         variableRepository.deleteByName(variable);
     }
 
-    public Variable save(InputStream is, long size, String variable, String filename, Long workbookId, String contextId) {
+    public Variable save(InputStream is, long size, String variable, String filename, Long execContextId, String internalContextId) {
         try {
             Variable data = new Variable();
             data.inited = true;
             data.setName(variable);
             data.setFilename(filename);
-            data.setWorkbookId(workbookId);
+            data.setExecContextId(execContextId);
             data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-            data.setContextId(contextId);
+            data.setContextId(internalContextId);
 
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
             data.setData(blob);
@@ -154,12 +154,12 @@ public class VariableService {
         }
     }
 
-    public Variable createUninitialized(String variable, Long workbookId, String contextId) {
+    public Variable createUninitialized(String variable, Long execContextId, String contextId) {
         try {
             Variable data = new Variable();
             data.inited = false;
             data.setName(variable);
-            data.setWorkbookId(workbookId);
+            data.setExecContextId(execContextId);
             // TODO right now only DataSourcing.launchpad is supporting as internal variable.
             //  the code has to be added for another type of sourcing
             data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
@@ -227,10 +227,10 @@ public class VariableService {
         return variableRepository.getFilenamesForBatchIds(batchIds);
     }
 
-    public Variable storeInitialResource(File tempFile, String variable, String filename, Long workbookId, String contextId) {
+    public Variable storeInitialResource(File tempFile, String variable, String filename, Long workbookId, String internalContextId) {
         try {
             try (InputStream is = new FileInputStream(tempFile)) {
-                return save(is, tempFile.length(), variable, filename, workbookId, contextId);
+                return save(is, tempFile.length(), variable, filename, workbookId, internalContextId);
             }
         } catch (IOException e) {
             log.error("Error", e);

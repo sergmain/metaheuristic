@@ -259,7 +259,7 @@ public class SourceCodeService {
 
     public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl sourceCode, ExecContext execContext) {
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
-        if (isPersist && execContext.getExecState()!= EnumsApi.ExecContextState.PRODUCING.code) {
+        if (isPersist && execContext.getState()!= EnumsApi.ExecContextState.PRODUCING.code) {
             result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.ALREADY_PRODUCED_ERROR;
             return result;
         }

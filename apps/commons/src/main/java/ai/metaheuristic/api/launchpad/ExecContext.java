@@ -37,7 +37,7 @@ public interface ExecContext {
 
     boolean isValid();
 
-    int getExecState();
+    int getState();
 
     void setId(Long id);
 
@@ -53,5 +53,5 @@ public interface ExecContext {
 
     void setValid(boolean valid);
 
-    void setExecState(int execState);
+    void setState(int execState);
 }

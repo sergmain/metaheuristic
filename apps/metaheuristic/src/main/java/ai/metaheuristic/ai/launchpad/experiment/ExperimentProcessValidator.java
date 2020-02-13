@@ -69,8 +69,8 @@ public class ExperimentProcessValidator implements ProcessValidator {
         if (e==null) {
             return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
         }
-        if (e.getWorkbookId()!=null) {
-            ExecContext execContext = execContextCache.findById(e.getWorkbookId());
+        if (e.getExecContextId()!=null) {
+            ExecContext execContext = execContextCache.findById(e.getExecContextId());
             if (execContext != null) {
                 if (!sourceCode.getId().equals(execContext.getSourceCodeId())) {
                     return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;

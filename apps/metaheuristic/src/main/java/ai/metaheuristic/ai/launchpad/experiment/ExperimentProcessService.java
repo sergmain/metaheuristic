@@ -80,7 +80,7 @@ public class ExperimentProcessService {
         if (!isPersist) {
             e = e.clone();
         }
-        e.setWorkbookId(execContextId);
+        e.setExecContextId(execContextId);
         if (isPersist) {
             e = experimentCache.save(e);
         }

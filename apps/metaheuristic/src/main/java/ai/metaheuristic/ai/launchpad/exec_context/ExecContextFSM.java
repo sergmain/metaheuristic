@@ -43,7 +43,7 @@ public class ExecContextFSM {
     public void toState(Long execContextId, EnumsApi.ExecContextState state) {
         execContextSyncService.getWithSync(execContextId, execContext -> {
             if (execContext.state !=state.code) {
-                execContext.setExecState(state.code);
+                execContext.setState(state.code);
                 execContextCache.save(execContext);
             }
             return null;
@@ -54,7 +54,7 @@ public class ExecContextFSM {
         execContextSyncService.getWithSync(execContextId, execContext -> {
             if (execContext.state !=state.code || execContext.completedOn==null) {
                 execContext.setCompletedOn(System.currentTimeMillis());
-                execContext.setExecState(state.code);
+                execContext.setState(state.code);
                 execContextCache.save(execContext);
             }
             return null;

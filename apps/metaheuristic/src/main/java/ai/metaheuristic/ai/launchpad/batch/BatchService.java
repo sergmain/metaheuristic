@@ -543,7 +543,7 @@ public class BatchService {
                 break;
         }
 
-        if (wb.getExecState() != EnumsApi.ExecContextState.FINISHED.code) {
+        if (wb.getState() != EnumsApi.ExecContextState.FINISHED.code) {
             bs.getProgressStatus().add("#990.360 " + mainDocument + ", Task hasn't completed yet, " +
                             "batchId:" + batchId + ", execContextId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + ", " +

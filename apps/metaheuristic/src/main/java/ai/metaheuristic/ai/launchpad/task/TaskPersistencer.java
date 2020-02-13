@@ -143,7 +143,7 @@ public class TaskPersistencer {
             Task t = prepareAndSaveTask(result, state);
             launchpadEventService.publishTaskEvent(
                     state==EnumsApi.TaskExecState.OK ? EnumsApi.LaunchpadEventType.TASK_FINISHED : EnumsApi.LaunchpadEventType.TASK_ERROR,
-                    null, result.taskId, t.getWorkbookId());
+                    null, result.taskId, t.getExecContextId());
             action.accept(t);
             return t;
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -180,7 +180,7 @@ public class TaskPersistencer {
             task.setResultReceived(true);
 
             task = taskRepository.save(task);
-            launchpadEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ERROR,null, task.id, task.getWorkbookId());
+            launchpadEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ERROR,null, task.id, task.getExecContextId());
 
             return task;
         });

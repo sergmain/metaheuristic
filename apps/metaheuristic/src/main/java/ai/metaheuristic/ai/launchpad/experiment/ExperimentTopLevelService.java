@@ -199,11 +199,11 @@ public class ExperimentTopLevelService {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.064 experiment wasn't found, experimentId: " + experimentId);
         }
 
-        if (experiment.getWorkbookId() == null) {
+        if (experiment.getExecContextId() == null) {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.070 experiment wasn't startet yet, experimentId: " + experimentId);
         }
 
-        ExecContextImpl workbook = execContextCache.findById(experiment.getWorkbookId());
+        ExecContextImpl workbook = execContextCache.findById(experiment.getExecContextId());
         if (workbook == null) {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to execContext, experimentId: " + experimentId);
         }
@@ -217,7 +217,7 @@ public class ExperimentTopLevelService {
         }
 
         ExperimentApiData.ExperimentInfoExtendedResult result = new ExperimentApiData.ExperimentInfoExtendedResult();
-        if (experiment.getWorkbookId()==null) {
+        if (experiment.getExecContextId()==null) {
             result.addInfoMessage("#285.090 A launch is disabled, dataset isn't assigned");
         }
 
@@ -226,7 +226,7 @@ public class ExperimentTopLevelService {
         final List<ExperimentParamsYaml.ExperimentFeature> experimentFeatures = epy.processing.features;
         experimentInfoResult.features = experimentFeatures.stream().map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
         experimentInfoResult.execContext = workbook;
-        experimentInfoResult.execContextState = EnumsApi.ExecContextState.toState(workbook.getExecState());
+        experimentInfoResult.execContextState = EnumsApi.ExecContextState.toState(workbook.getState());
         result.experiment = ExperimentService.asExperimentData(experiment);
         result.experimentInfo = experimentInfoResult;
 
@@ -763,7 +763,7 @@ public class ExperimentTopLevelService {
             return EnumsApi.ExecContextState.UNKNOWN;
         }
         ExecContext wb = execContextCache.findById(experiment.execContextId);
-        return EnumsApi.ExecContextState.toState(wb.getExecState());
+        return EnumsApi.ExecContextState.toState(wb.getState());
     }
 
     public OperationStatusRest startProcessingOfTasks(String experimentCode) {

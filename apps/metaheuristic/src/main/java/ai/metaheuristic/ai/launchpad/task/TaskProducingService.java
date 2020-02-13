@@ -143,7 +143,7 @@ public class TaskProducingService {
 
     @SuppressWarnings("Duplicates")
     private TaskImpl createTaskInternal(
-            SourceCodeParamsYaml sourceCodeParams, Long workbookId, SourceCodeParamsYaml.Process process,
+            SourceCodeParamsYaml sourceCodeParams, Long execContextId, SourceCodeParamsYaml.Process process,
             Map<String, SourceCodeParamsYaml.Variable> outputResourceIds,
             SourceCodeParamsYaml.SnippetDefForSourceCode snDef, Map<String, List<String>> collectedInputs, Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls,
             Map<String, String> mappingCodeToOriginalFilename) {
@@ -185,7 +185,7 @@ public class TaskProducingService {
         String taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);
 
         TaskImpl task = new TaskImpl();
-        task.setWorkbookId(workbookId);
+        task.setExecContextId(execContextId);
         task.setParams(taskParams);
         taskRepository.save(task);
 
