@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.workbook;
+package ai.metaheuristic.ai.launchpad.exec_context;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
@@ -37,7 +37,7 @@ import org.springframework.stereotype.Service;
 @Profile("launchpad")
 @Slf4j
 @RequiredArgsConstructor
-public class WorkbookCache {
+public class ExecContextCache {
 
     private final WorkbookRepository workbookRepository;
 

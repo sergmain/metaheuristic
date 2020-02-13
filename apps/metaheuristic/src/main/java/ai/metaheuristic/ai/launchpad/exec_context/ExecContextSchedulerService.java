@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.workbook;
+package ai.metaheuristic.ai.launchpad.exec_context;
 
 import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
@@ -47,14 +47,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Profile("launchpad")
 @Slf4j
 @RequiredArgsConstructor
-public class WorkbookSchedulerService {
+public class ExecContextSchedulerService {
 
-    private final WorkbookService workbookService;
+    private final ExecContextService execContextService;
     private final WorkbookRepository workbookRepository;
     private final TaskRepository taskRepository;
     private final AtlasService atlasService;
-    private final WorkbookFSM workbookFSM;
-    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
+    private final ExecContextFSM execContextFSM;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     public void updateWorkbookStatuses(boolean needReconciliation) {
         List<ExecContextImpl> workbooks = workbookRepository.findByExecState(EnumsApi.ExecContextState.STARTED.code);
@@ -69,14 +69,14 @@ public class WorkbookSchedulerService {
             try {
                 status = atlasService.storeExperimentToAtlas(workbookId);
             } catch (Exception e) {
-                workbookFSM.toError(workbookId);
+                execContextFSM.toError(workbookId);
                 continue;
             }
 
             if (status.status==EnumsApi.OperationStatus.OK) {
                 log.info("Exporting of execContext #{} was finished", workbookId);
             } else {
-                workbookFSM.toError(workbookId);
+                execContextFSM.toError(workbookId);
                 log.error("Error exporting experiment to atlas, workbookID #{}\n{}", workbookId, status.getErrorMessagesAsStr());
             }
         }
@@ -90,14 +90,14 @@ public class WorkbookSchedulerService {
      */
     public void updateWorkbookStatus(Long workbookId, boolean needReconciliation) {
 
-        long countUnfinishedTasks = workbookService.getCountUnfinishedTasks(workbookId);
+        long countUnfinishedTasks = execContextService.getCountUnfinishedTasks(workbookId);
         if (countUnfinishedTasks==0) {
             // workaround for situation when states in graph and db are different
             reconcileStates(workbookId);
-            countUnfinishedTasks = workbookService.getCountUnfinishedTasks(workbookId);
+            countUnfinishedTasks = execContextService.getCountUnfinishedTasks(workbookId);
             if (countUnfinishedTasks==0) {
                 log.info("ExecContext #{} was finished", workbookId);
-                workbookFSM.toFinished(workbookId);
+                execContextFSM.toFinished(workbookId);
             }
         }
         else {
@@ -121,7 +121,7 @@ public class WorkbookSchedulerService {
         ConcurrentHashMap<Long, Integer> taskStates = new ConcurrentHashMap<>();
         AtomicBoolean isNullState = new AtomicBoolean(false);
 
-        List<WorkbookParamsYaml.TaskVertex> vertices = workbookService.findAllVertices(workbookId);
+        List<WorkbookParamsYaml.TaskVertex> vertices = execContextService.findAllVertices(workbookId);
         vertices.stream().parallel().forEach(tv -> {
             Integer state = states.get(tv.taskId);
             if (state==null) {
@@ -137,10 +137,10 @@ public class WorkbookSchedulerService {
 
         if (isNullState.get()) {
             log.info("#705.052 Found non-created task, graph consistency is failed");
-            workbookFSM.toError(workbookId);
+            execContextFSM.toError(workbookId);
         }
         else {
-            workbookGraphTopLevelService.updateTaskExecStates(workbookId, taskStates);
+            execContextGraphTopLevelService.updateTaskExecStates(workbookId, taskStates);
         }
 
         // fix actual state of tasks (can be as a result of OptimisticLockingException)
@@ -161,11 +161,11 @@ public class WorkbookSchedulerService {
                             long timeout = Math.min(multiplyBy2, oneHourToMills);
                             if ((System.currentTimeMillis() - task.assignedOn) > timeout) {
                                 log.info("Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
-                                workbookService.resetTask(task.id);
+                                execContextService.resetTask(task.id);
                             }
                         }
                         else if (task.resultReceived && task.isCompleted) {
-                            workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(workbookId, task.id, EnumsApi.TaskExecState.OK.value);
+                            execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(workbookId, task.id, EnumsApi.TaskExecState.OK.value);
                         }
                     }
                 });

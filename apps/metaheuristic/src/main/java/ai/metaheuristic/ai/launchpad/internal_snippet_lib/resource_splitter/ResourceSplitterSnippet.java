@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.ExecContext;
@@ -83,7 +83,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
     private final SourceCodeCache sourceCodeCache;
     private final VariableRepository variableRepository;
     private final VariableService variableService;
-    private final WorkbookCache workbookCache;
+    private final ExecContextCache execContextCache;
     private final IdsRepository idsRepository;
 
     public static WorkbookParamsYaml.WorkbookYaml initWorkbookParamsYaml(
@@ -164,7 +164,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         if (sourceCode==null) {
             throw new IllegalStateException("#995.200 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
         }
-        ExecContext wb = workbookCache.findById(execContextId);
+        ExecContext wb = execContextCache.findById(execContextId);
         if (wb==null) {
             throw new IllegalStateException("#995.202 execContext wasn't found, execContextId: " + execContextId);
         }

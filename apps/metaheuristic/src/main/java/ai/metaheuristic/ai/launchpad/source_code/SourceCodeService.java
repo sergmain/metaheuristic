@@ -30,8 +30,8 @@ import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -74,10 +74,10 @@ public class SourceCodeService {
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
 
-    private final WorkbookService workbookService;
+    private final ExecContextService execContextService;
     private final CommonProcessValidatorService commonProcessValidatorService;
     private final SnippetRepository snippetRepository;
-    private final WorkbookFSM workbookFSM;
+    private final ExecContextFSM execContextFSM;
     private final CompanyCache companyCache;
 
     @Async
@@ -181,7 +181,7 @@ public class SourceCodeService {
         for (ExecContextImpl workbook : workbooks) {
             SourceCodeImpl sourceCode = sourceCodeCache.findById(workbook.getSourceCodeId());
             if (sourceCode==null) {
-                workbookFSM.toStopped(workbook.id);
+                execContextFSM.toStopped(workbook.id);
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
@@ -270,13 +270,13 @@ public class SourceCodeService {
                 result.sourceCodeValidateStatus != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
             log.error("#701.160 Can't produce tasks, error: {}", result.sourceCodeValidateStatus);
             if(isPersist) {
-                workbookFSM.toStopped(execContext.getId());
+                execContextFSM.toStopped(execContext.getId());
             }
             return result;
         }
         Monitoring.log("##022", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        result = workbookService.produceTasks(isPersist, sourceCode, execContext.getId());
+        result = execContextService.produceTasks(isPersist, sourceCode, execContext.getId());
         log.info("#701.170 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 

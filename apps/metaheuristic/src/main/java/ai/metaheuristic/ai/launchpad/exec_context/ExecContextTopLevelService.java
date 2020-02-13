@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.workbook;
+package ai.metaheuristic.ai.launchpad.exec_context;
 
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
@@ -42,18 +42,18 @@ import java.util.List;
 @Profile("launchpad")
 @Service
 @RequiredArgsConstructor
-public class WorkbookTopLevelService {
+public class ExecContextTopLevelService {
 
     private final WorkbookRepository workbookRepository;
-    private final WorkbookService workbookService;
+    private final ExecContextService execContextService;
     private final SourceCodeCache sourceCodeCache;
 
     public SourceCodeApiData.ExecContextsResult getWorkbooksOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, LaunchpadContext context) {
-        return workbookService.getWorkbooksOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
+        return execContextService.getWorkbooksOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
     }
 
     public SourceCodeApiData.TaskProducingResult createExecContext(Long sourceCodeId, String inputResourceParam, LaunchpadContext context) {
-        final SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(sourceCodeId, SourceCodeUtils.parseToWorkbookParamsYaml(inputResourceParam));
+        final SourceCodeApiData.TaskProducingResultComplex result = execContextService.createWorkbook(sourceCodeId, SourceCodeUtils.parseToWorkbookParamsYaml(inputResourceParam));
         return new SourceCodeApiData.TaskProducingResult(
                 result.getStatus()== EnumsApi.TaskProducingStatus.OK
                         ? new ArrayList<>()
@@ -66,7 +66,7 @@ public class WorkbookTopLevelService {
     }
 
     public SourceCodeApiData.ExecContextResult getExecContextExtendedForDeletion(Long workbookId, LaunchpadContext context) {
-        SourceCodeApiData.ExecContextResult result = workbookService.getWorkbookExtended(workbookId);
+        SourceCodeApiData.ExecContextResult result = execContextService.getWorkbookExtended(workbookId);
 
         // don't show actual graph for this execContext
         WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.getParams());
@@ -78,7 +78,7 @@ public class WorkbookTopLevelService {
 
     public SourceCodeApiData.ExecContextResult getWorkbookExtended(Long execContextId) {
         //noinspection UnnecessaryLocalVariable
-        SourceCodeApiData.ExecContextResult result = workbookService.getWorkbookExtended(execContextId);
+        SourceCodeApiData.ExecContextResult result = execContextService.getWorkbookExtended(execContextId);
         return result;
     }
 

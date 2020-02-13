@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -55,7 +55,7 @@ public class TestCountOfTasks extends PreparingPlan {
     @Autowired
     public TaskPersistencer taskPersistencer;
     @Autowired
-    public WorkbookService workbookService;
+    public ExecContextService execContextService;
 
     @Test
     public void testCountNumberOfTasks() {
@@ -67,15 +67,15 @@ public class TestCountOfTasks extends PreparingPlan {
         EnumsApi.SourceCodeValidateStatus status = sourceCodeService.validate(plan);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createWorkbook(plan.getId(), workbookYaml);
         workbook = (ExecContextImpl)result.execContext;
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertNotNull(workbook);
         assertEquals(EnumsApi.ExecContextState.NONE.code, workbook.getExecState());
 
 
-        EnumsApi.SourceCodeProducingStatus producingStatus = workbookService.toProducing(workbook.id);
-        workbook = workbookCache.findById(this.workbook.id);
+        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(workbook.id);
+        workbook = execContextCache.findById(this.workbook.id);
         assertNotNull(workbook);
         assertEquals(EnumsApi.ExecContextState.PRODUCING.code, workbook.getExecState());
 

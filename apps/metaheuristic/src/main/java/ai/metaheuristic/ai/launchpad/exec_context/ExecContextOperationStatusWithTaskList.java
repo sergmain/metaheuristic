@@ -14,22 +14,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.exceptions;
+package ai.metaheuristic.ai.launchpad.exec_context;
+
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Serge
- * Date: 7/9/2019
- * Time: 5:42 PM
+ * Date: 7/15/2019
+ * Time: 11:03 PM
  */
-public class WorkbookGraphException extends RuntimeException {
-    public WorkbookGraphException() {
-    }
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ExecContextOperationStatusWithTaskList {
+    public OperationStatusRest status;
+    public List<WorkbookParamsYaml.TaskVertex> childrenTasks = new ArrayList<>();
 
-    public WorkbookGraphException(String message) {
-        super(message);
-    }
-
-    public WorkbookGraphException(String message, Throwable cause) {
-        super(message, cause);
+    public ExecContextOperationStatusWithTaskList(OperationStatusRest status) {
+        this.status = status;
     }
 }

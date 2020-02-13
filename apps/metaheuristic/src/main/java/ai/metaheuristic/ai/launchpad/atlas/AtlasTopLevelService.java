@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasTaskRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
@@ -95,7 +95,7 @@ public class AtlasTopLevelService {
     private final AtlasRepository atlasRepository;
     private final AtlasTaskRepository atlasTaskRepository;
     private final AtlasParamsYamlUtils atlasParamsYamlUtils;
-    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     private static class ParamFilter {
         String key;
@@ -369,7 +369,7 @@ public class AtlasTopLevelService {
         workbook.setParams(ypywc.atlasParams.execContext.execContextParams);
         workbook.id = ypywc.atlasParams.execContext.execContextId;
         workbook.execState = ypywc.atlasParams.execContext.execState;
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphTopLevelService.findAll(workbook);
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
 
         AtlasData.ExperimentInfo experimentInfoResult = new AtlasData.ExperimentInfo();
         experimentInfoResult.features = ypywc.getExperimentParamsYaml().processing.features
@@ -719,7 +719,7 @@ public class AtlasTopLevelService {
         workbook.setParams( ypywc.atlasParams.execContext.execContextParams);
         workbook.id = ypywc.atlasParams.execContext.execContextId;
         workbook.execState = ypywc.atlasParams.execContext.execState;
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphTopLevelService.findAll(workbook);
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
 
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
@@ -771,7 +771,7 @@ public class AtlasTopLevelService {
         workbook.setParams(ypywc.atlasParams.execContext.execContextParams);
         workbook.id = ypywc.atlasParams.execContext.execContextId;
         workbook.execState = ypywc.atlasParams.execContext.execState;
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphTopLevelService.findAll(workbook);
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
 
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
         result.tasks = findTasks(atlasId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);

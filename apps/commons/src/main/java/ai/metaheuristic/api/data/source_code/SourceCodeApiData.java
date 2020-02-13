@@ -34,7 +34,7 @@ public class SourceCodeApiData {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class PlanStatus {
+    public static class SourceCodeStatus {
         public boolean isOk;
         public String error;
     }
@@ -166,14 +166,14 @@ public class SourceCodeApiData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class PlanListResult extends BaseDataClass {
+    public static class SourceCodeListResult extends BaseDataClass {
         public SourceCode sourceCode;
-        public long currentPlanId;
+        public long currentSourceCodeId;
     }
 
     // !!! DO NOT CHANGE THIS CLASS UNDER ANY CIRCUMSTANCES
     @Data
-    public static class PlanInternalParamsYaml {
+    public static class SourceCodeInternalParamsYaml {
         public boolean archived;
     }
 

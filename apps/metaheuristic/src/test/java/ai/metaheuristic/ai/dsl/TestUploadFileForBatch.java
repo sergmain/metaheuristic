@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -85,7 +85,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
     @Autowired
     public TaskPersistencer taskPersistencer;
     @Autowired
-    public WorkbookService workbookService;
+    public ExecContextService execContextService;
     @Autowired
     private BatchTopLevelService batchTopLevelService;
     @Autowired
@@ -107,7 +107,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
             }
             if (uploadingStatus.workbookId!=null) {
                 try {
-                    workbookCache.deleteById(uploadingStatus.workbookId);
+                    execContextCache.deleteById(uploadingStatus.workbookId);
                 } catch (Throwable th) {
                     log.error("Error", th);
                 }

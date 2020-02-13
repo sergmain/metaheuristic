@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
@@ -54,7 +54,7 @@ public class LaunchpadCommandProcessor {
     private final StationCache stationCache;
     private final TaskService taskService;
     private final StationTopLevelService stationTopLevelService;
-    private final WorkbookService workbookService;
+    private final ExecContextService execContextService;
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
 
@@ -121,7 +121,7 @@ public class LaunchpadCommandProcessor {
         }
         //noinspection UnnecessaryLocalVariable
         final LaunchpadCommParamsYaml.ReportResultDelivering cmd1 = new LaunchpadCommParamsYaml.ReportResultDelivering(
-                workbookService.storeAllConsoleResults(request.reportTaskProcessingResult.results)
+                execContextService.storeAllConsoleResults(request.reportTaskProcessingResult.results)
         );
         return cmd1;
     }
@@ -142,7 +142,7 @@ public class LaunchpadCommandProcessor {
         }
         checkStationId(request);
         LaunchpadCommParamsYaml.AssignedTask assignedTask =
-                workbookService.getTaskAndAssignToStation(Long.parseLong(request.stationCommContext.stationId), request.requestTask.isAcceptOnlySigned(), null);
+                execContextService.getTaskAndAssignToStation(Long.parseLong(request.stationCommContext.stationId), request.requestTask.isAcceptOnlySigned(), null);
 
         if (assignedTask!=null) {
             log.info("Assign task #{} to station #{}", assignedTask.getTaskId(), request.stationCommContext.stationId );

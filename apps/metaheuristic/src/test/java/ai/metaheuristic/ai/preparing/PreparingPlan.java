@@ -29,9 +29,9 @@ import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtilsV1;
@@ -74,7 +74,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public WorkbookRepository workbookRepository;
 
     @Autowired
-    public WorkbookCache workbookCache;
+    public ExecContextCache execContextCache;
 
     @Autowired
     public SourceCodeService sourceCodeService;
@@ -86,7 +86,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public TaskCollector taskCollector;
 
     @Autowired
-    public WorkbookService workbookService;
+    public ExecContextService execContextService;
 
     @Autowired
     public TaskPersistencer taskPersistencer;
@@ -95,7 +95,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public CompanyRepository companyRepository;
 
     @Autowired
-    public WorkbookGraphTopLevelService workbookGraphTopLevelService;
+    public ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     public SourceCodeImpl plan = null;
     public Snippet s1 = null;
@@ -378,7 +378,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         EnumsApi.SourceCodeValidateStatus status = sourceCodeService.validate(plan);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
+        TaskProducingResultComplex result = execContextService.createWorkbook(plan.getId(), workbookYaml);
         workbook = (ExecContextImpl)result.execContext;
 
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
@@ -386,9 +386,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
         assertEquals(EnumsApi.ExecContextState.NONE.code, workbook.getExecState());
 
 
-        EnumsApi.SourceCodeProducingStatus producingStatus = workbookService.toProducing(workbook.id);
+        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(workbook.id);
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, producingStatus);
-        workbook = workbookCache.findById(this.workbook.id);
+        workbook = execContextCache.findById(this.workbook.id);
         assertNotNull(workbook);
         assertEquals(EnumsApi.ExecContextState.PRODUCING.code, workbook.getExecState());
 
@@ -396,7 +396,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         experiment = experimentCache.findById(experiment.id);
         this.workbook = (ExecContextImpl)result.execContext;
         assertEquals(result.numberOfTasks, taskRepository.findAllTaskIdsByWorkbookId(workbook.id).size());
-        assertEquals(result.numberOfTasks, workbookService.getCountUnfinishedTasks(workbook));
+        assertEquals(result.numberOfTasks, execContextService.getCountUnfinishedTasks(workbook));
 
 
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);

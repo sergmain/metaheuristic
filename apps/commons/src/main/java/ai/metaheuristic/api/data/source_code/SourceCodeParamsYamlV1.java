@@ -56,16 +56,16 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SnippetDefForPlanV1 {
+    public static class SnippetDefForSourceCodeV1 {
         public String code;
         public String params;
         public EnumsApi.SnippetExecContext context = EnumsApi.SnippetExecContext.external;
 
-        public SnippetDefForPlanV1(String code) {
+        public SnippetDefForSourceCodeV1(String code) {
             this.code = code;
         }
 
-        public SnippetDefForPlanV1(String code, EnumsApi.SnippetExecContext context) {
+        public SnippetDefForSourceCodeV1(String code, EnumsApi.SnippetExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -104,9 +104,9 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
 
         public String name;
         public String code;
-        public SnippetDefForPlanV1 snippet;
-        public List<SnippetDefForPlanV1> preSnippets;
-        public List<SnippetDefForPlanV1> postSnippets;
+        public SnippetDefForSourceCodeV1 snippet;
+        public List<SnippetDefForSourceCodeV1> preSnippets;
+        public List<SnippetDefForSourceCodeV1> postSnippets;
 
         /**
          * Timeout before terminating a process with snippet

@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
@@ -53,7 +53,7 @@ public class TestTaskRequest extends FeatureMethods {
     public TaskService taskService;
 
     @Autowired
-    public WorkbookSchedulerService workbookSchedulerService;
+    public ExecContextSchedulerService execContextSchedulerService;
 
     @Override
     public String getPlanYamlAsString() {
@@ -89,7 +89,7 @@ public class TestTaskRequest extends FeatureMethods {
                 break;
             }
 
-            LaunchpadCommParamsYaml.AssignedTask t = workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            LaunchpadCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
             assertNotNull(t);
 
             final StationCommParamsYaml stationComm0 = new StationCommParamsYaml();
@@ -111,8 +111,8 @@ public class TestTaskRequest extends FeatureMethods {
             assertNotNull(task);
             assertTrue(task.isCompleted);
 
-            workbookSchedulerService.updateWorkbookStatus(workbook.id,true);
-            workbook = workbookCache.findById(workbook.id);
+            execContextSchedulerService.updateWorkbookStatus(workbook.id,true);
+            workbook = execContextCache.findById(workbook.id);
         }
         {
             final StationCommParamsYaml stationComm0 = new StationCommParamsYaml();

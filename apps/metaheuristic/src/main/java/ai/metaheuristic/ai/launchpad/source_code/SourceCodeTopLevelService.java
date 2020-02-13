@@ -23,8 +23,8 @@ import ai.metaheuristic.ai.launchpad.variable.GlobalVariableService;
 import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -72,9 +72,9 @@ public class SourceCodeTopLevelService {
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeService sourceCodeService;
     private final SourceCodeRepository sourceCodeRepository;
-    private final WorkbookService workbookService;
+    private final ExecContextService execContextService;
     private final ApplicationEventPublisher publisher;
-    private final WorkbookCache workbookCache;
+    private final ExecContextCache execContextCache;
     private final GlobalVariableService globalVariableService;
 
     public SourceCodeApiData.ExecContextResult addWorkbook(Long sourceCodeId, String variable, LaunchpadContext context) {
@@ -104,7 +104,7 @@ public class SourceCodeTopLevelService {
         if (status != null) {
             return new SourceCodeApiData.ExecContextResult( "#560.011 access denied: " + status.getErrorMessagesAsStr());
         }
-        return workbookService.createWorkbookInternal(sourceCode, variable);
+        return execContextService.createWorkbookInternal(sourceCode, variable);
     }
 
     public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, LaunchpadContext context) {
@@ -360,7 +360,7 @@ public class SourceCodeTopLevelService {
         if (status != null) {
             return status;
         }
-        status = workbookService.workbookTargetExecState(workbookId, execState);
+        status = execContextService.workbookTargetExecState(workbookId, execState);
         return status;
     }
 
@@ -370,7 +370,7 @@ public class SourceCodeTopLevelService {
             return status;
         }
         publisher.publishEvent( new LaunchpadInternalEvent.ExecContextDeletionEvent(this, execContextId) );
-        workbookService.deleteWorkbook(execContextId, context.getCompanyId());
+        execContextService.deleteWorkbook(execContextId, context.getCompanyId());
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -379,7 +379,7 @@ public class SourceCodeTopLevelService {
         if (execContextId==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 execContextId is null");
         }
-        ExecContext wb = workbookCache.findById(execContextId);
+        ExecContext wb = execContextCache.findById(execContextId);
         if (wb==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
         }

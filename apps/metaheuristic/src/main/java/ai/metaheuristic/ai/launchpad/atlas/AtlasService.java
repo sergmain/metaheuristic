@@ -26,9 +26,9 @@ import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasTaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
@@ -66,9 +66,9 @@ public class AtlasService {
     private final AtlasRepository atlasRepository;
     private final AtlasTaskRepository atlasTaskRepository;
     private final AtlasParamsYamlUtils atlasParamsYamlUtils;
-    private final WorkbookCache workbookCache;
-    private final WorkbookService workbookService;
-    private final WorkbookFSM workbookFSM;
+    private final ExecContextCache execContextCache;
+    private final ExecContextService execContextService;
+    private final ExecContextFSM execContextFSM;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -91,7 +91,7 @@ public class AtlasService {
     }
 
     public OperationStatusRest storeExperimentToAtlas(Long workbookId) {
-        workbookFSM.toExportingToAtlasStarted(workbookId);
+        execContextFSM.toExportingToAtlasStarted(workbookId);
         Long experimentId = experimentRepository.findIdByWorkbookId(workbookId);
 
         if (experimentId==null ) {
@@ -102,7 +102,7 @@ public class AtlasService {
         if (experiment==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.02 can't find experiment for id: " + experimentId);
         }
-        ExecContextImpl workbook = workbookCache.findById(experiment.workbookId);
+        ExecContextImpl workbook = execContextCache.findById(experiment.workbookId);
         if (workbook==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.05 can't find execContext for this experiment");
         }
@@ -171,7 +171,7 @@ public class AtlasService {
                 });
 
 
-        workbookFSM.toFinished(workbookId);
+        execContextFSM.toFinished(workbookId);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

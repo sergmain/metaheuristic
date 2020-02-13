@@ -32,8 +32,8 @@ import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -91,12 +91,12 @@ public class BatchService {
     private final SourceCodeCache sourceCodeCache;
     private final BatchCache batchCache;
     private final BatchRepository batchRepository;
-    private final WorkbookCache workbookCache;
+    private final ExecContextCache execContextCache;
     private final VariableService variableService;
     private final TaskRepository taskRepository;
     private final StationCache stationCache;
     private final LaunchpadEventService launchpadEventService;
-    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     private static final ConcurrentHashMap<Long, Object> batchMap = new ConcurrentHashMap<>(100, 0.75f, 10);
 
@@ -462,7 +462,7 @@ public class BatchService {
                     "data was prepared only for one task (there was one task for one execContext)." +
                     "Not we have only one execContext with a number of tasks. So need to re-write to use taskId or something like that.");
         }
-        ExecContextImpl wb = workbookCache.findById(workbookId);
+        ExecContextImpl wb = execContextCache.findById(workbookId);
         if (wb == null) {
             String msg = "#990.260 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
             bs.getGeneralStatus().add(msg, '\n');
@@ -483,7 +483,7 @@ public class BatchService {
 
         List<WorkbookParamsYaml.TaskVertex> taskVertices;
         try {
-            taskVertices = workbookGraphTopLevelService.findLeafs(wb);
+            taskVertices = execContextGraphTopLevelService.findLeafs(wb);
         } catch (ObjectOptimisticLockingFailureException e) {
             String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
             log.warn(msg);

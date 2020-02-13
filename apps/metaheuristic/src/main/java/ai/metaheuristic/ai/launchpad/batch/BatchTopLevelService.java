@@ -33,7 +33,7 @@ import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeUtils;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -99,7 +99,7 @@ public class BatchTopLevelService {
     private final BatchService batchService;
     private final BatchCache batchCache;
     private final LaunchpadEventService launchpadEventService;
-    private final WorkbookService workbookService;
+    private final ExecContextService execContextService;
     private final IdsRepository idsRepository;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
@@ -214,7 +214,7 @@ public class BatchTopLevelService {
             String code = ResourceUtils.toResourceCode(originFilename);
 
             WorkbookParamsYaml.WorkbookYaml workbookYaml = SourceCodeUtils.asWorkbookParamsYaml(code);
-            producingResult = workbookService.createWorkbook(sourceCodeId, workbookYaml, false);
+            producingResult = execContextService.createWorkbook(sourceCodeId, workbookYaml, false);
             if (producingResult.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
                 throw new BatchResourceProcessingException("#995.075 Error creating execContext: " + producingResult.sourceCodeProducingStatus);
             }
@@ -275,7 +275,7 @@ public class BatchTopLevelService {
             }
         }
         else {
-            workbookService.deleteWorkbook(batch.execContextId, companyUniqueId);
+            execContextService.deleteWorkbook(batch.execContextId, companyUniqueId);
             batchCache.deleteById(batch.id);
         }
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);

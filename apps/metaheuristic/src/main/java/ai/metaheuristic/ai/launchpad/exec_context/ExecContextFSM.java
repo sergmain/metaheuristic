@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.workbook;
+package ai.metaheuristic.ai.launchpad.exec_context;
 
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
@@ -34,28 +34,28 @@ import org.springframework.stereotype.Service;
 @Profile("launchpad")
 @Slf4j
 @RequiredArgsConstructor
-public class WorkbookFSM {
+public class ExecContextFSM {
 
-    private final WorkbookSyncService workbookSyncService;
-    private final WorkbookCache workbookCache;
+    private final ExecContextSyncService execContextSyncService;
+    private final ExecContextCache execContextCache;
     private final SourceCodeCache sourceCodeCache;
 
     public void toState(Long workbookId, EnumsApi.ExecContextState state) {
-        workbookSyncService.getWithSync(workbookId, workbook -> {
+        execContextSyncService.getWithSync(workbookId, workbook -> {
             if (workbook.execState!=state.code) {
                 workbook.setExecState(state.code);
-                workbookCache.save(workbook);
+                execContextCache.save(workbook);
             }
             return null;
         });
     }
 
     private void toStateWithCompletion(Long workbookId, EnumsApi.ExecContextState state) {
-        workbookSyncService.getWithSync(workbookId, workbook -> {
+        execContextSyncService.getWithSync(workbookId, workbook -> {
             if (workbook.execState!=state.code || workbook.completedOn==null) {
                 workbook.setCompletedOn(System.currentTimeMillis());
                 workbook.setExecState(state.code);
-                workbookCache.save(workbook);
+                execContextCache.save(workbook);
             }
             return null;
         });

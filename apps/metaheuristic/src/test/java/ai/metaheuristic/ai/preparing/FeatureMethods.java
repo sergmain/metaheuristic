@@ -22,8 +22,8 @@ import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -61,10 +61,10 @@ public abstract class FeatureMethods extends PreparingPlan {
     protected TaskService taskService;
 
     @Autowired
-    public WorkbookService workbookService;
+    public ExecContextService execContextService;
 
     @Autowired
-    public WorkbookFSM workbookFSM;
+    public ExecContextFSM execContextFSM;
 
     public boolean isCorrectInit = true;
 
@@ -74,8 +74,8 @@ public abstract class FeatureMethods extends PreparingPlan {
     }
 
     public void toStarted() {
-        workbookFSM.toStarted(workbook);
-        workbook = workbookCache.findById(workbook.getId());
+        execContextFSM.toStarted(workbook);
+        workbook = execContextCache.findById(workbook.getId());
         assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getExecState());
     }
 
@@ -83,15 +83,15 @@ public abstract class FeatureMethods extends PreparingPlan {
         EnumsApi.SourceCodeValidateStatus status = sourceCodeService.validate(plan);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createWorkbook(plan.getId(), workbookYaml);
         workbook = (ExecContextImpl)result.execContext;
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertNotNull(workbook);
         assertEquals(EnumsApi.ExecContextState.NONE.code, workbook.getExecState());
 
 
-        EnumsApi.SourceCodeProducingStatus producingStatus = workbookService.toProducing(workbook.id);
-        workbook = workbookCache.findById(workbook.id);
+        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(workbook.id);
+        workbook = execContextCache.findById(workbook.id);
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, producingStatus);
         assertEquals(EnumsApi.ExecContextState.PRODUCING.code, workbook.getExecState());
 
@@ -120,7 +120,7 @@ public abstract class FeatureMethods extends PreparingPlan {
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
-        LaunchpadCommParamsYaml.AssignedTask task = workbookService.getTaskAndAssignToStation(
+        LaunchpadCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getWorkbookId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 
@@ -147,7 +147,7 @@ public abstract class FeatureMethods extends PreparingPlan {
             results.add(sser);
         }
 
-        workbookService.storeAllConsoleResults(results);
+        execContextService.storeAllConsoleResults(results);
     }
 
     protected void finishCurrentWithOk(int expectedTasks) {
@@ -167,7 +167,7 @@ public abstract class FeatureMethods extends PreparingPlan {
             results.add(ster);
         }
 
-        workbookService.storeAllConsoleResults(results);
+        execContextService.storeAllConsoleResults(results);
     }
 
 

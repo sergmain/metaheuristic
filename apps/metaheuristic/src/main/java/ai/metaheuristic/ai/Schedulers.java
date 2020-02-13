@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.launchpad.batch.BatchService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.replication.ReplicationService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.station.*;
 import ai.metaheuristic.ai.station.actors.DownloadResourceActor;
 import ai.metaheuristic.ai.station.actors.DownloadSnippetActor;
@@ -51,7 +51,7 @@ public class Schedulers {
     public static class LaunchpadSchedulers {
 
         private final Globals globals;
-        private final WorkbookSchedulerService workbookSchedulerService;
+        private final ExecContextSchedulerService execContextSchedulerService;
         private final SourceCodeService sourceCodeService;
         private final ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad;
         private final ExperimentService experimentService;
@@ -80,7 +80,7 @@ public class Schedulers {
                 if ((System.currentTimeMillis()- prevReconciliationTime) > TIMEOUT_BETWEEN_RECONCILIATION) {
                     needReconciliation = true;
                 }
-                workbookSchedulerService.updateWorkbookStatuses(needReconciliation);
+                execContextSchedulerService.updateWorkbookStatuses(needReconciliation);
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("!!! need to investigate. Error while updateWorkbookStatuses()",e);
             } catch (Throwable th) {

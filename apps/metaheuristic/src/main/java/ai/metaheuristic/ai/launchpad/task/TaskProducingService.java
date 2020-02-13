@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -53,7 +53,7 @@ public class TaskProducingService {
     private final TaskRepository taskRepository;
     private final SnippetService snippetService;
     private final VariableService variableService;
-    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalSnippetProcessor internalSnippetProcessor;
     private final IdsRepository idsRepository;
 
@@ -87,7 +87,7 @@ public class TaskProducingService {
                 }
             }
 
-            workbookGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, result.taskIds);
+            execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, result.taskIds);
 
             result.numberOfTasks++;
             if (process.subProcesses!=null && CollectionUtils.isNotEmpty(process.subProcesses.processes)) {

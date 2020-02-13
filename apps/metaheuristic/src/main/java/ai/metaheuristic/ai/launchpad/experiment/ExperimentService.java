@@ -28,8 +28,8 @@ import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
@@ -101,10 +101,10 @@ public class ExperimentService {
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final SnippetService snippetService;
-    private final WorkbookCache workbookCache;
+    private final ExecContextCache execContextCache;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
-    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     @Async
     @EventListener
@@ -242,7 +242,7 @@ public class ExperimentService {
                 log.warn("#179.020 This shouldn't be happened");
                 continue;
             }
-            ExecContextImpl wb = workbookCache.findById(e.workbookId);
+            ExecContextImpl wb = execContextCache.findById(e.workbookId);
             if (wb==null) {
                 log.info("#179.030 Can't calc max values and export to atlas because workbookId is null");
                 continue;
@@ -548,7 +548,7 @@ public class ExperimentService {
         if (experiment.workbookId==null) {
             return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.050 workbookId is null");
         }
-        ExecContextImpl workbook = workbookCache.findById(experiment.workbookId);
+        ExecContextImpl workbook = execContextCache.findById(experiment.workbookId);
 
         ExperimentParamsYaml.ExperimentFeature experimentFeature = experiment.getExperimentParamsYaml().getFeature(featureId);
         if (experimentFeature == null) {
@@ -603,7 +603,7 @@ public class ExperimentService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphTopLevelService.findAll(workbook);
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
 
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
@@ -735,7 +735,7 @@ public class ExperimentService {
         long prevMills = System.currentTimeMillis();
         try {
             eventMulticaster.addApplicationListener(listener);
-            ExecContext wb = workbookCache.findById(workbookId);
+            ExecContext wb = execContextCache.findById(workbookId);
             if (wb==null) {
                 return EnumsApi.SourceCodeProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
             }
@@ -891,7 +891,7 @@ public class ExperimentService {
                             if (task == null) {
                                 return EnumsApi.SourceCodeProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
-                            workbookGraphTopLevelService.addNewTasksToGraph(workbookId, prevParentTaskIds, taskIds);
+                            execContextGraphTopLevelService.addNewTasksToGraph(workbookId, prevParentTaskIds, taskIds);
                         }
                         prevParentTaskIds = taskIds;
                     }

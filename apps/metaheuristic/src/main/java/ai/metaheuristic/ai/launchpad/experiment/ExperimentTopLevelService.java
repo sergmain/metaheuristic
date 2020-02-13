@@ -25,10 +25,10 @@ import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -90,15 +90,15 @@ public class ExperimentTopLevelService {
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
     private final TaskRepository taskRepository;
-    private final WorkbookCache workbookCache;
+    private final ExecContextCache execContextCache;
 
     private final ExperimentCache experimentCache;
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
-    private final WorkbookService workbookService;
-    private final WorkbookFSM workbookFSM;
-    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
+    private final ExecContextService execContextService;
+    private final ExecContextFSM execContextFSM;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
@@ -159,14 +159,14 @@ public class ExperimentTopLevelService {
 
     public ExperimentApiData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentId, Long featureId, String[] params, Pageable pageable) {
         Experiment experiment= experimentCache.findById(experimentId);
-        ExecContextImpl workbook = workbookCache.findById(experiment.workbookId);
+        ExecContextImpl workbook = execContextCache.findById(experiment.workbookId);
 
         ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
 
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
         tasksResult.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphTopLevelService.findAll(workbook);
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
 
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.tasksResult = tasksResult;
@@ -203,7 +203,7 @@ public class ExperimentTopLevelService {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.070 experiment wasn't startet yet, experimentId: " + experimentId);
         }
 
-        ExecContextImpl workbook = workbookCache.findById(experiment.getWorkbookId());
+        ExecContextImpl workbook = execContextCache.findById(experiment.getWorkbookId());
         if (workbook == null) {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to execContext, experimentId: " + experimentId);
         }
@@ -221,7 +221,7 @@ public class ExperimentTopLevelService {
             result.addInfoMessage("#285.090 A launch is disabled, dataset isn't assigned");
         }
 
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphTopLevelService.findAll(workbook);
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
         ExperimentApiData.ExperimentInfoResult experimentInfoResult = new ExperimentApiData.ExperimentInfoResult();
         final List<ExperimentParamsYaml.ExperimentFeature> experimentFeatures = epy.processing.features;
         experimentInfoResult.features = experimentFeatures.stream().map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
@@ -708,7 +708,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.420 This experiment isn't bound to ExecContext");
         }
-        workbookFSM.toExportingToAtlas(experiment.workbookId);
+        execContextFSM.toExportingToAtlas(experiment.workbookId);
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Exporting of experiment was successfully started", null);
     }
 
@@ -762,7 +762,7 @@ public class ExperimentTopLevelService {
         if (experiment==null || experiment.workbookId==null) {
             return EnumsApi.ExecContextState.UNKNOWN;
         }
-        ExecContext wb = workbookCache.findById(experiment.workbookId);
+        ExecContext wb = execContextCache.findById(experiment.workbookId);
         return EnumsApi.ExecContextState.toState(wb.getExecState());
     }
 
@@ -778,7 +778,7 @@ public class ExperimentTopLevelService {
         if (experiment==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.560 can't find an experiment for code: " + experimentCode);
         }
-        OperationStatusRest status = workbookService.workbookTargetExecState(experiment.workbookId, execState);
+        OperationStatusRest status = execContextService.workbookTargetExecState(experiment.workbookId, execState);
         if (status.isErrorMessages()) {
             return status;
         }

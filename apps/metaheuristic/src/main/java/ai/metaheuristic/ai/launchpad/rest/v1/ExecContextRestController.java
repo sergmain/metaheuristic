@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.rest.v1;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookTopLevelService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.AllArgsConstructor;
@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.*;
 public class ExecContextRestController {
 
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
-    private final WorkbookTopLevelService workbookTopLevelService;
+    private final ExecContextTopLevelService execContextTopLevelService;
     private final LaunchpadContextService launchpadContextService;
 
     @Data
@@ -64,7 +64,7 @@ public class ExecContextRestController {
     public SourceCodeApiData.ExecContextsResult workbooks(@PathVariable Long sourceCodeId,
                                                           @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context);
+        return execContextTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context);
     }
 
     /**
@@ -96,7 +96,7 @@ public class ExecContextRestController {
     @GetMapping(value = "/workbook/{sourceCodeId}/{execContextId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SourceCodeApiData.ExecContextResult workbookEdit(@SuppressWarnings("unused") @PathVariable Long sourceCodeId, @PathVariable Long execContextId) {
-        return workbookTopLevelService.getWorkbookExtended(execContextId);
+        return execContextTopLevelService.getWorkbookExtended(execContextId);
     }
 
     @SuppressWarnings("unused")

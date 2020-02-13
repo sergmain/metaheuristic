@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.workbook;
+package ai.metaheuristic.ai.launchpad.exec_context;
 
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
@@ -45,10 +45,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
-public class WorkbookController {
+public class ExecContextController {
 
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
-    private final WorkbookTopLevelService workbookTopLevelService;
+    private final ExecContextTopLevelService execContextTopLevelService;
     private final LaunchpadContextService launchpadContextService;
 
     // ============= Workbooks =============
@@ -58,7 +58,7 @@ public class WorkbookController {
     public String workbooks(Model model, @PathVariable Long sourceCodeId, @PageableDefault(size = 5) Pageable pageable,
                             @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        model.addAttribute("result", workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context));
+        model.addAttribute("result", execContextTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context));
         return "launchpad/source-code/workbooks";
     }
 
@@ -68,7 +68,7 @@ public class WorkbookController {
     public String workbooksPart(Model model, @PathVariable Long sourceCodeId,
                                 @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        model.addAttribute("result", workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context));
+        model.addAttribute("result", execContextTopLevelService.getWorkbooksOrderByCreatedOnDesc(sourceCodeId, pageable, context));
         return "launchpad/source-code/workbooks :: table";
     }
 
@@ -102,7 +102,7 @@ public class WorkbookController {
     public String workbookDelete(Model model, @PathVariable Long sourceCodeId, @PathVariable Long execContextId,
                                  final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.ExecContextResult result = workbookTopLevelService.getExecContextExtendedForDeletion(execContextId, context);
+        SourceCodeApiData.ExecContextResult result = execContextTopLevelService.getExecContextExtendedForDeletion(execContextId, context);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;

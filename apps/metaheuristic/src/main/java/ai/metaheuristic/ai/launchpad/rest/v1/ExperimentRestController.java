@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.rest.v1;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
@@ -44,7 +44,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ExperimentRestController {
 
     private final ExperimentTopLevelService experimentTopLevelService;
-    private final WorkbookService workbookService;
+    private final ExecContextService execContextService;
     private final LaunchpadContextService launchpadContextService;
 
     @GetMapping("/experiments")
@@ -147,7 +147,7 @@ public class ExperimentRestController {
 
     @PostMapping("/task-rerun/{taskId}")
     public OperationStatusRest rerunTask(@PathVariable Long taskId) {
-        return workbookService.resetTask(taskId);
+        return execContextService.resetTask(taskId);
     }
 
     @PostMapping(value = "/experiment-upload-from-file")

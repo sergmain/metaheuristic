@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.workbook;
+package ai.metaheuristic.ai.launchpad.exec_context;
 
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
@@ -39,69 +39,69 @@ import java.util.concurrent.ConcurrentHashMap;
 @Profile("launchpad")
 @Slf4j
 @RequiredArgsConstructor
-public class WorkbookGraphTopLevelService {
+public class ExecContextGraphTopLevelService {
 
-    private final WorkbookGraphService workbookGraphService;
-    private final WorkbookSyncService workbookSyncService;
+    private final ExecContextGraphService execContextGraphService;
+    private final ExecContextSyncService execContextSyncService;
     private final TaskPersistencer taskPersistencer;
 
     // section 'execContext graph methods'
 
     // read-only operations with graph
     public List<WorkbookParamsYaml.TaskVertex> findAll(ExecContextImpl workbook) {
-        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAll(workbook));
+        return execContextSyncService.getWithSyncReadOnly(workbook, () -> execContextGraphService.findAll(workbook));
     }
 
     public List<WorkbookParamsYaml.TaskVertex> findLeafs(ExecContextImpl workbook) {
-        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findLeafs(workbook));
+        return execContextSyncService.getWithSyncReadOnly(workbook, () -> execContextGraphService.findLeafs(workbook));
     }
 
     public Set<WorkbookParamsYaml.TaskVertex> findDescendants(ExecContextImpl workbook, Long taskId) {
-        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findDescendants(workbook, taskId));
+        return execContextSyncService.getWithSyncReadOnly(workbook, () -> execContextGraphService.findDescendants(workbook, taskId));
     }
 
     public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(ExecContextImpl workbook) {
-        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAllForAssigning(workbook));
+        return execContextSyncService.getWithSyncReadOnly(workbook, () -> execContextGraphService.findAllForAssigning(workbook));
     }
 
     public List<WorkbookParamsYaml.TaskVertex> findAllBroken(ExecContextImpl workbook) {
-        return workbookSyncService.getWithSyncReadOnly(workbook, () -> workbookGraphService.findAllBroken(workbook));
+        return execContextSyncService.getWithSyncReadOnly(workbook, () -> execContextGraphService.findAllBroken(workbook));
     }
 
     // write operations with graph
     public OperationStatusRest updateTaskExecStateByWorkbookId(Long workbookId, Long taskId, int execState) {
-        return workbookSyncService.getWithSync(workbookId, workbook -> {
-            final WorkbookOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(workbook, taskId, execState);
+        return execContextSyncService.getWithSync(workbookId, workbook -> {
+            final ExecContextOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(workbook, taskId, execState);
             return status.status;
         });
     }
 
-    private WorkbookOperationStatusWithTaskList updateTaskExecStateWithoutSync(ExecContextImpl workbook, Long taskId, int execState) {
+    private ExecContextOperationStatusWithTaskList updateTaskExecStateWithoutSync(ExecContextImpl workbook, Long taskId, int execState) {
         taskPersistencer.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
-        final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecState(workbook, taskId, execState);
+        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(workbook, taskId, execState);
         taskPersistencer.updateTasksStateInDb(status);
         return status;
     }
 
-    public WorkbookOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(Long workbookId, Long taskId) {
-        return workbookSyncService.getWithSync(workbookId, (workbook) -> workbookGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, taskId));
+    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(Long workbookId, Long taskId) {
+        return execContextSyncService.getWithSync(workbookId, (workbook) -> execContextGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, taskId));
     }
 
     public OperationStatusRest addNewTasksToGraph(Long workbookId, List<Long> parentTaskIds, List<Long> taskIds) {
-        final OperationStatusRest withSync = workbookSyncService.getWithSync(workbookId, (workbook) -> workbookGraphService.addNewTasksToGraph(workbook, parentTaskIds, taskIds));
+        final OperationStatusRest withSync = execContextSyncService.getWithSync(workbookId, (workbook) -> execContextGraphService.addNewTasksToGraph(workbook, parentTaskIds, taskIds));
         return withSync != null ? withSync : OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public WorkbookOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(Long workbookId, Long taskId) {
-        return workbookSyncService.getWithSync(workbookId, (workbook) -> workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, taskId));
+    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(Long workbookId, Long taskId) {
+        return execContextSyncService.getWithSync(workbookId, (workbook) -> execContextGraphService.updateGraphWithResettingAllChildrenTasks(workbook, taskId));
     }
 
-    public WorkbookOperationStatusWithTaskList updateTaskExecStates(Long workbookId, ConcurrentHashMap<Long, Integer> taskStates) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecStates(Long workbookId, ConcurrentHashMap<Long, Integer> taskStates) {
         if (taskStates==null || taskStates.isEmpty()) {
-            return new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+            return new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
         }
-        return workbookSyncService.getWithSync(workbookId, (workbook) -> {
-            final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecStates(workbook, taskStates);
+        return execContextSyncService.getWithSync(workbookId, (workbook) -> {
+            final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecStates(workbook, taskStates);
             taskPersistencer.updateTasksStateInDb(status);
             return status;
         });

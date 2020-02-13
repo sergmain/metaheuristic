@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -50,7 +50,7 @@ import static org.junit.Assert.*;
 public class TestFindUnassignedTaskInGraph extends PreparingPlan {
 
     @Autowired
-    public WorkbookCache workbookCache;
+    public ExecContextCache execContextCache;
 
     @Override
     public String getPlanYamlAsString() {
@@ -60,33 +60,33 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
     @Test
     public void test() {
 
-        SourceCodeApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createWorkbook(plan.getId(), workbookYaml);
         workbook = (ExecContextImpl)result.execContext;
 
         assertNotNull(workbook);
 
-        OperationStatusRest osr = workbookGraphTopLevelService.addNewTasksToGraph(workbook.id, List.of(), List.of(1L));
-        workbook = workbookCache.findById(workbook.id);
+        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(workbook.id, List.of(), List.of(1L));
+        workbook = execContextCache.findById(workbook.id);
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-        long count = workbookService.getCountUnfinishedTasks(workbook);
+        long count = execContextService.getCountUnfinishedTasks(workbook);
         assertEquals(1, count);
 
 
-        osr = workbookGraphTopLevelService.addNewTasksToGraph(workbook.id,List.of(1L), List.of(21L, 22L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(workbook.id,List.of(1L), List.of(21L, 22L));
 
-        osr = workbookGraphTopLevelService.addNewTasksToGraph(workbook.id,List.of(21L), List.of(311L, 312L, 313L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(workbook.id,List.of(21L), List.of(311L, 312L, 313L));
 
-        osr = workbookGraphTopLevelService.addNewTasksToGraph(workbook.id,List.of(22L), List.of(321L, 322L, 323L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(workbook.id,List.of(22L), List.of(321L, 322L, 323L));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        workbook = workbookCache.findById(workbook.id);
+        workbook = execContextCache.findById(workbook.id);
 
-        count = workbookService.getCountUnfinishedTasks(workbook);
+        count = execContextService.getCountUnfinishedTasks(workbook);
         assertEquals(9, count);
 
-        List<TaskVertex> leafs = workbookGraphTopLevelService.findLeafs(workbook);
+        List<TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(workbook);
 
         assertEquals(6, leafs.size());
         assertTrue(leafs.contains(new TaskVertex(311L, EnumsApi.TaskExecState.NONE)));
@@ -99,53 +99,53 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
 
 
         Set<EnumsApi.TaskExecState> states;
-        workbookGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(workbook.id,1L);
-        workbook = workbookCache.findById(workbook.id);
+        execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(workbook.id,1L);
+        workbook = execContextCache.findById(workbook.id);
 
         // there is only 'NONE' exec state
-        states = workbookGraphTopLevelService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
+        states = execContextGraphTopLevelService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(1, states.size());
         assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
 
-        List<WorkbookParamsYaml.TaskVertex> vertices = workbookGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
+        List<WorkbookParamsYaml.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
 
         assertEquals(1, vertices.size());
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertEquals(Long.valueOf(1L), vertices.get(0).taskId);
 
-        OperationStatusRest status = workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id,1L, EnumsApi.TaskExecState.OK.value);
+        OperationStatusRest status = execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id,1L, EnumsApi.TaskExecState.OK.value);
 
         assertEquals(EnumsApi.OperationStatus.OK, status.status);
-        workbook = workbookCache.findById(workbook.id);
+        workbook = execContextCache.findById(workbook.id);
 
-        vertices = workbookGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
+        vertices = execContextGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
 
         assertEquals(2, vertices.size());
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertTrue(Set.of(21L, 22L).contains(vertices.get(0).taskId));
 
-        status = workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id,22L, EnumsApi.TaskExecState.IN_PROGRESS.value);
-        workbook = workbookCache.findById(workbook.id);
+        status = execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id,22L, EnumsApi.TaskExecState.IN_PROGRESS.value);
+        workbook = execContextCache.findById(workbook.id);
 
-        vertices = workbookGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
-
-        assertEquals(1, vertices.size());
-        assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
-        assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
-
-
-        status = workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id,22L, EnumsApi.TaskExecState.BROKEN.value);
-        workbook = workbookCache.findById(workbook.id);
-
-        vertices = workbookGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
+        vertices = execContextGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
 
         assertEquals(1, vertices.size());
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
-        status = workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id,21L, EnumsApi.TaskExecState.OK.value);
 
-        vertices = workbookGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
+        status = execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id,22L, EnumsApi.TaskExecState.BROKEN.value);
+        workbook = execContextCache.findById(workbook.id);
+
+        vertices = execContextGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
+
+        assertEquals(1, vertices.size());
+        assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
+        assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
+
+        status = execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id,21L, EnumsApi.TaskExecState.OK.value);
+
+        vertices = execContextGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
 
         assertEquals(3, vertices.size());
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
@@ -153,11 +153,11 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
         assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(1).taskId));
         assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(2).taskId));
 
-        status = workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id,22L, EnumsApi.TaskExecState.OK.value);
-        workbook = workbookCache.findById(workbook.id);
+        status = execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(workbook.id,22L, EnumsApi.TaskExecState.OK.value);
+        workbook = execContextCache.findById(workbook.id);
 
 
-        vertices = workbookGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
+        vertices = execContextGraphTopLevelService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
 
         assertEquals(6, vertices.size());
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);

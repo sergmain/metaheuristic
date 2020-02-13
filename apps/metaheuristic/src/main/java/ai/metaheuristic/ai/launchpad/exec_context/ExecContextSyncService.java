@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.workbook;
+package ai.metaheuristic.ai.launchpad.exec_context;
 
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -36,7 +36,7 @@ import java.util.function.Supplier;
 @Service
 @RequiredArgsConstructor
 @Profile("launchpad")
-public class WorkbookSyncService {
+public class ExecContextSyncService {
 
     private final WorkbookRepository workbookRepository;
 

@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.source_code.ProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
@@ -45,7 +45,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
 
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
-    private final WorkbookCache workbookCache;
+    private final ExecContextCache execContextCache;
     private final SnippetRepository snippetRepository;
 
     // TODO experiment has to be stateless and has its own instances
@@ -70,7 +70,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
             return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
         }
         if (e.getWorkbookId()!=null) {
-            ExecContext execContext = workbookCache.findById(e.getWorkbookId());
+            ExecContext execContext = execContextCache.findById(e.getWorkbookId());
             if (execContext != null) {
                 if (!sourceCode.getId().equals(execContext.getSourceCodeId())) {
                     return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;

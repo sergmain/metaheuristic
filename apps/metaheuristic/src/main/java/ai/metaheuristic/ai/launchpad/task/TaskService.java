@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.launchpad.task;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookOperationStatusWithTaskList;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.launchpad.Task;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final WorkbookGraphTopLevelService workbookGraphTopLevelService;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     public List<Long> resourceReceivingChecker(long stationId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
@@ -60,9 +60,9 @@ public class TaskService {
                     return;
                 }
                 taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
-                WorkbookOperationStatusWithTaskList workbookOperationStatusWithTaskList =
-                        workbookGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.workbookId, task.id);
-                if (workbookOperationStatusWithTaskList==null) {
+                ExecContextOperationStatusWithTaskList execContextOperationStatusWithTaskList =
+                        execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.workbookId, task.id);
+                if (execContextOperationStatusWithTaskList ==null) {
                     log.warn("#317.030 ExecContext for this task was already deleted");
                     return;
                 }

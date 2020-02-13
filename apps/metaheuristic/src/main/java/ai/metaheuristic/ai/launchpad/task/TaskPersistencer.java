@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookOperationStatusWithTaskList;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -279,7 +279,7 @@ public class TaskPersistencer {
         }
     }
 
-    public void updateTasksStateInDb(WorkbookOperationStatusWithTaskList status) {
+    public void updateTasksStateInDb(ExecContextOperationStatusWithTaskList status) {
         status.childrenTasks.forEach(t -> {
             TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
             if (task != null) {

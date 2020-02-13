@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.api.EnumsApi;
@@ -53,7 +53,7 @@ public class ExperimentProcessService {
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
     private final VariableService variableService;
-    private final WorkbookCache workbookCache;
+    private final ExecContextCache execContextCache;
 
     public SourceCodeService.ProduceTaskResult produceTasks(
             boolean isPersist, SourceCodeParamsYaml sourceCodeParams, Long execContextId,
@@ -89,7 +89,7 @@ public class ExperimentProcessService {
 
         List<String> features;
         if (meta==null) {
-            ExecContextImpl workbook = workbookCache.findById(execContextId);
+            ExecContextImpl workbook = execContextCache.findById(execContextId);
             if (workbook==null) {
                 result.status = EnumsApi.SourceCodeProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
                 return result;

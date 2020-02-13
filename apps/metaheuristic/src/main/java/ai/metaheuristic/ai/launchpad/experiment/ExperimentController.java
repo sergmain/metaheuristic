@@ -21,8 +21,8 @@ import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.context.LaunchpadContextService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeController;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -59,8 +59,8 @@ public class ExperimentController {
 
     private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiment/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
-    private final WorkbookService workbookService;
-    private final WorkbookCache workbookCache;
+    private final ExecContextService execContextService;
+    private final ExecContextCache execContextCache;
     private final ExperimentCache experimentCache;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final LaunchpadContextService launchpadContextService;
@@ -297,7 +297,7 @@ public class ExperimentController {
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
         if (experiment.workbookId!=null) {
-            ExecContext wb = workbookCache.findById(experiment.workbookId);
+            ExecContext wb = execContextCache.findById(experiment.workbookId);
             if (wb != null) {
                 OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteExecContextById(experiment.workbookId, context);
                 if (operationStatusRest.isErrorMessages()) {
@@ -333,13 +333,13 @@ public class ExperimentController {
 
     @PostMapping("/task-rerun/{taskId}")
     public @ResponseBody boolean rerunTask(@PathVariable Long taskId) {
-        return workbookService.resetTask(taskId).status == EnumsApi.OperationStatus.OK;
+        return execContextService.resetTask(taskId).status == EnumsApi.OperationStatus.OK;
     }
 
     @GetMapping("/task-reset-all-broken/{workbookId}/{experimentId}")
     public String rerunBrokenTasks(
             @PathVariable Long workbookId, @PathVariable Long experimentId, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = workbookService.resetBrokenTasks(workbookId);
+        OperationStatusRest status = execContextService.resetBrokenTasks(workbookId);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }

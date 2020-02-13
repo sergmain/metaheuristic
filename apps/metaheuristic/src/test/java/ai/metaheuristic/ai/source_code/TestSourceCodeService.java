@@ -18,10 +18,10 @@ package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookFSM;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphTopLevelService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
@@ -59,16 +59,16 @@ public class TestSourceCodeService extends PreparingPlan {
     public TaskCollector taskCollector;
 
     @Autowired
-    public WorkbookService workbookService;
+    public ExecContextService execContextService;
 
     @Autowired
-    public WorkbookSchedulerService workbookSchedulerService;
+    public ExecContextSchedulerService execContextSchedulerService;
 
     @Autowired
-    public WorkbookFSM workbookFSM;
+    public ExecContextFSM execContextFSM;
 
     @Autowired
-    public WorkbookGraphTopLevelService workbookGraphTopLevelService;
+    public ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     @Override
     public String getPlanYamlAsString() {
@@ -113,23 +113,23 @@ public class TestSourceCodeService extends PreparingPlan {
         final int actualTaskNumber = taskNumber + epy.processing.getNumberOfTask();
         assertEquals(1 + 1 + 3 + 2 * 12 * 7, actualTaskNumber);
 
-        long numberFromGraph = workbookService.getCountUnfinishedTasks(workbook);
+        long numberFromGraph = execContextService.getCountUnfinishedTasks(workbook);
         assertEquals(actualTaskNumber, numberFromGraph);
 
         // ======================
 
         LaunchpadCommParamsYaml.AssignedTask simpleTask0 =
-                workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
         assertNull(simpleTask0);
 
-        workbookFSM.toStarted(workbook);
-        workbook = workbookCache.findById(workbook.getId());
+        execContextFSM.toStarted(workbook);
+        workbook = execContextCache.findById(workbook.getId());
 
         assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getExecState());
         {
             LaunchpadCommParamsYaml.AssignedTask simpleTask =
-                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             assertNotNull(simpleTask);
             assertNotNull(simpleTask.getTaskId());
@@ -137,15 +137,15 @@ public class TestSourceCodeService extends PreparingPlan {
             assertNotNull(task);
 
             LaunchpadCommParamsYaml.AssignedTask simpleTask2 =
-                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
             assertNull(simpleTask2);
 
             storeExecResult(simpleTask);
-            workbookSchedulerService.updateWorkbookStatuses(true);
+            execContextSchedulerService.updateWorkbookStatuses(true);
         }
         {
             LaunchpadCommParamsYaml.AssignedTask simpleTask20 =
-                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             assertNotNull(simpleTask20);
             assertNotNull(simpleTask20.getTaskId());
@@ -153,15 +153,15 @@ public class TestSourceCodeService extends PreparingPlan {
             assertNotNull(task3);
 
             LaunchpadCommParamsYaml.AssignedTask simpleTask21 =
-                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
             assertNull(simpleTask21);
 
             storeExecResult(simpleTask20);
-            workbookSchedulerService.updateWorkbookStatuses(true);
+            execContextSchedulerService.updateWorkbookStatuses(true);
         }
         {
             LaunchpadCommParamsYaml.AssignedTask simpleTask30 =
-                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             assertNotNull(simpleTask30);
             assertNotNull(simpleTask30.getTaskId());
@@ -169,42 +169,42 @@ public class TestSourceCodeService extends PreparingPlan {
             assertNotNull(task30);
 
             LaunchpadCommParamsYaml.AssignedTask simpleTask31 =
-                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             assertNull(simpleTask31);
 
             storeExecResult(simpleTask30);
-            workbookSchedulerService.updateWorkbookStatuses(true);
+            execContextSchedulerService.updateWorkbookStatuses(true);
         }
         {
             LaunchpadCommParamsYaml.AssignedTask simpleTask32 =
-                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             assertNotNull(simpleTask32);
             assertNotNull(simpleTask32.getTaskId());
             Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
             assertNotNull(task32);
             storeExecResult(simpleTask32);
-            workbookSchedulerService.updateWorkbookStatuses(true);
+            execContextSchedulerService.updateWorkbookStatuses(true);
         }
         int j;
-        long prevValue = workbookService.getCountUnfinishedTasks(workbook);
+        long prevValue = execContextService.getCountUnfinishedTasks(workbook);
         for ( j = 0; j < 1000; j++) {
             if (j%20==0) {
                 System.out.println("j = " + j);
             }
             LaunchpadCommParamsYaml.AssignedTask loopSimpleTask =
-                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             assertNotNull(loopSimpleTask);
             assertNotNull(loopSimpleTask.getTaskId());
             Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
             assertNotNull(loopTask);
             storeExecResult(loopSimpleTask);
-            workbookSchedulerService.updateWorkbookStatus( workbook.id, true);
-            workbook = workbookCache.findById(workbook.id);
+            execContextSchedulerService.updateWorkbookStatus( workbook.id, true);
+            workbook = execContextCache.findById(workbook.id);
 
-            final long count = workbookService.getCountUnfinishedTasks(workbook);
+            final long count = execContextService.getCountUnfinishedTasks(workbook);
             assertNotEquals(count, prevValue);
             prevValue = count;
             if (count==0) {
@@ -222,7 +222,7 @@ public class TestSourceCodeService extends PreparingPlan {
 
         taskPersistencer.storeExecResult(r, t -> {
             if (t!=null) {
-                workbookGraphTopLevelService.updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
+                execContextGraphTopLevelService.updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
             }
         });
         taskPersistencer.setResultReceived(simpleTask.getTaskId(), true);

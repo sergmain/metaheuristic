@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.workbook;
+package ai.metaheuristic.ai.launchpad.exec_context;
 
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.api.EnumsApi;
@@ -47,12 +47,12 @@ import java.util.stream.Collectors;
 @Profile("launchpad")
 @Slf4j
 @RequiredArgsConstructor
-class WorkbookGraphService {
+class ExecContextGraphService {
 
     public static final String EMPTY_GRAPH = "strict digraph G { }";
     private static final String TASK_EXEC_STATE_ATTR = "task_exec_state";
 
-    private final WorkbookCache workbookCache;
+    private final ExecContextCache execContextCache;
 
     private void changeGraph(ExecContextImpl workbook, Consumer<DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge>> callable) throws ImportException {
         WorkbookParamsYaml wpy = workbook.getWorkbookParamsYaml();
@@ -80,7 +80,7 @@ class WorkbookGraphService {
             exporter.exportGraph(graph, writer);
             wpy.graph = writer.toString();
             workbook.updateParams(wpy);
-            workbookCache.save(workbook);
+            execContextCache.save(workbook);
         }
     }
 
@@ -138,12 +138,12 @@ class WorkbookGraphService {
 
     private GraphImporter<WorkbookParamsYaml.TaskVertex, DefaultEdge> buildImporter() {
         //noinspection UnnecessaryLocalVariable
-        DOTImporter<WorkbookParamsYaml.TaskVertex, DefaultEdge> importer = new DOTImporter<>(WorkbookGraphService::toTaskVertex, ep);
+        DOTImporter<WorkbookParamsYaml.TaskVertex, DefaultEdge> importer = new DOTImporter<>(ExecContextGraphService::toTaskVertex, ep);
         return importer;
     }
 
-    public WorkbookOperationStatusWithTaskList updateTaskExecStates(ExecContextImpl workbook, ConcurrentHashMap<Long, Integer> taskStates) {
-        final WorkbookOperationStatusWithTaskList status = new WorkbookOperationStatusWithTaskList();
+    public ExecContextOperationStatusWithTaskList updateTaskExecStates(ExecContextImpl workbook, ConcurrentHashMap<Long, Integer> taskStates) {
+        final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList();
         status.status = OperationStatusRest.OPERATION_STATUS_OK;
         if (taskStates==null || taskStates.isEmpty()) {
             return status;
@@ -159,10 +159,10 @@ class WorkbookGraphService {
                 tvs.forEach(taskVertex -> {
                     taskVertex.execState = EnumsApi.TaskExecState.from(taskStates.get(taskVertex.taskId));
                     if (taskVertex.execState == EnumsApi.TaskExecState.ERROR || taskVertex.execState == EnumsApi.TaskExecState.BROKEN) {
-                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.BROKEN);
+                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new ExecContextOperationStatusWithTaskList(), EnumsApi.TaskExecState.BROKEN);
                     }
                     else if (taskVertex.execState == EnumsApi.TaskExecState.OK) {
-                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.NONE);
+                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new ExecContextOperationStatusWithTaskList(), EnumsApi.TaskExecState.NONE);
                     }
                 });
             });
@@ -174,8 +174,8 @@ class WorkbookGraphService {
         return status;
     }
 
-    public WorkbookOperationStatusWithTaskList updateTaskExecState(ExecContextImpl workbook, Long taskId, int execState) {
-        final WorkbookOperationStatusWithTaskList status = new WorkbookOperationStatusWithTaskList();
+    public ExecContextOperationStatusWithTaskList updateTaskExecState(ExecContextImpl workbook, Long taskId, int execState) {
+        final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList();
         try {
             changeGraph(workbook, graph -> {
                 WorkbookParamsYaml.TaskVertex tv = graph.vertexSet()
@@ -218,9 +218,9 @@ class WorkbookGraphService {
         }
     }
 
-    public WorkbookOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(ExecContextImpl workbook, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(ExecContextImpl workbook, Long taskId) {
         try {
-            final WorkbookOperationStatusWithTaskList withTaskList = new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+            final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
             changeGraph(workbook, graph -> {
 
                 Set<WorkbookParamsYaml.TaskVertex> set = findDescendantsInternal(graph, taskId);
@@ -232,7 +232,7 @@ class WorkbookGraphService {
             return withTaskList;
         }
         catch (Throwable th) {
-            return new WorkbookOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
+            return new ExecContextOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
         }
     }
 
@@ -381,21 +381,21 @@ class WorkbookGraphService {
         }
     }
 
-    public WorkbookOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(ExecContextImpl workbook, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(ExecContextImpl workbook, Long taskId) {
         try {
-            final WorkbookOperationStatusWithTaskList withTaskList = new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+            final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
             changeGraph(workbook, graph -> setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.BROKEN));
             return withTaskList;
         }
         catch (Throwable th) {
             log.error("#915.050 Error", th);
-            return new WorkbookOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
+            return new ExecContextOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
         }
     }
 
     private void setStateForAllChildrenTasksInternal(
             DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph,
-            Long taskId, WorkbookOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
+            Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
 
         Set<WorkbookParamsYaml.TaskVertex> set = findDescendantsInternal(graph, taskId);
         set.forEach( t->{

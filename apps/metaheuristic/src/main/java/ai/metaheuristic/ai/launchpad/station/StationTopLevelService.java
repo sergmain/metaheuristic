@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.data.StationData;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
@@ -57,7 +57,7 @@ public class StationTopLevelService {
     private final Globals globals;
     private final StationsRepository stationsRepository;
     private final StationCache stationCache;
-    private final WorkbookService workbookService;
+    private final ExecContextService execContextService;
     private final TaskRepository taskRepository;
 
     // Attention, this value must be greater than
@@ -253,7 +253,7 @@ public class StationTopLevelService {
                 log.info("\tstatuses: {}", statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()));
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tisFound: {}, is expired: {}", isFound, isExpired);
-                OperationStatusRest result = workbookService.resetTask(taskId);
+                OperationStatusRest result = execContextService.resetTask(taskId);
                 if (result.status== EnumsApi.OperationStatus.ERROR) {
                     log.error("#179.10 Resetting of task #{} was failed. See log for more info.", taskId);
                 }
