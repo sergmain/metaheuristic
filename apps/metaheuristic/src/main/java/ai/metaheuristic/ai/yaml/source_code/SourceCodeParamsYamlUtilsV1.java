@@ -46,7 +46,6 @@ public class SourceCodeParamsYamlUtilsV1
     public SourceCodeParamsYaml upgradeTo(SourceCodeParamsYamlV1 v1, Long ... vars) {
         v1.checkIntegrity();
         SourceCodeParamsYaml p = new SourceCodeParamsYaml();
-        p.internalParams = new SourceCodeParamsYaml.InternalParams(v1.internalParams.archived, v1.internalParams.published, v1.internalParams.updatedOn, null);
         p.source = new SourceCodeParamsYaml.SourceCodeYaml();
         if (v1.source.metas!=null){
             p.source.metas = new ArrayList<>(v1.source.metas);
@@ -74,8 +73,6 @@ public class SourceCodeParamsYamlUtilsV1
         if (v1.source.ac!=null) {
             p.source.ac = new SourceCodeParamsYaml.AccessControl(v1.source.ac.groups);
         }
-        p.origin.source = v1.origin.source;
-        p.origin.lang = v1.origin.lang;
         p.checkIntegrity();
         return p;
     }
@@ -107,10 +104,6 @@ public class SourceCodeParamsYamlUtilsV1
         final SourceCodeParamsYamlV1 p = getYaml().load(s);
         if (p.source ==null) {
             throw new IllegalStateException("#635.010 SourceCode Yaml is null");
-        }
-
-        if (p.internalParams==null) {
-            p.internalParams = new SourceCodeParamsYamlV1.InternalParamsV1();
         }
         return p;
     }

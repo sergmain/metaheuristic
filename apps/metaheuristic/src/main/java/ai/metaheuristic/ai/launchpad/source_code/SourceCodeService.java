@@ -35,10 +35,12 @@ import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.ExecContext;
@@ -109,8 +111,8 @@ public class SourceCodeService {
                 return false;
             }
             try {
-                SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
-                return ppy.internalParams == null || !ppy.internalParams.archived;
+                SourceCodeStoredParamsYaml scspy = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
+                return scspy.internalParams == null || !scspy.internalParams.archived;
             } catch (YAMLException e) {
                 final String es = "#995.010 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
                 sourceCodesForCompany.addErrorMessage(es);
@@ -246,13 +248,12 @@ public class SourceCodeService {
     }
 
     private void saveInternal(SourceCodeImpl sourceCode) {
-        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode.getParams());
-        if (ppy.internalParams==null) {
-            ppy.internalParams = new SourceCodeParamsYaml.InternalParams();
+        SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
+        if (scspy.internalParams==null) {
+            scspy.internalParams = new SourceCodeStoredParamsYaml.InternalParams();
         }
-        ppy.internalParams.updatedOn = System.currentTimeMillis();
-        String params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
-        sourceCode.setParams(params);
+        scspy.internalParams.updatedOn = System.currentTimeMillis();
+        sourceCode.updateParams(scspy);
 
         sourceCodeCache.save(sourceCode);
     }
@@ -293,7 +294,8 @@ public class SourceCodeService {
         if (StringUtils.isBlank(sourceCode.getParams())) {
             return EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_PARAMS_EMPTY_ERROR;
         }
-        SourceCodeParamsYaml sourceCodeParamsYaml = sourceCode.getSourceCodeStoredParamsYaml();
+        SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
         SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = sourceCodeParamsYaml.source;
         if (sourceCodeYaml.getProcesses().isEmpty()) {
             return EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR;

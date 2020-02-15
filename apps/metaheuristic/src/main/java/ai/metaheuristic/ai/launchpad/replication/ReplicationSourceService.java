@@ -23,13 +23,13 @@ import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
-import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
-import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -82,7 +82,7 @@ public class ReplicationSourceService {
         res.sourceCodes.addAll(sourceCodeRepository.findAllAsIds().parallelStream()
                 .map(id->{
                     SourceCodeImpl sourceCode = sourceCodeCache.findById(id);
-                    SourceCodeParamsYaml params = sourceCode.getSourceCodeStoredParamsYaml();
+                    SourceCodeStoredParamsYaml params = sourceCode.getSourceCodeStoredParamsYaml();
                     if (params.internalParams!= null && params.internalParams.archived) {
                         return null;
                     }

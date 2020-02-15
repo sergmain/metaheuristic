@@ -37,6 +37,7 @@ import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelServic
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -45,6 +46,7 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.ExecContext;
@@ -591,8 +593,9 @@ public class BatchService {
                     : ".bin");
         }
 
-        SourceCodeParamsYaml sourceCodeParams = sourceCode.getSourceCodeStoredParamsYaml();
-        final Meta meta = MetaUtils.getMeta(sourceCodeParams.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
+        SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+        final Meta meta = MetaUtils.getMeta(scpy.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
 
         return meta != null && StringUtils.isNotBlank(meta.getValue())
                 ? meta.getValue()
