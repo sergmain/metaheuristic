@@ -293,7 +293,7 @@ public class SourceCodeService {
         if (StringUtils.isBlank(sourceCode.getParams())) {
             return EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_PARAMS_EMPTY_ERROR;
         }
-        SourceCodeParamsYaml sourceCodeParamsYaml = sourceCode.getSourceCodeParamsYaml();
+        SourceCodeParamsYaml sourceCodeParamsYaml = sourceCode.getSourceCodeStoredParamsYaml();
         SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = sourceCodeParamsYaml.source;
         if (sourceCodeYaml.getProcesses().isEmpty()) {
             return EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR;

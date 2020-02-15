@@ -64,7 +64,7 @@ public class SourceCodeData {
 
     @Data
     @EqualsAndHashCode(exclude = "graph")
-    public static class SourceCode {
+    public static class SourceCodeGraph {
         public boolean clean;
         public final DirectedAcyclicGraph<SimpleTaskVertex, DefaultEdge> graph = new DirectedAcyclicGraph<>(DefaultEdge.class);
     }

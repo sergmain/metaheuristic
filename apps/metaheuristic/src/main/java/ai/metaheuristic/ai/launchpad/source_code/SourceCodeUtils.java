@@ -25,19 +25,6 @@ import java.util.ArrayList;
 
 public class SourceCodeUtils {
 
-    public static String getResourceCode(Long execContextId, String processCode, String snippetName, int processOrder, int snippetIdx) {
-        return String.format("%d-%d-%s-%s-%d", execContextId, processOrder, snippetName, processCode, snippetIdx);
-    }
-
-    public static ExecContextParamsYaml.ExecContextYaml parseToExecContextParamsYaml(String inputResourceParams) {
-        // we're using V1 because inputResourceParams has a user-generated value in format of V1
-        ExecContextParamsYamlV1 v1 = (ExecContextParamsYamlV1) ExecContextParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1).to(inputResourceParams);
-        ExecContextParamsYaml.ExecContextYaml wrc = new ExecContextParamsYaml.ExecContextYaml();
-        // ???
-        wrc.variables.putAll(v1.poolCodes);
-        return wrc;
-    }
-
     public static ExecContextParamsYaml.ExecContextYaml asExecContextParamsYaml(String variable) {
         ExecContextParamsYaml.ExecContextYaml wrc = new ExecContextParamsYaml.ExecContextYaml();
         wrc.variables.computeIfAbsent(Consts.MH_EXEC_CONTEXT_INPUT_VARIABLE, o->new ArrayList<>()).add(variable);

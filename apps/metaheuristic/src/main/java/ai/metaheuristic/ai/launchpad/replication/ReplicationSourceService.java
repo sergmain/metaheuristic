@@ -82,7 +82,7 @@ public class ReplicationSourceService {
         res.sourceCodes.addAll(sourceCodeRepository.findAllAsIds().parallelStream()
                 .map(id->{
                     SourceCodeImpl sourceCode = sourceCodeCache.findById(id);
-                    SourceCodeParamsYaml params = sourceCode.getSourceCodeParamsYaml();
+                    SourceCodeParamsYaml params = sourceCode.getSourceCodeStoredParamsYaml();
                     if (params.internalParams!= null && params.internalParams.archived) {
                         return null;
                     }

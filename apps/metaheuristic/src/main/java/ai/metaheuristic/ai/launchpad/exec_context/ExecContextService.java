@@ -23,6 +23,8 @@ import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.*;
+import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
+import ai.metaheuristic.ai.launchpad.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
@@ -47,6 +49,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.launchpad.ExecContext;
@@ -199,7 +202,7 @@ public class ExecContextService {
 
         if (checkResources) {
             ExecContextParamsYaml resourceParam = ec.getExecContextParamsYaml();
-            List<SimpleVariableAndStorageUrl> inputResourceCodes = variableService.getIdInVariables(resourceParam.getAllPoolCodes());
+            List<SimpleVariableAndStorageUrl> inputResourceCodes = variableService.getIdInVariables(resourceParam.getAllVariables());
             if (inputResourceCodes == null || inputResourceCodes.isEmpty()) {
                 result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
                 return result;
@@ -484,8 +487,6 @@ public class ExecContextService {
     public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, SourceCodeImpl sourceCode, Long execContextId) {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
-        long mill = System.currentTimeMillis();
-
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
             log.error("#701.175 Can't find execContext #{}", execContextId);
@@ -493,8 +494,14 @@ public class ExecContextService {
         }
 
         ExecContextParamsYaml resourceParams = execContext.getExecContextParamsYaml();
-        List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(resourceParams.getAllPoolCodes());
-        log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
+
+        SourceCodeStoredParamsYaml sourceCodeStoredParams = sourceCode.getSourceCodeStoredParamsYaml();
+        SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(sourceCodeStoredParams.lang, sourceCodeStoredParams.source );
+
+
+        long mill = System.currentTimeMillis();
+        List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(resourceParams.getAllVariables());
+        log.debug("#701.180 Resources was acquired for {} ms", System.currentTimeMillis() - mill);
 
         SourceCodeService.ResourcePools pools = new SourceCodeService.ResourcePools(initialInputResourceCodes);
         if (pools.status!= EnumsApi.SourceCodeProducingStatus.OK) {
@@ -524,50 +531,18 @@ public class ExecContextService {
         }
 
         Monitoring.log("##025", Enums.Monitor.MEMORY);
-        SourceCodeParamsYaml sourceCodeParams = sourceCode.getSourceCodeParamsYaml();
 
         int idx = Consts.PROCESS_ORDER_START_VALUE;
         List<Long> parentTaskIds = new ArrayList<>();
         int numberOfTasks=0;
         String contextId = "" + idsRepository.save(new Ids()).id;
 
-        for (SourceCodeParamsYaml.Process process : sourceCodeParams.source.getProcesses()) {
-            Monitoring.log("##026", Enums.Monitor.MEMORY);
-            SourceCodeService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasksForProcess(isPersist, sourceCode.getId(), contextId, sourceCodeParams, execContextId, process, pools, parentTaskIds);
-            Monitoring.log("##027", Enums.Monitor.MEMORY);
-            parentTaskIds.clear();
-            parentTaskIds.addAll(produceTaskResult.taskIds);
-
-            numberOfTasks += produceTaskResult.numberOfTasks;
-            if (produceTaskResult.status != EnumsApi.SourceCodeProducingStatus.OK) {
-                return new SourceCodeApiData.TaskProducingResultComplex(produceTaskResult.status);
-            }
-            Monitoring.log("##030", Enums.Monitor.MEMORY);
-
-            // this part of code replaces the code below
-            for (SourceCodeParamsYaml.Variable variable : process.output) {
-                pools.add(variable.name, produceTaskResult.outputResourceCodes);
-                for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
-                    pools.inputStorageUrls.put(outputResourceCode, variable);
-                }
-            }
-/*
-            if (process.outputParams.storageType!=null) {
-                pools.add(process.outputParams.storageType, produceTaskResult.outputResourceCodes);
-                for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
-                    pools.inputStorageUrls.put(outputResourceCode, process.outputParams);
-                }
-            }
-*/
-            Monitoring.log("##031", Enums.Monitor.MEMORY);
-        }
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist) {
             execContextFSM.toProduced(execContextId);
         }
         result.execContext = execContextCache.findById(execContextId);
-        result.sourceCodeYaml = sourceCodeParams.source;
         result.numberOfTasks = numberOfTasks;
         result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.OK;
         result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;

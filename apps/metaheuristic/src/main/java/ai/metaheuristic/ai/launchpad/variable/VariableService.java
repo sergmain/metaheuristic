@@ -49,6 +49,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
@@ -118,7 +119,7 @@ public class VariableService {
     }
 
     @Transactional(readOnly = true)
-    public List<SimpleVariableAndStorageUrl> getIdInVariables(List<String> variables) {
+    public List<SimpleVariableAndStorageUrl> getIdInVariables(Set<String> variables) {
         if (variables.isEmpty()) {
             return List.of();
         }

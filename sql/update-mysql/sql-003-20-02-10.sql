@@ -49,5 +49,6 @@ alter table mh_experiment change WORKBOOK_ID EXEC_CONTEXT_ID decimal null;
 
 alter table mh_task change WORKBOOK_ID EXEC_CONTEXT_ID decimal not null;
 
+drop table mh_launchpad_address;
 
 

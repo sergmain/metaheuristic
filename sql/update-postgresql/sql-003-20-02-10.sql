@@ -48,4 +48,5 @@ alter table mh_experiment rename column workbook_id to EXEC_CONTEXT_ID;
 
 alter table mh_task rename column workbook_id to EXEC_CONTEXT_ID;
 
+drop table mh_launchpad_address;
 

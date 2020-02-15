@@ -33,6 +33,7 @@ import java.sql.Blob;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * User: Serg
@@ -62,7 +63,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Query(value="select new ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl(" +
             "b.id, b.name, b.params, b.filename ) " +
             "from Variable b where b.name in :vars")
-    List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(List<String> vars);
+    List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(Set<String> vars);
 
     List<Variable> findAllByName(String variableName);
 

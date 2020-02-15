@@ -52,19 +52,6 @@ public class ExecContextTopLevelService {
         return execContextService.getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
     }
 
-    public SourceCodeApiData.TaskProducingResult createExecContext(Long sourceCodeId, String inputResourceParam, LaunchpadContext context) {
-        final SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(sourceCodeId, SourceCodeUtils.parseToExecContextParamsYaml(inputResourceParam));
-        return new SourceCodeApiData.TaskProducingResult(
-                result.getStatus()== EnumsApi.TaskProducingStatus.OK
-                        ? new ArrayList<>()
-                        : List.of("Error of creating execContext, " +
-                        "validation status: " + result.getSourceCodeValidateStatus()+", producing status: " + result.getSourceCodeProducingStatus()),
-                result.sourceCodeValidateStatus,
-                result.sourceCodeProducingStatus,
-                result.execContext.getId()
-        );
-    }
-
     public SourceCodeApiData.ExecContextResult getExecContextExtendedForDeletion(Long execContextId, LaunchpadContext context) {
         SourceCodeApiData.ExecContextResult result = execContextService.getExecContextExtended(execContextId);
 

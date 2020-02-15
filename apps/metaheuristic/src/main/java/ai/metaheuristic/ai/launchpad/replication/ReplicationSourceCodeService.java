@@ -71,7 +71,7 @@ public class ReplicationSourceCodeService {
             for (ReplicationData.SourceCodeShortAsset actualSourceCode : actualSourceCodes) {
                 if (actualSourceCode.uid.equals(p.uid)) {
                     isDeleted = false;
-                    if (actualSourceCode.updateOn != p.getSourceCodeParamsYaml().internalParams.updatedOn) {
+                    if (actualSourceCode.updateOn != p.getSourceCodeStoredParamsYaml().internalParams.updatedOn) {
                         SourceCodeLoopEntry sourceCodeLoopEntry = new SourceCodeLoopEntry(actualSourceCode, p);
                         forUpdating.add(sourceCodeLoopEntry);
                     }

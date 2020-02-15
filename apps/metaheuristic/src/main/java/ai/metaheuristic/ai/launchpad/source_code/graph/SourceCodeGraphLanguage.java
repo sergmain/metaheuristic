@@ -14,35 +14,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.beans;
+package ai.metaheuristic.ai.launchpad.source_code.graph;
 
-import lombok.Data;
+import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
+import ai.metaheuristic.api.EnumsApi;
 
-import javax.persistence.*;
-import java.io.Serializable;
-
-@Entity
-@Table(name = "MH_LAUNCHPAD_ADDRESS")
-@Data
-public class LaunchpadAddress implements Serializable {
-
-    private static final long serialVersionUID = 1604044122889826271L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
-
-    @Version
-    private Integer version;
-
-    @Column(name = "URL")
-    public String url;
-
-    @Column(name = "DESCRIPTION")
-    public String description;
-
-    @Column(name = "SIGNATURE")
-    public String signature;
-
-
+/**
+ * @author Serge
+ * Date: 2/14/2020
+ * Time: 10:48 PM
+ */
+public interface SourceCodeGraphLanguage {
+    SourceCodeData.SourceCodeGraph parse(String sourceCode);
 }

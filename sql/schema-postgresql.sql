@@ -262,13 +262,3 @@ CREATE TABLE MH_EVENT
 CREATE INDEX MH_EVENT_PERIOD_IDX
     ON MH_EVENT (PERIOD);
 
--- ========= legacy table
-
-create table MH_LAUNCHPAD_ADDRESS
-(
-    ID          bigserial not null PRIMARY KEY,
-    VERSION     bigint NOT NULL,
-    URL varchar(200) not null,
-    DESCRIPTION varchar(100) not null,
-    SIGNATURE varchar(1000)
-);

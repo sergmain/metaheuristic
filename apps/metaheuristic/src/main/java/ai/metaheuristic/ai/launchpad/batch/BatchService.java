@@ -591,7 +591,7 @@ public class BatchService {
                     : ".bin");
         }
 
-        SourceCodeParamsYaml sourceCodeParams = sourceCode.getSourceCodeParamsYaml();
+        SourceCodeParamsYaml sourceCodeParams = sourceCode.getSourceCodeStoredParamsYaml();
         final Meta meta = MetaUtils.getMeta(sourceCodeParams.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
 
         return meta != null && StringUtils.isNotBlank(meta.getValue())

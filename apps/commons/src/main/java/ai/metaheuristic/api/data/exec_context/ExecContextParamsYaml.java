@@ -24,10 +24,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Data
 public class ExecContextParamsYaml implements BaseParams {
@@ -39,6 +36,7 @@ public class ExecContextParamsYaml implements BaseParams {
 
     @Data
     public static class ExecContextYaml {
+        // key - ???, value - list of name of variables
         public Map<String, List<String>> variables = new HashMap<>();
 
         public boolean preservePoolNames;
@@ -55,12 +53,13 @@ public class ExecContextParamsYaml implements BaseParams {
 
     public final int version = 1;
     public ExecContextYaml execContextYaml = new ExecContextYaml();
+    // this is a graph for runtime phase
     public String graph;
 
     @JsonIgnore
-    public List<String> getAllPoolCodes() {
-        List<String> codes = new ArrayList<>();
-        execContextYaml.variables.values().forEach(codes::addAll);
-        return codes;
+    public Set<String> getAllVariables() {
+        Set<String> variables = new HashSet<>();
+        execContextYaml.variables.values().forEach(variables::addAll);
+        return variables;
     }
 }

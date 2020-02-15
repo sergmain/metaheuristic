@@ -15,8 +15,8 @@
  */
 package ai.metaheuristic.ai.launchpad.beans;
 
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -54,7 +54,7 @@ public class SourceCodeImpl implements Serializable, SourceCode {
     public void setParams(String params) {
         synchronized (this) {
             this.params = params;
-            this.ppy=null;
+            this.scspy =null;
         }
     }
 
@@ -70,31 +70,31 @@ public class SourceCodeImpl implements Serializable, SourceCode {
 
     @Transient
     @JsonIgnore
-    private SourceCodeParamsYaml ppy = null;
+    private SourceCodeStoredParamsYaml scspy = null;
 
     // for controlling of SnakeYaml
     @SuppressWarnings("unused")
     @Transient
-    private SourceCodeParamsYaml getPpy(){
-        return ppy;
+    private SourceCodeStoredParamsYaml getScspy(){
+        return scspy;
     }
 
     @JsonIgnore
-    public SourceCodeParamsYaml getSourceCodeParamsYaml() {
-        if (ppy ==null) {
+    public SourceCodeStoredParamsYaml getSourceCodeStoredParamsYaml() {
+        if (scspy ==null) {
             synchronized (this) {
-                if (ppy ==null) {
+                if (scspy ==null) {
                     //noinspection UnnecessaryLocalVariable
-                    SourceCodeParamsYaml temp = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    ppy = temp;
+                    SourceCodeStoredParamsYaml temp = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    scspy = temp;
                 }
             }
         }
-        return ppy;
+        return scspy;
     }
 
     @JsonIgnore
-    public void updateParams(SourceCodeParamsYaml ppy) {
-        params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
+    public void updateParams(SourceCodeStoredParamsYaml scspy) {
+        params = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.toString(scspy);
     }
 }

@@ -40,33 +40,11 @@ public class SourceCodeApiData {
     }
 
     @Data
-    @EqualsAndHashCode(callSuper = false)
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class TaskProducingResult extends BaseDataClass {
-        public EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus;
-        public EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus;
-        public int numberOfTasks = 0;
-        public Long execContextId = null;
-
-        public TaskProducingResult(
-                List<String> errorMessages, EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus,
-                EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus,
-                Long execContextId ) {
-            this.execContextId = execContextId;
-            this.errorMessages = errorMessages;
-            this.sourceCodeValidateStatus = sourceCodeValidateStatus;
-            this.sourceCodeProducingStatus = sourceCodeProducingStatus;
-        }
-    }
-
-    @Data
     @NoArgsConstructor
     public static class TaskProducingResultComplex {
         public EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.NOT_VALIDATED_YET_ERROR;
         public EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.NOT_PRODUCING_YET_ERROR;
         public List<Task> tasks = new ArrayList<>();
-        public SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml;
         public ExecContext execContext;
         public int numberOfTasks;
 

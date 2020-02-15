@@ -277,13 +277,3 @@ CREATE TABLE mh_event
 CREATE INDEX mh_event_period_idx
     ON mh_event (PERIOD);
 
--- ========= legacy table
-
-create table mh_launchpad_address
-(
-    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,
-    URL varchar(200) not null,
-    DESCRIPTION varchar(100) not null,
-    SIGNATURE varchar(1000)
-);

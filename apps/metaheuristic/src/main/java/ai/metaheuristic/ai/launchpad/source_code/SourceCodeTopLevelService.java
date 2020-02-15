@@ -150,7 +150,7 @@ public class SourceCodeTopLevelService {
                     "#560.050 sourceCode wasn't found, sourceCodeId: " + sourceCodeId,
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
         }
-        return new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeParamsYaml().origin);
+        return new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml().origin);
     }
 
     public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, LaunchpadContext context) {
@@ -160,7 +160,7 @@ public class SourceCodeTopLevelService {
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
         }
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeParamsYaml().origin);
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml().origin);
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
         result.errorMessages = sourceCodeValidation.errorMessages;
         result.infoMessages = sourceCodeValidation.infoMessages;
