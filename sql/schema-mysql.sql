@@ -107,7 +107,7 @@ CREATE TABLE mh_variable
     IS_INITED       BOOLEAN not null default false,
     NAME            VARCHAR(250) not null,
     CONTEXT_ID      VARCHAR(250),
-    EXEC_CONTEXT_ID     NUMERIC(10, 0),
+    EXEC_CONTEXT_ID NUMERIC(10, 0),
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     DATA            LONGBLOB,
     FILENAME        VARCHAR(150),
@@ -159,35 +159,32 @@ CREATE UNIQUE INDEX mh_experiment_code_unq_idx
 
 CREATE TABLE mh_task
 (
-    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,
-    PARAMS          MEDIUMTEXT not null,
-    STATION_ID          NUMERIC(10, 0),
-    ASSIGNED_ON    bigint,
-    IS_COMPLETED   tinyint(1) not null default 0,
-    COMPLETED_ON   bigint,
-    SNIPPET_EXEC_RESULTS  MEDIUMTEXT,
-    METRICS         MEDIUMTEXT,
-    EXEC_CONTEXT_ID          NUMERIC(10, 0)   NOT NULL,
-    EXEC_STATE        tinyint(1) not null default 0,
-    IS_RESULT_RECEIVED  tinyint(1) not null default 0,
+    ID                          INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION                     INT UNSIGNED    NOT NULL,
+    PARAMS                      MEDIUMTEXT not null,
+    STATION_ID                  NUMERIC(10, 0),
+    ASSIGNED_ON                 bigint,
+    IS_COMPLETED                tinyint(1) not null default 0,
+    COMPLETED_ON                bigint,
+    SNIPPET_EXEC_RESULTS        MEDIUMTEXT,
+    METRICS                     MEDIUMTEXT,
+    EXEC_CONTEXT_ID             NUMERIC(10, 0)   NOT NULL,
+    EXEC_STATE                  tinyint(1) not null default 0,
+    IS_RESULT_RECEIVED          tinyint(1) not null default 0,
     RESULT_RESOURCE_SCHEDULED_ON bigint,
-    EXTENDED_RESULT      MEDIUMTEXT
+    EXTENDED_RESULT             MEDIUMTEXT
 );
 
-CREATE INDEX mh_task_workbook_id_idx
+CREATE INDEX mh_task_exec_context_id_idx
     ON mh_task (EXEC_CONTEXT_ID);
-
-CREATE INDEX mh_task_workbook_id_task_order_idx
-    ON mh_task (EXEC_CONTEXT_ID, TASK_ORDER);
 
 CREATE TABLE mh_snippet
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
     SNIPPET_CODE    VARCHAR(100)  not null,
-    SNIPPET_TYPE      VARCHAR(50) not null,
-    PARAMS        MEDIUMTEXT not null
+    SNIPPET_TYPE    VARCHAR(50) not null,
+    PARAMS          MEDIUMTEXT not null
 );
 
 CREATE UNIQUE INDEX mh_snippet_snippet_code_unq_idx
@@ -199,10 +196,10 @@ CREATE TABLE mh_source_code
     VERSION         INT UNSIGNED    NOT NULL,
     COMPANY_ID      INT UNSIGNED    not null,
     UID             varchar(50)  NOT NULL,
-    CREATED_ON    bigint NOT NULL,
-    PARAMS        TEXT not null,
-    IS_LOCKED      BOOLEAN not null default false,
-    IS_VALID      BOOLEAN not null default false
+    CREATED_ON      bigint NOT NULL,
+    PARAMS          TEXT not null,
+    IS_LOCKED       BOOLEAN not null default false,
+    IS_VALID        BOOLEAN not null default false
 );
 
 CREATE UNIQUE INDEX mh_source_code_uid_unq_idx
