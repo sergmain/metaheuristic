@@ -17,8 +17,12 @@
 package ai.metaheuristic.ai.launchpad.internal_snippet_lib;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.permute_variables_and_hyper_params.PermuteVariablesAndHyperParamsSnippet;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.resource_splitter.ResourceSplitterSnippet;
+import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,13 +45,19 @@ public class InternalSnippetProcessor {
 
     public final ResourceSplitterSnippet resourceSplitterSnippet;
     public final PermuteVariablesAndHyperParamsSnippet permuteVariablesAndHyperParamsSnippet;
+    public final SourceCodeCache sourceCodeCache;
 
-    public List<InternalSnippetOutput> process(String snippetCode, Long sourceCodeId, Long execContextId, String internalContextId, Map<String, List<String>> inputResourceIds) {
+    public List<InternalSnippetOutput> process(
+            String snippetCode, Long sourceCodeId, Long execContextId, String internalContextId, Map<String, List<String>> inputResourceIds) {
+
+        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode.getSourceCodeStoredParamsYaml().source);
+
         switch(snippetCode) {
             case Consts.MH_RESOURCE_SPLITTER_SNIPPET:
-                return resourceSplitterSnippet.process(sourceCodeId, execContextId, internalContextId, inputResourceIds);
+                return resourceSplitterSnippet.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, inputResourceIds);
             case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS:
-                return permuteVariablesAndHyperParamsSnippet.process(sourceCodeId, execContextId, internalContextId, inputResourceIds);
+                return permuteVariablesAndHyperParamsSnippet.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, inputResourceIds);
             default:
                 throw new IllegalStateException("Unknown internal snippet: " + snippetCode);
         }

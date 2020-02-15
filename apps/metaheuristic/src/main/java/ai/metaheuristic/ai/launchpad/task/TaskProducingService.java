@@ -62,6 +62,7 @@ public class TaskProducingService {
         if (true) {
             throw new NotImplementedException("not yet");
         }
+        // ..... produceTasksForProcess() ......
         return null;
     }
 
@@ -127,13 +128,13 @@ public class TaskProducingService {
             }
         }
         else {
+            if (true) {
+                throw new NotImplementedException("not yet");
+            }
             // variables will be created while processing of internal snippet
             List<InternalSnippetOutput> outputs = internalSnippetProcessor.process(snDef.code, sourceCodeId, execContextId, internalContextId, null);
 
             // theoretically, internal snippet can be without subProcesses, i.e. a result aggregation snippet
-            if (true) {
-                throw new NotImplementedException("not yet");
-            }
 
             if (process.subProcesses!=null && CollectionUtils.isNotEmpty(process.subProcesses.processes)) {
                 for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
