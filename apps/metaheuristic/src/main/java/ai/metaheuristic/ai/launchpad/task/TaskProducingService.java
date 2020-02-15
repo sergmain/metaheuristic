@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.task;
 import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
+import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
 import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetProcessor;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
@@ -56,6 +57,14 @@ public class TaskProducingService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalSnippetProcessor internalSnippetProcessor;
     private final IdsRepository idsRepository;
+
+    public SourceCodeService.ProduceTaskResult produceTasks(SourceCodeData.SourceCodeGraph sourceCodeGraph) {
+        if (true) {
+            throw new NotImplementedException("not yet");
+        }
+        return null;
+    }
+
 
     @SuppressWarnings("Duplicates")
     public SourceCodeService.ProduceTaskResult produceTasksForProcess(

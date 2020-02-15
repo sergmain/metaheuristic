@@ -29,8 +29,6 @@ import java.util.Map;
 @SuppressWarnings("DeprecatedIsStillUsed")
 public class Consts {
 
-    public static final int PROCESS_ORDER_START_VALUE = 1;
-
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
 

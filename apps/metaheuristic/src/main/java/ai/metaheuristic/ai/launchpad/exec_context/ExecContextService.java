@@ -24,34 +24,33 @@ import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
-import ai.metaheuristic.ai.launchpad.source_code.graph.SourceCodeGraphFactory;
-import ai.metaheuristic.ai.launchpad.variable.VariableService;
-import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
+import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
-import ai.metaheuristic.ai.launchpad.task.TaskProducingService;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeUtils;
-import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.launchpad.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
+import ai.metaheuristic.ai.launchpad.task.TaskProducingService;
+import ai.metaheuristic.ai.launchpad.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
@@ -496,8 +495,16 @@ public class ExecContextService {
         ExecContextParamsYaml resourceParams = execContext.getExecContextParamsYaml();
 
         SourceCodeStoredParamsYaml sourceCodeStoredParams = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(sourceCodeStoredParams.lang, sourceCodeStoredParams.source );
 
+        // parse concrete sourceCode into graph-based meta-model
+        SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
+                sourceCodeStoredParams.lang, sourceCodeStoredParams.source, () -> "" + idsRepository.save(new Ids()).id);
+
+        // create all internal variables as uninitialized
+        variableService.createUninitialized(execContextId, sourceCodeGraph);
+
+        // create all not dynamic tasks
+        SourceCodeService.ProduceTaskResult produceTaskResult =taskProducingService.produceTasks(sourceCodeGraph);
 
         long mill = System.currentTimeMillis();
         List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(resourceParams.getAllVariables());
@@ -508,6 +515,7 @@ public class ExecContextService {
             return new SourceCodeApiData.TaskProducingResultComplex(pools.status);
         }
 
+        // todo 2020-02-15 what do we do here?
         if (resourceParams.execContextYaml.preservePoolNames) {
             final Map<String, List<String>> collectedInputs = new HashMap<>();
             try {
@@ -532,18 +540,13 @@ public class ExecContextService {
 
         Monitoring.log("##025", Enums.Monitor.MEMORY);
 
-        int idx = Consts.PROCESS_ORDER_START_VALUE;
-        List<Long> parentTaskIds = new ArrayList<>();
-        int numberOfTasks=0;
-        String contextId = "" + idsRepository.save(new Ids()).id;
-
-
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist) {
             execContextFSM.toProduced(execContextId);
         }
+
         result.execContext = execContextCache.findById(execContextId);
-        result.numberOfTasks = numberOfTasks;
+        result.numberOfTasks = produceTaskResult.numberOfTasks;
         result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.OK;
         result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;
 

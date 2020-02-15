@@ -19,11 +19,13 @@ package ai.metaheuristic.ai.launchpad.source_code.graph;
 import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.api.EnumsApi;
 
+import java.util.function.Supplier;
+
 /**
  * @author Serge
  * Date: 2/14/2020
  * Time: 10:48 PM
  */
 public interface SourceCodeGraphLanguage {
-    SourceCodeData.SourceCodeGraph parse(String sourceCode);
+    SourceCodeData.SourceCodeGraph parse(String sourceCode, Supplier<String> contectIdSupplier);
 }

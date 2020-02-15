@@ -97,8 +97,10 @@ public class SourceCodeApiData {
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public SourceCodeResult(SourceCode sourceCode, SourceCodeParamsYaml.Origin origin) {
+        public SourceCodeResult(SourceCode sourceCode, EnumsApi.SourceCodeLang lang, String sourceCodeYamlAsStr) {
             this.sourceCode = sourceCode;
+            this.lang = lang;
+            this.sourceCodeYamlAsStr = sourceCodeYamlAsStr;
             this.sourceCodeYamlAsStr = origin.source;
             this.lang = origin.lang;
         }

@@ -43,7 +43,8 @@ public class SourceCodeData {
 
     @Data
     public static class SimpleTaskVertex {
-        public String contextId;
+        public String execContextId;
+        public String internalContextId;
 
         public String processName;
         public String processCode;

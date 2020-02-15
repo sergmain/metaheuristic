@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
+import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleVariable;
 import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
@@ -152,6 +153,12 @@ public class VariableService {
             throw e;
         } catch(Throwable th) {
             throw new VariableSavingException("#087.070 error storing data to db - " + th.getMessage(), th);
+        }
+    }
+
+    public void createUninitialized(Long execContextId, SourceCodeData.SourceCodeGraph sourceCodeGraph) {
+        if (true) {
+            throw new NotImplementedException("not yet");
         }
     }
 

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.source_code.graph;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
+import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -27,6 +28,8 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 
+import java.util.function.Supplier;
+
 /**
  * @author Serge
  * Date: 2/14/2020
@@ -35,9 +38,12 @@ import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
     @Override
-    public SourceCodeData.SourceCodeGraph parse(String sourceCode) {
+    public SourceCodeData.SourceCodeGraph parse(String sourceCode, Supplier<String> contextIdSupplier) {
 
         SourceCodeParamsYaml sourceCodeParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
+
+        String internalContextId = contextIdSupplier.get();
+
 
         for (SourceCodeParamsYaml.Process process : sourceCodeParams.source.getProcesses()) {
             Monitoring.log("##026", Enums.Monitor.MEMORY);

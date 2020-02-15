@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.launchpad.source_code.graph;
 import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.api.EnumsApi;
 
+import java.util.function.Supplier;
+
 /**
  * @author Serge
  * Date: 2/14/2020
@@ -28,11 +30,11 @@ public class SourceCodeGraphFactory {
 
     private final static SourceCodeGraphLanguageYaml YAML_LANG = new SourceCodeGraphLanguageYaml();
 
-    public static SourceCodeData.SourceCodeGraph parse(EnumsApi.SourceCodeLang lang, String sourceCode) {
+    public static SourceCodeData.SourceCodeGraph parse(EnumsApi.SourceCodeLang lang, String sourceCode, Supplier<String> contextIdSupplier) {
         //noinspection SwitchStatementWithTooFewBranches
         switch (lang) {
             case yaml:
-                return YAML_LANG.parse(sourceCode);
+                return YAML_LANG.parse(sourceCode, contextIdSupplier);
             default:
                 throw new IllegalStateException("Unknown language dialect: " + lang);
         }
