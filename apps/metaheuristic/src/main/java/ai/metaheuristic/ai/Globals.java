@@ -472,7 +472,7 @@ public class Globals {
         log.info("'\tchunkSize: {}", chunkSize);
         log.info("'\tresourceRowsLimit: {}", resourceRowsLimit);
         log.info("'\texperimentRowsLimit: {}", experimentRowsLimit);
-        log.info("'\tplanRowsLimit: {}", sourceCodeRowsLimit);
+        log.info("'\tsourceCodeRowsLimit: {}", sourceCodeRowsLimit);
         log.info("'\texecContextRowsLimit: {}", execContextRowsLimit);
         log.info("'\tstationRowsLimit: {}", stationRowsLimit);
         log.info("'\taccountRowsLimit: {}", accountRowsLimit);

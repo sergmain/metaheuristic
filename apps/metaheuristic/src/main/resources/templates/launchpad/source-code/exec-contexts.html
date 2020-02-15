@@ -25,10 +25,10 @@
 
     </script>
 
-    <h1 class="widget-header">Workbooks</h1>
+    <h1 class="widget-header">Exec contexts</h1>
 
     <a class="pure-button pure-button-primary" href="exec-context-add.html"
-       th:href="${'/launchpad/source-code/exec-context-add/' + result.currentSourceCodeId}">Add new execContext</a>
+       th:href="${'/launchpad/source-code/exec-context-add/' + result.currentSourceCodeId}">Add new exec context</a>
     <p></p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
@@ -82,17 +82,17 @@
                         <li class="table-nav-padding">
                             <span th:if='${result.instances.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.instances.first}'
-                               th:href="@{/launchpad/source-code/workbooks-part/{id}(id=${result.currentSourceCodeId},page=0,size=${result.instances.pageable.pageSize})}">« First</a>
+                               th:href="@{/launchpad/source-code/exec-contexts-part/{id}(id=${result.currentSourceCodeId},page=0,size=${result.instances.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.instances.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.instances.hasPrevious()}'
-                               th:href="@{/launchpad/source-code/workbooks-part/{id}(id=${result.currentSourceCodeId},page=${result.instances.pageable.pageNumber - 1},size=${result.instances.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/launchpad/source-code/exec-contexts-part/{id}(id=${result.currentSourceCodeId},page=${result.instances.pageable.pageNumber - 1},size=${result.instances.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.instances.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.instances.hasNext()}'
-                               th:href="@{/launchpad/source-code/workbooks-part/{id}(id=${result.currentSourceCodeId},page=${result.instances.pageable.pageNumber + 1},size=${result.instances.pageable.pageSize})}" title='Go to next page'>→</a>
+                               th:href="@{/launchpad/source-code/exec-contexts-part/{id}(id=${result.currentSourceCodeId},page=${result.instances.pageable.pageNumber + 1},size=${result.instances.pageable.pageSize})}" title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>
@@ -102,6 +102,6 @@
     </table>
     <p></p>
 
-    <a class="pure-button pure-button-primary" href="source-codes.html" th:href="${'/launchpad/source-code/source-codes'  }">To sourceCodes</a>
+    <a class="pure-button pure-button-primary" href="source-codes.html" th:href="${'/launchpad/source-code/source-codes'  }">To source codes</a>
 
 </div>

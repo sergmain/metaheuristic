@@ -39,16 +39,11 @@ public class ArtifactCleanerAtLaunchpad {
 
     public void fixedDelay() {
         deleteOrphanTasks();
-//# select count(*) from aiai.mh_data d where d.ref_type='execContext' and d.REF_ID not in (select z.id from aiai.mh_workbook z)
-        deleteOrphanWorkbookData();
-
-//select count(*) from aiai.mh_workbook w, aiai.mh_plan p
-//where w.PLAN_ID=p.ID and p.PARAMS like '%archived: true%'
-
+        deleteOrphanExecContextData();
     }
 
-    private void deleteOrphanWorkbookData() {
-        deleteOrphanData(variableRepository.findAllOrphanWorkbookData());
+    private void deleteOrphanExecContextData() {
+        deleteOrphanData(variableRepository.findAllOrphanExecContextData());
     }
 
     private void deleteOrphanData(List<Long> ids) {
@@ -71,9 +66,9 @@ public class ArtifactCleanerAtLaunchpad {
             taskRepository.findAllAsTaskSimple(PageRequest.of(page, 100))
                     .forEach(t -> {
                         isFound.set(true);
-                        Long workbookId = (Long) t[1];
-                        if (!ids.contains(workbookId)) {
-                            log.info("Found orphan task #{}, workbookId: #{}", t[0], workbookId);
+                        Long execContextId = (Long) t[1];
+                        if (!ids.contains(execContextId)) {
+                            log.info("Found orphan task #{}, execContextId: #{}", t[0], execContextId);
                             taskRepository.deleteById((Long) t[0]);
                         }
                     });

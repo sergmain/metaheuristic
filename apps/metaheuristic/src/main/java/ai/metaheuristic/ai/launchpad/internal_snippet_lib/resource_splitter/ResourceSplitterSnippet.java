@@ -86,7 +86,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
     private final ExecContextCache execContextCache;
     private final IdsRepository idsRepository;
 
-    public static ExecContextParamsYaml.ExecContextYaml initWorkbookParamsYaml(
+    public static ExecContextParamsYaml.ExecContextYaml initExecContextParamsYaml(
             String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
         ExecContextParamsYaml.ExecContextYaml wy = new ExecContextParamsYaml.ExecContextYaml();
         wy.preservePoolNames = true;
@@ -247,22 +247,22 @@ public class ResourceSplitterSnippet implements InternalSnippet {
             throw new BatchResourceProcessingException("#995.180 main document wasn't found");
         }
 
-        SourceCodeApiData.TaskProducingResultComplex countTasks = workbookService.produceTasks(false, sourceCode, ec.getId());
+        SourceCodeApiData.TaskProducingResultComplex countTasks = execContextService.produceTasks(false, sourceCode, ec.getId());
         if (countTasks.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
-            workbookService.changeValidStatus(ec.getId(), false);
+            execContextService.changeValidStatus(ec.getId(), false);
             throw new BatchResourceProcessingException("#995.220 validation of sourceCode was failed, status: " + countTasks.sourceCodeValidateStatus);
         }
 
-        if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
-            workbookService.changeValidStatus(ec.getId(), false);
+        if (globals.maxTasksPerExecContext < countTasks.numberOfTasks) {
+            execContextService.changeValidStatus(ec.getId(), false);
             throw new BatchResourceProcessingException(
                     "#995.220 number of tasks for this execContext exceeded the allowed maximum number. ExecContext was created but its status is 'not valid'. " +
-                            "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook +", tasks in this execContext:  " + countTasks.numberOfTasks);
+                            "Allowed maximum number of tasks: " + globals.maxTasksPerExecContext +", tasks in this execContext: " + countTasks.numberOfTasks);
         }
-        workbookService.changeValidStatus(ec.getId(), true);
+        execContextService.changeValidStatus(ec.getId(), true);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = workbookService.workbookTargetExecState(ec.getId(), EnumsApi.ExecContextState.PRODUCING);
+        OperationStatusRest operationStatus = execContextService.execContextTargetExecState(ec.getId(), EnumsApi.ExecContextState.PRODUCING);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
@@ -272,10 +272,10 @@ public class ResourceSplitterSnippet implements InternalSnippet {
         }
         // TODO 2020-02-05 at this point we have to create new tasks
         //  do we need to invoke produceTasks() ?
-        workbookService.produceTasks(true, sourceCode, ec.getId());
+        execContextService.produceTasks(true, sourceCode, ec.getId());
 //        sourceCodeService.createAllTasks();
 
-        operationStatus = workbookService.workbookTargetExecState(ec.getId(), EnumsApi.ExecContextState.STARTED);
+        operationStatus = execContextService.execContextTargetExecState(ec.getId(), EnumsApi.ExecContextState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());

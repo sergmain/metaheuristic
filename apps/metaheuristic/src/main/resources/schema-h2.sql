@@ -148,10 +148,10 @@ CREATE TABLE mh_task
 );
 
 CREATE INDEX mh_task_workbook_id_idx
-    ON mh_task (WORKBOOK_ID);
+    ON mh_task (EXEC_CONTEXT_ID);
 
 CREATE INDEX mh_task_workbook_id_task_order_idx
-    ON mh_task (WORKBOOK_ID, TASK_ORDER);
+    ON mh_task (EXEC_CONTEXT_ID, TASK_ORDER);
 
 CREATE TABLE mh_snippet
 (

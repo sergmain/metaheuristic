@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.api.data.Meta;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,18 +33,22 @@ import java.util.List;
  * Communication file which is transferred from a Station to Launchpad
  *
  * @author Serge
- * Date: 8/29/2019
+ * Date: 11/13/2019
  * Time: 6:00 PM
  */
 @Data
 @NoArgsConstructor
 public class StationCommParamsYamlV1 implements BaseParams {
 
+    public final int version=1;
+
     @Override
     public boolean checkIntegrity() {
         return true;
     }
 
+    // always report info about snippets
+    public SnippetDownloadStatusV1 snippetDownloadStatus = new SnippetDownloadStatusV1();
     public StationCommContextV1 stationCommContext;
     public RequestStationIdV1 requestStationId;
     public ReportStationStatusV1 reportStationStatus;
@@ -54,6 +59,19 @@ public class StationCommParamsYamlV1 implements BaseParams {
     public ResendTaskOutputResourceResultV1 resendTaskOutputResourceResult;
 
     @Data
+    public static class SnippetDownloadStatusV1 {
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class Status {
+            public Enums.SnippetState snippetState;
+            public String snippetCode;
+        }
+
+        public List<Status> statuses = new ArrayList<>();
+    }
+
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class StationCommContextV1 {
@@ -62,15 +80,15 @@ public class StationCommParamsYamlV1 implements BaseParams {
     }
 
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class RequestStationIdV1 {
         public boolean keep = true;
     }
 
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class CheckForMissingOutputResourcesV1 {
         public boolean keep = true;
     }
@@ -86,14 +104,25 @@ public class StationCommParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ReportStationStatusV1 {
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class SnippetStatus {
+            public String code;
+            public Enums.SnippetState state;
+        }
+
+        public List<SnippetStatus> snippetStatuses = null;
+
         public EnvYaml env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;
         public String sessionId;
 
         // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
-        //  it'll work but in some cases behaviour can be different
-        //  need to change it to UTC, Coordinated Universal Time
+        // it'll work but in some cases behaviour can be different
+        // need to change it to UTC, Coordinated Universal Time
         public long sessionCreatedOn;
         public String ip;
         public String host;
@@ -114,9 +143,18 @@ public class StationCommParamsYamlV1 implements BaseParams {
     }
 
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ReportTaskProcessingResultV1 {
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class MachineLearningTaskResult {
+            public String metrics;
+            public String predicted;
+            public EnumsApi.Fitting fitting;
+        }
 
         @Data
         @AllArgsConstructor
@@ -124,10 +162,10 @@ public class StationCommParamsYamlV1 implements BaseParams {
         public static class SimpleTaskExecResult {
             public long taskId;
             public String result;
-            public String metrics;
+            public MachineLearningTaskResult ml;
         }
 
-        public List<ReportTaskProcessingResultV1.SimpleTaskExecResult> results = new ArrayList<>();
+        public List<SimpleTaskExecResult> results = new ArrayList<>();
     }
 
     @Data
@@ -142,7 +180,7 @@ public class StationCommParamsYamlV1 implements BaseParams {
             public long taskId;
         }
 
-        public List<ReportStationTaskStatusV1.SimpleStatus> statuses;
+        public List<SimpleStatus> statuses;
     }
 
     @Data
@@ -158,8 +196,6 @@ public class StationCommParamsYamlV1 implements BaseParams {
             public Enums.ResendTaskOutputResourceStatus status;
         }
 
-        public List<ResendTaskOutputResourceResultV1.SimpleStatus> statuses;
+        public List<SimpleStatus> statuses;
     }
-
-    public final int version=1;
 }

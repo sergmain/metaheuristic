@@ -173,23 +173,23 @@ public class SourceCodeService {
     public synchronized void createAllTasks() {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
-        List<ExecContextImpl> workbooks = execContextRepository.findByExecState(EnumsApi.ExecContextState.PRODUCING.code);
+        List<ExecContextImpl> execContexts = execContextRepository.findByExecState(EnumsApi.ExecContextState.PRODUCING.code);
         Monitoring.log("##020", Enums.Monitor.MEMORY);
-        if (!workbooks.isEmpty()) {
+        if (!execContexts.isEmpty()) {
             log.info("#701.020 Start producing tasks");
         }
-        for (ExecContextImpl workbook : workbooks) {
-            SourceCodeImpl sourceCode = sourceCodeCache.findById(workbook.getSourceCodeId());
+        for (ExecContextImpl execContext : execContexts) {
+            SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
             if (sourceCode==null) {
-                execContextFSM.toStopped(workbook.id);
+                execContextFSM.toStopped(execContext.id);
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
-            log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}",sourceCode.uid, workbook.getParams());
-            produceAllTasks(true, sourceCode, workbook);
+            log.info("#701.030 Producing tasks for sourceCode.code: {}, input resource pool: \n{}",sourceCode.uid, execContext.getParams());
+            produceAllTasks(true, sourceCode, execContext);
             Monitoring.log("##022", Enums.Monitor.MEMORY);
         }
-        if (!workbooks.isEmpty()) {
+        if (!execContexts.isEmpty()) {
             log.info("#701.040 Producing of tasks was finished");
         }
     }

@@ -66,8 +66,8 @@ public class AtlasTaskParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(AtlasTaskParamsYamlV1 planYaml) {
-        return getYaml().dump(planYaml);
+    public String toString(AtlasTaskParamsYamlV1 paramsYaml) {
+        return getYaml().dump(paramsYaml);
     }
 
     @Override

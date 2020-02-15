@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.*;
  * Time: 3:55 PM
  */
 
-// all urls in "/rest/v1/launchpad/sourceCode" because of angular.
+// all urls in "/rest/v1/launchpad/source-code" because of angular.
 // need change angular code too but not know
 @RequestMapping("/rest/v1/launchpad/source-code")
 @RestController
@@ -55,13 +55,13 @@ public class ExecContextRestController {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SimpleWorkbookAddingResult {
-        public Long workbookId;
+    public static class SimpleExecContextAddingResult {
+        public Long execContextId;
     }
 
-    @GetMapping("/workbooks/{sourceCodeId}")
+    @GetMapping("/exec-contexts/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
-    public SourceCodeApiData.ExecContextsResult workbooks(@PathVariable Long sourceCodeId,
+    public SourceCodeApiData.ExecContextsResult execContexts(@PathVariable Long sourceCodeId,
                                                           @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context);
@@ -71,43 +71,43 @@ public class ExecContextRestController {
      * create ExecContext by uid
      * useful for creating ExecContext from command-line with cURL
      *
+     * @param uid Uid of sourceCode
+     * @param variable
+     *
      * @return
      */
-    @PostMapping("/source-code-exec-context-add-commit")
+    @PostMapping("/uid-exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SimpleWorkbookAddingResult workbookAddCommit(String sourceCode, String variable, Authentication authentication) {
+    public SimpleExecContextAddingResult execContextAddCommit(String uid, String variable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
-        SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addExecContext(sourceCode, variable, context);
-        return new SimpleWorkbookAddingResult(execContextResult.execContext.getId());
+        SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addExecContext(uid, variable, context);
+        return new SimpleExecContextAddingResult(execContextResult.execContext.getId());
     }
 
-    /**
-     * Only one parameter has to be used - either poolCode or inputResourceParams
-     */
     @PostMapping("/exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SourceCodeApiData.ExecContextResult workbookAddCommit(Long sourceCodeId, String variable, Authentication authentication) {
+    public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, String variable, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         //noinspection UnnecessaryLocalVariable
         SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addExecContext(sourceCodeId, variable, context);
         return execContextResult;
     }
 
-    @GetMapping(value = "/workbook/{sourceCodeId}/{execContextId}")
+    @GetMapping(value = "/exec-context/{sourceCodeId}/{execContextId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SourceCodeApiData.ExecContextResult workbookEdit(@SuppressWarnings("unused") @PathVariable Long sourceCodeId, @PathVariable Long execContextId) {
+    public SourceCodeApiData.ExecContextResult execContextEdit(@SuppressWarnings("unused") @PathVariable Long sourceCodeId, @PathVariable Long execContextId) {
         return execContextTopLevelService.getExecContextExtended(execContextId);
     }
 
     @SuppressWarnings("unused")
-    @PostMapping("/workbook-delete-commit")
+    @PostMapping("/exec-context-delete-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public OperationStatusRest workbookDeleteCommit(Long sourceCodeId, Long execContextId, Authentication authentication) {
+    public OperationStatusRest execContextDeleteCommit(Long sourceCodeId, Long execContextId, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.deleteExecContextById(execContextId, context);
     }
 
-    @GetMapping("/workbook-target-exec-state/{sourceCodeId}/{state}/{id}")
+    @GetMapping("/exec-context-target-exec-state/{sourceCodeId}/{state}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest execContextTargetExecState(
             @SuppressWarnings("unused") @PathVariable Long sourceCodeId, @PathVariable String state,

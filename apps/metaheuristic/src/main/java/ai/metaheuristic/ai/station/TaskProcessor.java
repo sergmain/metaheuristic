@@ -131,16 +131,16 @@ public class TaskProcessor {
                 continue;
             }
 
-            EnumsApi.ExecContextState state = currentExecState.getState(task.launchpadUrl, task.workbookId);
+            EnumsApi.ExecContextState state = currentExecState.getState(task.launchpadUrl, task.execContextId);
             if (state== EnumsApi.ExecContextState.UNKNOWN) {
                 stationTaskService.delete(task.launchpadUrl, task.taskId);
-                log.info("The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.workbookId, task.launchpadUrl, task.taskId);
+                log.info("The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.execContextId, task.launchpadUrl, task.taskId);
                 continue;
             }
 
             if (state!= EnumsApi.ExecContextState.STARTED) {
                 stationTaskService.delete(task.launchpadUrl, task.taskId);
-                log.info("The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.workbookId, task.launchpadUrl, state, task.taskId);
+                log.info("The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.execContextId, task.launchpadUrl, state, task.taskId);
                 continue;
             }
 
@@ -454,8 +454,7 @@ public class TaskProcessor {
                             Consts.META_SNIPPET_PARAMS_AS_FILE_META);
                     if (MetaUtils.isTrue(meta)) {
                         final Meta metaExt = MetaUtils.getMeta(snippetPrepareResult.snippet.metas,
-                                ConstsApi.META_MH_SNIPPET_PARAMS_FILE_EXT_META,
-                                Consts.META_SNIPPET_PARAMS_FILE_EXT_META);
+                                ConstsApi.META_MH_SNIPPET_PARAMS_FILE_EXT_META);
                         String ext = (metaExt!=null && metaExt.value!=null && !metaExt.value.isBlank())
                                 ? metaExt.value : ".txt";
 

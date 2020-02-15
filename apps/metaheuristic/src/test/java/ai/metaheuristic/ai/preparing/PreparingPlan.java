@@ -299,7 +299,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-03.txt");
 
         execContextYaml = new ExecContextParamsYaml.ExecContextYaml();
-        execContextYaml.variables.computeIfAbsent(Consts.MH_WORKBOOK_INPUT_VARIABLE, o-> new ArrayList<>()).add(TEST_GLOBAL_VARIABLE);
+        execContextYaml.variables.computeIfAbsent(Consts.MH_EXEC_CONTEXT_INPUT_VARIABLE, o-> new ArrayList<>()).add(TEST_GLOBAL_VARIABLE);
     }
 
     private Snippet createSnippet(String snippetCode) {

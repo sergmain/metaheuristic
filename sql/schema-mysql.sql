@@ -149,8 +149,8 @@ CREATE TABLE mh_experiment
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    WORKBOOK_ID  NUMERIC(10, 0),
-    CODE        VARCHAR(50)   NOT NULL,
+    EXEC_CONTEXT_ID  NUMERIC(10, 0),
+    CODE            VARCHAR(50)   NOT NULL,
     PARAMS          MEDIUMTEXT not null
 );
 
@@ -167,8 +167,8 @@ CREATE TABLE mh_task
     IS_COMPLETED   tinyint(1) not null default 0,
     COMPLETED_ON   bigint,
     SNIPPET_EXEC_RESULTS  MEDIUMTEXT,
-    METRICS      MEDIUMTEXT,
-    WORKBOOK_ID          NUMERIC(10, 0)   NOT NULL,
+    METRICS         MEDIUMTEXT,
+    EXEC_CONTEXT_ID          NUMERIC(10, 0)   NOT NULL,
     EXEC_STATE        tinyint(1) not null default 0,
     IS_RESULT_RECEIVED  tinyint(1) not null default 0,
     RESULT_RESOURCE_SCHEDULED_ON bigint,
@@ -176,10 +176,10 @@ CREATE TABLE mh_task
 );
 
 CREATE INDEX mh_task_workbook_id_idx
-    ON mh_task (WORKBOOK_ID);
+    ON mh_task (EXEC_CONTEXT_ID);
 
 CREATE INDEX mh_task_workbook_id_task_order_idx
-    ON mh_task (WORKBOOK_ID, TASK_ORDER);
+    ON mh_task (EXEC_CONTEXT_ID, TASK_ORDER);
 
 CREATE TABLE mh_snippet
 (

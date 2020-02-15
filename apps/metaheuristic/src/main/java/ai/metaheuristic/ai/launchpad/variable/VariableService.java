@@ -110,11 +110,11 @@ public class VariableService {
     }
 
     @Transactional(readOnly = true)
-    public List<SimpleVariableAndStorageUrl> getIdInVariables(List<String> variables, Long workbookId) {
+    public List<SimpleVariableAndStorageUrl> getIdInVariables(List<String> variables, Long execContextId) {
         if (variables.isEmpty()) {
             return List.of();
         }
-        return variableRepository.getIdAndStorageUrlInVarsForWorkbook(variables, workbookId);
+        return variableRepository.getIdAndStorageUrlInVarsForExecContext(variables, execContextId);
     }
 
     @Transactional(readOnly = true)
@@ -205,15 +205,15 @@ public class VariableService {
 
     @Transactional(readOnly = true)
     public List<String> getFilenameByVariableAndExecContextId(String variable, Long execContextId) {
-        return variableRepository.findFilenameByVariableAndWorkbookId(variable, execContextId);
+        return variableRepository.findFilenameByVariableAndExecContextId(variable, execContextId);
     }
 
     @Transactional(readOnly = true)
-    public List<String> findFilenameByBatchId(Long batchId, Long workbookId) {
+    public List<String> findFilenameByBatchId(Long batchId, Long execContextId) {
         if (true) {
             throw new NotImplementedException("Need to re-write");
         }
-        return variableRepository.findFilenameByVariableAndWorkbookId(batchId.toString(), workbookId);
+        return variableRepository.findFilenameByVariableAndExecContextId(batchId.toString(), execContextId);
     }
 
     @Transactional(readOnly = true)
@@ -227,10 +227,10 @@ public class VariableService {
         return variableRepository.getFilenamesForBatchIds(batchIds);
     }
 
-    public Variable storeInitialResource(File tempFile, String variable, String filename, Long workbookId, String internalContextId) {
+    public Variable storeInitialResource(File tempFile, String variable, String filename, Long execContextId, String internalContextId) {
         try {
             try (InputStream is = new FileInputStream(tempFile)) {
-                return save(is, tempFile.length(), variable, filename, workbookId, internalContextId);
+                return save(is, tempFile.length(), variable, filename, execContextId, internalContextId);
             }
         } catch (IOException e) {
             log.error("Error", e);

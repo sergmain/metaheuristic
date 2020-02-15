@@ -89,12 +89,12 @@ public class ExperimentProcessService {
 
         List<String> features;
         if (meta==null) {
-            ExecContextImpl workbook = execContextCache.findById(execContextId);
-            if (workbook==null) {
+            ExecContextImpl execContext = execContextCache.findById(execContextId);
+            if (execContext==null) {
                 result.status = EnumsApi.SourceCodeProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
                 return result;
             }
-            ExecContextParamsYaml resourceParams = workbook.getExecContextParamsYaml();
+            ExecContextParamsYaml resourceParams = execContext.getExecContextParamsYaml();
             List<String> list = resourceParams.execContextYaml.getVariables().get(FEATURE_POOL_CODE_TYPE);
             if (CollectionUtils.isEmpty(list)) {
                 result.status = EnumsApi.SourceCodeProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;

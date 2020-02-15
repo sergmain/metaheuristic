@@ -25,8 +25,8 @@ import java.util.ArrayList;
 
 public class SourceCodeUtils {
 
-    public static String getResourceCode(Long workbookId, String processCode, String snippetName, int processOrder, int snippetIdx) {
-        return String.format("%d-%d-%s-%s-%d", workbookId, processOrder, snippetName, processCode, snippetIdx);
+    public static String getResourceCode(Long execContextId, String processCode, String snippetName, int processOrder, int snippetIdx) {
+        return String.format("%d-%d-%s-%s-%d", execContextId, processOrder, snippetName, processCode, snippetIdx);
     }
 
     public static ExecContextParamsYaml.ExecContextYaml parseToExecContextParamsYaml(String inputResourceParams) {
@@ -40,7 +40,7 @@ public class SourceCodeUtils {
 
     public static ExecContextParamsYaml.ExecContextYaml asExecContextParamsYaml(String variable) {
         ExecContextParamsYaml.ExecContextYaml wrc = new ExecContextParamsYaml.ExecContextYaml();
-        wrc.variables.computeIfAbsent(Consts.MH_WORKBOOK_INPUT_VARIABLE, o->new ArrayList<>()).add(variable);
+        wrc.variables.computeIfAbsent(Consts.MH_EXEC_CONTEXT_INPUT_VARIABLE, o->new ArrayList<>()).add(variable);
         return wrc;
     }
 

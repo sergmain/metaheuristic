@@ -51,8 +51,8 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Long> findAllTaskIdsByExecContextId(Long execContextId);
 
     @Transactional
-    @Query(value="select t from TaskImpl t where t.execContextId=:workbookId")
-    Stream<Task> findAllByExecContextIdAsStream(Long workbookId);
+    @Query(value="select t from TaskImpl t where t.execContextId=:execContextId")
+    Stream<Task> findAllByExecContextIdAsStream(Long execContextId);
 
     @Transactional(readOnly = true)
     @Query(value="select t.id, t.execContextId from TaskImpl t")
@@ -72,8 +72,8 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Object[]> findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(Long stationId);
 
     @Transactional(readOnly = true)
-    @Query(value="select t.id, t.execState from TaskImpl t where t.execContextId=:workbookId")
-    List<Object[]> findAllExecStateByExecContextId(Long workbookId);
+    @Query(value="select t.id, t.execState from TaskImpl t where t.execContextId=:execContextId")
+    List<Object[]> findAllExecStateByExecContextId(Long execContextId);
 
     @Transactional
     void deleteByExecContextId(Long execContextId);
@@ -115,7 +115,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
             "from ( "+
             "           SELECT count(*) count, t.TASK_ORDER "+
             "           FROM MH_TASK t  "+
-            "           where t.WORKBOOK_ID =:execContextId "+
+            "           where t.EXEC_CONTEXT_ID =:execContextId "+
             "           group by t.TASK_ORDER "+
             "     ) z "+
             "order by z.TASK_ORDER asc")

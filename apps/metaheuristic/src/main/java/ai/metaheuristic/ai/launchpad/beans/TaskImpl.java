@@ -65,7 +65,7 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "EXTENDED_RESULT")
     public String extendedResult;
 
-    @Column(name = "WORKBOOK_ID")
+    @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 
     @Column(name = "EXEC_STATE")

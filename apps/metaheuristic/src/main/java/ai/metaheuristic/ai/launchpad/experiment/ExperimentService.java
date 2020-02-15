@@ -109,7 +109,7 @@ public class ExperimentService {
     @Async
     @EventListener
     public void handleAsync(LaunchpadInternalEvent.ExperimentResetEvent event) {
-        resetExperimentByWorkbookId(event.execContextId);
+        resetExperimentByExecContextId(event.execContextId);
     }
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
@@ -244,7 +244,7 @@ public class ExperimentService {
             }
             ExecContextImpl wb = execContextCache.findById(e.execContextId);
             if (wb==null) {
-                log.info("#179.030 Can't calc max values and export to atlas because workbookId is null");
+                log.info("#179.030 Can't calc max values and export to atlas because execContext is null");
                 continue;
             }
             if (wb.state != EnumsApi.ExecContextState.FINISHED.code) {
@@ -546,9 +546,9 @@ public class ExperimentService {
 
     public ExperimentApiData.ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, Long featureId ) {
         if (experiment.execContextId ==null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.050 workbookId is null");
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.050 execContextId is null");
         }
-        ExecContextImpl workbook = execContextCache.findById(experiment.execContextId);
+        ExecContextImpl execContext = execContextCache.findById(experiment.execContextId);
 
         ExperimentParamsYaml.ExperimentFeature experimentFeature = experiment.getExperimentParamsYaml().getFeature(featureId);
         if (experimentFeature == null) {
@@ -603,7 +603,7 @@ public class ExperimentService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
-        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
+        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
@@ -644,8 +644,8 @@ public class ExperimentService {
         return experimentHyperParams.stream().collect(Collectors.toMap(HyperParam::getKey, HyperParam::getValues, (a, b) -> b, HashMap::new));
     }
 
-    private void resetExperimentByWorkbookId(Long workbookId) {
-        Experiment e = experimentRepository.findByWorkbookIdForUpdate(workbookId);
+    private void resetExperimentByExecContextId(Long execContextId) {
+        Experiment e = experimentRepository.findByExecContextIdForUpdate(execContextId);
         if (e==null) {
             return;
         }
@@ -659,7 +659,7 @@ public class ExperimentService {
         e = experimentCache.save(e);
     }
 
-    public void bindExperimentToWorkbook(Long experimentId, Long execContextId) {
+    public void bindExperimentToExecContext(Long experimentId, Long execContextId) {
 
         Experiment e = experimentRepository.findByIdForUpdate(experimentId);
         if (e==null) {

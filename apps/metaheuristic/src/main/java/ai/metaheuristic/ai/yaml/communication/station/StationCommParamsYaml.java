@@ -39,7 +39,7 @@ import java.util.List;
 @NoArgsConstructor
 public class StationCommParamsYaml implements BaseParams {
 
-    public final int version=4;
+    public final int version=1;
 
     @Override
     public boolean checkIntegrity() {
@@ -59,7 +59,6 @@ public class StationCommParamsYaml implements BaseParams {
 
     @Data
     public static class SnippetDownloadStatus {
-        
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
@@ -104,6 +103,17 @@ public class StationCommParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ReportStationStatus {
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class SnippetStatus {
+            public String code;
+            public Enums.SnippetState state;
+        }
+
+        public List<SnippetStatus> snippetStatuses = null;
+
         public EnvYaml env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;
@@ -132,6 +142,8 @@ public class StationCommParamsYaml implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ReportTaskProcessingResult {
 
         @Data
@@ -172,6 +184,7 @@ public class StationCommParamsYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ResendTaskOutputResourceResult {
 
         @Data
@@ -183,9 +196,5 @@ public class StationCommParamsYaml implements BaseParams {
         }
 
         public List<SimpleStatus> statuses;
-
-        public ResendTaskOutputResourceResult(List<SimpleStatus> statuses) {
-            this.statuses = statuses;
-        }
     }
 }

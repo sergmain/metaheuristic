@@ -60,7 +60,7 @@ CREATE TABLE mh_variable_global
 
 truncate table mh_task;
 
-update mh_experiment set WORKBOOK_ID=null where 1=1;
+update mh_experiment set EXEC_CONTEXT_ID=null where 1=1;
 
 update mh_source_code set IS_LOCKED=0 where 1=1;
 

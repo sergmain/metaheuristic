@@ -46,11 +46,6 @@ public class ConstsApi {
 
     public static final String META_MH_FITTING_DETECTION_SUPPORTED = "mh.fitting-detection-supported";
 
-    // legacy meta
-    @Deprecated
-    public static final String META_TASK_PARAMS_VERSION = "task-params-version";
-
-
     public static final String META_MH_SNIPPET_SUPPORTED_OS = "mh.snippet-supported-os";
 
 }

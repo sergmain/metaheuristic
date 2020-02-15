@@ -35,7 +35,7 @@ import java.util.List;
 @Data
 public class LaunchpadCommParamsYaml implements BaseParams {
 
-    public final int version=2;
+    public final int version=1;
 
     @Override
     public boolean checkIntegrity() {
@@ -50,7 +50,7 @@ public class LaunchpadCommParamsYaml implements BaseParams {
     public AssignedStationId assignedStationId;
     public ReAssignStationId reAssignedStationId;
     public ReportResultDelivering reportResultDelivering;
-    public WorkbookStatus workbookStatus;
+    public ExecContextStatus execContextStatus;
     public ResendTaskOutputResource resendTaskOutputResource;
 
     @Data
@@ -68,6 +68,8 @@ public class LaunchpadCommParamsYaml implements BaseParams {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class AssignedTask {
         public String params;
         public Long taskId;
@@ -104,13 +106,13 @@ public class LaunchpadCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class WorkbookStatus {
+    public static class ExecContextStatus {
 
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SimpleStatus {
-            public long workbookId;
+            public long execContextId;
             public EnumsApi.ExecContextState state;
         }
 
@@ -124,6 +126,9 @@ public class LaunchpadCommParamsYaml implements BaseParams {
         public List<Long> taskIds;
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class LaunchpadCommContext {
         public Long chunkSize;
         // Station's version for communicating with launchpad

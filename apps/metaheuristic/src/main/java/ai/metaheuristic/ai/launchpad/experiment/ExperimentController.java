@@ -170,8 +170,8 @@ public class ExperimentController {
         return "launchpad/experiment/experiment-edit-form";
     }
 
-    @GetMapping("/workbook-target-exec-state/{experimentId}/{state}/{id}")
-    public String workbookTargetExecState(@PathVariable Long experimentId, @PathVariable String state,
+    @GetMapping("/exec-context-target-exec-state/{experimentId}/{state}/{id}")
+    public String execContextTargetExecState(@PathVariable Long experimentId, @PathVariable String state,
                                           @PathVariable Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         LaunchpadContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeExecContextState(state, id, context);
@@ -336,10 +336,10 @@ public class ExperimentController {
         return execContextService.resetTask(taskId).status == EnumsApi.OperationStatus.OK;
     }
 
-    @GetMapping("/task-reset-all-broken/{workbookId}/{experimentId}")
+    @GetMapping("/task-reset-all-broken/{execContextId}/{experimentId}")
     public String rerunBrokenTasks(
-            @PathVariable Long workbookId, @PathVariable Long experimentId, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = execContextService.resetBrokenTasks(workbookId);
+            @PathVariable Long execContextId, @PathVariable Long experimentId, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = execContextService.resetBrokenTasks(execContextId);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }

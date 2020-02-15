@@ -42,7 +42,7 @@ public class ArtifactCleanerAtStation {
     public void fixedDelay() {
         for (String launchpadUrl : launchpadLookupExtendedService.lookupExtendedMap.keySet()) {
             if (!globals.isStationEnabled || !currentExecState.isInited(launchpadUrl)) {
-                // don't delete anything until the station has received the list of actual workbooks
+                // don't delete anything until the station has received the list of actual ExecContexts
                 continue;
             }
 
@@ -54,7 +54,7 @@ public class ArtifactCleanerAtStation {
 
             List<StationTask> all = stationTaskService.findAll(launchpadUrl);
             for (StationTask task : all) {
-                if (currentExecState.isState(launchpadUrl, task.workbookId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
+                if (currentExecState.isState(launchpadUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
                     log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), launchpadUrl);
                     stationTaskService.delete(launchpadUrl, task.getTaskId());
                     continue;

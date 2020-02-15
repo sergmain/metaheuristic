@@ -27,7 +27,7 @@ import java.util.List;
 public class StationTask {
     public long taskId;
 
-    public long workbookId;
+    public Long execContextId;
 
     // params of this task
     public String params;

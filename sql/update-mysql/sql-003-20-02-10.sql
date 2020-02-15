@@ -45,5 +45,9 @@ CREATE INDEX mh_batch_exec_context_id_idx
 alter table mh_task
     drop column TASK_ORDER;
 
+alter table mh_experiment change WORKBOOK_ID EXEC_CONTEXT_ID decimal null;
+
+alter table mh_task change WORKBOOK_ID EXEC_CONTEXT_ID decimal not null;
+
 
 

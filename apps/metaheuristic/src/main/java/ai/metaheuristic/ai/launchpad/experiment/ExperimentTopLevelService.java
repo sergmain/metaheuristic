@@ -159,14 +159,14 @@ public class ExperimentTopLevelService {
 
     public ExperimentApiData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentId, Long featureId, String[] params, Pageable pageable) {
         Experiment experiment= experimentCache.findById(experimentId);
-        ExecContextImpl workbook = execContextCache.findById(experiment.execContextId);
+        ExecContextImpl execContext = execContextCache.findById(experiment.execContextId);
 
         ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
 
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
         tasksResult.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
-        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
+        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.tasksResult = tasksResult;
@@ -191,7 +191,7 @@ public class ExperimentTopLevelService {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.060 experiment wasn't found, experimentId: " + experimentId);
         }
         // TODO 2019-07-21 calculation of max shouldn't be called every time. Add button for recalculating?
-//        experimentService.updateMaxValueForExperimentFeatures(experiment.getWorkbookId());
+//        experimentService.updateMaxValueForExperimentFeatures(experiment.getExecContextId());
 
         // one more time to get new object from cache
         experiment = experimentCache.findById(experimentId);
@@ -203,8 +203,8 @@ public class ExperimentTopLevelService {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.070 experiment wasn't startet yet, experimentId: " + experimentId);
         }
 
-        ExecContextImpl workbook = execContextCache.findById(experiment.getExecContextId());
-        if (workbook == null) {
+        ExecContextImpl execContext = execContextCache.findById(experiment.getExecContextId());
+        if (execContext == null) {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to execContext, experimentId: " + experimentId);
         }
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
@@ -221,16 +221,16 @@ public class ExperimentTopLevelService {
             result.addInfoMessage("#285.090 A launch is disabled, dataset isn't assigned");
         }
 
-        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(workbook);
+        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
         ExperimentApiData.ExperimentInfoResult experimentInfoResult = new ExperimentApiData.ExperimentInfoResult();
         final List<ExperimentParamsYaml.ExperimentFeature> experimentFeatures = epy.processing.features;
         experimentInfoResult.features = experimentFeatures.stream().map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
-        experimentInfoResult.execContext = workbook;
-        experimentInfoResult.execContextState = EnumsApi.ExecContextState.toState(workbook.getState());
+        experimentInfoResult.execContext = execContext;
+        experimentInfoResult.execContextState = EnumsApi.ExecContextState.toState(execContext.getState());
         result.experiment = ExperimentService.asExperimentData(experiment);
         result.experimentInfo = experimentInfoResult;
 
-        List<TaskProgress> taskProgresses = taskRepository.getTaskProgress(workbook.id);
+        List<TaskProgress> taskProgresses = taskRepository.getTaskProgress(execContext.id);
         result.progress = taskProgresses.stream()
                 .sorted(Comparator.comparingInt(t -> t.execState))
                 .map(t->new ExperimentApiData.ExperimentProgressResult(t.count, t.execState, EnumsApi.TaskExecState.from(t.execState).toString(), t.isCompleted, t.isResultReceived))
@@ -742,7 +742,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, execContextResultRest.errorMessages, execContextResultRest.infoMessages);
         }
 
-        experimentService.bindExperimentToWorkbook(experiment.id, execContextResultRest.execContext.getId());
+        experimentService.bindExperimentToExecContext(experiment.id, execContextResultRest.execContext.getId());
 
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,
                 "Binding an experiment '"+experimentCode+"' to sourceCode '"+p.uid +"' with using a resource '"+resourcePoolCode+"' was successful", null);

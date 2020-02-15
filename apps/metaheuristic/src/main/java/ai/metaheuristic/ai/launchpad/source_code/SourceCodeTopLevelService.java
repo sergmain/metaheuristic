@@ -78,14 +78,14 @@ public class SourceCodeTopLevelService {
     private final GlobalVariableService globalVariableService;
 
     public SourceCodeApiData.ExecContextResult addExecContext(Long sourceCodeId, String variable, LaunchpadContext context) {
-        return getWorkbookResult(variable, context, sourceCodeCache.findById(sourceCodeId));
+        return getExecContextResult(variable, context, sourceCodeCache.findById(sourceCodeId));
     }
 
     public SourceCodeApiData.ExecContextResult addExecContext(String sourceCodeUid, String variable, LaunchpadContext context) {
-        return getWorkbookResult(variable, context, sourceCodeRepository.findByUidAndCompanyId(sourceCodeUid, context.getCompanyId()));
+        return getExecContextResult(variable, context, sourceCodeRepository.findByUidAndCompanyId(sourceCodeUid, context.getCompanyId()));
     }
 
-    private SourceCodeApiData.ExecContextResult getWorkbookResult(String variable, LaunchpadContext context, SourceCodeImpl sourceCode) {
+    private SourceCodeApiData.ExecContextResult getExecContextResult(String variable, LaunchpadContext context, SourceCodeImpl sourceCode) {
         if (S.b(variable)) {
             return new SourceCodeApiData.ExecContextResult("#560.006 name of variable is empty");
         }
@@ -351,21 +351,21 @@ public class SourceCodeTopLevelService {
 
     // ========= ExecContext specific =============
 
-    public OperationStatusRest changeExecContextState(String state, Long workbookId, LaunchpadContext context) {
+    public OperationStatusRest changeExecContextState(String state, Long execContextId, LaunchpadContext context) {
         EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.valueOf(state.toUpperCase());
         if (execState== EnumsApi.ExecContextState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
         }
-        OperationStatusRest status = checkWorkbook(workbookId, context);
+        OperationStatusRest status = checkExecContext(execContextId, context);
         if (status != null) {
             return status;
         }
-        status = execContextService.execContextTargetState(workbookId, execState);
+        status = execContextService.execContextTargetState(execContextId, execState);
         return status;
     }
 
     public OperationStatusRest deleteExecContextById(Long execContextId, LaunchpadContext context) {
-        OperationStatusRest status = checkWorkbook(execContextId, context);
+        OperationStatusRest status = checkExecContext(execContextId, context);
         if (status != null) {
             return status;
         }
@@ -375,7 +375,7 @@ public class SourceCodeTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private OperationStatusRest checkWorkbook(Long execContextId, LaunchpadContext context) {
+    private OperationStatusRest checkExecContext(Long execContextId, LaunchpadContext context) {
         if (execContextId==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 execContextId is null");
         }

@@ -339,7 +339,7 @@ public class StationTaskService {
                 // we don't need new task because execContext for this task is active
                 // i.e. there is a non-completed task with active execContext
                 // if execContext wasn't active we would need a new task
-                if (currentExecState.isStarted(task.launchpadUrl, task.workbookId)) {
+                if (currentExecState.isStarted(task.launchpadUrl, task.execContextId)) {
                     return false;
                 }
             }
@@ -480,7 +480,7 @@ public class StationTaskService {
         return new StationCommParamsYaml.ReportStationTaskStatus(statuses);
     }
 
-    public void createTask(String launchpadUrl, long taskId, Long workbookId, String params) {
+    public void createTask(String launchpadUrl, long taskId, Long execContextId, String params) {
         if (launchpadUrl==null) {
             throw new IllegalStateException("#713.150 launchpadUrl is null");
         }
@@ -490,7 +490,7 @@ public class StationTaskService {
             StationTask task = mapForLaunchpadUrl.computeIfAbsent(taskId, k -> new StationTask());
 
             task.taskId = taskId;
-            task.workbookId = workbookId;
+            task.execContextId = execContextId;
             task.params = params;
             task.metrics = null;
             task.snippetExecResult = null;

@@ -64,17 +64,17 @@ public class Schedulers {
         private long prevReconciliationTime = 0L;
 
         /**
-         * update status of all workbooks which are in 'started' state. Also, if execContext is finished, atlas will be produced
+         * update status of all execContexts which are in 'started' state. Also, if execContext is finished, atlas will be produced
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.process-workbook'), 1, 40, 3)*1000 }")
-        public void updateWorkbookStatuses() {
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.process-exec-context'), 1, 40, 3)*1000 }")
+        public void updateExecContextStatuses() {
             if (globals.isUnitTesting) {
                 return;
             }
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoking WorkbookService.updateWorkbookStatuses()");
+            log.info("Invoking ExecContextService.updateExecContextStatuses()");
             boolean needReconciliation = false;
             try {
                 if ((System.currentTimeMillis()- prevReconciliationTime) > TIMEOUT_BETWEEN_RECONCILIATION) {
@@ -82,9 +82,9 @@ public class Schedulers {
                 }
                 execContextSchedulerService.updateExecContextStatuses(needReconciliation);
             } catch (InvalidDataAccessResourceUsageException e) {
-                log.error("!!! need to investigate. Error while updateWorkbookStatuses()",e);
+                log.error("!!! need to investigate. Error while updateExecContextStatuses()",e);
             } catch (Throwable th) {
-                log.error("Error while updateWorkbookStatuses()", th);
+                log.error("Error while updateExecContextStatuses()", th);
             }
             finally {
                 if (needReconciliation) {
@@ -94,7 +94,7 @@ public class Schedulers {
         }
 
         /**
-         * update statuses of all batches if all related workbooks are finished
+         * update statuses of all batches if all related execContexts are finished
          */
         @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.update-batch-statuses'), 5, 60, 5)*1000 }")
         public void updateBatchStatuses() {
@@ -116,7 +116,7 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoking planService.createAllTasks()");
+            log.info("Invoking sourceCodeService.createAllTasks()");
             sourceCodeService.createAllTasks();
         }
 

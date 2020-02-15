@@ -45,7 +45,7 @@ public class StationCommandProcessor {
     // this method is synchronized outside
     public void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String launchpadUrl, LaunchpadCommParamsYaml launchpadYaml) {
         scpy.resendTaskOutputResourceResult = resendTaskOutputResource(launchpadUrl, launchpadYaml);
-        processWorkbookStatus(launchpadUrl, launchpadYaml);
+        processExecContextStatus(launchpadUrl, launchpadYaml);
         processReportResultDelivering(launchpadUrl, launchpadYaml);
         processAssignedTask(launchpadUrl, launchpadYaml);
         storeStationId(launchpadUrl, launchpadYaml);
@@ -73,11 +73,11 @@ public class StationCommandProcessor {
         return new StationCommParamsYaml.ResendTaskOutputResourceResult(statuses);
     }
 
-    private void processWorkbookStatus(String launchpadUrl, LaunchpadCommParamsYaml request) {
-        if (request.workbookStatus==null) {
+    private void processExecContextStatus(String launchpadUrl, LaunchpadCommParamsYaml request) {
+        if (request.execContextStatus ==null) {
             return;
         }
-        currentExecState.register(launchpadUrl, request.workbookStatus.statuses);
+        currentExecState.register(launchpadUrl, request.execContextStatus.statuses);
     }
 
     // processing on station side

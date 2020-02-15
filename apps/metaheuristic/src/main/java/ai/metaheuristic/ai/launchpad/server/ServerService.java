@@ -286,8 +286,8 @@ public class ServerService {
         }
     }
 
-    private LaunchpadCommParamsYaml.WorkbookStatus getWorkbookStatuses() {
-        return new LaunchpadCommParamsYaml.WorkbookStatus(
+    private LaunchpadCommParamsYaml.ExecContextStatus getExecContextStatuses() {
+        return new LaunchpadCommParamsYaml.ExecContextStatus(
                 execContextRepository.findAllExecStates()
                         .stream()
                         .map(o -> ServerService.toSimpleStatus((Long)o[0], (Integer)o[1]))
@@ -315,7 +315,7 @@ public class ServerService {
                 return lcpy;
             }
 
-            lcpy.workbookStatus = getWorkbookStatuses();
+            lcpy.execContextStatus = getExecContextStatuses();
 
             log.debug("Start processing commands");
             launchpadCommandProcessor.process(scpy, lcpy);
@@ -455,12 +455,12 @@ public class ServerService {
         return new LaunchpadCommParamsYaml.ReAssignStationId(s.getId(), sessionId);
     }
 
-    private static LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus to(ExecContext execContext) {
-        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(execContext.getId(), EnumsApi.ExecContextState.toState(execContext.getState()));
+    private static LaunchpadCommParamsYaml.ExecContextStatus.SimpleStatus to(ExecContext execContext) {
+        return new LaunchpadCommParamsYaml.ExecContextStatus.SimpleStatus(execContext.getId(), EnumsApi.ExecContextState.toState(execContext.getState()));
     }
 
-    private static LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus toSimpleStatus(Long workbookId, Integer execSate) {
-        return new LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus(workbookId, EnumsApi.ExecContextState.toState(execSate));
+    private static LaunchpadCommParamsYaml.ExecContextStatus.SimpleStatus toSimpleStatus(Long execContextId, Integer execSate) {
+        return new LaunchpadCommParamsYaml.ExecContextStatus.SimpleStatus(execContextId, EnumsApi.ExecContextState.toState(execSate));
     }
 
 }

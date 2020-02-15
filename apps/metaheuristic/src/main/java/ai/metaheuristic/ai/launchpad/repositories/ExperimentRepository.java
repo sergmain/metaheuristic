@@ -58,7 +58,7 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
 
     @Transactional
     @Query(value="select e from Experiment e where e.execContextId=:execContextId")
-    Experiment findByWorkbookIdForUpdate(Long execContextId);
+    Experiment findByExecContextIdForUpdate(Long execContextId);
 
     @Override
     @Transactional(readOnly = true)

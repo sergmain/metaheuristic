@@ -29,8 +29,8 @@ create table MH_BATCH
     VERSION           NUMERIC(5, 0)  NOT NULL,
     COMPANY_ID        NUMERIC(10, 0) NOT NULL,
     ACCOUNT_ID        NUMERIC(10, 0),
-    SOURCE_CODE_ID           NUMERIC(10, 0) NOT NULL,
-    EXEC_CONTEXT_ID       NUMERIC(10, 0),
+    SOURCE_CODE_ID    NUMERIC(10, 0) NOT NULL,
+    EXEC_CONTEXT_ID   NUMERIC(10, 0),
     DATA_ID           NUMERIC(10, 0),
     CREATED_ON        bigint         NOT NULL,
     EXEC_STATE        smallint not null default 0,
@@ -43,5 +43,9 @@ CREATE INDEX MH_BATCH_EXEC_CONTEXT_ID_IDX
 
 alter table mh_task
     drop column task_order;
+
+alter table mh_experiment rename column workbook_id to EXEC_CONTEXT_ID;
+
+alter table mh_task rename column workbook_id to EXEC_CONTEXT_ID;
 
 

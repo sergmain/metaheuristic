@@ -28,17 +28,11 @@ import java.util.Map;
 public class StationCommParamsYamlUtils {
 
     private static final StationCommParamsYamlUtilsV1 YAML_UTILS_V_1 = new StationCommParamsYamlUtilsV1();
-    private static final StationCommParamsYamlUtilsV2 YAML_UTILS_V_2 = new StationCommParamsYamlUtilsV2();
-    private static final StationCommParamsYamlUtilsV3 YAML_UTILS_V_3 = new StationCommParamsYamlUtilsV3();
-    private static final StationCommParamsYamlUtilsV4 YAML_UTILS_V_4 = new StationCommParamsYamlUtilsV4();
-    private static final StationCommParamsYamlUtilsV4 DEFAULT_UTILS = YAML_UTILS_V_4;
+    private static final StationCommParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
     public static final BaseYamlUtils<StationCommParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2,
-                    3, YAML_UTILS_V_3,
-                    4, YAML_UTILS_V_4
+                    1, YAML_UTILS_V_1
             ),
             DEFAULT_UTILS
     );

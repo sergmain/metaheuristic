@@ -27,33 +27,33 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Profile("station")
 public class CurrentExecState {
 
-    // this is a map for holding the current status of ExecContext, Not a task
-    private final Map<String, Map<Long, EnumsApi.ExecContextState>> workbookState = new HashMap<>();
+    // this is a map for holding the current status of ExecContext, not of task
+    private final Map<String, Map<Long, EnumsApi.ExecContextState>> execContextState = new HashMap<>();
 
     private Map<String, AtomicBoolean> isInit = new HashMap<>();
 
     public boolean isInited(String launchpadUrl) {
-        synchronized(workbookState) {
+        synchronized(execContextState) {
             return isInit.computeIfAbsent(launchpadUrl, v -> new AtomicBoolean(false)).get();
         }
     }
 
-    public void register(String launchpadUrl, List<LaunchpadCommParamsYaml.WorkbookStatus.SimpleStatus> statuses) {
-        synchronized(workbookState) {
+    public void register(String launchpadUrl, List<LaunchpadCommParamsYaml.ExecContextStatus.SimpleStatus> statuses) {
+        synchronized(execContextState) {
             isInit.computeIfAbsent(launchpadUrl, v -> new AtomicBoolean()).set(true);
             // statuses==null when there isn't any execContext
             if (statuses==null) {
-                workbookState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).clear();
+                execContextState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).clear();
                 return;
             }
-            statuses.forEach(status -> workbookState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).put(status.workbookId, status.state));
-            workbookState.forEach((k, v) -> {
+            statuses.forEach(status -> execContextState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).put(status.execContextId, status.state));
+            execContextState.forEach((k, v) -> {
                 if (!k.equals(launchpadUrl)) {
                     return;
                 }
                 List<Long> ids = new ArrayList<>();
                 v.forEach((key, value) -> {
-                    boolean isFound = statuses.stream().anyMatch(status -> status.workbookId == key);
+                    boolean isFound = statuses.stream().anyMatch(status -> status.execContextId == key);
                     if (!isFound) {
                         ids.add(key);
                     }
@@ -63,21 +63,21 @@ public class CurrentExecState {
         }
     }
 
-    EnumsApi.ExecContextState getState(String host, long workbookId) {
-        synchronized(workbookState) {
+    EnumsApi.ExecContextState getState(String host, Long execContextId) {
+        synchronized(execContextState) {
             if (!isInited(host)) {
                 return EnumsApi.ExecContextState.UNKNOWN;
             }
-            return workbookState.getOrDefault(host, Collections.emptyMap()).getOrDefault(workbookId, EnumsApi.ExecContextState.DOESNT_EXIST);
+            return execContextState.getOrDefault(host, Collections.emptyMap()).getOrDefault(execContextId, EnumsApi.ExecContextState.DOESNT_EXIST);
         }
     }
 
-    boolean isState(String launchpadUrl, long workbookId, EnumsApi.ExecContextState state) {
-        EnumsApi.ExecContextState currState = getState(launchpadUrl, workbookId);
+    boolean isState(String launchpadUrl, Long execContextId, EnumsApi.ExecContextState state) {
+        EnumsApi.ExecContextState currState = getState(launchpadUrl, execContextId);
         return currState!=null && currState==state;
     }
 
-    boolean isStarted(String launchpadUrl, long workbookId) {
-        return isState(launchpadUrl, workbookId, EnumsApi.ExecContextState.STARTED);
+    boolean isStarted(String launchpadUrl, Long execContextId) {
+        return isState(launchpadUrl, execContextId, EnumsApi.ExecContextState.STARTED);
     }
 }

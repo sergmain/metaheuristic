@@ -40,12 +40,12 @@ public class ParamsSetter {
     }
 
     @Transactional
-    public Set<String> getParamsInTransaction(boolean isPersist, Long workbookId, Experiment experiment, IntHolder size) {
+    public Set<String> getParamsInTransaction(boolean isPersist, Long execContextId, Experiment experiment, IntHolder size) {
         Set<String> taskParams;
         taskParams = new LinkedHashSet<>();
 
         size.value = 0;
-        try (Stream<Object[]> stream = taskRepository.findByExecContextId(workbookId) ) {
+        try (Stream<Object[]> stream = taskRepository.findByExecContextId(execContextId) ) {
             stream
                     .forEach(o -> {
                         if (taskParams.contains((String) o[1])) {

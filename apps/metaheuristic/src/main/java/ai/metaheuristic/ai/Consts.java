@@ -74,7 +74,7 @@ public class Consts {
     public static final String PARAMS_YAML_MASK = "params-v%d.yaml";
     public static final String TASK_YAML = "task.yaml";
 
-    public static final String MH_WORKBOOK_INPUT_VARIABLE = "mh.execContext-input-variable";
+    public static final String MH_EXEC_CONTEXT_INPUT_VARIABLE = "mh.exec-context-input-variable";
     public static final String ML_MODEL_BIN = "ml_model.bin";
     public static final String LOCALHOST_IP = "127.0.0.1";
 
@@ -101,18 +101,6 @@ public class Consts {
     public static final String ZIP_EXT = ".zip";
     public static final String XML_EXT = ".xml";
     public static final String RAR_EXT = ".rar";
-
-    // legacy meta, all metas moved to ai.metaheuristic.api.ConstsApi
-    @Deprecated
-    public static final String RESULT_FILE_EXTENSION = "result-file-extension";
-
-    // legacy meta, all metas moved to ai.metaheuristic.api.ConstsApi
-    @Deprecated
-    public static final String META_SNIPPET_PARAMS_AS_FILE_META = "snippet-params-as-file";
-
-    // legacy meta, all metas moved to ai.metaheuristic.api.ConstsApi
-    @Deprecated
-    public static final String META_SNIPPET_PARAMS_FILE_EXT_META = "snippet-params-file-ext";
 
     public static final String HEADER_MH_IS_LAST_CHUNK = "mh-is-last-chunk";
     public static final String HEADER_MH_CHUNK_SIZE = "mh-chunk-size";

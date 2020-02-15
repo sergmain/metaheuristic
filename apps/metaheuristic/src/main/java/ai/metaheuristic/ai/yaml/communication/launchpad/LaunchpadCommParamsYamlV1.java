@@ -22,17 +22,20 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Communication file which is transferred from a Launchpad to a Station
  *
  * @author Serge
- * Date: 8/29/2019
+ * Date: 10/03/2019
  * Time: 6:00 PM
  */
 @Data
 public class LaunchpadCommParamsYamlV1 implements BaseParams {
+
+    public final int version=1;
 
     @Override
     public boolean checkIntegrity() {
@@ -41,12 +44,28 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
 
     public LaunchpadCommContextV1 launchpadCommContext;
 
+    // always send info about snippets
+    public SnippetsV1 snippets = new SnippetsV1();
     public AssignedTaskV1 assignedTask;
     public AssignedStationIdV1 assignedStationId;
     public ReAssignStationIdV1 reAssignedStationId;
     public ReportResultDeliveringV1 reportResultDelivering;
-    public WorkbookStatusV1 workbookStatus;
+    public ExecContextStatusV1 execContextStatus;
     public ResendTaskOutputResourceV1 resendTaskOutputResource;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SnippetsV1 {
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        public static class Info {
+            public String code;
+            public EnumsApi.SnippetSourcing sourcing;
+        }
+        public List<Info> infos = new ArrayList<>();
+    }
 
     @Data
     @AllArgsConstructor
@@ -54,7 +73,7 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
     public static class AssignedTaskV1 {
         public String params;
         public Long taskId;
-        public Long workbookId;
+        public Long execContextId;
     }
 
     @Data
@@ -87,13 +106,13 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class WorkbookStatusV1 {
+    public static class ExecContextStatusV1 {
 
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SimpleStatus {
-            public long workbookId;
+            public long execContextId;
             public EnumsApi.ExecContextState state;
         }
 
@@ -112,10 +131,10 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class LaunchpadCommContextV1 {
         public Long chunkSize;
+        // Station's version for communicating with launchpad
+        public Integer stationCommVersion;
     }
 
     public boolean success = true;
     public String msg;
-
-    public final int version=1;
 }
