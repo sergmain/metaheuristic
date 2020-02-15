@@ -19,20 +19,21 @@ package ai.metaheuristic.ai.launchpad.source_code;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.launchpad.variable.GlobalVariableService;
 import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
-import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
+import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.launchpad.variable.GlobalVariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.launchpad.SourceCode;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.launchpad.ExecContext;
+import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -109,28 +110,29 @@ public class SourceCodeTopLevelService {
 
     public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, LaunchpadContext context) {
         pageable = ControllerUtils.fixPageSize(globals.sourceCodeRowsLimit, pageable);
-        List<SourceCode> sourceCodes = sourceCodeRepository.findAllByOrderByIdDesc(context.getCompanyId());
+        List<Long> sourceCodeIds = sourceCodeRepository.findAllIdsByOrderByIdDesc(context.getCompanyId());
         AtomicInteger count = new AtomicInteger();
 
-        List<SourceCode> activeSourceCodes = sourceCodes.stream()
-                .filter(o-> {
+        List<SourceCode> activeSourceCodes = sourceCodeIds.stream()
+                .map(sourceCodeCache::findById)
+                .filter(sourceCode-> {
                     try {
-                        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
-                        boolean b = ppy.internalParams == null || !ppy.internalParams.archived;
+                        SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
+                        boolean b = scspy.internalParams == null || !scspy.internalParams.archived;
                         b = isArchive != b;
                         if (b) {
                             count.incrementAndGet();
                         }
                         return b;
                     } catch (YAMLException e) {
-                        log.error("#560.020 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #{}", o.getId());
-                        log.error("#560.025 Params:\n{}", o.getParams());
+                        log.error("#560.020 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #{}", sourceCode.getId());
+                        log.error("#560.025 Params:\n{}", sourceCode.getParams());
                         log.error("#560.030 Error: {}", e.toString());
                         return false;
                     }
                 }).collect(Collectors.toList());
 
-        sourceCodes = activeSourceCodes.stream()
+        List<SourceCode> sourceCodes = activeSourceCodes.stream()
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .peek(o-> o.setParams(null))
@@ -150,7 +152,8 @@ public class SourceCodeTopLevelService {
                     "#560.050 sourceCode wasn't found, sourceCodeId: " + sourceCodeId,
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
         }
-        return new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml().origin);
+        SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
+        return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source);
     }
 
     public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, LaunchpadContext context) {
@@ -160,7 +163,8 @@ public class SourceCodeTopLevelService {
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
         }
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml().origin);
+        SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source);
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
         result.errorMessages = sourceCodeValidation.errorMessages;
         result.infoMessages = sourceCodeValidation.infoMessages;
@@ -194,11 +198,12 @@ public class SourceCodeTopLevelService {
         }
 
         SourceCodeImpl sourceCode = new SourceCodeImpl();
-        ppy.origin.source = sourceCodeYamlAsStr;
-        ppy.origin.lang = EnumsApi.SourceCodeLang.yaml;
-        ppy.internalParams.updatedOn = System.currentTimeMillis();
-        String params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
-        sourceCode.setParams(params);
+        SourceCodeStoredParamsYaml scspy = new SourceCodeStoredParamsYaml();
+        scspy.source = sourceCodeYamlAsStr;
+        scspy.lang = EnumsApi.SourceCodeLang.yaml;
+        scspy.internalParams.updatedOn = System.currentTimeMillis();
+
+        sourceCode.updateParams(scspy);
 
         sourceCode.companyId = context.getCompanyId();
         sourceCode.createdOn = System.currentTimeMillis();
@@ -207,7 +212,7 @@ public class SourceCodeTopLevelService {
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, ppy.origin );
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml());
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.errorMessages = sourceCodeValidation.errorMessages;
         return result;
@@ -234,26 +239,23 @@ public class SourceCodeTopLevelService {
         if (StringUtils.isBlank(code)) {
             return new SourceCodeApiData.SourceCodeResult("#560.190 code of sourceCode is empty");
         }
-        if (StringUtils.isBlank(code)) {
-            return new SourceCodeApiData.SourceCodeResult("#560.210 sourceCode is empty");
-        }
         SourceCode p = sourceCodeRepository.findByUidAndCompanyId(code, context.getCompanyId());
         if (p!=null && !p.getId().equals(sourceCode.getId())) {
             return new SourceCodeApiData.SourceCodeResult("#560.230 sourceCode with such code already exists, code: " + code);
         }
         sourceCode.uid = code;
 
-        ppy.origin.source = sourceCodeYamlAsStr;
-        ppy.origin.lang = EnumsApi.SourceCodeLang.yaml;
-        ppy.internalParams.updatedOn = System.currentTimeMillis();
-        String params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
-        sourceCode.setParams(params);
+        SourceCodeStoredParamsYaml scspy = new SourceCodeStoredParamsYaml();
+        scspy.source = sourceCodeYamlAsStr;
+        scspy.lang = EnumsApi.SourceCodeLang.yaml;
+        scspy.internalParams.updatedOn = System.currentTimeMillis();
+        sourceCode.updateParams(scspy);
 
         sourceCode = sourceCodeCache.save(sourceCode);
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
 
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, ppy.origin );
+        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, scspy );
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.errorMessages = sourceCodeValidation.errorMessages;
         return result;
@@ -283,13 +285,13 @@ public class SourceCodeTopLevelService {
         if (status!=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId+", " + status.getErrorMessagesAsStr());
         }
-        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode.getParams());
-        if (ppy.internalParams==null) {
-            ppy.internalParams = new SourceCodeParamsYaml.InternalParams();
+        SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
+        if (scspy.internalParams==null) {
+            scspy.internalParams = new SourceCodeStoredParamsYaml.InternalParams();
         }
-        ppy.internalParams.archived = true;
-        ppy.internalParams.updatedOn = System.currentTimeMillis();
-        sourceCode.setParams(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
+        scspy.internalParams.archived = true;
+        scspy.internalParams.updatedOn = System.currentTimeMillis();
+        sourceCode.updateParams(scspy);
 
         sourceCodeCache.save(sourceCode);
         return OperationStatusRest.OPERATION_STATUS_OK;

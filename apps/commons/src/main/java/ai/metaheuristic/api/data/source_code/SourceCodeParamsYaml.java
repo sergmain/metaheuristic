@@ -168,27 +168,6 @@ public class SourceCodeParamsYaml implements BaseParams {
         }
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class InternalParams {
-        public boolean archived;
-        public boolean published;
-        public long updatedOn;
-        public List<Meta> metas;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Origin {
-        public String source;
-        public EnumsApi.SourceCodeLang lang;
-    }
-
     public final int version=1;
     public SourceCodeYaml source;
-    public final Origin origin = new Origin();
-    public InternalParams internalParams;
-
 }

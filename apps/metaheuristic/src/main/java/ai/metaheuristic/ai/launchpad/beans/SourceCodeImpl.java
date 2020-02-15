@@ -95,6 +95,6 @@ public class SourceCodeImpl implements Serializable, SourceCode {
 
     @JsonIgnore
     public void updateParams(SourceCodeStoredParamsYaml scspy) {
-        params = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.toString(scspy);
+        setParams(SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.toString(scspy));
     }
 }

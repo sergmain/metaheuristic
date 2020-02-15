@@ -44,6 +44,10 @@ public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Lon
     List<SourceCode> findAllByOrderByIdDesc(Long companyUniqueId);
 
     @Transactional(readOnly = true)
+    @Query(value="select p.id from SourceCodeImpl p where p.companyId=:companyUniqueId order by p.id desc ")
+    List<Long> findAllIdsByOrderByIdDesc(Long companyUniqueId);
+
+    @Transactional(readOnly = true)
     @Query(value="select p from SourceCodeImpl p where p.uid=:uid and p.companyId=:companyUniqueId")
     SourceCodeImpl findByUidAndCompanyId(String uid, Long companyUniqueId);
 
