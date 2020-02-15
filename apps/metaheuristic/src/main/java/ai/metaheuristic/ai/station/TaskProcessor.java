@@ -450,8 +450,7 @@ public class TaskProcessor {
             if (!snippetPrepareResult.snippet.skipParams) {
                 if (StringUtils.isNoneBlank(snippetPrepareResult.snippet.params)) {
                     final Meta meta = MetaUtils.getMeta(snippetPrepareResult.snippet.metas,
-                            ConstsApi.META_MH_SNIPPET_PARAMS_AS_FILE_META,
-                            Consts.META_SNIPPET_PARAMS_AS_FILE_META);
+                            ConstsApi.META_MH_SNIPPET_PARAMS_AS_FILE_META);
                     if (MetaUtils.isTrue(meta)) {
                         final Meta metaExt = MetaUtils.getMeta(snippetPrepareResult.snippet.metas,
                                 ConstsApi.META_MH_SNIPPET_PARAMS_FILE_EXT_META);

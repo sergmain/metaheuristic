@@ -103,17 +103,6 @@ public class StationCommParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ReportStationStatus {
-
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class SnippetStatus {
-            public String code;
-            public Enums.SnippetState state;
-        }
-
-        public List<SnippetStatus> snippetStatuses = null;
-
         public EnvYaml env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;

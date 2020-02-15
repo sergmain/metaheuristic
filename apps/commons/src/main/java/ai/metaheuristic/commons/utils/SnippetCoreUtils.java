@@ -131,9 +131,10 @@ public class SnippetCoreUtils {
         return List.of();
     }
 
+    // TODO 2020-02-14 why it was deprecated?
     @SuppressWarnings("deprecation")
     public static int getTaskParamsVersion(List<Meta> metas) {
-        final Meta meta = MetaUtils.getMeta(metas, ConstsApi.META_MH_TASK_PARAMS_VERSION, ConstsApi.META_TASK_PARAMS_VERSION);
+        final Meta meta = MetaUtils.getMeta(metas, ConstsApi.META_MH_TASK_PARAMS_VERSION);
         return (meta!=null) ? Integer.parseInt(meta.value) : 1;
     }
 }

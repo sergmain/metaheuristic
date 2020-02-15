@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.Meta;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -104,7 +103,7 @@ public class StationCommParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ReportStationStatusV1 {
-
+/*
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
@@ -115,6 +114,7 @@ public class StationCommParamsYamlV1 implements BaseParams {
 
         public List<SnippetStatus> snippetStatuses = null;
 
+*/
         public EnvYaml env;
         public GitSourcingService.GitStatusInfo gitStatusInfo;
         public String schedule;

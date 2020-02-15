@@ -16,18 +16,14 @@
 
 package ai.metaheuristic.ai.yaml.atlas;
 
-import ai.metaheuristic.ai.launchpad.beans.AtlasTask;
-import ai.metaheuristic.ai.launchpad.repositories.AtlasTaskRepository;
+import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV1;
-import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
-
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -38,14 +34,11 @@ import java.util.stream.Collectors;
 @Profile("launchpad")
 @RequiredArgsConstructor
 public class AtlasParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<AtlasParamsYamlV1, AtlasParamsYamlV1, AtlasParamsYamlUtilsV2, Void, Void, Void> {
-
-    private final AtlasTaskRepository atlasTaskRepository;
-    private final AtlasParamsYamlUtilsV2 atlasParamsYamlUtilsV2;
+        extends AbstractParamsYamlUtils<AtlasParamsYamlV1, AtlasParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @Override
@@ -54,40 +47,14 @@ public class AtlasParamsYamlUtilsV1
     }
 
     @Override
-    public AtlasParamsYamlV1 upgradeTo(AtlasParamsYamlV1 src, Long ... vars) {
-        if (vars==null || vars.length==0) {
-            throw new IllegalStateException("Not enough parameters");
-        }
+    public AtlasParamsYaml upgradeTo(AtlasParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
-        AtlasParamsYamlV1 trg = new AtlasParamsYamlV1();
+        AtlasParamsYaml trg = new AtlasParamsYaml();
         trg.createdOn = src.createdOn;
-        trg.sourceCode = new AtlasParamsYamlV1.SourceCodeWithParamsV1(src.sourceCode.sourceCodeId, src.sourceCode.sourceCodeParams);
-        trg.execContext = new AtlasParamsYamlV1.ExecContextWithParamsV1(src.execContext.execContextId, src.execContext.execContextParams, src.execContext.execState);
-        trg.experiment = new AtlasParamsYamlV1.ExperimentWithParamsV1(src.experiment.experimentId, src.experiment.experimentParams);
-        trg.taskIds = src.tasks.stream().peek(t->{
-            final Long atlasId = vars[0];
-            AtlasTask at = atlasTaskRepository.findByAtlasIdAndTaskId(atlasId, t.taskId);
-            if (at==null) {
-                at = new AtlasTask();
-                at.atlasId = atlasId;
-                at.taskId = t.taskId;
-                AtlasTaskParamsYaml atpy = new AtlasTaskParamsYaml();
-                atpy.assignedOn = t.getAssignedOn();
-                atpy.completed = t.isCompleted();
-                atpy.completedOn = t.getCompletedOn();
-                atpy.execState = t.getExecState();
-                atpy.taskId = t.taskId;
-                atpy.taskParams = t.taskParams;
-                // typeAsString will be initialized when AtlasTaskParamsYaml will be requested
-                // see method ai.metaheuristic.ai.launchpad.atlas.AtlasTopLevelService.findTasks
-                atpy.typeAsString = null;
-                atpy.snippetExecResults = t.getExec();
-                atpy.metrics = t.getMetrics();
-
-                at.params = AtlasTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
-                atlasTaskRepository.save(at);
-            }
-        }).map(o->o.taskId).collect(Collectors.toList());
+        trg.sourceCode = new AtlasParamsYaml.SourceCodeWithParams(src.sourceCode.sourceCodeId, src.sourceCode.sourceCodeParams);
+        trg.execContext = new AtlasParamsYaml.ExecContextWithParams(src.execContext.execContextId, src.execContext.execContextParams, src.execContext.execState);
+        trg.experiment = new AtlasParamsYaml.ExperimentWithParams(src.experiment.experimentId, src.experiment.experimentParams);
+        trg.taskIds = src.taskIds;
 
         trg.checkIntegrity();
         return trg;
@@ -99,8 +66,8 @@ public class AtlasParamsYamlUtilsV1
     }
 
     @Override
-    public AtlasParamsYamlUtilsV2 nextUtil() {
-        return atlasParamsYamlUtilsV2;
+    public Void nextUtil() {
+        return null;
     }
 
     @Override

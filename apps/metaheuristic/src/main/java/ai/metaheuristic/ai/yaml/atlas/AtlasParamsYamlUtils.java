@@ -35,9 +35,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AtlasParamsYamlUtils {
 
-    private final AtlasParamsYamlUtilsV1 YAML_UTILS_V_1;
-    private final AtlasParamsYamlUtilsV2 YAML_UTILS_V_2;
-//    private static final AtlasParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final AtlasParamsYamlUtilsV1 YAML_UTILS_V_1 = new AtlasParamsYamlUtilsV1();
+    private static final AtlasParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
     public BaseYamlUtils<AtlasParamsYaml> BASE_YAML_UTILS;
 
@@ -45,10 +44,9 @@ public class AtlasParamsYamlUtils {
     private void postConstruct() {
         BASE_YAML_UTILS = new BaseYamlUtils<>(
                 Map.of(
-                        1, YAML_UTILS_V_1,
-                        2, YAML_UTILS_V_2
+                        1, YAML_UTILS_V_1
                 ),
-                YAML_UTILS_V_2
+                DEFAULT_UTILS
         );
     }
 }
