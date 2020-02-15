@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.yaml.atlas;
 import ai.metaheuristic.ai.launchpad.beans.AtlasTask;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasTaskRepository;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV1;
-import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV2;
 import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -39,7 +38,7 @@ import java.util.stream.Collectors;
 @Profile("launchpad")
 @RequiredArgsConstructor
 public class AtlasParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<AtlasParamsYamlV1, AtlasParamsYamlV2, AtlasParamsYamlUtilsV2, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<AtlasParamsYamlV1, AtlasParamsYamlV1, AtlasParamsYamlUtilsV2, Void, Void, Void> {
 
     private final AtlasTaskRepository atlasTaskRepository;
     private final AtlasParamsYamlUtilsV2 atlasParamsYamlUtilsV2;
@@ -55,16 +54,16 @@ public class AtlasParamsYamlUtilsV1
     }
 
     @Override
-    public AtlasParamsYamlV2 upgradeTo(AtlasParamsYamlV1 src, Long ... vars) {
+    public AtlasParamsYamlV1 upgradeTo(AtlasParamsYamlV1 src, Long ... vars) {
         if (vars==null || vars.length==0) {
             throw new IllegalStateException("Not enough parameters");
         }
         src.checkIntegrity();
-        AtlasParamsYamlV2 trg = new AtlasParamsYamlV2();
+        AtlasParamsYamlV1 trg = new AtlasParamsYamlV1();
         trg.createdOn = src.createdOn;
-        trg.plan = new AtlasParamsYamlV2.PlanWithParamsV2(src.plan.planId, src.plan.planParams);
-        trg.workbook = new AtlasParamsYamlV2.WorkbookWithParamsV2(src.workbook.workbookId, src.workbook.workbookParams, src.workbook.execState);
-        trg.experiment = new AtlasParamsYamlV2.ExperimentWithParamsV2(src.experiment.experimentId, src.experiment.experimentParams);
+        trg.sourceCode = new AtlasParamsYamlV1.SourceCodeWithParamsV1(src.sourceCode.sourceCodeId, src.sourceCode.sourceCodeParams);
+        trg.execContext = new AtlasParamsYamlV1.ExecContextWithParamsV1(src.execContext.execContextId, src.execContext.execContextParams, src.execContext.execState);
+        trg.experiment = new AtlasParamsYamlV1.ExperimentWithParamsV1(src.experiment.experimentId, src.experiment.experimentParams);
         trg.taskIds = src.tasks.stream().peek(t->{
             final Long atlasId = vars[0];
             AtlasTask at = atlasTaskRepository.findByAtlasIdAndTaskId(atlasId, t.taskId);

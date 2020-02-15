@@ -837,7 +837,7 @@ public class ExperimentService {
 
                         ExperimentTaskFeature tef = new ExperimentTaskFeature();
                         tef.id = id.incrementAndGet();
-                        tef.setWorkbookId(execContextId);
+                        tef.setExecContextId(execContextId);
                         tef.setTaskId(task.getId());
                         tef.setFeatureId(feature.id);
                         tef.setTaskType(type.value);

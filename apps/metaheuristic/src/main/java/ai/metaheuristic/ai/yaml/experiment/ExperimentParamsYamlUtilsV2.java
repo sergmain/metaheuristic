@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.yaml.experiment;
 
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYamlV2;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Time: 11:36 PM
  */
 public class ExperimentParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<ExperimentParamsYamlV2, ExperimentParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<ExperimentParamsYamlV1, ExperimentParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -40,11 +40,11 @@ public class ExperimentParamsYamlUtilsV2
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(ExperimentParamsYamlV2.class);
+        return YamlUtils.init(ExperimentParamsYamlV1.class);
     }
 
     @Override
-    public ExperimentParamsYaml upgradeTo(ExperimentParamsYamlV2 src, Long ... vars) {
+    public ExperimentParamsYaml upgradeTo(ExperimentParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         ExperimentParamsYaml trg = new ExperimentParamsYaml();
         trg.createdOn = src.createdOn;
@@ -99,14 +99,14 @@ public class ExperimentParamsYamlUtilsV2
     }
 
     @Override
-    public String toString(ExperimentParamsYamlV2 yaml) {
+    public String toString(ExperimentParamsYamlV1 yaml) {
         return null;
     }
 
     @Override
-    public ExperimentParamsYamlV2 to(String s) {
+    public ExperimentParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable
-        final ExperimentParamsYamlV2 p = getYaml().load(s);
+        final ExperimentParamsYamlV1 p = getYaml().load(s);
         return p;
     }
 

@@ -48,7 +48,7 @@ public class LaunchpadEventYamlV1 implements BaseParams {
         public String filename;
         public String username;
         public Long batchId;
-        public Long workbookId;
+        public Long execContextId;
         public Long companyId;
     }
 
@@ -56,7 +56,7 @@ public class LaunchpadEventYamlV1 implements BaseParams {
     public static class TaskEventDataV1 {
         public Long stationId;
         public Long taskId;
-        public Long workbookId;
+        public Long execContextId;
         public Long batchId;
     }
 }

@@ -139,8 +139,8 @@ public class TaskParamsYamlUtilsV2
     }
 
     @Override
-    public String toString(TaskParamsYamlV2 planYaml) {
-        return getYaml().dump(planYaml);
+    public String toString(TaskParamsYamlV2 taskParamsYaml) {
+        return getYaml().dump(taskParamsYaml);
     }
 
     @Override

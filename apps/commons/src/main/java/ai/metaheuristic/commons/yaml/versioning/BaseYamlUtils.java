@@ -51,8 +51,8 @@ public class BaseYamlUtils<T> {
         return FACTORY.getDefault();
     }
 
-    public String toString(BaseParams planYaml) {
-        return getDefault().getYaml().dumpAsMap(planYaml);
+    public String toString(BaseParams baseParams) {
+        return getDefault().getYaml().dumpAsMap(baseParams);
     }
 
     public String toStringAsVersion(BaseParams baseParamsYaml, int version) {
@@ -62,17 +62,17 @@ public class BaseYamlUtils<T> {
         else {
 
             AbstractParamsYamlUtils yamlUtils = getDefault();
-            Object currPlanParamsYaml = baseParamsYaml;
+            Object currBaseParamsYaml = baseParamsYaml;
             do {
                 if (yamlUtils.getVersion()==version) {
                     break;
                 }
                 //noinspection unchecked
-                currPlanParamsYaml = yamlUtils.downgradeTo(currPlanParamsYaml);
+                currBaseParamsYaml = yamlUtils.downgradeTo(currBaseParamsYaml);
             } while ((yamlUtils=(AbstractParamsYamlUtils)yamlUtils.prevUtil())!=null);
 
             //noinspection unchecked
-            T p = (T)currPlanParamsYaml;
+            T p = (T)currBaseParamsYaml;
 
             return getForVersion(version).getYaml().dumpAsMap(p);
         }
@@ -82,14 +82,14 @@ public class BaseYamlUtils<T> {
         try {
             YamlVersion v = YamlForVersioning.getYamlForVersion().load(s);
             AbstractParamsYamlUtils yamlUtils = getForVersion(v.getActualVersion());
-            BaseParams currPlanParamsYaml = yamlUtils.to(s);
+            BaseParams currBaseParamsYaml = yamlUtils.to(s);
             do {
                 //noinspection unchecked
-                currPlanParamsYaml = yamlUtils.upgradeTo(currPlanParamsYaml, vars);
+                currBaseParamsYaml = yamlUtils.upgradeTo(currBaseParamsYaml, vars);
             } while ((yamlUtils=(AbstractParamsYamlUtils)yamlUtils.nextUtil())!=null);
 
             //noinspection unchecked,UnnecessaryLocalVariable
-            T p = (T)currPlanParamsYaml;
+            T p = (T)currBaseParamsYaml;
 
             return p;
         } catch (YAMLException e) {

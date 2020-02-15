@@ -66,7 +66,7 @@ public class AtlasParamsYaml implements BaseParams {
     }
 
     public long createdOn;
-    public final int version = 3;
+    public final int version = 1;
     public SourceCodeWithParams sourceCode;
     public ExecContextWithParams execContext;
     public ExperimentWithParams experiment;

@@ -47,13 +47,13 @@ public class SourceCodeApiData {
         public EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus;
         public EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus;
         public int numberOfTasks = 0;
-        public Long workbookId = null;
+        public Long execContextId = null;
 
         public TaskProducingResult(
                 List<String> errorMessages, EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus,
                 EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus,
-                Long workbookId ) {
-            this.workbookId = workbookId;
+                Long execContextId ) {
+            this.execContextId = execContextId;
             this.errorMessages = errorMessages;
             this.sourceCodeValidateStatus = sourceCodeValidateStatus;
             this.sourceCodeProducingStatus = sourceCodeProducingStatus;

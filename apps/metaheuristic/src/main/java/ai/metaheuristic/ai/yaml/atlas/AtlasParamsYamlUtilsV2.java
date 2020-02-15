@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.yaml.atlas;
 
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
-import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV2;
+import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ import org.yaml.snakeyaml.Yaml;
 @Profile("launchpad")
 @RequiredArgsConstructor
 public class AtlasParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<AtlasParamsYamlV2, AtlasParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<AtlasParamsYamlV1, AtlasParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -43,16 +43,16 @@ public class AtlasParamsYamlUtilsV2
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(AtlasParamsYamlV2.class);
+        return YamlUtils.init(AtlasParamsYamlV1.class);
     }
 
     @Override
-    public AtlasParamsYaml upgradeTo(AtlasParamsYamlV2 src, Long ... vars) {
+    public AtlasParamsYaml upgradeTo(AtlasParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         AtlasParamsYaml trg = new AtlasParamsYaml();
         trg.createdOn = src.createdOn;
-        trg.sourceCode = new AtlasParamsYaml.SourceCodeWithParams(src.plan.planId, src.plan.planParams);
-        trg.execContext = new AtlasParamsYaml.ExecContextWithParams(src.workbook.workbookId, src.workbook.workbookParams, src.workbook.execState);
+        trg.sourceCode = new AtlasParamsYaml.SourceCodeWithParams(src.sourceCode.sourceCodeId, src.sourceCode.sourceCodeParams);
+        trg.execContext = new AtlasParamsYaml.ExecContextWithParams(src.execContext.execContextId, src.execContext.execContextParams, src.execContext.execState);
         trg.experiment = new AtlasParamsYaml.ExperimentWithParams(src.experiment.experimentId, src.experiment.experimentParams);
         trg.taskIds = src.taskIds;
 
@@ -76,14 +76,14 @@ public class AtlasParamsYamlUtilsV2
     }
 
     @Override
-    public String toString(AtlasParamsYamlV2 yaml) {
+    public String toString(AtlasParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @Override
-    public AtlasParamsYamlV2 to(String s) {
+    public AtlasParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable
-        final AtlasParamsYamlV2 p = getYaml().load(s);
+        final AtlasParamsYamlV1 p = getYaml().load(s);
         return p;
     }
 

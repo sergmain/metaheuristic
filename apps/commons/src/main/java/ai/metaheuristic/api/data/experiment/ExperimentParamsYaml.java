@@ -85,7 +85,7 @@ public class ExperimentParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class ExperimentTaskFeature {
         public Long id;
-        public Long workbookId;
+        public Long execContextId;
         public Long taskId;
         public Long featureId;
         public int taskType;
@@ -106,7 +106,7 @@ public class ExperimentParamsYaml implements BaseParams {
         public List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
     }
 
-    public final int version=2;
+    public final int version=1;
     public long createdOn;
     public ExperimentYaml experimentYaml = new ExperimentYaml();
     public ExperimentProcessing processing = new ExperimentProcessing();

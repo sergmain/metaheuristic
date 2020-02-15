@@ -31,8 +31,8 @@ public class AtlasParamsYamlV1 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        if (plan==null || workbook==null || experiment==null || tasks==null) {
-            throw new IllegalArgumentException("(sourceCode==null || execContext==null || experiment==null || tasks==null)");
+        if (sourceCode ==null || execContext ==null || experiment==null || taskIds==null) {
+            throw new IllegalArgumentException("(sourceCode==null || execContext==null || experiment==null || taskIds==null)");
         }
         return true;
     }
@@ -41,9 +41,9 @@ public class AtlasParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class PlanWithParamsV1 {
-        public Long planId;
-        public String planParams;
+    public static class SourceCodeWithParamsV1 {
+        public Long sourceCodeId;
+        public String sourceCodeParams;
     }
 
     @Data
@@ -59,33 +59,16 @@ public class AtlasParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class WorkbookWithParamsV1 {
-        public Long workbookId;
-        public String workbookParams;
+    public static class ExecContextWithParamsV1 {
+        public Long execContextId;
+        public String execContextParams;
         public int execState;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @ToString
-    public static class TaskWithParamsV1 {
-        public Long taskId;
-        public String taskParams;
-        public int execState;
-        public String metrics;
-        public String exec;
-
-        public Long completedOn;
-        public boolean completed;
-        public Long assignedOn;
-        public String typeAsString;
     }
 
     public long createdOn;
     public final int version = 1;
-    public PlanWithParamsV1 plan;
-    public WorkbookWithParamsV1 workbook;
+    public SourceCodeWithParamsV1 sourceCode;
+    public ExecContextWithParamsV1 execContext;
     public ExperimentWithParamsV1 experiment;
-    public List<TaskWithParamsV1> tasks = new ArrayList<>();
+    public List<Long> taskIds = new ArrayList<>();
 }
