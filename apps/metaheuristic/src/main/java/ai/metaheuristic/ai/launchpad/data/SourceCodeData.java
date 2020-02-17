@@ -19,8 +19,10 @@ package ai.metaheuristic.ai.launchpad.data;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 
@@ -42,7 +44,11 @@ public class SourceCodeData {
     }
 
     @Data
+    @EqualsAndHashCode(of = "taskId")
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SimpleTaskVertex {
+        public Long taskId;
         public String execContextId;
         public String internalContextId;
 
@@ -64,7 +70,6 @@ public class SourceCodeData {
     }
 
     @Data
-    @EqualsAndHashCode(exclude = "graph")
     public static class SourceCodeGraph {
         public boolean clean;
         public final DirectedAcyclicGraph<SimpleTaskVertex, DefaultEdge> graph = new DirectedAcyclicGraph<>(DefaultEdge.class);

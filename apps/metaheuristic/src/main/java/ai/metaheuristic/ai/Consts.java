@@ -115,4 +115,5 @@ public class Consts {
     public static final String MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS = "mh.permute-variables-and-hyper-params";
     public static final List<String> MH_INTERNAL_SNIPPETS = List.of(MH_RESOURCE_SPLITTER_SNIPPET, MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS);
 
+    public static final String EMPTY_GRAPH = "strict digraph G { }";
 }

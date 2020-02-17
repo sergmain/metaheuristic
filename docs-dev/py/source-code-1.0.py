@@ -1,9 +1,9 @@
 from metaheuristic import *
 
-snippet_assembly = SnippetV1(code='serg.assembly.dataset:1.3', params='A')
-snippet_dataset = Snippet(code='serg.assembly.dataset:1.3', params='A B')
-snippet_feature_1 = Snippet(code='serg.feature.standard:1.5', params='CLUSTER')
-snippet_feature_2 = Snippet(code='serg.feature.standard:1.5', params='MATRIX')
+snippet_assembly = Snippet(code='assembly.dataset:1.3', params='A')
+snippet_dataset = Snippet(code='assembly.dataset:1.3', params='A B')
+snippet_feature_1 = Snippet(code='feature.standard:1.5', params='CLUSTER')
+snippet_feature_2 = Snippet(code='feature.standard:1.5', params='MATRIX')
 
 input = Variable(name='input codes', input={'input': '$$initial_pool_code$$'})
 input_as_dictionary = dictionary_to_resources_code(input)

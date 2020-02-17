@@ -49,7 +49,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 class ExecContextGraphService {
 
-    public static final String EMPTY_GRAPH = "strict digraph G { }";
     private static final String TASK_EXEC_STATE_ATTR = "task_exec_state";
 
     private final ExecContextCache execContextCache;
@@ -136,7 +135,7 @@ class ExecContextGraphService {
 
     private static final EdgeProvider<ExecContextParamsYaml.TaskVertex, DefaultEdge> ep = (f, t, l, attrs) -> new DefaultEdge();
 
-    private GraphImporter<ExecContextParamsYaml.TaskVertex, DefaultEdge> buildImporter() {
+    private static GraphImporter<ExecContextParamsYaml.TaskVertex, DefaultEdge> buildImporter() {
         //noinspection UnnecessaryLocalVariable
         DOTImporter<ExecContextParamsYaml.TaskVertex, DefaultEdge> importer = new DOTImporter<>(ExecContextGraphService::toTaskVertex, ep);
         return importer;

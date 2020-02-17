@@ -16,18 +16,16 @@
 
 package ai.metaheuristic.ai.launchpad.source_code.graph;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.launchpad.beans.Ids;
+import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
 import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
-import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 /**
@@ -42,42 +40,85 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
         SourceCodeParamsYaml sourceCodeParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
 
-        String internalContextId = contextIdSupplier.get();
+        SourceCodeData.SourceCodeGraph scg = new SourceCodeData.SourceCodeGraph();
+        scg.clean = sourceCodeParams.source.clean;
 
 
-        for (SourceCodeParamsYaml.Process process : sourceCodeParams.source.getProcesses()) {
-            Monitoring.log("##026", Enums.Monitor.MEMORY);
-            SourceCodeService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasksForProcess(isPersist, sourceCode.getId(), contextId, sourceCodeStoredParams, execContextId, process, pools, parentTaskIds);
-            Monitoring.log("##027", Enums.Monitor.MEMORY);
-            parentTaskIds.clear();
-            parentTaskIds.addAll(produceTaskResult.taskIds);
+        AtomicLong taskId = new AtomicLong();
+        long internalContextId = 1L;
+        List<Long> parentIds =  List.of();
+        List<Long> prevParentIds =  new ArrayList<>();
 
-            numberOfTasks += produceTaskResult.numberOfTasks;
-            if (produceTaskResult.status != EnumsApi.SourceCodeProducingStatus.OK) {
-                return new SourceCodeApiData.TaskProducingResultComplex(produceTaskResult.status);
-            }
-            Monitoring.log("##030", Enums.Monitor.MEMORY);
+        String currentInternalContextId = "" + internalContextId;
+        for (SourceCodeParamsYaml.Process p : sourceCodeParams.source.getProcesses()) {
+            SourceCodeData.SimpleTaskVertex v = toVertex(contextIdSupplier, taskId, prevParentIds, currentInternalContextId, p);
 
-            // this part of code replaces the code below
-            for (SourceCodeParamsYaml.Variable variable : process.output) {
-                pools.add(variable.name, produceTaskResult.outputResourceCodes);
-                for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
-                    pools.inputStorageUrls.put(outputResourceCode, variable);
+            SourceCodeGraphUtils.addNewTasksToGraph(scg, v, parentIds);
+
+            SourceCodeParamsYaml.SubProcesses subProcesses = p.subProcesses;
+            if (subProcesses !=null) {
+                if (CollectionUtils.isEmpty(subProcesses.processes)) {
+                    throw new SourceCodeGraphException();
+                }
+                List<Long> prevIds = new ArrayList<>();
+                prevIds.add(v.taskId);
+                String subInternalContextId = null;
+                if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
+                    subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
+                }
+                for (SourceCodeParamsYaml.Process subP : subProcesses.processes) {
+                    if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
+                        subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
+                    }
+                    if (subInternalContextId==null) {
+                        throw new IllegalStateException("(subInternalContextId==null)");
+                    }
+                    SourceCodeData.SimpleTaskVertex subV = toVertex(contextIdSupplier, taskId, prevIds, subInternalContextId, subP);
+                    if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
+                        prevIds.clear();
+                        prevIds.add(subV.taskId);
+                    }
                 }
             }
-/*
-            if (process.outputParams.storageType!=null) {
-                pools.add(process.outputParams.storageType, produceTaskResult.outputResourceCodes);
-                for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
-                    pools.inputStorageUrls.put(outputResourceCode, process.outputParams);
-                }
-            }
-*/
-            Monitoring.log("##031", Enums.Monitor.MEMORY);
         }
-
-        return null;
+        return scg;
     }
 
+    private SourceCodeData.SimpleTaskVertex toVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, List<Long> prevParentIds, String currentInternalContextId, SourceCodeParamsYaml.Process p) {
+        //            public String name;
+//            public String code;
+//            public SourceCodeParamsYaml.SnippetDefForSourceCode snippet;
+//            public List<SourceCodeParamsYaml.SnippetDefForSourceCode> preSnippets;
+//            public List<SourceCodeParamsYaml.SnippetDefForSourceCode> postSnippets;
+//
+//            /**
+//             * Timeout before terminating a process with snippet
+//             * value in seconds
+//             * null or 0 mean the infinite execution
+//             */
+//            public Long timeoutBeforeTerminate;
+//            public final List<SourceCodeParamsYaml.Variable> input = new ArrayList<>();
+//            public final List<SourceCodeParamsYaml.Variable> output = new ArrayList<>();
+//            public List<Meta> metas = new ArrayList<>();
+//            public SourceCodeParamsYaml.SubProcesses subProcesses;
+
+        SourceCodeData.SimpleTaskVertex v = new SourceCodeData.SimpleTaskVertex();
+        v.snippet = p.snippet;
+        v.preSnippets = p.preSnippets;
+        v.postSnippets = p.postSnippets;
+        v.taskId = taskId.incrementAndGet();
+        prevParentIds.add(v.taskId);
+
+        v.execContextId = contextIdSupplier.get();
+        v.internalContextId = currentInternalContextId;
+
+        v.processName = p.name;
+        v.processCode = p.code;
+        v.timeoutBeforeTerminate = p.timeoutBeforeTerminate;
+        p.input.stream().map(o->o.name).forEach(v.input::add);
+        p.output.stream().map(o->o.name).forEach(v.output::add);
+        v.metas = p.metas;
+        return v;
+    }
 
 }

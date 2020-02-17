@@ -14,26 +14,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.utils;
+package ai.metaheuristic.ai.launchpad.source_code.graph;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import ai.metaheuristic.api.EnumsApi;
+import org.junit.Test;
 
-public class CollectionUtils {
+import java.util.concurrent.atomic.AtomicLong;
 
-    public static boolean isNotEmpty(Collection<?> collection) {
-        return collection!=null && !collection.isEmpty();
+/**
+ * @author Serge
+ * Date: 2/17/2020
+ * Time: 2:38 AM
+ */
+public class TestSourceCodeGraphLanguageYaml {
+
+    @Test
+    public void test_01() {
+
+        String sourceCode = "";
+        AtomicLong contextId = new AtomicLong();
+        SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, ()-> ""+ contextId.incrementAndGet());
     }
-
-    public static boolean isEmpty(Collection<?> collection) {
-        return !isNotEmpty(collection);
-    }
-
-    public static List<String> toPlainList(Collection<List<String>> inputResourceCodes) {
-        final List<String> codes = new ArrayList<>();
-        inputResourceCodes.forEach(codes::addAll);
-        return codes;
-    }
-
 }

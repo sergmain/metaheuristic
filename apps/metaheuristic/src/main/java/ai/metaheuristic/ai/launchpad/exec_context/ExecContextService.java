@@ -195,7 +195,7 @@ public class ExecContextService {
         ec.setCompletedOn(null);
         ExecContextParamsYaml params = new ExecContextParamsYaml();
         params.execContextYaml = execContextYaml;
-        params.graph = ExecContextGraphService.EMPTY_GRAPH;
+        params.graph = Consts.EMPTY_GRAPH;
         ec.updateParams(params);
         ec.setValid(true);
 

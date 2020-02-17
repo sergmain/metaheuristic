@@ -14,26 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.utils;
+package ai.metaheuristic.ai.exceptions;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-public class CollectionUtils {
-
-    public static boolean isNotEmpty(Collection<?> collection) {
-        return collection!=null && !collection.isEmpty();
+/**
+ * @author Serge
+ * Date: 2/17/2020
+ * Time: 2:12 AM
+ */
+public class SourceCodeGraphException extends RuntimeException{
+    public SourceCodeGraphException() {
     }
 
-    public static boolean isEmpty(Collection<?> collection) {
-        return !isNotEmpty(collection);
+    public SourceCodeGraphException(String message) {
+        super(message);
     }
 
-    public static List<String> toPlainList(Collection<List<String>> inputResourceCodes) {
-        final List<String> codes = new ArrayList<>();
-        inputResourceCodes.forEach(codes::addAll);
-        return codes;
+    public SourceCodeGraphException(String message, Throwable cause) {
+        super(message, cause);
     }
 
+    public SourceCodeGraphException(Throwable cause) {
+        super(cause);
+    }
 }
