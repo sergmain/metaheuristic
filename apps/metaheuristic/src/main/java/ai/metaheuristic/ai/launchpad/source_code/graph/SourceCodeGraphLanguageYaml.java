@@ -23,6 +23,8 @@ import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import jdk.jshell.spi.ExecutionControl;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +70,8 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             parentIds.add(v.taskId);
 
             SourceCodeParamsYaml.SubProcesses subProcesses = p.subProcesses;
-            if (subProcesses !=null) {
+            // tasks for internal snippets will be produced at runtime phase
+            if (subProcesses !=null && p.snippet.context!= EnumsApi.SnippetExecContext.internal) {
                 if (CollectionUtils.isEmpty(subProcesses.processes)) {
                     throw new SourceCodeGraphException("(subProcesses !=null) && (CollectionUtils.isEmpty(subProcesses.processes))");
                 }
@@ -78,6 +81,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
                     subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
                 }
+                List<Long> andIds = new ArrayList<>();
                 for (SourceCodeParamsYaml.Process subP : subProcesses.processes) {
                     if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
                         subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
@@ -89,9 +93,16 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                     SourceCodeGraphUtils.addNewTasksToGraph(scg, subV, prevIds);
                     if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
                         prevIds.clear();
+                        prevIds.add(subV.taskId);
                     }
-                    prevIds.add(subV.taskId);
+                    else if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and) {
+                        andIds.add(subV.taskId);
+                    }
+                    else {
+                        throw new NotImplementedException("not yet");
+                    }
                 }
+                parentIds.addAll(andIds);
                 parentIds.addAll(prevIds);
             }
         }
@@ -102,7 +113,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         return scg;
     }
 
-    public SourceCodeData.SimpleTaskVertex createFinishVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, String currentInternalContextId) {
+    private SourceCodeData.SimpleTaskVertex createFinishVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, String currentInternalContextId) {
         SourceCodeData.SimpleTaskVertex v = new SourceCodeData.SimpleTaskVertex();
         v.snippet = new SourceCodeParamsYaml.SnippetDefForSourceCode(Consts.MH_FINISH_SNIPPET);
         v.taskId = taskId.incrementAndGet();
@@ -115,23 +126,6 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
     }
 
     private SourceCodeData.SimpleTaskVertex toVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, String currentInternalContextId, SourceCodeParamsYaml.Process p) {
-        //            public String name;
-//            public String code;
-//            public SourceCodeParamsYaml.SnippetDefForSourceCode snippet;
-//            public List<SourceCodeParamsYaml.SnippetDefForSourceCode> preSnippets;
-//            public List<SourceCodeParamsYaml.SnippetDefForSourceCode> postSnippets;
-//
-//            /**
-//             * Timeout before terminating a process with snippet
-//             * value in seconds
-//             * null or 0 mean the infinite execution
-//             */
-//            public Long timeoutBeforeTerminate;
-//            public final List<SourceCodeParamsYaml.Variable> input = new ArrayList<>();
-//            public final List<SourceCodeParamsYaml.Variable> output = new ArrayList<>();
-//            public List<Meta> metas = new ArrayList<>();
-//            public SourceCodeParamsYaml.SubProcesses subProcesses;
-
         SourceCodeData.SimpleTaskVertex v = new SourceCodeData.SimpleTaskVertex();
         v.snippet = p.snippet;
         v.preSnippets = p.preSnippets;

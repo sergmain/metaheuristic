@@ -45,8 +45,8 @@ public class TestSourceCodeGraphLanguageYaml {
 
         assertNotNull(graph);
         assertTrue(graph.clean);
-        assertEquals(9, graph.graph.vertexSet().size());
-        assertEquals(8, SourceCodeGraphUtils.findDescendants(graph, 1L).size());
+        assertEquals(6, graph.graph.vertexSet().size());
+        assertEquals(5, SourceCodeGraphUtils.findDescendants(graph, 1L).size());
         assertEquals(1, SourceCodeGraphUtils.findLeafs(graph).size());
 
         SimpleTaskVertex v = SourceCodeGraphUtils.findVertex(graph, 1L);
@@ -64,11 +64,15 @@ public class TestSourceCodeGraphLanguageYaml {
 
         List<SimpleTaskVertex> vs2 = SourceCodeGraphUtils.findTargets(graph, 2L);
 
-        Set<String> codes = Set.of("feature-processing_cluster", "feature-processing_matrix", "mh.permute-variables-and-hyper-params");
         assertEquals(3, vs2.size());
-        assertTrue(codes.contains(vs2.get(0).processCode));
-        assertTrue(codes.contains(vs2.get(1).processCode));
-        assertTrue(codes.contains(vs2.get(2).processCode));
+
+        SimpleTaskVertex v21 = vs2.stream().filter(o->o.processCode.equals("feature-processing_cluster")).findFirst().orElseThrow();
+        SimpleTaskVertex v22 = vs2.stream().filter(o->o.processCode.equals("feature-processing_matrix")).findFirst().orElseThrow();
+        SimpleTaskVertex v23 = vs2.stream().filter(o->o.processCode.equals("mh.permute-variables-and-hyper-params")).findFirst().orElseThrow();
+
+        assertEquals(1, SourceCodeGraphUtils.findTargets(graph, v21.taskId).size());
+        assertEquals(1, SourceCodeGraphUtils.findTargets(graph, v22.taskId).size());
+        assertEquals(1, SourceCodeGraphUtils.findTargets(graph, v23.taskId).size());
 
     }
 }
