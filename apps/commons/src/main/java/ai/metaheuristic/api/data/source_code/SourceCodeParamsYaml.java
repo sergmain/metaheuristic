@@ -91,6 +91,9 @@ public class SourceCodeParamsYaml implements BaseParams {
         }
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SubProcesses {
         public EnumsApi.SourceCodeSubProcessLogic logic;
         public List<Process> processes;

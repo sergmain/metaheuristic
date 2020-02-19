@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV1;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -55,26 +56,35 @@ public class SourceCodeParamsYamlUtilsV1
             v1.source.variables.inline.forEach(p.source.variables.inline::put);
         }
         p.source.clean = v1.source.clean;
-        p.source.processes = v1.source.processes.stream().map(o-> {
-            SourceCodeParamsYaml.Process pr = new SourceCodeParamsYaml.Process();
-            pr.name = o.name;
-            pr.code = o.code;
-            pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
-            o.input.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.input::add);
-            o.output.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.output::add);
-            pr.snippet = o.snippet!=null ? new SourceCodeParamsYaml.SnippetDefForSourceCode(o.snippet.code, o.snippet.params, o.snippet.context) : null;
-            pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new SourceCodeParamsYaml.SnippetDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
-            pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new SourceCodeParamsYaml.SnippetDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
-            pr.metas = o.metas;
+        p.source.processes = v1.source.processes.stream().map(SourceCodeParamsYamlUtilsV1::toProcess).collect(Collectors.toList());
 
-            return pr;
-        }).collect(Collectors.toList());
         p.source.uid = v1.source.uid;
         if (v1.source.ac!=null) {
             p.source.ac = new SourceCodeParamsYaml.AccessControl(v1.source.ac.groups);
         }
         p.checkIntegrity();
         return p;
+    }
+
+    @NonNull
+    private static SourceCodeParamsYaml.Process toProcess(SourceCodeParamsYamlV1.ProcessV1 o) {
+        SourceCodeParamsYaml.Process pr = new SourceCodeParamsYaml.Process();
+        pr.name = o.name;
+        pr.code = o.code;
+        pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
+        o.input.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.input::add);
+        o.output.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.output::add);
+        pr.snippet = o.snippet!=null ? new SourceCodeParamsYaml.SnippetDefForSourceCode(o.snippet.code, o.snippet.params, o.snippet.context) : null;
+        pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new SourceCodeParamsYaml.SnippetDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
+        pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new SourceCodeParamsYaml.SnippetDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
+        pr.metas = o.metas;
+
+        pr.subProcesses = o.subProcesses!=null
+                ?  new SourceCodeParamsYaml.SubProcesses(
+                    o.subProcesses.logic, o.subProcesses.processes.stream().map(SourceCodeParamsYamlUtilsV1::toProcess).collect(Collectors.toList()) )
+                : null;
+
+        return pr;
     }
 
     @Override

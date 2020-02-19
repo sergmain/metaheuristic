@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.launchpad.internal_snippet_lib.resource_splitter.Reso
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -56,7 +55,7 @@ public class InternalSnippetProcessor {
         switch(snippetCode) {
             case Consts.MH_RESOURCE_SPLITTER_SNIPPET:
                 return resourceSplitterSnippet.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, inputResourceIds);
-            case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS:
+            case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_SNIPPET:
                 return permuteVariablesAndHyperParamsSnippet.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, inputResourceIds);
             default:
                 throw new IllegalStateException("Unknown internal snippet: " + snippetCode);

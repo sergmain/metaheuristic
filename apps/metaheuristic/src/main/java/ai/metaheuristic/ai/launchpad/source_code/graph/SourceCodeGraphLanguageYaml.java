@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.source_code.graph;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
 import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -39,6 +40,9 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
     public SourceCodeData.SourceCodeGraph parse(String sourceCode, Supplier<String> contextIdSupplier) {
 
         SourceCodeParamsYaml sourceCodeParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
+        if (CollectionUtils.isEmpty(sourceCodeParams.source.processes)) {
+            throw new SourceCodeGraphException("(CollectionUtils.isEmpty(sourceCodeParams.source.processes))");
+        }
 
         SourceCodeData.SourceCodeGraph scg = new SourceCodeData.SourceCodeGraph();
         scg.clean = sourceCodeParams.source.clean;
@@ -46,19 +50,27 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
         AtomicLong taskId = new AtomicLong();
         long internalContextId = 1L;
-        List<Long> parentIds =  List.of();
-        List<Long> prevParentIds =  new ArrayList<>();
+        List<Long> parentIds =  new ArrayList<>();
 
         String currentInternalContextId = "" + internalContextId;
-        for (SourceCodeParamsYaml.Process p : sourceCodeParams.source.getProcesses()) {
-            SourceCodeData.SimpleTaskVertex v = toVertex(contextIdSupplier, taskId, prevParentIds, currentInternalContextId, p);
-
+        boolean finishPresent = false;
+        for (SourceCodeParamsYaml.Process p : sourceCodeParams.source.processes) {
+            if (finishPresent) {
+                throw new SourceCodeGraphException("(finishPresent)");
+            }
+            SourceCodeData.SimpleTaskVertex v = toVertex(contextIdSupplier, taskId, currentInternalContextId, p);
             SourceCodeGraphUtils.addNewTasksToGraph(scg, v, parentIds);
+            if (Consts.MH_FINISH_SNIPPET.equals(v.snippet.code)) {
+                finishPresent = true;
+            }
+
+            parentIds.clear();
+            parentIds.add(v.taskId);
 
             SourceCodeParamsYaml.SubProcesses subProcesses = p.subProcesses;
             if (subProcesses !=null) {
                 if (CollectionUtils.isEmpty(subProcesses.processes)) {
-                    throw new SourceCodeGraphException();
+                    throw new SourceCodeGraphException("(subProcesses !=null) && (CollectionUtils.isEmpty(subProcesses.processes))");
                 }
                 List<Long> prevIds = new ArrayList<>();
                 prevIds.add(v.taskId);
@@ -73,18 +85,36 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                     if (subInternalContextId==null) {
                         throw new IllegalStateException("(subInternalContextId==null)");
                     }
-                    SourceCodeData.SimpleTaskVertex subV = toVertex(contextIdSupplier, taskId, prevIds, subInternalContextId, subP);
+                    SourceCodeData.SimpleTaskVertex subV = toVertex(contextIdSupplier, taskId, subInternalContextId, subP);
+                    SourceCodeGraphUtils.addNewTasksToGraph(scg, subV, prevIds);
                     if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
                         prevIds.clear();
-                        prevIds.add(subV.taskId);
                     }
+                    prevIds.add(subV.taskId);
                 }
+                parentIds.addAll(prevIds);
             }
+        }
+        if (!finishPresent) {
+            SourceCodeData.SimpleTaskVertex finishVertex = createFinishVertex(contextIdSupplier, taskId, currentInternalContextId);
+            SourceCodeGraphUtils.addNewTasksToGraph(scg, finishVertex, parentIds);
         }
         return scg;
     }
 
-    private SourceCodeData.SimpleTaskVertex toVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, List<Long> prevParentIds, String currentInternalContextId, SourceCodeParamsYaml.Process p) {
+    public SourceCodeData.SimpleTaskVertex createFinishVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, String currentInternalContextId) {
+        SourceCodeData.SimpleTaskVertex v = new SourceCodeData.SimpleTaskVertex();
+        v.snippet = new SourceCodeParamsYaml.SnippetDefForSourceCode(Consts.MH_FINISH_SNIPPET);
+        v.taskId = taskId.incrementAndGet();
+        v.execContextId = contextIdSupplier.get();
+        v.internalContextId = currentInternalContextId;
+
+        v.processName = Consts.MH_FINISH_SNIPPET;
+        v.processCode = Consts.MH_FINISH_SNIPPET;
+        return v;
+    }
+
+    private SourceCodeData.SimpleTaskVertex toVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, String currentInternalContextId, SourceCodeParamsYaml.Process p) {
         //            public String name;
 //            public String code;
 //            public SourceCodeParamsYaml.SnippetDefForSourceCode snippet;
@@ -107,7 +137,6 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         v.preSnippets = p.preSnippets;
         v.postSnippets = p.postSnippets;
         v.taskId = taskId.incrementAndGet();
-        prevParentIds.add(v.taskId);
 
         v.execContextId = contextIdSupplier.get();
         v.internalContextId = currentInternalContextId;

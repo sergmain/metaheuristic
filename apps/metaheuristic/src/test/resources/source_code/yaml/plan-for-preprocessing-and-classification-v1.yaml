@@ -1,4 +1,5 @@
 source:
+  clean: true
   uid: experiment-branch-1.8-with-snippet-6.xx
   variables:
     global: global-input
@@ -30,7 +31,7 @@ source:
       subProcesses:
         logic: and
         processes:
-          - code: feature-processing_cluster_size_1
+          - code: feature-processing_cluster
             name: feature processing
             snippet:
               code: feature.standard:1.5

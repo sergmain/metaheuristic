@@ -112,8 +112,9 @@ public class Consts {
     public static final Long ID_1 = 1L;
 
     public static final String MH_RESOURCE_SPLITTER_SNIPPET = "mh.resource-splitter";
-    public static final String MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS = "mh.permute-variables-and-hyper-params";
-    public static final List<String> MH_INTERNAL_SNIPPETS = List.of(MH_RESOURCE_SPLITTER_SNIPPET, MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS);
+    public static final String MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_SNIPPET = "mh.permute-variables-and-hyper-params";
+    public static final String MH_FINISH_SNIPPET = "mh.finish";
+    public static final List<String> MH_INTERNAL_SNIPPETS = List.of(MH_RESOURCE_SPLITTER_SNIPPET, MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_SNIPPET, MH_FINISH_SNIPPET);
 
     public static final String EMPTY_GRAPH = "strict digraph G { }";
 }
