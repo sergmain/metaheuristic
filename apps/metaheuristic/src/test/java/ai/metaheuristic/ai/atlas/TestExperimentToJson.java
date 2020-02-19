@@ -60,7 +60,7 @@ public class TestExperimentToJson extends PreparingPlan {
 
         assertNotNull(experiment);
         assertNotNull(experiment.getId());
-        assertNotNull(experiment.getWorkbookId());
+        assertNotNull(experiment.getExecContextId());
 
         AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(plan, workbook, experiment);
         assertEquals(Enums.StoringStatus.OK, r.status);

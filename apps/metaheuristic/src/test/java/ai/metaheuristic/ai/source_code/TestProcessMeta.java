@@ -38,7 +38,7 @@ public class TestProcessMeta {
     @Test
     public void testProcessMeta() {
         SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = new SourceCodeParamsYaml.SourceCodeYaml();
-        sourceCodeYaml.code = "test-process-for-meta";
+        sourceCodeYaml.uid = "test-process-for-meta";
         {
             SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
             p.name = "experiment";

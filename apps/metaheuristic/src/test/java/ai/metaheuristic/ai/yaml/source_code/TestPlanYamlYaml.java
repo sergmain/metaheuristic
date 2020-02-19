@@ -33,7 +33,7 @@ public class TestPlanYamlYaml {
 
     @Test
     public void testYaml() {
-        String yaml = PreparingPlan.getPlanV8();
+        String yaml = PreparingPlan.getPlanV1();
         System.out.println(yaml);
         assertFalse(yaml.startsWith("!!"));
         SourceCodeParamsYaml planParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yaml);

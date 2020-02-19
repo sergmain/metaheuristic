@@ -45,12 +45,12 @@ public class TestExperimentCache extends PreparingExperiment {
 
         System.out.println("\n\ne1.params:\n" + e1.getParams());
 
-        assertNull(e1.getWorkbookId());
-        assertNull(e2.getWorkbookId());
+        assertNull(e1.getExecContextId());
+        assertNull(e2.getExecContextId());
 
-        assertEquals(e1.getWorkbookId(), e2.getWorkbookId());
+        assertEquals(e1.getExecContextId(), e2.getExecContextId());
 
-        e2.setWorkbookId(1L);
+        e2.setExecContextId(1L);
         e2 = experimentCache.save(e2);
 
         e1 = experimentCache.findById(experiment.getId());
@@ -59,12 +59,12 @@ public class TestExperimentCache extends PreparingExperiment {
         assertNotNull(e1);
         assertNotNull(e2);
 
-        assertNotNull(e1.getWorkbookId());
-        assertNotNull(e2.getWorkbookId());
+        assertNotNull(e1.getExecContextId());
+        assertNotNull(e2.getExecContextId());
 
-        assertEquals(e1.getWorkbookId(), e2.getWorkbookId());
+        assertEquals(e1.getExecContextId(), e2.getExecContextId());
 
-        e2.setWorkbookId(null);
+        e2.setExecContextId(null);
         e2 = experimentCache.save(e2);
 
         e1 = experimentCache.findById(experiment.getId());
@@ -73,10 +73,10 @@ public class TestExperimentCache extends PreparingExperiment {
         assertNotNull(e1);
         assertNotNull(e2);
 
-        assertNull(e1.getWorkbookId());
-        assertNull(e2.getWorkbookId());
+        assertNull(e1.getExecContextId());
+        assertNull(e2.getExecContextId());
 
-        assertEquals(e1.getWorkbookId(), e2.getWorkbookId());
+        assertEquals(e1.getExecContextId(), e2.getExecContextId());
 
     }
 }

@@ -44,20 +44,20 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         execContextFSM.toStarted(workbook);
         workbook = execContextCache.findById(workbook.getId());
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getExecState());
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getState());
 
         getTaskAndAssignToStation_mustBeNewTask();
 
         // this station already got task, so don't provide any new
         LaunchpadCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getWorkbookId());
+                station.getId(), false, experiment.getExecContextId());
         // task is empty cos we still didn't finish those task
         assertNull(task);
 
         finishCurrentWithError(1);
 
         LaunchpadCommParamsYaml.AssignedTask task1 = execContextService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getWorkbookId());
+                station.getId(), false, experiment.getExecContextId());
 
         assertNull(task1);
 

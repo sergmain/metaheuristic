@@ -17,8 +17,11 @@
 package ai.metaheuristic.ai.launchpad.source_code.graph;
 
 import ai.metaheuristic.api.EnumsApi;
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -29,10 +32,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TestSourceCodeGraphLanguageYaml {
 
     @Test
-    public void test_01() {
-
-        String sourceCode = "";
+    public void test_01() throws IOException {
+        String sourceCode = IOUtils.resourceToString("/source_code/yaml/plan-for-preprocessing-and-classification-v8.yaml", StandardCharsets.UTF_8);
         AtomicLong contextId = new AtomicLong();
-        SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, ()-> ""+ contextId.incrementAndGet());
+        SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet());
     }
 }

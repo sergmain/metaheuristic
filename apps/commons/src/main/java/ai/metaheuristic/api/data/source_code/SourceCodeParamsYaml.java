@@ -41,7 +41,7 @@ public class SourceCodeParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        final boolean b = source != null && !S.b(source.code) && source.processes != null;
+        final boolean b = source != null && !S.b(source.uid) && source.processes != null;
         if (!b) {
             throw new CheckIntegrityFailedException("(b = sourceCode != null && !S.b(sourceCode.code) && sourceCode.processes != null) ");
         }
@@ -151,7 +151,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public VariableDefinition variables;
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
-        public String code;
+        public String uid;
         public List<Meta> metas;
         public AccessControl ac;
 

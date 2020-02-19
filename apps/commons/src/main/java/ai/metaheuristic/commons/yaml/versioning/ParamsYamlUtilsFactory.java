@@ -26,6 +26,7 @@ import java.util.Map;
  * Date: 6/17/2019
  * Time: 9:24 PM
  */
+@SuppressWarnings("rawtypes")
 @Data
 public class ParamsYamlUtilsFactory {
 

@@ -76,7 +76,7 @@ public abstract class FeatureMethods extends PreparingPlan {
     public void toStarted() {
         execContextFSM.toStarted(workbook);
         workbook = execContextCache.findById(workbook.getId());
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getExecState());
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getState());
     }
 
     protected void produceTasks() {
@@ -87,13 +87,13 @@ public abstract class FeatureMethods extends PreparingPlan {
         workbook = (ExecContextImpl)result.execContext;
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertNotNull(workbook);
-        assertEquals(EnumsApi.ExecContextState.NONE.code, workbook.getExecState());
+        assertEquals(EnumsApi.ExecContextState.NONE.code, workbook.getState());
 
 
         EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(workbook.id);
         workbook = execContextCache.findById(workbook.id);
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, producingStatus);
-        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, workbook.getExecState());
+        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, workbook.getState());
 
         List<Object[]> tasks01 = taskCollector.getTasks(result.execContext);
         assertTrue(tasks01.isEmpty());
@@ -109,10 +109,10 @@ public abstract class FeatureMethods extends PreparingPlan {
 
         workbook = (ExecContextImpl)result.execContext;
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
-        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, workbook.getExecState());
+        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, workbook.getState());
 
         experiment = experimentCache.findById(experiment.getId());
-        assertNotNull(experiment.getWorkbookId());
+        assertNotNull(experiment.getExecContextId());
     }
 
     protected LaunchpadCommParamsYaml.AssignedTask getTaskAndAssignToStation_mustBeNewTask() {
@@ -121,7 +121,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
         LaunchpadCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getWorkbookId());
+                station.getId(), false, experiment.getExecContextId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(task);

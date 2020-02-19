@@ -66,10 +66,10 @@ public class TestFeatureWithAllError extends FeatureMethods {
     }
 
     public void noNewTask() {
-        LaunchpadCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(station.getId(), false, experiment.getWorkbookId());
+        LaunchpadCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(station.getId(), false, experiment.getExecContextId());
         assertNull(task);
 
-        task = execContextService.getTaskAndAssignToStation(station.getId() + 1, false, experiment.getWorkbookId());
+        task = execContextService.getTaskAndAssignToStation(station.getId() + 1, false, experiment.getExecContextId());
         assertNull(task);
     }
 

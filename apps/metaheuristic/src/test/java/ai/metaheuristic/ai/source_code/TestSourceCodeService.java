@@ -126,7 +126,7 @@ public class TestSourceCodeService extends PreparingPlan {
         execContextFSM.toStarted(workbook);
         workbook = execContextCache.findById(workbook.getId());
 
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getExecState());
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getState());
         {
             LaunchpadCommParamsYaml.AssignedTask simpleTask =
                     execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
@@ -222,7 +222,7 @@ public class TestSourceCodeService extends PreparingPlan {
 
         taskPersistencer.storeExecResult(r, t -> {
             if (t!=null) {
-                execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getWorkbookId(), t.getId(), t.getExecState());
+                execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState());
             }
         });
         taskPersistencer.setResultReceived(simpleTask.getTaskId(), true);

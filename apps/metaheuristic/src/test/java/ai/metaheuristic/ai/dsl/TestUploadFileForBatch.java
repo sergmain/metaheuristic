@@ -61,15 +61,15 @@ public class TestUploadFileForBatch extends PreparingPlan {
     public String getPlanYamlAsString() {
         SourceCodeParamsYamlV1 planParamsYaml = new SourceCodeParamsYamlV1();
 
-        planParamsYaml.source = new SourceCodeParamsYamlV1.SourceCodeV8();
-        planParamsYaml.source.code = "SourceCode for testing uploading batch file";
+        planParamsYaml.source = new SourceCodeParamsYamlV1.SourceCodeV1();
+        planParamsYaml.source.uid = "SourceCode for testing uploading batch file";
         {
-            SourceCodeParamsYamlV1.ProcessV8 p = new SourceCodeParamsYamlV1.ProcessV8();
+            SourceCodeParamsYamlV1.ProcessV1 p = new SourceCodeParamsYamlV1.ProcessV1();
             p.name = "Plocess mh.resource-splitter";
             p.code = "process-mh.resource-splitter";
 
-            p.snippet = new SourceCodeParamsYamlV1.SnippetDefForPlanV8(Consts.MH_RESOURCE_SPLITTER_SNIPPET, EnumsApi.SnippetExecContext.internal);
-            p.output.add( new SourceCodeParamsYamlV1.VariableV8(EnumsApi.DataSourcing.launchpad,"batch-array"));
+            p.snippet = new SourceCodeParamsYamlV1.SnippetDefForSourceCodeV1(Consts.MH_RESOURCE_SPLITTER_SNIPPET, EnumsApi.SnippetExecContext.internal);
+            p.output.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad,"batch-array"));
 
             planParamsYaml.source.processes.add(p);
         }

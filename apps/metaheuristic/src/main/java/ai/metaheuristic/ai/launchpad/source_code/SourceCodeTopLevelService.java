@@ -188,7 +188,7 @@ public class SourceCodeTopLevelService {
             return new SourceCodeApiData.SourceCodeResult("#560.110 An error parsing yaml: " + e.getMessage());
         }
 
-        final String code = ppy.source.code;
+        final String code = ppy.source.uid;
         if (StringUtils.isBlank(code)) {
             return new SourceCodeApiData.SourceCodeResult("#560.130 the code of sourceCode is empty");
         }
@@ -207,7 +207,7 @@ public class SourceCodeTopLevelService {
 
         sourceCode.companyId = context.getCompanyId();
         sourceCode.createdOn = System.currentTimeMillis();
-        sourceCode.uid = ppy.source.code;
+        sourceCode.uid = ppy.source.uid;
         sourceCode = sourceCodeCache.save(sourceCode);
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
@@ -235,7 +235,7 @@ public class SourceCodeTopLevelService {
 
         SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
 
-        final String code = ppy.source.code;
+        final String code = ppy.source.uid;
         if (StringUtils.isBlank(code)) {
             return new SourceCodeApiData.SourceCodeResult("#560.190 code of sourceCode is empty");
         }

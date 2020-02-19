@@ -50,7 +50,7 @@ public class TestProcess {
         );
         SourceCodeParamsYaml sourceCodeParamsYaml = new SourceCodeParamsYaml();
         SourceCodeYaml sourceCodeYaml = new SourceCodeParamsYaml.SourceCodeYaml();
-        sourceCodeYaml.code = "test-process-for-meta";
+        sourceCodeYaml.uid = "test-process-for-meta";
         sourceCodeYaml.processes.add(p);
         sourceCodeParamsYaml.source = sourceCodeYaml;
 

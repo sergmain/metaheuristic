@@ -1,0 +1,92 @@
+source:
+  uid: experiment-branch-1.8-with-snippet-6.xx
+  variables:
+    global: global-input
+    inline:
+      mh.hyper-params:
+        RNN: LSTM
+        batches: '40'
+        seed: '42'
+        time_steps: '7'
+  processes:
+    - code: assembly-raw-file
+      name: assembly raw file
+      snippet:
+        code: assembly.dataset:1.3
+        params: 'assemble'
+      input:
+        - name: global-input
+      output:
+        - name: assembled-raw
+    - code: dataset-processing
+      name: dataset processing
+      snippet:
+        code: assembly.dataset:1.3
+        params: 'produce'
+      input:
+        - name: assembled-raw
+      output:
+        - name: dataset-processing
+      subProcesses:
+        logic: and
+        processes:
+          - code: feature-processing_cluster_size_1
+            name: feature processing
+            snippet:
+              code: feature.standard:1.5
+              params: CLUSTER
+            input:
+              - name: dataset-processing
+            output:
+              - name: feature-processing_cluster
+          - code: feature-processing_matrix
+            name: feature processing
+            snippet:
+              code: feature.standard:1.5
+              params: MATRIX
+            input:
+              - name: dataset-processing
+            output:
+              - name: feature-processing_matrix
+    - code: mh.permute-variables-and-hyper-params
+      name: permute variables and hyper params
+      metas:
+        - key: variables
+          value: feature-processing_matrix, feature-processing_cluster_size_1
+      snippet:
+        code: mh.permute-variables-and-hyper-params
+        context: internal
+      output:
+        - name: feature-per-task
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: fit-data
+            name: fit-data
+            snippet:
+              code: fit:6.2
+            input:
+              - name: dataset-processing
+              - name: feature-per-task
+            output:
+              - name: model
+          - code: predict-result
+            name: predict-result
+            snippet:
+              code: predict:6.2
+            input:
+              - name: dataset-processing
+              - name: feature-per-task
+              - name: model
+            output:
+              - name: metrics
+              - name: predicted
+          - code: check-fitting
+            name: check-fitting
+            snippet:
+              code: check-fitting:6.2
+            input:
+              - name: predicted
+            output:
+              - name: overfitting
+version: 1

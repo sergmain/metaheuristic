@@ -69,7 +69,7 @@ public class SourceCodeParamsYamlUtilsV1
 
             return pr;
         }).collect(Collectors.toList());
-        p.source.code = v1.source.code;
+        p.source.uid = v1.source.uid;
         if (v1.source.ac!=null) {
             p.source.ac = new SourceCodeParamsYaml.AccessControl(v1.source.ac.groups);
         }
