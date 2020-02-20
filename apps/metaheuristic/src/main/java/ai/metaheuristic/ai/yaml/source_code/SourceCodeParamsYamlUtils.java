@@ -26,7 +26,7 @@ public class SourceCodeParamsYamlUtils {
     // key - version of SourceCodeParamsYaml
     // value - version of TaskParamsYaml
     private static final Map<Integer, Integer> MIN_TASK_PARAMS_YAML_VERSION = Map.of(
-            1, 5
+            1, 1
     );
 
     public static int getRequiredVertionOfTaskParamsYaml(int sourceCodeParamsYamlVersion) {

@@ -36,6 +36,13 @@ import java.util.Map;
 @Data
 public class TaskParamsYamlV1 implements BaseParams {
 
+    public final int version = 1;
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -45,6 +52,23 @@ public class TaskParamsYamlV1 implements BaseParams {
          * snippet's binary length
          */
         public long length;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MachineLearningV1 {
+        // does this snippet support metrics
+        public boolean metrics = false;
+        // does this snippet support fitting detection
+        public boolean fitting = false;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class TaskMachineLearningV1 {
+        public Map<String, String> hyperParams;
     }
 
     @Data
@@ -83,44 +107,45 @@ public class TaskParamsYamlV1 implements BaseParams {
         public String params;
         public String env;
         public EnumsApi.SnippetSourcing sourcing;
-        public boolean metrics = false;
         public Map<EnumsApi.Type, String> checksumMap;
         public SnippetInfoV1 info = new SnippetInfoV1();
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
         public List<Meta> metas = new ArrayList<>();
-
-        // this field is here only for compatibility
-        public Integer version;
+        public MachineLearningV1 ml;
     }
 
-    public Map<String, List<String>> inputResourceCodes = new HashMap<>();
-    public SnippetConfigV1 snippet;
-    public SnippetConfigV1 preSnippet;
-    public SnippetConfigV1 postSnippet;
-    public Map<String, String> hyperParams;
-    public String outputResourceCode;
-    public Map<String, DataStorageParams> resourceStorageUrls = new HashMap<>();
-    public boolean clean = false;
+    @Data
+    public static class TaskYamlV1 {
+        public SnippetConfigV1 snippet;
+        public List<SnippetConfigV1> preSnippets;
+        public List<SnippetConfigV1> postSnippets;
 
-    /**
-     * Timeout before terminate a process with snippet
-     * value in seconds
-     * null or 0 mean the infinite execution
-     */
-    public Long timeoutBeforeTerminate;
+        // key is ???, value is ???
+        public Map<String, List<String>> inputResourceIds = new HashMap<>();
 
-    // fields which are initialized at station
-    public String workingPath;
+        // key is ???, value is ???
+        public Map<String, String> outputResourceIds = new HashMap<>();
+        public Map<String, DataStorageParams> resourceStorageUrls = new HashMap<>();
+        public TaskMachineLearningV1 taskMl;
+        public boolean clean = false;
+        public EnumsApi.SnippetExecContext context;
 
-    // TODO this isn't good solution because it doesn't support ftp, hadoop or something else
-    // TODO as a result we'll support only direct access to files
-    public Map<String, List<String>> inputResourceAbsolutePaths = new HashMap<>();
-    public String outputResourceAbsolutePath;
+        /**
+         * Timeout before terminate a process with snippet
+         * value in seconds
+         * null or 0 mean the infinite execution
+         */
+        public Long timeoutBeforeTerminate;
 
-    @Override
-    public boolean checkIntegrity() {
-        return true;
+        // fields which are initialized at station
+        public String workingPath;
+
+        // key - resource code, value - real file name of resource
+        public Map<String, String> realNames;
     }
+
+    public TaskYamlV1 taskYaml = new TaskYamlV1();
+
 }

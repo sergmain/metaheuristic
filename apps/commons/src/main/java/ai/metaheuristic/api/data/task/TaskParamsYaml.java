@@ -38,6 +38,8 @@ import java.util.Map;
 @EqualsAndHashCode
 public class TaskParamsYaml implements BaseParams {
 
+    public final int version = 1;
+
     @Override
     public boolean checkIntegrity() {
         if (taskYaml.context==null) {
@@ -145,7 +147,6 @@ public class TaskParamsYaml implements BaseParams {
         public Map<String, String> realNames;
     }
 
-    public final int version = 5;
     public TaskYaml taskYaml = new TaskYaml();
 
 }

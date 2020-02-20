@@ -32,6 +32,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class FittingYaml implements BaseParams {
 
+    public final int version=1;
+
     @Override
     public boolean checkIntegrity() {
         return true;

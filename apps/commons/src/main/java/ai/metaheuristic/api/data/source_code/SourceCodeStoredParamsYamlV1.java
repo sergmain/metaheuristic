@@ -51,6 +51,6 @@ public class SourceCodeStoredParamsYamlV1 implements BaseParams {
     public final int version=1;
     public String source;
     public EnumsApi.SourceCodeLang lang;
-    public InternalParamsV1 internalParams;
+    public final InternalParamsV1 internalParams = new InternalParamsV1();
 
 }

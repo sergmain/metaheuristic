@@ -22,5 +22,6 @@ package ai.metaheuristic.api.data;
  * Time: 11:39 PM
  */
 public interface BaseParams {
+    int getVersion();
     boolean checkIntegrity();
 }

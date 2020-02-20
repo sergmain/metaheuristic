@@ -83,13 +83,10 @@ public class ReplicationSourceService {
                 .map(id->{
                     SourceCodeImpl sourceCode = sourceCodeCache.findById(id);
                     SourceCodeStoredParamsYaml params = sourceCode.getSourceCodeStoredParamsYaml();
-                    if (params.internalParams!= null && params.internalParams.archived) {
+                    if (params.internalParams.archived) {
                         return null;
                     }
-                    if (params.internalParams==null) {
-                        log.warn("!!! params.internalParams is null. Need to investigate");
-                    }
-                    return new ReplicationData.SourceCodeShortAsset(sourceCode.uid, params.internalParams==null ? 0L : params.internalParams.updatedOn);
+                    return new ReplicationData.SourceCodeShortAsset(sourceCode.uid, params.internalParams.updatedOn);
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));

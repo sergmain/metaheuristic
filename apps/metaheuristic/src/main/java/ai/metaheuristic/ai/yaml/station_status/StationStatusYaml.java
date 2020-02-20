@@ -35,6 +35,8 @@ import java.util.List;
 @ToString
 public class StationStatusYaml implements BaseParams {
 
+    public final int version=1;
+
     @Override
     public boolean checkIntegrity() {
         return true;

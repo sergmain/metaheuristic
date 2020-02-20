@@ -33,6 +33,8 @@ import java.util.List;
 @Data
 public class SourceCodeStoredParamsYaml implements BaseParams {
 
+    public final int version=1;
+
     @Override
     public boolean checkIntegrity() {
         return true;
@@ -46,11 +48,17 @@ public class SourceCodeStoredParamsYaml implements BaseParams {
         public boolean published;
         public long updatedOn;
         public List<Meta> metas;
+
+        public void init(boolean archived, boolean published, long updatedOn, List<Meta> metas) {
+            this.archived = archived;
+            this.published = published;
+            this.updatedOn = updatedOn;
+            this.metas = metas;
+        }
     }
 
-    public final int version=1;
     public String source;
     public EnumsApi.SourceCodeLang lang;
-    public InternalParams internalParams;
+    public final InternalParams internalParams = new InternalParams();
 
 }

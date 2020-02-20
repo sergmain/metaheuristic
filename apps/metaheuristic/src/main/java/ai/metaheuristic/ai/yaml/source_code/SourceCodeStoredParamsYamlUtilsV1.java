@@ -43,7 +43,7 @@ public class SourceCodeStoredParamsYamlUtilsV1
     public SourceCodeStoredParamsYaml upgradeTo(SourceCodeStoredParamsYamlV1 v1, Long ... vars) {
         v1.checkIntegrity();
         SourceCodeStoredParamsYaml p = new SourceCodeStoredParamsYaml();
-        p.internalParams = new SourceCodeStoredParamsYaml.InternalParams(v1.internalParams.archived, v1.internalParams.published, v1.internalParams.updatedOn, null);
+        p.internalParams.init(v1.internalParams.archived, v1.internalParams.published, v1.internalParams.updatedOn, null);
         p.source = v1.source;
         p.lang = v1.lang;
         p.checkIntegrity();
@@ -77,10 +77,6 @@ public class SourceCodeStoredParamsYamlUtilsV1
         final SourceCodeStoredParamsYamlV1 p = getYaml().load(s);
         if (p.source ==null) {
             throw new IllegalStateException("#635.010 SourceCode Yaml is null");
-        }
-
-        if (p.internalParams==null) {
-            p.internalParams = new SourceCodeStoredParamsYamlV1.InternalParamsV1();
         }
         return p;
     }

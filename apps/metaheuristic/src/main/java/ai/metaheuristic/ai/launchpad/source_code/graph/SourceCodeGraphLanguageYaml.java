@@ -27,7 +27,9 @@ import jdk.jshell.spi.ExecutionControl;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -56,10 +58,13 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
         String currentInternalContextId = "" + internalContextId;
         boolean finishPresent = false;
+        Set<String> processCodes = new HashSet<>();
         for (SourceCodeParamsYaml.Process p : sourceCodeParams.source.processes) {
             if (finishPresent) {
                 throw new SourceCodeGraphException("(finishPresent)");
             }
+            checkProcessCode(processCodes, p);
+
             SourceCodeData.SimpleTaskVertex v = toVertex(contextIdSupplier, taskId, currentInternalContextId, p);
             SourceCodeGraphUtils.addNewTasksToGraph(scg, v, parentIds);
             if (Consts.MH_FINISH_SNIPPET.equals(v.snippet.code)) {
@@ -70,7 +75,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             parentIds.add(v.taskId);
 
             SourceCodeParamsYaml.SubProcesses subProcesses = p.subProcesses;
-            // tasks for internal snippets will be produced at runtime phase
+            // tasks for sub-processes of internal snippet will be produced at runtime phase
             if (subProcesses !=null && p.snippet.context!= EnumsApi.SnippetExecContext.internal) {
                 if (CollectionUtils.isEmpty(subProcesses.processes)) {
                     throw new SourceCodeGraphException("(subProcesses !=null) && (CollectionUtils.isEmpty(subProcesses.processes))");
@@ -83,6 +88,8 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 }
                 List<Long> andIds = new ArrayList<>();
                 for (SourceCodeParamsYaml.Process subP : subProcesses.processes) {
+                    checkProcessCode(processCodes, subP);
+
                     if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
                         subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
                     }
@@ -111,6 +118,13 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             SourceCodeGraphUtils.addNewTasksToGraph(scg, finishVertex, parentIds);
         }
         return scg;
+    }
+
+    public void checkProcessCode(Set<String> processCodes, SourceCodeParamsYaml.Process p) {
+        if (processCodes.contains(p.code)) {
+            throw new SourceCodeGraphException("(processCodes.contains(p.code))");
+        }
+        processCodes.add(p.code);
     }
 
     private SourceCodeData.SimpleTaskVertex createFinishVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, String currentInternalContextId) {

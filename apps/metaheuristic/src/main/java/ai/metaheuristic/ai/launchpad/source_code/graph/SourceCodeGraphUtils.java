@@ -16,11 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.source_code.graph;
 
-import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
-import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
 
 import java.util.HashSet;
@@ -29,7 +24,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.launchpad.data.SourceCodeData.*;
+import static ai.metaheuristic.ai.launchpad.data.SourceCodeData.SimpleTaskVertex;
+import static ai.metaheuristic.ai.launchpad.data.SourceCodeData.SourceCodeGraph;
 
 /**
  * @author Serge

@@ -1,19 +1,19 @@
-plan:
-  code: sourceCode-for-batch-processing-1:0
+source:
+  uid: source-code-for-batch-processing-1:0
   variables:
     globals: vocab
     runtime: dataset
   processes:
     - code: mh.resource-splitter
       name: mh.resource-splitter
-      snippets:
-        - code: mh.resource-splitter
-          context: internal
+      snippet:
+        code: mh.resource-splitter
+        context: internal
       input:
-        - variable: vocab
-        - variable: dataset
+        - name: vocab
+        - name: dataset
       output:
-        - variable: batch-item
+        - name: batch-item
       subProcesses:
         exec: parallel
         processes:
@@ -22,8 +22,8 @@ plan:
             snippets:
               - code: fit:6.2
             input:
-              - variable: batch-item
+              - name: batch-item
             output:
-              - variable: processed-file
+              - name: processed-file
 
-version: 8
+version: 1

@@ -24,4 +24,4 @@ plan:
             output:
               - variable: processed-file
 
-version: 8
+version: 1

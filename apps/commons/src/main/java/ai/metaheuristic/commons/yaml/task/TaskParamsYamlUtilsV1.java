@@ -16,22 +16,22 @@
 
 package ai.metaheuristic.commons.yaml.task;
 
-import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import ai.metaheuristic.api.data.task.TaskParamsYamlV2;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
- * Date: 6/17/2019
+ * Date: 8/08/2019
  * Time: 12:10 AM
  */
 public class TaskParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<TaskParamsYamlV1, TaskParamsYamlV2, TaskParamsYamlUtilsV2, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<TaskParamsYamlV1, TaskParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -43,11 +43,38 @@ public class TaskParamsYamlUtilsV1
         return YamlUtils.init(TaskParamsYamlV1.class);
     }
 
-    private static TaskParamsYamlV2.SnippetConfigV2 to(TaskParamsYamlV1.SnippetConfigV1 src) {
+    @Override
+    public TaskParamsYaml upgradeTo(TaskParamsYamlV1 v5, Long ... vars) {
+        v5.checkIntegrity();
+        TaskParamsYaml t = new TaskParamsYaml();
+        t.taskYaml = new TaskParamsYaml.TaskYaml();
+        BeanUtils.copyProperties(v5.taskYaml, t.taskYaml, "snippet", "preSnippet", "postSnippet");
+        t.taskYaml.snippet = toUp(v5.taskYaml.snippet);
+        if (v5.taskYaml.preSnippets!=null) {
+            t.taskYaml.preSnippets = v5.taskYaml.preSnippets.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
+        }
+        if (v5.taskYaml.postSnippets!=null) {
+            t.taskYaml.postSnippets = v5.taskYaml.postSnippets.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
+        }
+        if (v5.taskYaml.taskMl!=null) {
+            t.taskYaml.taskMl = new TaskParamsYaml.TaskMachineLearning(v5.taskYaml.taskMl.hyperParams);
+        }
+
+        t.checkIntegrity();
+
+        return t;
+    }
+
+    @Override
+    public Void downgradeTo(Void yaml) {
+        return null;
+    }
+
+    private static TaskParamsYaml.SnippetConfig toUp(TaskParamsYamlV1.SnippetConfigV1 src) {
         if (src==null) {
             return null;
         }
-        TaskParamsYamlV2.SnippetConfigV2 trg = new TaskParamsYamlV2.SnippetConfigV2();
+        TaskParamsYaml.SnippetConfig trg = new TaskParamsYaml.SnippetConfig();
         trg.checksum = src.checksum;
         trg.checksumMap = src.checksumMap;
         trg.code = src.code;
@@ -55,10 +82,12 @@ public class TaskParamsYamlUtilsV1
         trg.file = src.file;
         trg.git = src.git;
         if (src.info!=null) {
-            trg.info = new TaskParamsYamlV2.SnippetInfoV2(src.info.signed, src.info.length);
+            trg.info = new TaskParamsYaml.SnippetInfo(src.info.signed, src.info.length);
         }
         trg.metas = src.metas;
-        trg.metrics = src.metrics;
+        if (src.ml!=null) {
+            trg.ml = new TaskParamsYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
+        }
         trg.params = src.params;
         trg.skipParams = src.skipParams;
         trg.sourcing = src.sourcing;
@@ -67,39 +96,18 @@ public class TaskParamsYamlUtilsV1
     }
 
     @Override
-    public TaskParamsYamlV2 upgradeTo(TaskParamsYamlV1 taskParams, Long ... vars) {
-        TaskParamsYamlV2 t = new TaskParamsYamlV2();
-        BeanUtils.copyProperties(taskParams, t.taskYaml, "snippet", "preSnippet", "postSnippet");
-        t.taskYaml.snippet = to(taskParams.snippet);
-        if (taskParams.preSnippet!=null) {
-            t.taskYaml.preSnippets = List.of(to(taskParams.preSnippet));
-        }
-        if (taskParams.postSnippet!=null) {
-            t.taskYaml.postSnippets = List.of(to(taskParams.postSnippet));
-        }
-        return t;
-    }
-
-    @Override
-    public Void downgradeTo(Void yaml) {
-        // there isn't any prev version
+    public Void nextUtil() {
         return null;
-    }
-
-    @Override
-    public TaskParamsYamlUtilsV2 nextUtil() {
-        return (TaskParamsYamlUtilsV2)TaskParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override
     public Void prevUtil() {
-        // there isn't any prev version
         return null;
     }
 
     @Override
-    public String toString(TaskParamsYamlV1 taskParamsYaml) {
-        return getYaml().dump(taskParamsYaml);
+    public String toString(TaskParamsYamlV1 params) {
+        return getYaml().dump(params);
     }
 
     @Override

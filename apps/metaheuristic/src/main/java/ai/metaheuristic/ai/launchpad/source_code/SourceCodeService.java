@@ -112,7 +112,7 @@ public class SourceCodeService {
             }
             try {
                 SourceCodeStoredParamsYaml scspy = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
-                return scspy.internalParams == null || !scspy.internalParams.archived;
+                return !scspy.internalParams.archived;
             } catch (YAMLException e) {
                 final String es = "#995.010 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
                 sourceCodesForCompany.addErrorMessage(es);
@@ -249,9 +249,6 @@ public class SourceCodeService {
 
     private void saveInternal(SourceCodeImpl sourceCode) {
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-        if (scspy.internalParams==null) {
-            scspy.internalParams = new SourceCodeStoredParamsYaml.InternalParams();
-        }
         scspy.internalParams.updatedOn = System.currentTimeMillis();
         sourceCode.updateParams(scspy);
 

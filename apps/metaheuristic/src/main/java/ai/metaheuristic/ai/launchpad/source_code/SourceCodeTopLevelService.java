@@ -118,7 +118,7 @@ public class SourceCodeTopLevelService {
                 .filter(sourceCode-> {
                     try {
                         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-                        boolean b = scspy.internalParams == null || !scspy.internalParams.archived;
+                        boolean b = !scspy.internalParams.archived;
                         b = isArchive != b;
                         if (b) {
                             count.incrementAndGet();
@@ -286,9 +286,6 @@ public class SourceCodeTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId+", " + status.getErrorMessagesAsStr());
         }
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-        if (scspy.internalParams==null) {
-            scspy.internalParams = new SourceCodeStoredParamsYaml.InternalParams();
-        }
         scspy.internalParams.archived = true;
         scspy.internalParams.updatedOn = System.currentTimeMillis();
         sourceCode.updateParams(scspy);

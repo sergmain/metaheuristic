@@ -36,6 +36,8 @@ import java.util.List;
 @AllArgsConstructor
 public class SnippetDownloadStatusYamlV1 implements BaseParams {
 
+    public final int version=1;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

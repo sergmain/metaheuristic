@@ -18,7 +18,7 @@ package aiai.ai.metaheuristic.commons.yaml;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYamlV2;
+import ai.metaheuristic.api.data.task.TaskParamsYamlV1;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.Test;
@@ -37,32 +37,32 @@ public class TestTaskParamsYaml {
 
     @Test
     public void test() {
-        TaskParamsYamlV2 v2 = new TaskParamsYamlV2();
-        final TaskParamsYamlV2.TaskYamlV2 ty = new TaskParamsYamlV2.TaskYamlV2();
+        TaskParamsYamlV1 v2 = new TaskParamsYamlV1();
+        final TaskParamsYamlV1.TaskYamlV1 ty = new TaskParamsYamlV1.TaskYamlV1();
         v2.taskYaml = ty;
-        ty.inputResourceCodes = Map.of("code-1", List.of("value-1-1", "value-1-2"));
-        ty.outputResourceCode = "output-code-1";
+        ty.inputResourceIds = Map.of("code-1", List.of("value-1-1", "value-1-2"));
+        ty.outputResourceIds = Map.of("output-code-1", "1");
         ty.resourceStorageUrls = Map.of(
                 "value-1-1", new DataStorageParams(EnumsApi.DataSourcing.launchpad),
                 "value-1-2", new DataStorageParams(EnumsApi.DataSourcing.disk)
         );
         ty.clean = true;
-        ty.hyperParams = Map.of("hyper-param-key-01", "hyper-param-value-01");
+        ty.taskMl = new TaskParamsYamlV1.TaskMachineLearningV1(Map.of("hyper-param-key-01", "hyper-param-value-01"));
         ty.workingPath = "working-path";
         ty.timeoutBeforeTerminate = 42L;
 
 
-        final TaskParamsYamlV2.SnippetConfigV2 preSnippet = new TaskParamsYamlV2.SnippetConfigV2();
+        final TaskParamsYamlV1.SnippetConfigV1 preSnippet = new TaskParamsYamlV1.SnippetConfigV1();
         preSnippet.code = "pre-snippet-code";
         preSnippet.sourcing = EnumsApi.SnippetSourcing.station;
         ty.preSnippets = List.of(preSnippet);
 
-        final TaskParamsYamlV2.SnippetConfigV2 snippet = new TaskParamsYamlV2.SnippetConfigV2();
+        final TaskParamsYamlV1.SnippetConfigV1 snippet = new TaskParamsYamlV1.SnippetConfigV1();
         snippet.code = "snippet-code";
         snippet.sourcing = EnumsApi.SnippetSourcing.git;
         ty.snippet = snippet;
 
-        final TaskParamsYamlV2.SnippetConfigV2 postSnippet = new TaskParamsYamlV2.SnippetConfigV2();
+        final TaskParamsYamlV1.SnippetConfigV1 postSnippet = new TaskParamsYamlV1.SnippetConfigV1();
         postSnippet.code = "post-snippet-code";
         postSnippet.sourcing = EnumsApi.SnippetSourcing.launchpad;
         ty.postSnippets = List.of(postSnippet);
@@ -91,7 +91,7 @@ public class TestTaskParamsYaml {
         assertNotNull(tpy.taskYaml.inputResourceIds.get("code-1"));
         assertTrue(tpy.taskYaml.inputResourceIds.get("code-1").contains("value-1-1"));
         assertTrue(tpy.taskYaml.inputResourceIds.get("code-1").contains("value-1-2"));
-        ty.outputResourceCode = "output-code-1";
+        ty.outputResourceIds = Map.of("output-code-1", "1");
         ty.resourceStorageUrls = Map.of(
                 "value-1-1", new DataStorageParams(EnumsApi.DataSourcing.launchpad),
                 "value-1-2", new DataStorageParams(EnumsApi.DataSourcing.disk)
