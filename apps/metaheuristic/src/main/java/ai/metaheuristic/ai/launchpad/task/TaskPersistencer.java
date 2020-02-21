@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.launchpad.event.LaunchpadEventService;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
+import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -130,13 +130,13 @@ public class TaskPersistencer {
 
     @SuppressWarnings("UnusedReturnValue")
     public Task storeExecResult(StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, Consumer<Task> action) {
-        FunctionApiData.FunctionExec functionExec = SnippetExecUtils.to(result.getResult());
-        FunctionApiData.FunctionExecResult actualSnippet = functionExec.generalExec!=null ? functionExec.generalExec : functionExec.exec;
-        if (!actualSnippet.isOk) {
-            log.warn("#307.050 Task #{} finished with error, snippetCode: {}, console: {}",
+        FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(result.getResult());
+        FunctionApiData.FunctionExecResult functionExecResult = functionExec.generalExec!=null ? functionExec.generalExec : functionExec.exec;
+        if (!functionExecResult.isOk) {
+            log.warn("#307.050 Task #{} finished with error, functionCode: {}, console: {}",
                     result.taskId,
-                    actualSnippet.functionCode,
-                    StringUtils.isNotBlank(actualSnippet.console) ? actualSnippet.console : "<console output is empty>");
+                    functionExecResult.functionCode,
+                    StringUtils.isNotBlank(functionExecResult.console) ? functionExecResult.console : "<console output is empty>");
         }
         try {
             EnumsApi.TaskExecState state = functionExec.allFunctionsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
@@ -175,7 +175,7 @@ public class TaskPersistencer {
                 functionExec.exec = new FunctionApiData.FunctionExecResult(
                         tpy.taskYaml.function.code, false, -999, "#307.080 Task is broken, error is unknown, cant' process it"
                 );
-                task.setFunctionExecResults(SnippetExecUtils.toString(functionExec));
+                task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
             }
             task.setResultReceived(true);
 

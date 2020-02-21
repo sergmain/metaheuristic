@@ -66,7 +66,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
             SourceCodeData.SimpleTaskVertex v = toVertex(contextIdSupplier, taskId, currentInternalContextId, p);
             SourceCodeGraphUtils.addNewTasksToGraph(scg, v, parentIds);
-            if (Consts.MH_FINISH_SNIPPET.equals(v.snippet.code)) {
+            if (Consts.MH_FINISH_FUNCTION.equals(v.function.code)) {
                 finishPresent = true;
             }
 
@@ -128,21 +128,21 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
     private SourceCodeData.SimpleTaskVertex createFinishVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, String currentInternalContextId) {
         SourceCodeData.SimpleTaskVertex v = new SourceCodeData.SimpleTaskVertex();
-        v.snippet = new SourceCodeParamsYaml.FunctionDefForSourceCode(Consts.MH_FINISH_SNIPPET);
+        v.function = new SourceCodeParamsYaml.FunctionDefForSourceCode(Consts.MH_FINISH_FUNCTION);
         v.taskId = taskId.incrementAndGet();
         v.execContextId = contextIdSupplier.get();
         v.internalContextId = currentInternalContextId;
 
-        v.processName = Consts.MH_FINISH_SNIPPET;
-        v.processCode = Consts.MH_FINISH_SNIPPET;
+        v.processName = Consts.MH_FINISH_FUNCTION;
+        v.processCode = Consts.MH_FINISH_FUNCTION;
         return v;
     }
 
     private SourceCodeData.SimpleTaskVertex toVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, String currentInternalContextId, SourceCodeParamsYaml.Process p) {
         SourceCodeData.SimpleTaskVertex v = new SourceCodeData.SimpleTaskVertex();
-        v.snippet = p.function;
-        v.preSnippets = p.preFunctions;
-        v.postSnippets = p.postFunctions;
+        v.function = p.function;
+        v.preFunctions = p.preFunctions;
+        v.postFunctions = p.postFunctions;
         v.taskId = taskId.incrementAndGet();
 
         v.execContextId = contextIdSupplier.get();

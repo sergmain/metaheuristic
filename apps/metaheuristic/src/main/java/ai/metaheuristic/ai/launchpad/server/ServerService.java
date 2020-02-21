@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetDataService;
+import ai.metaheuristic.ai.launchpad.function.FunctionDataService;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
@@ -91,7 +91,7 @@ public class ServerService {
 
     private final Globals globals;
     private final VariableService variableService;
-    private final SnippetDataService snippetDataService;
+    private final FunctionDataService functionDataService;
     private final LaunchpadCommandProcessor launchpadCommandProcessor;
     private final StationCache stationCache;
     private final ExecContextRepository execContextRepository;
@@ -201,8 +201,8 @@ public class ServerService {
         BiConsumer<String, File> dataSaver;
         switch (binaryType) {
             case function:
-                assetFile = ResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, resourceId, null);
-                dataSaver = snippetDataService::storeToFile;
+                assetFile = ResourceUtils.prepareFunctionFile(globals.launchpadResourcesDir, resourceId, null);
+                dataSaver = functionDataService::storeToFile;
                 break;
             case data:
                 assetFile = ResourceUtils.prepareDataFile(globals.launchpadTempDir, resourceId, null);

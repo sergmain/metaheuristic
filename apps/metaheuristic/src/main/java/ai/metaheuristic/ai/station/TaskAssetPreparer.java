@@ -17,10 +17,10 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.station.actors.DownloadSnippetActor;
-import ai.metaheuristic.ai.station.tasks.DownloadSnippetTask;
+import ai.metaheuristic.ai.station.actors.DownloadFunctionActor;
+import ai.metaheuristic.ai.station.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
-import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
+import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 public class TaskAssetPreparer {
 
     private final Globals globals;
-    private final DownloadSnippetActor downloadSnippetActor;
+    private final DownloadFunctionActor downloadFunctionActor;
     private final CurrentExecState currentExecState;
     private final StationTaskService stationTaskService;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
@@ -111,19 +111,19 @@ public class TaskAssetPreparer {
             // start preparing functions
             final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
             final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.taskYaml.function;
-            if ( !prepareSnippet(functionConfig, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
+            if ( !prepareFunction(functionConfig, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
                 isAllReady.set(false);
             }
             if (taskParamYaml.taskYaml.preFunctions !=null) {
                 taskParamYaml.taskYaml.preFunctions.forEach(sc-> {
-                    if ( !prepareSnippet(sc, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
+                    if ( !prepareFunction(sc, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
                         isAllReady.set(false);
                     }
                 });
             }
             if (taskParamYaml.taskYaml.postFunctions !=null) {
                 taskParamYaml.taskYaml.postFunctions.forEach(sc-> {
-                    if ( !prepareSnippet(sc, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
+                    if ( !prepareFunction(sc, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
                         isAllReady.set(false);
                     }
                 });
@@ -137,23 +137,23 @@ public class TaskAssetPreparer {
         }
     }
 
-    private boolean prepareSnippet(TaskParamsYaml.FunctionConfig functionConfig, String launchpadUrl, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, String stationId) {
+    private boolean prepareFunction(TaskParamsYaml.FunctionConfig functionConfig, String launchpadUrl, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, String stationId) {
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.launchpad) {
             final String code = functionConfig.code;
-            final SnippetDownloadStatusYaml.Status snippetDownloadStatuses = metadataService.getSnippetDownloadStatuses(launchpadUrl, code);
-            if (snippetDownloadStatuses==null) {
+            final FunctionDownloadStatusYaml.Status functionDownloadStatuses = metadataService.getFunctionDownloadStatuses(launchpadUrl, code);
+            if (functionDownloadStatuses==null) {
                 return false;
             }
-            final Enums.SnippetState snippetState = snippetDownloadStatuses.snippetState;
-            if (snippetState==Enums.SnippetState.none) {
-                DownloadSnippetTask snippetTask = new DownloadSnippetTask(launchpad.context.chunkSize, functionConfig.getCode(), functionConfig);
-                snippetTask.launchpad = launchpad.launchpadLookup;
-                snippetTask.stationId = stationId;
-                downloadSnippetActor.add(snippetTask);
+            final Enums.FunctionState functionState = functionDownloadStatuses.functionState;
+            if (functionState == Enums.FunctionState.none) {
+                DownloadFunctionTask functionTask = new DownloadFunctionTask(launchpad.context.chunkSize, functionConfig.getCode(), functionConfig);
+                functionTask.launchpad = launchpad.launchpadLookup;
+                functionTask.stationId = stationId;
+                downloadFunctionActor.add(functionTask);
                 return true;
             }
             else {
-                return snippetState == Enums.SnippetState.ready;
+                return functionState == Enums.FunctionState.ready;
             }
         }
         return true;

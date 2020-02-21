@@ -64,33 +64,11 @@ public class LaunchpadLookupConfig {
         public LaunchpadLookupType lookupType;
         public AuthType authType;
 
-        // security must be enabled all the time
-        @SuppressWarnings("DeprecatedIsStillUsed")
-        @Deprecated
-        private boolean securityEnabled;
-        public boolean isSecurityEnabled() {
-            return true;
-        }
-        public void setSecurityEnabled(boolean securityEnabled) {
-            this.securityEnabled = true;
-        }
-
         public String restPassword;
         public String restUsername;
         public Asset asset;
 
-        /**
-         * won't delete this field for backward compatibility
-         */
-        @Deprecated
-        public String restToken;
-        // for backward compatibility
-        public String getRestToken() {
-            return "";
-        }
-
-
-        public boolean acceptOnlySignedSnippets = false;
+        public boolean acceptOnlySignedFunctions = false;
 
         private final Map<Integer, PublicKey> publicKeyMap = new HashMap<>();
 

@@ -51,11 +51,11 @@ public class LaunchpadCommParamsYamlUtilsV1 extends
             t.launchpadCommContext.chunkSize = v1.launchpadCommContext.chunkSize;
             t.launchpadCommContext.stationCommVersion = v1.launchpadCommContext.stationCommVersion;
         }
-        if (v1.snippets!=null) {
-            t.snippets = new LaunchpadCommParamsYaml.Snippets();
-            t.snippets.infos.addAll( v1.snippets.infos
+        if (v1.functions !=null) {
+            t.functions = new LaunchpadCommParamsYaml.Functions();
+            t.functions.infos.addAll( v1.functions.infos
                             .stream()
-                            .map(o->new LaunchpadCommParamsYaml.Snippets.Info (o.code, o.sourcing))
+                            .map(o->new LaunchpadCommParamsYaml.Functions.Info (o.code, o.sourcing))
                             .collect(Collectors.toList())
                     );
         }

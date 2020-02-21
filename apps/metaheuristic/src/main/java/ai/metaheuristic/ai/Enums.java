@@ -17,12 +17,12 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
-    public enum AssetType { company, account, snippet, source}
+    public enum AssetType { company, account, function, source}
 
-    public enum SnippetState {
+    public enum FunctionState {
         none, ok, ready, not_found,
         signature_wrong, signature_not_found, checksum_wrong, not_supported_os,
-        asset_error, download_error, snippet_config_error, io_error }
+        asset_error, download_error, function_config_error, io_error }
 
     public enum GitStatus {unknown, installed, not_found, error }
 

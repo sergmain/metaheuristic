@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
-import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.launchpad.repositories.FunctionRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
@@ -54,7 +54,7 @@ public class ReplicationSourceService {
     public final CompanyRepository companyRepository;
     public final AccountRepository accountRepository;
     public final SourceCodeRepository sourceCodeRepository;
-    public final SnippetRepository snippetRepository;
+    public final FunctionRepository functionRepository;
     public final SourceCodeCache sourceCodeCache;
     public final AccountCache accountCache;
     public final CompanyCache companyCache;
@@ -78,7 +78,7 @@ public class ReplicationSourceService {
                 })
                 .collect(Collectors.toList()));
 
-        res.snippets.addAll(snippetRepository.findAllSnippetCodes());
+        res.functions.addAll(functionRepository.findAllFunctionCodes());
         res.sourceCodes.addAll(sourceCodeRepository.findAllAsIds().parallelStream()
                 .map(id->{
                     SourceCodeImpl sourceCode = sourceCodeCache.findById(id);
@@ -93,9 +93,9 @@ public class ReplicationSourceService {
         return res;
     }
 
-    public ReplicationData.SnippetAsset getSnippet(String snippetCode) {
-        ReplicationData.SnippetAsset snippetAsset = new ReplicationData.SnippetAsset(snippetRepository.findByCode(snippetCode));
-        return snippetAsset;
+    public ReplicationData.FunctionAsset getFunction(String functionCode) {
+        ReplicationData.FunctionAsset functionAsset = new ReplicationData.FunctionAsset(functionRepository.findByCode(functionCode));
+        return functionAsset;
     }
 
     public ReplicationData.SourceCodeAsset getSourceCode(String uid) {

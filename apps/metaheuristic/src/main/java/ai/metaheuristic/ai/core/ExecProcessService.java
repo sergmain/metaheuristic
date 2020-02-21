@@ -44,14 +44,14 @@ public class ExecProcessService {
     }
 
     public FunctionApiData.FunctionExecResult execCommand(
-            List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate, String snippetCode,
+            List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate, String functionCode,
             final LaunchpadSchedule schedule) throws IOException, InterruptedException {
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
         log.info("\ttaskDir: {}", execDir.getPath());
         log.info("\ttaskDir abs: {}", execDir.getAbsolutePath());
         log.info("\tconsoleLogFile abs: {}", consoleLogFile.getAbsolutePath());
-        log.info("\tsnippetCode: {}", snippetCode);
+        log.info("\tfunctionCode: {}", functionCode);
         log.info("\ttimeoutBeforeTerminate (seconds): {}", timeoutBeforeTerminate);
         log.info("\tschedule: {}", schedule);
 
@@ -176,7 +176,7 @@ public class ExecProcessService {
         String console = readLastLines(1000, consoleLogFile) + '\n' + timeoutMessage;
 
         log.debug("'\tconsole output:\n{}", console);
-        return new FunctionApiData.FunctionExecResult(snippetCode, exitCode==0, exitCode, console);
+        return new FunctionApiData.FunctionExecResult(functionCode, exitCode==0, exitCode, console);
     }
 
     public static void collectHandlers(List<ProcessHandle> handles, ProcessHandle handle) {

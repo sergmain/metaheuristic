@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.launchpad.replication.ReplicationService;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.station.*;
 import ai.metaheuristic.ai.station.actors.DownloadResourceActor;
-import ai.metaheuristic.ai.station.actors.DownloadSnippetActor;
+import ai.metaheuristic.ai.station.actors.DownloadFunctionActor;
 import ai.metaheuristic.ai.station.actors.UploadResourceActor;
 import ai.metaheuristic.ai.station.env.EnvService;
 import lombok.RequiredArgsConstructor;
@@ -182,7 +182,7 @@ public class Schedulers {
         private final Globals globals;
         private final TaskAssetPreparer taskAssetPreparer;
         private final TaskProcessor taskProcessor;
-        private final DownloadSnippetActor downloadSnippetActor;
+        private final DownloadFunctionActor downloadFunctionActor;
         private final DownloadResourceActor downloadResourceActor;
         private final UploadResourceActor uploadResourceActor;
         private final ArtifactCleanerAtStation artifactCleaner;
@@ -195,11 +195,11 @@ public class Schedulers {
         private final RoundRobinForLaunchpad roundRobin;
         private final Map<String, LaunchpadRequestor> launchpadRequestorMap = new HashMap<>();
 
-        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, CurrentExecState currentExecState, EnvService envService, StationCommandProcessor stationCommandProcessor) {
+        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadFunctionActor downloadFunctionActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, CurrentExecState currentExecState, EnvService envService, StationCommandProcessor stationCommandProcessor) {
             this.globals = globals;
             this.taskAssetPreparer = taskAssetPreparer;
             this.taskProcessor = taskProcessor;
-            this.downloadSnippetActor = downloadSnippetActor;
+            this.downloadFunctionActor = downloadFunctionActor;
             this.downloadResourceActor = downloadResourceActor;
             this.uploadResourceActor = uploadResourceActor;
             this.artifactCleaner = artifactCleaner;
@@ -298,28 +298,28 @@ public class Schedulers {
             taskProcessor.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.download-snippet'), 3, 20, 10)*1000 }")
-        public void downloadSnippetActor() {
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.download-function'), 3, 20, 10)*1000 }")
+        public void downloadFunctionActor() {
             if (globals.isUnitTesting) {
                 return;
             }
             if (!globals.isStationEnabled) {
                 return;
             }
-            log.info("Run downloadSnippetActor.downloadSnippets()");
-            downloadSnippetActor.downloadSnippets();
+            log.info("Run downloadFunctionActor.downloadFunctions()");
+            downloadFunctionActor.downloadFunctions();
         }
 
-        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.prepare-snippet-for-downloading'), 3, 20, 10)*1000 }")
-        public void prepareSnippetForDownloading() {
+        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.prepare-function-for-downloading'), 3, 20, 10)*1000 }")
+        public void prepareFunctionForDownloading() {
             if (globals.isUnitTesting) {
                 return;
             }
             if (!globals.isStationEnabled) {
                 return;
             }
-            log.info("Run downloadSnippetActor.prepareSnippetForDownloading()");
-            downloadSnippetActor.prepareSnippetForDownloading();
+            log.info("Run downloadFunctionActor.prepareFunctionForDownloading()");
+            downloadFunctionActor.prepareFunctionForDownloading();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.download-resource'), 3, 20, 3)*1000 }")
@@ -330,7 +330,7 @@ public class Schedulers {
             if (!globals.isStationEnabled) {
                 return;
             }
-            log.info("Run downloadSnippetActor.fixedDelay()");
+            log.info("Run downloadResourceActor.fixedDelay()");
             downloadResourceActor.fixedDelay();
         }
 

@@ -47,7 +47,7 @@ public class StationCommParamsYaml implements BaseParams {
     }
 
     // always report info about functions
-    public SnippetDownloadStatus snippetDownloadStatus = new SnippetDownloadStatus();
+    public FunctionDownloadStatus functionDownloadStatus = new FunctionDownloadStatus();
     public StationCommContext stationCommContext;
     public RequestStationId requestStationId;
     public ReportStationStatus reportStationStatus;
@@ -58,13 +58,13 @@ public class StationCommParamsYaml implements BaseParams {
     public ResendTaskOutputResourceResult resendTaskOutputResourceResult;
 
     @Data
-    public static class SnippetDownloadStatus {
+    public static class FunctionDownloadStatus {
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
         public static class Status {
-            public Enums.SnippetState snippetState;
-            public String snippetCode;
+            public Enums.FunctionState functionState;
+            public String functionCode;
         }
 
         public List<Status> statuses = new ArrayList<>();

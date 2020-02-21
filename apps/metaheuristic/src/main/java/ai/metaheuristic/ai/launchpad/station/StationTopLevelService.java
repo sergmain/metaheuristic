@@ -83,15 +83,15 @@ public class StationTopLevelService {
 
             String blacklistReason = stationBlacklisted(status);
 
-            boolean isSnippetProblem = status.downloadStatuses.stream()
-                    .anyMatch(s->s.snippetState!=Enums.SnippetState.none &&
-                            s.snippetState!=Enums.SnippetState.ready &&
-                            s.snippetState!=Enums.SnippetState.not_found &&
-                            s.snippetState!=Enums.SnippetState.ok);
+            boolean isFunctionProblem = status.downloadStatuses.stream()
+                    .anyMatch(s->s.functionState != Enums.FunctionState.none &&
+                            s.functionState != Enums.FunctionState.ready &&
+                            s.functionState != Enums.FunctionState.not_found &&
+                            s.functionState != Enums.FunctionState.ok);
 
             ss.add(new StationData.StationStatus(
                     station, System.currentTimeMillis() - station.updatedOn < STATION_TIMEOUT,
-                    isSnippetProblem,
+                    isFunctionProblem,
                     blacklistReason!=null, blacklistReason,
                     station.updatedOn,
                     (StringUtils.isNotBlank(status.ip) ? status.ip : "[unknown]"),
@@ -137,7 +137,7 @@ public class StationTopLevelService {
 
     private static final ConcurrentHashMap<Long, Object> syncMap = new ConcurrentHashMap<>(50, 0.75f, 10);
 
-    public void storeStationStatuses(String stationIdAsStr, StationCommParamsYaml.ReportStationStatus status, StationCommParamsYaml.SnippetDownloadStatus snippetDownloadStatus) {
+    public void storeStationStatuses(String stationIdAsStr, StationCommParamsYaml.ReportStationStatus status, StationCommParamsYaml.FunctionDownloadStatus functionDownloadStatus) {
         final Long stationId = Long.valueOf(stationIdAsStr);
         final Object obj = syncMap.computeIfAbsent(stationId, o -> new Object());
         log.debug("Before entering in sync block, storeStationStatus()");
@@ -173,9 +173,9 @@ public class StationTopLevelService {
                     station.updatedOn = System.currentTimeMillis();
                     isUpdated = true;
                 }
-                if (isStationSnippetDownloadStatusDifferent(ss, snippetDownloadStatus)) {
-                    ss.downloadStatuses = snippetDownloadStatus.statuses.stream()
-                            .map(o->new StationStatusYaml.DownloadStatus(o.snippetState, o.snippetCode))
+                if (isStationFunctionDownloadStatusDifferent(ss, functionDownloadStatus)) {
+                    ss.downloadStatuses = functionDownloadStatus.statuses.stream()
+                            .map(o->new StationStatusYaml.DownloadStatus(o.functionState, o.functionCode))
                             .collect(Collectors.toList());
                     station.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
                     station.updatedOn = System.currentTimeMillis();
@@ -217,13 +217,13 @@ public class StationTopLevelService {
         ss.os!=status.os;
     }
 
-    public static boolean isStationSnippetDownloadStatusDifferent(StationStatusYaml ss, StationCommParamsYaml.SnippetDownloadStatus status) {
+    public static boolean isStationFunctionDownloadStatusDifferent(StationStatusYaml ss, StationCommParamsYaml.FunctionDownloadStatus status) {
         if (ss.downloadStatuses.size()!=status.statuses.size()) {
             return true;
         }
         for (StationStatusYaml.DownloadStatus downloadStatus : ss.downloadStatuses) {
-            for (StationCommParamsYaml.SnippetDownloadStatus.Status sds : status.statuses) {
-                if (downloadStatus.snippetCode.equals(sds.snippetCode) && !downloadStatus.snippetState.equals(sds.snippetState)) {
+            for (StationCommParamsYaml.FunctionDownloadStatus.Status sds : status.statuses) {
+                if (downloadStatus.functionCode.equals(sds.functionCode) && !downloadStatus.functionState.equals(sds.functionState)) {
                     return true;
                 }
             }

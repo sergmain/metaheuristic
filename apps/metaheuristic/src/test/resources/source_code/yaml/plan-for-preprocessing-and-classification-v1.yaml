@@ -12,7 +12,7 @@ source:
   processes:
     - code: assembly-raw-file
       name: assembly raw file
-      snippet:
+      function:
         code: assembly.dataset:1.3
         params: 'assemble'
       input:
@@ -21,7 +21,7 @@ source:
         - name: assembled-raw
     - code: dataset-processing
       name: dataset processing
-      snippet:
+      function:
         code: assembly.dataset:1.3
         params: 'produce'
       input:
@@ -33,7 +33,7 @@ source:
         processes:
           - code: feature-processing_cluster
             name: feature processing
-            snippet:
+            function:
               code: feature.standard:1.5
               params: CLUSTER
             input:
@@ -42,7 +42,7 @@ source:
               - name: feature-processing_cluster
           - code: feature-processing_matrix
             name: feature processing
-            snippet:
+            function:
               code: feature.standard:1.5
               params: MATRIX
             input:
@@ -54,7 +54,7 @@ source:
       metas:
         - key: variables
           value: feature-processing_matrix, feature-processing_cluster_size_1
-      snippet:
+      function:
         code: mh.permute-variables-and-hyper-params
         context: internal
       output:
@@ -64,7 +64,7 @@ source:
         processes:
           - code: fit-data
             name: fit-data
-            snippet:
+            function:
               code: fit:6.2
             input:
               - name: dataset-processing
@@ -73,7 +73,7 @@ source:
               - name: model
           - code: predict-result
             name: predict-result
-            snippet:
+            function:
               code: predict:6.2
             input:
               - name: dataset-processing
@@ -84,7 +84,7 @@ source:
               - name: predicted
           - code: check-fitting
             name: check-fitting
-            snippet:
+            function:
               code: check-fitting:6.2
             input:
               - name: predicted

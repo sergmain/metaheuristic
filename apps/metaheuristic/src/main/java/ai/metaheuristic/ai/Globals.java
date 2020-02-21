@@ -80,10 +80,10 @@ public class Globals {
     public boolean isSslRequired = true;
 
     @Value("${mh.launchpad.function-checksum-required:#{true}}")
-    public boolean isSnippetChecksumRequired = true;
+    public boolean isFunctionChecksumRequired = true;
 
     @Value("${mh.launchpad.function-signature-required:#{true}}")
-    public boolean isSnippetSignatureRequired = true;
+    public boolean isFunctionSignatureRequired = true;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-username')) }")
     public String launchpadMasterUsername;

@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
+import ai.metaheuristic.ai.launchpad.function.FunctionService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
@@ -100,7 +100,7 @@ public class ExperimentService {
     private final MetricsMaxValueCollector metricsMaxValueCollector;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final SnippetService snippetService;
+    private final FunctionService functionService;
     private final ExecContextCache execContextCache;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
@@ -680,9 +680,9 @@ public class ExperimentService {
 
     @Data
     @AllArgsConstructor
-    private static class ExperimentSnippetItem {
+    private static class ExperimentFunctionItem {
         public EnumsApi.ExperimentFunction type;
-        public String snippetCode;
+        public String functionCode;
     }
 
     public EnumsApi.SourceCodeProducingStatus produceTasks(
@@ -692,12 +692,12 @@ public class ExperimentService {
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         if (StringUtils.isBlank(epy.experimentYaml.fitFunction)|| StringUtils.isBlank(epy.experimentYaml.predictFunction)) {
-            throw new IllegalStateException("#179.080 (StringUtils.isBlank(epy.yaml.fitSnippet)|| StringUtils.isBlank(epy.yaml.predictSnippet))" +
+            throw new IllegalStateException("#179.080 (StringUtils.isBlank(epy.yaml.fitFunction)|| StringUtils.isBlank(epy.yaml.predictFunction))" +
                     ", "+epy.experimentYaml.fitFunction +", " + epy.experimentYaml.predictFunction);
         }
-        List<ExperimentSnippetItem> experimentSnippets =
-                List.of(new ExperimentSnippetItem(EnumsApi.ExperimentFunction.FIT, epy.experimentYaml.fitFunction),
-                        new ExperimentSnippetItem(EnumsApi.ExperimentFunction.PREDICT, epy.experimentYaml.predictFunction));
+        List<ExperimentFunctionItem> experimentFunctions =
+                List.of(new ExperimentFunctionItem(EnumsApi.ExperimentFunction.FIT, epy.experimentYaml.fitFunction),
+                        new ExperimentFunctionItem(EnumsApi.ExperimentFunction.PREDICT, epy.experimentYaml.predictFunction));
 
         final Map<String, String> map = toMap(epy.experimentYaml.getHyperParams(), epy.experimentYaml.seed);
         final int calcTotalVariants = ExperimentUtils.calcTotalVariants(map);
@@ -753,7 +753,7 @@ public class ExperimentService {
                     TaskImpl prevTask;
                     TaskImpl task = null;
                     List<Long> prevParentTaskIds = new ArrayList<>(parentTaskIds);
-                    for (ExperimentSnippetItem snippetItem : experimentSnippets) {
+                    for (ExperimentFunctionItem functionItem : experimentFunctions) {
                         if (boolHolder.get()) {
                             return EnumsApi.SourceCodeProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
                         }
@@ -798,10 +798,10 @@ public class ExperimentService {
                                     );
 
                         }
-                        final String snippetCode = snippetItem.snippetCode;
-                        Function function = getSnippet(localCache, snippetCode);
+                        final String functionCode = functionItem.functionCode;
+                        Function function = getFunction(localCache, functionCode);
                         if (function == null) {
-                            log.warn("#179.110 Function wasn't found for code: {}", snippetCode);
+                            log.warn("#179.110 Function wasn't found for code: {}", functionCode);
                             continue;
                         }
 
@@ -845,28 +845,28 @@ public class ExperimentService {
                             epy.processing.taskFeatures.add(tef);
                         }
 
-                        yaml.taskYaml.function = TaskParamsUtils.toFunctionConfig(function.getSnippetConfig(true));
+                        yaml.taskYaml.function = TaskParamsUtils.toFunctionConfig(function.getFunctionConfig(true));
                         yaml.taskYaml.preFunctions = new ArrayList<>();
                         if (process.getPreFunctions() != null) {
                             for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.getPreFunctions()) {
-                                yaml.taskYaml.preFunctions.add(snippetService.getSnippetConfig(snDef));
+                                yaml.taskYaml.preFunctions.add(functionService.getFunctionConfig(snDef));
                             }
                         }
                         yaml.taskYaml.postFunctions = new ArrayList<>();
-                        if (snippetItem.type== EnumsApi.ExperimentFunction.PREDICT) {
-                            Meta m = MetaUtils.getMeta(function.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
+                        if (functionItem.type== EnumsApi.ExperimentFunction.PREDICT) {
+                            Meta m = MetaUtils.getMeta(function.getFunctionConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
                             if (MetaUtils.isTrue(m) && !S.b(epy.experimentYaml.checkFittingFunction)) {
-                                Function cos = getSnippet(localCache, epy.experimentYaml.checkFittingFunction);
+                                Function cos = getFunction(localCache, epy.experimentYaml.checkFittingFunction);
                                 if (function == null) {
-                                    log.warn("#179.140 Function wasn't found for code: {}", snippetCode);
+                                    log.warn("#179.140 Function wasn't found for code: {}", functionCode);
                                     continue;
                                 }
-                                yaml.taskYaml.postFunctions.add(TaskParamsUtils.toFunctionConfig(cos.getSnippetConfig(false)));
+                                yaml.taskYaml.postFunctions.add(TaskParamsUtils.toFunctionConfig(cos.getFunctionConfig(false)));
                             }
                         }
                         if (process.getPostFunctions()!=null) {
                             for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.getPostFunctions()) {
-                                yaml.taskYaml.postFunctions.add(snippetService.getSnippetConfig(snDef));
+                                yaml.taskYaml.postFunctions.add(functionService.getFunctionConfig(snDef));
                             }
                         }
                         yaml.taskYaml.clean = sourceCodeParams.source.clean;
@@ -922,12 +922,12 @@ public class ExperimentService {
         return EnumsApi.SourceCodeProducingStatus.OK;
     }
 
-    public Function getSnippet(Map<String, Function> localCache, String snippetCode) {
-        Function function = localCache.get(snippetCode);
+    public Function getFunction(Map<String, Function> localCache, String functionCode) {
+        Function function = localCache.get(functionCode);
         if (function == null) {
-            function = snippetService.findByCode(snippetCode);
+            function = functionService.findByCode(functionCode);
             if (function != null) {
-                localCache.put(snippetCode, function);
+                localCache.put(functionCode, function);
             }
         }
         return function;

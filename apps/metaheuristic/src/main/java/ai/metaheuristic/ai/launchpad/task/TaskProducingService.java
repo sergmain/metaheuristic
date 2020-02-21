@@ -20,12 +20,12 @@ import ai.metaheuristic.ai.launchpad.beans.Ids;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.Variable;
 import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
-import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetOutput;
-import ai.metaheuristic.ai.launchpad.internal_snippet_lib.InternalSnippetProcessor;
+import ai.metaheuristic.ai.launchpad.internal_functions.InternalFunctionOutput;
+import ai.metaheuristic.ai.launchpad.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.repositories.IdsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
+import ai.metaheuristic.ai.launchpad.function.FunctionService;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -52,10 +52,10 @@ import java.util.Map;
 public class TaskProducingService {
 
     private final TaskRepository taskRepository;
-    private final SnippetService snippetService;
+    private final FunctionService functionService;
     private final VariableService variableService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final InternalSnippetProcessor internalSnippetProcessor;
+    private final InternalFunctionProcessor internalFunctionProcessor;
     private final IdsRepository idsRepository;
 
     public SourceCodeService.ProduceTaskResult produceTasks(SourceCodeData.SourceCodeGraph sourceCodeGraph) {
@@ -132,7 +132,7 @@ public class TaskProducingService {
                 throw new NotImplementedException("not yet");
             }
             // variables will be created while processing of internal function
-            List<InternalSnippetOutput> outputs = internalSnippetProcessor.process(snDef.code, sourceCodeId, execContextId, internalContextId, null);
+            List<InternalFunctionOutput> outputs = internalFunctionProcessor.process(snDef.code, sourceCodeId, execContextId, internalContextId, null);
 
             // theoretically, internal function can be without subProcesses, i.e. a result aggregation function
 
@@ -172,21 +172,21 @@ public class TaskProducingService {
         }
         yaml.taskYaml.resourceStorageUrls = map;
 
-        yaml.taskYaml.function = snippetService.getSnippetConfig(snDef);
+        yaml.taskYaml.function = functionService.getFunctionConfig(snDef);
         if (yaml.taskYaml.function ==null) {
             log.error("#171.07 Function wasn't found for code: {}", snDef.code);
             return null;
         }
         yaml.taskYaml.preFunctions = new ArrayList<>();
         if (process.getPreFunctions()!=null) {
-            for (SourceCodeParamsYaml.FunctionDefForSourceCode preSnippet : process.getPreFunctions()) {
-                yaml.taskYaml.preFunctions.add(snippetService.getSnippetConfig(preSnippet));
+            for (SourceCodeParamsYaml.FunctionDefForSourceCode preFunction : process.getPreFunctions()) {
+                yaml.taskYaml.preFunctions.add(functionService.getFunctionConfig(preFunction));
             }
         }
         yaml.taskYaml.postFunctions = new ArrayList<>();
         if (process.getPostFunctions()!=null) {
-            for (SourceCodeParamsYaml.FunctionDefForSourceCode postSnippet : process.getPostFunctions()) {
-                yaml.taskYaml.postFunctions.add(snippetService.getSnippetConfig(postSnippet));
+            for (SourceCodeParamsYaml.FunctionDefForSourceCode postFunction : process.getPostFunctions()) {
+                yaml.taskYaml.postFunctions.add(functionService.getFunctionConfig(postFunction));
             }
         }
         yaml.taskYaml.clean = sourceCodeParams.source.clean;

@@ -105,21 +105,21 @@ public class TestYamlParser {
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void loadSnippetYamlWithError_01() throws IOException {
+    public void loadFunctionYamlWithError_01() throws IOException {
 
-        FunctionConfigListYaml config = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/snippets-test-error.yaml", StandardCharsets.UTF_8));
+        FunctionConfigListYaml config = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/functions-test-error.yaml", StandardCharsets.UTF_8));
         assertNotNull(config);
         assertNotNull(config.getFunctions());
         assertEquals(1, config.getFunctions().size());
-        FunctionConfigListYaml.FunctionConfig snippet = config.getFunctions().get(0);
-        FunctionApiData.FunctionConfigStatus status = FunctionCoreUtils.validate(snippet);
+        FunctionConfigListYaml.FunctionConfig function = config.getFunctions().get(0);
+        FunctionApiData.FunctionConfigStatus status = FunctionCoreUtils.validate(function);
         assertFalse(status.isOk);
     }
 
     @Test
-    public void loadSnippetsFromYaml() throws IOException {
+    public void loadFunctionsFromYaml() throws IOException {
 
-        FunctionConfigListYaml config = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/snippets-test.yaml", StandardCharsets.UTF_8));
+        FunctionConfigListYaml config = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/functions-test.yaml", StandardCharsets.UTF_8));
 
         assertNotNull(config);
         assertNotNull(config.functions);

@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.launchpad;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
+import ai.metaheuristic.ai.launchpad.repositories.FunctionRepository;
+import ai.metaheuristic.ai.launchpad.function.FunctionCache;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
@@ -55,11 +55,11 @@ public class LaunchpadCommandProcessor {
     private final TaskService taskService;
     private final StationTopLevelService stationTopLevelService;
     private final ExecContextService execContextService;
-    private final SnippetRepository snippetRepository;
-    private final SnippetCache snippetCache;
+    private final FunctionRepository functionRepository;
+    private final FunctionCache functionCache;
 
-    private static final long SNIPPET_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
-    private List<LaunchpadCommParamsYaml.Snippets.Info> snippetInfosCache = new ArrayList<>();
+    private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
+    private List<LaunchpadCommParamsYaml.Functions.Info> functionInfosCache = new ArrayList<>();
     private long mills = System.currentTimeMillis();
 
     public void process(StationCommParamsYaml scpy, LaunchpadCommParamsYaml lcpy) {
@@ -71,19 +71,19 @@ public class LaunchpadCommandProcessor {
         processReportStationStatus(scpy);
         lcpy.assignedTask = processRequestTask(scpy);
         lcpy.assignedStationId = getNewStationId(scpy.requestStationId);
-        lcpy.snippets.infos.addAll( getSnippetInfos() );
+        lcpy.functions.infos.addAll( getFunctionInfos() );
     }
 
-    private synchronized List<LaunchpadCommParamsYaml.Snippets.Info> getSnippetInfos() {
-        if (System.currentTimeMillis() - mills > SNIPPET_INFOS_TIMEOUT_REFRESH) {
+    private synchronized List<LaunchpadCommParamsYaml.Functions.Info> getFunctionInfos() {
+        if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
             mills = System.currentTimeMillis();
-            final List<Long> allIds = snippetRepository.findAllIds();
-            snippetInfosCache = allIds.stream()
-                    .map(snippetCache::findById)
-                    .map(s->new LaunchpadCommParamsYaml.Snippets.Info(s.code, s.getSnippetConfig(false).sourcing))
+            final List<Long> allIds = functionRepository.findAllIds();
+            functionInfosCache = allIds.stream()
+                    .map(functionCache::findById)
+                    .map(s->new LaunchpadCommParamsYaml.Functions.Info(s.code, s.getFunctionConfig(false).sourcing))
                     .collect(Collectors.toList());
         }
-        return snippetInfosCache;
+        return functionInfosCache;
     }
 
     // processing on launchpad side
@@ -132,7 +132,7 @@ public class LaunchpadCommandProcessor {
             return;
         }
         checkStationId(request);
-        stationTopLevelService.storeStationStatuses(request.stationCommContext.stationId, request.reportStationStatus, request.snippetDownloadStatus);
+        stationTopLevelService.storeStationStatuses(request.stationCommContext.stationId, request.reportStationStatus, request.functionDownloadStatus);
     }
 
     // processing on launchpad side

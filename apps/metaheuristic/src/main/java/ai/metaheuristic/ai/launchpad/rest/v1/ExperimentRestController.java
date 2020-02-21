@@ -110,9 +110,9 @@ public class ExperimentRestController {
         return experimentTopLevelService.metadataEditCommit(id, key, value);
     }
 
-    @PostMapping("/experiment-snippet-add-commit/{id}")
-    public OperationStatusRest snippetAddCommit(@PathVariable Long id, String code) {
-        return experimentTopLevelService.snippetAddCommit(id, code);
+    @PostMapping("/experiment-function-add-commit/{id}")
+    public OperationStatusRest functionAddCommit(@PathVariable Long id, String code) {
+        return experimentTopLevelService.functionAddCommit(id, code);
     }
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
@@ -125,14 +125,14 @@ public class ExperimentRestController {
         return experimentTopLevelService.metadataDefaultAddCommit(experimentId);
     }
 
-    @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{snippetCode}")
-    public OperationStatusRest snippetDeleteCommit(@PathVariable Long experimentId, @PathVariable String snippetCode) {
-        return experimentTopLevelService.snippetDeleteCommit(experimentId, snippetCode);
+    @GetMapping("/experiment-function-delete-commit/{experimentId}/{functionCode}")
+    public OperationStatusRest functionDeleteCommit(@PathVariable Long experimentId, @PathVariable String functionCode) {
+        return experimentTopLevelService.functionDeleteCommit(experimentId, functionCode);
     }
 
-    @GetMapping("/experiment-snippet-delete-by-type-commit/{experimentId}/{snippetType}")
-    public OperationStatusRest snippetDeleteByTypeCommit(@PathVariable Long experimentId, @PathVariable String snippetType) {
-        return experimentTopLevelService.snippetDeleteByTypeCommit(experimentId, snippetType);
+    @GetMapping("/experiment-function-delete-by-type-commit/{experimentId}/{functionType}")
+    public OperationStatusRest functionDeleteByTypeCommit(@PathVariable Long experimentId, @PathVariable String functionType) {
+        return experimentTopLevelService.functionDeleteByTypeCommit(experimentId, functionType);
     }
 
     @PostMapping("/experiment-delete-commit")
@@ -151,7 +151,7 @@ public class ExperimentRestController {
     }
 
     @PostMapping(value = "/experiment-upload-from-file")
-    public OperationStatusRest uploadSnippet(final MultipartFile file) {
+    public OperationStatusRest uploadFunction(final MultipartFile file) {
         return experimentTopLevelService.uploadExperiment(file);
     }
 

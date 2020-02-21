@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
+import ai.metaheuristic.ai.launchpad.function.FunctionService;
 import ai.metaheuristic.commons.CommonConsts;
 import org.junit.Test;
 
@@ -63,7 +63,7 @@ public class TestExperimentUtils {
         es3.setType(CommonConsts.CHECK_FITTING_TYPE);
 
         List<Function> experimentFunctions = Arrays.asList( es1, es2, es3 );
-        SnippetService.sortExperimentSnippets(experimentFunctions);
+        FunctionService.sortExperimentFunctions(experimentFunctions);
         assertEquals(CommonConsts.FIT_TYPE, experimentFunctions.get(0).getType());
         assertEquals(CommonConsts.PREDICT_TYPE, experimentFunctions.get(1).getType());
         assertEquals(CommonConsts.CHECK_FITTING_TYPE, experimentFunctions.get(2).getType());

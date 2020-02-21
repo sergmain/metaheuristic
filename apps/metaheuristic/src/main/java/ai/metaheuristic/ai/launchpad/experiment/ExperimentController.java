@@ -166,7 +166,7 @@ public class ExperimentController {
 
         model.addAttribute("hyperParams", r.hyperParams);
         model.addAttribute("simpleExperiment", r.simpleExperiment);
-        model.addAttribute("snippetResult", r.functionResult);
+        model.addAttribute("functionResult", r.functionResult);
         return "launchpad/experiment/experiment-edit-form";
     }
 
@@ -228,9 +228,9 @@ public class ExperimentController {
         return "redirect:/launchpad/experiment/experiment-edit/"+id;
     }
 
-    @PostMapping("/experiment-snippet-add-commit/{id}")
-    public String snippetAddCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = experimentTopLevelService.snippetAddCommit(id, code);
+    @PostMapping("/experiment-function-add-commit/{id}")
+    public String functionAddCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = experimentTopLevelService.functionAddCommit(id, code);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
@@ -256,18 +256,18 @@ public class ExperimentController {
         return "redirect:/launchpad/experiment/experiment-edit/" + experimentId;
     }
 
-    @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{snippetCode}")
-    public String snippetDeleteCommit(@PathVariable Long experimentId, @PathVariable String snippetCode, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = experimentTopLevelService.snippetDeleteCommit(experimentId, snippetCode);
+    @GetMapping("/experiment-function-delete-commit/{experimentId}/{functionCode}")
+    public String functionDeleteCommit(@PathVariable Long experimentId, @PathVariable String functionCode, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = experimentTopLevelService.functionDeleteCommit(experimentId, functionCode);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
         return "redirect:/launchpad/experiment/experiment-edit/" + experimentId;
     }
 
-    @GetMapping("/experiment-snippet-delete-by-type-commit/{experimentId}/{snippetType}")
-    public String snippetDeleteByTypeCommit(@PathVariable Long experimentId, @PathVariable String snippetType, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = experimentTopLevelService.snippetDeleteByTypeCommit(experimentId, snippetType);
+    @GetMapping("/experiment-function-delete-by-type-commit/{experimentId}/{functionType}")
+    public String functionDeleteByTypeCommit(@PathVariable Long experimentId, @PathVariable String functionType, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = experimentTopLevelService.functionDeleteByTypeCommit(experimentId, functionType);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }

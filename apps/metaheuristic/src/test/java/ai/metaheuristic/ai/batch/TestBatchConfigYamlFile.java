@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.batch;
 
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
-import ai.metaheuristic.ai.launchpad.internal_snippet_lib.resource_splitter.ResourceSplitterSnippet;
+import ai.metaheuristic.ai.launchpad.internal_functions.resource_splitter.ResourceSplitterFunction;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.utils.DirUtils;
 import org.apache.commons.io.FileUtils;
@@ -45,7 +45,7 @@ public class TestBatchConfigYamlFile {
     public void testParsing() throws IOException {
 
         try (InputStream is = TestBatchConfigYamlFile.class.getResourceAsStream("/yaml/batch/bad-config.yaml")) {
-            ResourceSplitterSnippet.getMainDocument(is);
+            ResourceSplitterFunction.getMainDocument(is);
         }
     }
 
@@ -60,7 +60,7 @@ public class TestBatchConfigYamlFile {
             FileUtils.write(new File(artifact, "config.yaml"), "mainDocument: ccc.xml", StandardCharsets.UTF_8);
 
             thrown.expect(BatchResourceProcessingException.class);
-            File f = ResourceSplitterSnippet.getMainDocumentFileFromConfig(artifact, Map.of());
+            File f = ResourceSplitterFunction.getMainDocumentFileFromConfig(artifact, Map.of());
         }
         finally {
             if (dir!=null) {
@@ -80,7 +80,7 @@ public class TestBatchConfigYamlFile {
             FileUtils.write(new File(artifact, "config.yaml"), "mainDocument: aaa.xml", StandardCharsets.UTF_8);
 
 //            thrown.expect(BatchResourceProcessingException.class);
-            File f = ResourceSplitterSnippet.getMainDocumentFileFromConfig(artifact, Map.of("artifacts/aaa1.xml", "artifacts/aaa.xml", "artifacts/bbb1.xml", "artifacts/bbb.xml"));
+            File f = ResourceSplitterFunction.getMainDocumentFileFromConfig(artifact, Map.of("artifacts/aaa1.xml", "artifacts/aaa.xml", "artifacts/bbb1.xml", "artifacts/bbb.xml"));
         }
         finally {
             if (dir!=null) {

@@ -68,7 +68,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
             p.name = "Plocess mh.resource-splitter";
             p.code = "process-mh.resource-splitter";
 
-            p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(Consts.MH_RESOURCE_SPLITTER_SNIPPET, EnumsApi.FunctionExecContext.internal);
+            p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(Consts.MH_RESOURCE_SPLITTER_FUNCTION, EnumsApi.FunctionExecContext.internal);
             p.output.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad,"batch-array"));
 
             planParamsYaml.source.processes.add(p);

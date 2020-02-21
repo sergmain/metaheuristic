@@ -39,7 +39,7 @@ public class ReplicationService {
     public final ReplicationCoreService replicationCoreService;
     public final ReplicationCompanyService replicationCompanyService;
     public final ReplicationAccountService replicationAccountService;
-    public final ReplicationSnippetService replicationSnippetService;
+    public final ReplicationFunctionService replicationFunctionService;
     public final ReplicationSourceCodeService replicationSourceCodeService;
 
     public void sync() {
@@ -51,7 +51,7 @@ public class ReplicationService {
             log.error("#308.010 Error while getting actual assets: " + assetStateResponse.getErrorMessagesAsStr());
             return;
         }
-        replicationSnippetService.syncSnippets(assetStateResponse.snippets);
+        replicationFunctionService.syncFunctions(assetStateResponse.functions);
         replicationSourceCodeService.syncSourceCodes(assetStateResponse.sourceCodes);
         replicationCompanyService.syncCompanies(assetStateResponse.companies);
         replicationAccountService.syncAccounts(assetStateResponse.usernames);

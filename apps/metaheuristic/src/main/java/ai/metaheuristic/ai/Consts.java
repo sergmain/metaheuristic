@@ -91,7 +91,7 @@ public class Consts {
     public static final String BATCHES_CACHE = "batches";
     public static final String EXPERIMENTS_CACHE = "experiments";
     public static final String SOURCE_CODES_CACHE = "source_codes";
-    public static final String SNIPPETS_CACHE = "functions";
+    public static final String FUNCTIONS_CACHE = "functions";
 
     public static final String MAIN_DOCUMENT_POOL_CODE_FOR_BATCH = "mainDocument";
 
@@ -107,15 +107,15 @@ public class Consts {
 
     public static final String META_PREDICTED_DATA = "mh-predicted-data";
     public static final String META_FITTED = "mh-fitted";
-    public static final String META_SNIPPET_DOWNLOAD_STATUS = "mh-function-download-status";
+    public static final String META_FUNCTION_DOWNLOAD_STATUS = "mh-function-download-status";
 
     public static final String RESULT_ZIP = "result.zip";
     public static final Long ID_1 = 1L;
 
-    public static final String MH_RESOURCE_SPLITTER_SNIPPET = "mh.resource-splitter";
-    public static final String MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_SNIPPET = "mh.permute-variables-and-hyper-params";
-    public static final String MH_FINISH_SNIPPET = "mh.finish";
-    public static final List<String> MH_INTERNAL_SNIPPETS = List.of(MH_RESOURCE_SPLITTER_SNIPPET, MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_SNIPPET, MH_FINISH_SNIPPET);
+    public static final String MH_RESOURCE_SPLITTER_FUNCTION = "mh.resource-splitter";
+    public static final String MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION = "mh.permute-variables-and-hyper-params";
+    public static final String MH_FINISH_FUNCTION = "mh.finish";
+    public static final List<String> MH_INTERNAL_FUNCTIONS = List.of(MH_RESOURCE_SPLITTER_FUNCTION, MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION, MH_FINISH_FUNCTION);
 
     public static final String EMPTY_GRAPH = "strict digraph G { }";
 }

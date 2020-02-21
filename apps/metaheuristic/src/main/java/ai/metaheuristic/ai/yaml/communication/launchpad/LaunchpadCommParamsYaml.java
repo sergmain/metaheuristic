@@ -45,7 +45,7 @@ public class LaunchpadCommParamsYaml implements BaseParams {
     public LaunchpadCommContext launchpadCommContext;
 
     // always send info about functions
-    public Snippets snippets = new Snippets();
+    public Functions functions = new Functions();
     public AssignedTask assignedTask;
     public AssignedStationId assignedStationId;
     public ReAssignStationId reAssignedStationId;
@@ -56,7 +56,7 @@ public class LaunchpadCommParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Snippets {
+    public static class Functions {
         @Data
         @NoArgsConstructor
         @AllArgsConstructor

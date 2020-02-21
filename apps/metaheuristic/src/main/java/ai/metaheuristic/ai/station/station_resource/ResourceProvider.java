@@ -37,7 +37,7 @@ public interface ResourceProvider {
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String outputResourceId,
-            TaskParamsYaml.FunctionConfig snippet
+            TaskParamsYaml.FunctionConfig functionConfig
     );
 
     File getOutputResourceFile(

@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
 import ai.metaheuristic.ai.launchpad.repositories.CompanyRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
+import ai.metaheuristic.ai.launchpad.function.FunctionCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
@@ -80,7 +80,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public SourceCodeService sourceCodeService;
 
     @Autowired
-    public SnippetCache snippetCache;
+    public FunctionCache functionCache;
 
     @Autowired
     public TaskCollector taskCollector;
@@ -208,7 +208,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             SourceCodeParamsYamlV1.ProcessV1 p1 = new SourceCodeParamsYamlV1.ProcessV1();
             p1.name = "feature-processing-1";
             p1.code = "feature-processing-1";
-            p1.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(TEST_FIT_SNIPPET);
+            p1.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(TEST_FIT_FUNCTION);
 //            input:
 //              - variable: feature-per-task
 //                sourcing: launchpad
@@ -222,7 +222,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             SourceCodeParamsYamlV1.ProcessV1 p2 = new SourceCodeParamsYamlV1.ProcessV1();
             p2.name = "feature-processing-2";
             p2.code = "feature-processing-2";
-            p2.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(TEST_PREDICT_SNIPPET);
+            p2.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(TEST_PREDICT_FUNCTION);
             p2.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
 //              - variable: metrics
 //                sourcing: launchpad
@@ -234,7 +234,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             SourceCodeParamsYamlV1.ProcessV1 p3 = new SourceCodeParamsYamlV1.ProcessV1();
             p3.name = "feature-processing-3";
             p3.code = "feature-processing-3";
-            p3.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(TEST_FITTING_SNIPPET);
+            p3.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(TEST_FITTING_FUNCTION);
             p3.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "predicted"));
             p3.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "overfitting"));
 
@@ -265,11 +265,11 @@ public abstract class PreparingPlan extends PreparingExperiment {
         // id==1L must be assigned only to master company
         assertNotEquals(Consts.ID_1, company.id);
 
-        s1 = createSnippet("function-01:1.1");
-        s2 = createSnippet("function-02:1.1");
-        s3 = createSnippet("function-03:1.1");
-        s4 = createSnippet("function-04:1.1");
-        s5 = createSnippet("function-05:1.1");
+        s1 = createFunction("function-01:1.1");
+        s2 = createFunction("function-02:1.1");
+        s3 = createFunction("function-03:1.1");
+        s4 = createFunction("function-04:1.1");
+        s5 = createFunction("function-05:1.1");
 
         plan = new SourceCodeImpl();
         plan.setUid("test-sourceCode-code");
@@ -302,12 +302,12 @@ public abstract class PreparingPlan extends PreparingExperiment {
         execContextYaml.variables.computeIfAbsent(Consts.MH_EXEC_CONTEXT_INPUT_VARIABLE, o-> new ArrayList<>()).add(TEST_GLOBAL_VARIABLE);
     }
 
-    private Function createSnippet(String snippetCode) {
+    private Function createFunction(String functionCode) {
         FunctionConfigYaml sc = new FunctionConfigYaml();
-        sc.code = snippetCode;
-        sc.type = snippetCode + "-type";
+        sc.code = functionCode;
+        sc.type = functionCode + "-type";
         sc.file = null;
-        sc.setEnv("env-"+snippetCode);
+        sc.setEnv("env-"+functionCode);
         sc.sourcing = EnumsApi.FunctionSourcing.station;
 
         sc.info.setSigned(false);
@@ -317,15 +317,15 @@ public abstract class PreparingPlan extends PreparingExperiment {
 //    value: '3'
         sc.metas.add(new Meta(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5", null));
         Function s = new Function();
-        Long snippetId = snippetRepository.findIdByCode(snippetCode);
-        if (snippetId!=null) {
-            snippetCache.delete(snippetId);
+        Long functionId = functionRepository.findIdByCode(functionCode);
+        if (functionId!=null) {
+            functionCache.delete(functionId);
         }
-        s.setCode(snippetCode);
+        s.setCode(functionCode);
         s.setType(sc.type);
         s.setParams(FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc));
 
-        snippetCache.save(s);
+        functionCache.save(s);
         return s;
     }
 
@@ -345,11 +345,11 @@ public abstract class PreparingPlan extends PreparingExperiment {
                 log.error("Error while companyRepository.deleteById()", th);
             }
         }
-        deleteSnippet(s1);
-        deleteSnippet(s2);
-        deleteSnippet(s3);
-        deleteSnippet(s4);
-        deleteSnippet(s5);
+        deleteFunction(s1);
+        deleteFunction(s2);
+        deleteFunction(s3);
+        deleteFunction(s4);
+        deleteFunction(s5);
         if (workbook!=null) {
             try {
                 execContextRepository.deleteById(workbook.getId());
@@ -405,10 +405,10 @@ public abstract class PreparingPlan extends PreparingExperiment {
         return result;
     }
 
-    private void deleteSnippet(Function s) {
+    private void deleteFunction(Function s) {
         if (s!=null) {
             try {
-                snippetCache.delete(s);
+                functionCache.delete(s);
             } catch (Throwable th) {
                 log.error("Error", th);
             }

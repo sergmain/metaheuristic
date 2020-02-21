@@ -75,7 +75,7 @@ public class ResourceUtils {
         return assetFile;
     }
 
-    public static AssetFile prepareSnippetFile(File baseDir, String snippetCode, String resourceFilename) {
+    public static AssetFile prepareFunctionFile(File baseDir, String functionCode, String resourceFilename) {
 
         final AssetFile assetFile = new AssetFile();
         final File trgDir = new File(baseDir, EnumsApi.BinaryType.function.toString());
@@ -84,7 +84,7 @@ public class ResourceUtils {
             log.error("#025.37 Can't create function dir: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
-        final String resId = snippetCode.replace(':', '_');
+        final String resId = functionCode.replace(':', '_');
         final File resDir = new File(trgDir, resId);
         if (!resDir.exists() && !resDir.mkdirs()) {
             assetFile.isError = true;

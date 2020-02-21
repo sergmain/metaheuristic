@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.launchpad.company.CompanyCache;
 import ai.metaheuristic.ai.launchpad.data.SourceCodeData;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.launchpad.repositories.FunctionRepository;
 import ai.metaheuristic.ai.launchpad.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
@@ -78,7 +78,7 @@ public class SourceCodeService {
 
     private final ExecContextService execContextService;
     private final CommonProcessValidatorService commonProcessValidatorService;
-    private final SnippetRepository snippetRepository;
+    private final FunctionRepository functionRepository;
     private final ExecContextFSM execContextFSM;
     private final CompanyCache companyCache;
 
@@ -321,7 +321,7 @@ public class SourceCodeService {
                 return EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
             EnumsApi.SourceCodeValidateStatus status;
-            status = checkSnippets(sourceCode, process);
+            status = checkFunctions(sourceCode, process);
             if (status!=OK) {
                 return status;
             }
@@ -329,13 +329,13 @@ public class SourceCodeService {
         return EnumsApi.SourceCodeValidateStatus.OK;
     }
 
-    private EnumsApi.SourceCodeValidateStatus checkSnippets(SourceCode sourceCode, SourceCodeParamsYaml.Process process) {
+    private EnumsApi.SourceCodeValidateStatus checkFunctions(SourceCode sourceCode, SourceCodeParamsYaml.Process process) {
         YamlVersion v = YamlForVersioning.getYamlForVersion().load(sourceCode.getParams());
 
         if (process.function !=null) {
             SourceCodeParamsYaml.FunctionDefForSourceCode snDef = process.function;
             if (snDef.context== EnumsApi.FunctionExecContext.internal) {
-                if (!Consts.MH_INTERNAL_SNIPPETS.contains(snDef.code)) {
+                if (!Consts.MH_INTERNAL_FUNCTIONS.contains(snDef.code)) {
                     return EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR;
                 }
             }
@@ -371,8 +371,8 @@ public class SourceCodeService {
 
     private EnumsApi.SourceCodeValidateStatus checkRequiredVersionOfTaskParams(int sourceCodeYamlAsStr, SourceCodeParamsYaml.Process process, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
         if (StringUtils.isNotBlank(snDef.code)) {
-            Long  snippetId = snippetRepository.findIdByCode(snDef.code);
-            if (snippetId == null) {
+            Long functionId = functionRepository.findIdByCode(snDef.code);
+            if (functionId == null) {
                 log.error("#177.030 function wasn't found for code: {}, process: {}", snDef.code, process);
                 return EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR;
             }

@@ -46,7 +46,7 @@ public class StationStatusYamlUtilsV1
         src.checkIntegrity();
         StationStatusYaml trg = new StationStatusYaml();
         trg.downloadStatuses = src.downloadStatuses.stream()
-                .map( source -> new StationStatusYaml.DownloadStatus(source.snippetState,source.snippetCode))
+                .map( source -> new StationStatusYaml.DownloadStatus(source.functionState,source.functionCode))
                 .collect(Collectors.toList());
         if (src.errors!=null) {
             trg.errors = new ArrayList<>(src.errors);

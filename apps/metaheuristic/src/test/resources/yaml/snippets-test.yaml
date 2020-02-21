@@ -1,4 +1,4 @@
-snippets:
+nippets:
     - code: aiai.fit.default.function:1.0-SNAPSHOT
       type: fit
       file: fit-model.py

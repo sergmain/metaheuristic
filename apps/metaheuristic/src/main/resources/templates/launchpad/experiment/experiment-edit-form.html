@@ -55,7 +55,7 @@
 
         <!--/*@thymesVar id="hyperParams" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.HyperParamsResult"*/-->
         <!--/*@thymesVar id="simpleExperiment" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.SimpleExperiment"*/-->
-        <!--/*@thymesVar id="functionResult" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.SnippetResult"*/-->
+        <!--/*@thymesVar id="functionResult" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$FunctionResult"*/-->
         <form class="pure-form pure-form-stacked" th:object="${simpleExperiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment/experiment-edit-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <fieldset>
@@ -93,7 +93,7 @@
         </form>
         <p>&nbsp;</p>
 
-        <h1 class="widget-header">Snippets</h1>
+        <h1 class="widget-header">Functions</h1>
         <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment/experiment-function-add-commit/'+simpleExperiment.id}" accept-charset="UTF-8"
               th:if="${!functionResult.selectOptions.isEmpty()}">
             <select class="pure-input-medium" th:name="code">
@@ -114,10 +114,9 @@
 
             <tbody>
             <tr th:each="s : ${functionResult.functions}">
-                <td th:text="${s.type}">Snippet type</td>
-                <td th:text="${s.getSnippetCode()}">Snippet code</td>
+                <td th:text="${s.type}">Function type</td>
+                <td th:text="${s.getFunctionCode()}">Function code</td>
                 <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment/experiment-function-delete-by-type-commit/' + simpleExperiment.id+'/'+ s.type}">Delete</a></td>
-<!--                <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment/experiment-function-delete-commit/' + simpleExperiment.id+'/'+ s.snippetCode}">Delete</a></td>-->
             </tr>
             </tbody>
         </table>

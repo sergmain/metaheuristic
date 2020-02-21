@@ -44,9 +44,10 @@ public class ReplicationController {
         return replicationSourceService.currentAssets();
     }
 
-    @PostMapping(value="/snippet")
-    public @ResponseBody ReplicationData.SnippetAsset getSnippet(@RequestParam String snippetCode) {
-        return replicationSourceService.getSnippet(snippetCode);
+    @PostMapping(value="/function")
+    public @ResponseBody
+    ReplicationData.FunctionAsset getFunction(@RequestParam String functionCode) {
+        return replicationSourceService.getFunction(functionCode);
     }
 
     @PostMapping(value="/source-code")

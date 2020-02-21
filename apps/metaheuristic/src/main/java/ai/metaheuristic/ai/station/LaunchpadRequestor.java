@@ -237,7 +237,7 @@ public class LaunchpadRequestor {
                     final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
                     Monitoring.log("##012", Enums.Monitor.MEMORY);
                     if (b && !launchpad.schedule.isCurrentTimeInactive()) {
-                        setRequestTask(scpy, new StationCommParamsYaml.RequestTask(launchpad.launchpadLookup.acceptOnlySignedSnippets));
+                        setRequestTask(scpy, new StationCommParamsYaml.RequestTask(launchpad.launchpadLookup.acceptOnlySignedFunctions));
                     }
                     else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
@@ -264,7 +264,7 @@ public class LaunchpadRequestor {
                 setReportTaskProcessingResult(scpy, stationTaskService.reportTaskProcessingResult(launchpadUrl));
                 Monitoring.log("##014", Enums.Monitor.MEMORY);
 
-                scpy.snippetDownloadStatus.statuses.addAll(metadataService.getAsSnippetDownloadStatuses(launchpadUrl));
+                scpy.functionDownloadStatus.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(launchpadUrl));
             }
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;

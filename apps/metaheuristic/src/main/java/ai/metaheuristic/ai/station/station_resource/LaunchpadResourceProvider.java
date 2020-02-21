@@ -68,7 +68,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     public FunctionApiData.FunctionExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            String outputResourceId, TaskParamsYaml.FunctionConfig snippet) {
+            String outputResourceId, TaskParamsYaml.FunctionConfig functionConfig) {
         File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
         if (outputResourceFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputResourceFile.getPath());
@@ -79,7 +79,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
         } else {
             String es = "Result data file doesn't exist, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
-            return new FunctionApiData.FunctionExecResult(snippet.code,false, -1, es);
+            return new FunctionApiData.FunctionExecResult(functionConfig.code,false, -1, es);
         }
         return null;
     }

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.source_code;
 
-import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
+import ai.metaheuristic.ai.launchpad.function.FunctionService;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +30,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CommonProcessValidatorService {
 
-    private final SnippetService snippetService;
+    private final FunctionService functionService;
 
     public boolean checkRequiredVersion(int sourceCodeParamsVersion, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
         int taskParamsYamlVersion = SourceCodeParamsYamlUtils.getRequiredVertionOfTaskParamsYaml(sourceCodeParamsVersion);
-        boolean ok = snippetService.isSnippetVersionOk(taskParamsYamlVersion, snDef);
+        boolean ok = functionService.isFunctionVersionOk(taskParamsYamlVersion, snDef);
         if (!ok) {
             log.error("#175.030 Version of function {} is too low, required version: {}", snDef.code, taskParamsYamlVersion);
             return false;

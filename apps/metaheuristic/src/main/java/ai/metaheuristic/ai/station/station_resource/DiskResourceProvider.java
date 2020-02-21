@@ -105,7 +105,7 @@ public class DiskResourceProvider implements ResourceProvider {
     public FunctionApiData.FunctionExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            String outputResourceId, TaskParamsYaml.FunctionConfig snippet
+            String outputResourceId, TaskParamsYaml.FunctionConfig functionConfig
     ) {
         File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
         if (outputResourceFile.exists()) {
@@ -114,7 +114,7 @@ public class DiskResourceProvider implements ResourceProvider {
         } else {
             String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
-            return new FunctionApiData.FunctionExecResult(snippet.code, false, -1, es);
+            return new FunctionApiData.FunctionExecResult(functionConfig.code, false, -1, es);
         }
         return null;
     }

@@ -36,7 +36,7 @@ import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
+import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
@@ -516,7 +516,7 @@ public class BatchService {
         EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
         FunctionApiData.FunctionExec functionExec;
         try {
-            functionExec = SnippetExecUtils.to(task.getFunctionExecResults());
+            functionExec = FunctionExecUtils.to(task.getFunctionExecResults());
         } catch (YAMLException e) {
             bs.getGeneralStatus().add("#990.310 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                     ", batchId:" + batchId + ", execContextId: " + wb.getId() + ", " +

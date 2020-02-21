@@ -21,14 +21,14 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
-import ai.metaheuristic.ai.station.snippet.StationSnippetService;
+import ai.metaheuristic.ai.station.function.StationFunctionService;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metadata.MetadataUtils;
-import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYaml;
-import ai.metaheuristic.ai.yaml.metadata.SnippetDownloadStatusYamlUtils;
+import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
+import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -60,7 +60,7 @@ public class MetadataService {
 
     private final Globals globals;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
-    private final StationSnippetService stationSnippetService;
+    private final StationFunctionService stationFunctionService;
 
     private Metadata metadata = null;
 
@@ -110,18 +110,18 @@ public class MetadataService {
         int i=0;
     }
 
-    public ChecksumState prepareChecksum(String snippetCode, String launchpadUrl, TaskParamsYaml.FunctionConfig functionConfig) {
+    public ChecksumState prepareChecksum(String functionCode, String launchpadUrl, TaskParamsYaml.FunctionConfig functionConfig) {
         ChecksumState checksumState = new ChecksumState();
         // check requirements of signature
         if (S.b(functionConfig.checksum)) {
-            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.signature_not_found);
+            setFunctionState(launchpadUrl, functionCode, Enums.FunctionState.signature_not_found);
             checksumState.signatureIsOk = false;
             return checksumState;
         }
         checksumState.checksum = Checksum.fromJson(functionConfig.checksum);
         boolean isSignature = checksumState.checksum.checksums.entrySet().stream().anyMatch(e -> e.getKey().isSign);
         if (!isSignature) {
-            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.signature_not_found);
+            setFunctionState(launchpadUrl, functionCode, Enums.FunctionState.signature_not_found);
             checksumState.signatureIsOk = false;
             return checksumState;
         }
@@ -130,31 +130,31 @@ public class MetadataService {
     }
 
     private void markAllAsUnverified() {
-        List<SnippetDownloadStatusYaml.Status > statuses = getSnippetDownloadStatusYamlInternal().statuses;
-        for (SnippetDownloadStatusYaml.Status status : statuses) {
+        List<FunctionDownloadStatusYaml.Status > statuses = getFunctionDownloadStatusYamlInternal().statuses;
+        for (FunctionDownloadStatusYaml.Status status : statuses) {
             if (status.sourcing!= EnumsApi.FunctionSourcing.launchpad) {
                 continue;
             }
 
             final String launchpadUrl = status.launchpadUrl;
-            final String snippetCode = status.code;
+            final String functionCode = status.code;
 
-            setVerifiedStatus(launchpadUrl, snippetCode, false);
+            setVerifiedStatus(launchpadUrl, functionCode, false);
         }
     }
 
-    public SnippetDownloadStatusYaml.Status syncSnippetStatus(String launchpadUrl, LaunchpadLookupConfig.Asset asset, final String snippetCode) {
+    public FunctionDownloadStatusYaml.Status syncFunctionStatus(String launchpadUrl, LaunchpadLookupConfig.Asset asset, final String functionCode) {
         try {
-            syncSnippetStatusInternal(launchpadUrl, asset, snippetCode);
+            syncFunctionStatusInternal(launchpadUrl, asset, functionCode);
         } catch (Throwable th) {
-            log.error("Error in syncSnippetStatus()", th);
-            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.io_error);
+            log.error("Error in syncFunctionStatus()", th);
+            setFunctionState(launchpadUrl, functionCode, Enums.FunctionState.io_error);
         }
-        return getSnippetDownloadStatuses(launchpadUrl, snippetCode);
+        return getFunctionDownloadStatuses(launchpadUrl, functionCode);
     }
 
-    private void syncSnippetStatusInternal(String launchpadUrl, LaunchpadLookupConfig.Asset asset, String snippetCode) {
-        SnippetDownloadStatusYaml.Status status = getSnippetDownloadStatuses(launchpadUrl, snippetCode);
+    private void syncFunctionStatusInternal(String launchpadUrl, LaunchpadLookupConfig.Asset asset, String functionCode) {
+        FunctionDownloadStatusYaml.Status status = getFunctionDownloadStatuses(launchpadUrl, functionCode);
 
         if (status==null || status.sourcing != EnumsApi.FunctionSourcing.launchpad || status.verified) {
             return;
@@ -169,63 +169,63 @@ public class MetadataService {
             );
         });
 
-        StationSnippetService.DownloadedSnippetConfigStatus downloadedSnippetConfigStatus =
-                stationSnippetService.downloadSnippetConfig(launchpadUrl, simpleCache.asset, snippetCode, simpleCache.launchpadInfo.stationId);
+        StationFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
+                stationFunctionService.downloadFunctionConfig(launchpadUrl, simpleCache.asset, functionCode, simpleCache.launchpadInfo.stationId);
 
-        if (downloadedSnippetConfigStatus.status==StationSnippetService.ConfigStatus.error) {
-            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.snippet_config_error);
+        if (downloadedFunctionConfigStatus.status== StationFunctionService.ConfigStatus.error) {
+            setFunctionState(launchpadUrl, functionCode, Enums.FunctionState.function_config_error);
             return;
         }
-        if (downloadedSnippetConfigStatus.status==StationSnippetService.ConfigStatus.not_found) {
-            removeSnippet(launchpadUrl, snippetCode);
+        if (downloadedFunctionConfigStatus.status== StationFunctionService.ConfigStatus.not_found) {
+            removeFunction(launchpadUrl, functionCode);
             return;
         }
-        TaskParamsYaml.FunctionConfig functionConfig = downloadedSnippetConfigStatus.functionConfig;
+        TaskParamsYaml.FunctionConfig functionConfig = downloadedFunctionConfigStatus.functionConfig;
 
-        ChecksumState checksumState = prepareChecksum(snippetCode, launchpadUrl, functionConfig);
+        ChecksumState checksumState = prepareChecksum(functionCode, launchpadUrl, functionConfig);
         if (!checksumState.signatureIsOk) {
             return;
         }
 
-        final AssetFile assetFile = ResourceUtils.prepareSnippetFile(simpleCache.baseResourceDir, status.code, functionConfig.file);
+        final AssetFile assetFile = ResourceUtils.prepareFunctionFile(simpleCache.baseResourceDir, status.code, functionConfig.file);
         if (assetFile.isError) {
-            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.asset_error);
+            setFunctionState(launchpadUrl, functionCode, Enums.FunctionState.asset_error);
             return;
         }
         if (!assetFile.isContent) {
-            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.none);
+            setFunctionState(launchpadUrl, functionCode, Enums.FunctionState.none);
             return;
         }
 
         try {
             CheckSumAndSignatureStatus checkSumAndSignatureStatus = getCheckSumAndSignatureStatus(
-                    snippetCode, simpleCache.launchpad.launchpadLookup, checksumState.checksum, assetFile.file);
+                    functionCode, simpleCache.launchpad.launchpadLookup, checksumState.checksum, assetFile.file);
 
             if (checkSumAndSignatureStatus.checksum==CheckSumAndSignatureStatus.Status.correct && checkSumAndSignatureStatus.signature==CheckSumAndSignatureStatus.Status.correct) {
-                if (status.snippetState!=Enums.SnippetState.ready || !status.verified) {
-                    setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.ready);
+                if (status.functionState != Enums.FunctionState.ready || !status.verified) {
+                    setFunctionState(launchpadUrl, functionCode, Enums.FunctionState.ready);
                 }
             }
         } catch (Throwable th) {
-            log.error(S.f("#815.030 Error verifying function %s from %s", snippetCode, launchpadUrl), th);
-            setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.io_error);
+            log.error(S.f("#815.030 Error verifying function %s from %s", functionCode, launchpadUrl), th);
+            setFunctionState(launchpadUrl, functionCode, Enums.FunctionState.io_error);
         }
     }
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-            String snippetCode, LaunchpadLookupConfig.LaunchpadLookup launchpad, Checksum checksum, File snippetTempFile) throws IOException {
+            String functionCode, LaunchpadLookupConfig.LaunchpadLookup launchpad, Checksum checksum, File functionTempFile) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(CheckSumAndSignatureStatus.Status.correct, CheckSumAndSignatureStatus.Status.correct);
-        if (launchpad.acceptOnlySignedSnippets) {
-            try (FileInputStream fis = new FileInputStream(snippetTempFile)) {
-                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "Launchpad url: "+ launchpad.url +", function: "+snippetCode, fis, true, launchpad.createPublicKey());
+        if (launchpad.acceptOnlySignedFunctions) {
+            try (FileInputStream fis = new FileInputStream(functionTempFile)) {
+                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "Launchpad url: "+ launchpad.url +", function: "+functionCode, fis, true, launchpad.createPublicKey());
             }
             if (status.signature != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.040 launchpad.acceptOnlySignedSnippets is {} but function {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
-                setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.signature_wrong);
+                log.warn("#815.040 launchpad.acceptOnlySignedFunctions is {} but function {} has the broken signature", launchpad.acceptOnlySignedFunctions, functionCode);
+                setFunctionState(launchpad.url, functionCode, Enums.FunctionState.signature_wrong);
             }
             else if (status.checksum != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.050 launchpad.acceptOnlySignedSnippets is {} but function {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
-                setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.checksum_wrong);
+                log.warn("#815.050 launchpad.acceptOnlySignedFunctions is {} but function {} has the broken signature", launchpad.acceptOnlySignedFunctions, functionCode);
+                setFunctionState(launchpad.url, functionCode, Enums.FunctionState.checksum_wrong);
             }
         }
         return status;
@@ -279,28 +279,28 @@ public class MetadataService {
         }
     }
 
-    public List<SnippetDownloadStatusYaml.Status> registerNewSnippetCode(String launchpadUrl, List<LaunchpadCommParamsYaml.Snippets.Info> infos) {
+    public List<FunctionDownloadStatusYaml.Status> registerNewFunctionCode(String launchpadUrl, List<LaunchpadCommParamsYaml.Functions.Info> infos) {
         if (S.b(launchpadUrl)) {
             throw new IllegalStateException("#815.080 launchpadUrl is null");
         }
-        SnippetDownloadStatusYaml snippetDownloadStatusYaml;
+        FunctionDownloadStatusYaml functionDownloadStatusYaml;
         synchronized (syncObj) {
-            snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
+            functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
             boolean isChanged = false;
-            for (LaunchpadCommParamsYaml.Snippets.Info info : infos) {
-                SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream()
+            for (LaunchpadCommParamsYaml.Functions.Info info : infos) {
+                FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream()
                         .filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(info.code))
                         .findAny().orElse(null);
-                if (status==null || status.snippetState==Enums.SnippetState.not_found) {
-                    setSnippetDownloadStatusInternal(launchpadUrl, info.code, info.sourcing, Enums.SnippetState.none);
+                if (status==null || status.functionState == Enums.FunctionState.not_found) {
+                    setFunctionDownloadStatusInternal(launchpadUrl, info.code, info.sourcing, Enums.FunctionState.none);
                     isChanged = true;
                 }
             }
 
-            // set state to SnippetState.not_found if function doesn't exist on Launchpad any more
-            for (SnippetDownloadStatusYaml.Status status : snippetDownloadStatusYaml.statuses) {
+            // set state to FunctionState.not_found if function doesn't exist on Launchpad any more
+            for (FunctionDownloadStatusYaml.Status status : functionDownloadStatusYaml.statuses) {
                 if (status.launchpadUrl.equals(launchpadUrl) && infos.stream().filter(i-> i.code.equals(status.code)).findAny().orElse(null)==null) {
-                    setSnippetDownloadStatusInternal(launchpadUrl, status.code, status.sourcing, Enums.SnippetState.not_found);
+                    setFunctionDownloadStatusInternal(launchpadUrl, status.code, status.sourcing, Enums.FunctionState.not_found);
                     isChanged = true;
                 }
             }
@@ -308,139 +308,139 @@ public class MetadataService {
                 updateMetadataFile();
             }
         }
-        return snippetDownloadStatusYaml.statuses;
+        return functionDownloadStatusYaml.statuses;
     }
 
-    public boolean setSnippetState(final String assetUrl, String snippetCode, Enums.SnippetState snippetState) {
+    public boolean setFunctionState(final String assetUrl, String functionCode, Enums.FunctionState functionState) {
         if (S.b(assetUrl)) {
             throw new IllegalStateException("#815.090 assetUrl is null");
         }
-        if (S.b(snippetCode)) {
-            throw new IllegalStateException("#815.100 snippetCode is null");
+        if (S.b(functionCode)) {
+            throw new IllegalStateException("#815.100 functionCode is null");
         }
         synchronized (syncObj) {
-            SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
+            FunctionDownloadStatusYaml functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
 
-            SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(assetUrl) && o.code.equals(snippetCode)).findAny().orElse(null);
+            FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(assetUrl) && o.code.equals(functionCode)).findAny().orElse(null);
             if (status == null) {
                 return false;
             }
-            status.snippetState = snippetState;
+            status.functionState = functionState;
             status.verified = true;
-            String yaml = SnippetDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(snippetDownloadStatusYaml);
-            metadata.metadata.put(Consts.META_SNIPPET_DOWNLOAD_STATUS, yaml);
+            String yaml = FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(functionDownloadStatusYaml);
+            metadata.metadata.put(Consts.META_FUNCTION_DOWNLOAD_STATUS, yaml);
             updateMetadataFile();
             return true;
         }
     }
 
-    public boolean removeSnippet(final String launchpadUrl, String snippetCode) {
+    public boolean removeFunction(final String launchpadUrl, String functionCode) {
         if (S.b(launchpadUrl)) {
             throw new IllegalStateException("#815.110 launchpadUrl is null");
         }
-        if (S.b(snippetCode)) {
-            throw new IllegalStateException("#815.120 snippetCode is null");
+        if (S.b(functionCode)) {
+            throw new IllegalStateException("#815.120 functionCode is empty");
         }
         synchronized (syncObj) {
-            SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
-            List<SnippetDownloadStatusYaml.Status> statuses = snippetDownloadStatusYaml.statuses.stream().filter(o->!(o.launchpadUrl.equals(launchpadUrl) && o.code.equals(snippetCode))).collect(Collectors.toList());
-            if (statuses.size()!=snippetDownloadStatusYaml.statuses.size()) {
-                snippetDownloadStatusYaml.statuses = statuses;
-                String yaml = SnippetDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(snippetDownloadStatusYaml);
-                metadata.metadata.put(Consts.META_SNIPPET_DOWNLOAD_STATUS, yaml);
+            FunctionDownloadStatusYaml functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
+            List<FunctionDownloadStatusYaml.Status> statuses = functionDownloadStatusYaml.statuses.stream().filter(o->!(o.launchpadUrl.equals(launchpadUrl) && o.code.equals(functionCode))).collect(Collectors.toList());
+            if (statuses.size()!= functionDownloadStatusYaml.statuses.size()) {
+                functionDownloadStatusYaml.statuses = statuses;
+                String yaml = FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(functionDownloadStatusYaml);
+                metadata.metadata.put(Consts.META_FUNCTION_DOWNLOAD_STATUS, yaml);
                 updateMetadataFile();
             }
             return true;
         }
     }
 
-    public boolean setVerifiedStatus(final String launchpadUrl, String snippetCode, boolean verified) {
+    public boolean setVerifiedStatus(final String launchpadUrl, String functionCode, boolean verified) {
         if (S.b(launchpadUrl)) {
             throw new IllegalStateException("#815.130 launchpadUrl is null");
         }
-        if (S.b(snippetCode)) {
-            throw new IllegalStateException("#815.140 snippetCode is null");
+        if (S.b(functionCode)) {
+            throw new IllegalStateException("#815.140 functionCode is null");
         }
         synchronized (syncObj) {
-            SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
+            FunctionDownloadStatusYaml functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
 
-            SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(snippetCode)).findAny().orElse(null);
+            FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(functionCode)).findAny().orElse(null);
             if (status == null) {
                 return false;
             }
             status.verified = verified;
-            String yaml = SnippetDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(snippetDownloadStatusYaml);
-            metadata.metadata.put(Consts.META_SNIPPET_DOWNLOAD_STATUS, yaml);
+            String yaml = FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(functionDownloadStatusYaml);
+            metadata.metadata.put(Consts.META_FUNCTION_DOWNLOAD_STATUS, yaml);
             updateMetadataFile();
             return true;
         }
     }
 
-    public void setSnippetDownloadStatus(final String launchpadUrl, String snippetCode, EnumsApi.FunctionSourcing sourcing, Enums.SnippetState snippetState) {
+    public void setFunctionDownloadStatus(final String launchpadUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
         if (S.b(launchpadUrl)) {
             throw new IllegalStateException("#815.150 launchpadUrl is null");
         }
-        if (S.b(snippetCode)) {
-            throw new IllegalStateException("#815.160 snippetCode is null");
+        if (S.b(functionCode)) {
+            throw new IllegalStateException("#815.160 functionCode is empty");
         }
         synchronized (syncObj) {
-            setSnippetDownloadStatusInternal(launchpadUrl, snippetCode, sourcing, snippetState);
+            setFunctionDownloadStatusInternal(launchpadUrl, functionCode, sourcing, functionState);
             updateMetadataFile();
         }
     }
 
-    public SnippetDownloadStatusYaml.Status getSnippetDownloadStatuses(String launchpadUrl, String snippetCode) {
+    public FunctionDownloadStatusYaml.Status getFunctionDownloadStatuses(String launchpadUrl, String functionCode) {
         synchronized (syncObj) {
-            return getSnippetDownloadStatusYamlInternal().statuses.stream()
-                    .filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(snippetCode))
+            return getFunctionDownloadStatusYamlInternal().statuses.stream()
+                    .filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(functionCode))
                     .findAny().orElse(null);
         }
     }
 
-    public List<StationCommParamsYaml.SnippetDownloadStatus.Status> getAsSnippetDownloadStatuses(final String launchpadUrl) {
+    public List<StationCommParamsYaml.FunctionDownloadStatus.Status> getAsFunctionDownloadStatuses(final String launchpadUrl) {
         synchronized (syncObj) {
-            return getSnippetDownloadStatusYamlInternal().statuses.stream()
+            return getFunctionDownloadStatusYamlInternal().statuses.stream()
                     .filter(o->o.launchpadUrl.equals(launchpadUrl))
-                    .map(o->new StationCommParamsYaml.SnippetDownloadStatus.Status(o.snippetState, o.code))
+                    .map(o->new StationCommParamsYaml.FunctionDownloadStatus.Status(o.functionState, o.code))
                     .collect(Collectors.toList());
         }
     }
 
-    private void setSnippetDownloadStatusInternal(String launchpadUrl, String code, EnumsApi.FunctionSourcing sourcing, Enums.SnippetState snippetState) {
-        SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
+    private void setFunctionDownloadStatusInternal(String launchpadUrl, String code, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
+        FunctionDownloadStatusYaml functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
 
-        SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(code)).findAny().orElse(null);
+        FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(code)).findAny().orElse(null);
         if (status == null) {
-            status = new SnippetDownloadStatusYaml.Status(Enums.SnippetState.none, code, launchpadUrl, sourcing, false);
-            snippetDownloadStatusYaml.statuses.add(status);
+            status = new FunctionDownloadStatusYaml.Status(Enums.FunctionState.none, code, launchpadUrl, sourcing, false);
+            functionDownloadStatusYaml.statuses.add(status);
         }
-        status.snippetState = snippetState;
-        String yaml = SnippetDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(snippetDownloadStatusYaml);
-        metadata.metadata.put(Consts.META_SNIPPET_DOWNLOAD_STATUS, yaml);
+        status.functionState = functionState;
+        String yaml = FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(functionDownloadStatusYaml);
+        metadata.metadata.put(Consts.META_FUNCTION_DOWNLOAD_STATUS, yaml);
     }
 
-    public SnippetDownloadStatusYaml getSnippetDownloadStatusYaml() {
+    public FunctionDownloadStatusYaml getFunctionDownloadStatusYaml() {
         synchronized (syncObj) {
             //noinspection UnnecessaryLocalVariable
-            SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
-            return snippetDownloadStatusYaml;
+            FunctionDownloadStatusYaml functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
+            return functionDownloadStatusYaml;
         }
     }
 
-    private SnippetDownloadStatusYaml getSnippetDownloadStatusYamlInternal() {
-        String yaml = metadata.metadata.get(Consts.META_SNIPPET_DOWNLOAD_STATUS);
-        SnippetDownloadStatusYaml snippetDownloadStatusYaml;
+    private FunctionDownloadStatusYaml getFunctionDownloadStatusYamlInternal() {
+        String yaml = metadata.metadata.get(Consts.META_FUNCTION_DOWNLOAD_STATUS);
+        FunctionDownloadStatusYaml functionDownloadStatusYaml;
         if (S.b(yaml)) {
-            snippetDownloadStatusYaml = new SnippetDownloadStatusYaml();
+            functionDownloadStatusYaml = new FunctionDownloadStatusYaml();
         }
         else {
-            snippetDownloadStatusYaml = SnippetDownloadStatusYamlUtils.BASE_YAML_UTILS.to(yaml);
-            if (snippetDownloadStatusYaml == null) {
-                snippetDownloadStatusYaml = new SnippetDownloadStatusYaml();
+            functionDownloadStatusYaml = FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS.to(yaml);
+            if (functionDownloadStatusYaml == null) {
+                functionDownloadStatusYaml = new FunctionDownloadStatusYaml();
             }
         }
-        snippetDownloadStatusYaml.statuses.sort(Comparator.comparingInt(c -> c.sourcing.value));
-        return snippetDownloadStatusYaml;
+        functionDownloadStatusYaml.statuses.sort(Comparator.comparingInt(c -> c.sourcing.value));
+        return functionDownloadStatusYaml;
     }
 
     public String getSessionId(final String launchpadUrl) {

@@ -97,7 +97,7 @@
 
 <!--
         TODO need to fix this part
-        <h1 class="widget-header">Snippets</h1>
+        <h1 class="widget-header">Functions</h1>
         <table class="pure-table pure-table-bordered" id="table-function" th:fragment="table-function">
             <thead>
             <tr>
@@ -109,7 +109,7 @@
             <tbody>
             <tr th:each="s : ${experiment.functions}">
                 <td th:text="${s.type}">Function type</td>
-                <td th:text="${s.getSnippetCode()}">Function code</td>
+                <td th:text="${s.getFunctionCode()}">Function code</td>
             </tr>
             </tbody>
         </table>

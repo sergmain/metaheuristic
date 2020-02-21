@@ -19,19 +19,19 @@ package ai.metaheuristic.ai.launchpad.experiment;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.LaunchpadContext;
 import ai.metaheuristic.ai.launchpad.beans.*;
-import ai.metaheuristic.ai.launchpad.data.SnippetData;
+import ai.metaheuristic.ai.launchpad.data.FunctionData;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.launchpad.repositories.FunctionRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
+import ai.metaheuristic.ai.launchpad.function.FunctionService;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
+import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
@@ -84,11 +84,11 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @RequiredArgsConstructor
 public class ExperimentTopLevelService {
 
-    private final List<String> experimentSnippetTypes = Arrays.asList(CommonConsts.FIT_TYPE, CommonConsts.PREDICT_TYPE, CommonConsts.CHECK_FITTING_TYPE);
+    private final List<String> experimentFunctionTypes = Arrays.asList(CommonConsts.FIT_TYPE, CommonConsts.PREDICT_TYPE, CommonConsts.CHECK_FITTING_TYPE);
 
     private final Globals globals;
-    private final SnippetRepository snippetRepository;
-    private final SnippetService snippetService;
+    private final FunctionRepository functionRepository;
+    private final FunctionService functionService;
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
 
@@ -144,7 +144,7 @@ public class ExperimentTopLevelService {
         ExperimentApiData.ConsoleResult result = new ExperimentApiData.ConsoleResult();
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task!=null) {
-            FunctionApiData.FunctionExec functionExec = SnippetExecUtils.to(task.getFunctionExecResults());
+            FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResults());
             if (functionExec !=null) {
                 final FunctionApiData.FunctionExecResult execFunctionExecResult = functionExec.getExec();
                 result.items.add(new ExperimentApiData.ConsoleResult.SimpleConsoleOutput(
@@ -243,37 +243,37 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentApiData.ExperimentsEditResult("#285.100 experiment wasn't found, experimentId: " + id);
         }
-        Iterable<Function> snippets = snippetRepository.findAll();
+        Iterable<Function> functions = functionRepository.findAll();
         ExperimentApiData.FunctionResult functionResult = new ExperimentApiData.FunctionResult();
 
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        final List<String> snippetCodes = epy.getFunctionCodes();
-        List<Function> experimentFunctions = snippetService.getSnippetsForCodes(snippetCodes);
+        final List<String> functionCodes = epy.getFunctionCodes();
+        List<Function> experimentFunctions = functionService.getFunctionsForCodes(functionCodes);
 
         functionResult.functions = experimentFunctions.stream().map(es->
                 new ExperimentApiData.ExperimentFunctionResult(
                         es.getId(), es.getVersion(), es.getCode(), es.type, experiment.id)).collect(Collectors.toList());
 
-        functionResult.selectOptions = snippetService.getSelectOptions(
-                snippets,
-                functionResult.functions.stream().map(o -> new SnippetData.SnippetCode(o.getId(), o.getFunctionCode())).collect(Collectors.toList()),
+        functionResult.selectOptions = functionService.getSelectOptions(
+                functions,
+                functionResult.functions.stream().map(o -> new FunctionData.FunctionCode(o.getId(), o.getFunctionCode())).collect(Collectors.toList()),
                 (s) -> {
-                    if (!experimentSnippetTypes.contains(s.type) ) {
+                    if (!experimentFunctionTypes.contains(s.type) ) {
                         return true;
                     }
-                    if (CommonConsts.FIT_TYPE.equals(s.type) && snippetService.hasType(experimentFunctions, CommonConsts.FIT_TYPE)) {
+                    if (CommonConsts.FIT_TYPE.equals(s.type) && functionService.hasType(experimentFunctions, CommonConsts.FIT_TYPE)) {
                         return true;
                     }
-                    else if (CommonConsts.PREDICT_TYPE.equals(s.type) && snippetService.hasType(experimentFunctions, CommonConsts.PREDICT_TYPE)) {
+                    else if (CommonConsts.PREDICT_TYPE.equals(s.type) && functionService.hasType(experimentFunctions, CommonConsts.PREDICT_TYPE)) {
                         return true;
                     }
                     else if (CommonConsts.CHECK_FITTING_TYPE.equals(s.type)) {
-                        if (snippetService.hasType(experimentFunctions, CommonConsts.CHECK_FITTING_TYPE)) {
+                        if (functionService.hasType(experimentFunctions, CommonConsts.CHECK_FITTING_TYPE)) {
                             return true;
                         }
                         for (Function function : experimentFunctions) {
                             if (CommonConsts.PREDICT_TYPE.equals(function.getType())) {
-                                final Meta meta = MetaUtils.getMeta(function.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
+                                final Meta meta = MetaUtils.getMeta(function.getFunctionConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
                                 if (MetaUtils.isTrue(meta)) {
                                     // don't include this Function because 'predict' function doesn't support fitting detection
                                     return false;
@@ -297,7 +297,7 @@ public class ExperimentTopLevelService {
         return result;
     }
 
-    private void addCheckFittingSnippet(ExperimentParamsYaml epy, List<Function> experimentFunctions) {
+    private void addCheckFittingFunction(ExperimentParamsYaml epy, List<Function> experimentFunctions) {
         if (S.b(epy.experimentYaml.checkFittingFunction)) {
             return;
         }
@@ -305,9 +305,9 @@ public class ExperimentTopLevelService {
                 .filter(s->s.type.equals(CommonConsts.PREDICT_TYPE))
                 .findFirst()
                 .ifPresent(s-> {
-                    Meta m = MetaUtils.getMeta(s.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
+                    Meta m = MetaUtils.getMeta(s.getFunctionConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
                     if (MetaUtils.isTrue(m)) {
-                        experimentFunctions.add(snippetRepository.findByCode(epy.experimentYaml.checkFittingFunction));
+                        experimentFunctions.add(functionRepository.findByCode(epy.experimentYaml.checkFittingFunction));
                     }
         });
     }
@@ -429,14 +429,14 @@ public class ExperimentTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest snippetAddCommit(Long id, String snippetCode) {
+    public OperationStatusRest functionAddCommit(Long id, String functionCode) {
         Experiment experiment = experimentRepository.findByIdForUpdate(id);
         if (experiment == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.200 experiment wasn't found, id: "+id );
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        Function s = snippetService.findByCode(snippetCode);
+        Function s = functionService.findByCode(functionCode);
         if (s==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.210 function wasn't found, id: "+id );
@@ -444,13 +444,13 @@ public class ExperimentTopLevelService {
         }
         switch(s.getType()){
             case "fit":
-                epy.experimentYaml.fitFunction = snippetCode;
+                epy.experimentYaml.fitFunction = functionCode;
                 break;
             case "predict":
-                epy.experimentYaml.predictFunction = snippetCode;
+                epy.experimentYaml.predictFunction = functionCode;
                 break;
             case "check-fitting":
-                epy.experimentYaml.checkFittingFunction = snippetCode;
+                epy.experimentYaml.checkFittingFunction = functionCode;
                 break;
             default:
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.220 function has non-supported type for an experiment: "+s.getType() );
@@ -516,9 +516,9 @@ public class ExperimentTopLevelService {
         params.add(param);
     }
 
-    public OperationStatusRest snippetDeleteCommit(Long experimentId, String snippetType) {
-        if (snippetType==null || snippetType.isBlank()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.245 snippetType is blank");
+    public OperationStatusRest functionDeleteCommit(Long experimentId, String functionType) {
+        if (functionType==null || functionType.isBlank()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.245 functionType is blank");
         }
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment == null) {
@@ -527,28 +527,28 @@ public class ExperimentTopLevelService {
         }
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        if (Objects.equals(epy.experimentYaml.fitFunction, snippetType)) {
+        if (Objects.equals(epy.experimentYaml.fitFunction, functionType)) {
             epy.experimentYaml.fitFunction = null;
         }
-        else if (Objects.equals(epy.experimentYaml.predictFunction, snippetType)) {
+        else if (Objects.equals(epy.experimentYaml.predictFunction, functionType)) {
             epy.experimentYaml.predictFunction = null;
             epy.experimentYaml.checkFittingFunction = null;
         }
-        else if (Objects.equals(epy.experimentYaml.checkFittingFunction, snippetType)) {
+        else if (Objects.equals(epy.experimentYaml.checkFittingFunction, functionType)) {
             epy.experimentYaml.checkFittingFunction = null;
         }
         else {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.252 Can't find a function with the type: "+snippetType );
+                    "#285.252 Can't find a function with the type: "+functionType );
         }
         experiment.updateParams(epy);
         experimentCache.save(experiment);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest snippetDeleteByTypeCommit(Long experimentId, String snippetType) {
-        if (S.b(snippetType)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.245 snippetCode is blank");
+    public OperationStatusRest functionDeleteByTypeCommit(Long experimentId, String functionType) {
+        if (S.b(functionType)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.245 functionType is blank");
         }
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment == null) {
@@ -557,7 +557,7 @@ public class ExperimentTopLevelService {
         }
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        switch(snippetType) {
+        switch(functionType) {
             case CommonConsts.FIT_TYPE:
                 epy.experimentYaml.fitFunction = null;
                 break;
@@ -570,7 +570,7 @@ public class ExperimentTopLevelService {
                 break;
             default:
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#285.254 Unknown type of function: "+snippetType );
+                        "#285.254 Unknown type of function: "+functionType );
         }
         experiment.updateParams(epy);
         experimentCache.save(experiment);

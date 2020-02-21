@@ -36,7 +36,7 @@ public class StationTask {
     public String metrics;
 
     // function exec result
-    public String snippetExecResult;
+    public String functionExecResult;
 
     // need to clean a dir of task after processing this task?
     public boolean clean;

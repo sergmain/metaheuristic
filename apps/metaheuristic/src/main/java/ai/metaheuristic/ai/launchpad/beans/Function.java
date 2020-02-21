@@ -61,7 +61,7 @@ public class Function implements Serializable {
     private FunctionConfigYaml sc = null;
 
     @JsonIgnore
-    public FunctionConfigYaml getSnippetConfig(boolean isClone) {
+    public FunctionConfigYaml getFunctionConfig(boolean isClone) {
         if (sc==null) {
             synchronized (this) {
                 if (sc==null) {

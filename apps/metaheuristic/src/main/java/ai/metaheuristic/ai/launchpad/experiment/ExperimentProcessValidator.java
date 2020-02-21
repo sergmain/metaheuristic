@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.ai.launchpad.source_code.ProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.launchpad.repositories.FunctionRepository;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextCache;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -46,7 +46,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
     private final ExecContextCache execContextCache;
-    private final SnippetRepository snippetRepository;
+    private final FunctionRepository functionRepository;
 
     // TODO experiment has to be stateless and has its own instances
     // TODO 2019.05.02 do we need an experiment to have its own instance still?
@@ -85,21 +85,21 @@ public class ExperimentProcessValidator implements ProcessValidator {
         if (StringUtils.isBlank(epy.experimentYaml.fitFunction) || StringUtils.isBlank(epy.experimentYaml.predictFunction)) {
             return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_HASNT_ALL_FUNCTIONS_ERROR;
         }
-        Function s = snippetRepository.findByCode(epy.experimentYaml.fitFunction);
+        Function s = functionRepository.findByCode(epy.experimentYaml.fitFunction);
         if (s==null) {
             return EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR;
         }
 
-        Function predictFunction = snippetRepository.findByCode(epy.experimentYaml.fitFunction);
+        Function predictFunction = functionRepository.findByCode(epy.experimentYaml.fitFunction);
         if (predictFunction ==null) {
             return EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR;
         }
-        boolean isFittingDetection = MetaUtils.isTrue(predictFunction.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
+        boolean isFittingDetection = MetaUtils.isTrue(predictFunction.getFunctionConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
         if (isFittingDetection) {
             if (S.b(epy.experimentYaml.checkFittingFunction)) {
                 return EnumsApi.SourceCodeValidateStatus.FITTING_FUNCTION_NOT_FOUND_ERROR;
             }
-            Function fittingFunction = snippetRepository.findByCode(epy.experimentYaml.checkFittingFunction);
+            Function fittingFunction = functionRepository.findByCode(epy.experimentYaml.checkFittingFunction);
             if (fittingFunction ==null) {
                 return EnumsApi.SourceCodeValidateStatus.FITTING_FUNCTION_NOT_FOUND_ERROR;
             }

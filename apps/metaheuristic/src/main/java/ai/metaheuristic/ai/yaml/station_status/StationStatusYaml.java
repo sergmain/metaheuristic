@@ -46,8 +46,8 @@ public class StationStatusYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class DownloadStatus {
-        public Enums.SnippetState snippetState;
-        public String snippetCode;
+        public Enums.FunctionState functionState;
+        public String functionCode;
     }
 
     public List<DownloadStatus> downloadStatuses = new ArrayList<>();

@@ -16,8 +16,5 @@
 
 package ai.metaheuristic.ai.station.tasks;
 
-//@Data
-//@AllArgsConstructor
-//@EqualsAndHashCode(of = "snippetCode")
 public class OAuthTokenTask extends StationRestTask {
 }

@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
+import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
@@ -233,6 +233,6 @@ public class TestSourceCodeService extends PreparingPlan {
                 new FunctionApiData.FunctionExecResult("output-of-a-function",true, 0, "Everything is Ok."),
                 null, null, null);
 
-        return SnippetExecUtils.toString(functionExec);
+        return FunctionExecUtils.toString(functionExec);
     }
 }

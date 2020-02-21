@@ -62,7 +62,7 @@ public class GitSourcingService {
     @AllArgsConstructor
     @ToString
     public static class GitExecResult {
-        public File snippetDir;
+        public File functionDir;
         public FunctionApiData.FunctionExecResult functionExecResult;
         public boolean ok;
         public String error;
@@ -97,7 +97,7 @@ public class GitSourcingService {
             log.warn("#027.010 Error of getting git status");
             log.warn("\tresult.ok: {}",  result.ok);
             log.warn("\tresult.error: {}",  result.error);
-            log.warn("\tresult.snippetDir: {}",  result.snippetDir!=null ? result.snippetDir.getPath() : null);
+            log.warn("\tresult.functionDir: {}",  result.functionDir !=null ? result.functionDir.getPath() : null);
             log.warn("\tresult.functionExecResult: {}",  result.functionExecResult);
             return new GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
         }
@@ -127,7 +127,7 @@ public class GitSourcingService {
         }
     }
 
-    private static AssetFile prepareSnippetDir(final File resourceDir, String snippetCode) {
+    private static AssetFile prepareFunctionDir(final File resourceDir, String functionCode) {
         final AssetFile assetFile = new AssetFile();
         final File trgDir = new File(resourceDir, EnumsApi.BinaryType.function.toString());
         log.info("Target dir: {}, exist: {}", trgDir.getAbsolutePath(), trgDir.exists() );
@@ -136,7 +136,7 @@ public class GitSourcingService {
             log.error("#027.030 Can't create function dir: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
-        final String resId = snippetCode.replace(':', '_');
+        final String resId = functionCode.replace(':', '_');
         final File resDir = new File(trgDir, resId);
         log.info("Resource dir: {}, exist: {}", resDir.getAbsolutePath(), resDir.exists() );
         if (!resDir.exists() && !resDir.mkdirs()) {
@@ -148,24 +148,24 @@ public class GitSourcingService {
         return assetFile;
     }
 
-    public GitExecResult prepareSnippet(final File resourceDir, TaskParamsYaml.FunctionConfig snippet) {
+    public GitExecResult prepareFunction(final File resourceDir, TaskParamsYaml.FunctionConfig functionConfig) {
 
         log.info("#027.050 Start preparing function dir");
-        AssetFile assetFile = prepareSnippetDir(resourceDir, snippet.code);
+        AssetFile assetFile = prepareFunctionDir(resourceDir, functionConfig.code);
         log.info("#027.060 assetFile.isError: {}" , assetFile.isError);
         if (assetFile.isError) {
-            return new GitExecResult(null,false, "#027.060 Can't create dir for function " + snippet.code);
+            return new GitExecResult(null,false, "#027.060 Can't create dir for function " + functionConfig.code);
         }
 
-        File snippetDir = assetFile.file;
-        File repoDir = new File(snippetDir, "git");
+        File functionDir = assetFile.file;
+        File repoDir = new File(functionDir, "git");
         log.info("#027.070 Target dir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists() );
 
         if (!repoDir.exists()) {
-            GitExecResult result = execClone(snippetDir, snippet);
+            GitExecResult result = execClone(functionDir, functionConfig);
             log.info("#027.080 Result of cloning repo: {}", result.toString());
             if (!result.ok || !result.functionExecResult.isOk()) {
-                result = tryToRepairRepo(snippetDir, snippet);
+                result = tryToRepairRepo(functionDir, functionConfig);
                 log.info("#027.090 Result of repairing of repo: {}", result.toString());
                 return result;
             }
@@ -179,7 +179,7 @@ public class GitSourcingService {
             return new GitExecResult(null,false, result.functionExecResult.console);
         }
         if (!"true".equals(result.functionExecResult.console.strip())) {
-            result = tryToRepairRepo(repoDir, snippet);
+            result = tryToRepairRepo(repoDir, functionConfig);
             log.info("#027.110 Result of tryToRepairRepo: {}", result.toString());
             if (!result.ok) {
                 return result;
@@ -207,7 +207,7 @@ public class GitSourcingService {
             return new GitExecResult(null,false, result.functionExecResult.console);
         }
 
-        result = execPullOrigin(repoDir, snippet);
+        result = execPullOrigin(repoDir, functionConfig);
         log.info("#027.140 Result of execPullOrigin: {}", result.toString());
         if (!result.ok) {
             return result;
@@ -216,7 +216,7 @@ public class GitSourcingService {
             return new GitExecResult(null,false, result.functionExecResult.console);
         }
 
-        result = execCheckoutRevision(repoDir, snippet);
+        result = execCheckoutRevision(repoDir, functionConfig);
         log.info("#027.150 Result of execCheckoutRevision: {}", result.toString());
         if (!result.ok) {
             return result;
@@ -226,23 +226,23 @@ public class GitSourcingService {
         }
         log.info("#027.160 repoDir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists());
 
-        return new GitExecResult(repoDir, new FunctionApiData.FunctionExecResult(snippet.code, true, 0, "" ), true, null);
+        return new GitExecResult(repoDir, new FunctionApiData.FunctionExecResult(functionConfig.code, true, 0, "" ), true, null);
     }
 
-    public GitExecResult tryToRepairRepo(File snippetDir, TaskParamsYaml.FunctionConfig snippet) {
-        File repoDir = new File(snippetDir, "git");
+    public GitExecResult tryToRepairRepo(File functionDir, TaskParamsYaml.FunctionConfig functionConfig) {
+        File repoDir = new File(functionDir, "git");
         GitExecResult result;
         FileUtils.deleteQuietly(repoDir);
         if (repoDir.exists()) {
             return new GitExecResult(null,
                     false,
-                    "#027.170 Function "+snippet.code+", can't prepare repo dir: " + repoDir.getAbsolutePath());
+                    "#027.170 Function "+functionConfig.code+", can't prepare repo dir for function: " + repoDir.getAbsolutePath());
         }
-        result = execClone(snippetDir, snippet);
+        result = execClone(functionDir, functionConfig);
         return result;
     }
 
-    private GitExecResult execFileSystemCheck(File repoDir, TaskParamsYaml.FunctionConfig snippet) {
+    private GitExecResult execFileSystemCheck(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
 //git>git fsck --full
 //Checking object directories: 100% (256/256), done.
 //Checking objects: 100% (10432/10432), done.
@@ -251,21 +251,21 @@ public class GitSourcingService {
 
         // git fsck --full
         //noinspection UnnecessaryLocalVariable
-        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", snippet.git.commit),0L);
+        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", functionConfig.git.commit),0L);
         return result;
     }
 
-    private GitExecResult execCheckoutRevision(File repoDir, TaskParamsYaml.FunctionConfig snippet) {
+    private GitExecResult execCheckoutRevision(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // git checkout sha1
         //noinspection UnnecessaryLocalVariable
-        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", snippet.git.commit),0L);
+        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", functionConfig.git.commit),0L);
         return result;
     }
 
-    private GitExecResult execPullOrigin(File repoDir, TaskParamsYaml.FunctionConfig snippet) {
+    private GitExecResult execPullOrigin(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // pull origin master
         //noinspection UnnecessaryLocalVariable
-        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", snippet.git.branch),0L);
+        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", functionConfig.git.branch),0L);
         return result;
     }
 
@@ -296,11 +296,11 @@ public class GitSourcingService {
         return execGitCmd(cmd, timeout);
     }
 
-    private GitExecResult execClone(File repoDir, TaskParamsYaml.FunctionConfig snippet) {
+    private GitExecResult execClone(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // git -C <path> clone <git-repo-url> git
 
-        String mirror = envService.getEnvYaml().mirrors.get(snippet.git.repo);
-        String gitUrl = mirror!=null ? mirror : snippet.git.repo;
+        String mirror = envService.getEnvYaml().mirrors.get(functionConfig.git.repo);
+        String gitUrl = mirror!=null ? mirror : functionConfig.git.repo;
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "clone", gitUrl, "git");
         log.info("exec {}", cmd);
         //noinspection UnnecessaryLocalVariable

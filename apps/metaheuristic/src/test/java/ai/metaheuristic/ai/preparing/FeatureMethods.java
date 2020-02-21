@@ -20,13 +20,13 @@ import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
+import ai.metaheuristic.ai.launchpad.function.FunctionCache;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
+import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -52,7 +52,7 @@ public abstract class FeatureMethods extends PreparingPlan {
     protected ExperimentRepository experimentRepository;
 
     @Autowired
-    protected SnippetCache snippetCache;
+    protected FunctionCache functionCache;
 
     @Autowired
     protected TaskRepository taskRepository;
@@ -138,7 +138,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         for (Task task : tasks) {
             FunctionApiData.FunctionExecResult functionExecResult = new FunctionApiData.FunctionExecResult("output-of-a-function",false, -1, "This is sample console output");
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec(functionExecResult, null, null, null);
-            String yaml = SnippetExecUtils.toString(functionExec);
+            String yaml = FunctionExecUtils.toString(functionExec);
 
             StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult sser =
                     new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);
@@ -160,7 +160,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         for (Task task : tasks) {
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
             functionExec.setExec( new FunctionApiData.FunctionExecResult("output-of-a-function", true, 0, "This is sample console output. fit"));
-            String yaml = SnippetExecUtils.toString(functionExec);
+            String yaml = FunctionExecUtils.toString(functionExec);
 
             StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult ster =
                     new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.server;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.beans.Function;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
+import ai.metaheuristic.ai.launchpad.function.FunctionService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
@@ -52,14 +52,14 @@ import java.io.IOException;
 public class AssetController {
 
     private final ServerService serverService;
-    private final SnippetService snippetService;
+    private final FunctionService functionService;
 
     @GetMapping(value="/function/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<AbstractResource> deliverSnippetAuth(
+    public ResponseEntity<AbstractResource> deliverFunctionAuth(
             HttpServletRequest request,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             String code, String chunkSize, Integer chunkNum) {
-        log.debug("deliverSnippetAuth(), code: {}, chunkSize: {}, chunkNum: {}", code, chunkSize, chunkNum);
+        log.debug("deliverFunctionAuth(), code: {}, chunkSize: {}, chunkNum: {}", code, chunkSize, chunkNum);
         if (chunkSize==null || chunkSize.isBlank() || chunkNum==null) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
         }
@@ -75,48 +75,48 @@ public class AssetController {
         return entity;
     }
 
-    @PostMapping("/snippet-checksum/{random-part}")
-    public String snippetChecksumAuth(
+    @PostMapping("/function-checksum/{random-part}")
+    public String functionChecksumAuth(
             HttpServletResponse response,
             @SuppressWarnings("unused") String stationId,
             @SuppressWarnings("unused") String taskId,
             String code,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) throws IOException {
-        return getSnippetChecksum(response, code);
+        return getFunctionChecksum(response, code);
     }
 
-    private String getSnippetChecksum(HttpServletResponse response, String snippetCode) throws IOException {
-        Function function = snippetService.findByCode(snippetCode);
+    private String getFunctionChecksum(HttpServletResponse response, String functionCode) throws IOException {
+        Function function = functionService.findByCode(functionCode);
         if (function ==null) {
-            log.warn("#440.100 Function {} wasn't", snippetCode);
+            log.warn("#440.100 Function {} wasn't", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        FunctionConfigYaml sc = function.getSnippetConfig(false);
+        FunctionConfigYaml sc = function.getFunctionConfig(false);
         log.info("#440.120 Send checksum {} for function {}", sc.checksum, sc.getCode());
         return sc.checksum;
     }
 
-    @PostMapping("/snippet-config/{random-part}")
-    public String snippetConfig(
+    @PostMapping("/function-config/{random-part}")
+    public String functionConfig(
             HttpServletResponse response,
             @SuppressWarnings("unused") String stationId,
             @SuppressWarnings("unused") String taskId,
             String code,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) throws IOException {
-        return getSnippetConfig(response, code);
+        return getFunctionConfig(response, code);
     }
 
-    private String getSnippetConfig(HttpServletResponse response, String snippetCode) throws IOException {
-        Function function = snippetService.findByCode(snippetCode);
+    private String getFunctionConfig(HttpServletResponse response, String functionCode) throws IOException {
+        Function function = functionService.findByCode(functionCode);
         if (function ==null) {
-            log.warn("#440.140 Function {} wasn't found", snippetCode);
+            log.warn("#440.140 Function {} wasn't found", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        FunctionConfigYaml sc = function.getSnippetConfig(false);
+        FunctionConfigYaml sc = function.getFunctionConfig(false);
         log.info("Send function config for function {}", sc.getCode());
         return FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
     }

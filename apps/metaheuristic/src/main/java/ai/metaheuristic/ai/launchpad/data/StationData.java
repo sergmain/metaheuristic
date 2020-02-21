@@ -38,7 +38,7 @@ public class StationData {
     public static class StationStatus {
         public Station station;
         public boolean active;
-        public boolean snippetProblem;
+        public boolean functionProblem;
         public boolean blacklisted;
         public String blacklistReason;
         public long lastSeen;

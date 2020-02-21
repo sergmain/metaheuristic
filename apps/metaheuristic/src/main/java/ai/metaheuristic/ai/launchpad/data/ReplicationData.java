@@ -51,10 +51,10 @@ public class ReplicationData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SnippetAsset extends BaseDataClass implements ReplicationAsset {
+    public static class FunctionAsset extends BaseDataClass implements ReplicationAsset {
         public Function function;
 
-        public SnippetAsset(List<String> errorMessages) {
+        public FunctionAsset(List<String> errorMessages) {
             addErrorMessages(errorMessages);
         }
     }
@@ -123,7 +123,7 @@ public class ReplicationData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class AssetStateResponse extends BaseDataClass implements ReplicationAsset {
-        public final List<String> snippets = new ArrayList<>();
+        public final List<String> functions = new ArrayList<>();
         public final List<SourceCodeShortAsset> sourceCodes = new ArrayList<>();
         public final List<CompanyShortAsset> companies = new ArrayList<>();
         public final List<AccountShortAsset> usernames = new ArrayList<>();

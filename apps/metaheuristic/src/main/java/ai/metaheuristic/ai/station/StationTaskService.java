@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.station.env.EnvService;
 import ai.metaheuristic.ai.utils.DigitUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
-import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
+import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.ai.yaml.station_task.StationTaskUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -121,7 +121,7 @@ public class StationTaskService {
                                     getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
 
                                     // fix state of task
-                                    FunctionApiData.FunctionExec functionExec = SnippetExecUtils.to(task.getSnippetExecResult());
+                                    FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
                                     if (functionExec !=null &&
                                             ((functionExec.generalExec!=null && !functionExec.exec.isOk ) ||
                                                     (functionExec.generalExec!=null && !functionExec.generalExec.isOk))) {
@@ -272,7 +272,7 @@ public class StationTaskService {
                         task.getMetrics(), predictedData.getValue(), EnumsApi.Fitting.of(MetaUtils.getValue(task.metas, Consts.META_FITTED)));
             }
             final StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
-                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), ml);
+                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getFunctionExecResult(), ml);
             processingResult.results.add(result);
             setReportedOn(launchpadUrl, task.taskId);
         }
@@ -308,7 +308,7 @@ public class StationTaskService {
                 task.setFinishedOn(System.currentTimeMillis());
                 task.setDelivered(false);
                 task.setReported(false);
-                task.setSnippetExecResult(SnippetExecUtils.toString(functionExec));
+                task.setFunctionExecResult(FunctionExecUtils.toString(functionExec));
 
                 save(task);
             }
@@ -347,10 +347,10 @@ public class StationTaskService {
         }
     }
 
-    public void storePredictedData(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig snippet, File artifactDir) throws IOException {
-        Meta m = MetaUtils.getMeta(snippet.metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
+    public void storePredictedData(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) throws IOException {
+        Meta m = MetaUtils.getMeta(functionConfig.metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
         if (MetaUtils.isTrue(m)) {
-            log.info("storePredictedData(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, snippet.getCode());
+            log.info("storePredictedData(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, functionConfig.getCode());
             String data = getPredictedData(artifactDir);
             if (data!=null) {
                 task.getMetas().add( new Meta(Consts.META_PREDICTED_DATA, data, null) );
@@ -359,9 +359,9 @@ public class StationTaskService {
         }
     }
 
-    public void storeFittingCheck(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig snippet, File artifactDir) throws IOException {
-        if (snippet.type.equals(CommonConsts.CHECK_FITTING_TYPE)) {
-           log.info("storeFittingCheck(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, snippet.getCode());
+    public void storeFittingCheck(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) throws IOException {
+        if (functionConfig.type.equals(CommonConsts.CHECK_FITTING_TYPE)) {
+           log.info("storeFittingCheck(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, functionConfig.getCode());
             FittingYaml fittingYaml = getFittingCheck(artifactDir);
             if (fittingYaml != null) {
                 task.getMetas().add(new Meta(Consts.META_FITTED, fittingYaml.fitting.toString(), null));
@@ -373,10 +373,10 @@ public class StationTaskService {
         }
     }
 
-    public void storeMetrics(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig snippet, File artifactDir) {
+    public void storeMetrics(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) {
         // store metrics after predict only
-        if (snippet.ml!=null && snippet.ml.metrics) {
-            log.info("storeMetrics(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, snippet.getCode());
+        if (functionConfig.ml!=null && functionConfig.ml.metrics) {
+            log.info("storeMetrics(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, functionConfig.getCode());
             Metrics metrics = new Metrics();
             File metricsFile = getMetricsFile(artifactDir);
             if (metricsFile!=null) {
@@ -493,7 +493,7 @@ public class StationTaskService {
             task.execContextId = execContextId;
             task.params = params;
             task.metrics = null;
-            task.snippetExecResult = null;
+            task.functionExecResult = null;
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
             task.clean = taskParamYaml.taskYaml.clean;
             task.launchpadUrl = launchpadUrl;
