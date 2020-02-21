@@ -89,7 +89,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 continue;
             }
 
-            // it could be null if this snippet was deleted
+            // it could be null if this function was deleted
             SnippetDownloadStatusYaml.Status sdsy = metadataService.syncSnippetStatus(launchpad.url, asset, snippetCode);
             if (sdsy==null || sdsy.snippetState==Enums.SnippetState.ready) {
                 continue;
@@ -97,15 +97,15 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
             final SnippetDownloadStatusYaml.Status snippetDownloadStatus = metadataService.getSnippetDownloadStatuses(launchpad.url, snippetCode);
             if (snippetDownloadStatus.sourcing!= EnumsApi.FunctionSourcing.launchpad) {
-                log.warn("#811.010 Snippet {} can't be downloaded from {} because a sourcing isn't 'launchpad'.", snippetCode, launchpad.url);
+                log.warn("#811.010 Function {} can't be downloaded from {} because a sourcing isn't 'launchpad'.", snippetCode, launchpad.url);
                 continue;
             }
             if (snippetDownloadStatus.snippetState!= Enums.SnippetState.none) {
-                log.warn("#811.013 Snippet {} from {} was already processed and has a state {}.", snippetCode, launchpad.url, snippetDownloadStatus.snippetState);
+                log.warn("#811.013 Function {} from {} was already processed and has a state {}.", snippetCode, launchpad.url, snippetDownloadStatus.snippetState);
                 continue;
             }
 
-            // task.functionConfig is null when we are downloading a snippet proactively, without any task
+            // task.functionConfig is null when we are downloading a function proactively, without any task
             TaskParamsYaml.FunctionConfig functionConfig = task.functionConfig;
             if (functionConfig ==null) {
                 StationSnippetService.DownloadedSnippetConfigStatus downloadedSnippetConfigStatus = stationSnippetService.downloadSnippetConfig(launchpad.url, asset, snippetCode, task.stationId);
@@ -137,7 +137,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     }
                     break;
                 case ok:
-                    log.error("#811.020 Unexpected state of snippet {}, launchpad {}, will be resetted to none", snippetCode, launchpad.url);
+                    log.error("#811.020 Unexpected state of function {}, launchpad {}, will be resetted to none", snippetCode, launchpad.url);
                     metadataService.setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.none);
                     break;
                 case signature_wrong:
@@ -146,20 +146,20 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 case not_supported_os:
                 case asset_error:
                 case download_error:
-                    log.warn("#811.030 Snippet {} can't be downloaded from {}. The current status is {}", snippetCode, launchpad.url, snippetDownloadStatus.snippetState);
+                    log.warn("#811.030 Function {} can't be downloaded from {}. The current status is {}", snippetCode, launchpad.url, snippetDownloadStatus.snippetState);
                     continue;
                 case snippet_config_error:
-                    log.warn("#811.030 Config for snippet {} wasn't downloaded from {}, State will be reseted to none", snippetCode, launchpad.url);
+                    log.warn("#811.030 Config for function {} wasn't downloaded from {}, State will be reseted to none", snippetCode, launchpad.url);
                     // reset to none for trying again
                     metadataService.setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.none);
                     continue;
                 case not_found:
-                    log.warn("#811.033 Config for snippet {} wasn't found on {}, State will be reseted to none", snippetCode, launchpad.url);
+                    log.warn("#811.033 Config for function {} wasn't found on {}, State will be reseted to none", snippetCode, launchpad.url);
                     metadataService.setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.none);
                     continue;
                 case ready:
                     if (assetFile.isError || !assetFile.isContent ) {
-                        log.warn("#811.040 Snippet {} from {} is broken. Set state to asset_error", snippetCode, launchpad.url);
+                        log.warn("#811.040 Function {} from {} is broken. Set state to asset_error", snippetCode, launchpad.url);
                         metadataService.setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.asset_error);
                     }
                     continue;
@@ -169,7 +169,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
                 File snippetTempFile = new File(assetFile.file.getAbsolutePath() + ".tmp");
 
-                final String targetUrl = asset.url + Consts.REST_ASSET_URL + "/snippet";
+                final String targetUrl = asset.url + Consts.REST_ASSET_URL + "/function";
 
                 String mask = assetFile.file.getName() + ".%s.tmp";
                 File dir = assetFile.file.getParentFile();
@@ -204,7 +204,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         }
                         final Header[] headers = httpResponse.getAllHeaders();
                         if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
-                            log.error("#811.060 error while downloading chunk of snippet {}, size is different", snippetCode);
+                            log.error("#811.060 error while downloading chunk of function {}, size is different", snippetCode);
                             metadataService.setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.download_error);
                             resourceState = Enums.SnippetState.download_error;
                             break;
@@ -219,14 +219,14 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         }
                     } catch (HttpResponseException e) {
                         if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                            final String es = S.f("#811.070 Snippet %s wasn't found on launchpad %s.", task.snippetCode, launchpad.url);
+                            final String es = S.f("#811.070 Function %s wasn't found on launchpad %s.", task.snippetCode, launchpad.url);
                             log.warn(es);
                             metadataService.setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.not_found);
                             resourceState = Enums.SnippetState.not_found;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
-                            final String es = S.f("#811.080 Unknown error with a snippet %s from launchpad %s.", task.snippetCode, launchpad.url);
+                            final String es = S.f("#811.080 Unknown error with a function %s from launchpad %s.", task.snippetCode, launchpad.url);
                             log.warn(es);
                             metadataService.setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.download_error);
                             resourceState = Enums.SnippetState.download_error;
@@ -247,7 +247,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     continue;
                 }
                 else if (resourceState == Enums.SnippetState.download_error || resourceState == Enums.SnippetState.not_found) {
-                    log.warn("#811.110 snippet {} can't be acquired, state: {}", snippetCode, resourceState);
+                    log.warn("#811.110 function {} can't be acquired, state: {}", snippetCode, resourceState);
                     continue;
                 }
 
@@ -297,7 +297,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     return;
                 }
 
-                log.info("Create new DownloadSnippetTask for downloading snippet {} from {}, chunck size: {}",
+                log.info("Create new DownloadSnippetTask for downloading function {} from {}, chunck size: {}",
                         o.code, o.launchpadUrl, launchpad.context.chunkSize);
                 Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(o.launchpadUrl);
 
@@ -311,10 +311,10 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
     private void logError(String snippetCode, HttpResponseException e) {
         if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
-            log.warn("#811.200 Snippet with code {} wasn't found", snippetCode);
+            log.warn("#811.200 Function with code {} wasn't found", snippetCode);
         }
         else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-            log.warn("#811.210 Snippet with id {} is broken and need to be recreated", snippetCode);
+            log.warn("#811.210 Function with id {} is broken and need to be recreated", snippetCode);
         }
         else {
             log.error("#811.220 HttpResponseException", e);

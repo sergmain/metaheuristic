@@ -133,7 +133,7 @@ public class GitSourcingService {
         log.info("Target dir: {}, exist: {}", trgDir.getAbsolutePath(), trgDir.exists() );
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
-            log.error("#027.030 Can't create snippet dir: {}", trgDir.getAbsolutePath());
+            log.error("#027.030 Can't create function dir: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
         final String resId = snippetCode.replace(':', '_');
@@ -150,11 +150,11 @@ public class GitSourcingService {
 
     public GitExecResult prepareSnippet(final File resourceDir, TaskParamsYaml.FunctionConfig snippet) {
 
-        log.info("#027.050 Start preparing snippet dir");
+        log.info("#027.050 Start preparing function dir");
         AssetFile assetFile = prepareSnippetDir(resourceDir, snippet.code);
         log.info("#027.060 assetFile.isError: {}" , assetFile.isError);
         if (assetFile.isError) {
-            return new GitExecResult(null,false, "#027.060 Can't create dir for snippet " + snippet.code);
+            return new GitExecResult(null,false, "#027.060 Can't create dir for function " + snippet.code);
         }
 
         File snippetDir = assetFile.file;
@@ -236,7 +236,7 @@ public class GitSourcingService {
         if (repoDir.exists()) {
             return new GitExecResult(null,
                     false,
-                    "#027.170 Snippet "+snippet.code+", can't prepare repo dir: " + repoDir.getAbsolutePath());
+                    "#027.170 Function "+snippet.code+", can't prepare repo dir: " + repoDir.getAbsolutePath());
         }
         result = execClone(snippetDir, snippet);
         return result;

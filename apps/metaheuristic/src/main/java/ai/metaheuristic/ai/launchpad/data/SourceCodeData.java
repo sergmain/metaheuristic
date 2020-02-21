@@ -59,7 +59,7 @@ public class SourceCodeData {
         public List<SourceCodeParamsYaml.FunctionDefForSourceCode> postSnippets;
 
         /**
-         * Timeout before terminating a process with snippet
+         * Timeout before terminating a process with function
          * value in seconds
          * null or 0 mean the infinite execution
          */

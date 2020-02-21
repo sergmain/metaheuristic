@@ -44,7 +44,7 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
 
     public LaunchpadCommContextV1 launchpadCommContext;
 
-    // always send info about snippets
+    // always send info about functions
     public SnippetsV1 snippets = new SnippetsV1();
     public AssignedTaskV1 assignedTask;
     public AssignedStationIdV1 assignedStationId;

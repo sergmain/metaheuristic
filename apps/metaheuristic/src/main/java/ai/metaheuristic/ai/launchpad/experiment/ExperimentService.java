@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.event.LaunchpadInternalEvent;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
@@ -704,7 +704,7 @@ public class ExperimentService {
 
         final List<ExperimentFeature> features = epy.processing.features;
 
-        // there is 2 because we have 2 types of snippets - fit and predict
+        // there is 2 because we have 2 types of functions - fit and predict
         // feature has the real value only when isPersist==true
         int totalVariants = features.size() * calcTotalVariants * 2;
 
@@ -715,7 +715,7 @@ public class ExperimentService {
         }
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
-        final Map<String, Snippet> localCache = new HashMap<>();
+        final Map<String, Function> localCache = new HashMap<>();
         final IntHolder size = new IntHolder();
         final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, execContextId, experiment, size);
 
@@ -799,17 +799,17 @@ public class ExperimentService {
 
                         }
                         final String snippetCode = snippetItem.snippetCode;
-                        Snippet snippet = getSnippet(localCache, snippetCode);
-                        if (snippet == null) {
-                            log.warn("#179.110 Snippet wasn't found for code: {}", snippetCode);
+                        Function function = getSnippet(localCache, snippetCode);
+                        if (function == null) {
+                            log.warn("#179.110 Function wasn't found for code: {}", snippetCode);
                             continue;
                         }
 
                         EnumsApi.ExperimentTaskType type;
-                        if (CommonConsts.FIT_TYPE.equals(snippet.getType())) {
+                        if (CommonConsts.FIT_TYPE.equals(function.getType())) {
                             yaml.taskYaml.outputResourceIds.put("default-output", getModelFilename(task));
                             type = EnumsApi.ExperimentTaskType.FIT;
-                        } else if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
+                        } else if (CommonConsts.PREDICT_TYPE.equals(function.getType())) {
                             if (prevTask == null) {
                                 throw new IllegalStateException("#179.120 prevTask is null");
                             }
@@ -822,7 +822,7 @@ public class ExperimentService {
                             yaml.taskYaml.resourceStorageUrls.put(modelFilename, new SourceCodeParamsYaml.Variable("mode"));
 //                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                         } else {
-                            throw new IllegalStateException("#179.130 Not supported type of snippet encountered, type: " + snippet.getType());
+                            throw new IllegalStateException("#179.130 Not supported type of function encountered, type: " + function.getType());
                         }
                         for (SourceCodeParamsYaml.Variable variable : process.output) {
                             String resourceId = "1L";
@@ -845,7 +845,7 @@ public class ExperimentService {
                             epy.processing.taskFeatures.add(tef);
                         }
 
-                        yaml.taskYaml.function = TaskParamsUtils.toFunctionConfig(snippet.getSnippetConfig(true));
+                        yaml.taskYaml.function = TaskParamsUtils.toFunctionConfig(function.getSnippetConfig(true));
                         yaml.taskYaml.preFunctions = new ArrayList<>();
                         if (process.getPreFunctions() != null) {
                             for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.getPreFunctions()) {
@@ -854,11 +854,11 @@ public class ExperimentService {
                         }
                         yaml.taskYaml.postFunctions = new ArrayList<>();
                         if (snippetItem.type== EnumsApi.ExperimentFunction.PREDICT) {
-                            Meta m = MetaUtils.getMeta(snippet.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
+                            Meta m = MetaUtils.getMeta(function.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
                             if (MetaUtils.isTrue(m) && !S.b(epy.experimentYaml.checkFittingFunction)) {
-                                Snippet cos = getSnippet(localCache, epy.experimentYaml.checkFittingFunction);
-                                if (snippet == null) {
-                                    log.warn("#179.140 Snippet wasn't found for code: {}", snippetCode);
+                                Function cos = getSnippet(localCache, epy.experimentYaml.checkFittingFunction);
+                                if (function == null) {
+                                    log.warn("#179.140 Function wasn't found for code: {}", snippetCode);
                                     continue;
                                 }
                                 yaml.taskYaml.postFunctions.add(TaskParamsUtils.toFunctionConfig(cos.getSnippetConfig(false)));
@@ -922,15 +922,15 @@ public class ExperimentService {
         return EnumsApi.SourceCodeProducingStatus.OK;
     }
 
-    public Snippet getSnippet(Map<String, Snippet> localCache, String snippetCode) {
-        Snippet snippet = localCache.get(snippetCode);
-        if (snippet == null) {
-            snippet = snippetService.findByCode(snippetCode);
-            if (snippet != null) {
-                localCache.put(snippetCode, snippet);
+    public Function getSnippet(Map<String, Function> localCache, String snippetCode) {
+        Function function = localCache.get(snippetCode);
+        if (function == null) {
+            function = snippetService.findByCode(snippetCode);
+            if (function != null) {
+                localCache.put(snippetCode, function);
             }
         }
-        return snippet;
+        return function;
     }
 
     private String getModelFilename(Task task) {

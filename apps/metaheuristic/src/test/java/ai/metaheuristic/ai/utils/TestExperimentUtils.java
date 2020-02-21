@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.commons.CommonConsts;
@@ -50,22 +50,22 @@ public class TestExperimentUtils {
 
     @Test
     public void testSorting() {
-        Snippet es1 = new Snippet();
-        es1.setCode("snippet-1:1");
+        Function es1 = new Function();
+        es1.setCode("function-1:1");
         es1.setType(CommonConsts.PREDICT_TYPE);
 
-        Snippet es2 = new Snippet();
-        es2.setCode("snippet-2:1");
+        Function es2 = new Function();
+        es2.setCode("function-2:1");
         es2.setType(CommonConsts.FIT_TYPE);
 
-        Snippet es3 = new Snippet();
-        es3.setCode("snippet-3:1");
+        Function es3 = new Function();
+        es3.setCode("function-3:1");
         es3.setType(CommonConsts.CHECK_FITTING_TYPE);
 
-        List<Snippet>experimentSnippets = Arrays.asList( es1, es2, es3 );
-        SnippetService.sortExperimentSnippets(experimentSnippets);
-        assertEquals(CommonConsts.FIT_TYPE, experimentSnippets.get(0).getType());
-        assertEquals(CommonConsts.PREDICT_TYPE, experimentSnippets.get(1).getType());
-        assertEquals(CommonConsts.CHECK_FITTING_TYPE, experimentSnippets.get(2).getType());
+        List<Function> experimentFunctions = Arrays.asList( es1, es2, es3 );
+        SnippetService.sortExperimentSnippets(experimentFunctions);
+        assertEquals(CommonConsts.FIT_TYPE, experimentFunctions.get(0).getType());
+        assertEquals(CommonConsts.PREDICT_TYPE, experimentFunctions.get(1).getType());
+        assertEquals(CommonConsts.CHECK_FITTING_TYPE, experimentFunctions.get(2).getType());
     }
 }

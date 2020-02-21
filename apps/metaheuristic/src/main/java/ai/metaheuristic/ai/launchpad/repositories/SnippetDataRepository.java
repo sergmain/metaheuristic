@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.repositories;
 
-import ai.metaheuristic.ai.launchpad.beans.SnippetData;
+import ai.metaheuristic.ai.launchpad.beans.FunctionData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -32,15 +32,15 @@ import java.sql.Blob;
  */
 @Repository
 @Profile("launchpad")
-public interface SnippetDataRepository extends CrudRepository<SnippetData, Long> {
+public interface SnippetDataRepository extends CrudRepository<FunctionData, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select b.data from SnippetData b where b.snippetCode=:snippetCode")
+    @Query(value="select b.data from FunctionData b where b.functionCode=:snippetCode")
     Blob getDataAsStreamByCode(String snippetCode);
 
     @Transactional
-    @Query(value="select b from SnippetData b where b.snippetCode=:snippetCode")
-    SnippetData findByCodeForUpdate(String snippetCode);
+    @Query(value="select b from FunctionData b where b.functionCode=:snippetCode")
+    FunctionData findByCodeForUpdate(String snippetCode);
 
     @Transactional
     void deleteBySnippetCode(String snippetCode);

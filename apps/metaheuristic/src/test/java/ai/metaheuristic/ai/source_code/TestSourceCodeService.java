@@ -230,7 +230,7 @@ public class TestSourceCodeService extends PreparingPlan {
 
     private String getOKExecResult() {
         FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec(
-                new FunctionApiData.FunctionExecResult("output-of-a-snippet",true, 0, "Everything is Ok."),
+                new FunctionApiData.FunctionExecResult("output-of-a-function",true, 0, "Everything is Ok."),
                 null, null, null);
 
         return SnippetExecUtils.toString(functionExec);

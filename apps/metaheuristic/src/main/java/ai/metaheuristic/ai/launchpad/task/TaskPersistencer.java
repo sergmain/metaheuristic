@@ -162,14 +162,14 @@ public class TaskPersistencer {
                 log.warn("#307.080 Can't find Task for Id: {}", taskId);
                 return null;
             }
-            if (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.snippetExecResults)) {
+            if (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
                 return task;
             }
             task.setExecState(state.value);
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
 
-            if (task.snippetExecResults==null || task.snippetExecResults.isBlank()) {
+            if (task.functionExecResults ==null || task.functionExecResults.isBlank()) {
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
                 FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
                 functionExec.exec = new FunctionApiData.FunctionExecResult(

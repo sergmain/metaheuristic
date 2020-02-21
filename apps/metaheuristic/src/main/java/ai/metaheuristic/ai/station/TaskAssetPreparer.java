@@ -101,14 +101,14 @@ public class TaskAssetPreparer {
                 continue;
             }
 
-            // Start preparing data for snippet
+            // Start preparing data for function
             File taskDir = stationTaskService.prepareTaskDir(launchpadInfo, task.taskId);
             StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadInfo, taskParamYaml, launchpad, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
 
-            // start preparing snippets
+            // start preparing functions
             final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
             final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.taskYaml.function;
             if ( !prepareSnippet(functionConfig, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {

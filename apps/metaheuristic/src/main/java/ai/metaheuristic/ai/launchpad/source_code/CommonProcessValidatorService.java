@@ -36,7 +36,7 @@ public class CommonProcessValidatorService {
         int taskParamsYamlVersion = SourceCodeParamsYamlUtils.getRequiredVertionOfTaskParamsYaml(sourceCodeParamsVersion);
         boolean ok = snippetService.isSnippetVersionOk(taskParamsYamlVersion, snDef);
         if (!ok) {
-            log.error("#175.030 Version of snippet {} is too low, required version: {}", snDef.code, taskParamsYamlVersion);
+            log.error("#175.030 Version of function {} is too low, required version: {}", snDef.code, taskParamsYamlVersion);
             return false;
         }
         return true;

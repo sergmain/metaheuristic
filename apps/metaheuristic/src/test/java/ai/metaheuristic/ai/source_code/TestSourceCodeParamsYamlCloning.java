@@ -37,7 +37,7 @@ public class TestSourceCodeParamsYamlCloning {
         SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
         p.name = "name";
         p.code = "code";
-        p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode("snippet-code", "snippet-params", EnumsApi.FunctionExecContext.external);
+        p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode("function-code", "function-params", EnumsApi.FunctionExecContext.external);
         p.preFunctions = List.of(
                 new SourceCodeParamsYaml.FunctionDefForSourceCode("pre1-code", "pre1-params", EnumsApi.FunctionExecContext.external),
                 new SourceCodeParamsYaml.FunctionDefForSourceCode("pre2-code", "pre2-params", EnumsApi.FunctionExecContext.external)
@@ -58,8 +58,8 @@ public class TestSourceCodeParamsYamlCloning {
         assertEquals("name", p1.name);
         assertEquals("code", p1.code);
         assertNotNull(p1.function);
-        assertEquals("snippet-code", p1.function.code);
-        assertEquals("snippet-params", p1.function.params);
+        assertEquals("function-code", p1.function.code);
+        assertEquals("function-params", p1.function.params);
 
         assertEquals(2, p1.preFunctions.size());
         assertEquals("pre1-code", p1.preFunctions.get(0).code);

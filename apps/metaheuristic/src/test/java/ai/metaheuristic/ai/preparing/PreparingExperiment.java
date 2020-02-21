@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.variable.VariableService;
 import ai.metaheuristic.ai.launchpad.variable.GlobalVariableService;
@@ -57,9 +57,9 @@ import static org.junit.Assert.assertTrue;
 @Slf4j
 public abstract class PreparingExperiment {
 
-    public static final String TEST_FIT_SNIPPET = "test.fit.snippet:1.0";
-    public static final String TEST_PREDICT_SNIPPET = "test.predict.snippet:1.0";
-    public static final String TEST_FITTING_SNIPPET = "test.fitting.snippet:1.0";
+    public static final String TEST_FIT_SNIPPET = "test.fit.function:1.0";
+    public static final String TEST_PREDICT_SNIPPET = "test.predict.function:1.0";
+    public static final String TEST_FITTING_SNIPPET = "test.fitting.function:1.0";
     static final String TEST_EXPERIMENT_CODE_01 = "test-experiment-code-01";
 
     @Autowired
@@ -102,8 +102,8 @@ public abstract class PreparingExperiment {
     public Experiment experiment = null;
     public boolean isCorrectInit = true;
 
-    public Snippet fitSnippet = null;
-    public Snippet predictSnippet = null;
+    public Function fitFunction = null;
+    public Function predictFunction = null;
 
     @Before
     public void beforePreparingExperiment() {
@@ -142,15 +142,15 @@ public abstract class PreparingExperiment {
             log.info("stationsRepository.save() was finished for {}", System.currentTimeMillis() - mills);
             stationIdAsStr =  Long.toString(station.getId());
 
-            // Prepare snippets
+            // Prepare functions
             mills = System.currentTimeMillis();
             log.info("Start findByCode.save()");
-            fitSnippet = snippetRepository.findByCodeForUpdate(TEST_FIT_SNIPPET);
+            fitFunction = snippetRepository.findByCodeForUpdate(TEST_FIT_SNIPPET);
             log.info("findByCode() was finished for {}", System.currentTimeMillis() - mills);
 
             byte[] bytes = "some program code".getBytes();
-            if (fitSnippet == null) {
-                fitSnippet = new Snippet();
+            if (fitFunction == null) {
+                fitFunction = new Function();
                 FunctionConfigYaml sc = new FunctionConfigYaml();
                 sc.code = TEST_FIT_SNIPPET;
                 sc.env = "python-3";
@@ -159,24 +159,24 @@ public abstract class PreparingExperiment {
                 sc.checksum = "sha2";
                 sc.info.length = bytes.length;
 
-                fitSnippet.setCode(TEST_FIT_SNIPPET);
-                fitSnippet.setType(CommonConsts.FIT_TYPE);
-                fitSnippet.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
+                fitFunction.setCode(TEST_FIT_SNIPPET);
+                fitFunction.setType(CommonConsts.FIT_TYPE);
+                fitFunction.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
 
                 mills = System.currentTimeMillis();
                 log.info("Start snippetRepository.save() #1");
-                snippetCache.save(fitSnippet);
+                snippetCache.save(fitFunction);
                 log.info("snippetRepository.save() #1 was finished for {}", System.currentTimeMillis() - mills);
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #1");
-                snippetDataService.save(new ByteArrayInputStream(bytes), bytes.length, fitSnippet.getCode());
+                snippetDataService.save(new ByteArrayInputStream(bytes), bytes.length, fitFunction.getCode());
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
 
-            predictSnippet = snippetRepository.findByCodeForUpdate(TEST_PREDICT_SNIPPET);
-            if (predictSnippet == null) {
-                predictSnippet = new Snippet();
+            predictFunction = snippetRepository.findByCodeForUpdate(TEST_PREDICT_SNIPPET);
+            if (predictFunction == null) {
+                predictFunction = new Function();
                 FunctionConfigYaml sc = new FunctionConfigYaml();
                 sc.code = TEST_PREDICT_SNIPPET;
                 sc.type = CommonConsts.PREDICT_TYPE;
@@ -185,18 +185,18 @@ public abstract class PreparingExperiment {
                 sc.info.length = bytes.length;
                 sc.checksum = "sha2";
 
-                predictSnippet.setCode(TEST_PREDICT_SNIPPET);
-                predictSnippet.setType(CommonConsts.PREDICT_TYPE);
-                predictSnippet.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
+                predictFunction.setCode(TEST_PREDICT_SNIPPET);
+                predictFunction.setType(CommonConsts.PREDICT_TYPE);
+                predictFunction.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
 
                 mills = System.currentTimeMillis();
                 log.info("Start snippetRepository.save() #2");
-                snippetCache.save(predictSnippet);
+                snippetCache.save(predictFunction);
                 log.info("stationsRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #2");
-                snippetDataService.save(new ByteArrayInputStream(bytes), bytes.length, predictSnippet.getCode());
+                snippetDataService.save(new ByteArrayInputStream(bytes), bytes.length, predictFunction.getCode());
                 log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
             }
 
@@ -229,9 +229,9 @@ public abstract class PreparingExperiment {
 
             epy.experimentYaml.setHyperParams(List.of(ehp1, ehp2, ehp3));
 
-            // set snippets for experiment
-            epy.experimentYaml.fitFunction = fitSnippet.getCode();
-            epy.experimentYaml.predictFunction = predictSnippet.getCode();
+            // set functions for experiment
+            epy.experimentYaml.fitFunction = fitFunction.getCode();
+            epy.experimentYaml.predictFunction = predictFunction.getCode();
 
             experiment.updateParams(epy);
 
@@ -273,26 +273,26 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
         }
-        if (predictSnippet != null) {
+        if (predictFunction != null) {
             try {
-                snippetCache.delete(predictSnippet.getId());
+                snippetCache.delete(predictFunction.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
             try {
-                snippetDataService.deleteBySnippetCode(predictSnippet.getCode());
+                snippetDataService.deleteBySnippetCode(predictFunction.getCode());
             } catch (Throwable th) {
                 th.printStackTrace();
             }
         }
-        if (fitSnippet != null) {
+        if (fitFunction != null) {
             try {
-                snippetCache.delete(fitSnippet.getId());
+                snippetCache.delete(fitFunction.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
             try {
-                snippetDataService.deleteBySnippetCode(fitSnippet.getCode());
+                snippetDataService.deleteBySnippetCode(fitFunction.getCode());
             } catch (Throwable th) {
                 th.printStackTrace();
             }

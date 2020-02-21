@@ -50,7 +50,7 @@
 
 <!--
         <h1 class="widget-header">Snippets</h1>
-        <table class="pure-table pure-table-bordered" id="table-snippet" th:fragment="table-snippet">
+        <table class="pure-table pure-table-bordered" id="table-function" th:fragment="table-function">
             <thead>
             <tr>
                 <th width="150">Type</th>
@@ -59,9 +59,9 @@
             </thead>
 
             <tbody>
-            <tr th:each="s : ${experiment.snippets}">
-                <td th:text="${s.type}">Snippet type</td>
-                <td th:text="${s.getSnippetCode()}">Snippet code</td>
+            <tr th:each="s : ${experiment.functions}">
+                <td th:text="${s.type}">Function type</td>
+                <td th:text="${s.getSnippetCode()}">Function code</td>
             </tr>
             </tbody>
         </table>

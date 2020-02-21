@@ -211,7 +211,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
 
         // TODO this method need to be re-written completely
         if (true) {
-            throw new NotImplementedException("Need to re-write and use names of variables from snippet config");
+            throw new NotImplementedException("Need to re-write and use names of variables from function config");
         }
 
 /*
@@ -235,7 +235,7 @@ public class ResourceSplitterSnippet implements InternalSnippet {
             else {
                 variable = attachPoolCode;
                 if (true) {
-                    throw new NotImplementedException("Need to re-write and use names of variables from snippet config");
+                    throw new NotImplementedException("Need to re-write and use names of variables from function config");
                 }
 //                attachments.add(code);
             }

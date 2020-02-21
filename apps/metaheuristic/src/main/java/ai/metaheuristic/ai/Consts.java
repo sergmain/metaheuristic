@@ -91,7 +91,7 @@ public class Consts {
     public static final String BATCHES_CACHE = "batches";
     public static final String EXPERIMENTS_CACHE = "experiments";
     public static final String SOURCE_CODES_CACHE = "source_codes";
-    public static final String SNIPPETS_CACHE = "snippets";
+    public static final String SNIPPETS_CACHE = "functions";
 
     public static final String MAIN_DOCUMENT_POOL_CODE_FOR_BATCH = "mainDocument";
 
@@ -107,7 +107,7 @@ public class Consts {
 
     public static final String META_PREDICTED_DATA = "mh-predicted-data";
     public static final String META_FITTED = "mh-fitted";
-    public static final String META_SNIPPET_DOWNLOAD_STATUS = "mh-snippet-download-status";
+    public static final String META_SNIPPET_DOWNLOAD_STATUS = "mh-function-download-status";
 
     public static final String RESULT_ZIP = "result.zip";
     public static final Long ID_1 = 1L;

@@ -1,6 +1,6 @@
 snippets:
-  - code: simple-snippet-git:1.0
-    type: simple-snippet
+  - code: simple-function-git:1.0
+    type: simple-function
     file: some-file
     params:  param1
     sourcing: git

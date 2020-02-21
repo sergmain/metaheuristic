@@ -42,7 +42,7 @@ import java.util.Set;
 @SpringBootApplication
 public class PackageSnippet implements CommandLineRunner {
 
-    private static final String SNIPPETS_YAML = "snippets.yaml";
+    private static final String SNIPPETS_YAML = "functions.yaml";
     private static final String ZIP_EXTENSION = ".zip";
 
     public static void main(String[] args) {
@@ -98,7 +98,7 @@ public class PackageSnippet implements CommandLineRunner {
         boolean isError = false;
         Set<String> set = new HashSet<>();
         for (FunctionConfigListYaml.FunctionConfig snippet : snippetConfigList.getFunctions()) {
-//            FunctionConfigYaml snippet = FunctionCoreUtils.to(snTemp);
+//            FunctionConfigYaml function = FunctionCoreUtils.to(snTemp);
             final FunctionApiData.FunctionConfigStatus verify = FunctionCoreUtils.validate(snippet);
             if (!verify.isOk) {
                 System.out.println(verify.error);
@@ -112,13 +112,13 @@ public class PackageSnippet implements CommandLineRunner {
                 }
 
                 if (set.contains(snippet.code)) {
-                    System.out.println("Found duplicate snippet: " + snippet.code);
+                    System.out.println("Found duplicate function: " + snippet.code);
                     isError = true;
                 }
                 set.add(snippet.code);
                 File f = new File(snippet.file);
                 if (!f.getPath().equals(snippet.file)) {
-                    System.out.println("Relative path for snippet file isn't supported, file: " + snippet.file);
+                    System.out.println("Relative path for function file isn't supported, file: " + snippet.file);
                     isError = true;
                 }
             }

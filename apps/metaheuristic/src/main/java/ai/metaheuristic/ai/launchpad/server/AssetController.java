@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.server;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
@@ -87,14 +87,14 @@ public class AssetController {
     }
 
     private String getSnippetChecksum(HttpServletResponse response, String snippetCode) throws IOException {
-        Snippet snippet = snippetService.findByCode(snippetCode);
-        if (snippet==null) {
-            log.warn("#440.100 Snippet {} wasn't", snippetCode);
+        Function function = snippetService.findByCode(snippetCode);
+        if (function ==null) {
+            log.warn("#440.100 Function {} wasn't", snippetCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        FunctionConfigYaml sc = snippet.getSnippetConfig(false);
-        log.info("#440.120 Send checksum {} for snippet {}", sc.checksum, sc.getCode());
+        FunctionConfigYaml sc = function.getSnippetConfig(false);
+        log.info("#440.120 Send checksum {} for function {}", sc.checksum, sc.getCode());
         return sc.checksum;
     }
 
@@ -110,14 +110,14 @@ public class AssetController {
     }
 
     private String getSnippetConfig(HttpServletResponse response, String snippetCode) throws IOException {
-        Snippet snippet = snippetService.findByCode(snippetCode);
-        if (snippet==null) {
-            log.warn("#440.140 Snippet {} wasn't found", snippetCode);
+        Function function = snippetService.findByCode(snippetCode);
+        if (function ==null) {
+            log.warn("#440.140 Function {} wasn't found", snippetCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        FunctionConfigYaml sc = snippet.getSnippetConfig(false);
-        log.info("Send snippet config for snippet {}", sc.getCode());
+        FunctionConfigYaml sc = function.getSnippetConfig(false);
+        log.info("Send function config for function {}", sc.getCode());
         return FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
     }
 

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.replication;
 
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.ai.launchpad.data.ReplicationData;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
@@ -62,20 +62,20 @@ public class ReplicationSnippetService {
     private void createSnippet(String snippetCode) {
         ReplicationData.SnippetAsset snippetAsset = requestSnippetAsset(snippetCode);
         if (snippetAsset.isErrorMessages()) {
-            log.error("#308.010 Error while getting snippet "+ snippetCode +", error: " + snippetAsset.getErrorMessagesAsStr());
+            log.error("#308.010 Error while getting function "+ snippetCode +", error: " + snippetAsset.getErrorMessagesAsStr());
             return;
         }
-        Snippet sn = snippetRepository.findByCode(snippetCode);
+        Function sn = snippetRepository.findByCode(snippetCode);
         if (sn!=null) {
             return;
         }
-        snippetAsset.snippet.id=null;
-        snippetCache.save(snippetAsset.snippet);
+        snippetAsset.function.id=null;
+        snippetCache.save(snippetAsset.function);
     }
 
     public ReplicationData.SnippetAsset requestSnippetAsset(String snippetCode) {
         ReplicationData.ReplicationAsset data = replicationCoreService.getData(
-                "/rest/v1/replication/snippet", ReplicationData.SnippetAsset.class,
+                "/rest/v1/replication/function", ReplicationData.SnippetAsset.class,
                 (uri) -> Request.Post(uri)
                         .bodyForm(Form.form().add("snippetCode", snippetCode).build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)

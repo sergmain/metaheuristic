@@ -385,7 +385,7 @@ public class ExecContextService {
                 if (taskParamYaml.taskYaml.function.env!=null) {
                     String interpreter = stationStatus.env.getEnvs().get(taskParamYaml.taskYaml.function.env);
                     if (interpreter == null) {
-                        log.warn("#705.213 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
+                        log.warn("#705.213 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for function's env {}",
                                 station.getId(), task.getId(), taskParamYaml.taskYaml.function.env
                         );
                         longHolder.value = System.currentTimeMillis();
@@ -396,7 +396,7 @@ public class ExecContextService {
                 final List<EnumsApi.OS> supportedOS = getSupportedOS(taskParamYaml);
                 if (stationStatus.os!=null && !supportedOS.isEmpty() && !supportedOS.contains(stationStatus.os)) {
                     log.info("#705.217 Can't assign task #{} to station #{}, " +
-                                    "because this station doesn't support required OS version. station: {}, snippet: {}",
+                                    "because this station doesn't support required OS version. station: {}, function: {}",
                             station.getId(), task.getId(), stationStatus.os, supportedOS
                     );
                     longHolder.value = System.currentTimeMillis();
@@ -405,7 +405,7 @@ public class ExecContextService {
 
                 if (isAcceptOnlySigned) {
                     if (!taskParamYaml.taskYaml.function.info.isSigned()) {
-                        log.warn("#705.220 Snippet with code {} wasn't signed", taskParamYaml.taskYaml.function.getCode());
+                        log.warn("#705.220 Function with code {} wasn't signed", taskParamYaml.taskYaml.function.getCode());
                         continue;
                     }
                 }

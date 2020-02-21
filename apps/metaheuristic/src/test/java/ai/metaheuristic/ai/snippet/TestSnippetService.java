@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.snippet;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetDataService;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
@@ -53,7 +53,7 @@ import static org.junit.Assert.*;
 @Slf4j
 public class TestSnippetService {
 
-    private static final String TEST_SNIPPET = "test.snippet:1.0";
+    private static final String TEST_SNIPPET = "test.function:1.0";
     private static final String SNIPPET_PARAMS = "AAA";
 
     @Autowired
@@ -71,7 +71,7 @@ public class TestSnippetService {
     @Autowired
     private Globals globals;
 
-    public Snippet snippet = null;
+    public Function function = null;
 
     @Test
     public void test() {
@@ -93,9 +93,9 @@ public class TestSnippetService {
 
         long mills;
         byte[] bytes = "some program code".getBytes();
-        snippet = snippetRepository.findByCodeForUpdate(TEST_SNIPPET);
-        if (snippet == null) {
-            Snippet s = new Snippet();
+        function = snippetRepository.findByCodeForUpdate(TEST_SNIPPET);
+        if (function == null) {
+            Function s = new Function();
             FunctionConfigYaml sc = new FunctionConfigYaml();
             sc.code = TEST_SNIPPET;
             sc.type = "test";
@@ -112,7 +112,7 @@ public class TestSnippetService {
 
             mills = System.currentTimeMillis();
             log.info("Start snippetRepository.save() #2");
-            snippet = snippetCache.save(s);
+            function = snippetCache.save(s);
             log.info("stationsRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
 
             mills = System.currentTimeMillis();
@@ -126,14 +126,14 @@ public class TestSnippetService {
     public void afterPreparingExperiment() {
         long mills = System.currentTimeMillis();
         log.info("Start after()");
-        if (snippet != null) {
+        if (function != null) {
             try {
-                snippetCache.delete(snippet.getId());
+                snippetCache.delete(function.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
             try {
-                snippetDataService.deleteBySnippetCode(snippet.getCode());
+                snippetDataService.deleteBySnippetCode(function.getCode());
             } catch (Throwable th) {
                 th.printStackTrace();
             }

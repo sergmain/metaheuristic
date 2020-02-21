@@ -31,7 +31,7 @@ public class TestSnippetExec {
     @Test
     public void testMarshaling() {
         FunctionApiData.FunctionExec output = new FunctionApiData.FunctionExec();
-        output.exec = new FunctionApiData.FunctionExecResult("output-of-a-snippet",true, 0, "output#1");
+        output.exec = new FunctionApiData.FunctionExecResult("output-of-a-function",true, 0, "output#1");
 
         String yaml = SnippetExecUtils.toString(output);
         FunctionApiData.FunctionExec output1 = SnippetExecUtils.to(yaml);

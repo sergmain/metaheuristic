@@ -81,7 +81,7 @@ public class ResourceUtils {
         final File trgDir = new File(baseDir, EnumsApi.BinaryType.function.toString());
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
-            log.error("#025.37 Can't create snippet dir: {}", trgDir.getAbsolutePath());
+            log.error("#025.37 Can't create function dir: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
         final String resId = snippetCode.replace(':', '_');

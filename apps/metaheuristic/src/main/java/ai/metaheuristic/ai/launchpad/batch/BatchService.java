@@ -397,18 +397,18 @@ public class BatchService {
             sb.append(execResultAsStr(functionExec.generalExec));
         }
         if (functionExec.preExecs!=null && !functionExec.preExecs.isEmpty()) {
-            sb.append("Pre snippets:\n");
+            sb.append("Pre functions:\n");
             for (FunctionApiData.FunctionExecResult preExec : functionExec.preExecs) {
                 sb.append(execResultAsStr(preExec));
             }
         }
         if (StringUtils.isNotBlank(functionExec.exec.functionCode)) {
-            sb.append("Main snippet:\n");
+            sb.append("Main function:\n");
             sb.append(execResultAsStr(functionExec.exec));
         }
 
         if (functionExec.postExecs!=null && !functionExec.postExecs.isEmpty()) {
-            sb.append("Post snippets:\n");
+            sb.append("Post functions:\n");
             for (FunctionApiData.FunctionExecResult postExec : functionExec.postExecs) {
                 sb.append(execResultAsStr(postExec));
             }
@@ -419,7 +419,7 @@ public class BatchService {
 
     private String execResultAsStr(FunctionApiData.FunctionExecResult execResult) {
         return
-                "snippet: " + execResult.functionCode + "\n" +
+                "function: " + execResult.functionCode + "\n" +
                 "isOk: " + execResult.isOk + "\n" +
                 "exitCode: " + execResult.exitCode + "\n" +
                 "console:\n" + (StringUtils.isNotBlank(execResult.console) ? execResult.console : "<output to console is blank>") + "\n\n";

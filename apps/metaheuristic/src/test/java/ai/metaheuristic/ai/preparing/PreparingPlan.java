@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Company;
 import ai.metaheuristic.ai.launchpad.beans.ExecContextImpl;
+import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
@@ -98,11 +98,11 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     public SourceCodeImpl plan = null;
-    public Snippet s1 = null;
-    public Snippet s2 = null;
-    public Snippet s3 = null;
-    public Snippet s4 = null;
-    public Snippet s5 = null;
+    public Function s1 = null;
+    public Function s2 = null;
+    public Function s3 = null;
+    public Function s4 = null;
+    public Function s5 = null;
     public ExecContextImpl workbook = null;
 
     public ExecContextParamsYaml.ExecContextYaml execContextYaml;
@@ -131,7 +131,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
-            p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("snippet-01:1.1");
+            p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("function-01:1.1");
             p.input.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, PreparingPlan.TEST_GLOBAL_VARIABLE));
             p.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "assembled-raw-output"));
 //      input:
@@ -148,7 +148,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.name = "dataset processing";
             p.code = "dataset-processing";
 
-            p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("snippet-02:1.1");
+            p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("function-02:1.1");
             p.input.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "assembled-raw-output"));
             p.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
 
@@ -160,21 +160,21 @@ public abstract class PreparingPlan extends PreparingExperiment {
             SourceCodeParamsYamlV1.ProcessV1 p1 = new SourceCodeParamsYamlV1.ProcessV1();
             p1.name = "feature-processing-1";
             p1.code = "feature-processing-1";
-            p1.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("snippet-03:1.1");
+            p1.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("function-03:1.1");
             p1.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
             p1.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "feature-output-1"));
 
             SourceCodeParamsYamlV1.ProcessV1 p2 = new SourceCodeParamsYamlV1.ProcessV1();
             p2.name = "feature-processing-2";
             p2.code = "feature-processing-2";
-            p2.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("snippet-04:1.1");
+            p2.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("function-04:1.1");
             p2.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
             p2.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "feature-output-2"));
 
             SourceCodeParamsYamlV1.ProcessV1 p3 = new SourceCodeParamsYamlV1.ProcessV1();
             p3.name = "feature-processing-3";
             p3.code = "feature-processing-3";
-            p3.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("snippet-05:1.1");
+            p3.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("function-05:1.1");
             p3.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
             p3.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "feature-output-3"));
 
@@ -186,7 +186,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
 //      metas:
 //        - key: variables
 //          value: feature-processing_matrix_of_winning, feature-processing_cluster_size_1
-//      snippets:
+//      functions:
 //        - code: mh.permute-variables-and-hyper-params
 //      output:
 //        - variable: feature-per-task
@@ -265,11 +265,11 @@ public abstract class PreparingPlan extends PreparingExperiment {
         // id==1L must be assigned only to master company
         assertNotEquals(Consts.ID_1, company.id);
 
-        s1 = createSnippet("snippet-01:1.1");
-        s2 = createSnippet("snippet-02:1.1");
-        s3 = createSnippet("snippet-03:1.1");
-        s4 = createSnippet("snippet-04:1.1");
-        s5 = createSnippet("snippet-05:1.1");
+        s1 = createSnippet("function-01:1.1");
+        s2 = createSnippet("function-02:1.1");
+        s3 = createSnippet("function-03:1.1");
+        s4 = createSnippet("function-04:1.1");
+        s5 = createSnippet("function-05:1.1");
 
         plan = new SourceCodeImpl();
         plan.setUid("test-sourceCode-code");
@@ -302,7 +302,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         execContextYaml.variables.computeIfAbsent(Consts.MH_EXEC_CONTEXT_INPUT_VARIABLE, o-> new ArrayList<>()).add(TEST_GLOBAL_VARIABLE);
     }
 
-    private Snippet createSnippet(String snippetCode) {
+    private Function createSnippet(String snippetCode) {
         FunctionConfigYaml sc = new FunctionConfigYaml();
         sc.code = snippetCode;
         sc.type = snippetCode + "-type";
@@ -316,7 +316,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
 //  - key: mh.task-params-version
 //    value: '3'
         sc.metas.add(new Meta(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5", null));
-        Snippet s = new Snippet();
+        Function s = new Function();
         Long snippetId = snippetRepository.findIdByCode(snippetCode);
         if (snippetId!=null) {
             snippetCache.delete(snippetId);
@@ -405,7 +405,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         return result;
     }
 
-    private void deleteSnippet(Snippet s) {
+    private void deleteSnippet(Function s) {
         if (s!=null) {
             try {
                 snippetCache.delete(s);

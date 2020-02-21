@@ -136,7 +136,7 @@ public abstract class FeatureMethods extends PreparingPlan {
             assertEquals(expectedSeqs, tasks.size());
         }
         for (Task task : tasks) {
-            FunctionApiData.FunctionExecResult functionExecResult = new FunctionApiData.FunctionExecResult("output-of-a-snippet",false, -1, "This is sample console output");
+            FunctionApiData.FunctionExecResult functionExecResult = new FunctionApiData.FunctionExecResult("output-of-a-function",false, -1, "This is sample console output");
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec(functionExecResult, null, null, null);
             String yaml = SnippetExecUtils.toString(functionExec);
 
@@ -159,7 +159,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         }
         for (Task task : tasks) {
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
-            functionExec.setExec( new FunctionApiData.FunctionExecResult("output-of-a-snippet", true, 0, "This is sample console output. fit"));
+            functionExec.setExec( new FunctionApiData.FunctionExecResult("output-of-a-function", true, 0, "This is sample console output. fit"));
             String yaml = SnippetExecUtils.toString(functionExec);
 
             StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult ster =

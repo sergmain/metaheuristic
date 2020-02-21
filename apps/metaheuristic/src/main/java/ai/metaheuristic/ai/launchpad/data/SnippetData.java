@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.data;
 
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.BaseDataClass;
@@ -33,7 +33,7 @@ public class SnippetData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class SnippetsResult extends BaseDataClass {
-        public List<Snippet> snippets;
+        public List<Function> functions;
         public EnumsApi.LaunchpadAssetMode assetMode;
     }
 

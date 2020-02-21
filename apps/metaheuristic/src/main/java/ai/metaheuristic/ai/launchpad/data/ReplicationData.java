@@ -16,11 +16,10 @@
 
 package ai.metaheuristic.ai.launchpad.data;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.beans.Company;
+import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.ai.launchpad.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,9 +27,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Serge
@@ -55,7 +52,7 @@ public class ReplicationData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SnippetAsset extends BaseDataClass implements ReplicationAsset {
-        public Snippet snippet;
+        public Function function;
 
         public SnippetAsset(List<String> errorMessages) {
             addErrorMessages(errorMessages);

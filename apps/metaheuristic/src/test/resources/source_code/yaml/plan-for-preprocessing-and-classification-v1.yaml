@@ -1,6 +1,6 @@
 source:
   clean: true
-  uid: experiment-branch-1.8-with-snippet-6.xx
+  uid: experiment-branch-1.8-with-function-6.xx
   variables:
     global: global-input
     inline:

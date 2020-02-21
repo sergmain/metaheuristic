@@ -35,7 +35,7 @@ public class StationTask {
     // metrics of this task
     public String metrics;
 
-    // snippet exec result
+    // function exec result
     public String snippetExecResult;
 
     // need to clean a dir of task after processing this task?
@@ -46,13 +46,13 @@ public class StationTask {
     // when task was created
     public long createdOn;
 
-    // were all assets (data resources and snippet) prepared?
+    // were all assets (data resources and function) prepared?
     public boolean assetsPrepared;
 
     // when task was launched
     public Long launchedOn;
 
-    // when execution of snippet finished
+    // when execution of function finished
     public Long finishedOn;
 
     // when status and console output were reported to launchpad
@@ -64,12 +64,12 @@ public class StationTask {
     // were status and console result received by launchpad?
     public boolean delivered;
 
-    // was resource(output resource as the result of execution of snippet) uploaded to launchpad?
+    // was resource(output resource as the result of execution of function) uploaded to launchpad?
     public boolean resourceUploaded;
 
     // processing of this task was completed (it doesn't matter with which outcome)
     public boolean completed;
 
-    // temporary storage for holding data - snippet's result and so on
+    // temporary storage for holding data - function's result and so on
     public List<Meta> metas = new ArrayList<>();
 }

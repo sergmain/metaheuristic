@@ -3,6 +3,7 @@ application-launchpad.properties
 application-*.properties
 *.txt
 snippet*
+function*
 cfg
 sourceCode
 params

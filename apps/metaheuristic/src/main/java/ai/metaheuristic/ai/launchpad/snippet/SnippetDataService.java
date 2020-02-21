@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.snippet;
 
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.launchpad.beans.SnippetData;
+import ai.metaheuristic.ai.launchpad.beans.FunctionData;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetDataRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -77,12 +77,12 @@ public class SnippetDataService {
         snippetDataRepository.deleteBySnippetCode(snippetCode);
     }
 
-    public SnippetData save(InputStream is, long size, String snippetCode) {
+    public FunctionData save(InputStream is, long size, String functionCode) {
         try {
-            SnippetData data = snippetDataRepository.findByCodeForUpdate(snippetCode);
+            FunctionData data = snippetDataRepository.findByCodeForUpdate(functionCode);
             if (data == null) {
-                data = new SnippetData();
-                data.setSnippetCode(snippetCode);
+                data = new FunctionData();
+                data.setFunctionCode(functionCode);
                 data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.launchpad)));
             } else {
                 DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
@@ -107,7 +107,7 @@ public class SnippetDataService {
         }
     }
 
-    public void update(InputStream is, long size, SnippetData data) {
+    public void update(InputStream is, long size, FunctionData data) {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
@@ -121,7 +121,7 @@ public class SnippetDataService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<SnippetData> findById(Long id) {
+    public Optional<FunctionData> findById(Long id) {
         return snippetDataRepository.findById(id);
     }
 

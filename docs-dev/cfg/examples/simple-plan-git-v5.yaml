@@ -6,7 +6,7 @@ planYaml:
       outputParams:
         sourcing: launchpad
       snippets:
-        - code: simple-snippet-git:1.0
+        - code: simple-function-git:1.0
       timeoutBeforeTerminate: 600
       type: FILE_PROCESSING
 version: 5

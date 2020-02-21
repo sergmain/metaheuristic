@@ -56,8 +56,8 @@ public class TaskImpl implements Serializable, Task {
     public boolean isCompleted;
 
     @JsonIgnore
-    @Column(name = "SNIPPET_EXEC_RESULTS")
-    public String snippetExecResults;
+    @Column(name = "FUNCTION_EXEC_RESULTS")
+    public String functionExecResults;
 
     @Column(name = "METRICS")
     public String metrics;

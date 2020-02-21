@@ -13,19 +13,19 @@
          */
         function deleteSnippet(id) {
             console.log("Start deleteSnippet("+id+")");
-            my_confirm('Do you really want to delete this snippet?', 'Delete snippet?', "Delete", function() {
-                console.log("Deletion of snippet was confirmed.");
-                $.get('/launchpad/snippet/snippet-delete/' + id, function(status) {
+            my_confirm('Do you really want to delete this function?', 'Delete function?', "Delete", function() {
+                console.log("Deletion of function was confirmed.");
+                $.get('/launchpad/function/function-delete/' + id, function(status) {
                     console.log("task-rerun is finished, Status: " + status);
                     var text;
                     if (status==="true") {
                         text = 'Snippet was deleted.';
                     }
                     else {
-                        text = 'There is some problem with deleting of snippet. Status: '+status;
+                        text = 'There is some problem with deleting of function. Status: '+status;
                     }
                     my_alert_with_action(text, 'Status', function(status) {
-                        window.location.replace("/launchpad/snippet/snippets");
+                        window.location.replace("/launchpad/function/functions");
                     });
                 });
             });
@@ -53,17 +53,17 @@
 
     </script>
 
-    <!-- ==================================== Snippet files ==================================== -->
+    <!-- ==================================== Function files ==================================== -->
     <h1 class="widget-header">Snippets</h1>
 
     <div th:if="${result.assetMode==T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-        <p class="alert alert-info">Upload and deletion of snippets are disabled, assetMode is 'replicated'.</p>
+        <p class="alert alert-info">Upload and deletion of functions are disabled, assetMode is 'replicated'.</p>
     </div>
 
     <div th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
-        <h2 class="widget-header">Upload snippet </h2>
+        <h2 class="widget-header">Upload function </h2>
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-              th:action="@{/launchpad/snippet/snippet-upload-from-file}"
+              th:action="@{/launchpad/function/function-upload-from-file}"
         >
             <table>
                 <tr>
@@ -73,7 +73,7 @@
                             <label for="uploadFile">Snippet file</label>
                             <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:size="100" style="color:black; background-color:white"/>
                             <div class="fileUpload pure-button pure-button-primary">
-                                <span>Select snippet files</span>
+                                <span>Select function files</span>
                                 <input name="file" id="uploadBtn" type="file" class="upload">
                             </div>
                             <span class="pure-form-message">This is a required field.</span>
@@ -82,7 +82,7 @@
                 </tr>
             </table>
             <p></p>
-            <button type="submit" class="pure-button pure-button-primary">Start uploading snippet file</button>
+            <button type="submit" class="pure-button pure-button-primary">Start uploading function file</button>
         </form>
         <p>&nbsp;</p>
 
@@ -97,7 +97,7 @@
     <div class="pure-controls">
         <label for="show-status" class="pure-checkbox">
             <input id="show-status" type="checkbox" onclick="switchStatus();"/>
-            Show parameters of snippets
+            Show parameters of functions
         </label>
     </div>
 
@@ -113,7 +113,7 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:each="s : ${result.snippets}">
+        <tr th:each="s : ${result.functions}">
             <td th:text="${s.id}">#Id</td>
             <td th:text="${s.code}">Code</td>
             <td th:text="${s.type}">Type</td>
@@ -121,7 +121,7 @@
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}"><a class="pure-button pure-button-primary" href="#"
                    th:data-id="${s.id}"
                    onclick="deleteSnippet( this.getAttribute('data-id') ); return false;"
-                   title='Delete snippet'>Delete</a></td>
+                   title='Delete function'>Delete</a></td>
         </tr>
         </tbody>
     </table>

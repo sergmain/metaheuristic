@@ -200,7 +200,7 @@ public class StationTaskService {
             }
 
             task.setDelivered(true);
-            // if snippet has finished with an error,
+            // if function has finished with an error,
             // then we don't have to set isCompleted any more
             // because we've already marked this task as completed
             if (!task.isCompleted()) {
@@ -350,7 +350,7 @@ public class StationTaskService {
     public void storePredictedData(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig snippet, File artifactDir) throws IOException {
         Meta m = MetaUtils.getMeta(snippet.metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
         if (MetaUtils.isTrue(m)) {
-            log.info("storePredictedData(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
+            log.info("storePredictedData(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, snippet.getCode());
             String data = getPredictedData(artifactDir);
             if (data!=null) {
                 task.getMetas().add( new Meta(Consts.META_PREDICTED_DATA, data, null) );
@@ -361,7 +361,7 @@ public class StationTaskService {
 
     public void storeFittingCheck(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig snippet, File artifactDir) throws IOException {
         if (snippet.type.equals(CommonConsts.CHECK_FITTING_TYPE)) {
-           log.info("storeFittingCheck(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
+           log.info("storeFittingCheck(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, snippet.getCode());
             FittingYaml fittingYaml = getFittingCheck(artifactDir);
             if (fittingYaml != null) {
                 task.getMetas().add(new Meta(Consts.META_FITTED, fittingYaml.fitting.toString(), null));
@@ -376,7 +376,7 @@ public class StationTaskService {
     public void storeMetrics(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig snippet, File artifactDir) {
         // store metrics after predict only
         if (snippet.ml!=null && snippet.ml.metrics) {
-            log.info("storeMetrics(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
+            log.info("storeMetrics(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, snippet.getCode());
             Metrics metrics = new Metrics();
             File metricsFile = getMetricsFile(artifactDir);
             if (metricsFile!=null) {

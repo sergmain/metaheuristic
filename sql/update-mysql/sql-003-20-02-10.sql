@@ -17,9 +17,9 @@ CREATE TABLE mh_exec_context
     SOURCE_CODE_ID  NUMERIC(10, 0) NOT NULL,
     CREATED_ON      bigint NOT NULL,
     COMPLETED_ON    bigint,
-    INPUT_RESOURCE_PARAM  LONGTEXT NOT NULL,
-    IS_VALID      BOOLEAN not null default false,
-    STATE   smallint not null default 0
+    PARAMS          LONGTEXT NOT NULL,
+    IS_VALID        BOOLEAN not null default false,
+    STATE           smallint not null default 0
 );
 
 drop table mh_batch;

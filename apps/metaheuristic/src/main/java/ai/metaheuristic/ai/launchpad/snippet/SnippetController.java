@@ -36,7 +36,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 public class SnippetController {
 
-    private static final String REDIRECT_LAUNCHPAD_SNIPPETS = "redirect:/launchpad/snippet/snippets";
+    private static final String REDIRECT_LAUNCHPAD_SNIPPETS = "redirect:/launchpad/function/functions";
 
     private final SnippetTopLevelService snippetTopLevelService;
 

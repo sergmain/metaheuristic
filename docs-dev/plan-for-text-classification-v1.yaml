@@ -17,8 +17,8 @@ source:
       subProcesses:
         exec: parallel
         processes:
-          - code: snippet-1
-            name: snippet-1
+          - code: function-1
+            name: function-1
             snippets:
               - code: fit:6.2
             input:

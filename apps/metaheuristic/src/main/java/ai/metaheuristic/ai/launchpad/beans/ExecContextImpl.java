@@ -46,7 +46,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name="COMPLETED_ON")
     public Long completedOn;
 
-    @Column(name = "INPUT_RESOURCE_PARAM")
+    @Column(name = "PARAMS")
     private String params;
 
     public void setParams(String params) {

@@ -58,7 +58,7 @@ public class InternalSnippetProcessor {
             case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_SNIPPET:
                 return permuteVariablesAndHyperParamsSnippet.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, inputResourceIds);
             default:
-                throw new IllegalStateException("Unknown internal snippet: " + snippetCode);
+                throw new IllegalStateException("Unknown internal function: " + snippetCode);
         }
     }
 }

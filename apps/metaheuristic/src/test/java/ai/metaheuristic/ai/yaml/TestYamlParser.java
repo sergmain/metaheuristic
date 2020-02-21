@@ -127,7 +127,7 @@ public class TestYamlParser {
 
         FunctionConfigListYaml.FunctionConfig sc;
         sc = config.functions.get(0);
-        assertEquals("aiai.fit.default.snippet:1.0-SNAPSHOT", sc.code);
+        assertEquals("aiai.fit.default.function:1.0-SNAPSHOT", sc.code);
         assertEquals(CommonConsts.FIT_TYPE, sc.type);
         assertEquals("fit-model.py", sc.file);
         assertEquals("python-3", sc.env);
@@ -135,7 +135,7 @@ public class TestYamlParser {
         assertNull(sc.ml);
 
         sc = config.functions.get(1);
-        assertEquals("aiai.predict.default.snippet:1.0-SNAPSHOT", sc.code);
+        assertEquals("aiai.predict.default.function:1.0-SNAPSHOT", sc.code);
         assertEquals(CommonConsts.PREDICT_TYPE, sc.type);
         assertEquals("predict-model.py", sc.file);
         assertEquals("python-3", sc.env);
@@ -144,7 +144,7 @@ public class TestYamlParser {
         assertTrue(sc.ml.metrics);
 
         sc = config.functions.get(2);
-        assertEquals("aiai.predict-model-for-test-only.snippet:1.0-SNAPSHOT", sc.code);
+        assertEquals("aiai.predict-model-for-test-only.function:1.0-SNAPSHOT", sc.code);
         assertEquals(CommonConsts.PREDICT_TYPE, sc.type);
         assertEquals("predict-model-for-test-only.py", sc.file);
         assertEquals("python-3", sc.env);

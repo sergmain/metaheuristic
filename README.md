@@ -69,7 +69,7 @@ Also PyYAML 5.1 package must [be installed](https://pyyaml.org/wiki/PyYAMLDocume
 
 1. Change dir to /mh-root/metaheuristic-assets/examples/simple-metrics and run scripts:
     ```
-    curl-upload-snippet-as-one-file
+    curl-upload-function-as-one-file
     curl-add-resource-stub
     curl-add-experiment
     curl-add-plan

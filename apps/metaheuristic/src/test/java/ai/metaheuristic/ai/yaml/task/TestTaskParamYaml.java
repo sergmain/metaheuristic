@@ -53,7 +53,7 @@ public class TestTaskParamYaml {
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.setHyperParams(map);
-        seq.setSnippet(new FunctionApiData.FunctionConfig(
+        seq.setFunction(new FunctionApiData.FunctionConfig(
                 "123:1.0",
                 CommonConsts.FIT_TYPE,
                 "file.txt",

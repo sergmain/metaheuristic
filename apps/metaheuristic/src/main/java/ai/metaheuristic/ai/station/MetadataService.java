@@ -207,7 +207,7 @@ public class MetadataService {
                 }
             }
         } catch (Throwable th) {
-            log.error(S.f("#815.030 Error verifying snippet %s from %s", snippetCode, launchpadUrl), th);
+            log.error(S.f("#815.030 Error verifying function %s from %s", snippetCode, launchpadUrl), th);
             setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.io_error);
         }
     }
@@ -217,14 +217,14 @@ public class MetadataService {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(CheckSumAndSignatureStatus.Status.correct, CheckSumAndSignatureStatus.Status.correct);
         if (launchpad.acceptOnlySignedSnippets) {
             try (FileInputStream fis = new FileInputStream(snippetTempFile)) {
-                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "Launchpad url: "+ launchpad.url +", snippet: "+snippetCode, fis, true, launchpad.createPublicKey());
+                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "Launchpad url: "+ launchpad.url +", function: "+snippetCode, fis, true, launchpad.createPublicKey());
             }
             if (status.signature != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.040 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
+                log.warn("#815.040 launchpad.acceptOnlySignedSnippets is {} but function {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
                 setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.signature_wrong);
             }
             else if (status.checksum != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.050 launchpad.acceptOnlySignedSnippets is {} but snippet {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
+                log.warn("#815.050 launchpad.acceptOnlySignedSnippets is {} but function {} has the broken signature", launchpad.acceptOnlySignedSnippets, snippetCode);
                 setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.checksum_wrong);
             }
         }
@@ -297,7 +297,7 @@ public class MetadataService {
                 }
             }
 
-            // set state to SnippetState.not_found if snippet doesn't exist on Launchpad any more
+            // set state to SnippetState.not_found if function doesn't exist on Launchpad any more
             for (SnippetDownloadStatusYaml.Status status : snippetDownloadStatusYaml.statuses) {
                 if (status.launchpadUrl.equals(launchpadUrl) && infos.stream().filter(i-> i.code.equals(status.code)).findAny().orElse(null)==null) {
                     setSnippetDownloadStatusInternal(launchpadUrl, status.code, status.sourcing, Enums.SnippetState.not_found);

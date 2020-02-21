@@ -243,14 +243,14 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentApiData.ExperimentsEditResult("#285.100 experiment wasn't found, experimentId: " + id);
         }
-        Iterable<Snippet> snippets = snippetRepository.findAll();
+        Iterable<Function> snippets = snippetRepository.findAll();
         ExperimentApiData.FunctionResult functionResult = new ExperimentApiData.FunctionResult();
 
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         final List<String> snippetCodes = epy.getFunctionCodes();
-        List<Snippet> experimentSnippets = snippetService.getSnippetsForCodes(snippetCodes);
+        List<Function> experimentFunctions = snippetService.getSnippetsForCodes(snippetCodes);
 
-        functionResult.functions = experimentSnippets.stream().map(es->
+        functionResult.functions = experimentFunctions.stream().map(es->
                 new ExperimentApiData.ExperimentFunctionResult(
                         es.getId(), es.getVersion(), es.getCode(), es.type, experiment.id)).collect(Collectors.toList());
 
@@ -261,21 +261,21 @@ public class ExperimentTopLevelService {
                     if (!experimentSnippetTypes.contains(s.type) ) {
                         return true;
                     }
-                    if (CommonConsts.FIT_TYPE.equals(s.type) && snippetService.hasType(experimentSnippets, CommonConsts.FIT_TYPE)) {
+                    if (CommonConsts.FIT_TYPE.equals(s.type) && snippetService.hasType(experimentFunctions, CommonConsts.FIT_TYPE)) {
                         return true;
                     }
-                    else if (CommonConsts.PREDICT_TYPE.equals(s.type) && snippetService.hasType(experimentSnippets, CommonConsts.PREDICT_TYPE)) {
+                    else if (CommonConsts.PREDICT_TYPE.equals(s.type) && snippetService.hasType(experimentFunctions, CommonConsts.PREDICT_TYPE)) {
                         return true;
                     }
                     else if (CommonConsts.CHECK_FITTING_TYPE.equals(s.type)) {
-                        if (snippetService.hasType(experimentSnippets, CommonConsts.CHECK_FITTING_TYPE)) {
+                        if (snippetService.hasType(experimentFunctions, CommonConsts.CHECK_FITTING_TYPE)) {
                             return true;
                         }
-                        for (Snippet snippet : experimentSnippets) {
-                            if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
-                                final Meta meta = MetaUtils.getMeta(snippet.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
+                        for (Function function : experimentFunctions) {
+                            if (CommonConsts.PREDICT_TYPE.equals(function.getType())) {
+                                final Meta meta = MetaUtils.getMeta(function.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
                                 if (MetaUtils.isTrue(meta)) {
-                                    // don't include this Snippet because 'predict' snippet doesn't support fitting detection
+                                    // don't include this Function because 'predict' function doesn't support fitting detection
                                     return false;
                                 }
                             }
@@ -297,17 +297,17 @@ public class ExperimentTopLevelService {
         return result;
     }
 
-    private void addCheckFittingSnippet(ExperimentParamsYaml epy, List<Snippet> experimentSnippets) {
+    private void addCheckFittingSnippet(ExperimentParamsYaml epy, List<Function> experimentFunctions) {
         if (S.b(epy.experimentYaml.checkFittingFunction)) {
             return;
         }
-        experimentSnippets.stream()
+        experimentFunctions.stream()
                 .filter(s->s.type.equals(CommonConsts.PREDICT_TYPE))
                 .findFirst()
                 .ifPresent(s-> {
                     Meta m = MetaUtils.getMeta(s.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
                     if (MetaUtils.isTrue(m)) {
-                        experimentSnippets.add(snippetRepository.findByCode(epy.experimentYaml.checkFittingFunction));
+                        experimentFunctions.add(snippetRepository.findByCode(epy.experimentYaml.checkFittingFunction));
                     }
         });
     }
@@ -436,10 +436,10 @@ public class ExperimentTopLevelService {
                     "#285.200 experiment wasn't found, id: "+id );
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        Snippet s = snippetService.findByCode(snippetCode);
+        Function s = snippetService.findByCode(snippetCode);
         if (s==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.210 snippet wasn't found, id: "+id );
+                    "#285.210 function wasn't found, id: "+id );
 
         }
         switch(s.getType()){
@@ -453,7 +453,7 @@ public class ExperimentTopLevelService {
                 epy.experimentYaml.checkFittingFunction = snippetCode;
                 break;
             default:
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.220 snippet has non-supported type for an experiment: "+s.getType() );
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.220 function has non-supported type for an experiment: "+s.getType() );
         }
         experiment.updateParams(epy);
 
@@ -539,7 +539,7 @@ public class ExperimentTopLevelService {
         }
         else {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.252 Can't find a snippet with the type: "+snippetType );
+                    "#285.252 Can't find a function with the type: "+snippetType );
         }
         experiment.updateParams(epy);
         experimentCache.save(experiment);
@@ -570,7 +570,7 @@ public class ExperimentTopLevelService {
                 break;
             default:
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#285.254 Unknown type of snippet: "+snippetType );
+                        "#285.254 Unknown type of function: "+snippetType );
         }
         experiment.updateParams(epy);
         experimentCache.save(experiment);

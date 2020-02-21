@@ -28,9 +28,9 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "mh_function_data")
 @Data
-@EqualsAndHashCode(of = {"snippetCode"})
+@EqualsAndHashCode(of = {"functionCode"})
 @ToString(exclude={"data", "bytes"})
-public class SnippetData implements Serializable {
+public class FunctionData implements Serializable {
     private static final long serialVersionUID = 7768428475142175426L;
 
     @Id
@@ -40,8 +40,8 @@ public class SnippetData implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "SNIPPET_CODE")
-    private String snippetCode;
+    @Column(name = "FUNCTION_CODE")
+    private String functionCode;
 
     @Column(name = "UPLOAD_TS")
     private Timestamp uploadTs;

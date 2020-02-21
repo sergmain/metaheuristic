@@ -342,7 +342,7 @@ public class SourceCodeService {
             else {
                 EnumsApi.SourceCodeValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x != OK) {
-                    log.error("#177.030 Snippet wasn't found for code: {}, process: {}", snDef.code, process);
+                    log.error("#177.030 Function wasn't found for code: {}, process: {}", snDef.code, process);
                     return x;
                 }
             }
@@ -351,7 +351,7 @@ public class SourceCodeService {
             for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.preFunctions) {
                 EnumsApi.SourceCodeValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x != OK) {
-                    log.error("#177.030 Pre-snippet {} wasn't found", snDef.code);
+                    log.error("#177.030 Pre-function {} wasn't found", snDef.code);
                     return x;
                 }
             }
@@ -360,7 +360,7 @@ public class SourceCodeService {
             for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.postFunctions) {
                 EnumsApi.SourceCodeValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x != OK) {
-                    log.error("#177.030 Post-snippet {} wasn't found", snDef.code);
+                    log.error("#177.030 Post-function {} wasn't found", snDef.code);
                     return x;
                 }
             }
@@ -373,12 +373,12 @@ public class SourceCodeService {
         if (StringUtils.isNotBlank(snDef.code)) {
             Long  snippetId = snippetRepository.findIdByCode(snDef.code);
             if (snippetId == null) {
-                log.error("#177.030 snippet wasn't found for code: {}, process: {}", snDef.code, process);
+                log.error("#177.030 function wasn't found for code: {}, process: {}", snDef.code, process);
                 return EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR;
             }
         }
         else {
-            log.error("#177.060 snippet wasn't found for code: {}, process: {}", snDef.code, process);
+            log.error("#177.060 function wasn't found for code: {}, process: {}", snDef.code, process);
             return EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR;
         }
         if (!commonProcessValidatorService.checkRequiredVersion(sourceCodeYamlAsStr, snDef)) {

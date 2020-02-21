@@ -15,41 +15,40 @@
  */
 package ai.metaheuristic.ai.launchpad.repositories;
 
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.Function;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
 import java.util.List;
 
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface SnippetRepository extends JpaRepository<Snippet, Long> {
+public interface SnippetRepository extends JpaRepository<Function, Long> {
 
     @Transactional(readOnly = true)
-    Snippet findByCode(String code);
+    Function findByCode(String code);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.id from Snippet b where b.code=:code")
+    @Query(value="select b.id from Function b where b.code=:code")
     Long findIdByCode(String code);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.id from Snippet b where b.code in :codes")
+    @Query(value="select b.id from Function b where b.code in :codes")
     List<Long> findIdsByCodes(List<String> codes);
 
     @Transactional
-    @Query(value="select b from Snippet b where b.code=:code")
-    Snippet findByCodeForUpdate(String code);
+    @Query(value="select b from Function b where b.code=:code")
+    Function findByCodeForUpdate(String code);
 
     @Transactional(readOnly = true)
-    @Query(value="select b.id from Snippet b")
+    @Query(value="select b.id from Function b")
     List<Long> findAllIds();
 
     @Transactional(readOnly = true)
-    @Query(value="select b.code from Snippet b")
+    @Query(value="select b.code from Function b")
     List<String> findAllSnippetCodes();
 }

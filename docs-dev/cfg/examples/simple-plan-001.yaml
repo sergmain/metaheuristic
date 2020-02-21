@@ -3,7 +3,7 @@ processes:
     collectResources: false
     name: Fileless sourceCode for documents
     snippetCodes:
-      - fileless-snippet:1.0
+      - fileless-function:1.0
     type: FILE_PROCESSING
     parallelExec: false
 metas:

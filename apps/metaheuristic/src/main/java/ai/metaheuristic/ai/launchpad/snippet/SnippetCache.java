@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.launchpad.snippet;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.Function;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,17 +35,17 @@ public class SnippetCache {
     private final SnippetRepository snippetRepository;
 
     @CacheEvict(cacheNames = {Consts.SNIPPETS_CACHE}, key = "#result.id")
-    public Snippet save(Snippet snippet) {
-        snippet.reset();
-        return snippetRepository.saveAndFlush(snippet);
+    public Function save(Function function) {
+        function.reset();
+        return snippetRepository.saveAndFlush(function);
     }
 
-    @CacheEvict(cacheNames = {Consts.SNIPPETS_CACHE}, key = "#snippet.id")
-    public void delete(Snippet snippet) {
+    @CacheEvict(cacheNames = {Consts.SNIPPETS_CACHE}, key = "#function.id")
+    public void delete(Function function) {
         try {
-            snippetRepository.delete(snippet);
+            snippetRepository.delete(function);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error deleting of snippet by object", e);
+            log.warn("Error deleting of function by object", e);
         }
     }
 
@@ -54,12 +54,12 @@ public class SnippetCache {
         try {
             snippetRepository.deleteById(snippetId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error deleting of snippet by id", e);
+            log.warn("Error deleting of function by id", e);
         }
     }
 
     @Cacheable(cacheNames = {Consts.SNIPPETS_CACHE}, unless="#result==null")
-    public Snippet findById(Long id) {
+    public Function findById(Long id) {
         return snippetRepository.findById(id).orElse(null);
     }
 

@@ -131,10 +131,10 @@ public class TaskProducingService {
             if (true) {
                 throw new NotImplementedException("not yet");
             }
-            // variables will be created while processing of internal snippet
+            // variables will be created while processing of internal function
             List<InternalSnippetOutput> outputs = internalSnippetProcessor.process(snDef.code, sourceCodeId, execContextId, internalContextId, null);
 
-            // theoretically, internal snippet can be without subProcesses, i.e. a result aggregation snippet
+            // theoretically, internal function can be without subProcesses, i.e. a result aggregation function
 
             if (process.subProcesses!=null && CollectionUtils.isNotEmpty(process.subProcesses.processes)) {
                 for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
@@ -174,7 +174,7 @@ public class TaskProducingService {
 
         yaml.taskYaml.function = snippetService.getSnippetConfig(snDef);
         if (yaml.taskYaml.function ==null) {
-            log.error("#171.07 Snippet wasn't found for code: {}", snDef.code);
+            log.error("#171.07 Function wasn't found for code: {}", snDef.code);
             return null;
         }
         yaml.taskYaml.preFunctions = new ArrayList<>();

@@ -26,12 +26,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ai.metaheuristic</groupId>
-    <artifactId>package-snippet</artifactId>
+    <artifactId>package-function</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>package-snippet</name>
-    <description>Package snippet, signing is optional</description>
+    <name>package-function</name>
+    <description>Package function, signing is optional</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -48,7 +48,7 @@
         <dependency>
             <groupId>ai.metaheuristic</groupId>
             <artifactId>mh-commons</artifactId>
-            <version>3.1.0</version>
+            <version>4.0.0</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
@@ -59,7 +59,7 @@
     </dependencies>
 
     <build>
-        <finalName>package-snippet</finalName>
+        <finalName>package-function</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -186,7 +186,7 @@ public class AtlasTopLevelService {
         catch (Exception e) {
             log.error("#422.040 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.050 can't load snippets, Error: " + e.toString());
+                    "#422.050 can't load functions, Error: " + e.toString());
         }
         finally {
             DirUtils.deleteAsync(resultDir);

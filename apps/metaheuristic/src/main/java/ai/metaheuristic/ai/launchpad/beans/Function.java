@@ -26,7 +26,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "mh_function")
 @Data
-public class Snippet implements Serializable {
+public class Function implements Serializable {
     private static final long serialVersionUID = 4066977399166436522L;
 
     @Id
@@ -36,10 +36,10 @@ public class Snippet implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "SNIPPET_CODE")
+    @Column(name = "FUNCTION_CODE")
     public String code;
 
-    @Column(name = "SNIPPET_TYPE")
+    @Column(name = "FUNCTION_TYPE")
     public String type;
 
     @Column(name = "PARAMS")

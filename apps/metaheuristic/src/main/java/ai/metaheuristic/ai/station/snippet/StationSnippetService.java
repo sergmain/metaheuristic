@@ -60,7 +60,7 @@ public class StationSnippetService {
     public DownloadedSnippetConfigStatus downloadSnippetConfig(String launchpadUrl,
             LaunchpadLookupConfig.Asset asset, String snippetCode, String stationId) {
 
-        final String snippetChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/snippet-config";
+        final String snippetChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/function-config";
         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +'-' + stationId;
 
         final DownloadedSnippetConfigStatus snippetConfigStatus = new DownloadedSnippetConfigStatus();
@@ -87,20 +87,20 @@ public class StationSnippetService {
             }
             else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
                 snippetConfigStatus.status = ConfigStatus.not_found;
-                log.warn("#813.200 Snippet with code {} wasn't found", snippetCode);
+                log.warn("#813.200 Function with code {} wasn't found", snippetCode);
             }
             else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-                log.warn("#813.210 Snippet with id {} is broken and need to be recreated", snippetCode);
+                log.warn("#813.210 Function with id {} is broken and need to be recreated", snippetCode);
             }
             else {
                 log.error("#813.220 HttpResponseException", e);
             }
         } catch (SocketTimeoutException e) {
-            log.error("#813.170 SocketTimeoutException: {}, snippet: {}, launchpad: {}, assetUrl: {}", e.toString(), snippetCode, launchpadUrl, asset.url);
+            log.error("#813.170 SocketTimeoutException: {}, function: {}, launchpad: {}, assetUrl: {}", e.toString(), snippetCode, launchpadUrl, asset.url);
         } catch (IOException e) {
-            log.error(S.f("#813.180 IOException, snippet: %s, launchpad: %s, assetUrl: %s",snippetCode, launchpadUrl), e);
+            log.error(S.f("#813.180 IOException, function: %s, launchpad: %s, assetUrl: %s",snippetCode, launchpadUrl), e);
         } catch (Throwable th) {
-            log.error(S.f("#813.190 Throwable, snippet: %s, launchpad: %s, assetUrl: %s",snippetCode, launchpadUrl, asset.url), th);
+            log.error(S.f("#813.190 Throwable, function: %s, launchpad: %s, assetUrl: %s",snippetCode, launchpadUrl, asset.url), th);
         }
         return snippetConfigStatus;
     }

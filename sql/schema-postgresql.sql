@@ -101,10 +101,10 @@ CREATE TABLE MH_VARIABLE
 );
 
 CREATE INDEX MH_VARIABLE_EXEC_CONTEXT_ID_IDX
-    ON mh_data (EXEC_CONTEXT_ID);
+    ON MH_VARIABLE (EXEC_CONTEXT_ID);
 
 CREATE INDEX MH_DATA_VAR_ID_IDX
-  ON mh_data (NAME);
+  ON MH_VARIABLE (NAME);
 
 --  its name is VARIABLE_GLOBAL, not GLOBAL_VARIABLE because I want these tables to be in the same spot in scheme
 CREATE TABLE MH_VARIABLE_GLOBAL
@@ -196,7 +196,7 @@ CREATE TABLE MH_EXEC_CONTEXT
   SOURCE_CODE_ID    NUMERIC(10, 0) NOT NULL,
   CREATED_ON        bigint NOT NULL,
   COMPLETED_ON      bigint,
-  INPUT_RESOURCE_PARAM  TEXT NOT NULL,
+  PARAMS            TEXT NOT NULL,
   IS_VALID          BOOLEAN not null default false,
   STATE             smallint not null default 0
 );
