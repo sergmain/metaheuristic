@@ -44,20 +44,20 @@ public class TaskParamsYamlUtilsV1
     }
 
     @Override
-    public TaskParamsYaml upgradeTo(TaskParamsYamlV1 v5, Long ... vars) {
-        v5.checkIntegrity();
+    public TaskParamsYaml upgradeTo(TaskParamsYamlV1 v1, Long ... vars) {
+        v1.checkIntegrity();
         TaskParamsYaml t = new TaskParamsYaml();
         t.taskYaml = new TaskParamsYaml.TaskYaml();
-        BeanUtils.copyProperties(v5.taskYaml, t.taskYaml, "function", "preFunctions", "postFunctions");
-        t.taskYaml.function = toUp(v5.taskYaml.function);
-        if (v5.taskYaml.preFunctions !=null) {
-            t.taskYaml.preFunctions = v5.taskYaml.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
+        BeanUtils.copyProperties(v1.taskYaml, t.taskYaml, "function", "preFunctions", "postFunctions");
+        t.taskYaml.function = toUp(v1.taskYaml.function);
+        if (v1.taskYaml.preFunctions !=null) {
+            t.taskYaml.preFunctions = v1.taskYaml.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
         }
-        if (v5.taskYaml.postFunctions !=null) {
-            t.taskYaml.postFunctions = v5.taskYaml.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
+        if (v1.taskYaml.postFunctions !=null) {
+            t.taskYaml.postFunctions = v1.taskYaml.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
         }
-        if (v5.taskYaml.taskMl!=null) {
-            t.taskYaml.taskMl = new TaskParamsYaml.TaskMachineLearning(v5.taskYaml.taskMl.hyperParams);
+        if (v1.taskYaml.taskMl!=null) {
+            t.taskYaml.taskMl = new TaskParamsYaml.TaskMachineLearning(v1.taskYaml.taskMl.hyperParams);
         }
 
         t.checkIntegrity();

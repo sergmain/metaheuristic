@@ -123,6 +123,7 @@ public class TaskParamsYaml implements BaseParams {
 
     @Data
     public static class TaskYaml {
+        public Long execContextId;
         public FunctionConfig function;
         public List<FunctionConfig> preFunctions;
         public List<FunctionConfig> postFunctions;

@@ -158,6 +158,7 @@ public class TaskProducingService {
             SourceCodeParamsYaml.FunctionDefForSourceCode snDef, Map<String, List<String>> collectedInputs, Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls,
             Map<String, String> mappingCodeToOriginalFilename) {
         TaskParamsYaml yaml = new TaskParamsYaml();
+        yaml.taskYaml.execContextId = execContextId;
 
         collectedInputs.forEach((key, value) -> yaml.taskYaml.inputResourceIds.put(key, value));
         outputResourceIds.forEach((key, value) -> yaml.taskYaml.outputResourceIds.put(value.name, key));

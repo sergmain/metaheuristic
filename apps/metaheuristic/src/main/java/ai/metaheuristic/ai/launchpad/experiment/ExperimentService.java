@@ -773,6 +773,7 @@ public class ExperimentService {
                         numberOfTasks.value++;
 
                         TaskParamsYaml yaml = new TaskParamsYaml();
+                        yaml.taskYaml.execContextId = execContextId;
                         yaml.taskYaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
 
                         if (!hyperParams.params.isEmpty()) {
