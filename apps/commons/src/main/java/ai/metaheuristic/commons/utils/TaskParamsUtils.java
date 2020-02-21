@@ -17,7 +17,7 @@
 package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 
 /**
  * @author Serge
@@ -26,11 +26,11 @@ import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
  */
 public class TaskParamsUtils {
 
-    public static TaskParamsYaml.SnippetConfig toSnippetConfig(SnippetConfigYaml src) {
+    public static TaskParamsYaml.FunctionConfig toFunctionConfig(FunctionConfigYaml src) {
         if (src==null) {
             return null;
         }
-        TaskParamsYaml.SnippetConfig trg = new TaskParamsYaml.SnippetConfig();
+        TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig();
         trg.checksum = src.checksum;
         trg.checksumMap = src.checksumMap;
         trg.code = src.code;
@@ -38,7 +38,7 @@ public class TaskParamsUtils {
         trg.file = src.file;
         trg.git = src.git;
         if (src.info!=null) {
-            trg.info = new TaskParamsYaml.SnippetInfo(src.info.signed, src.info.length);
+            trg.info = new TaskParamsYaml.FunctionInfo(src.info.signed, src.info.length);
         }
         trg.metas = src.metas;
         if (src.ml!=null) {

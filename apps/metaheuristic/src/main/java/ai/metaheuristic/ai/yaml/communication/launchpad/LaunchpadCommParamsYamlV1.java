@@ -62,7 +62,7 @@ public class LaunchpadCommParamsYamlV1 implements BaseParams {
         @AllArgsConstructor
         public static class Info {
             public String code;
-            public EnumsApi.SnippetSourcing sourcing;
+            public EnumsApi.FunctionSourcing sourcing;
         }
         public List<Info> infos = new ArrayList<>();
     }

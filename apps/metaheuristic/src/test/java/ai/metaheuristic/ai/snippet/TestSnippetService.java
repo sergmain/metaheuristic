@@ -24,8 +24,8 @@ import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
@@ -75,10 +75,10 @@ public class TestSnippetService {
 
     @Test
     public void test() {
-        SourceCodeParamsYaml.SnippetDefForSourceCode sd = new SourceCodeParamsYaml.SnippetDefForSourceCode();
+        SourceCodeParamsYaml.FunctionDefForSourceCode sd = new SourceCodeParamsYaml.FunctionDefForSourceCode();
         sd.code = TEST_SNIPPET;
         sd.params = null;
-        TaskParamsYaml.SnippetConfig sc = snippetService.getSnippetConfig(sd);
+        TaskParamsYaml.FunctionConfig sc = snippetService.getSnippetConfig(sd);
 
         assertNotNull(sc.params);
         final String[] split = StringUtils.split(sc.params);
@@ -96,7 +96,7 @@ public class TestSnippetService {
         snippet = snippetRepository.findByCodeForUpdate(TEST_SNIPPET);
         if (snippet == null) {
             Snippet s = new Snippet();
-            SnippetConfigYaml sc = new SnippetConfigYaml();
+            FunctionConfigYaml sc = new FunctionConfigYaml();
             sc.code = TEST_SNIPPET;
             sc.type = "test";
             sc.env = "python-3";
@@ -108,7 +108,7 @@ public class TestSnippetService {
 
             s.setCode(TEST_SNIPPET);
             s.setType("test");
-            s.params = SnippetConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
+            s.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
 
             mills = System.currentTimeMillis();
             log.info("Start snippetRepository.save() #2");

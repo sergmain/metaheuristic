@@ -19,7 +19,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -53,16 +53,16 @@ public class TestTaskParamYaml {
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.setHyperParams(map);
-        seq.setSnippet(new SnippetApiData.SnippetConfig(
+        seq.setSnippet(new FunctionApiData.FunctionConfig(
                 "123:1.0",
                 CommonConsts.FIT_TYPE,
                 "file.txt",
                 "112233",
                 "python.exe",
-                EnumsApi.SnippetSourcing.launchpad,
+                EnumsApi.FunctionSourcing.launchpad,
                 true,
                 null,
-                new SnippetApiData.SnippetConfig.SnippetInfo(),
+                new FunctionApiData.FunctionConfig.FunctionInfo(),
                 null,
                 null,
                 false
@@ -88,20 +88,20 @@ public class TestTaskParamYaml {
         map.put("key2", "#1");
         tpy.taskYaml.taskMl = new TaskParamsYaml.TaskMachineLearning();
         tpy.taskYaml.taskMl.setHyperParams(map);
-        tpy.taskYaml.setSnippet(TaskParamsUtils.toSnippetConfig(new SnippetConfigYaml(
+        tpy.taskYaml.setFunction(TaskParamsUtils.toFunctionConfig(new FunctionConfigYaml(
                 "123:1.0",
                 CommonConsts.FIT_TYPE,
                 "file.txt",
                 "112233",
                 "python.exe",
-                EnumsApi.SnippetSourcing.launchpad,
+                EnumsApi.FunctionSourcing.launchpad,
                 null,
-                new SnippetConfigYaml.SnippetInfo(),
+                new FunctionConfigYaml.FunctionInfo(),
                 null,
                 null,
                 false,
                 new ArrayList<>(),
-                new SnippetConfigYaml.MachineLearning(true, false)
+                new FunctionConfigYaml.MachineLearning(true, false)
         )));
 
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);

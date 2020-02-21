@@ -55,7 +55,7 @@ import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.api.launchpad.SourceCode;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
-import ai.metaheuristic.commons.utils.SnippetCoreUtils;
+import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -373,7 +373,7 @@ public class ExecContextService {
                     throw new RuntimeException("#705.200 Error", e);
                 }
 
-                if (taskParamYaml.taskYaml.snippet.sourcing== EnumsApi.SnippetSourcing.git &&
+                if (taskParamYaml.taskYaml.function.sourcing== EnumsApi.FunctionSourcing.git &&
                         stationStatus.gitStatusInfo.status!= Enums.GitStatus.installed) {
                     log.warn("#705.210 Can't assign task #{} to station #{} because this station doesn't correctly installed git, git status info: {}",
                             station.getId(), task.getId(), stationStatus.gitStatusInfo
@@ -382,11 +382,11 @@ public class ExecContextService {
                     continue;
                 }
 
-                if (taskParamYaml.taskYaml.snippet.env!=null) {
-                    String interpreter = stationStatus.env.getEnvs().get(taskParamYaml.taskYaml.snippet.env);
+                if (taskParamYaml.taskYaml.function.env!=null) {
+                    String interpreter = stationStatus.env.getEnvs().get(taskParamYaml.taskYaml.function.env);
                     if (interpreter == null) {
                         log.warn("#705.213 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
-                                station.getId(), task.getId(), taskParamYaml.taskYaml.snippet.env
+                                station.getId(), task.getId(), taskParamYaml.taskYaml.function.env
                         );
                         longHolder.value = System.currentTimeMillis();
                         continue;
@@ -404,8 +404,8 @@ public class ExecContextService {
                 }
 
                 if (isAcceptOnlySigned) {
-                    if (!taskParamYaml.taskYaml.snippet.info.isSigned()) {
-                        log.warn("#705.220 Snippet with code {} wasn't signed", taskParamYaml.taskYaml.snippet.getCode());
+                    if (!taskParamYaml.taskYaml.function.info.isSigned()) {
+                        log.warn("#705.220 Snippet with code {} wasn't signed", taskParamYaml.taskYaml.function.getCode());
                         continue;
                     }
                 }
@@ -455,8 +455,8 @@ public class ExecContextService {
     }
 
     private List<EnumsApi.OS> getSupportedOS(TaskParamsYaml taskParamYaml) {
-        if (taskParamYaml.taskYaml.snippet!=null) {
-            return SnippetCoreUtils.getSupportedOS(taskParamYaml.taskYaml.snippet.metas);
+        if (taskParamYaml.taskYaml.function !=null) {
+            return FunctionCoreUtils.getSupportedOS(taskParamYaml.taskYaml.function.metas);
         }
         return List.of();
     }

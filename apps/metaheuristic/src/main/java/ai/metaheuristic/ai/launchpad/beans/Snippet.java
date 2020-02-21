@@ -15,8 +15,8 @@
  */
 package ai.metaheuristic.ai.launchpad.beans;
 
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
@@ -24,7 +24,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "MH_SNIPPET")
+@Table(name = "mh_function")
 @Data
 public class Snippet implements Serializable {
     private static final long serialVersionUID = 4066977399166436522L;
@@ -58,15 +58,15 @@ public class Snippet implements Serializable {
 
     @Transient
     @JsonIgnore
-    private SnippetConfigYaml sc = null;
+    private FunctionConfigYaml sc = null;
 
     @JsonIgnore
-    public SnippetConfigYaml getSnippetConfig(boolean isClone) {
+    public FunctionConfigYaml getSnippetConfig(boolean isClone) {
         if (sc==null) {
             synchronized (this) {
                 if (sc==null) {
                     //noinspection UnnecessaryLocalVariable
-                    SnippetConfigYaml temp = SnippetConfigYamlUtils.BASE_YAML_UTILS.to(params);
+                    FunctionConfigYaml temp = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(params);
                     sc = temp;
                     return sc;
                 }

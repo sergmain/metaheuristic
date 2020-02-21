@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.station.LaunchpadLookupExtendedService;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 
@@ -33,11 +33,11 @@ public interface ResourceProvider {
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String resourceId, SourceCodeParamsYaml.Variable dataStorageParams);
 
-    SnippetApiData.SnippetExecResult processResultingFile(
+    FunctionApiData.FunctionExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String outputResourceId,
-            TaskParamsYaml.SnippetConfig snippet
+            TaskParamsYaml.FunctionConfig snippet
     );
 
     File getOutputResourceFile(

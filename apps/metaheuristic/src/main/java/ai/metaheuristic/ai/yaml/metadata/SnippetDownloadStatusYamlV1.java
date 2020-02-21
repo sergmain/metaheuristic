@@ -45,7 +45,7 @@ public class SnippetDownloadStatusYamlV1 implements BaseParams {
         public Enums.SnippetState snippetState;
         public String code;
         public String launchpadUrl;
-        public EnumsApi.SnippetSourcing sourcing;
+        public EnumsApi.FunctionSourcing sourcing;
         public boolean verified;
     }
 

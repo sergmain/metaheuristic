@@ -166,7 +166,7 @@ public class ExperimentController {
 
         model.addAttribute("hyperParams", r.hyperParams);
         model.addAttribute("simpleExperiment", r.simpleExperiment);
-        model.addAttribute("snippetResult", r.snippetResult);
+        model.addAttribute("snippetResult", r.functionResult);
         return "launchpad/experiment/experiment-edit-form";
     }
 

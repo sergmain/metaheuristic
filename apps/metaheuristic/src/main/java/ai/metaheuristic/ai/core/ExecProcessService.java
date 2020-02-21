@@ -17,7 +17,7 @@ package ai.metaheuristic.ai.core;
 
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +43,7 @@ public class ExecProcessService {
         public InputStream is;
     }
 
-    public SnippetApiData.SnippetExecResult execCommand(
+    public FunctionApiData.FunctionExecResult execCommand(
             List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate, String snippetCode,
             final LaunchpadSchedule schedule) throws IOException, InterruptedException {
         log.info("Exec info:");
@@ -176,7 +176,7 @@ public class ExecProcessService {
         String console = readLastLines(1000, consoleLogFile) + '\n' + timeoutMessage;
 
         log.debug("'\tconsole output:\n{}", console);
-        return new SnippetApiData.SnippetExecResult(snippetCode, exitCode==0, exitCode, console);
+        return new FunctionApiData.FunctionExecResult(snippetCode, exitCode==0, exitCode, console);
     }
 
     public static void collectHandlers(List<ProcessHandle> handles, ProcessHandle handle) {

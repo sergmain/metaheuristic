@@ -21,8 +21,8 @@ import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.data.SnippetData;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -113,7 +113,7 @@ public class SnippetTopLevelService {
             try(OutputStream os = new FileOutputStream(zipFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
-            List<SnippetApiData.SnippetConfigStatus> statuses;
+            List<FunctionApiData.FunctionConfigStatus> statuses;
             if (ZIP_EXT.equals(ext)) {
                 log.debug("Start unzipping archive");
                 ZipUtils.unzipFolder(zipFile, tempDir);
@@ -141,11 +141,11 @@ public class SnippetTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private List<String> toErrorMessages(List<SnippetApiData.SnippetConfigStatus> statuses) {
+    private List<String> toErrorMessages(List<FunctionApiData.FunctionConfigStatus> statuses) {
         return statuses.stream().filter(o->!o.isOk).map(o->o.error).collect(Collectors.toList());
     }
 
-    private boolean isError(List<SnippetApiData.SnippetConfigStatus> statuses) {
+    private boolean isError(List<FunctionApiData.FunctionConfigStatus> statuses) {
         return statuses.stream().filter(o->!o.isOk).findFirst().orElse(null)!=null;
     }
 

@@ -110,15 +110,15 @@ public class MetadataService {
         int i=0;
     }
 
-    public ChecksumState prepareChecksum(String snippetCode, String launchpadUrl, TaskParamsYaml.SnippetConfig snippetConfig) {
+    public ChecksumState prepareChecksum(String snippetCode, String launchpadUrl, TaskParamsYaml.FunctionConfig functionConfig) {
         ChecksumState checksumState = new ChecksumState();
         // check requirements of signature
-        if (S.b(snippetConfig.checksum)) {
+        if (S.b(functionConfig.checksum)) {
             setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.signature_not_found);
             checksumState.signatureIsOk = false;
             return checksumState;
         }
-        checksumState.checksum = Checksum.fromJson(snippetConfig.checksum);
+        checksumState.checksum = Checksum.fromJson(functionConfig.checksum);
         boolean isSignature = checksumState.checksum.checksums.entrySet().stream().anyMatch(e -> e.getKey().isSign);
         if (!isSignature) {
             setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.signature_not_found);
@@ -132,7 +132,7 @@ public class MetadataService {
     private void markAllAsUnverified() {
         List<SnippetDownloadStatusYaml.Status > statuses = getSnippetDownloadStatusYamlInternal().statuses;
         for (SnippetDownloadStatusYaml.Status status : statuses) {
-            if (status.sourcing!=EnumsApi.SnippetSourcing.launchpad) {
+            if (status.sourcing!= EnumsApi.FunctionSourcing.launchpad) {
                 continue;
             }
 
@@ -156,7 +156,7 @@ public class MetadataService {
     private void syncSnippetStatusInternal(String launchpadUrl, LaunchpadLookupConfig.Asset asset, String snippetCode) {
         SnippetDownloadStatusYaml.Status status = getSnippetDownloadStatuses(launchpadUrl, snippetCode);
 
-        if (status==null || status.sourcing != EnumsApi.SnippetSourcing.launchpad || status.verified) {
+        if (status==null || status.sourcing != EnumsApi.FunctionSourcing.launchpad || status.verified) {
             return;
         }
         SimpleCache simpleCache = simpleCacheMap.computeIfAbsent(launchpadUrl, o->{
@@ -180,14 +180,14 @@ public class MetadataService {
             removeSnippet(launchpadUrl, snippetCode);
             return;
         }
-        TaskParamsYaml.SnippetConfig snippetConfig = downloadedSnippetConfigStatus.snippetConfig;
+        TaskParamsYaml.FunctionConfig functionConfig = downloadedSnippetConfigStatus.functionConfig;
 
-        ChecksumState checksumState = prepareChecksum(snippetCode, launchpadUrl, snippetConfig);
+        ChecksumState checksumState = prepareChecksum(snippetCode, launchpadUrl, functionConfig);
         if (!checksumState.signatureIsOk) {
             return;
         }
 
-        final AssetFile assetFile = ResourceUtils.prepareSnippetFile(simpleCache.baseResourceDir, status.code, snippetConfig.file);
+        final AssetFile assetFile = ResourceUtils.prepareSnippetFile(simpleCache.baseResourceDir, status.code, functionConfig.file);
         if (assetFile.isError) {
             setSnippetState(launchpadUrl, snippetCode, Enums.SnippetState.asset_error);
             return;
@@ -376,7 +376,7 @@ public class MetadataService {
         }
     }
 
-    public void setSnippetDownloadStatus(final String launchpadUrl, String snippetCode, EnumsApi.SnippetSourcing sourcing, Enums.SnippetState snippetState) {
+    public void setSnippetDownloadStatus(final String launchpadUrl, String snippetCode, EnumsApi.FunctionSourcing sourcing, Enums.SnippetState snippetState) {
         if (S.b(launchpadUrl)) {
             throw new IllegalStateException("#815.150 launchpadUrl is null");
         }
@@ -406,7 +406,7 @@ public class MetadataService {
         }
     }
 
-    private void setSnippetDownloadStatusInternal(String launchpadUrl, String code, EnumsApi.SnippetSourcing sourcing, Enums.SnippetState snippetState) {
+    private void setSnippetDownloadStatusInternal(String launchpadUrl, String code, EnumsApi.FunctionSourcing sourcing, Enums.SnippetState snippetState) {
         SnippetDownloadStatusYaml snippetDownloadStatusYaml = getSnippetDownloadStatusYamlInternal();
 
         SnippetDownloadStatusYaml.Status status = snippetDownloadStatusYaml.statuses.stream().filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(code)).findAny().orElse(null);

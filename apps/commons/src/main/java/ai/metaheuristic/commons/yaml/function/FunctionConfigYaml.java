@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.snippet;
+package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -37,7 +37,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "code")
-public class SnippetConfigYamlV2 implements Cloneable, BaseParams {
+public class FunctionConfigYaml implements Cloneable, BaseParams {
 
     public final int version=2;
 
@@ -47,8 +47,8 @@ public class SnippetConfigYamlV2 implements Cloneable, BaseParams {
     }
 
     @SneakyThrows
-    public SnippetConfigYamlV2 clone() {
-        final SnippetConfigYamlV2 clone = (SnippetConfigYamlV2) super.clone();
+    public FunctionConfigYaml clone() {
+        final FunctionConfigYaml clone = (FunctionConfigYaml) super.clone();
         if (this.checksumMap != null) {
             clone.checksumMap = new HashMap<>(this.checksumMap);
         }
@@ -64,10 +64,10 @@ public class SnippetConfigYamlV2 implements Cloneable, BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class SnippetInfoV2 {
+    public static class FunctionInfo {
         public boolean signed;
         /**
-         * snippet's binary length
+         * function's binary length
          */
         public long length;
     }
@@ -75,31 +75,31 @@ public class SnippetConfigYamlV2 implements Cloneable, BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class MachineLearningV2 {
+    public static class MachineLearning {
         public boolean metrics = false;
         public boolean fitting = false;
     }
 
     /**
-     * code of snippet, i.e. simple-app:1.0
+     * code of function, i.e. simple-app:1.0
      */
     public String code;
     public String type;
     public String file;
     /**
-     * params for command line fo invoking snippet
+     * params for command line for invoking function
      * <p>
      * this isn't a holder for yaml-based config
      */
     public String params;
     public String env;
-    public EnumsApi.SnippetSourcing sourcing;
+    public EnumsApi.FunctionSourcing sourcing;
     public Map<EnumsApi.Type, String> checksumMap;
-    public SnippetInfoV2 info = new SnippetInfoV2();
+    public FunctionInfo info = new FunctionInfo();
     public String checksum;
     public GitInfo git;
     public boolean skipParams = false;
     public List<Meta> metas = new ArrayList<>();
-    public MachineLearningV2 ml;
+    public MachineLearning ml;
 
 }

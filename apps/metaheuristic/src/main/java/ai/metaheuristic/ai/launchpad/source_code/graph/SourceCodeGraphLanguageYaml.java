@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import jdk.jshell.spi.ExecutionControl;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.ArrayList;
@@ -76,7 +75,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
             SourceCodeParamsYaml.SubProcesses subProcesses = p.subProcesses;
             // tasks for sub-processes of internal snippet will be produced at runtime phase
-            if (subProcesses !=null && p.snippet.context!= EnumsApi.SnippetExecContext.internal) {
+            if (subProcesses !=null && p.function.context!= EnumsApi.FunctionExecContext.internal) {
                 if (CollectionUtils.isEmpty(subProcesses.processes)) {
                     throw new SourceCodeGraphException("(subProcesses !=null) && (CollectionUtils.isEmpty(subProcesses.processes))");
                 }
@@ -129,7 +128,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
     private SourceCodeData.SimpleTaskVertex createFinishVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, String currentInternalContextId) {
         SourceCodeData.SimpleTaskVertex v = new SourceCodeData.SimpleTaskVertex();
-        v.snippet = new SourceCodeParamsYaml.SnippetDefForSourceCode(Consts.MH_FINISH_SNIPPET);
+        v.snippet = new SourceCodeParamsYaml.FunctionDefForSourceCode(Consts.MH_FINISH_SNIPPET);
         v.taskId = taskId.incrementAndGet();
         v.execContextId = contextIdSupplier.get();
         v.internalContextId = currentInternalContextId;
@@ -141,9 +140,9 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
     private SourceCodeData.SimpleTaskVertex toVertex(Supplier<String> contextIdSupplier, AtomicLong taskId, String currentInternalContextId, SourceCodeParamsYaml.Process p) {
         SourceCodeData.SimpleTaskVertex v = new SourceCodeData.SimpleTaskVertex();
-        v.snippet = p.snippet;
-        v.preSnippets = p.preSnippets;
-        v.postSnippets = p.postSnippets;
+        v.snippet = p.function;
+        v.preSnippets = p.preFunctions;
+        v.postSnippets = p.postFunctions;
         v.taskId = taskId.incrementAndGet();
 
         v.execContextId = contextIdSupplier.get();

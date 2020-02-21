@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.snippet;
+package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -30,36 +30,36 @@ import java.util.HashMap;
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class SnippetConfigYamlUtilsV2
-        extends AbstractParamsYamlUtils<SnippetConfigYamlV2, SnippetConfigYaml, Void, Void, Void, Void> {
+public class FunctionConfigYamlUtilsV1
+        extends AbstractParamsYamlUtils<FunctionConfigYamlV1, FunctionConfigYamlV2, FunctionConfigYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 1;
     }
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(SnippetConfigYamlV2.class);
+        return YamlUtils.init(FunctionConfigYamlV1.class);
     }
 
     @Override
-    public SnippetConfigYaml upgradeTo(SnippetConfigYamlV2 src, Long ... vars) {
+    public FunctionConfigYamlV2 upgradeTo(FunctionConfigYamlV1 src, Long ... vars) {
         src.checkIntegrity();
-        SnippetConfigYaml trg = new SnippetConfigYaml();
+        FunctionConfigYamlV2 trg = new FunctionConfigYamlV2();
         BeanUtils.copyProperties(src, trg);
 
         if (src.checksumMap!=null) {
             trg.checksumMap = new HashMap<>(src.checksumMap);
         }
         if (src.info!=null) {
-            trg.info = new SnippetConfigYaml.SnippetInfo(src.info.signed, src.info.length);
+            trg.info = new FunctionConfigYamlV2.FunctionInfoV2(src.info.signed, src.info.length);
         }
         if (src.metas!=null) {
             trg.metas = new ArrayList<>(src.metas);
         }
-        if (src.ml!=null) {
-            trg.ml = new SnippetConfigYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
+        if (src.metrics) {
+            trg.ml = new FunctionConfigYamlV2.MachineLearningV2(true, false);
         }
         trg.checkIntegrity();
         return trg;
@@ -71,8 +71,8 @@ public class SnippetConfigYamlUtilsV2
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public FunctionConfigYamlUtilsV2 nextUtil() {
+        return (FunctionConfigYamlUtilsV2) FunctionConfigYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override
@@ -81,17 +81,17 @@ public class SnippetConfigYamlUtilsV2
     }
 
     @Override
-    public String toString(SnippetConfigYamlV2 yaml) {
+    public String toString(FunctionConfigYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @Override
-    public SnippetConfigYamlV2 to(String s) {
+    public FunctionConfigYamlV1 to(String s) {
         if (S.b(s)) {
             return null;
         }
         //noinspection UnnecessaryLocalVariable
-        final SnippetConfigYamlV2 p = getYaml().load(s);
+        final FunctionConfigYamlV1 p = getYaml().load(s);
         return p;
     }
 

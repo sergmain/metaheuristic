@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.snippet_exec;
 
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
@@ -27,22 +27,22 @@ import java.io.InputStream;
 public class SnippetExecUtils {
 
     private static Yaml getYaml() {
-        return YamlUtils.init(SnippetApiData.SnippetExec.class);
+        return YamlUtils.init(FunctionApiData.FunctionExec.class);
     }
 
-    public static String toString(SnippetApiData.SnippetExec config) {
+    public static String toString(FunctionApiData.FunctionExec config) {
         return YamlUtils.toString(config, getYaml());
     }
 
-    public static SnippetApiData.SnippetExec to(String s) {
-        return (SnippetApiData.SnippetExec) YamlUtils.to(s, getYaml());
+    public static FunctionApiData.FunctionExec to(String s) {
+        return (FunctionApiData.FunctionExec) YamlUtils.to(s, getYaml());
     }
 
-    public static SnippetApiData.SnippetExec to(InputStream is) {
-        return (SnippetApiData.SnippetExec) YamlUtils.to(is, getYaml());
+    public static FunctionApiData.FunctionExec to(InputStream is) {
+        return (FunctionApiData.FunctionExec) YamlUtils.to(is, getYaml());
     }
 
-    public static SnippetApiData.SnippetExec to(File file) {
-        return (SnippetApiData.SnippetExec) YamlUtils.to(file, getYaml());
+    public static FunctionApiData.FunctionExec to(File file) {
+        return (FunctionApiData.FunctionExec) YamlUtils.to(file, getYaml());
     }
 }

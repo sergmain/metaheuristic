@@ -69,7 +69,7 @@ public class ConsoleFormAtlasService {
                 stream.forEach(o -> {
                     ConsoleOutputStoredToAtlas.TaskOutput taskOutput = new ConsoleOutputStoredToAtlas.TaskOutput();
                     taskOutput.taskId = o.getId();
-                    taskOutput.console = o.getSnippetExecResults();
+                    taskOutput.console = o.getFunctionExecResults();
                     try {
                         String json = mapper.writeValueAsString(taskOutput);
 

@@ -26,7 +26,7 @@ public class EnumsApi {
 
     public enum SourceCodeSubProcessLogic { and, or, sequential}
 
-    public enum SnippetExecContext { external, internal }
+    public enum FunctionExecContext { external, internal }
 
     /**
      * local - all assets are managed locally
@@ -47,18 +47,18 @@ public class EnumsApi {
         }
     }
 
-    public enum ExperimentSnippet {
+    public enum ExperimentFunction {
         FIT(CommonConsts.FIT_TYPE),
         PREDICT(CommonConsts.PREDICT_TYPE),
         CHECK_FITTING(CommonConsts.CHECK_FITTING_TYPE);
 
         public String code;
 
-        ExperimentSnippet(String code) {
+        ExperimentFunction(String code) {
             this.code = code;
         }
 
-        public static ExperimentSnippet to(String code) {
+        public static ExperimentFunction to(String code) {
             switch (code) {
                 case CommonConsts.FIT_TYPE:
                     return FIT;
@@ -78,9 +78,9 @@ public class EnumsApi {
     public enum DataSourcing {
         // data will be downloaded from launchpad
         launchpad(1),
-        // snippet already has been deployed locally at station
+        // function already has been deployed locally at station
         disk(2),
-        // snippet will be downloaded from git
+        // function will be downloaded from git
         git(3),
         // data will be provided via inline in params.yaml
         inline(4);
@@ -116,22 +116,22 @@ public class EnumsApi {
     }
 
     @ToString
-    public enum SnippetSourcing {
-        // snippet will be downloaded from launchpad
+    public enum FunctionSourcing {
+        // function will be downloaded from launchpad
         launchpad(1),
-        // snippet already has been deployed locally at station
+        // function already has been deployed locally at station
         station(2),
-        // snippet will be downloaded from git
+        // function will be downloaded from git
         git(3);
 
         public int value;
 
-        SnippetSourcing(int value) {
+        FunctionSourcing(int value) {
             this.value = value;
         }
 
         @SuppressWarnings("Duplicates")
-        public static SnippetSourcing to(int value) {
+        public static FunctionSourcing to(int value) {
             switch (value) {
                 case 1:
                     //noinspection
@@ -147,7 +147,7 @@ public class EnumsApi {
 
         public static String from(int value) {
             //noinspection unused
-            SnippetSourcing state = to(value);
+            FunctionSourcing state = to(value);
             return state.toString();
         }
 
@@ -176,20 +176,20 @@ public class EnumsApi {
         INPUT_TYPE_EMPTY_ERROR,
         OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
         NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR,
-        SNIPPET_NOT_DEFINED_ERROR,
+        FUNCTION_NOT_DEFINED_ERROR,
         SOURCE_CODE_PARAMS_EMPTY_ERROR,
         PROCESS_PARAMS_EMPTY_ERROR,
-        SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR,
+        FUNCTION_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR,
         PROCESS_CODE_NOT_FOUND_ERROR,
-        TOO_MANY_SNIPPET_CODES_ERROR,
+        TOO_MANY_FUNCTION_CODES_ERROR,
         INPUT_CODE_NOT_SPECIFIED_ERROR,
-        WRONG_FORMAT_OF_SNIPPET_CODE,
-        SNIPPET_NOT_FOUND_ERROR,
-        FITTING_SNIPPET_NOT_FOUND_ERROR,
-        VERSION_OF_SNIPPET_IS_TOO_LOW_ERROR,
+        WRONG_FORMAT_OF_FUNCTION_CODE,
+        FUNCTION_NOT_FOUND_ERROR,
+        FITTING_FUNCTION_NOT_FOUND_ERROR,
+        VERSION_OF_FUNCTION_IS_TOO_LOW_ERROR,
         EXPERIMENT_NOT_FOUND_ERROR,
         EXPERIMENT_ALREADY_STARTED_ERROR,
-        EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR,
+        EXPERIMENT_HASNT_ALL_FUNCTIONS_ERROR,
         EXPERIMENT_META_NOT_FOUND_ERROR,
         EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR,
         EXPERIMENT_META_DATASET_NOT_FOUND_ERROR,
@@ -201,14 +201,14 @@ public class EnumsApi {
         START_VARIABLE_EMPTY_ERROR,
         START_RESOURCE_POOL_IS_EMPTY_ERROR,
         PROCESS_VALIDATOR_NOT_FOUND_ERROR,
-        MIXED_EXTERNAL_AND_INTERNAL_SNIPPETS_ERROR,
-        PRE_SNIPPET_WITH_INTERNAL_SNIPPET_ERROR,
-        POST_SNIPPET_WITH_INTERNAL_SNIPPET_ERROR,
-        INTERNAL_SNIPPET_WITH_PARALLEL_EXEC_ERROR,
-        INTERNAL_AND_EXTERNAL_SNIPPET_IN_THE_SAME_PROCESS_ERROR,
-        TOO_MANY_INTERNAL_SNIPPETS_ERROR,
-        INTERNAL_SNIPPET_SUPPORT_ONLY_LAUNCHPAD_ERROR,
-        INTERNAL_SNIPPET_NOT_FOUND_ERROR
+        MIXED_EXTERNAL_AND_INTERNAL_FUNCTIONS_ERROR,
+        PRE_FUNCTION_WITH_INTERNAL_FUNCTION_ERROR,
+        POST_FUNCTION_WITH_INTERNAL_FUNCTION_ERROR,
+        INTERNAL_FUNCTION_WITH_PARALLEL_EXEC_ERROR,
+        INTERNAL_AND_EXTERNAL_FUNCTION_IN_THE_SAME_PROCESS_ERROR,
+        TOO_MANY_INTERNAL_FUNCTIONS_ERROR,
+        INTERNAL_FUNCTION_SUPPORT_ONLY_LAUNCHPAD_ERROR,
+        INTERNAL_FUNCTION_NOT_FOUND_ERROR
     }
 
     public enum SourceCodeProducingStatus {
@@ -222,13 +222,13 @@ public class EnumsApi {
         META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR,
         EXEC_CONTEXT_NOT_FOUND_ERROR,
         SOURCE_CODE_NOT_FOUND_ERROR,
-        WRONG_FORMAT_OF_SNIPPET_CODE,
+        WRONG_FORMAT_OF_FUNCTION_CODE,
         ERROR,
         TOO_MANY_TASKS_PER_SOURCE_CODE_ERROR,
         TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR
     }
 
-    public enum BinaryDataType { DATA, SNIPPET }
+    public enum BinaryType {data, function}
 
     public enum OperationStatus {OK, ERROR}
 

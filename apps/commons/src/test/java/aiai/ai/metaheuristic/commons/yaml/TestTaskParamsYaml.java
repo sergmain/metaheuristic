@@ -52,20 +52,20 @@ public class TestTaskParamsYaml {
         ty.timeoutBeforeTerminate = 42L;
 
 
-        final TaskParamsYamlV1.SnippetConfigV1 preSnippet = new TaskParamsYamlV1.SnippetConfigV1();
-        preSnippet.code = "pre-snippet-code";
-        preSnippet.sourcing = EnumsApi.SnippetSourcing.station;
-        ty.preSnippets = List.of(preSnippet);
+        final TaskParamsYamlV1.FunctionConfigV1 preFunction = new TaskParamsYamlV1.FunctionConfigV1();
+        preFunction.code = "pre-function-code";
+        preFunction.sourcing = EnumsApi.FunctionSourcing.station;
+        ty.preFunctions = List.of(preFunction);
 
-        final TaskParamsYamlV1.SnippetConfigV1 snippet = new TaskParamsYamlV1.SnippetConfigV1();
-        snippet.code = "snippet-code";
-        snippet.sourcing = EnumsApi.SnippetSourcing.git;
-        ty.snippet = snippet;
+        final TaskParamsYamlV1.FunctionConfigV1 function = new TaskParamsYamlV1.FunctionConfigV1();
+        function.code = "function-code";
+        function.sourcing = EnumsApi.FunctionSourcing.git;
+        ty.function = function;
 
-        final TaskParamsYamlV1.SnippetConfigV1 postSnippet = new TaskParamsYamlV1.SnippetConfigV1();
-        postSnippet.code = "post-snippet-code";
-        postSnippet.sourcing = EnumsApi.SnippetSourcing.launchpad;
-        ty.postSnippets = List.of(postSnippet);
+        final TaskParamsYamlV1.FunctionConfigV1 postFunction = new TaskParamsYamlV1.FunctionConfigV1();
+        postFunction.code = "post-function-code";
+        postFunction.sourcing = EnumsApi.FunctionSourcing.launchpad;
+        ty.postFunctions = List.of(postFunction);
 
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(v2);
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(s);
@@ -73,9 +73,9 @@ public class TestTaskParamsYaml {
         assertNotNull(tpy);
         assertEquals(5, tpy.version);
         assertNotNull(tpy.taskYaml);
-        assertNotNull(tpy.taskYaml.preSnippets);
-        assertNotNull(tpy.taskYaml.snippet);
-        assertNotNull(tpy.taskYaml.postSnippets);
+        assertNotNull(tpy.taskYaml.preFunctions);
+        assertNotNull(tpy.taskYaml.function);
+        assertNotNull(tpy.taskYaml.postFunctions);
         assertNotNull(tpy.taskYaml.taskMl);
         assertNotNull(tpy.taskYaml.taskMl.hyperParams);
         assertNotNull(tpy.taskYaml.workingPath);
@@ -101,18 +101,18 @@ public class TestTaskParamsYaml {
         assertTrue(tpy.taskYaml.taskMl.hyperParams.containsKey("hyper-param-key-01"));
         assertEquals("hyper-param-value-01", tpy.taskYaml.taskMl.hyperParams.get("hyper-param-key-01"));
 
-        // test snippets
+        // test functions
 
-        assertEquals(1, tpy.taskYaml.preSnippets.size());
-        assertEquals("pre-snippet-code", tpy.taskYaml.preSnippets.get(0).code);
-        assertEquals(EnumsApi.SnippetSourcing.station, tpy.taskYaml.preSnippets.get(0).sourcing);
+        assertEquals(1, tpy.taskYaml.preFunctions.size());
+        assertEquals("pre-function-code", tpy.taskYaml.preFunctions.get(0).code);
+        assertEquals(EnumsApi.FunctionSourcing.station, tpy.taskYaml.preFunctions.get(0).sourcing);
 
-        assertEquals("snippet-code", tpy.taskYaml.snippet.code);
-        assertEquals(EnumsApi.SnippetSourcing.git, tpy.taskYaml.snippet.sourcing);
+        assertEquals("function-code", tpy.taskYaml.function.code);
+        assertEquals(EnumsApi.FunctionSourcing.git, tpy.taskYaml.function.sourcing);
 
-        assertEquals(1, tpy.taskYaml.postSnippets.size());
-        assertEquals("post-snippet-code", tpy.taskYaml.postSnippets.get(0).code);
-        assertEquals(EnumsApi.SnippetSourcing.launchpad, tpy.taskYaml.postSnippets.get(0).sourcing);
+        assertEquals(1, tpy.taskYaml.postFunctions.size());
+        assertEquals("post-function-code", tpy.taskYaml.postFunctions.get(0).code);
+        assertEquals(EnumsApi.FunctionSourcing.launchpad, tpy.taskYaml.postFunctions.get(0).sourcing);
 
     }
 }

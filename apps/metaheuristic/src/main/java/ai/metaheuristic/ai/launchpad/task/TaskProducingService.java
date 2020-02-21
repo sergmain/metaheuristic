@@ -78,9 +78,9 @@ public class TaskProducingService {
 
         result.outputResourceCodes = new ArrayList<>();
 
-        SourceCodeParamsYaml.SnippetDefForSourceCode snDef = process.snippet;
+        SourceCodeParamsYaml.FunctionDefForSourceCode snDef = process.function;
         // start processing of process
-        if (process.snippet.context==EnumsApi.SnippetExecContext.external ) {
+        if (process.function.context== EnumsApi.FunctionExecContext.external ) {
             Map<String, SourceCodeParamsYaml.Variable> outputResourceIds = new HashMap<>();
             for (SourceCodeParamsYaml.Variable variable : process.output) {
                 Variable v = variableService.createUninitialized(variable.name, execContextId, internalContextId);
@@ -155,7 +155,7 @@ public class TaskProducingService {
     private TaskImpl createTaskInternal(
             SourceCodeParamsYaml sourceCodeParams, Long execContextId, SourceCodeParamsYaml.Process process,
             Map<String, SourceCodeParamsYaml.Variable> outputResourceIds,
-            SourceCodeParamsYaml.SnippetDefForSourceCode snDef, Map<String, List<String>> collectedInputs, Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls,
+            SourceCodeParamsYaml.FunctionDefForSourceCode snDef, Map<String, List<String>> collectedInputs, Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls,
             Map<String, String> mappingCodeToOriginalFilename) {
         TaskParamsYaml yaml = new TaskParamsYaml();
 
@@ -172,21 +172,21 @@ public class TaskProducingService {
         }
         yaml.taskYaml.resourceStorageUrls = map;
 
-        yaml.taskYaml.snippet = snippetService.getSnippetConfig(snDef);
-        if (yaml.taskYaml.snippet==null) {
+        yaml.taskYaml.function = snippetService.getSnippetConfig(snDef);
+        if (yaml.taskYaml.function ==null) {
             log.error("#171.07 Snippet wasn't found for code: {}", snDef.code);
             return null;
         }
-        yaml.taskYaml.preSnippets = new ArrayList<>();
-        if (process.getPreSnippets()!=null) {
-            for (SourceCodeParamsYaml.SnippetDefForSourceCode preSnippet : process.getPreSnippets()) {
-                yaml.taskYaml.preSnippets.add(snippetService.getSnippetConfig(preSnippet));
+        yaml.taskYaml.preFunctions = new ArrayList<>();
+        if (process.getPreFunctions()!=null) {
+            for (SourceCodeParamsYaml.FunctionDefForSourceCode preSnippet : process.getPreFunctions()) {
+                yaml.taskYaml.preFunctions.add(snippetService.getSnippetConfig(preSnippet));
             }
         }
-        yaml.taskYaml.postSnippets = new ArrayList<>();
-        if (process.getPostSnippets()!=null) {
-            for (SourceCodeParamsYaml.SnippetDefForSourceCode postSnippet : process.getPostSnippets()) {
-                yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(postSnippet));
+        yaml.taskYaml.postFunctions = new ArrayList<>();
+        if (process.getPostFunctions()!=null) {
+            for (SourceCodeParamsYaml.FunctionDefForSourceCode postSnippet : process.getPostFunctions()) {
+                yaml.taskYaml.postFunctions.add(snippetService.getSnippetConfig(postSnippet));
             }
         }
         yaml.taskYaml.clean = sourceCodeParams.source.clean;

@@ -42,8 +42,8 @@ import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
@@ -384,7 +384,7 @@ public class BatchService {
         return batchParams.batchStatus;
     }
 
-    private String getStatusForError(Long batchId, ExecContext ec, String mainDocument, Task task, SnippetApiData.SnippetExec snippetExec, String stationIpAndHost) {
+    private String getStatusForError(Long batchId, ExecContext ec, String mainDocument, Task task, FunctionApiData.FunctionExec functionExec, String stationIpAndHost) {
 
         final String header =
                 "#990.210 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", execContextId: " + ec.getId() + ", " +
@@ -392,24 +392,24 @@ public class BatchService {
                 "stationId: " + task.getStationId() + "\n" +
                 stationIpAndHost + "\n\n";
         StringBuilder sb = new StringBuilder(header);
-        if (snippetExec.generalExec!=null) {
+        if (functionExec.generalExec!=null) {
             sb.append("General execution state:\n");
-            sb.append(execResultAsStr(snippetExec.generalExec));
+            sb.append(execResultAsStr(functionExec.generalExec));
         }
-        if (snippetExec.preExecs!=null && !snippetExec.preExecs.isEmpty()) {
+        if (functionExec.preExecs!=null && !functionExec.preExecs.isEmpty()) {
             sb.append("Pre snippets:\n");
-            for (SnippetApiData.SnippetExecResult preExec : snippetExec.preExecs) {
+            for (FunctionApiData.FunctionExecResult preExec : functionExec.preExecs) {
                 sb.append(execResultAsStr(preExec));
             }
         }
-        if (StringUtils.isNotBlank(snippetExec.exec.snippetCode)) {
+        if (StringUtils.isNotBlank(functionExec.exec.functionCode)) {
             sb.append("Main snippet:\n");
-            sb.append(execResultAsStr(snippetExec.exec));
+            sb.append(execResultAsStr(functionExec.exec));
         }
 
-        if (snippetExec.postExecs!=null && !snippetExec.postExecs.isEmpty()) {
+        if (functionExec.postExecs!=null && !functionExec.postExecs.isEmpty()) {
             sb.append("Post snippets:\n");
-            for (SnippetApiData.SnippetExecResult postExec : snippetExec.postExecs) {
+            for (FunctionApiData.FunctionExecResult postExec : functionExec.postExecs) {
                 sb.append(execResultAsStr(postExec));
             }
         }
@@ -417,9 +417,9 @@ public class BatchService {
         return sb.toString();
     }
 
-    private String execResultAsStr(SnippetApiData.SnippetExecResult execResult) {
+    private String execResultAsStr(FunctionApiData.FunctionExecResult execResult) {
         return
-                "snippet: " + execResult.snippetCode + "\n" +
+                "snippet: " + execResult.functionCode + "\n" +
                 "isOk: " + execResult.isOk + "\n" +
                 "exitCode: " + execResult.exitCode + "\n" +
                 "console:\n" + (StringUtils.isNotBlank(execResult.console) ? execResult.console : "<output to console is blank>") + "\n\n";
@@ -514,9 +514,9 @@ public class BatchService {
         }
 
         EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
-        SnippetApiData.SnippetExec snippetExec;
+        FunctionApiData.FunctionExec functionExec;
         try {
-            snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
+            functionExec = SnippetExecUtils.to(task.getFunctionExecResults());
         } catch (YAMLException e) {
             bs.getGeneralStatus().add("#990.310 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                     ", batchId:" + batchId + ", execContextId: " + wb.getId() + ", " +
@@ -539,7 +539,7 @@ public class BatchService {
                 return true;
             case ERROR:
             case BROKEN:
-                bs.getErrorStatus().add(getStatusForError(batchId, wb, mainDocument, task, snippetExec, stationIpAndHost));
+                bs.getErrorStatus().add(getStatusForError(batchId, wb, mainDocument, task, functionExec, stationIpAndHost));
                 return true;
             case OK:
                 break;

@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.snippet;
+package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -37,7 +37,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "code")
-public class SnippetConfigYamlV1 implements Cloneable, BaseParams {
+public class FunctionConfigYamlV1 implements Cloneable, BaseParams {
 
     public final int version=1;
 
@@ -47,8 +47,8 @@ public class SnippetConfigYamlV1 implements Cloneable, BaseParams {
     }
 
     @SneakyThrows
-    public SnippetConfigYamlV1 clone() {
-        final SnippetConfigYamlV1 clone = (SnippetConfigYamlV1) super.clone();
+    public FunctionConfigYamlV1 clone() {
+        final FunctionConfigYamlV1 clone = (FunctionConfigYamlV1) super.clone();
         if (this.checksumMap != null) {
             clone.checksumMap = new HashMap<>(this.checksumMap);
         }
@@ -64,31 +64,31 @@ public class SnippetConfigYamlV1 implements Cloneable, BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class SnippetInfoV1 {
+    public static class FunctionInfoV1 {
         public boolean signed;
         /**
-         * snippet's binary length
+         * function's binary length
          */
         public long length;
     }
 
     /**
-     * code of snippet, i.e. simple-app:1.0
+     * code of function, i.e. simple-app:1.0
      */
     public String code;
     public String type;
     public String file;
     /**
-     * params for command line fo invoking snippet
+     * params for command line for invoking function
      * <p>
      * this isn't a holder for yaml-based config
      */
     public String params;
     public String env;
-    public EnumsApi.SnippetSourcing sourcing;
+    public EnumsApi.FunctionSourcing sourcing;
     public boolean metrics = false;
     public Map<EnumsApi.Type, String> checksumMap;
-    public SnippetInfoV1 info = new SnippetInfoV1();
+    public FunctionInfoV1 info = new FunctionInfoV1();
     public String checksum;
     public GitInfo git;
     public boolean skipParams = false;

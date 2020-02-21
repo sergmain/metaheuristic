@@ -681,7 +681,7 @@ public class ExperimentService {
     @Data
     @AllArgsConstructor
     private static class ExperimentSnippetItem {
-        public EnumsApi.ExperimentSnippet type;
+        public EnumsApi.ExperimentFunction type;
         public String snippetCode;
     }
 
@@ -691,13 +691,13 @@ public class ExperimentService {
             Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        if (StringUtils.isBlank(epy.experimentYaml.fitSnippet)|| StringUtils.isBlank(epy.experimentYaml.predictSnippet)) {
+        if (StringUtils.isBlank(epy.experimentYaml.fitFunction)|| StringUtils.isBlank(epy.experimentYaml.predictFunction)) {
             throw new IllegalStateException("#179.080 (StringUtils.isBlank(epy.yaml.fitSnippet)|| StringUtils.isBlank(epy.yaml.predictSnippet))" +
-                    ", "+epy.experimentYaml.fitSnippet +", " + epy.experimentYaml.predictSnippet);
+                    ", "+epy.experimentYaml.fitFunction +", " + epy.experimentYaml.predictFunction);
         }
         List<ExperimentSnippetItem> experimentSnippets =
-                List.of(new ExperimentSnippetItem(EnumsApi.ExperimentSnippet.FIT, epy.experimentYaml.fitSnippet),
-                        new ExperimentSnippetItem(EnumsApi.ExperimentSnippet.PREDICT, epy.experimentYaml.predictSnippet));
+                List.of(new ExperimentSnippetItem(EnumsApi.ExperimentFunction.FIT, epy.experimentYaml.fitFunction),
+                        new ExperimentSnippetItem(EnumsApi.ExperimentFunction.PREDICT, epy.experimentYaml.predictFunction));
 
         final Map<String, String> map = toMap(epy.experimentYaml.getHyperParams(), epy.experimentYaml.seed);
         final int calcTotalVariants = ExperimentUtils.calcTotalVariants(map);
@@ -845,28 +845,28 @@ public class ExperimentService {
                             epy.processing.taskFeatures.add(tef);
                         }
 
-                        yaml.taskYaml.snippet = TaskParamsUtils.toSnippetConfig(snippet.getSnippetConfig(true));
-                        yaml.taskYaml.preSnippets = new ArrayList<>();
-                        if (process.getPreSnippets() != null) {
-                            for (SourceCodeParamsYaml.SnippetDefForSourceCode snDef : process.getPreSnippets()) {
-                                yaml.taskYaml.preSnippets.add(snippetService.getSnippetConfig(snDef));
+                        yaml.taskYaml.function = TaskParamsUtils.toFunctionConfig(snippet.getSnippetConfig(true));
+                        yaml.taskYaml.preFunctions = new ArrayList<>();
+                        if (process.getPreFunctions() != null) {
+                            for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.getPreFunctions()) {
+                                yaml.taskYaml.preFunctions.add(snippetService.getSnippetConfig(snDef));
                             }
                         }
-                        yaml.taskYaml.postSnippets = new ArrayList<>();
-                        if (snippetItem.type== EnumsApi.ExperimentSnippet.PREDICT) {
+                        yaml.taskYaml.postFunctions = new ArrayList<>();
+                        if (snippetItem.type== EnumsApi.ExperimentFunction.PREDICT) {
                             Meta m = MetaUtils.getMeta(snippet.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
-                            if (MetaUtils.isTrue(m) && !S.b(epy.experimentYaml.checkFittingSnippet)) {
-                                Snippet cos = getSnippet(localCache, epy.experimentYaml.checkFittingSnippet);
+                            if (MetaUtils.isTrue(m) && !S.b(epy.experimentYaml.checkFittingFunction)) {
+                                Snippet cos = getSnippet(localCache, epy.experimentYaml.checkFittingFunction);
                                 if (snippet == null) {
                                     log.warn("#179.140 Snippet wasn't found for code: {}", snippetCode);
                                     continue;
                                 }
-                                yaml.taskYaml.postSnippets.add(TaskParamsUtils.toSnippetConfig(cos.getSnippetConfig(false)));
+                                yaml.taskYaml.postFunctions.add(TaskParamsUtils.toFunctionConfig(cos.getSnippetConfig(false)));
                             }
                         }
-                        if (process.getPostSnippets()!=null) {
-                            for (SourceCodeParamsYaml.SnippetDefForSourceCode snDef : process.getPostSnippets()) {
-                                yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(snDef));
+                        if (process.getPostFunctions()!=null) {
+                            for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.getPostFunctions()) {
+                                yaml.taskYaml.postFunctions.add(snippetService.getSnippetConfig(snDef));
                             }
                         }
                         yaml.taskYaml.clean = sourceCodeParams.source.clean;

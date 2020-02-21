@@ -28,14 +28,14 @@ import java.util.List;
  * Date: 5/10/2019
  * Time: 2:14 AM
  */
-public class SnippetApiData {
+public class FunctionApiData {
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     @ToString(exclude = {"console"})
-    public static class SnippetExecResult {
-        public String snippetCode;
+    public static class FunctionExecResult {
+        public String functionCode;
         public boolean isOk;
         public int exitCode;
         public String console;
@@ -44,13 +44,13 @@ public class SnippetApiData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SnippetExec {
-        public SnippetExecResult exec = new SnippetExecResult();
-        public List<SnippetExecResult> preExecs;
-        public List<SnippetExecResult> postExecs;
-        public SnippetExecResult generalExec;
+    public static class FunctionExec {
+        public FunctionExecResult exec = new FunctionExecResult();
+        public List<FunctionExecResult> preExecs;
+        public List<FunctionExecResult> postExecs;
+        public FunctionExecResult generalExec;
 
-        public boolean allSnippetsAreOk() {
+        public boolean allFunctionsAreOk() {
             if (exec==null || !exec.isOk) {
                 return false;
             }
@@ -58,14 +58,14 @@ public class SnippetApiData {
                 return false;
             }
             if (preExecs!=null) {
-                for (SnippetExecResult preExec : preExecs) {
+                for (FunctionExecResult preExec : preExecs) {
                     if (!preExec.isOk) {
                         return false;
                     }
                 }
             }
             if (postExecs!=null) {
-                for (SnippetExecResult postExec : postExecs) {
+                for (FunctionExecResult postExec : postExecs) {
                     if (!postExec.isOk) {
                         return false;
                     }
@@ -78,7 +78,7 @@ public class SnippetApiData {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class SnippetConfigStatus {
+    public static class FunctionConfigStatus {
         public boolean isOk;
         public String error;
     }

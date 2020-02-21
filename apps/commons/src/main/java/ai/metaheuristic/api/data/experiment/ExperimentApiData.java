@@ -83,7 +83,7 @@ public class ExperimentApiData {
     public static class ExperimentsEditResult extends BaseDataClass {
         public HyperParamsResult hyperParams;
         public ExperimentApiData.SimpleExperiment simpleExperiment;
-        public ExperimentApiData.SnippetResult snippetResult;
+        public FunctionResult functionResult;
 
         public ExperimentsEditResult(String errorMessage) {
             addErrorMessage(errorMessage);
@@ -201,7 +201,7 @@ public class ExperimentApiData {
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SimpleConsoleOutput {
-            public String snippetCode;
+            public String functionCode;
             public int exitCode;
             public boolean isOk;
             public String console;
@@ -298,20 +298,20 @@ public class ExperimentApiData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ExperimentSnippetResult  {
+    public static class ExperimentFunctionResult {
         public Long id;
         public Integer version;
-        public String snippetCode;
+        public String functionCode;
         public String type;
         public long experimentId;
     }
     @Data
-    public static class SnippetResult {
+    public static class FunctionResult {
         public List<SimpleSelectOption> selectOptions = new ArrayList<>();
-        public List<ExperimentSnippetResult> snippets = new ArrayList<>();
+        public List<ExperimentFunctionResult> functions = new ArrayList<>();
 
-        public void sortSnippetsByOrder() {
-//            snippets.sort(Comparator.comparingInt(ExperimentSnippetResult::getOrder));
+        public void sortFunctionsByOrder() {
+//            functions.sort(Comparator.comparingInt(ExperimentFunctionResult::getOrder));
         }
     }
 

@@ -18,10 +18,10 @@ package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -32,87 +32,87 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 @Slf4j
-public class SnippetCoreUtils {
+public class FunctionCoreUtils {
 
-    private static final SnippetApiData.SnippetConfigStatus SNIPPET_CONFIG_STATUS_OK = new SnippetApiData.SnippetConfigStatus(true, null);
+    private static final FunctionApiData.FunctionConfigStatus FUNCTION_CONFIG_STATUS_OK = new FunctionApiData.FunctionConfigStatus(true, null);
 
-    public static SnippetConfigYaml to(SnippetConfigListYaml.SnippetConfig snSrc) {
-        SnippetConfigYaml snTrg = new SnippetConfigYaml();
+    public static FunctionConfigYaml to(FunctionConfigListYaml.FunctionConfig snSrc) {
+        FunctionConfigYaml snTrg = new FunctionConfigYaml();
         BeanUtils.copyProperties(snSrc, snTrg);
 
         if (snSrc.checksumMap != null) {
             snTrg.checksumMap = new HashMap<>(snSrc.checksumMap);
         }
         if (snSrc.info != null) {
-            snTrg.info = new SnippetConfigYaml.SnippetInfo(snSrc.info.signed, snSrc.info.length);
+            snTrg.info = new FunctionConfigYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
         }
         if (snSrc.metas != null) {
             snTrg.metas = new ArrayList<>(snSrc.metas);
         }
         if (snSrc.ml!=null) {
-            snTrg.ml = new SnippetConfigYaml.MachineLearning(true, false);
+            snTrg.ml = new FunctionConfigYaml.MachineLearning(true, false);
         }
         return  snTrg;
 
     }
 
-    public static SnippetConfigYaml to1(SnippetConfigListYaml.SnippetConfig snSrc) {
-        SnippetConfigYaml snTrg = new SnippetConfigYaml();
+    public static FunctionConfigYaml to1(FunctionConfigListYaml.FunctionConfig snSrc) {
+        FunctionConfigYaml snTrg = new FunctionConfigYaml();
         BeanUtils.copyProperties(snSrc, snTrg);
 
         if (snSrc.checksumMap != null) {
             snTrg.checksumMap = new HashMap<>(snSrc.checksumMap);
         }
         if (snSrc.info != null) {
-            snTrg.info = new SnippetConfigYaml.SnippetInfo(snSrc.info.signed, snSrc.info.length);
+            snTrg.info = new FunctionConfigYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
         }
         if (snSrc.metas != null) {
             snTrg.metas = new ArrayList<>(snSrc.metas);
         }
         if (snSrc.ml!=null) {
-            snTrg.ml = new SnippetConfigYaml.MachineLearning(true, false);
+            snTrg.ml = new FunctionConfigYaml.MachineLearning(true, false);
         }
         return  snTrg;
 
     }
 
-    public static SnippetApiData.SnippetConfigStatus validate(SnippetConfigListYaml.SnippetConfig snippetConfig) {
-        if ((snippetConfig.file ==null || snippetConfig.file.isBlank()) && (snippetConfig.env ==null || snippetConfig.env.isBlank())) {
-            return new SnippetApiData.SnippetConfigStatus(false, "#401.10 Fields 'file' and 'env' can't be null or empty both.");
+    public static FunctionApiData.FunctionConfigStatus validate(FunctionConfigListYaml.FunctionConfig functionConfig) {
+        if ((functionConfig.file ==null || functionConfig.file.isBlank()) && (functionConfig.env ==null || functionConfig.env.isBlank())) {
+            return new FunctionApiData.FunctionConfigStatus(false, "#401.10 Fields 'file' and 'env' can't be null or empty both.");
         }
-        if (snippetConfig.code ==null || snippetConfig.code.isBlank() || snippetConfig.type ==null || snippetConfig.type.isBlank()) {
-            return new SnippetApiData.SnippetConfigStatus(false, "#401.15 A field is null or empty: " + snippetConfig.toString());
+        if (functionConfig.code ==null || functionConfig.code.isBlank() || functionConfig.type ==null || functionConfig.type.isBlank()) {
+            return new FunctionApiData.FunctionConfigStatus(false, "#401.15 A field is null or empty: " + functionConfig.toString());
         }
-        if (!StrUtils.isCodeOk(snippetConfig.code)) {
-            return new SnippetApiData.SnippetConfigStatus(false, "#401.20 Snippet code has wrong chars: "+ snippetConfig.code +", allowed only: " + StrUtils.ALLOWED_CHARS_IN_CODE_REGEXP);
+        if (!StrUtils.isCodeOk(functionConfig.code)) {
+            return new FunctionApiData.FunctionConfigStatus(false, "#401.20 Function code has wrong chars: "+ functionConfig.code +", allowed only: " + StrUtils.ALLOWED_CHARS_IN_CODE_REGEXP);
         }
-        if (snippetConfig.sourcing ==null) {
-            return new SnippetApiData.SnippetConfigStatus(false, "#401.25 Field 'sourcing' is absent");
+        if (functionConfig.sourcing ==null) {
+            return new FunctionApiData.FunctionConfigStatus(false, "#401.25 Field 'sourcing' is absent");
         }
-        switch (snippetConfig.sourcing) {
+        switch (functionConfig.sourcing) {
             case launchpad:
-                if (StringUtils.isBlank(snippetConfig.file)) {
-                    return new SnippetApiData.SnippetConfigStatus(false, "#401.30 sourcing is 'launchpad' but file is empty: " + snippetConfig.toString());
+                if (StringUtils.isBlank(functionConfig.file)) {
+                    return new FunctionApiData.FunctionConfigStatus(false, "#401.30 sourcing is 'launchpad' but file is empty: " + functionConfig.toString());
                 }
                 break;
             case station:
                 break;
             case git:
-                if (snippetConfig.git ==null) {
-                    return new SnippetApiData.SnippetConfigStatus(false, "#401.42 sourcing is 'git', but git info is absent");
+                if (functionConfig.git ==null) {
+                    return new FunctionApiData.FunctionConfigStatus(false, "#401.42 sourcing is 'git', but git info is absent");
                 }
                 break;
         }
-        return SNIPPET_CONFIG_STATUS_OK;
+        return FUNCTION_CONFIG_STATUS_OK;
     }
 
-    public static String getDataForChecksumWhenGitSourcing(SnippetConfigListYaml.SnippetConfig snippetConfig) {
-        return "" + snippetConfig.env+", " + snippetConfig.file +" " + snippetConfig.params;
+    public static String getDataForChecksumWhenGitSourcing(FunctionConfigListYaml.FunctionConfig functionConfig) {
+        return "" + functionConfig.env+", " + functionConfig.file +" " + functionConfig.params;
     }
 
 
     public static List<EnumsApi.OS> getSupportedOS(List<Meta> metas) {
-        final Meta meta = MetaUtils.getMeta(metas, ConstsApi.META_MH_SNIPPET_SUPPORTED_OS);
+        final Meta meta = MetaUtils.getMeta(metas, ConstsApi.META_MH_FUNCTION_SUPPORTED_OS);
         if (meta != null && meta.value!=null && !meta.value.isBlank()) {
             try {
                 StringTokenizer st = new StringTokenizer(meta.value, ", ");

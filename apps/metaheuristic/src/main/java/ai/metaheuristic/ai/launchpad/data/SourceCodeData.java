@@ -54,9 +54,9 @@ public class SourceCodeData {
 
         public String processName;
         public String processCode;
-        public SourceCodeParamsYaml.SnippetDefForSourceCode snippet;
-        public List<SourceCodeParamsYaml.SnippetDefForSourceCode> preSnippets;
-        public List<SourceCodeParamsYaml.SnippetDefForSourceCode> postSnippets;
+        public SourceCodeParamsYaml.FunctionDefForSourceCode snippet;
+        public List<SourceCodeParamsYaml.FunctionDefForSourceCode> preSnippets;
+        public List<SourceCodeParamsYaml.FunctionDefForSourceCode> postSnippets;
 
         /**
          * Timeout before terminating a process with snippet

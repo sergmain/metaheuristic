@@ -26,7 +26,7 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "MH_SNIPPET_DATA")
+@Table(name = "mh_function_data")
 @Data
 @EqualsAndHashCode(of = {"snippetCode"})
 @ToString(exclude={"data", "bytes"})

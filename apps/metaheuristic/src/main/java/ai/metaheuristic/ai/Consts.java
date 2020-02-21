@@ -50,8 +50,9 @@ public class Consts {
 
     public static final ByteArrayResource ZERO_BYTE_ARRAY_RESOURCE = new ByteArrayResource(new byte[0]);
 
-    public static final String SNIPPET_DIR = "snippet";
-    public static final String DATABASE_DIR = "database";
+    // dir at launchpad where all functions will be stored
+    public static final String FUNCTIONS_RESOURCE_DIR = "functions";
+
     public static final String EXPERIMENT_DIR = "experiment";
     public static final String SYSTEM_DIR = "system";
     public static final String RESOURCES_DIR = "resources";

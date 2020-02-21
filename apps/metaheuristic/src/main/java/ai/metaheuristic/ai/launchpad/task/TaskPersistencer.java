@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.launchpad.exec_context.ExecContextOperationStatusWith
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
@@ -113,7 +113,7 @@ public class TaskPersistencer {
                 return task;
             }
 
-            task.setSnippetExecResults(null);
+            task.setFunctionExecResults(null);
             task.setStationId(null);
             task.setAssignedOn(null);
             task.setCompleted(false);
@@ -130,16 +130,16 @@ public class TaskPersistencer {
 
     @SuppressWarnings("UnusedReturnValue")
     public Task storeExecResult(StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, Consumer<Task> action) {
-        SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
-        SnippetApiData.SnippetExecResult actualSnippet = snippetExec.generalExec!=null ? snippetExec.generalExec : snippetExec.exec;
+        FunctionApiData.FunctionExec functionExec = SnippetExecUtils.to(result.getResult());
+        FunctionApiData.FunctionExecResult actualSnippet = functionExec.generalExec!=null ? functionExec.generalExec : functionExec.exec;
         if (!actualSnippet.isOk) {
             log.warn("#307.050 Task #{} finished with error, snippetCode: {}, console: {}",
                     result.taskId,
-                    actualSnippet.snippetCode,
+                    actualSnippet.functionCode,
                     StringUtils.isNotBlank(actualSnippet.console) ? actualSnippet.console : "<console output is empty>");
         }
         try {
-            EnumsApi.TaskExecState state = snippetExec.allSnippetsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
+            EnumsApi.TaskExecState state = functionExec.allFunctionsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
             Task t = prepareAndSaveTask(result, state);
             launchpadEventService.publishTaskEvent(
                     state==EnumsApi.TaskExecState.OK ? EnumsApi.LaunchpadEventType.TASK_FINISHED : EnumsApi.LaunchpadEventType.TASK_ERROR,
@@ -171,11 +171,11 @@ public class TaskPersistencer {
 
             if (task.snippetExecResults==null || task.snippetExecResults.isBlank()) {
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-                SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec();
-                snippetExec.exec = new SnippetApiData.SnippetExecResult(
-                        tpy.taskYaml.snippet.code, false, -999, "#307.080 Task is broken, error is unknown, cant' process it"
+                FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
+                functionExec.exec = new FunctionApiData.FunctionExecResult(
+                        tpy.taskYaml.function.code, false, -999, "#307.080 Task is broken, error is unknown, cant' process it"
                 );
-                task.setSnippetExecResults(SnippetExecUtils.toString(snippetExec));
+                task.setFunctionExecResults(SnippetExecUtils.toString(functionExec));
             }
             task.setResultReceived(true);
 
@@ -237,7 +237,7 @@ public class TaskPersistencer {
                     task.setCompletedOn(System.currentTimeMillis());
                 }
             }
-            task.setSnippetExecResults(result.getResult());
+            task.setFunctionExecResults(result.getResult());
             if (result.ml!=null) {
                 Metrics m = MetricsUtils.to(result.ml.metrics);
                 TaskMachineLearningYaml.Metrics metrics = new TaskMachineLearningYaml.Metrics(m.status, m.error, m.metrics);

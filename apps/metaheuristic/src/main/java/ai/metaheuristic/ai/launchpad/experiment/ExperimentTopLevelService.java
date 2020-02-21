@@ -36,7 +36,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -144,14 +144,14 @@ public class ExperimentTopLevelService {
         ExperimentApiData.ConsoleResult result = new ExperimentApiData.ConsoleResult();
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task!=null) {
-            SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
-            if (snippetExec!=null) {
-                final SnippetApiData.SnippetExecResult execSnippetExecResult = snippetExec.getExec();
+            FunctionApiData.FunctionExec functionExec = SnippetExecUtils.to(task.getFunctionExecResults());
+            if (functionExec !=null) {
+                final FunctionApiData.FunctionExecResult execFunctionExecResult = functionExec.getExec();
                 result.items.add(new ExperimentApiData.ConsoleResult.SimpleConsoleOutput(
-                        execSnippetExecResult.snippetCode, execSnippetExecResult.exitCode, execSnippetExecResult.isOk, execSnippetExecResult.console));
+                        execFunctionExecResult.functionCode, execFunctionExecResult.exitCode, execFunctionExecResult.isOk, execFunctionExecResult.console));
             }
             else {
-                log.info("#285.020 snippetExec is null");
+                log.info("#285.020 functionExec is null");
             }
         }
         return result;
@@ -244,19 +244,19 @@ public class ExperimentTopLevelService {
             return new ExperimentApiData.ExperimentsEditResult("#285.100 experiment wasn't found, experimentId: " + id);
         }
         Iterable<Snippet> snippets = snippetRepository.findAll();
-        ExperimentApiData.SnippetResult snippetResult = new ExperimentApiData.SnippetResult();
+        ExperimentApiData.FunctionResult functionResult = new ExperimentApiData.FunctionResult();
 
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        final List<String> snippetCodes = epy.getSnippetCodes();
+        final List<String> snippetCodes = epy.getFunctionCodes();
         List<Snippet> experimentSnippets = snippetService.getSnippetsForCodes(snippetCodes);
 
-        snippetResult.snippets = experimentSnippets.stream().map(es->
-                new ExperimentApiData.ExperimentSnippetResult(
+        functionResult.functions = experimentSnippets.stream().map(es->
+                new ExperimentApiData.ExperimentFunctionResult(
                         es.getId(), es.getVersion(), es.getCode(), es.type, experiment.id)).collect(Collectors.toList());
 
-        snippetResult.selectOptions = snippetService.getSelectOptions(
+        functionResult.selectOptions = snippetService.getSelectOptions(
                 snippets,
-                snippetResult.snippets.stream().map(o -> new SnippetData.SnippetCode(o.getId(), o.getSnippetCode())).collect(Collectors.toList()),
+                functionResult.functions.stream().map(o -> new SnippetData.SnippetCode(o.getId(), o.getFunctionCode())).collect(Collectors.toList()),
                 (s) -> {
                     if (!experimentSnippetTypes.contains(s.type) ) {
                         return true;
@@ -286,19 +286,19 @@ public class ExperimentTopLevelService {
                     }
                 });
 
-        snippetResult.sortSnippetsByOrder();
+        functionResult.sortFunctionsByOrder();
         ExperimentApiData.ExperimentsEditResult result = new ExperimentApiData.ExperimentsEditResult();
 
         ExperimentApiData.HyperParamsResult r = new ExperimentApiData.HyperParamsResult();
         r.items = epy.experimentYaml.getHyperParams().stream().map(ExperimentTopLevelService::asHyperParamData).collect(Collectors.toList());
         result.hyperParams = r;
         result.simpleExperiment = asSimpleExperiment(experiment);
-        result.snippetResult = snippetResult;
+        result.functionResult = functionResult;
         return result;
     }
 
     private void addCheckFittingSnippet(ExperimentParamsYaml epy, List<Snippet> experimentSnippets) {
-        if (S.b(epy.experimentYaml.checkFittingSnippet)) {
+        if (S.b(epy.experimentYaml.checkFittingFunction)) {
             return;
         }
         experimentSnippets.stream()
@@ -307,7 +307,7 @@ public class ExperimentTopLevelService {
                 .ifPresent(s-> {
                     Meta m = MetaUtils.getMeta(s.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
                     if (MetaUtils.isTrue(m)) {
-                        experimentSnippets.add(snippetRepository.findByCode(epy.experimentYaml.checkFittingSnippet));
+                        experimentSnippets.add(snippetRepository.findByCode(epy.experimentYaml.checkFittingFunction));
                     }
         });
     }
@@ -444,13 +444,13 @@ public class ExperimentTopLevelService {
         }
         switch(s.getType()){
             case "fit":
-                epy.experimentYaml.fitSnippet = snippetCode;
+                epy.experimentYaml.fitFunction = snippetCode;
                 break;
             case "predict":
-                epy.experimentYaml.predictSnippet = snippetCode;
+                epy.experimentYaml.predictFunction = snippetCode;
                 break;
             case "check-fitting":
-                epy.experimentYaml.checkFittingSnippet = snippetCode;
+                epy.experimentYaml.checkFittingFunction = snippetCode;
                 break;
             default:
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.220 snippet has non-supported type for an experiment: "+s.getType() );
@@ -527,15 +527,15 @@ public class ExperimentTopLevelService {
         }
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        if (Objects.equals(epy.experimentYaml.fitSnippet, snippetType)) {
-            epy.experimentYaml.fitSnippet = null;
+        if (Objects.equals(epy.experimentYaml.fitFunction, snippetType)) {
+            epy.experimentYaml.fitFunction = null;
         }
-        else if (Objects.equals(epy.experimentYaml.predictSnippet, snippetType)) {
-            epy.experimentYaml.predictSnippet = null;
-            epy.experimentYaml.checkFittingSnippet = null;
+        else if (Objects.equals(epy.experimentYaml.predictFunction, snippetType)) {
+            epy.experimentYaml.predictFunction = null;
+            epy.experimentYaml.checkFittingFunction = null;
         }
-        else if (Objects.equals(epy.experimentYaml.checkFittingSnippet, snippetType)) {
-            epy.experimentYaml.checkFittingSnippet = null;
+        else if (Objects.equals(epy.experimentYaml.checkFittingFunction, snippetType)) {
+            epy.experimentYaml.checkFittingFunction = null;
         }
         else {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -559,14 +559,14 @@ public class ExperimentTopLevelService {
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         switch(snippetType) {
             case CommonConsts.FIT_TYPE:
-                epy.experimentYaml.fitSnippet = null;
+                epy.experimentYaml.fitFunction = null;
                 break;
             case CommonConsts.PREDICT_TYPE:
-                epy.experimentYaml.predictSnippet = null;
-                epy.experimentYaml.checkFittingSnippet = null;
+                epy.experimentYaml.predictFunction = null;
+                epy.experimentYaml.checkFittingFunction = null;
                 break;
             case CommonConsts.CHECK_FITTING_TYPE:
-                epy.experimentYaml.checkFittingSnippet = null;
+                epy.experimentYaml.checkFittingFunction = null;
                 break;
             default:
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,

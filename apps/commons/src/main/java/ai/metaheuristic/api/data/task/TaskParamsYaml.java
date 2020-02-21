@@ -43,7 +43,7 @@ public class TaskParamsYaml implements BaseParams {
     @Override
     public boolean checkIntegrity() {
         if (taskYaml.context==null) {
-            throw new CheckIntegrityFailedException("snippet exec context is null");
+            throw new CheckIntegrityFailedException("function exec context is null");
         }
         return true;
     }
@@ -51,10 +51,10 @@ public class TaskParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class SnippetInfo {
+    public static class FunctionInfo {
         public boolean signed;
         /**
-         * snippet's binary length
+         * function's binary length
          */
         public long length;
     }
@@ -63,9 +63,9 @@ public class TaskParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class MachineLearning {
-        // does this snippet support metrics
+        // does this function support metrics
         public boolean metrics = false;
-        // does this snippet support fitting detection
+        // does this function support fitting detection
         public boolean fitting = false;
     }
 
@@ -81,11 +81,11 @@ public class TaskParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class SnippetConfig implements Cloneable {
+    public static class FunctionConfig implements Cloneable {
 
         @SneakyThrows
-        public SnippetConfig clone() {
-            final SnippetConfig clone = (SnippetConfig) super.clone();
+        public FunctionConfig clone() {
+            final FunctionConfig clone = (FunctionConfig) super.clone();
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
@@ -99,21 +99,21 @@ public class TaskParamsYaml implements BaseParams {
         }
 
         /**
-         * code of snippet, i.e. simple-app:1.0
+         * code of function, i.e. simple-app:1.0
          */
         public String code;
         public String type;
         public String file;
         /**
-         * params for command line fo invoking snippet
+         * params for command line for invoking function
          * <p>
          * this isn't a holder for yaml-based config
          */
         public String params;
         public String env;
-        public EnumsApi.SnippetSourcing sourcing;
+        public EnumsApi.FunctionSourcing sourcing;
         public Map<EnumsApi.Type, String> checksumMap;
-        public SnippetInfo info = new SnippetInfo();
+        public FunctionInfo info = new FunctionInfo();
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
@@ -123,18 +123,18 @@ public class TaskParamsYaml implements BaseParams {
 
     @Data
     public static class TaskYaml {
-        public SnippetConfig snippet;
-        public List<SnippetConfig> preSnippets;
-        public List<SnippetConfig> postSnippets;
+        public FunctionConfig function;
+        public List<FunctionConfig> preFunctions;
+        public List<FunctionConfig> postFunctions;
         public Map<String, List<String>> inputResourceIds = new HashMap<>();
         public Map<String, String> outputResourceIds = new HashMap<>();
         public Map<String, SourceCodeParamsYaml.Variable> resourceStorageUrls = new HashMap<>();
         public TaskMachineLearning taskMl;
         public boolean clean = false;
-        public EnumsApi.SnippetExecContext context;
+        public EnumsApi.FunctionExecContext context;
 
         /**
-         * Timeout before terminate a process with snippet
+         * Timeout before terminate a process with function
          * value in seconds
          * null or 0 mean the infinite execution
          */

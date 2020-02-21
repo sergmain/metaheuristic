@@ -26,8 +26,8 @@ import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.ai.yaml.station_task.StationTaskUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
@@ -121,11 +121,11 @@ public class StationTaskService {
                                     getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
 
                                     // fix state of task
-                                    SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
-                                    if (snippetExec!=null &&
-                                            ((snippetExec.generalExec!=null && !snippetExec.exec.isOk ) ||
-                                                    (snippetExec.generalExec!=null && !snippetExec.generalExec.isOk))) {
-                                        markAsFinished(launchpadUrl, taskId, snippetExec);
+                                    FunctionApiData.FunctionExec functionExec = SnippetExecUtils.to(task.getSnippetExecResult());
+                                    if (functionExec !=null &&
+                                            ((functionExec.generalExec!=null && !functionExec.exec.isOk ) ||
+                                                    (functionExec.generalExec!=null && !functionExec.generalExec.isOk))) {
+                                        markAsFinished(launchpadUrl, taskId, functionExec);
                                     }
                                 }
                                 catch (IOException e) {
@@ -282,13 +282,13 @@ public class StationTaskService {
     public void markAsFinishedWithError(String launchpadUrl, long taskId, String es) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             markAsFinished(launchpadUrl, taskId,
-                    new SnippetApiData.SnippetExec(
+                    new FunctionApiData.FunctionExec(
                             null, null, null,
-                            new SnippetApiData.SnippetExecResult("system-error", false, -991, es)));
+                            new FunctionApiData.FunctionExecResult("system-error", false, -991, es)));
         }
     }
 
-    void markAsFinished(String launchpadUrl, Long taskId, SnippetApiData.SnippetExec snippetExec ) {
+    void markAsFinished(String launchpadUrl, Long taskId, FunctionApiData.FunctionExec functionExec) {
 
         synchronized (StationSyncHolder.stationGlobalSync) {
             log.info("markAsFinished({}, {})", launchpadUrl, taskId);
@@ -300,7 +300,7 @@ public class StationTaskService {
                     log.info("#713.113 task #{} doesn't have the launchedOn as inited", taskId);
                     task.setLaunchedOn(System.currentTimeMillis());
                 }
-                if (!snippetExec.allSnippetsAreOk()) {
+                if (!functionExec.allFunctionsAreOk()) {
                     log.info("#713.115 task #{} was finished with an error, set completed to true", taskId);
                     // there are some problems with this task. mark it as completed
                     task.setCompleted(true);
@@ -308,7 +308,7 @@ public class StationTaskService {
                 task.setFinishedOn(System.currentTimeMillis());
                 task.setDelivered(false);
                 task.setReported(false);
-                task.setSnippetExecResult(SnippetExecUtils.toString(snippetExec));
+                task.setSnippetExecResult(SnippetExecUtils.toString(functionExec));
 
                 save(task);
             }
@@ -347,7 +347,7 @@ public class StationTaskService {
         }
     }
 
-    public void storePredictedData(String launchpadUrl, StationTask task, TaskParamsYaml.SnippetConfig snippet, File artifactDir) throws IOException {
+    public void storePredictedData(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig snippet, File artifactDir) throws IOException {
         Meta m = MetaUtils.getMeta(snippet.metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
         if (MetaUtils.isTrue(m)) {
             log.info("storePredictedData(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
@@ -359,7 +359,7 @@ public class StationTaskService {
         }
     }
 
-    public void storeFittingCheck(String launchpadUrl, StationTask task, TaskParamsYaml.SnippetConfig snippet, File artifactDir) throws IOException {
+    public void storeFittingCheck(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig snippet, File artifactDir) throws IOException {
         if (snippet.type.equals(CommonConsts.CHECK_FITTING_TYPE)) {
            log.info("storeFittingCheck(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());
             FittingYaml fittingYaml = getFittingCheck(artifactDir);
@@ -373,7 +373,7 @@ public class StationTaskService {
         }
     }
 
-    public void storeMetrics(String launchpadUrl, StationTask task, TaskParamsYaml.SnippetConfig snippet, File artifactDir) {
+    public void storeMetrics(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig snippet, File artifactDir) {
         // store metrics after predict only
         if (snippet.ml!=null && snippet.ml.metrics) {
             log.info("storeMetrics(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, task.taskId, snippet.getCode());

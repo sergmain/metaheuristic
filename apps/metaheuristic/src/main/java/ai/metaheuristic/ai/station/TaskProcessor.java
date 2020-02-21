@@ -32,12 +32,12 @@ import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -76,9 +76,9 @@ public class TaskProcessor {
 
     @Data
     public static class SnippetPrepareResult {
-        public TaskParamsYaml.SnippetConfig snippet;
+        public TaskParamsYaml.FunctionConfig snippet;
         public AssetFile snippetAssetFile;
-        public SnippetApiData.SnippetExecResult snippetExecResult;
+        public FunctionApiData.FunctionExecResult functionExecResult;
         boolean isLoaded = true;
         boolean isError = false;
     }
@@ -165,7 +165,7 @@ public class TaskProcessor {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.050 Broken task. Can't find params for outputResourceCode");
                 continue;
             }
-            if (taskParamYaml.taskYaml.snippet==null) {
+            if (taskParamYaml.taskYaml.function ==null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.080 Broken task. Snippet isn't defined");
                 continue;
             }
@@ -191,8 +191,8 @@ public class TaskProcessor {
             final SnippetPrepareResult[] results = new SnippetPrepareResult[ totalCountOfSnippets(taskParamYaml.taskYaml) ];
             int idx = 0;
             SnippetPrepareResult result;
-            for (TaskParamsYaml.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
-                result = prepareSnippet(task.launchpadUrl, launchpadInfo, preSnippetConfig);
+            for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.taskYaml.preFunctions) {
+                result = prepareSnippet(task.launchpadUrl, launchpadInfo, preFunctionConfig);
                 if (result.isError) {
                     markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                     isNotReady = true;
@@ -208,7 +208,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = prepareSnippet(task.launchpadUrl, launchpadInfo, taskParamYaml.taskYaml.getSnippet());
+            result = prepareSnippet(task.launchpadUrl, launchpadInfo, taskParamYaml.taskYaml.getFunction());
             if (result.isError) {
                 markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                 continue;
@@ -218,8 +218,8 @@ public class TaskProcessor {
                 continue;
             }
 
-            for (TaskParamsYaml.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
-                result = prepareSnippet(task.launchpadUrl, launchpadInfo, postSnippetConfig);
+            for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.taskYaml.postFunctions) {
+                result = prepareSnippet(task.launchpadUrl, launchpadInfo, postFunctionConfig);
                 if (result.isError) {
                     markSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                     isNotReady = true;
@@ -258,11 +258,11 @@ public class TaskProcessor {
     }
 
     private void markSnippetAsFinishedWithPermanentError(String launchpadUrl, Long taskId, SnippetPrepareResult result) {
-        SnippetApiData.SnippetExecResult execResult = new SnippetApiData.SnippetExecResult(
+        FunctionApiData.FunctionExecResult execResult = new FunctionApiData.FunctionExecResult(
                 result.getSnippet().code, false, -990,
-                "#100.105 Snippet "+result.getSnippet().code+" has permanent error: " + result.getSnippetExecResult().console);
+                "#100.105 Snippet "+result.getSnippet().code+" has permanent error: " + result.getFunctionExecResult().console);
         stationTaskService.markAsFinished(launchpadUrl, taskId,
-                new SnippetApiData.SnippetExec(null, null, null, execResult));
+                new FunctionApiData.FunctionExec(null, null, null, execResult));
 
     }
 
@@ -271,68 +271,68 @@ public class TaskProcessor {
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
             File systemDir, SnippetPrepareResult[] results) {
-        List<SnippetApiData.SnippetExecResult> preSnippetExecResult = new ArrayList<>();
-        List<SnippetApiData.SnippetExecResult> postSnippetExecResult = new ArrayList<>();
+        List<FunctionApiData.FunctionExecResult> preFunctionExecResult = new ArrayList<>();
+        List<FunctionApiData.FunctionExecResult> postFunctionExecResult = new ArrayList<>();
         boolean isOk = true;
         int idx = 0;
         LaunchpadSchedule schedule = launchpad.schedule!=null && launchpad.schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
                 ? launchpad.schedule : null;
-        for (TaskParamsYaml.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
+        for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.taskYaml.preFunctions) {
             SnippetPrepareResult result = results[idx++];
-            SnippetApiData.SnippetExecResult execResult;
+            FunctionApiData.FunctionExecResult execResult;
             if (result==null) {
-                execResult = new SnippetApiData.SnippetExecResult(
-                        preSnippetConfig.code, false, -999,
-                        "#100.110 Illegal State, result of preparing of snippet "+preSnippetConfig.code+" is null");
+                execResult = new FunctionApiData.FunctionExecResult(
+                        preFunctionConfig.code, false, -999,
+                        "#100.110 Illegal State, result of preparing of snippet "+ preFunctionConfig.code+" is null");
             }
             else {
                 execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result, schedule);
             }
-            preSnippetExecResult.add(execResult);
+            preFunctionExecResult.add(execResult);
             if (!execResult.isOk) {
                 isOk = false;
                 break;
             }
         }
-        SnippetApiData.SnippetExecResult snippetExecResult = null;
-        SnippetApiData.SnippetExecResult generalExec = null;
+        FunctionApiData.FunctionExecResult functionExecResult = null;
+        FunctionApiData.FunctionExecResult generalExec = null;
         if (isOk) {
             SnippetPrepareResult result = results[idx++];
             if (result==null) {
-                snippetExecResult = new SnippetApiData.SnippetExecResult(
-                        taskParamYaml.taskYaml.getSnippet().code, false, -999,
-                        "#100.120 Illegal State, result of preparing of snippet "+taskParamYaml.taskYaml.getSnippet()+" is null");
+                functionExecResult = new FunctionApiData.FunctionExecResult(
+                        taskParamYaml.taskYaml.getFunction().code, false, -999,
+                        "#100.120 Illegal State, result of preparing of snippet "+taskParamYaml.taskYaml.getFunction()+" is null");
                 isOk = false;
             }
             if (isOk) {
-                TaskParamsYaml.SnippetConfig mainSnippetConfig = result.snippet;
-                snippetExecResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result, schedule);
-                if (!snippetExecResult.isOk) {
+                TaskParamsYaml.FunctionConfig mainFunctionConfig = result.snippet;
+                functionExecResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result, schedule);
+                if (!functionExecResult.isOk) {
                     isOk = false;
                 }
                 if (isOk) {
-                    for (TaskParamsYaml.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
+                    for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.taskYaml.postFunctions) {
                         result = results[idx++];
-                        SnippetApiData.SnippetExecResult execResult;
+                        FunctionApiData.FunctionExecResult execResult;
                         if (result==null) {
-                            execResult = new SnippetApiData.SnippetExecResult(
-                                    postSnippetConfig.code, false, -999,
-                                    "#100.130 Illegal State, result of preparing of snippet "+postSnippetConfig.code+" is null");
+                            execResult = new FunctionApiData.FunctionExecResult(
+                                    postFunctionConfig.code, false, -999,
+                                    "#100.130 Illegal State, result of preparing of snippet "+ postFunctionConfig.code+" is null");
                         }
                         else {
                             execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result, schedule);
                         }
-                        postSnippetExecResult.add(execResult);
+                        postFunctionExecResult.add(execResult);
                         if (!execResult.isOk) {
                             isOk = false;
                             break;
                         }
                     }
-                    if (isOk && snippetExecResult.isOk()) {
+                    if (isOk && functionExecResult.isOk()) {
                         try {
-                            stationTaskService.storeMetrics(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
-                            stationTaskService.storePredictedData(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
-                            stationTaskService.storeFittingCheck(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
+                            stationTaskService.storeMetrics(task.launchpadUrl, task, mainFunctionConfig, artifactDir);
+                            stationTaskService.storePredictedData(task.launchpadUrl, task, mainFunctionConfig, artifactDir);
+                            stationTaskService.storeFittingCheck(task.launchpadUrl, task, mainFunctionConfig, artifactDir);
 
                             final SourceCodeParamsYaml.Variable params = taskParamYaml.taskYaml.resourceStorageUrls
                                     .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
@@ -340,12 +340,12 @@ public class TaskProcessor {
                             generalExec = resourceProvider.processResultingFile(
                                     launchpad, task, launchpadInfo,
                                     taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
-                                    mainSnippetConfig
+                                    mainFunctionConfig
                             );
                         }
                         catch (Throwable th) {
-                            generalExec = new SnippetApiData.SnippetExecResult(
-                                    mainSnippetConfig.code, false, -997,
+                            generalExec = new FunctionApiData.FunctionExecResult(
+                                    mainFunctionConfig.code, false, -997,
                                     "#100.132 Error storing snippet's result, error: " + th.getMessage());
 
                         }
@@ -355,7 +355,7 @@ public class TaskProcessor {
         }
 
         stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(),
-                new SnippetApiData.SnippetExec(snippetExecResult, preSnippetExecResult, postSnippetExecResult, generalExec));
+                new FunctionApiData.FunctionExec(functionExecResult, preFunctionExecResult, postFunctionExecResult, generalExec));
     }
 
     private boolean prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml, SnippetPrepareResult[] results) {
@@ -366,7 +366,7 @@ public class TaskProcessor {
         }
 
         Set<Integer> versions = Stream.of(results)
-                .map(o-> SnippetCoreUtils.getTaskParamsVersion(o.snippet.metas))
+                .map(o-> FunctionCoreUtils.getTaskParamsVersion(o.snippet.metas))
                 .collect(Collectors.toSet());
 
         taskParamYaml.taskYaml.workingPath = taskDir.getAbsolutePath();
@@ -393,22 +393,22 @@ public class TaskProcessor {
 
     private int totalCountOfSnippets(TaskParamsYaml.TaskYaml taskYaml) {
         int count = 0;
-        count += (taskYaml.preSnippets!=null) ? taskYaml.preSnippets.size() : 0;
-        count += (taskYaml.postSnippets!=null) ? taskYaml.postSnippets.size() : 0;
-        count += (taskYaml.snippet!=null) ? 1 : 0;
+        count += (taskYaml.preFunctions !=null) ? taskYaml.preFunctions.size() : 0;
+        count += (taskYaml.postFunctions !=null) ? taskYaml.postFunctions.size() : 0;
+        count += (taskYaml.function !=null) ? 1 : 0;
         return count;
     }
 
     @SuppressWarnings({"WeakerAccess", "deprecation"})
     // TODO 2019.05.02 implement unit-test for this method
-    public SnippetApiData.SnippetExecResult execSnippet(
+    public FunctionApiData.FunctionExecResult execSnippet(
             StationTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, SnippetPrepareResult snippetPrepareResult,
             LaunchpadSchedule schedule) {
 
         File paramFile = new File(
                 taskDir,
                 ConstsApi.ARTIFACTS_DIR + File.separatorChar +
-                        String.format(Consts.PARAMS_YAML_MASK, SnippetCoreUtils.getTaskParamsVersion(snippetPrepareResult.snippet.metas)));
+                        String.format(Consts.PARAMS_YAML_MASK, FunctionCoreUtils.getTaskParamsVersion(snippetPrepareResult.snippet.metas)));
 
         List<String> cmd;
         Interpreter interpreter=null;
@@ -427,7 +427,7 @@ public class TaskProcessor {
 
         log.info("All systems are checked for the task #{}, lift off", task.taskId );
 
-        SnippetApiData.SnippetExecResult snippetExecResult;
+        FunctionApiData.FunctionExecResult functionExecResult;
         try {
             switch (snippetPrepareResult.snippet.sourcing) {
                 case launchpad:
@@ -450,7 +450,7 @@ public class TaskProcessor {
             if (!snippetPrepareResult.snippet.skipParams) {
                 if (StringUtils.isNoneBlank(snippetPrepareResult.snippet.params)) {
                     final Meta meta = MetaUtils.getMeta(snippetPrepareResult.snippet.metas,
-                            ConstsApi.META_MH_SNIPPET_PARAMS_AS_FILE_META);
+                            ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
                     if (MetaUtils.isTrue(meta)) {
                         final Meta metaExt = MetaUtils.getMeta(snippetPrepareResult.snippet.metas,
                                 ConstsApi.META_MH_SNIPPET_PARAMS_FILE_EXT_META);
@@ -471,7 +471,7 @@ public class TaskProcessor {
             File consoleLogFile = new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
             // Exec snippet
-            snippetExecResult = execProcessService.execCommand(
+            functionExecResult = execProcessService.execCommand(
                     cmd, taskDir, consoleLogFile, taskParamYaml.taskYaml.timeoutBeforeTerminate, snippetPrepareResult.snippet.code, schedule);
 
         }
@@ -486,10 +486,10 @@ public class TaskProcessor {
                     ? snippetPrepareResult.snippetAssetFile.file.getAbsolutePath()
                     : snippetPrepareResult.snippet.file) +"\n" +
                     "\tparams", th);
-            snippetExecResult = new SnippetApiData.SnippetExecResult(
+            functionExecResult = new FunctionApiData.FunctionExecResult(
                     snippetPrepareResult.snippet.code, false, -1, ExceptionUtils.getStackTrace(th));
         }
-        return snippetExecResult;
+        return functionExecResult;
     }
 
     private String toFilename(String snippetCode) {
@@ -498,11 +498,11 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public SnippetPrepareResult prepareSnippet(String launchpadUrl, Metadata.LaunchpadInfo launchpadCode, TaskParamsYaml.SnippetConfig snippet) {
+    public SnippetPrepareResult prepareSnippet(String launchpadUrl, Metadata.LaunchpadInfo launchpadCode, TaskParamsYaml.FunctionConfig snippet) {
         SnippetPrepareResult snippetPrepareResult = new SnippetPrepareResult();
         snippetPrepareResult.snippet = snippet;
 
-        if (snippetPrepareResult.snippet.sourcing== EnumsApi.SnippetSourcing.launchpad) {
+        if (snippetPrepareResult.snippet.sourcing== EnumsApi.FunctionSourcing.launchpad) {
             final File snippetDir = launchpadLookupExtendedService.prepareBaseResourceDir(launchpadCode);
             snippetPrepareResult.snippetAssetFile = ResourceUtils.prepareSnippetFile(snippetDir, snippetPrepareResult.snippet.getCode(), snippetPrepareResult.snippet.file);
             // is this snippet prepared?
@@ -510,17 +510,17 @@ public class TaskProcessor {
                 log.info("Snippet {} hasn't been prepared yet, {}", snippetPrepareResult.snippet.code, snippetPrepareResult.snippetAssetFile);
                 snippetPrepareResult.isLoaded = false;
 
-                metadataService.setSnippetDownloadStatus(launchpadUrl, snippet.code, EnumsApi.SnippetSourcing.launchpad, Enums.SnippetState.none);
+                metadataService.setSnippetDownloadStatus(launchpadUrl, snippet.code, EnumsApi.FunctionSourcing.launchpad, Enums.SnippetState.none);
 
             }
         }
-        else if (snippetPrepareResult.snippet.sourcing==EnumsApi.SnippetSourcing.git) {
-            final File snippetRootDir = launchpadLookupExtendedService.prepareBaseResourceDir(launchpadCode);
-            log.info("Root dir for snippet: " + snippetRootDir);
-            GitSourcingService.GitExecResult result = gitSourcingService.prepareSnippet(snippetRootDir, snippetPrepareResult.snippet);
+        else if (snippetPrepareResult.snippet.sourcing== EnumsApi.FunctionSourcing.git) {
+            final File resourceDir = launchpadLookupExtendedService.prepareBaseResourceDir(launchpadCode);
+            log.info("Root dir for snippet: " + resourceDir);
+            GitSourcingService.GitExecResult result = gitSourcingService.prepareSnippet(resourceDir, snippetPrepareResult.snippet);
             if (!result.ok) {
                 log.warn("Snippet {} has a permanent error, {}", snippetPrepareResult.snippet.code, result.error);
-                snippetPrepareResult.snippetExecResult = new SnippetApiData.SnippetExecResult(snippet.code, false, -1, result.error);
+                snippetPrepareResult.functionExecResult = new FunctionApiData.FunctionExecResult(snippet.code, false, -1, result.error);
                 snippetPrepareResult.isLoaded = false;
                 snippetPrepareResult.isError = true;
                 return snippetPrepareResult;

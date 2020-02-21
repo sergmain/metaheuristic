@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.core.ExecProcessService;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.station.env.EnvService;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -63,12 +63,12 @@ public class GitSourcingService {
     @ToString
     public static class GitExecResult {
         public File snippetDir;
-        public SnippetApiData.SnippetExecResult snippetExecResult;
+        public FunctionApiData.FunctionExecResult functionExecResult;
         public boolean ok;
         public String error;
 
-        public GitExecResult(SnippetApiData.SnippetExecResult snippetExecResult, boolean ok, String error) {
-            this.snippetExecResult = snippetExecResult;
+        public GitExecResult(FunctionApiData.FunctionExecResult functionExecResult, boolean ok, String error) {
+            this.functionExecResult = functionExecResult;
             this.ok = ok;
             this.error = error;
         }
@@ -98,26 +98,26 @@ public class GitSourcingService {
             log.warn("\tresult.ok: {}",  result.ok);
             log.warn("\tresult.error: {}",  result.error);
             log.warn("\tresult.snippetDir: {}",  result.snippetDir!=null ? result.snippetDir.getPath() : null);
-            log.warn("\tresult.snippetExecResult: {}",  result.snippetExecResult);
+            log.warn("\tresult.functionExecResult: {}",  result.functionExecResult);
             return new GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
         }
 
-        if (result.snippetExecResult.exitCode!=0) {
+        if (result.functionExecResult.exitCode!=0) {
             return new GitStatusInfo(
                     Enums.GitStatus.not_found, null,
-                    "#027.013 Console: " + result.snippetExecResult.console);
+                    "#027.013 Console: " + result.functionExecResult.console);
         }
-        return new GitStatusInfo(Enums.GitStatus.installed, getGitVersion(result.snippetExecResult.console.toLowerCase()), null);
+        return new GitStatusInfo(Enums.GitStatus.installed, getGitVersion(result.functionExecResult.console.toLowerCase()), null);
     }
 
     private GitExecResult execGitCmd(List<String> gitVersionCmd, long timeout) {
         File consoleLogFile = null;
         try {
             consoleLogFile = File.createTempFile("console-", ".log");
-            SnippetApiData.SnippetExecResult snippetExecResult = execProcessService.execCommand(
+            FunctionApiData.FunctionExecResult functionExecResult = execProcessService.execCommand(
                     gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec", null );
-            log.info("snippetExecResult: {}" , snippetExecResult);
-            return new GitExecResult(snippetExecResult, snippetExecResult.isOk, snippetExecResult.console);
+            log.info("functionExecResult: {}" , functionExecResult);
+            return new GitExecResult(functionExecResult, functionExecResult.isOk, functionExecResult.console);
         } catch (InterruptedException | IOException e) {
             log.error("#027.020 Error", e);
             return new GitExecResult(null, false, "#027.020 Error: " + e.getMessage());
@@ -127,9 +127,9 @@ public class GitSourcingService {
         }
     }
 
-    private static AssetFile prepareSnippetDir(final File snippetRootDir, String snippetCode) {
+    private static AssetFile prepareSnippetDir(final File resourceDir, String snippetCode) {
         final AssetFile assetFile = new AssetFile();
-        final File trgDir = new File(snippetRootDir, EnumsApi.BinaryDataType.SNIPPET.toString());
+        final File trgDir = new File(resourceDir, EnumsApi.BinaryType.function.toString());
         log.info("Target dir: {}, exist: {}", trgDir.getAbsolutePath(), trgDir.exists() );
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
@@ -148,10 +148,10 @@ public class GitSourcingService {
         return assetFile;
     }
 
-    public GitExecResult prepareSnippet(final File snippetRootDir, TaskParamsYaml.SnippetConfig snippet) {
+    public GitExecResult prepareSnippet(final File resourceDir, TaskParamsYaml.FunctionConfig snippet) {
 
         log.info("#027.050 Start preparing snippet dir");
-        AssetFile assetFile = prepareSnippetDir(snippetRootDir, snippet.code);
+        AssetFile assetFile = prepareSnippetDir(resourceDir, snippet.code);
         log.info("#027.060 assetFile.isError: {}" , assetFile.isError);
         if (assetFile.isError) {
             return new GitExecResult(null,false, "#027.060 Can't create dir for snippet " + snippet.code);
@@ -164,7 +164,7 @@ public class GitSourcingService {
         if (!repoDir.exists()) {
             GitExecResult result = execClone(snippetDir, snippet);
             log.info("#027.080 Result of cloning repo: {}", result.toString());
-            if (!result.ok || !result.snippetExecResult.isOk()) {
+            if (!result.ok || !result.functionExecResult.isOk()) {
                 result = tryToRepairRepo(snippetDir, snippet);
                 log.info("#027.090 Result of repairing of repo: {}", result.toString());
                 return result;
@@ -175,17 +175,17 @@ public class GitSourcingService {
         if (!result.ok) {
             return result;
         }
-        if (!result.snippetExecResult.isOk) {
-            return new GitExecResult(null,false, result.snippetExecResult.console);
+        if (!result.functionExecResult.isOk) {
+            return new GitExecResult(null,false, result.functionExecResult.console);
         }
-        if (!"true".equals(result.snippetExecResult.console.strip())) {
+        if (!"true".equals(result.functionExecResult.console.strip())) {
             result = tryToRepairRepo(repoDir, snippet);
             log.info("#027.110 Result of tryToRepairRepo: {}", result.toString());
             if (!result.ok) {
                 return result;
             }
-            if (!result.snippetExecResult.isOk) {
-                return new GitExecResult(null,false, result.snippetExecResult.console);
+            if (!result.functionExecResult.isOk) {
+                return new GitExecResult(null,false, result.functionExecResult.console);
             }
         }
 
@@ -194,8 +194,8 @@ public class GitSourcingService {
         if (!result.ok) {
             return result;
         }
-        if (!result.snippetExecResult.isOk) {
-            return new GitExecResult(null,false, result.snippetExecResult.console);
+        if (!result.functionExecResult.isOk) {
+            return new GitExecResult(null,false, result.functionExecResult.console);
         }
 
         result = execCleanDF(repoDir);
@@ -203,8 +203,8 @@ public class GitSourcingService {
         if (!result.ok) {
             return result;
         }
-        if (!result.snippetExecResult.isOk) {
-            return new GitExecResult(null,false, result.snippetExecResult.console);
+        if (!result.functionExecResult.isOk) {
+            return new GitExecResult(null,false, result.functionExecResult.console);
         }
 
         result = execPullOrigin(repoDir, snippet);
@@ -212,8 +212,8 @@ public class GitSourcingService {
         if (!result.ok) {
             return result;
         }
-        if (!result.snippetExecResult.isOk) {
-            return new GitExecResult(null,false, result.snippetExecResult.console);
+        if (!result.functionExecResult.isOk) {
+            return new GitExecResult(null,false, result.functionExecResult.console);
         }
 
         result = execCheckoutRevision(repoDir, snippet);
@@ -221,15 +221,15 @@ public class GitSourcingService {
         if (!result.ok) {
             return result;
         }
-        if (!result.snippetExecResult.isOk) {
-            return new GitExecResult(null,false, result.snippetExecResult.console);
+        if (!result.functionExecResult.isOk) {
+            return new GitExecResult(null,false, result.functionExecResult.console);
         }
         log.info("#027.160 repoDir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists());
 
-        return new GitExecResult(repoDir, new SnippetApiData.SnippetExecResult(snippet.code, true, 0, "" ), true, null);
+        return new GitExecResult(repoDir, new FunctionApiData.FunctionExecResult(snippet.code, true, 0, "" ), true, null);
     }
 
-    public GitExecResult tryToRepairRepo(File snippetDir, TaskParamsYaml.SnippetConfig snippet) {
+    public GitExecResult tryToRepairRepo(File snippetDir, TaskParamsYaml.FunctionConfig snippet) {
         File repoDir = new File(snippetDir, "git");
         GitExecResult result;
         FileUtils.deleteQuietly(repoDir);
@@ -242,7 +242,7 @@ public class GitSourcingService {
         return result;
     }
 
-    private GitExecResult execFileSystemCheck(File repoDir, TaskParamsYaml.SnippetConfig snippet) {
+    private GitExecResult execFileSystemCheck(File repoDir, TaskParamsYaml.FunctionConfig snippet) {
 //git>git fsck --full
 //Checking object directories: 100% (256/256), done.
 //Checking objects: 100% (10432/10432), done.
@@ -255,14 +255,14 @@ public class GitSourcingService {
         return result;
     }
 
-    private GitExecResult execCheckoutRevision(File repoDir, TaskParamsYaml.SnippetConfig snippet) {
+    private GitExecResult execCheckoutRevision(File repoDir, TaskParamsYaml.FunctionConfig snippet) {
         // git checkout sha1
         //noinspection UnnecessaryLocalVariable
         GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", snippet.git.commit),0L);
         return result;
     }
 
-    private GitExecResult execPullOrigin(File repoDir, TaskParamsYaml.SnippetConfig snippet) {
+    private GitExecResult execPullOrigin(File repoDir, TaskParamsYaml.FunctionConfig snippet) {
         // pull origin master
         //noinspection UnnecessaryLocalVariable
         GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", snippet.git.branch),0L);
@@ -296,7 +296,7 @@ public class GitSourcingService {
         return execGitCmd(cmd, timeout);
     }
 
-    private GitExecResult execClone(File repoDir, TaskParamsYaml.SnippetConfig snippet) {
+    private GitExecResult execClone(File repoDir, TaskParamsYaml.FunctionConfig snippet) {
         // git -C <path> clone <git-repo-url> git
 
         String mirror = envService.getEnvYaml().mirrors.get(snippet.git.repo);

@@ -34,18 +34,18 @@ public class ConstsApi {
     public static final String META_MH_RESULT_FILE_EXTENSION = "mh.result-file-extension";
 
 
-    // === snippets' metas
+    // === function' metas
 
     //
-    public static final String META_MH_SNIPPET_PARAMS_AS_FILE_META = "mh.snippet-params-as-file";
+    public static final String META_MH_FUNCTION_PARAMS_AS_FILE_META = "mh.function-params-as-file";
 
-    // extension for scripting file which will be executed as snippet
-    public static final String META_MH_SNIPPET_PARAMS_FILE_EXT_META = "mh.snippet-params-file-ext";
+    // extension for scripting file which will be executed as a function
+    public static final String META_MH_FUNCTION_PARAMS_FILE_EXT_META = "mh.function-params-file-ext";
 
     public static final String META_MH_TASK_PARAMS_VERSION = "mh.task-params-version";
 
     public static final String META_MH_FITTING_DETECTION_SUPPORTED = "mh.fitting-detection-supported";
 
-    public static final String META_MH_SNIPPET_SUPPORTED_OS = "mh.snippet-supported-os";
+    public static final String META_MH_FUNCTION_SUPPORTED_OS = "mh.function-supported-os";
 
 }

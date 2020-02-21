@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.commons.yaml.snippet_list;
+package ai.metaheuristic.commons.yaml.function_list;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -27,34 +27,26 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class SnippetConfigListYamlV2 implements BaseParams {
+public class FunctionConfigListYamlV1 implements BaseParams {
 
-    public final int version=2;
+    public final int version=1;
 
     @Override
     public boolean checkIntegrity() {
         return true;
     }
 
-    public List<SnippetConfigV2> snippets;
+    public List<FunctionConfigV1> functions;
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class SnippetInfoV2 {
+    public static class FunctionInfoV1 {
         public boolean signed;
         /**
-         * snippet's binary length
+         * function's binary length
          */
         public long length;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class MachineLearningV2 {
-        public boolean metrics = false;
-        public boolean fitting = false;
     }
 
     @Data
@@ -62,11 +54,11 @@ public class SnippetConfigListYamlV2 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class SnippetConfigV2 implements Cloneable {
+    public static class FunctionConfigV1 implements Cloneable {
 
         @SneakyThrows
-        public SnippetConfigV2 clone() {
-            final SnippetConfigV2 clone = (SnippetConfigV2) super.clone();
+        public FunctionConfigV1 clone() {
+            final FunctionConfigV1 clone = (FunctionConfigV1) super.clone();
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
@@ -80,27 +72,29 @@ public class SnippetConfigListYamlV2 implements BaseParams {
         }
 
         /**
-         * code of snippet, i.e. simple-app:1.0
+         * code of function, i.e. simple-app:1.0
          */
         public String code;
         public String type;
         public String file;
         /**
-         * params for command line fo invoking snippet
+         * params for command line for invoking function
          * <p>
          * this isn't a holder for yaml-based config
          */
         public String params;
         public String env;
-        public EnumsApi.SnippetSourcing sourcing;
+        public EnumsApi.FunctionSourcing sourcing;
         public Map<EnumsApi.Type, String> checksumMap;
-        public SnippetInfoV2 info = new SnippetInfoV2();
+        public FunctionInfoV1 info = new FunctionInfoV1();
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
         public List<Meta> metas = new ArrayList<>();
-        public MachineLearningV2 ml;
+        public boolean metrics = false;
 
+        // this field is here only for compatibility
+        public Integer version;
     }
 
 }

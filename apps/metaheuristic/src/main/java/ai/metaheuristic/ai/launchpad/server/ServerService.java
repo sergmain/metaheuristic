@@ -104,8 +104,8 @@ public class ServerService {
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
     @SuppressWarnings("Duplicates")
-    private static <T> T getWithSync(final EnumsApi.BinaryDataType binaryDataType, final String code, Supplier<T> function) {
-        final String key = "--" + binaryDataType + "--" + code;
+    private static <T> T getWithSync(final EnumsApi.BinaryType binaryType, final String code, Supplier<T> function) {
+        final String key = "--" + binaryType + "--" + code;
         final AtomicInteger obj;
         try {
             writeLock.lock();
@@ -133,9 +133,9 @@ public class ServerService {
     }
 
     // return a requested resource to a station
-    public ResourceWithCleanerInfo deliverResource(final EnumsApi.BinaryDataType binaryDataType, final String resourceId, final String chunkSize, final int chunkNum) {
-        return getWithSync(binaryDataType, resourceId,
-                () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryDataType, resourceId));
+    public ResourceWithCleanerInfo deliverResource(final EnumsApi.BinaryType binaryType, final String resourceId, final String chunkSize, final int chunkNum) {
+        return getWithSync(binaryType, resourceId,
+                () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryType, resourceId));
     }
 
     public UploadResult uploadResource(MultipartFile file, Long resourceId) {
@@ -195,21 +195,21 @@ public class ServerService {
                 : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+ variable.getId()+"");
     }
 
-    private ResourceWithCleanerInfo getAbstractResourceResponseEntity(String chunkSize, int chunkNum, EnumsApi.BinaryDataType binaryDataType, String resourceId) {
+    private ResourceWithCleanerInfo getAbstractResourceResponseEntity(String chunkSize, int chunkNum, EnumsApi.BinaryType binaryType, String resourceId) {
 
         AssetFile assetFile;
         BiConsumer<String, File> dataSaver;
-        switch (binaryDataType) {
-            case SNIPPET:
+        switch (binaryType) {
+            case function:
                 assetFile = ResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, resourceId, null);
                 dataSaver = snippetDataService::storeToFile;
                 break;
-            case DATA:
+            case data:
                 assetFile = ResourceUtils.prepareDataFile(globals.launchpadTempDir, resourceId, null);
                 dataSaver = variableService::storeToFile;
                 break;
             default:
-                throw new IllegalStateException("#442.008 Unknown type of data: " + binaryDataType);
+                throw new IllegalStateException("#442.008 Unknown type of data: " + binaryType);
         }
         if (assetFile.isError) {
             String es = "#442.006 Resource with id " + resourceId + " is broken";

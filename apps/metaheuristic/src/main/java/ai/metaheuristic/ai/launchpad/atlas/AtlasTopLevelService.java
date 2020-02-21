@@ -33,8 +33,8 @@ import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.atlas.AtlasTaskParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
@@ -743,11 +743,11 @@ public class AtlasTopLevelService {
         }
         AtlasTaskParamsYaml atpy = AtlasTaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
-        SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(atpy.snippetExecResults);
-        if (snippetExec==null ) {
+        FunctionApiData.FunctionExec functionExec = SnippetExecUtils.to(atpy.functionExecResults);
+        if (functionExec ==null ) {
             return new AtlasData.ConsoleResult("#422.313 Can't find a console output");
         }
-        return new AtlasData.ConsoleResult(snippetExec.exec.exitCode, snippetExec.exec.isOk, snippetExec.exec.console);
+        return new AtlasData.ConsoleResult(functionExec.exec.exitCode, functionExec.exec.isOk, functionExec.exec.console);
     }
 
     public AtlasData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long atlasId, Long featureId, String[] params, Pageable pageable) {

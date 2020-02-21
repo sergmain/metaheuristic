@@ -32,7 +32,7 @@ public class CommonProcessValidatorService {
 
     private final SnippetService snippetService;
 
-    public boolean checkRequiredVersion(int sourceCodeParamsVersion, SourceCodeParamsYaml.SnippetDefForSourceCode snDef) {
+    public boolean checkRequiredVersion(int sourceCodeParamsVersion, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
         int taskParamsYamlVersion = SourceCodeParamsYamlUtils.getRequiredVertionOfTaskParamsYaml(sourceCodeParamsVersion);
         boolean ok = snippetService.isSnippetVersionOk(taskParamsYamlVersion, snDef);
         if (!ok) {

@@ -162,7 +162,7 @@ public class AtlasService {
                     // typeAsString will be initialized when AtlasTaskParamsYaml will be requested
                     // see method ai.metaheuristic.ai.launchpad.atlas.AtlasTopLevelService.findTasks
                     atpy.typeAsString = null;
-                    atpy.snippetExecResults = t.getSnippetExecResults();
+                    atpy.functionExecResults = t.getFunctionExecResults();
                     atpy.metrics = t.getMetrics();
 
                     at.params = AtlasTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);

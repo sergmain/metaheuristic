@@ -96,7 +96,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             }
 
             final SnippetDownloadStatusYaml.Status snippetDownloadStatus = metadataService.getSnippetDownloadStatuses(launchpad.url, snippetCode);
-            if (snippetDownloadStatus.sourcing!=EnumsApi.SnippetSourcing.launchpad) {
+            if (snippetDownloadStatus.sourcing!= EnumsApi.FunctionSourcing.launchpad) {
                 log.warn("#811.010 Snippet {} can't be downloaded from {} because a sourcing isn't 'launchpad'.", snippetCode, launchpad.url);
                 continue;
             }
@@ -105,9 +105,9 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 continue;
             }
 
-            // task.snippetConfig is null when we are downloading a snippet proactively, without any task
-            TaskParamsYaml.SnippetConfig snippetConfig = task.snippetConfig;
-            if (snippetConfig ==null) {
+            // task.functionConfig is null when we are downloading a snippet proactively, without any task
+            TaskParamsYaml.FunctionConfig functionConfig = task.functionConfig;
+            if (functionConfig ==null) {
                 StationSnippetService.DownloadedSnippetConfigStatus downloadedSnippetConfigStatus = stationSnippetService.downloadSnippetConfig(launchpad.url, asset, snippetCode, task.stationId);
                 if (downloadedSnippetConfigStatus.status == StationSnippetService.ConfigStatus.error) {
                     metadataService.setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.snippet_config_error);
@@ -117,9 +117,9 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     metadataService.setSnippetState(launchpad.url, snippetCode, Enums.SnippetState.not_found);
                     continue;
                 }
-                snippetConfig = downloadedSnippetConfigStatus.snippetConfig;
+                functionConfig = downloadedSnippetConfigStatus.functionConfig;
             }
-            MetadataService.ChecksumState checksumState = metadataService.prepareChecksum(snippetCode, launchpad.url, snippetConfig);
+            MetadataService.ChecksumState checksumState = metadataService.prepareChecksum(snippetCode, launchpad.url, functionConfig);
             if (!checksumState.signatureIsOk) {
                 continue;
             }
@@ -127,7 +127,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
             final Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(launchpad.url);
             final File baseResourceDir = launchpadLookupExtendedService.prepareBaseResourceDir(launchpadInfo);
-            final AssetFile assetFile = ResourceUtils.prepareSnippetFile(baseResourceDir, snippetCode, snippetConfig.file);
+            final AssetFile assetFile = ResourceUtils.prepareSnippetFile(baseResourceDir, snippetCode, functionConfig.file);
 
             switch (snippetDownloadStatus.snippetState) {
                 case none:
@@ -288,7 +288,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
     public void prepareSnippetForDownloading() {
         metadataService.getSnippetDownloadStatusYaml().statuses.forEach(o -> {
-            if (o.sourcing==EnumsApi.SnippetSourcing.launchpad && (o.snippetState==Enums.SnippetState.none || !o.verified)) {
+            if (o.sourcing== EnumsApi.FunctionSourcing.launchpad && (o.snippetState==Enums.SnippetState.none || !o.verified)) {
                 final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
                         launchpadLookupExtendedService.lookupExtendedMap.get(o.launchpadUrl);
 

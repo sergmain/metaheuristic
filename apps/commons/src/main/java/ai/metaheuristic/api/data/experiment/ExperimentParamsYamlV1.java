@@ -61,9 +61,9 @@ public class ExperimentParamsYamlV1 implements BaseParams {
         public int seed = 42;
         public List<HyperParamV2> hyperParams = new ArrayList<>();
 
-        public String fitSnippet;
-        public String predictSnippet;
-        public String checkFittingSnippet;
+        public String fitFunction;
+        public String predictFunction;
+        public String checkFittingFunction;
     }
 
     @Data

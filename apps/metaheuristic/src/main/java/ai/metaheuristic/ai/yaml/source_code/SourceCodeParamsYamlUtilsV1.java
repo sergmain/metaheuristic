@@ -74,9 +74,9 @@ public class SourceCodeParamsYamlUtilsV1
         pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
         o.input.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.input::add);
         o.output.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.output::add);
-        pr.snippet = o.snippet!=null ? new SourceCodeParamsYaml.SnippetDefForSourceCode(o.snippet.code, o.snippet.params, o.snippet.context) : null;
-        pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new SourceCodeParamsYaml.SnippetDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
-        pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new SourceCodeParamsYaml.SnippetDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
+        pr.function = o.function !=null ? new SourceCodeParamsYaml.FunctionDefForSourceCode(o.function.code, o.function.params, o.function.context) : null;
+        pr.preFunctions = o.preFuntions !=null ? o.preFuntions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
+        pr.postFunctions = o.postFuntions !=null ? o.postFuntions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
         pr.metas = o.metas;
 
         pr.subProcesses = o.subProcesses!=null

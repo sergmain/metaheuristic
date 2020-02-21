@@ -37,15 +37,15 @@ public class TestSourceCodeParamsYamlCloning {
         SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
         p.name = "name";
         p.code = "code";
-        p.snippet = new SourceCodeParamsYaml.SnippetDefForSourceCode("snippet-code", "snippet-params", EnumsApi.SnippetExecContext.external);
-        p.preSnippets = List.of(
-                new SourceCodeParamsYaml.SnippetDefForSourceCode("pre1-code", "pre1-params", EnumsApi.SnippetExecContext.external),
-                new SourceCodeParamsYaml.SnippetDefForSourceCode("pre2-code", "pre2-params", EnumsApi.SnippetExecContext.external)
+        p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode("snippet-code", "snippet-params", EnumsApi.FunctionExecContext.external);
+        p.preFunctions = List.of(
+                new SourceCodeParamsYaml.FunctionDefForSourceCode("pre1-code", "pre1-params", EnumsApi.FunctionExecContext.external),
+                new SourceCodeParamsYaml.FunctionDefForSourceCode("pre2-code", "pre2-params", EnumsApi.FunctionExecContext.external)
         );
-        p.postSnippets = List.of(
-                new SourceCodeParamsYaml.SnippetDefForSourceCode("post1-code", "post1-params", EnumsApi.SnippetExecContext.external),
-                new SourceCodeParamsYaml.SnippetDefForSourceCode("post2-code", "post2-params", EnumsApi.SnippetExecContext.external),
-                new SourceCodeParamsYaml.SnippetDefForSourceCode("post3-code", "post3-params", EnumsApi.SnippetExecContext.external)
+        p.postFunctions = List.of(
+                new SourceCodeParamsYaml.FunctionDefForSourceCode("post1-code", "post1-params", EnumsApi.FunctionExecContext.external),
+                new SourceCodeParamsYaml.FunctionDefForSourceCode("post2-code", "post2-params", EnumsApi.FunctionExecContext.external),
+                new SourceCodeParamsYaml.FunctionDefForSourceCode("post3-code", "post3-params", EnumsApi.FunctionExecContext.external)
         ) ;
 
         p.timeoutBeforeTerminate = 120L;
@@ -57,17 +57,17 @@ public class TestSourceCodeParamsYamlCloning {
 
         assertEquals("name", p1.name);
         assertEquals("code", p1.code);
-        assertNotNull(p1.snippet);
-        assertEquals("snippet-code", p1.snippet.code);
-        assertEquals("snippet-params", p1.snippet.params);
+        assertNotNull(p1.function);
+        assertEquals("snippet-code", p1.function.code);
+        assertEquals("snippet-params", p1.function.params);
 
-        assertEquals(2, p1.preSnippets.size());
-        assertEquals("pre1-code", p1.preSnippets.get(0).code);
-        assertEquals("pre1-params", p1.preSnippets.get(0).params);
-        assertEquals("pre2-code", p1.preSnippets.get(1).code);
-        assertEquals("pre2-params", p1.preSnippets.get(1).params);
+        assertEquals(2, p1.preFunctions.size());
+        assertEquals("pre1-code", p1.preFunctions.get(0).code);
+        assertEquals("pre1-params", p1.preFunctions.get(0).params);
+        assertEquals("pre2-code", p1.preFunctions.get(1).code);
+        assertEquals("pre2-params", p1.preFunctions.get(1).params);
 
-        assertEquals(3, p1.postSnippets.size());
+        assertEquals(3, p1.postFunctions.size());
 
         assertNotNull(p1.timeoutBeforeTerminate);
         assertEquals(120L, (long)p1.timeoutBeforeTerminate);

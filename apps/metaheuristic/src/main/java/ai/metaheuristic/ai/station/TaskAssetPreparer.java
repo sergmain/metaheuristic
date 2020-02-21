@@ -110,19 +110,19 @@ public class TaskAssetPreparer {
 
             // start preparing snippets
             final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
-            final TaskParamsYaml.SnippetConfig snippetConfig = taskParamYaml.taskYaml.snippet;
-            if ( !prepareSnippet(snippetConfig, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
+            final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.taskYaml.function;
+            if ( !prepareSnippet(functionConfig, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
                 isAllReady.set(false);
             }
-            if (taskParamYaml.taskYaml.preSnippets!=null) {
-                taskParamYaml.taskYaml.preSnippets.forEach( sc-> {
+            if (taskParamYaml.taskYaml.preFunctions !=null) {
+                taskParamYaml.taskYaml.preFunctions.forEach(sc-> {
                     if ( !prepareSnippet(sc, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
                         isAllReady.set(false);
                     }
                 });
             }
-            if (taskParamYaml.taskYaml.postSnippets!=null) {
-                taskParamYaml.taskYaml.postSnippets.forEach( sc-> {
+            if (taskParamYaml.taskYaml.postFunctions !=null) {
+                taskParamYaml.taskYaml.postFunctions.forEach(sc-> {
                     if ( !prepareSnippet(sc, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
                         isAllReady.set(false);
                     }
@@ -137,16 +137,16 @@ public class TaskAssetPreparer {
         }
     }
 
-    private boolean prepareSnippet(TaskParamsYaml.SnippetConfig snippetConfig, String launchpadUrl, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, String stationId) {
-        if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.launchpad) {
-            final String code = snippetConfig.code;
+    private boolean prepareSnippet(TaskParamsYaml.FunctionConfig functionConfig, String launchpadUrl, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, String stationId) {
+        if (functionConfig.sourcing== EnumsApi.FunctionSourcing.launchpad) {
+            final String code = functionConfig.code;
             final SnippetDownloadStatusYaml.Status snippetDownloadStatuses = metadataService.getSnippetDownloadStatuses(launchpadUrl, code);
             if (snippetDownloadStatuses==null) {
                 return false;
             }
             final Enums.SnippetState snippetState = snippetDownloadStatuses.snippetState;
             if (snippetState==Enums.SnippetState.none) {
-                DownloadSnippetTask snippetTask = new DownloadSnippetTask(launchpad.context.chunkSize, snippetConfig.getCode(), snippetConfig);
+                DownloadSnippetTask snippetTask = new DownloadSnippetTask(launchpad.context.chunkSize, functionConfig.getCode(), functionConfig);
                 snippetTask.launchpad = launchpad.launchpadLookup;
                 snippetTask.stationId = stationId;
                 downloadSnippetActor.add(snippetTask);

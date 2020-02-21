@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.sourcing.DiskInfo;
@@ -102,10 +102,10 @@ public class DiskResourceProvider implements ResourceProvider {
     }
 
     @Override
-    public SnippetApiData.SnippetExecResult processResultingFile(
+    public FunctionApiData.FunctionExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            String outputResourceId, TaskParamsYaml.SnippetConfig snippet
+            String outputResourceId, TaskParamsYaml.FunctionConfig snippet
     ) {
         File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
         if (outputResourceFile.exists()) {
@@ -114,7 +114,7 @@ public class DiskResourceProvider implements ResourceProvider {
         } else {
             String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
-            return new SnippetApiData.SnippetExecResult(snippet.code, false, -1, es);
+            return new FunctionApiData.FunctionExecResult(snippet.code, false, -1, es);
         }
         return null;
     }

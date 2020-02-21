@@ -132,18 +132,18 @@ CREATE TABLE mh_variable_global
     PARAMS          MEDIUMTEXT not null
 );
 
-CREATE TABLE mh_snippet_data
+CREATE TABLE mh_function_data
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    SNIPPET_CODE    VARCHAR(100) not null,
+    FUNCTION_CODE    VARCHAR(100) not null,
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     DATA            LONGBLOB,
     PARAMS          MEDIUMTEXT not null
 );
 
-CREATE UNIQUE INDEX mh_snippet_data_snippet_code_unq_idx
-    ON mh_snippet_data (SNIPPET_CODE);
+CREATE UNIQUE INDEX mh_function_data_function_code_unq_idx
+    ON mh_function_data (FUNCTION_CODE);
 
 CREATE TABLE mh_experiment
 (
@@ -166,7 +166,7 @@ CREATE TABLE mh_task
     ASSIGNED_ON                 bigint,
     IS_COMPLETED                tinyint(1) not null default 0,
     COMPLETED_ON                bigint,
-    SNIPPET_EXEC_RESULTS        MEDIUMTEXT,
+    FUNCTION_EXEC_RESULTS       MEDIUMTEXT,
     METRICS                     MEDIUMTEXT,
     EXEC_CONTEXT_ID             NUMERIC(10, 0)   NOT NULL,
     EXEC_STATE                  tinyint(1) not null default 0,
@@ -178,17 +178,17 @@ CREATE TABLE mh_task
 CREATE INDEX mh_task_exec_context_id_idx
     ON mh_task (EXEC_CONTEXT_ID);
 
-CREATE TABLE mh_snippet
+CREATE TABLE mh_function
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    SNIPPET_CODE    VARCHAR(100)  not null,
-    SNIPPET_TYPE    VARCHAR(50) not null,
+    FUNCTION_CODE   VARCHAR(100)  not null,
+    FUNCTION_TYPE   VARCHAR(50) not null,
     PARAMS          MEDIUMTEXT not null
 );
 
-CREATE UNIQUE INDEX mh_snippet_snippet_code_unq_idx
-    ON mh_snippet (SNIPPET_CODE);
+CREATE UNIQUE INDEX mh_function_function_code_unq_idx
+    ON mh_function (FUNCTION_CODE);
 
 CREATE TABLE mh_source_code
 (

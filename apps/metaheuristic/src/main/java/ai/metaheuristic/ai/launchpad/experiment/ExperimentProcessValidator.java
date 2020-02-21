@@ -59,7 +59,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
     @Override
     public EnumsApi.SourceCodeValidateStatus validate(SourceCode sourceCode, SourceCodeParamsYaml.Process process, boolean isFirst) {
         if (StringUtils.isBlank(process.code)) {
-            return EnumsApi.SourceCodeValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
+            return EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_DEFINED_ERROR;
         }
         Long experimentId = experimentRepository.findIdByCode(process.code);
         if (experimentId==null) {
@@ -82,26 +82,26 @@ public class ExperimentProcessValidator implements ProcessValidator {
         }
         ExperimentParamsYaml epy = e.getExperimentParamsYaml();
 
-        if (StringUtils.isBlank(epy.experimentYaml.fitSnippet) || StringUtils.isBlank(epy.experimentYaml.predictSnippet)) {
-            return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR;
+        if (StringUtils.isBlank(epy.experimentYaml.fitFunction) || StringUtils.isBlank(epy.experimentYaml.predictFunction)) {
+            return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_HASNT_ALL_FUNCTIONS_ERROR;
         }
-        Snippet s = snippetRepository.findByCode(epy.experimentYaml.fitSnippet);
+        Snippet s = snippetRepository.findByCode(epy.experimentYaml.fitFunction);
         if (s==null) {
-            return EnumsApi.SourceCodeValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+            return EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR;
         }
 
-        Snippet predictSnippet = snippetRepository.findByCode(epy.experimentYaml.fitSnippet);
+        Snippet predictSnippet = snippetRepository.findByCode(epy.experimentYaml.fitFunction);
         if (predictSnippet==null) {
-            return EnumsApi.SourceCodeValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+            return EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR;
         }
         boolean isFittingDetection = MetaUtils.isTrue(predictSnippet.getSnippetConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
         if (isFittingDetection) {
-            if (S.b(epy.experimentYaml.checkFittingSnippet)) {
-                return EnumsApi.SourceCodeValidateStatus.FITTING_SNIPPET_NOT_FOUND_ERROR;
+            if (S.b(epy.experimentYaml.checkFittingFunction)) {
+                return EnumsApi.SourceCodeValidateStatus.FITTING_FUNCTION_NOT_FOUND_ERROR;
             }
-            Snippet fittingSnippet = snippetRepository.findByCode(epy.experimentYaml.checkFittingSnippet);
+            Snippet fittingSnippet = snippetRepository.findByCode(epy.experimentYaml.checkFittingFunction);
             if (fittingSnippet==null) {
-                return EnumsApi.SourceCodeValidateStatus.FITTING_SNIPPET_NOT_FOUND_ERROR;
+                return EnumsApi.SourceCodeValidateStatus.FITTING_FUNCTION_NOT_FOUND_ERROR;
             }
 
         }

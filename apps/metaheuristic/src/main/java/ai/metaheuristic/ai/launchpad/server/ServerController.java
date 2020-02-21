@@ -72,7 +72,7 @@ public class ServerController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryDataType.DATA, id, chunkSize, chunkNum);
+            ResourceWithCleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryType.data, id, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

@@ -22,8 +22,8 @@ import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -55,7 +54,7 @@ public class AssetController {
     private final ServerService serverService;
     private final SnippetService snippetService;
 
-    @GetMapping(value="/snippet/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value="/function/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<AbstractResource> deliverSnippetAuth(
             HttpServletRequest request,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
@@ -67,7 +66,7 @@ public class AssetController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryDataType.SNIPPET, code, chunkSize, chunkNum);
+            ResourceWithCleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryType.function, code, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {
@@ -94,7 +93,7 @@ public class AssetController {
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        SnippetConfigYaml sc = snippet.getSnippetConfig(false);
+        FunctionConfigYaml sc = snippet.getSnippetConfig(false);
         log.info("#440.120 Send checksum {} for snippet {}", sc.checksum, sc.getCode());
         return sc.checksum;
     }
@@ -117,9 +116,9 @@ public class AssetController {
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        SnippetConfigYaml sc = snippet.getSnippetConfig(false);
+        FunctionConfigYaml sc = snippet.getSnippetConfig(false);
         log.info("Send snippet config for snippet {}", sc.getCode());
-        return SnippetConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
+        return FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
     }
 
 

@@ -64,9 +64,9 @@ public class ExperimentParamsYaml implements BaseParams {
         public int seed = 42;
         public List<HyperParam> hyperParams = new ArrayList<>();
 
-        public String fitSnippet;
-        public String predictSnippet;
-        public String checkFittingSnippet;
+        public String fitFunction;
+        public String predictFunction;
+        public String checkFittingFunction;
     }
 
     @Data
@@ -113,19 +113,19 @@ public class ExperimentParamsYaml implements BaseParams {
 
 
     @JsonIgnore
-    public List<String> getSnippetCodes() {
-        final List<String> snippetCodes = new ArrayList<>();
+    public List<String> getFunctionCodes() {
+        final List<String> functionCodes = new ArrayList<>();
 
-        if (!S.b(experimentYaml.fitSnippet)) {
-            snippetCodes.add(experimentYaml.fitSnippet);
+        if (!S.b(experimentYaml.fitFunction)) {
+            functionCodes.add(experimentYaml.fitFunction);
         }
-        if (!S.b(experimentYaml.predictSnippet)) {
-            snippetCodes.add(experimentYaml.predictSnippet);
+        if (!S.b(experimentYaml.predictFunction)) {
+            functionCodes.add(experimentYaml.predictFunction);
         }
-        if (!S.b(experimentYaml.predictSnippet) && !S.b(experimentYaml.checkFittingSnippet)) {
-            snippetCodes.add(experimentYaml.checkFittingSnippet);
+        if (!S.b(experimentYaml.predictFunction) && !S.b(experimentYaml.checkFittingFunction)) {
+            functionCodes.add(experimentYaml.checkFittingFunction);
         }
-        return snippetCodes;
+        return functionCodes;
     }
 
     @JsonIgnore

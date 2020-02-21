@@ -34,13 +34,13 @@ import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.launchpad.ExecContext;
 import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -151,7 +151,7 @@ public abstract class PreparingExperiment {
             byte[] bytes = "some program code".getBytes();
             if (fitSnippet == null) {
                 fitSnippet = new Snippet();
-                SnippetConfigYaml sc = new SnippetConfigYaml();
+                FunctionConfigYaml sc = new FunctionConfigYaml();
                 sc.code = TEST_FIT_SNIPPET;
                 sc.env = "python-3";
                 sc.type = CommonConsts.FIT_TYPE;
@@ -161,7 +161,7 @@ public abstract class PreparingExperiment {
 
                 fitSnippet.setCode(TEST_FIT_SNIPPET);
                 fitSnippet.setType(CommonConsts.FIT_TYPE);
-                fitSnippet.params = SnippetConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
+                fitSnippet.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
 
                 mills = System.currentTimeMillis();
                 log.info("Start snippetRepository.save() #1");
@@ -177,7 +177,7 @@ public abstract class PreparingExperiment {
             predictSnippet = snippetRepository.findByCodeForUpdate(TEST_PREDICT_SNIPPET);
             if (predictSnippet == null) {
                 predictSnippet = new Snippet();
-                SnippetConfigYaml sc = new SnippetConfigYaml();
+                FunctionConfigYaml sc = new FunctionConfigYaml();
                 sc.code = TEST_PREDICT_SNIPPET;
                 sc.type = CommonConsts.PREDICT_TYPE;
                 sc.env = "python-3";
@@ -187,7 +187,7 @@ public abstract class PreparingExperiment {
 
                 predictSnippet.setCode(TEST_PREDICT_SNIPPET);
                 predictSnippet.setType(CommonConsts.PREDICT_TYPE);
-                predictSnippet.params = SnippetConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
+                predictSnippet.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
 
                 mills = System.currentTimeMillis();
                 log.info("Start snippetRepository.save() #2");
@@ -230,8 +230,8 @@ public abstract class PreparingExperiment {
             epy.experimentYaml.setHyperParams(List.of(ehp1, ehp2, ehp3));
 
             // set snippets for experiment
-            epy.experimentYaml.fitSnippet = fitSnippet.getCode();
-            epy.experimentYaml.predictSnippet = predictSnippet.getCode();
+            epy.experimentYaml.fitFunction = fitSnippet.getCode();
+            epy.experimentYaml.predictFunction = predictSnippet.getCode();
 
             experiment.updateParams(epy);
 

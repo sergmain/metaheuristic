@@ -332,11 +332,11 @@ public class SourceCodeService {
     private EnumsApi.SourceCodeValidateStatus checkSnippets(SourceCode sourceCode, SourceCodeParamsYaml.Process process) {
         YamlVersion v = YamlForVersioning.getYamlForVersion().load(sourceCode.getParams());
 
-        if (process.snippet!=null) {
-            SourceCodeParamsYaml.SnippetDefForSourceCode snDef = process.snippet;
-            if (snDef.context==EnumsApi.SnippetExecContext.internal) {
+        if (process.function !=null) {
+            SourceCodeParamsYaml.FunctionDefForSourceCode snDef = process.function;
+            if (snDef.context== EnumsApi.FunctionExecContext.internal) {
                 if (!Consts.MH_INTERNAL_SNIPPETS.contains(snDef.code)) {
-                    return EnumsApi.SourceCodeValidateStatus.INTERNAL_SNIPPET_NOT_FOUND_ERROR;
+                    return EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR;
                 }
             }
             else {
@@ -347,8 +347,8 @@ public class SourceCodeService {
                 }
             }
         }
-        if (process.preSnippets!=null) {
-            for (SourceCodeParamsYaml.SnippetDefForSourceCode snDef : process.preSnippets) {
+        if (process.preFunctions !=null) {
+            for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.preFunctions) {
                 EnumsApi.SourceCodeValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x != OK) {
                     log.error("#177.030 Pre-snippet {} wasn't found", snDef.code);
@@ -356,8 +356,8 @@ public class SourceCodeService {
                 }
             }
         }
-        if (process.postSnippets!=null) {
-            for (SourceCodeParamsYaml.SnippetDefForSourceCode snDef : process.postSnippets) {
+        if (process.postFunctions !=null) {
+            for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.postFunctions) {
                 EnumsApi.SourceCodeValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x != OK) {
                     log.error("#177.030 Post-snippet {} wasn't found", snDef.code);
@@ -369,20 +369,20 @@ public class SourceCodeService {
         return OK;
     }
 
-    private EnumsApi.SourceCodeValidateStatus checkRequiredVersionOfTaskParams(int sourceCodeYamlAsStr, SourceCodeParamsYaml.Process process, SourceCodeParamsYaml.SnippetDefForSourceCode snDef) {
+    private EnumsApi.SourceCodeValidateStatus checkRequiredVersionOfTaskParams(int sourceCodeYamlAsStr, SourceCodeParamsYaml.Process process, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
         if (StringUtils.isNotBlank(snDef.code)) {
             Long  snippetId = snippetRepository.findIdByCode(snDef.code);
             if (snippetId == null) {
                 log.error("#177.030 snippet wasn't found for code: {}, process: {}", snDef.code, process);
-                return EnumsApi.SourceCodeValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+                return EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR;
             }
         }
         else {
             log.error("#177.060 snippet wasn't found for code: {}, process: {}", snDef.code, process);
-            return EnumsApi.SourceCodeValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+            return EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR;
         }
         if (!commonProcessValidatorService.checkRequiredVersion(sourceCodeYamlAsStr, snDef)) {
-            return EnumsApi.SourceCodeValidateStatus.VERSION_OF_SNIPPET_IS_TOO_LOW_ERROR;
+            return EnumsApi.SourceCodeValidateStatus.VERSION_OF_FUNCTION_IS_TOO_LOW_ERROR;
         }
         return OK;
     }

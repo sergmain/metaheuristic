@@ -13,22 +13,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.commons.yaml.snippet;
+package ai.metaheuristic.commons.yaml.function;
 
-import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
 @Slf4j
-public class SnippetConfigYamlUtils {
+public class FunctionConfigYamlUtils {
 
-    private static final SnippetConfigYamlUtilsV1 YAML_UTILS_V_1 = new SnippetConfigYamlUtilsV1();
-    private static final SnippetConfigYamlUtilsV2 YAML_UTILS_V_2 = new SnippetConfigYamlUtilsV2();
-    private static final SnippetConfigYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final FunctionConfigYamlUtilsV1 YAML_UTILS_V_1 = new FunctionConfigYamlUtilsV1();
+    private static final FunctionConfigYamlUtilsV2 YAML_UTILS_V_2 = new FunctionConfigYamlUtilsV2();
+    private static final FunctionConfigYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
-    public static final BaseYamlUtils<SnippetConfigYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<FunctionConfigYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
                     2, YAML_UTILS_V_2

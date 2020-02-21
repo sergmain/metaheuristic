@@ -45,8 +45,8 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
             throw new CheckIntegrityFailedException("(b = sourceCode != null && !S.b(sourceCode.code) && sourceCode.processes != null) ");
         }
         for (ProcessV1 process : source.processes) {
-            if (process.snippet==null) {
-                throw new CheckIntegrityFailedException("(process.snippet==null)");
+            if (process.function ==null) {
+                throw new CheckIntegrityFailedException("(process.function==null)");
             }
         }
 
@@ -56,16 +56,16 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SnippetDefForSourceCodeV1 {
+    public static class FunctionDefForSourceCodeV1 {
         public String code;
         public String params;
-        public EnumsApi.SnippetExecContext context = EnumsApi.SnippetExecContext.external;
+        public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
 
-        public SnippetDefForSourceCodeV1(String code) {
+        public FunctionDefForSourceCodeV1(String code) {
             this.code = code;
         }
 
-        public SnippetDefForSourceCodeV1(String code, EnumsApi.SnippetExecContext context) {
+        public FunctionDefForSourceCodeV1(String code, EnumsApi.FunctionExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -104,12 +104,12 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
 
         public String name;
         public String code;
-        public SnippetDefForSourceCodeV1 snippet;
-        public List<SnippetDefForSourceCodeV1> preSnippets;
-        public List<SnippetDefForSourceCodeV1> postSnippets;
+        public FunctionDefForSourceCodeV1 function;
+        public List<FunctionDefForSourceCodeV1> preFuntions;
+        public List<FunctionDefForSourceCodeV1> postFuntions;
 
         /**
-         * Timeout before terminating a process with snippet
+         * Timeout before terminating a process with function
          * value in seconds
          * null or 0 mean the infinite execution
          */

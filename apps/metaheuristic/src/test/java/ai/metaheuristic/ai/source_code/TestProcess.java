@@ -39,7 +39,7 @@ public class TestProcess {
     @Test
     public void testProcessMeta() {
         SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
-        p.snippet = new SourceCodeParamsYaml.SnippetDefForSourceCode("some-snippet:1.0");
+        p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode("some-snippet:1.0");
 
         p.metas.addAll(
                 Arrays.asList(

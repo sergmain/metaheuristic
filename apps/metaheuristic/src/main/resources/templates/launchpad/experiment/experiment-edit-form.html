@@ -55,7 +55,7 @@
 
         <!--/*@thymesVar id="hyperParams" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.HyperParamsResult"*/-->
         <!--/*@thymesVar id="simpleExperiment" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.SimpleExperiment"*/-->
-        <!--/*@thymesVar id="snippetResult" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.SnippetResult"*/-->
+        <!--/*@thymesVar id="functionResult" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.SnippetResult"*/-->
         <form class="pure-form pure-form-stacked" th:object="${simpleExperiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment/experiment-edit-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <fieldset>
@@ -95,9 +95,9 @@
 
         <h1 class="widget-header">Snippets</h1>
         <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment/experiment-snippet-add-commit/'+simpleExperiment.id}" accept-charset="UTF-8"
-              th:if="${!snippetResult.selectOptions.isEmpty()}">
+              th:if="${!functionResult.selectOptions.isEmpty()}">
             <select class="pure-input-medium" th:name="code">
-                <option  th:each="o : ${snippetResult.selectOptions}" th:value="${o.value}" th:text="${o.desc} "></option>
+                <option  th:each="o : ${functionResult.selectOptions}" th:value="${o.value}" th:text="${o.desc} "></option>
             </select>
             <button class="pure-button pure-button-primary" type="submit">Add snippet</button>
             <p>&nbsp;</p>
@@ -113,7 +113,7 @@
             </thead>
 
             <tbody>
-            <tr th:each="s : ${snippetResult.snippets}">
+            <tr th:each="s : ${functionResult.snippets}">
                 <td th:text="${s.type}">Snippet type</td>
                 <td th:text="${s.getSnippetCode()}">Snippet code</td>
                 <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment/experiment-snippet-delete-by-type-commit/' + simpleExperiment.id+'/'+ s.type}">Delete</a></td>

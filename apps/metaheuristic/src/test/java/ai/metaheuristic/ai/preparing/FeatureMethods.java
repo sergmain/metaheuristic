@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.launchpad.Task;
 import lombok.extern.slf4j.Slf4j;
@@ -136,9 +136,9 @@ public abstract class FeatureMethods extends PreparingPlan {
             assertEquals(expectedSeqs, tasks.size());
         }
         for (Task task : tasks) {
-            SnippetApiData.SnippetExecResult snippetExecResult = new SnippetApiData.SnippetExecResult("output-of-a-snippet",false, -1, "This is sample console output");
-            SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec(snippetExecResult, null, null, null);
-            String yaml = SnippetExecUtils.toString(snippetExec);
+            FunctionApiData.FunctionExecResult functionExecResult = new FunctionApiData.FunctionExecResult("output-of-a-snippet",false, -1, "This is sample console output");
+            FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec(functionExecResult, null, null, null);
+            String yaml = SnippetExecUtils.toString(functionExec);
 
             StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult sser =
                     new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);
@@ -158,9 +158,9 @@ public abstract class FeatureMethods extends PreparingPlan {
             assertEquals(expectedTasks, tasks.size());
         }
         for (Task task : tasks) {
-            SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec();
-            snippetExec.setExec( new SnippetApiData.SnippetExecResult("output-of-a-snippet", true, 0, "This is sample console output. fit"));
-            String yaml = SnippetExecUtils.toString(snippetExec);
+            FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
+            functionExec.setExec( new FunctionApiData.FunctionExecResult("output-of-a-snippet", true, 0, "This is sample console output. fit"));
+            String yaml = SnippetExecUtils.toString(functionExec);
 
             StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult ster =
                     new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);

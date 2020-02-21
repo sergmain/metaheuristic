@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.yaml;
 
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,11 +30,11 @@ public class TestSnippetExec {
 
     @Test
     public void testMarshaling() {
-        SnippetApiData.SnippetExec output = new SnippetApiData.SnippetExec();
-        output.exec = new SnippetApiData.SnippetExecResult("output-of-a-snippet",true, 0, "output#1");
+        FunctionApiData.FunctionExec output = new FunctionApiData.FunctionExec();
+        output.exec = new FunctionApiData.FunctionExecResult("output-of-a-snippet",true, 0, "output#1");
 
         String yaml = SnippetExecUtils.toString(output);
-        SnippetApiData.SnippetExec output1 = SnippetExecUtils.to(yaml);
+        FunctionApiData.FunctionExec output1 = SnippetExecUtils.to(yaml);
         Assert.assertEquals(output, output1);
     }
 

@@ -48,13 +48,13 @@ public class TaskParamsYamlUtilsV1
         v5.checkIntegrity();
         TaskParamsYaml t = new TaskParamsYaml();
         t.taskYaml = new TaskParamsYaml.TaskYaml();
-        BeanUtils.copyProperties(v5.taskYaml, t.taskYaml, "snippet", "preSnippet", "postSnippet");
-        t.taskYaml.snippet = toUp(v5.taskYaml.snippet);
-        if (v5.taskYaml.preSnippets!=null) {
-            t.taskYaml.preSnippets = v5.taskYaml.preSnippets.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
+        BeanUtils.copyProperties(v5.taskYaml, t.taskYaml, "function", "preFunctions", "postFunctions");
+        t.taskYaml.function = toUp(v5.taskYaml.function);
+        if (v5.taskYaml.preFunctions !=null) {
+            t.taskYaml.preFunctions = v5.taskYaml.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
         }
-        if (v5.taskYaml.postSnippets!=null) {
-            t.taskYaml.postSnippets = v5.taskYaml.postSnippets.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
+        if (v5.taskYaml.postFunctions !=null) {
+            t.taskYaml.postFunctions = v5.taskYaml.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
         }
         if (v5.taskYaml.taskMl!=null) {
             t.taskYaml.taskMl = new TaskParamsYaml.TaskMachineLearning(v5.taskYaml.taskMl.hyperParams);
@@ -70,11 +70,11 @@ public class TaskParamsYamlUtilsV1
         return null;
     }
 
-    private static TaskParamsYaml.SnippetConfig toUp(TaskParamsYamlV1.SnippetConfigV1 src) {
+    private static TaskParamsYaml.FunctionConfig toUp(TaskParamsYamlV1.FunctionConfigV1 src) {
         if (src==null) {
             return null;
         }
-        TaskParamsYaml.SnippetConfig trg = new TaskParamsYaml.SnippetConfig();
+        TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig();
         trg.checksum = src.checksum;
         trg.checksumMap = src.checksumMap;
         trg.code = src.code;
@@ -82,7 +82,7 @@ public class TaskParamsYamlUtilsV1
         trg.file = src.file;
         trg.git = src.git;
         if (src.info!=null) {
-            trg.info = new TaskParamsYaml.SnippetInfo(src.info.signed, src.info.length);
+            trg.info = new TaskParamsYaml.FunctionInfo(src.info.signed, src.info.length);
         }
         trg.metas = src.metas;
         if (src.ml!=null) {

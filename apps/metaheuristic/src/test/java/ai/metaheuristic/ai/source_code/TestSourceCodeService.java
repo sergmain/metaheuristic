@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -229,10 +229,10 @@ public class TestSourceCodeService extends PreparingPlan {
     }
 
     private String getOKExecResult() {
-        SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec(
-                new SnippetApiData.SnippetExecResult("output-of-a-snippet",true, 0, "Everything is Ok."),
+        FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec(
+                new FunctionApiData.FunctionExecResult("output-of-a-snippet",true, 0, "Everything is Ok."),
                 null, null, null);
 
-        return SnippetExecUtils.toString(snippetExec);
+        return SnippetExecUtils.toString(functionExec);
     }
 }

@@ -16,14 +16,13 @@
 package ai.metaheuristic.apps.package_snippet;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
-import ai.metaheuristic.commons.utils.SnippetCoreUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYaml;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYamlUtils;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -93,19 +92,19 @@ public class PackageSnippet implements CommandLineRunner {
             return;
         }
         String yamlContent = FileUtils.readFileToString(snippetYamlFile, StandardCharsets.UTF_8);
-        SnippetConfigListYaml snippetConfigList = SnippetConfigListYamlUtils.BASE_YAML_UTILS.to(yamlContent);
+        FunctionConfigListYaml snippetConfigList = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(yamlContent);
 
         // Verify
         boolean isError = false;
         Set<String> set = new HashSet<>();
-        for (SnippetConfigListYaml.SnippetConfig snippet : snippetConfigList.getSnippets()) {
-//            SnippetConfigYaml snippet = SnippetCoreUtils.to(snTemp);
-            final SnippetApiData.SnippetConfigStatus verify = SnippetCoreUtils.validate(snippet);
+        for (FunctionConfigListYaml.FunctionConfig snippet : snippetConfigList.getFunctions()) {
+//            FunctionConfigYaml snippet = FunctionCoreUtils.to(snTemp);
+            final FunctionApiData.FunctionConfigStatus verify = FunctionCoreUtils.validate(snippet);
             if (!verify.isOk) {
                 System.out.println(verify.error);
                 isError=true;
             }
-            if (snippet.sourcing==EnumsApi.SnippetSourcing.launchpad) {
+            if (snippet.sourcing== EnumsApi.FunctionSourcing.launchpad) {
                 File sn = new File(snippetYamlFile.getParent(), snippet.file);
                 if (!sn.exists()) {
                     System.out.println("File " + sn.getPath() + " wasn't found");
@@ -129,38 +128,38 @@ public class PackageSnippet implements CommandLineRunner {
         }
 
         // Process
-        for (SnippetConfigListYaml.SnippetConfig snippetConfig : snippetConfigList.getSnippets()) {
+        for (FunctionConfigListYaml.FunctionConfig functionConfig : snippetConfigList.getFunctions()) {
             String sum;
-            if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.station ||
-                    snippetConfig.sourcing==EnumsApi.SnippetSourcing.git) {
-                String s = SnippetCoreUtils.getDataForChecksumWhenGitSourcing(snippetConfig);
+            if (functionConfig.sourcing== EnumsApi.FunctionSourcing.station ||
+                    functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
+                String s = FunctionCoreUtils.getDataForChecksumWhenGitSourcing(functionConfig);
                 sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(s.getBytes()));
             }
-            else if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.launchpad) {
-                final File snippetFile = new File(targetDir, snippetConfig.file);
-                FileUtils.copyFile(new File(snippetConfig.file), snippetFile);
+            else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.launchpad) {
+                final File snippetFile = new File(targetDir, functionConfig.file);
+                FileUtils.copyFile(new File(functionConfig.file), snippetFile);
                 try (FileInputStream fis = new FileInputStream(snippetFile)) {
                     sum = Checksum.getChecksum(EnumsApi.Type.SHA256, fis);
                 }
-                snippetConfig.info.length = snippetFile.length();
+                functionConfig.info.length = snippetFile.length();
             }
             else {
                 throw new IllegalArgumentException();
             }
 
-            snippetConfig.checksumMap = new HashMap<>();
+            functionConfig.checksumMap = new HashMap<>();
             if (privateKey!=null) {
                 String signature = SecUtils.getSignature(sum, privateKey);
-                snippetConfig.checksumMap.put(EnumsApi.Type.SHA256WithSignature, sum + SecUtils.SIGNATURE_DELIMITER + signature);
-                snippetConfig.info.signed = true;
+                functionConfig.checksumMap.put(EnumsApi.Type.SHA256WithSignature, sum + SecUtils.SIGNATURE_DELIMITER + signature);
+                functionConfig.info.signed = true;
             }
             else {
-                snippetConfig.checksumMap.put(EnumsApi.Type.SHA256, sum);
-                snippetConfig.info.signed = false;
+                functionConfig.checksumMap.put(EnumsApi.Type.SHA256, sum);
+                functionConfig.info.signed = false;
             }
         }
 
-        String yaml = SnippetConfigListYamlUtils.BASE_YAML_UTILS.toString(snippetConfigList);
+        String yaml = FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(snippetConfigList);
         final File file = new File(targetDir, SNIPPETS_YAML);
         FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
 

@@ -42,12 +42,31 @@ create table mh_batch
 CREATE INDEX mh_batch_exec_context_id_idx
     ON mh_batch (EXEC_CONTEXT_ID);
 
-alter table mh_task
-    drop column TASK_ORDER;
+drop table mh_task;
+
+CREATE TABLE mh_task
+(
+    ID                          INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION                     INT UNSIGNED    NOT NULL,
+    PARAMS                      MEDIUMTEXT not null,
+    STATION_ID                  NUMERIC(10, 0),
+    ASSIGNED_ON                 bigint,
+    IS_COMPLETED                tinyint(1) not null default 0,
+    COMPLETED_ON                bigint,
+    FUNCTION_EXEC_RESULTS       MEDIUMTEXT,
+    METRICS                     MEDIUMTEXT,
+    EXEC_CONTEXT_ID             NUMERIC(10, 0)   NOT NULL,
+    EXEC_STATE                  tinyint(1) not null default 0,
+    IS_RESULT_RECEIVED          tinyint(1) not null default 0,
+    RESULT_RESOURCE_SCHEDULED_ON bigint,
+    EXTENDED_RESULT             MEDIUMTEXT
+);
+
+CREATE INDEX mh_task_exec_context_id_idx
+    ON mh_task (EXEC_CONTEXT_ID);
+
 
 alter table mh_experiment change WORKBOOK_ID EXEC_CONTEXT_ID decimal null;
-
-alter table mh_task change WORKBOOK_ID EXEC_CONTEXT_ID decimal not null;
 
 drop table mh_launchpad_address;
 

@@ -1,18 +1,18 @@
-CREATE TABLE mh_snippet_data
+CREATE TABLE mh_function_data
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
-    SNIPPET_CODE    VARCHAR(100) not null,
+    FUNCTION_CODE    VARCHAR(100) not null,
     UPLOAD_TS       TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     DATA            LONGBLOB,
     PARAMS          MEDIUMTEXT not null
 );
 
-CREATE UNIQUE INDEX mh_snippet_data_snippet_code_unq_idx
-    ON mh_snippet_data (SNIPPET_CODE);
+CREATE UNIQUE INDEX mh_function_data_function_code_unq_idx
+    ON mh_function_data (FUNCTION_CODE);
 
-insert into mh_snippet_data
-(ID, VERSION, SNIPPET_CODE, UPLOAD_TS, DATA, PARAMS)
+insert into mh_function_data
+(ID, VERSION, FUNCTION_CODE, UPLOAD_TS, DATA, PARAMS)
 select ID, VERSION, CODE, UPLOAD_TS, DATA, PARAMS
 from mh_variable
 where DATA_TYPE=2;

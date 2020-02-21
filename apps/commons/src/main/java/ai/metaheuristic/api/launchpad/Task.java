@@ -32,7 +32,7 @@ public interface Task {
 
     boolean isCompleted();
 
-    String getSnippetExecResults();
+    String getFunctionExecResults();
 
     String getMetrics();
 
@@ -58,7 +58,7 @@ public interface Task {
 
     void setCompleted(boolean isCompleted);
 
-    void setSnippetExecResults(String snippetExecResults);
+    void setFunctionExecResults(String functionExecResults);
 
     void setMetrics(String metrics);
 

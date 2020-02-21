@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ public class TestSnippetUtils {
 
     @Test
     public void testMetas() {
-        final SnippetConfigYaml snippet = new SnippetConfigYaml();
+        final FunctionConfigYaml snippet = new FunctionConfigYaml();
         snippet.metas = new ArrayList<>();
         snippet.metas.add(new Meta("key1", "value1", null));
 

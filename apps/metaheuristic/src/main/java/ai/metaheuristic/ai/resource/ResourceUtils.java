@@ -34,7 +34,7 @@ public class ResourceUtils {
      * @return AssetFile
      */
     public static AssetFile prepareDataFile(File rootDir, String resourceId, String resourceFilename) {
-        return prepareAssetFile(rootDir, resourceId, resourceFilename, EnumsApi.BinaryDataType.DATA.toString());
+        return prepareAssetFile(rootDir, resourceId, resourceFilename, EnumsApi.BinaryType.data.toString());
     }
 
     public static AssetFile prepareOutputAssetFile(File rootDir, String id, String resourceFilename) {
@@ -78,7 +78,7 @@ public class ResourceUtils {
     public static AssetFile prepareSnippetFile(File baseDir, String snippetCode, String resourceFilename) {
 
         final AssetFile assetFile = new AssetFile();
-        final File trgDir = new File(baseDir, EnumsApi.BinaryDataType.SNIPPET.toString());
+        final File trgDir = new File(baseDir, EnumsApi.BinaryType.function.toString());
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
             log.error("#025.37 Can't create snippet dir: {}", trgDir.getAbsolutePath());

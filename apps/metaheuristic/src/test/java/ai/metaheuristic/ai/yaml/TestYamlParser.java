@@ -16,13 +16,11 @@
 
 package ai.metaheuristic.ai.yaml;
 
-import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.utils.SnippetCoreUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigYaml;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYaml;
-import ai.metaheuristic.commons.yaml.snippet_list.SnippetConfigListYamlUtils;
-import org.apache.commons.io.FileUtils;
+import ai.metaheuristic.commons.utils.FunctionCoreUtils;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
@@ -36,7 +34,6 @@ import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -110,26 +107,26 @@ public class TestYamlParser {
     @Test
     public void loadSnippetYamlWithError_01() throws IOException {
 
-        SnippetConfigListYaml config = SnippetConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/snippets-test-error.yaml", StandardCharsets.UTF_8));
+        FunctionConfigListYaml config = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/snippets-test-error.yaml", StandardCharsets.UTF_8));
         assertNotNull(config);
-        assertNotNull(config.getSnippets());
-        assertEquals(1, config.getSnippets().size());
-        SnippetConfigListYaml.SnippetConfig snippet = config.getSnippets().get(0);
-        SnippetApiData.SnippetConfigStatus status = SnippetCoreUtils.validate(snippet);
+        assertNotNull(config.getFunctions());
+        assertEquals(1, config.getFunctions().size());
+        FunctionConfigListYaml.FunctionConfig snippet = config.getFunctions().get(0);
+        FunctionApiData.FunctionConfigStatus status = FunctionCoreUtils.validate(snippet);
         assertFalse(status.isOk);
     }
 
     @Test
     public void loadSnippetsFromYaml() throws IOException {
 
-        SnippetConfigListYaml config = SnippetConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/snippets-test.yaml", StandardCharsets.UTF_8));
+        FunctionConfigListYaml config = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/snippets-test.yaml", StandardCharsets.UTF_8));
 
         assertNotNull(config);
-        assertNotNull(config.snippets);
-        assertEquals(3, config.snippets.size());
+        assertNotNull(config.functions);
+        assertEquals(3, config.functions.size());
 
-        SnippetConfigListYaml.SnippetConfig sc;
-        sc = config.snippets.get(0);
+        FunctionConfigListYaml.FunctionConfig sc;
+        sc = config.functions.get(0);
         assertEquals("aiai.fit.default.snippet:1.0-SNAPSHOT", sc.code);
         assertEquals(CommonConsts.FIT_TYPE, sc.type);
         assertEquals("fit-model.py", sc.file);
@@ -137,7 +134,7 @@ public class TestYamlParser {
         assertEquals("abc1", sc.params);
         assertNull(sc.ml);
 
-        sc = config.snippets.get(1);
+        sc = config.functions.get(1);
         assertEquals("aiai.predict.default.snippet:1.0-SNAPSHOT", sc.code);
         assertEquals(CommonConsts.PREDICT_TYPE, sc.type);
         assertEquals("predict-model.py", sc.file);
@@ -146,7 +143,7 @@ public class TestYamlParser {
         assertNotNull(sc.ml);
         assertTrue(sc.ml.metrics);
 
-        sc = config.snippets.get(2);
+        sc = config.functions.get(2);
         assertEquals("aiai.predict-model-for-test-only.snippet:1.0-SNAPSHOT", sc.code);
         assertEquals(CommonConsts.PREDICT_TYPE, sc.type);
         assertEquals("predict-model-for-test-only.py", sc.file);

@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.commons.yaml.snippet_list;
+package ai.metaheuristic.commons.yaml.function_list;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -27,11 +27,11 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class SnippetConfigListYaml implements BaseParams {
+public class FunctionConfigListYaml implements BaseParams {
 
     public final int version=2;
 
-    public List<SnippetConfig> snippets;
+    public List<FunctionConfig> functions;
 
     @Override
     public boolean checkIntegrity() {
@@ -41,10 +41,10 @@ public class SnippetConfigListYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class SnippetInfo {
+    public static class FunctionInfo {
         public boolean signed;
         /**
-         * snippet's binary length
+         * function's binary length
          */
         public long length;
     }
@@ -62,11 +62,11 @@ public class SnippetConfigListYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class SnippetConfig implements Cloneable {
+    public static class FunctionConfig implements Cloneable {
 
         @SneakyThrows
-        public SnippetConfig clone() {
-            final SnippetConfig clone = (SnippetConfig) super.clone();
+        public FunctionConfig clone() {
+            final FunctionConfig clone = (FunctionConfig) super.clone();
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
@@ -80,21 +80,21 @@ public class SnippetConfigListYaml implements BaseParams {
         }
 
         /**
-         * code of snippet, i.e. simple-app:1.0
+         * code of function, i.e. simple-app:1.0
          */
         public String code;
         public String type;
         public String file;
         /**
-         * params for command line fo invoking snippet
+         * params for command line for invoking function
          * <p>
          * this isn't a holder for yaml-based config
          */
         public String params;
         public String env;
-        public EnumsApi.SnippetSourcing sourcing;
+        public EnumsApi.FunctionSourcing sourcing;
         public Map<EnumsApi.Type, String> checksumMap;
-        public SnippetInfo info = new SnippetInfo();
+        public FunctionInfo info = new FunctionInfo();
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
