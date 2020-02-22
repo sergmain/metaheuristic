@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
@@ -157,7 +157,7 @@ public class ExperimentRestController {
 
     @PostMapping("/bind-experiment-to-source-code-with-resource")
     public OperationStatusRest bindExperimentToSourceCodeWithResource(String experimentCode, String resourcePoolCode, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return experimentTopLevelService.bindExperimentToSourceCodeWithResource(experimentCode, resourcePoolCode, context);
     }
 

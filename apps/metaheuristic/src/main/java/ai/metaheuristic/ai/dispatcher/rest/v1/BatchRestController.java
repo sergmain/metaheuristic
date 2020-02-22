@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
@@ -67,13 +67,13 @@ public class BatchRestController {
     public BatchData.BatchesResult batches(
             @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
             @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return batchTopLevelService.getBatches(pageable, context, false, filterBatches);
     }
 
     @GetMapping("/batch-exec-statuses")
     public BatchData.ExecStatuses batchExecStatuses(Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return batchTopLevelService.getBatchExecStatuses(context);
     }
 
@@ -81,13 +81,13 @@ public class BatchRestController {
     public BatchData.BatchesResult batchesPart(
             @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
             @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return batchTopLevelService.getBatches(pageable, context, false, filterBatches);
     }
 
     @GetMapping(value = "/batch-add")
     public SourceCodeData.SourceCodesForCompany batchAdd(Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeService.getAvailableSourceCodesForCompany(context);
     }
 
@@ -119,7 +119,7 @@ public class BatchRestController {
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request, @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) throws IOException {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         final ResponseEntity<AbstractResource> entity;
         try {
             ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context, false);

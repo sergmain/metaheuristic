@@ -56,7 +56,7 @@ public class CompanyTopLevelService {
     }
 
     public OperationStatusRest addCompany(Company company) {
-        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.010 Can't create a new company while 'replicated' mode of asset is active");
         }
@@ -129,7 +129,7 @@ public class CompanyTopLevelService {
      * @return
      */
     public OperationStatusRest editFormCommit(Long companyUniqueId, String name, String groups) {
-        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.055 Can't edit a company while 'replicated' mode of asset is active");
         }

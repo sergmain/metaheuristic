@@ -61,7 +61,7 @@ public class StationService {
     private final StationTaskService stationTaskService;
     private final UploadResourceActor uploadResourceActor;
     private final MetadataService metadataService;
-    private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
+    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final EnvService envService;
     private final ResourceProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
@@ -152,8 +152,8 @@ public class StationService {
             return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
         }
         final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
-        final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
-                launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
+        final DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad =
+                dispatcherLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
 
         UploadResourceTask uploadResourceTask = new UploadResourceTask(taskId, assetFile.file);
         uploadResourceTask.launchpad = launchpad.launchpadLookup;
@@ -169,7 +169,7 @@ public class StationService {
         public Map<String, List<AssetFile>> assetFiles = new HashMap<>();
     }
 
-    public StationService.ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.LaunchpadInfo launchpadCode, TaskParamsYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
+    public StationService.ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.LaunchpadInfo launchpadCode, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
         StationService.ResultOfChecking result = new StationService.ResultOfChecking();
         try {
             taskParamYaml.taskYaml.inputResourceIds.forEach((key, value) -> {
@@ -218,7 +218,7 @@ public class StationService {
         return result;
     }
 
-    public File getOutputResourceFile(StationTask task, TaskParamsYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
+    public File getOutputResourceFile(StationTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
         try {
             final SourceCodeParamsYaml.Variable dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
                     .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());

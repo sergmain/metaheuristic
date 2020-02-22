@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 public class MetadataService {
 
     private final Globals globals;
-    private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
+    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final StationFunctionService stationFunctionService;
 
     private Metadata metadata = null;
@@ -73,7 +73,7 @@ public class MetadataService {
     @Data
     @AllArgsConstructor
     private static class SimpleCache {
-        public final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad;
+        public final DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad;
         public final LaunchpadLookupConfig.Asset asset;
         public final Metadata.LaunchpadInfo launchpadInfo;
         public final File baseResourceDir;
@@ -100,7 +100,7 @@ public class MetadataService {
         if (metadata==null) {
             metadata = new Metadata();
         }
-        for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpadLookupExtendedService.lookupExtendedMap.entrySet()) {
+        for (Map.Entry<String, DispatcherLookupExtendedService.LaunchpadLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
             launchpadUrlAsCode(entry.getKey());
         }
         // update metadata.yaml file after fixing brocked metas
@@ -162,10 +162,10 @@ public class MetadataService {
         SimpleCache simpleCache = simpleCacheMap.computeIfAbsent(launchpadUrl, o->{
             final Metadata.LaunchpadInfo launchpadInfo = launchpadUrlAsCode(launchpadUrl);
             return new SimpleCache(
-                    launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl),
+                    dispatcherLookupExtendedService.lookupExtendedMap.get(launchpadUrl),
                     asset,
                     launchpadInfo,
-                    launchpadLookupExtendedService.prepareBaseResourceDir(launchpadInfo)
+                    dispatcherLookupExtendedService.prepareBaseResourceDir(launchpadInfo)
             );
         });
 

@@ -1,6 +1,6 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <div>
         <h1 class="widget-header">Deletion of part of global variable</h1>
@@ -37,7 +37,7 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${globalVariable}" th:method="post" th:action="@{/launchpad/global-variable/global-variable-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${globalVariable}" th:method="post" th:action="@{/dispatcher/global-variable/global-variable-delete-commit}"
                           accept-charset="UTF-8"
                           id="global-variable-delete-commit"
                           name="f">
@@ -51,7 +51,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/global-variable/global-variables}" accept-charset="UTF-8" id="global-variable-delete-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/global-variable/global-variables}" accept-charset="UTF-8" id="global-variable-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

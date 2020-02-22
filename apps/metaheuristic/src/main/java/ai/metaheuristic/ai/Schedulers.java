@@ -15,8 +15,8 @@
  */
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.dispatcher.ArtifactCleanerAtLaunchpad;
-import ai.metaheuristic.ai.dispatcher.RoundRobinForLaunchpad;
+import ai.metaheuristic.ai.dispatcher.ArtifactCleanerAtDispatcher;
+import ai.metaheuristic.ai.dispatcher.RoundRobinForDispatcher;
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
@@ -53,7 +53,7 @@ public class Schedulers {
         private final Globals globals;
         private final ExecContextSchedulerService execContextSchedulerService;
         private final SourceCodeService sourceCodeService;
-        private final ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad;
+        private final ArtifactCleanerAtDispatcher artifactCleanerAtDispatcher;
         private final ExperimentService experimentService;
         private final BatchService batchService;
         private final ReplicationService replicationService;
@@ -129,7 +129,7 @@ public class Schedulers {
                 return;
             }
             log.info("Invoking artifactCleanerAtLaunchpad.fixedDelay()");
-            artifactCleanerAtLaunchpad.fixedDelay();
+            artifactCleanerAtDispatcher.fixedDelay();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.exteriment-finisher'), 5, 300, 10)*1000 }")
@@ -187,15 +187,15 @@ public class Schedulers {
         private final UploadResourceActor uploadResourceActor;
         private final ArtifactCleanerAtStation artifactCleaner;
         private final MetadataService metadataService;
-        private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
+        private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
         private final CurrentExecState currentExecState;
         private final EnvService envService;
         private final StationCommandProcessor stationCommandProcessor;
 
-        private final RoundRobinForLaunchpad roundRobin;
-        private final Map<String, LaunchpadRequestor> launchpadRequestorMap = new HashMap<>();
+        private final RoundRobinForDispatcher roundRobin;
+        private final Map<String, DispatcherRequestor> launchpadRequestorMap = new HashMap<>();
 
-        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadFunctionActor downloadFunctionActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, CurrentExecState currentExecState, EnvService envService, StationCommandProcessor stationCommandProcessor) {
+        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadFunctionActor downloadFunctionActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, MetadataService metadataService, DispatcherLookupExtendedService dispatcherLookupExtendedService, CurrentExecState currentExecState, EnvService envService, StationCommandProcessor stationCommandProcessor) {
             this.globals = globals;
             this.taskAssetPreparer = taskAssetPreparer;
             this.taskProcessor = taskProcessor;
@@ -206,19 +206,19 @@ public class Schedulers {
             this.envService = envService;
             this.stationCommandProcessor = stationCommandProcessor;
 
-            if (launchpadLookupExtendedService.lookupExtendedMap==null) {
+            if (dispatcherLookupExtendedService.lookupExtendedMap==null) {
                 throw new IllegalStateException("launchpad.yaml wasn't configured");
             }
-            this.roundRobin = new RoundRobinForLaunchpad(launchpadLookupExtendedService.lookupExtendedMap);
+            this.roundRobin = new RoundRobinForDispatcher(dispatcherLookupExtendedService.lookupExtendedMap);
             this.metadataService = metadataService;
-            this.launchpadLookupExtendedService = launchpadLookupExtendedService;
+            this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
             this.currentExecState = currentExecState;
 
-            for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpadLookupExtendedService.lookupExtendedMap.entrySet()) {
-                final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = entry.getValue();
-                final LaunchpadRequestor requestor = new LaunchpadRequestor(launchpad.launchpadLookup.url, globals,
+            for (Map.Entry<String, DispatcherLookupExtendedService.LaunchpadLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
+                final DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad = entry.getValue();
+                final DispatcherRequestor requestor = new DispatcherRequestor(launchpad.launchpadLookup.url, globals,
                         stationTaskService, stationService, this.metadataService, this.currentExecState,
-                        this.launchpadLookupExtendedService, this.stationCommandProcessor);
+                        this.dispatcherLookupExtendedService, this.stationCommandProcessor);
 
                 launchpadRequestorMap.put(launchpad.launchpadLookup.url, requestor);
             }

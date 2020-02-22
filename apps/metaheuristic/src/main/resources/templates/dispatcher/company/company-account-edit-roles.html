@@ -20,7 +20,7 @@
         <tr th:each="r, i : ${roles}">
             <td>
                 <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
-                      th:action="@{/launchpad/company/company-account-edit-roles-commit/{companyUniqueId}(companyUniqueId=${companyUniqueId})}" accept-charset="UTF-8"
+                      th:action="@{/dispatcher/company/company-account-edit-roles-commit/{companyUniqueId}(companyUniqueId=${companyUniqueId})}" accept-charset="UTF-8"
                       th:id="${'form-change-role-' + i.index}" name="f">
                     <input type="hidden" th:name="roleId" th:value="${i.index}"/>
                     <input type="hidden" th:name="accountId" th:value="${account.id}"/>
@@ -35,6 +35,6 @@
     </table>
 
     <p></p>
-    <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/company/company-accounts/' + companyUniqueId}">To account</a>
+    <a class="pure-button pure-button-primary" href="#" th:href="${'/dispatcher/company/company-accounts/' + companyUniqueId}">To account</a>
     </form>
 </div>

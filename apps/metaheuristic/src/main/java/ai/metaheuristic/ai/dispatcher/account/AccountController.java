@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.account;
 
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
@@ -52,7 +52,7 @@ public class AccountController {
                            @PageableDefault(size = 5) Pageable pageable,
                            @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                            @ModelAttribute("errorMessage") final ArrayList<String> errorMessage, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         AccountData.AccountsResult accounts = accountTopLevelService.getAccounts(pageable, context);
         ControllerUtils.addMessagesToModel(model, accounts);
         model.addAttribute("result", accounts);
@@ -62,7 +62,7 @@ public class AccountController {
     // for AJAX
     @PostMapping("/accounts-part")
     public String getAccountsViaAJAX(Model model, @PageableDefault(size=5) Pageable pageable, Authentication authentication )  {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         AccountData.AccountsResult accounts = accountTopLevelService.getAccounts(pageable, context);
         model.addAttribute("result", accounts);
         return "launchpad/account/accounts :: table";
@@ -75,7 +75,7 @@ public class AccountController {
 
     @PostMapping("/account-add-commit")
     public String addFormCommit(Model model, Account account, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = accountTopLevelService.addAccount(account, context);
         if (operationStatusRest.isErrorMessages()) {
             model.addAttribute("errorMessage", operationStatusRest.errorMessages);
@@ -86,7 +86,7 @@ public class AccountController {
 
     @GetMapping(value = "/account-edit/{id}")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication){
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         AccountData.AccountResult accountResult = accountTopLevelService.getAccount(id, context);
         if (accountResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
@@ -101,7 +101,7 @@ public class AccountController {
     @PostMapping("/account-edit-commit")
     public String editFormCommit(Long id, String publicName, boolean enabled,
                                  final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = accountTopLevelService.editFormCommit(id, publicName, enabled, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
@@ -115,7 +115,7 @@ public class AccountController {
     @GetMapping(value = "/account-password-edit/{id}")
     public String passwordEdit(@PathVariable Long id, Model model,
                                final RedirectAttributes redirectAttributes, Authentication authentication){
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         AccountData.AccountResult accountResult = accountTopLevelService.getAccount(id, context);
         if (accountResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
@@ -130,7 +130,7 @@ public class AccountController {
     @PostMapping("/account-password-edit-commit")
     public String passwordEditFormCommit(Long id, String password, String password2,
                                          final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = accountTopLevelService.passwordEditFormCommit(id, password, password2, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);

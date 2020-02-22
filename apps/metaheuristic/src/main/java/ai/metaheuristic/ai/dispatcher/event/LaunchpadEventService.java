@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.LaunchpadEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.LaunchpadEventRepository;
@@ -82,12 +82,12 @@ public class LaunchpadEventService {
 
     public void publishBatchEvent(
             EnumsApi.LaunchpadEventType event, Long companyUniqueId, String filename,
-            Long size, Long batchId, Long execContextId, LaunchpadContext launchpadContext) {
+            Long size, Long batchId, Long execContextId, DispatcherContext dispatcherContext) {
         if (!globals.isEventEnabled) {
             return;
         }
-        if (event==EnumsApi.LaunchpadEventType.BATCH_CREATED && (batchId==null || launchpadContext==null)) {
-            throw new IllegalStateException("Error (event==Enums.LaunchpadEventType.BATCH_CREATED && (batchId==null || launchpadContext==null))");
+        if (event==EnumsApi.LaunchpadEventType.BATCH_CREATED && (batchId==null || dispatcherContext ==null)) {
+            throw new IllegalStateException("Error (event==Enums.LaunchpadEventType.BATCH_CREATED && (batchId==null || dispatcherContext==null))");
         }
         LaunchpadEventYaml.BatchEventData batchEventData = new LaunchpadEventYaml.BatchEventData();
         batchEventData.filename = filename;
@@ -95,10 +95,10 @@ public class LaunchpadEventService {
         batchEventData.batchId = batchId;
         batchEventData.execContextId = execContextId;
         String contextId = null;
-        if (launchpadContext!=null) {
-            batchEventData.companyId = launchpadContext.getCompanyId();
-            batchEventData.username = launchpadContext.getUsername();
-            contextId = launchpadContext.contextId;
+        if (dispatcherContext !=null) {
+            batchEventData.companyId = dispatcherContext.getCompanyId();
+            batchEventData.username = dispatcherContext.getUsername();
+            contextId = dispatcherContext.contextId;
         }
         applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, companyUniqueId, contextId, batchEventData));
     }

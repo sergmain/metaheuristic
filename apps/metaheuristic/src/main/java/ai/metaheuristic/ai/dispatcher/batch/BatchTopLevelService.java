@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
@@ -105,7 +105,7 @@ public class BatchTopLevelService {
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
     @SuppressWarnings("unused")
-    public BatchData.ExecStatuses getBatchExecStatuses(LaunchpadContext context) {
+    public BatchData.ExecStatuses getBatchExecStatuses(DispatcherContext context) {
         //noinspection UnnecessaryLocalVariable
         BatchData.ExecStatuses execStatuses = new BatchData.ExecStatuses(batchRepository.getBatchExecStatuses(context.getCompanyId()));
         return execStatuses;
@@ -123,7 +123,7 @@ public class BatchTopLevelService {
         return m.matches();
     }
 
-    public BatchData.BatchesResult getBatches(Pageable pageable, LaunchpadContext context, boolean includeDeleted, boolean filterBatches) {
+    public BatchData.BatchesResult getBatches(Pageable pageable, DispatcherContext context, boolean includeDeleted, boolean filterBatches) {
         return getBatches(pageable, context.getCompanyId(), context.account, includeDeleted, context.account != null && filterBatches);
     }
 
@@ -159,7 +159,7 @@ public class BatchTopLevelService {
         return result;
     }
 
-    public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final LaunchpadContext context) {
+    public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext context) {
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
             return new BatchData.UploadingStatus("#995.040 name of uploaded file is null or blank");
@@ -255,7 +255,7 @@ public class BatchTopLevelService {
         return uploadingStatus;
     }
 
-    public OperationStatusRest processResourceDeleteCommit(Long batchId, LaunchpadContext context, boolean isVirtualDeletion) {
+    public OperationStatusRest processResourceDeleteCommit(Long batchId, DispatcherContext context, boolean isVirtualDeletion) {
         return processResourceDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
     }
 
@@ -281,7 +281,7 @@ public class BatchTopLevelService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
     }
 
-    public BatchData.Status getProcessingResourceStatus(Long batchId, LaunchpadContext context, boolean includeDeleted) {
+    public BatchData.Status getProcessingResourceStatus(Long batchId, DispatcherContext context, boolean includeDeleted) {
         return getProcessingResourceStatus(batchId, context.getCompanyId(), includeDeleted);
     }
 
@@ -297,7 +297,7 @@ public class BatchTopLevelService {
         return new BatchData.Status(batchId, status.getStatus(), status.ok);
     }
 
-    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, LaunchpadContext context, boolean includeDeleted) throws IOException {
+    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, DispatcherContext context, boolean includeDeleted) throws IOException {
         return getBatchProcessingResult(batchId, context.getCompanyId(), includeDeleted);
     }
 

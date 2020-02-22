@@ -1,7 +1,7 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <h1 class="widget-header">Delete Experiment from Atlas</h1>
 
@@ -26,7 +26,7 @@
         <tr>
             <td>
                 <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${experiment}" th:method="post"
-                      th:action="@{/launchpad/atlas/atlas-experiment-delete-commit}"
+                      th:action="@{/dispatcher/atlas/atlas-experiment-delete-commit}"
                       accept-charset="UTF-8"
                       id="experiment-delete-commit"
                       name="f">
@@ -40,7 +40,7 @@
                 &nbsp;
             </td>
             <td>
-                <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/atlas/atlas-experiments}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
+                <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/atlas/atlas-experiments}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
                     <fieldset>
                         <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                     </fieldset>

@@ -2,7 +2,7 @@
      xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Edit account</h1>
@@ -11,7 +11,7 @@
         <p th:text="${'Username: ' + account.username}">username</p>
 
         <form class="pure-form pure-form-stacked" th:object="${account}" method="post" action="#" th:method="POST"
-              th:action="@{/launchpad/company/company-account-edit-commit/{companyUniqueId}(companyUniqueId=${companyUniqueId})}" accept-charset="UTF-8" id="account-form"
+              th:action="@{/dispatcher/company/company-account-edit-commit/{companyUniqueId}(companyUniqueId=${companyUniqueId})}" accept-charset="UTF-8" id="account-form"
               name="f">
             <input type="hidden" th:name="id" th:value="${account.id}"/>
             <fieldset>
@@ -34,7 +34,7 @@
                         </td>
                         <td>
                             <a class="pure-button pure-button-primary" href="company-accounts.html"
-                               th:href="${'/launchpad/company/company-accounts/'+ companyUniqueId}">Cancel</a>
+                               th:href="${'/dispatcher/company/company-accounts/'+ companyUniqueId}">Cancel</a>
                         </td>
                     </tr>
                 </table>

@@ -8,13 +8,13 @@
             <a class="pure-menu-link" href="about.html" th:href="@{/about}">About</a>
         </li>
         <li sec:authorize="hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT', 'ADMIN', 'DATA', 'MANAGER')"
-            th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+            th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
             th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/') && !#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/index.html" th:href="@{/launchpad/index}">Launchpad</a>
+            <a class="pure-menu-link" href="launchpad/index.html" th:href="@{/dispatcher/index}">Launchpad</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')"
-            th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/batch/index.html" th:href="@{/launchpad/batch/index}">Batch</a>
+            th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="launchpad/batch/index.html" th:href="@{/dispatcher/batch/index}">Batch</a>
         </li>
         <li sec:authorize="isAnonymous()" th:attr="class=${#httpServletRequest.requestURI=='/login'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="/login" th:href="@{/login}">Sign in</a>

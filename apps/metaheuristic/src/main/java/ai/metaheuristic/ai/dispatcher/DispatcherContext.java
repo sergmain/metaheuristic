@@ -31,7 +31,7 @@ import java.util.UUID;
  */
 @Data
 @AllArgsConstructor
-public class LaunchpadContext {
+public class DispatcherContext {
     public final String contextId = UUID.randomUUID().toString();
 
     @NonNull

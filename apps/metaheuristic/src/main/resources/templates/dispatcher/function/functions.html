@@ -1,7 +1,7 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
      xmlns:th="http://www.thymeleaf.org"
      layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <script>
         'use strict';
@@ -56,14 +56,14 @@
     <!-- ==================================== Function files ==================================== -->
     <h1 class="widget-header">Functions</h1>
 
-    <div th:if="${result.assetMode==T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
+    <div th:if="${result.assetMode==T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
         <p class="alert alert-info">Upload and deletion of functions are disabled, assetMode is 'replicated'.</p>
     </div>
 
-    <div th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">
+    <div th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
         <h2 class="widget-header">Upload function </h2>
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-              th:action="@{/launchpad/function/function-upload-from-file}"
+              th:action="@{/dispatcher/function/function-upload-from-file}"
         >
             <table>
                 <tr>
@@ -109,7 +109,7 @@
             <th>Code</th>
             <th>Type</th>
             <th>Params</th>
-            <th th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}">&nbsp;</th>
+            <th th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">&nbsp;</th>
         </tr>
         </thead>
         <tbody>
@@ -118,7 +118,7 @@
             <td th:text="${s.code}">Code</td>
             <td th:text="${s.type}">Type</td>
             <td><pre style="display: none;" th:if="${s.params}!=null" th:text="${s.params}">Params</pre></td>
-            <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.LaunchpadAssetMode).replicated}"><a class="pure-button pure-button-primary" href="#"
+            <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}"><a class="pure-button pure-button-primary" href="#"
                    th:data-id="${s.id}"
                    onclick="deleteFunction( this.getAttribute('data-id') ); return false;"
                    title='Delete function'>Delete</a></td>

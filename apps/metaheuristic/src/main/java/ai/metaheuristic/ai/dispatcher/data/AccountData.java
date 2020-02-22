@@ -35,7 +35,7 @@ public class AccountData {
     @EqualsAndHashCode(callSuper = false)
     public static class AccountsResult extends BaseDataClass {
         public Page<Account> accounts;
-        public EnumsApi.LaunchpadAssetMode assetMode;
+        public EnumsApi.DispatcherAssetMode assetMode;
     }
 
     @Data

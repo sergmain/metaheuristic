@@ -37,10 +37,10 @@ public class ArtifactCleanerAtStation {
     private final CurrentExecState currentExecState;
     private final Globals globals;
     private final MetadataService metadataService;
-    private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
+    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
 
     public void fixedDelay() {
-        for (String launchpadUrl : launchpadLookupExtendedService.lookupExtendedMap.keySet()) {
+        for (String launchpadUrl : dispatcherLookupExtendedService.lookupExtendedMap.keySet()) {
             if (!globals.isStationEnabled || !currentExecState.isInited(launchpadUrl)) {
                 // don't delete anything until the station has received the list of actual ExecContexts
                 continue;

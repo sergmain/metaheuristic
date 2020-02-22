@@ -65,7 +65,7 @@ public class FunctionTopLevelService {
 
     public OperationStatusRest deleteFunctionById(Long id) {
         log.info("Start deleting function with id: {}", id );
-        if (globals.assetMode== EnumsApi.LaunchpadAssetMode.replicated) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.005 Can't delete function while 'replicated' mode of asset is active");
         }
@@ -80,7 +80,7 @@ public class FunctionTopLevelService {
     }
 
     public OperationStatusRest uploadFunction(final MultipartFile file) {
-        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.020 Can't upload function while 'replicated' mode of asset is active");
         }

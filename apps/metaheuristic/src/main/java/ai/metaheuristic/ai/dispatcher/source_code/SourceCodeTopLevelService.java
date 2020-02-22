@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.LaunchpadInternalEvent;
@@ -78,15 +78,15 @@ public class SourceCodeTopLevelService {
     private final ExecContextCache execContextCache;
     private final GlobalVariableService globalVariableService;
 
-    public SourceCodeApiData.ExecContextResult addExecContext(Long sourceCodeId, String variable, LaunchpadContext context) {
+    public SourceCodeApiData.ExecContextResult addExecContext(Long sourceCodeId, String variable, DispatcherContext context) {
         return getExecContextResult(variable, context, sourceCodeCache.findById(sourceCodeId));
     }
 
-    public SourceCodeApiData.ExecContextResult addExecContext(String sourceCodeUid, String variable, LaunchpadContext context) {
+    public SourceCodeApiData.ExecContextResult addExecContext(String sourceCodeUid, String variable, DispatcherContext context) {
         return getExecContextResult(variable, context, sourceCodeRepository.findByUidAndCompanyId(sourceCodeUid, context.getCompanyId()));
     }
 
-    private SourceCodeApiData.ExecContextResult getExecContextResult(String variable, LaunchpadContext context, SourceCodeImpl sourceCode) {
+    private SourceCodeApiData.ExecContextResult getExecContextResult(String variable, DispatcherContext context, SourceCodeImpl sourceCode) {
         if (S.b(variable)) {
             return new SourceCodeApiData.ExecContextResult("#560.006 name of variable is empty");
         }
@@ -108,7 +108,7 @@ public class SourceCodeTopLevelService {
         return execContextService.createExecContextInternal(sourceCode, variable);
     }
 
-    public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, LaunchpadContext context) {
+    public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, DispatcherContext context) {
         pageable = ControllerUtils.fixPageSize(globals.sourceCodeRowsLimit, pageable);
         List<Long> sourceCodeIds = sourceCodeRepository.findAllIdsByOrderByIdDesc(context.getCompanyId());
         AtomicInteger count = new AtomicInteger();
@@ -145,7 +145,7 @@ public class SourceCodeTopLevelService {
         return sourceCodesResultRest;
     }
 
-    public SourceCodeApiData.SourceCodeResult getSourceCode(Long sourceCodeId, LaunchpadContext context) {
+    public SourceCodeApiData.SourceCodeResult getSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
             return new SourceCodeApiData.SourceCodeResult(
@@ -156,7 +156,7 @@ public class SourceCodeTopLevelService {
         return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source);
     }
 
-    public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, LaunchpadContext context) {
+    public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
             return new SourceCodeApiData.SourceCodeResult("#560.070 sourceCode wasn't found, sourceCodeId: " + sourceCodeId,
@@ -173,8 +173,8 @@ public class SourceCodeTopLevelService {
     }
 
     @SuppressWarnings("Duplicates")
-    public SourceCodeApiData.SourceCodeResult addSourceCode(String sourceCodeYamlAsStr, LaunchpadContext context) {
-        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+    public SourceCodeApiData.SourceCodeResult addSourceCode(String sourceCodeYamlAsStr, DispatcherContext context) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new SourceCodeApiData.SourceCodeResult("#560.085 Can't add a new sourceCode while 'replicated' mode of asset is active");
         }
         if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
@@ -219,8 +219,8 @@ public class SourceCodeTopLevelService {
     }
 
     @SuppressWarnings("Duplicates")
-    public SourceCodeApiData.SourceCodeResult updateSourceCode(Long sourceCodeId, String sourceCodeYamlAsStr, LaunchpadContext context) {
-        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+    public SourceCodeApiData.SourceCodeResult updateSourceCode(Long sourceCodeId, String sourceCodeYamlAsStr, DispatcherContext context) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new SourceCodeApiData.SourceCodeResult("#560.160 Can't update a sourceCode while 'replicated' mode of asset is active");
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
@@ -261,8 +261,8 @@ public class SourceCodeTopLevelService {
         return result;
     }
 
-    public OperationStatusRest deleteSourceCodeById(Long sourceCodeId, LaunchpadContext context) {
-        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+    public OperationStatusRest deleteSourceCodeById(Long sourceCodeId, DispatcherContext context) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
         }
@@ -275,8 +275,8 @@ public class SourceCodeTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest archiveSourceCodeById(Long sourceCodeId, LaunchpadContext context) {
-        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+    public OperationStatusRest archiveSourceCodeById(Long sourceCodeId, DispatcherContext context) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.260 Can't archive a sourceCode while 'replicated' mode of asset is active");
         }
@@ -294,8 +294,8 @@ public class SourceCodeTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest uploadSourceCode(MultipartFile file, LaunchpadContext context) {
-        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+    public OperationStatusRest uploadSourceCode(MultipartFile file, DispatcherContext context) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.280 Can't upload sourceCode while 'replicated' mode of asset is active");
         }
@@ -350,7 +350,7 @@ public class SourceCodeTopLevelService {
 
     // ========= ExecContext specific =============
 
-    public OperationStatusRest changeExecContextState(String state, Long execContextId, LaunchpadContext context) {
+    public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
         EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.valueOf(state.toUpperCase());
         if (execState== EnumsApi.ExecContextState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
@@ -363,7 +363,7 @@ public class SourceCodeTopLevelService {
         return status;
     }
 
-    public OperationStatusRest deleteExecContextById(Long execContextId, LaunchpadContext context) {
+    public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
         OperationStatusRest status = checkExecContext(execContextId, context);
         if (status != null) {
             return status;
@@ -374,7 +374,7 @@ public class SourceCodeTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private OperationStatusRest checkExecContext(Long execContextId, LaunchpadContext context) {
+    private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
         if (execContextId==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 execContextId is null");
         }
@@ -390,7 +390,7 @@ public class SourceCodeTopLevelService {
         return null;
     }
 
-    private OperationStatusRest checkSourceCode(SourceCode sourceCode, LaunchpadContext context) {
+    private OperationStatusRest checkSourceCode(SourceCode sourceCode, DispatcherContext context) {
         if (sourceCode ==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 sourceCode is null");
         }

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
-import ai.metaheuristic.ai.station.LaunchpadLookupExtendedService;
+import ai.metaheuristic.ai.station.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,13 +24,13 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-public class RoundRobinForLaunchpad {
+public class RoundRobinForDispatcher {
 
     private final Map<String, AtomicBoolean> urls;
 
-    public RoundRobinForLaunchpad(Map<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> launchpads) {
+    public RoundRobinForDispatcher(Map<String, DispatcherLookupExtendedService.LaunchpadLookupExtended> launchpads) {
         Map<String, AtomicBoolean> map = new HashMap<>();
-        for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpads.entrySet()) {
+        for (Map.Entry<String, DispatcherLookupExtendedService.LaunchpadLookupExtended> entry : launchpads.entrySet()) {
             LaunchpadLookupConfig.LaunchpadLookup launchpadLookup = entry.getValue().launchpadLookup;
             if (launchpadLookup.disabled) {
                 log.info("launchpad {} is disabled", launchpadLookup.url);

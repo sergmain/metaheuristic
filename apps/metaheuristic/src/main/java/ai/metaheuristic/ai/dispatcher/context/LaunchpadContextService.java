@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.context;
 
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
@@ -40,7 +40,7 @@ public class LaunchpadContextService {
 
     private final CompanyCache companyCache;
 
-    public LaunchpadContext getContext(Authentication authentication) {
+    public DispatcherContext getContext(Authentication authentication) {
         Account account = (Account)authentication.getPrincipal();
         if (account==null) {
             throw new BadExecutionContextException("principal is null");
@@ -48,7 +48,7 @@ public class LaunchpadContextService {
         return getContext(authentication, account.companyId);
     }
 
-    public LaunchpadContext getContext(Authentication authentication, Long companyUniqueId) {
+    public DispatcherContext getContext(Authentication authentication, Long companyUniqueId) {
         Account account = (Account)authentication.getPrincipal();
         if (account==null) {
             throw new BadExecutionContextException("principal is null");
@@ -58,7 +58,7 @@ public class LaunchpadContextService {
             throw new BadExecutionContextException("company not found not found for user: " + account.username);
         }
         //noinspection UnnecessaryLocalVariable
-        LaunchpadContext context = new LaunchpadContext(account, company);
+        DispatcherContext context = new DispatcherContext(account, company);
         return context;
     }
 }

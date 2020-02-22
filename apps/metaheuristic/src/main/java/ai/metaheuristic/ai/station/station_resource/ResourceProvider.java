@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.station.station_resource;
 
 import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.station.LaunchpadLookupExtendedService;
+import ai.metaheuristic.ai.station.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -29,12 +29,12 @@ import java.util.List;
 
 public interface ResourceProvider {
     List<AssetFile> prepareForDownloadingDataFile(
-            File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            File taskDir, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String resourceId, SourceCodeParamsYaml.Variable dataStorageParams);
 
     FunctionApiData.SystemExecResult processResultingFile(
-            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String outputResourceId,
             TaskParamsYaml.FunctionConfig functionConfig
@@ -42,7 +42,7 @@ public interface ResourceProvider {
 
     File getOutputResourceFile(
             File taskDir,
-            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task,
             String outputResourceId, SourceCodeParamsYaml.Variable dataStorageParams);
 }

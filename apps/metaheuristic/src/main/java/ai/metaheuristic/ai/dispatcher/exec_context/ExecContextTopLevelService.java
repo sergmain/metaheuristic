@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -43,11 +43,11 @@ public class ExecContextTopLevelService {
     private final ExecContextService execContextService;
     private final SourceCodeCache sourceCodeCache;
 
-    public SourceCodeApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, LaunchpadContext context) {
+    public SourceCodeApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         return execContextService.getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
     }
 
-    public SourceCodeApiData.ExecContextResult getExecContextExtendedForDeletion(Long execContextId, LaunchpadContext context) {
+    public SourceCodeApiData.ExecContextResult getExecContextExtendedForDeletion(Long execContextId, DispatcherContext context) {
         SourceCodeApiData.ExecContextResult result = execContextService.getExecContextExtended(execContextId);
 
         // don't show actual graph for this execContext

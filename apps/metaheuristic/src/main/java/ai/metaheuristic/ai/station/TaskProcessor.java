@@ -66,7 +66,7 @@ public class TaskProcessor {
     private final SystemProcessService systemProcessService;
     private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
-    private final LaunchpadLookupExtendedService launchpadLookupExtendedService ;
+    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final MetadataService metadataService;
     private final EnvService envService;
     private final StationService stationService;
@@ -114,7 +114,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
+            DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad = dispatcherLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
             if (launchpad==null) {
                 final String es = "#100.020 Broken task #"+task.taskId+". Launchpad wasn't found for url " + task.launchpadUrl;
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
@@ -269,7 +269,7 @@ public class TaskProcessor {
 
     private void execAllFunctions(
             StationTask task, Metadata.LaunchpadInfo launchpadInfo,
-            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
             File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
             File systemDir, FunctionPrepareResult[] results) {
         List<FunctionApiData.SystemExecResult> preSystemExecResult = new ArrayList<>();
@@ -504,7 +504,7 @@ public class TaskProcessor {
         functionPrepareResult.function = function;
 
         if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.launchpad) {
-            final File baseResourceDir = launchpadLookupExtendedService.prepareBaseResourceDir(launchpadCode);
+            final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(launchpadCode);
             functionPrepareResult.functionAssetFile = ResourceUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
             // is this function prepared?
             if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
@@ -516,7 +516,7 @@ public class TaskProcessor {
             }
         }
         else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {
-            final File resourceDir = launchpadLookupExtendedService.prepareBaseResourceDir(launchpadCode);
+            final File resourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(launchpadCode);
             log.info("Root dir for function: " + resourceDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
             if (!result.ok) {

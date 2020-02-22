@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
-import ai.metaheuristic.ai.station.LaunchpadLookupExtendedService;
+import ai.metaheuristic.ai.station.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.station.MetadataService;
 import ai.metaheuristic.ai.station.net.HttpClientExecutor;
 import ai.metaheuristic.ai.station.function.StationFunctionService;
@@ -64,7 +64,7 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
 
     private final Globals globals;
     private final MetadataService metadataService;
-    private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
+    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final StationFunctionService stationFunctionService;
 
     @SuppressWarnings("Duplicates")
@@ -126,7 +126,7 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
             Checksum checksum = checksumState.getChecksum();
 
             final Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(launchpad.url);
-            final File baseResourceDir = launchpadLookupExtendedService.prepareBaseResourceDir(launchpadInfo);
+            final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(launchpadInfo);
             final AssetFile assetFile = ResourceUtils.prepareFunctionFile(baseResourceDir, functionCode, functionConfig.file);
 
             switch (functionDownloadStatus.functionState) {
@@ -289,8 +289,8 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
     public void prepareFunctionForDownloading() {
         metadataService.getFunctionDownloadStatusYaml().statuses.forEach(o -> {
             if (o.sourcing== EnumsApi.FunctionSourcing.launchpad && (o.functionState == Enums.FunctionState.none || !o.verified)) {
-                final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
-                        launchpadLookupExtendedService.lookupExtendedMap.get(o.launchpadUrl);
+                final DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad =
+                        dispatcherLookupExtendedService.lookupExtendedMap.get(o.launchpadUrl);
 
                 if (launchpad==null || launchpad.context.chunkSize==null) {
                     log.info("#811.195 (launchpad==null || launchpad.config.chunkSize==null), launchpadUrl: {}", o.launchpadUrl);

@@ -71,7 +71,7 @@ public class SourceCodeApiData {
     @EqualsAndHashCode(callSuper = false)
     public static class SourceCodesResult extends BaseDataClass {
         public Slice<SourceCode> items;
-        public EnumsApi.LaunchpadAssetMode assetMode;
+        public EnumsApi.DispatcherAssetMode assetMode;
     }
 
     @Data

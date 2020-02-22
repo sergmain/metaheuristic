@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.company;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
@@ -151,7 +151,7 @@ public class BatchForOperatorController {
             @PathVariable Long companyUniqueId,
             Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         // create context with putting current user to specific company
-        LaunchpadContext context = launchpadContextService.getContext(authentication, companyUniqueId);
+        DispatcherContext context = launchpadContextService.getContext(authentication, companyUniqueId);
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
         if (uploadingStatus.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.errorMessages);

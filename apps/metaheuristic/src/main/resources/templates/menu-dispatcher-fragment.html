@@ -1,43 +1,43 @@
 <div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <a class="pure-menu-heading">Control panel</a>
     <ul>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER')"
             th:attr="class=${#httpServletRequest.requestURI=='/launchpad/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/index.html" th:href="@{/launchpad/index}">Launchpad index</a>
+            <a class="pure-menu-link" href="launchpad/index.html" th:href="@{/dispatcher/index}">Launchpad index</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER')"
             th:attr="class=${#httpServletRequest.requestURI.startsWith('/launchpad/sourceCode/sourceCode')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/source-code/source-codes.html" th:href="@{/launchpad/source-code/source-codes}">Source codes</a>
+            <a class="pure-menu-link" href="launchpad/source-code/source-codes.html" th:href="@{/dispatcher/source-code/source-codes}">Source codes</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
             th:attr="class=${#httpServletRequest.requestURI=='/launchpad/experiments'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/experiment/experiments.html" th:href="@{/launchpad/experiment/experiments}">Experiments</a>
+            <a class="pure-menu-link" href="launchpad/experiment/experiments.html" th:href="@{/dispatcher/experiment/experiments}">Experiments</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
             th:attr="class=${#httpServletRequest.requestURI.startsWith('/launchpad/atlas/atlas')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/atlas/atlas-experiments.html" th:href="@{/launchpad/atlas/atlas-experiments}">Atlas</a>
+            <a class="pure-menu-link" href="launchpad/atlas/atlas-experiments.html" th:href="@{/dispatcher/atlas/atlas-experiments}">Atlas</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
             th:attr="class=${#httpServletRequest.requestURI=='/launchpad/global-variables'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/global-variable/global-variables.html" th:href="@{/launchpad/global-variable/global-variables}">Resources</a>
+            <a class="pure-menu-link" href="launchpad/global-variable/global-variables.html" th:href="@{/dispatcher/global-variable/global-variables}">Resources</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
             th:attr="class=${#httpServletRequest.requestURI=='/launchpad/functions'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/function/functions.html" th:href="@{/launchpad/function/functions}">Functions</a>
+            <a class="pure-menu-link" href="launchpad/function/functions.html" th:href="@{/dispatcher/function/functions}">Functions</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
             th:attr="class=${#httpServletRequest.requestURI=='/launchpad/stations'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/station/stations.html" th:href="@{/launchpad/station/stations}">Stations</a>
+            <a class="pure-menu-link" href="launchpad/station/stations.html" th:href="@{/dispatcher/station/stations}">Stations</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN')"
                 th:attr="class=${#httpServletRequest.requestURI=='/launchpad/account/accounts'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/account/accounts.html" th:href="@{/launchpad/account/accounts}">Accounts</a>
+            <a class="pure-menu-link" href="launchpad/account/accounts.html" th:href="@{/dispatcher/account/accounts}">Accounts</a>
         </li>
         <li sec:authorize="hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT')"
                 th:attr="class=${#httpServletRequest.requestURI=='/launchpad/company/companies'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/company/companies.html" th:href="@{/launchpad/company/companies}">Company</a>
+            <a class="pure-menu-link" href="launchpad/company/companies.html" th:href="@{/dispatcher/company/companies}">Company</a>
         </li>
 <!--
         <li  sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER')"

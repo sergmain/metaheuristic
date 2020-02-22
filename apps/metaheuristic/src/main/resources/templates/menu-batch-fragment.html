@@ -1,16 +1,16 @@
 <div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      sec:authorize="isAuthenticated()"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <a class="pure-menu-heading">Batch</a>
     <ul>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')"
                 th:attr="class=${#httpServletRequest.requestURI=='/launchpad/batch/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/batch/index.html" th:href="@{/launchpad/batch/index}">Batch index</a>
+            <a class="pure-menu-link" href="launchpad/batch/index.html" th:href="@{/dispatcher/batch/index}">Batch index</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')"
                 th:attr="class=${#httpServletRequest.requestURI.startsWith('/launchpad/batch/batches/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/batch/batches.html" th:href="@{/launchpad/batch/batches}">Process resources</a>
+            <a class="pure-menu-link" href="launchpad/batch/batches.html" th:href="@{/dispatcher/batch/batches}">Process resources</a>
         </li>
     </ul>
 </div>

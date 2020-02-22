@@ -33,7 +33,7 @@ public class EnumsApi {
      * source - this launchpad is source for all assets
      * replicated - all assets on this launchpad are replicated from source launchpad
      */
-    public enum LaunchpadAssetMode {local, source, replicated}
+    public enum DispatcherAssetMode {local, source, replicated}
 
     public enum Fitting {
 

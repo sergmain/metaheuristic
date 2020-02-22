@@ -1,13 +1,13 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <div>
         <h1 class="widget-header">Station</h1>
 
         <!--/*@thymesVar id="station" type="ai.metaheuristic.ai.dispatcher.beans.Station"*/-->
-        <!--<form class="pure-form pure-form-stacked" th:object="${station}" method="post" action="#" th:method="POST" th:action="@{/launchpad/station-form-commit}" accept-charset="UTF-8" id="station-form" name="f">-->
+        <!--<form class="pure-form pure-form-stacked" th:object="${station}" method="post" action="#" th:method="POST" th:action="@{/dispatcher/station-form-commit}" accept-charset="UTF-8" id="station-form" name="f">-->
         <form class="form-horizontal" th:object="${station}">
             <div class="form-group">
                 <label class="col-sm-2 control-label">Station IP:</label>
@@ -26,7 +26,7 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${station}" th:method="post" th:action="@{/launchpad/station/station-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${station}" th:method="post" th:action="@{/dispatcher/station/station-delete-commit}"
                           accept-charset="UTF-8"
                           id="station-delete-commit"
                           name="f">
@@ -40,7 +40,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/station/stations}" accept-charset="UTF-8" id="station-delete-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/station/stations}" accept-charset="UTF-8" id="station-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

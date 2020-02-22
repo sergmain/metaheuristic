@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
 import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
@@ -75,7 +75,7 @@ public class BatchController {
             @ModelAttribute("infoMessages") final String infoMessages,
             Model model, Authentication authentication
             ) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false, filterBatches);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
@@ -87,7 +87,7 @@ public class BatchController {
             @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
             @PageableDefault(size = 20) Pageable pageable,
             Model model, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false, filterBatches);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
@@ -96,7 +96,7 @@ public class BatchController {
 
     @GetMapping(value = "/batch-add")
     public String batchAdd(Model model, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeService.getAvailableSourceCodesForCompany(context);
         ControllerUtils.addMessagesToModel(model, sourceCodes);
         model.addAttribute("result", sourceCodes);
@@ -105,7 +105,7 @@ public class BatchController {
 
     @GetMapping("/batch-delete/{batchId}")
     public String processResourceDelete(Model model, @PathVariable Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context, false);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
@@ -119,7 +119,7 @@ public class BatchController {
 
     @PostMapping("/batch-delete-commit")
     public String processResourceDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, context, true);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
@@ -129,7 +129,7 @@ public class BatchController {
 
     @PostMapping(value = "/batch-upload-from-file")
     public String uploadFile(final MultipartFile file, Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
         if (uploadingStatus.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.errorMessages);
@@ -140,7 +140,7 @@ public class BatchController {
     @GetMapping(value= "/batch-status/{batchId}" )
     public String getProcessingResourceStatus(
             Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context, false);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
@@ -155,7 +155,7 @@ public class BatchController {
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request, @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) throws IOException {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
 
         final ResponseEntity<AbstractResource> entity;
         try {

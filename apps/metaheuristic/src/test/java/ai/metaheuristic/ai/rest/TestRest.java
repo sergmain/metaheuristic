@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.rest;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.core.TestController;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
-import ai.metaheuristic.ai.station.LaunchpadRequestor;
+import ai.metaheuristic.ai.station.DispatcherRequestor;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
@@ -36,7 +36,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.*;
-import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -106,7 +105,7 @@ public class TestRest {
     @Test
 //    @WithUserDetails("data_rest")
     public void testRestMessages_02() {
-        RestTemplate restTemplate = new RestTemplate(LaunchpadRequestor.getHttpRequestFactory());
+        RestTemplate restTemplate = new RestTemplate(DispatcherRequestor.getHttpRequestFactory());
         // RestTemplate must be working without this
 //        restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
 

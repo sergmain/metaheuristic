@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @Service
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class LaunchpadCommandProcessor {
+public class DispatcherCommandProcessor {
 
     private final StationCache stationCache;
     private final TaskService taskService;

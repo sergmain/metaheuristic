@@ -1,6 +1,6 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <h1 class="widget-header">The experiment info</h1>
 
@@ -9,7 +9,7 @@
     <!--/*@thymesVar id="atlas" type="ai.metaheuristic.ai.dispatcher.beans.Atlas"*/-->
 
     <div align="right">
-        <a class="pure-button pure-button-primary" href="atlas-experiments.html" th:href="${'/launchpad/atlas/atlas-experiments'}">To list of experiments</a>
+        <a class="pure-button pure-button-primary" href="atlas-experiments.html" th:href="${'/dispatcher/atlas/atlas-experiments'}">To list of experiments</a>
     </div>
 
     <h1 class="widget-header">Progress of experiment</h1>
@@ -130,14 +130,14 @@
                 <td th:text="${f.execStatusAsString}">Exec status</td>
                 <td th:text="${f.maxValue!=null ? f.maxValue : 0 }">Max value</td>
                 <td><a class="pure-button table-nav-button-fill pure-button-primary"
-                       th:href="${'/launchpad/atlas/atlas-experiment-feature-progress/'+ atlas.id + '/'+ experiment.id + '/' + f.id}">Info</a></td>
+                       th:href="${'/dispatcher/atlas/atlas-experiment-feature-progress/'+ atlas.id + '/'+ experiment.id + '/' + f.id}">Info</a></td>
             </tr>
             </tbody>
         </table>
         <p>&nbsp;</p>
     </div>
 
-    <a class="pure-button pure-button-primary" href="atlas-experiments.html" th:href="${'/launchpad/atlas/atlas-experiments'}">To list of experiments</a>
+    <a class="pure-button pure-button-primary" href="atlas-experiments.html" th:href="${'/dispatcher/atlas/atlas-experiments'}">To list of experiments</a>
 
 
 </div>

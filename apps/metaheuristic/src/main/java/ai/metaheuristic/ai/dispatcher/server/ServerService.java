@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.dispatcher.LaunchpadCommandProcessor;
+import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.beans.Station;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -92,7 +92,7 @@ public class ServerService {
     private final Globals globals;
     private final VariableService variableService;
     private final FunctionDataService functionDataService;
-    private final LaunchpadCommandProcessor launchpadCommandProcessor;
+    private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final StationCache stationCache;
     private final ExecContextRepository execContextRepository;
     private final StationsRepository stationsRepository;
@@ -306,7 +306,7 @@ public class ServerService {
         LaunchpadCommParamsYaml lcpy = new LaunchpadCommParamsYaml();
         try {
             if (scpy.stationCommContext==null) {
-                lcpy.assignedStationId = launchpadCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
+                lcpy.assignedStationId = dispatcherCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
                 return lcpy;
             }
             checkStationId(scpy.stationCommContext.getStationId(), scpy.stationCommContext.getSessionId(), remoteAddress, lcpy);
@@ -318,7 +318,7 @@ public class ServerService {
             lcpy.execContextStatus = getExecContextStatuses();
 
             log.debug("Start processing commands");
-            launchpadCommandProcessor.process(scpy, lcpy);
+            dispatcherCommandProcessor.process(scpy, lcpy);
             setLaunchpadCommContext(lcpy);
         } catch (Throwable th) {
             log.error("#442.040 Error while processing client's request, StationCommParamsYaml:\n{}", scpy);
@@ -344,7 +344,7 @@ public class ServerService {
     private void checkStationId(String stationId, String sessionId, String remoteAddress, LaunchpadCommParamsYaml lcpy) {
         if (StringUtils.isBlank(stationId)) {
             log.warn("#442.045 StringUtils.isBlank(stationId), return RequestStationId()");
-            lcpy.assignedStationId = launchpadCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
+            lcpy.assignedStationId = dispatcherCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
             return;
         }
 

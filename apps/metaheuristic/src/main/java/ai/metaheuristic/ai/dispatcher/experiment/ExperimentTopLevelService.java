@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.experiment;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
@@ -712,7 +712,7 @@ public class ExperimentTopLevelService {
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Exporting of experiment was successfully started", null);
     }
 
-    public OperationStatusRest bindExperimentToSourceCodeWithResource(String experimentCode, String resourcePoolCode, LaunchpadContext context) {
+    public OperationStatusRest bindExperimentToSourceCodeWithResource(String experimentCode, String resourcePoolCode, DispatcherContext context) {
         if (resourcePoolCode==null || resourcePoolCode.isBlank()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.480 resource pool code is blank");
         }

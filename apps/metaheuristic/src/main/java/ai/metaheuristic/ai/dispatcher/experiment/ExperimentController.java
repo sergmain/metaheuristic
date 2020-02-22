@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.experiment;
 
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
@@ -173,7 +173,7 @@ public class ExperimentController {
     @GetMapping("/exec-context-target-exec-state/{experimentId}/{state}/{id}")
     public String execContextTargetExecState(@PathVariable Long experimentId, @PathVariable String state,
                                           @PathVariable Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeExecContextState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
@@ -289,7 +289,7 @@ public class ExperimentController {
 
     @PostMapping("/experiment-delete-commit")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage",
@@ -349,7 +349,7 @@ public class ExperimentController {
     @PostMapping("/bind-experiment-to-source-code-with-resource")
     public String bindExperimentToSourceCodeWithResource(Long experimentId, String experimentCode, String resourcePoolCode,
                                                          final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest status = experimentTopLevelService.bindExperimentToSourceCodeWithResource(experimentCode, resourcePoolCode, context);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);

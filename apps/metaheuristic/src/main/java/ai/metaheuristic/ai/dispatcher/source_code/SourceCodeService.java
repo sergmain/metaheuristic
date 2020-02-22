@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -88,7 +88,7 @@ public class SourceCodeService {
         setLockedTo(event.sourceCodeId, event.companyUniqueId, event.lock);
     }
 
-    public SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(LaunchpadContext context) {
+    public SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(DispatcherContext context) {
         return getAvailableSourceCodesForCompany(context.getCompanyId());
     }
 

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -46,63 +46,63 @@ public class SourceCodeRestController {
     @GetMapping("/source-codes")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodesResult sourceCodes(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.getSourceCodes(pageable, false, context);
     }
 
     @GetMapping("/source-codes-archived-only")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodesResult sourceCodeArchivedOnly(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.getSourceCodes(pageable, true, context);
     }
 
     @GetMapping(value = "/source-code/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodeResult edit(@PathVariable Long id, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.getSourceCode(id, context);
     }
 
     @GetMapping(value = "/source-code-validate/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodeResult validate(@PathVariable Long id, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.validateSourceCode(id, context);
     }
 
     @PostMapping("/source-code-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SourceCodeApiData.SourceCodeResult addFormCommit(@RequestParam(name = "sourceCodeYaml") String sourceCodeYamlAsStr, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.addSourceCode(sourceCodeYamlAsStr, context);
     }
 
     @PostMapping("/source-code-edit-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SourceCodeApiData.SourceCodeResult editFormCommit(Long sourceCodeId, @RequestParam(name = "sourceCodeYaml") String sourceCodeYamlAsStr, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.updateSourceCode(sourceCodeId, sourceCodeYamlAsStr, context);
     }
 
     @PostMapping("/source-code-delete-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(Long id, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.deleteSourceCodeById(id, context);
     }
 
     @PostMapping("/source-code-archive-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest archiveCommit(Long id, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.archiveSourceCodeById(id, context);
     }
 
     @PostMapping(value = "/source-code-upload-from-file")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest uploadSourceCode(final MultipartFile file, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.uploadSourceCode(file, context);
     }
 

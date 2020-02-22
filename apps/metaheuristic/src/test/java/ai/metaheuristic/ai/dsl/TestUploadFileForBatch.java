@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dsl;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
@@ -124,7 +124,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
         a.id = 1L;
         a.username = "test-batch-processing";
         a.companyId = company.uniqueId;
-        final LaunchpadContext context = new LaunchpadContext(a, company);
+        final DispatcherContext context = new DispatcherContext(a, company);
 
 
         SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeTopLevelService.validateSourceCode(plan.id, context);

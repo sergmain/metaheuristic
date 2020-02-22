@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
@@ -63,7 +63,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
     public SourceCodeApiData.ExecContextsResult execContexts(@PathVariable Long sourceCodeId,
                                                           @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context);
     }
 
@@ -79,7 +79,7 @@ public class ExecContextRestController {
     @PostMapping("/uid-exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SimpleExecContextAddingResult execContextAddCommit(String uid, String variable, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addExecContext(uid, variable, context);
         return new SimpleExecContextAddingResult(execContextResult.execContext.getId());
     }
@@ -87,7 +87,7 @@ public class ExecContextRestController {
     @PostMapping("/exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, String variable, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         //noinspection UnnecessaryLocalVariable
         SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addExecContext(sourceCodeId, variable, context);
         return execContextResult;
@@ -103,7 +103,7 @@ public class ExecContextRestController {
     @PostMapping("/exec-context-delete-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest execContextDeleteCommit(Long sourceCodeId, Long execContextId, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.deleteExecContextById(execContextId, context);
     }
 
@@ -112,7 +112,7 @@ public class ExecContextRestController {
     public OperationStatusRest execContextTargetExecState(
             @SuppressWarnings("unused") @PathVariable Long sourceCodeId, @PathVariable String state,
             @PathVariable Long id, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         return sourceCodeTopLevelService.changeExecContextState(state, id, context);
     }
 

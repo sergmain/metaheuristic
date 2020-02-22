@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.account;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -37,31 +37,31 @@ public class AccountTopLevelService {
     private final AccountService accountService;
     private final Globals globals;
 
-    public AccountData.AccountsResult getAccounts(Pageable pageable, LaunchpadContext context) {
+    public AccountData.AccountsResult getAccounts(Pageable pageable, DispatcherContext context) {
         pageable = ControllerUtils.fixPageSize(globals.accountRowsLimit, pageable);
         return accountService.getAccounts(pageable, context.getCompanyId());
     }
 
-    public OperationStatusRest addAccount(Account account, LaunchpadContext context) {
+    public OperationStatusRest addAccount(Account account, DispatcherContext context) {
         // company's admin can create only operator via AccountController
         // a fine-grained access is setting via CompanyController
         account.setRoles("ROLE_OPERATOR");
         return accountService.addAccount(account, context.getCompanyId());
     }
 
-    public AccountData.AccountResult getAccount(Long id, LaunchpadContext context) {
+    public AccountData.AccountResult getAccount(Long id, DispatcherContext context) {
         return accountService.getAccount(id, context.getCompanyId());
     }
 
-    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, LaunchpadContext context) {
+    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, DispatcherContext context) {
         return accountService.editFormCommit(accountId, publicName, enabled, context.getCompanyId());
     }
 
-    public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, LaunchpadContext context) {
+    public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, DispatcherContext context) {
         return accountService.passwordEditFormCommit(accountId, password, password2, context.getCompanyId());
     }
 
-    public OperationStatusRest roleFormCommit(Long accountId, String roles, LaunchpadContext context) {
+    public OperationStatusRest roleFormCommit(Long accountId, String roles, DispatcherContext context) {
         return accountService.roleFormCommit(accountId, roles, context.getCompanyId());
     }
 }

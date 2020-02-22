@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
@@ -57,7 +57,7 @@ public class ExecContextController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
     public String execContexts(Model model, @PathVariable Long sourceCodeId, @PageableDefault(size = 5) Pageable pageable,
                             @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         model.addAttribute("result", execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context));
         return "launchpad/source-code/exec-contexts";
     }
@@ -67,7 +67,7 @@ public class ExecContextController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
     public String execContextPart(Model model, @PathVariable Long sourceCodeId,
                                 @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         model.addAttribute("result", execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context));
         return "launchpad/source-code/exec-contexts :: table";
     }
@@ -76,7 +76,7 @@ public class ExecContextController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextAdd(@ModelAttribute("result") SourceCodeApiData.SourceCodeResult result,
                               @PathVariable Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(sourceCodeId, context);
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
@@ -89,7 +89,7 @@ public class ExecContextController {
     @PostMapping("/source-code-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextAddCommit(Long sourceCodeId, String variable, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.ExecContextResult execContextResultRest = sourceCodeTopLevelService.addExecContext(sourceCodeId, variable, context);
         if (execContextResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", execContextResultRest.errorMessages);
@@ -101,7 +101,7 @@ public class ExecContextController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextDelete(Model model, @PathVariable Long sourceCodeId, @PathVariable Long execContextId,
                                  final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.ExecContextResult result = execContextTopLevelService.getExecContextExtendedForDeletion(execContextId, context);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
@@ -115,7 +115,7 @@ public class ExecContextController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextDeleteCommit(Long sourceCodeId, Long execContextId,
                                        final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteExecContextById(execContextId, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
@@ -128,7 +128,7 @@ public class ExecContextController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextTargetState(@PathVariable Long sourceCodeId, @PathVariable String state, @PathVariable Long id,
                                           final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeExecContextState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);

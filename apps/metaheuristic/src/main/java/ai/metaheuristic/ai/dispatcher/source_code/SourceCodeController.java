@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -57,7 +57,7 @@ public class SourceCodeController {
     public String sourceCodes(Model model, @PageableDefault(size = 5) Pageable pageable,
                         @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                         @ModelAttribute("errorMessage") final ArrayList<String> errorMessage, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeTopLevelService.getSourceCodes(pageable, false, context);
         ControllerUtils.addMessagesToModel(model, sourceCodesResultRest);
         model.addAttribute("result", sourceCodesResultRest);
@@ -68,7 +68,7 @@ public class SourceCodeController {
     @PostMapping("/source-codes-part")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public String sourceCodesPart(Model model, @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeTopLevelService.getSourceCodes(pageable, false, context);
         model.addAttribute("result", sourceCodesResultRest);
         return "launchpad/source-code/source-codes :: table";
@@ -84,11 +84,11 @@ public class SourceCodeController {
     @GetMapping(value = "/source-code-edit/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             redirectAttributes.addFlashAttribute("errorMessage", "#561.010 Can't edit sourceCode while 'replicated' mode of asset is active");
             return REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
@@ -102,7 +102,7 @@ public class SourceCodeController {
     @GetMapping(value = "/source-code-validate/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.validateSourceCode(id, context);
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
@@ -119,7 +119,7 @@ public class SourceCodeController {
     @PostMapping(value = "/source-code-upload-from-file")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String uploadSourceCode(final MultipartFile file, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.uploadSourceCode(file, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
@@ -130,7 +130,7 @@ public class SourceCodeController {
     @PostMapping("/source-code-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String addFormCommit(String sourceCodeYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.addSourceCode(sourceCodeYamlAsStr, context);
         if (sourceCodeResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
@@ -144,7 +144,7 @@ public class SourceCodeController {
     @PostMapping("/source-code-edit-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String editFormCommit(Model model, Long sourceCodeId, String sourceCodeYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.updateSourceCode(sourceCodeId, sourceCodeYamlAsStr, context);
         if (sourceCodeResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", sourceCodeResultRest.errorMessages);
@@ -160,11 +160,11 @@ public class SourceCodeController {
     @GetMapping("/source-code-delete/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        if (globals.assetMode==EnumsApi.LaunchpadAssetMode.replicated) {
+        if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             redirectAttributes.addFlashAttribute("errorMessage", "#561.015 Can't delete sourceCode while 'replicated' mode of asset is active");
             return REDIRECT_LAUNCHPAD_SOURCE_CODES;
         }
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
@@ -178,7 +178,7 @@ public class SourceCodeController {
     @PostMapping("/source-code-delete-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteSourceCodeById(id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.020 sourceCode wasn't found, id: "+id) );
@@ -189,7 +189,7 @@ public class SourceCodeController {
     @GetMapping("/source-code-archive/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'DATA')")
     public String archive(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
@@ -203,7 +203,7 @@ public class SourceCodeController {
     @PostMapping("/source-code-archive-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String archiveCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        LaunchpadContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = launchpadContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.archiveSourceCodeById(id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#561.030 source code wasn't found, id: "+id) );

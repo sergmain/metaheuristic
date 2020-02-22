@@ -41,7 +41,7 @@ import java.util.Map;
 @Slf4j
 @Profile("station")
 @RequiredArgsConstructor
-public class LaunchpadLookupExtendedService {
+public class DispatcherLookupExtendedService {
 
     private final Globals globals;
 

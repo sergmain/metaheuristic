@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class ArtifactCleanerAtLaunchpad {
+public class ArtifactCleanerAtDispatcher {
 
     private final ExecContextRepository execContextRepository;
     private final TaskRepository taskRepository;

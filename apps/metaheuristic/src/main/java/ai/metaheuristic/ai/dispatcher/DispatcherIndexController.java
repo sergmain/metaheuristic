@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/launchpad")
 @Profile("dispatcher")
 @PreAuthorize("isAuthenticated()")
-public class LaunchpadIndexController {
+public class DispatcherIndexController {
 
     @GetMapping("/index")
     public String index() {

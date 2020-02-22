@@ -40,7 +40,7 @@ public class CompanyData {
     @EqualsAndHashCode(callSuper = false)
     public static class CompaniesResult extends BaseDataClass {
         public Page<Company> companies;
-        public EnumsApi.LaunchpadAssetMode assetMode;
+        public EnumsApi.DispatcherAssetMode assetMode;
     }
 
     @Data

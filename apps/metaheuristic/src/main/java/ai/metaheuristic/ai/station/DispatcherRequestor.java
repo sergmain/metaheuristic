@@ -57,7 +57,7 @@ import static org.apache.http.client.config.RequestConfig.custom;
  */
 
 @Slf4j
-public class LaunchpadRequestor {
+public class DispatcherRequestor {
 
     private final String launchpadUrl;
     private final Globals globals;
@@ -66,28 +66,28 @@ public class LaunchpadRequestor {
     private final StationService stationService;
     private final MetadataService metadataService;
     private final CurrentExecState currentExecState;
-    private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
+    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final StationCommandProcessor stationCommandProcessor;
 
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = getHttpRequestFactory();
     private RestTemplate restTemplate;
 
-    private LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad;
+    private DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad;
     private String serverRestUrl;
 
-    public LaunchpadRequestor(String launchpadUrl, Globals globals, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService, CurrentExecState currentExecState, LaunchpadLookupExtendedService launchpadLookupExtendedService, StationCommandProcessor stationCommandProcessor) {
+    public DispatcherRequestor(String launchpadUrl, Globals globals, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, StationCommandProcessor stationCommandProcessor) {
         this.launchpadUrl = launchpadUrl;
         this.globals = globals;
         this.stationTaskService = stationTaskService;
         this.stationService = stationService;
         this.metadataService = metadataService;
         this.currentExecState = currentExecState;
-        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
+        this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
         this.stationCommandProcessor = stationCommandProcessor;
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-        this.launchpad = this.launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
+        this.launchpad = this.dispatcherLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
         if (launchpad == null) {
             throw new IllegalStateException("#775.010 Can'r find launchpad config for url " + launchpadUrl);
         }
@@ -179,8 +179,8 @@ public class LaunchpadRequestor {
         if (launchpadCommParamsYaml==null || launchpadCommParamsYaml.launchpadCommContext==null) {
             return;
         }
-        LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
-                launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
+        DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad =
+                dispatcherLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
 
         if (launchpad==null) {
             return;
@@ -188,7 +188,7 @@ public class LaunchpadRequestor {
         storeLaunchpadContext(launchpadCommParamsYaml, launchpad);
     }
 
-    private void storeLaunchpadContext(LaunchpadCommParamsYaml launchpadCommParamsYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad) {
+    private void storeLaunchpadContext(LaunchpadCommParamsYaml launchpadCommParamsYaml, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad) {
         if (launchpadCommParamsYaml.launchpadCommContext==null) {
             return;
         }

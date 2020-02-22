@@ -94,7 +94,7 @@ public final class BatchData {
     @EqualsAndHashCode(callSuper = false)
     public static class BatchesResult extends BaseDataClass {
         public Page<ProcessResourceItem> batches;
-        public EnumsApi.LaunchpadAssetMode assetMode;
+        public EnumsApi.DispatcherAssetMode assetMode;
     }
 
     @Data

@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
-import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.LaunchpadEventService;
@@ -256,7 +256,7 @@ public class ExecContextService {
         return result;
     }
 
-    public SourceCodeApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, LaunchpadContext context) {
+    public SourceCodeApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         pageable = ControllerUtils.fixPageSize(globals.execContextRowsLimit, pageable);
         SourceCodeApiData.ExecContextsResult result = new SourceCodeApiData.ExecContextsResult();
         result.instances = execContextRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);

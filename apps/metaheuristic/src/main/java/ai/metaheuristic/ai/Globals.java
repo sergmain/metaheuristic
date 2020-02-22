@@ -183,7 +183,7 @@ public class Globals {
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
     public List<String> allowedOrigins;
-    public EnumsApi.LaunchpadAssetMode assetMode = EnumsApi.LaunchpadAssetMode.local;
+    public EnumsApi.DispatcherAssetMode assetMode = EnumsApi.DispatcherAssetMode.local;
 
     // TODO 2019-07-28 need to handle this case
     //  https://stackoverflow.com/questions/37436927/utf-8-encoding-of-application-properties-attributes-in-spring-boot
@@ -243,9 +243,9 @@ public class Globals {
         }
         if (!S.b(assetModeStr)) {
             try {
-                assetMode = EnumsApi.LaunchpadAssetMode.valueOf(assetModeStr);
+                assetMode = EnumsApi.DispatcherAssetMode.valueOf(assetModeStr);
             } catch (Throwable th) {
-                throw new GlobalConfigurationException("Wrong value of assertMode, must be one of "+ Arrays.toString(EnumsApi.LaunchpadAssetMode.values()) + ", " +
+                throw new GlobalConfigurationException("Wrong value of assertMode, must be one of "+ Arrays.toString(EnumsApi.DispatcherAssetMode.values()) + ", " +
                         "actual value: " + assetModeStr);
             }
         }
@@ -259,12 +259,12 @@ public class Globals {
             assetPassword = env.getProperty("MH_LAUNCHPAD_ASSET_PASSWORD");
         }
 
-        if (assetMode==EnumsApi.LaunchpadAssetMode.replicated && S.b(assetSourceUrl)) {
-            throw new GlobalConfigurationException("Wrong value of assertSourceUrl, must be not null when launchpadAssetMode==EnumsApi.LaunchpadAssetMode.replicate");
+        if (assetMode== EnumsApi.DispatcherAssetMode.replicated && S.b(assetSourceUrl)) {
+            throw new GlobalConfigurationException("Wrong value of assertSourceUrl, must be not null when launchpadAssetMode==EnumsApi.DispatcherAssetMode.replicate");
         }
         if (!isLaunchpadEnabled) {
-            log.warn("Launchpad wasn't enabled, assetMode will be set to LaunchpadAssetMode.local");
-            assetMode = EnumsApi.LaunchpadAssetMode.local;
+            log.warn("Launchpad wasn't enabled, assetMode will be set to DispatcherAssetMode.local");
+            assetMode = EnumsApi.DispatcherAssetMode.local;
         }
 
         String stationEnabledAsStr = env.getProperty("MH_IS_STATION_ENABLED");

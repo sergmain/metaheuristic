@@ -46,7 +46,7 @@ public class TaskAssetPreparer {
     private final DownloadFunctionActor downloadFunctionActor;
     private final CurrentExecState currentExecState;
     private final StationTaskService stationTaskService;
-    private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
+    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final MetadataService metadataService;
     private final StationService stationService;
 
@@ -92,8 +92,8 @@ public class TaskAssetPreparer {
                 log.warn("#951.040 taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;
             }
-            final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
-                    launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
+            final DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad =
+                    dispatcherLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
 
             // process only if launchpad has already sent its config
             if (launchpad.context.chunkSize==null) {
@@ -137,7 +137,7 @@ public class TaskAssetPreparer {
         }
     }
 
-    private boolean prepareFunction(TaskParamsYaml.FunctionConfig functionConfig, String launchpadUrl, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, String stationId) {
+    private boolean prepareFunction(TaskParamsYaml.FunctionConfig functionConfig, String launchpadUrl, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad, String stationId) {
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.launchpad) {
             final String code = functionConfig.code;
             final FunctionDownloadStatusYaml.Status functionDownloadStatuses = metadataService.getFunctionDownloadStatuses(launchpadUrl, code);

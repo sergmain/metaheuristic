@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.station.station_resource;
 import ai.metaheuristic.ai.exceptions.ResourceProviderException;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
-import ai.metaheuristic.ai.station.LaunchpadLookupExtendedService;
+import ai.metaheuristic.ai.station.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.station.StationTaskService;
 import ai.metaheuristic.ai.station.env.EnvService;
 import ai.metaheuristic.ai.yaml.env.DiskStorage;
@@ -56,7 +56,7 @@ public class DiskResourceProvider implements ResourceProvider {
 
     @Override
     public List<AssetFile> prepareForDownloadingDataFile(
-            File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            File taskDir, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String resourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
 
@@ -103,7 +103,7 @@ public class DiskResourceProvider implements ResourceProvider {
 
     @Override
     public FunctionApiData.SystemExecResult processResultingFile(
-            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String outputResourceId, TaskParamsYaml.FunctionConfig functionConfig
     ) {
@@ -121,7 +121,7 @@ public class DiskResourceProvider implements ResourceProvider {
 
     @Override
     public File getOutputResourceFile(
-            File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            File taskDir, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, String outputResourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
 
         EnvYaml env = envService.getEnvYaml();

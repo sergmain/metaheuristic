@@ -34,7 +34,7 @@ public class FunctionData {
     @EqualsAndHashCode(callSuper = false)
     public static class FunctionsResult extends BaseDataClass {
         public List<Function> functions;
-        public EnumsApi.LaunchpadAssetMode assetMode;
+        public EnumsApi.DispatcherAssetMode assetMode;
     }
 
     @Data
