@@ -83,12 +83,12 @@ public class FunctionDataService {
             if (data == null) {
                 data = new FunctionData();
                 data.setFunctionCode(functionCode);
-                data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.launchpad)));
+                data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher)));
             } else {
                 DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
-                if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.launchpad) {
+                if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.dispatcher) {
                     // this is an exception for the case when two resources have the same names but different pool codes
-                    throw new VariableSavingException("#088.060 Sourcing must be launchpad, value in db: " + data.getParams());
+                    throw new VariableSavingException("#088.060 Sourcing must be dispatcher, value in db: " + data.getParams());
                 }
             }
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));

@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/rest/v1/launchpad/experiment")
+@RequestMapping("/rest/v1/dispatcher/experiment")
 @Slf4j
 @Profile("dispatcher")
 @CrossOrigin

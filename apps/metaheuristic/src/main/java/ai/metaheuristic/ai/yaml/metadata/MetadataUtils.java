@@ -44,13 +44,13 @@ public class MetadataUtils {
         if (m==null) {
             return new Metadata();
         }
-        if (m.launchpad==null) {
-            m.launchpad = new LinkedHashMap<>();
+        if (m.dispatcher ==null) {
+            m.dispatcher = new LinkedHashMap<>();
         }
         if (m.metadata==null) {
             m.metadata = new LinkedHashMap<>();
         }
-        for (Map.Entry<String, Metadata.DispatcherInfo> entry : m.launchpad.entrySet()) {
+        for (Map.Entry<String, Metadata.DispatcherInfo> entry : m.dispatcher.entrySet()) {
             Metadata.DispatcherInfo info = entry.getValue();
             if (info.value != null) {
                 if (info.code == null) {

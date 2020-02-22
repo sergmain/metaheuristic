@@ -83,13 +83,13 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
         UploadResourceTask task;
         List<UploadResourceTask> repeat = new ArrayList<>();
         while((task = poll())!=null) {
-            StationTask stationTask = stationTaskService.findById(task.launchpad.url, task.taskId);
+            StationTask stationTask = stationTaskService.findById(task.dispatcher.url, task.taskId);
             if (stationTask == null) {
-                log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.launchpad.url, task.taskId);
+                log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.dispatcher.url, task.taskId);
                 continue;
             }
             if (stationTask.resourceUploaded) {
-                log.info("#311.030 resource was already uploaded, {}, #{}", task.launchpad.url, task.taskId);
+                log.info("#311.030 resource was already uploaded, {}, #{}", task.dispatcher.url, task.taskId);
                 continue;
             }
             log.info("Start uploading result data to server, resultDataFile: {}", task.file);
@@ -99,7 +99,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             }
             Enums.UploadResourceStatus status = null;
             try {
-                final String uploadRestUrl  = task.launchpad.url + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
+                final String uploadRestUrl  = task.dispatcher.url + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
                 String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.stationId + '-' + task.taskId;
                 final String uri = uploadRestUrl + randonPart;
 
@@ -117,7 +117,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                         .body(entity);
 
                 log.info("Start uploading resource to rest-server, {}", randonPart);
-                Response response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restPassword).execute(request);
+                Response response = HttpClientExecutor.getExecutor(task.dispatcher.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
                 String json = response.returnContent().asString();
                 UploadResult result = fromJson(json);
                 log.info("Server response: {}", result);
@@ -141,14 +141,14 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             if (status!=null) {
                 switch(status) {
                     case OK:
-                        log.info("Resource was successfully uploaded to server, {}, {} ", task.launchpad.url, task.taskId);
-                        stationTaskService.setResourceUploadedAndCompleted(task.launchpad.url, task.taskId);
+                        log.info("Resource was successfully uploaded to server, {}, {} ", task.dispatcher.url, task.taskId);
+                        stationTaskService.setResourceUploadedAndCompleted(task.dispatcher.url, task.taskId);
                         break;
                     case FILENAME_IS_BLANK:
                     case TASK_WAS_RESET:
                     case TASK_NOT_FOUND:
                     case UNRECOVERABLE_ERROR:
-                        stationTaskService.delete(task.launchpad.url, task.taskId);
+                        stationTaskService.delete(task.dispatcher.url, task.taskId);
                         log.error("#311.100 server return status {}, this task will be deleted.", status);
                         break;
                     case PROBLEM_WITH_LOCKING:

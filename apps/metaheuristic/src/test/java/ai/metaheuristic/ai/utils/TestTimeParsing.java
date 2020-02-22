@@ -15,10 +15,10 @@
  */
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.ai.yaml.launchpad_lookup.ExtendedTimePeriod;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.ExtendedTimePeriodUtils;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.TimePeriods;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriod;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriodUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.LaunchpadSchedule;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.TimePeriods;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.Data;
 import org.junit.Test;

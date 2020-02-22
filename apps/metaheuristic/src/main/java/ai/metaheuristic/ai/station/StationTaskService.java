@@ -87,8 +87,8 @@ public class StationTaskService {
         try {
             Files.list(globals.stationTaskDir.toPath()).forEach(top -> {
                 try {
-                    String launchpadUrl = metadataService.findHostByCode(top.toFile().getName());
-                    if (launchpadUrl==null) {
+                    String dispatcherUrl = metadataService.findHostByCode(top.toFile().getName());
+                    if (dispatcherUrl==null) {
                         return;
                     }
                     Files.list(top).forEach(p -> {
@@ -113,19 +113,19 @@ public class StationTaskService {
 
                                 try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
                                     StationTask task = StationTaskUtils.to(fis);
-                                    if (S.b(task.launchpadUrl)) {
+                                    if (S.b(task.dispatcherUrl)) {
                                         deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
-                                        log.warn("#713.007 task #{} from launchpad {} was deleted from disk because launchpadUrl field was empty", taskId, launchpadUrl);
+                                        log.warn("#713.007 task #{} from dispatcher {} was deleted from disk because dispatcherUrl field was empty", taskId, dispatcherUrl);
                                         return;
                                     }
-                                    getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
+                                    getMapForLaunchpadUrl(dispatcherUrl).put(taskId, task);
 
                                     // fix state of task
                                     FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
                                     if (functionExec !=null &&
                                             ((functionExec.generalExec!=null && !functionExec.exec.isOk ) ||
                                                     (functionExec.generalExec!=null && !functionExec.generalExec.isOk))) {
-                                        markAsFinished(launchpadUrl, taskId, functionExec);
+                                        markAsFinished(dispatcherUrl, taskId, functionExec);
                                     }
                                 }
                                 catch (IOException e) {
@@ -173,10 +173,10 @@ public class StationTaskService {
         }
     }
 
-    public void setReportedOn(String launchpadUrl, long taskId) {
+    public void setReportedOn(String dispatcherUrl, long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            log.info("setReportedOn({}, {})", launchpadUrl, taskId);
-            StationTask task = findById(launchpadUrl, taskId);
+            log.info("setReportedOn({}, {})", dispatcherUrl, taskId);
+            StationTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
                 log.error("#713.070 StationRestTask wasn't found for Id " + taskId);
                 return;
@@ -187,10 +187,10 @@ public class StationTaskService {
         }
     }
 
-    public void setDelivered(String launchpadUrl, Long taskId) {
+    public void setDelivered(String dispatcherUrl, Long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            log.info("setDelivered({}, {})", launchpadUrl, taskId);
-            StationTask task = findById(launchpadUrl, taskId);
+            log.info("setDelivered({}, {})", dispatcherUrl, taskId);
+            StationTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
                 log.error("#713.080 StationTask wasn't found for Id {}", taskId);
                 return;
@@ -210,10 +210,10 @@ public class StationTaskService {
         }
     }
 
-    public void setResourceUploadedAndCompleted(String launchpadUrl, Long taskId) {
+    public void setResourceUploadedAndCompleted(String dispatcherUrl, Long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            log.info("setResourceUploadedAndCompleted({}, {})", launchpadUrl, taskId);
-            StationTask task = findById(launchpadUrl, taskId);
+            log.info("setResourceUploadedAndCompleted({}, {})", dispatcherUrl, taskId);
+            StationTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
                 log.error("#713.090 StationTask wasn't found for Id {}", taskId);
                 return;
@@ -225,10 +225,10 @@ public class StationTaskService {
     }
 
     @SuppressWarnings("unused")
-    public void setCompleted(String launchpadUrl, Long taskId) {
+    public void setCompleted(String dispatcherUrl, Long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            log.info("setCompleted({}, {})", launchpadUrl, taskId);
-            StationTask task = findById(launchpadUrl, taskId);
+            log.info("setCompleted({}, {})", dispatcherUrl, taskId);
+            StationTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
                 log.error("#713.100 StationTask wasn't found for Id {}", taskId);
                 return;
@@ -238,9 +238,9 @@ public class StationTaskService {
         }
     }
 
-    public List<StationTask> getForReporting(String launchpadUrl) {
+    public List<StationTask> getForReporting(String dispatcherUrl) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            Stream<StationTask> stream = findAllByFinishedOnIsNotNull(launchpadUrl);
+            Stream<StationTask> stream = findAllByFinishedOnIsNotNull(dispatcherUrl);
             List<StationTask> result = stream
                     .filter(stationTask -> !stationTask.isReported() ||
                             (!stationTask.isDelivered() &&
@@ -250,8 +250,8 @@ public class StationTaskService {
         }
     }
 
-    public StationCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult(String launchpadUrl) {
-        final List<StationTask> list = getForReporting(launchpadUrl);
+    public StationCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult(String dispatcherUrl) {
+        final List<StationTask> list = getForReporting(dispatcherUrl);
         if (list.isEmpty()) {
             return null;
         }
@@ -274,25 +274,25 @@ public class StationTaskService {
             final StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
                     new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getFunctionExecResult(), ml);
             processingResult.results.add(result);
-            setReportedOn(launchpadUrl, task.taskId);
+            setReportedOn(dispatcherUrl, task.taskId);
         }
         return processingResult;
     }
 
-    public void markAsFinishedWithError(String launchpadUrl, long taskId, String es) {
+    public void markAsFinishedWithError(String dispatcherUrl, long taskId, String es) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            markAsFinished(launchpadUrl, taskId,
+            markAsFinished(dispatcherUrl, taskId,
                     new FunctionApiData.FunctionExec(
                             null, null, null,
                             new FunctionApiData.SystemExecResult("system-error", false, -991, es)));
         }
     }
 
-    void markAsFinished(String launchpadUrl, Long taskId, FunctionApiData.FunctionExec functionExec) {
+    void markAsFinished(String dispatcherUrl, Long taskId, FunctionApiData.FunctionExec functionExec) {
 
         synchronized (StationSyncHolder.stationGlobalSync) {
-            log.info("markAsFinished({}, {})", launchpadUrl, taskId);
-            StationTask task = findById(launchpadUrl, taskId);
+            log.info("markAsFinished({}, {})", dispatcherUrl, taskId);
+            StationTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
                 log.error("#713.110 StationTask wasn't found for Id #" + taskId);
             } else {
@@ -315,10 +315,10 @@ public class StationTaskService {
         }
     }
 
-    void markAsAssetPrepared(String launchpadUrl, Long taskId, boolean status) {
+    void markAsAssetPrepared(String dispatcherUrl, Long taskId, boolean status) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            log.info("markAsAssetPrepared(launchpadUrl: {}, taskId: {}, status: {})", launchpadUrl, taskId, status);
-            StationTask task = findById(launchpadUrl, taskId);
+            log.info("markAsAssetPrepared(dispatcherUrl: {}, taskId: {}, status: {})", dispatcherUrl, taskId, status);
+            StationTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
                 log.error("#713.130 StationTask wasn't found for Id {}", taskId);
             } else {
@@ -328,18 +328,18 @@ public class StationTaskService {
         }
     }
 
-    boolean isNeedNewTask(String launchpadUrl, String stationId) {
+    boolean isNeedNewTask(String dispatcherUrl, String stationId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             if (stationId == null) {
                 return false;
             }
             // TODO 2019-10-24 need to optimize
-            List<StationTask> tasks = findAllByCompletedIsFalse(launchpadUrl);
+            List<StationTask> tasks = findAllByCompletedIsFalse(dispatcherUrl);
             for (StationTask task : tasks) {
                 // we don't need new task because execContext for this task is active
                 // i.e. there is a non-completed task with active execContext
                 // if execContext wasn't active we would need a new task
-                if (currentExecState.isStarted(task.launchpadUrl, task.execContextId)) {
+                if (currentExecState.isStarted(task.dispatcherUrl, task.execContextId)) {
                     return false;
                 }
             }
@@ -347,10 +347,10 @@ public class StationTaskService {
         }
     }
 
-    public void storePredictedData(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) throws IOException {
+    public void storePredictedData(String dispatcherUrl, StationTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) throws IOException {
         Meta m = MetaUtils.getMeta(functionConfig.metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
         if (MetaUtils.isTrue(m)) {
-            log.info("storePredictedData(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, functionConfig.getCode());
+            log.info("storePredictedData(dispatcherUrl: {}, taskId: {}, function code: {})", dispatcherUrl, task.taskId, functionConfig.getCode());
             String data = getPredictedData(artifactDir);
             if (data!=null) {
                 task.getMetas().add( new Meta(Consts.META_PREDICTED_DATA, data, null) );
@@ -359,9 +359,9 @@ public class StationTaskService {
         }
     }
 
-    public void storeFittingCheck(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) throws IOException {
+    public void storeFittingCheck(String dispatcherUrl, StationTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) throws IOException {
         if (functionConfig.type.equals(CommonConsts.CHECK_FITTING_TYPE)) {
-           log.info("storeFittingCheck(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, functionConfig.getCode());
+           log.info("storeFittingCheck(dispatcherUrl: {}, taskId: {}, function code: {})", dispatcherUrl, task.taskId, functionConfig.getCode());
             FittingYaml fittingYaml = getFittingCheck(artifactDir);
             if (fittingYaml != null) {
                 task.getMetas().add(new Meta(Consts.META_FITTED, fittingYaml.fitting.toString(), null));
@@ -373,10 +373,10 @@ public class StationTaskService {
         }
     }
 
-    public void storeMetrics(String launchpadUrl, StationTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) {
+    public void storeMetrics(String dispatcherUrl, StationTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) {
         // store metrics after predict only
         if (functionConfig.ml!=null && functionConfig.ml.metrics) {
-            log.info("storeMetrics(launchpadUrl: {}, taskId: {}, function code: {})", launchpadUrl, task.taskId, functionConfig.getCode());
+            log.info("storeMetrics(dispatcherUrl: {}, taskId: {}, function code: {})", dispatcherUrl, task.taskId, functionConfig.getCode());
             Metrics metrics = new Metrics();
             File metricsFile = getMetricsFile(artifactDir);
             if (metricsFile!=null) {
@@ -428,10 +428,10 @@ public class StationTaskService {
         return null;
     }
 
-    public List<StationTask> findAllByCompletedIsFalse(String launchpadUrl) {
+    public List<StationTask> findAllByCompletedIsFalse(String dispatcherUrl) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             List<StationTask> list = new ArrayList<>();
-            for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
+            for (StationTask task : getMapForLaunchpadUrl(dispatcherUrl).values()) {
                 if (!task.completed) {
                     list.add(task);
                 }
@@ -440,18 +440,18 @@ public class StationTaskService {
         }
     }
 
-    private Map<Long, StationTask> getMapForLaunchpadUrl(String launchpadUrl) {
-        return map.computeIfAbsent(launchpadUrl, m -> new HashMap<>());
+    private Map<Long, StationTask> getMapForLaunchpadUrl(String dispatcherUrl) {
+        return map.computeIfAbsent(dispatcherUrl, m -> new HashMap<>());
     }
 
     public List<StationTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(boolean assetsPreparedStatus) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             List<StationTask> list = new ArrayList<>();
-            for (String launchpadUrl : map.keySet()) {
-                Map<Long, StationTask> mapForLaunchpadUrl = getMapForLaunchpadUrl(launchpadUrl);
+            for (String dispatcherUrl : map.keySet()) {
+                Map<Long, StationTask> mapForLaunchpadUrl = getMapForLaunchpadUrl(dispatcherUrl);
                 List<Long> forDelition = new ArrayList<>();
                 for (StationTask task : mapForLaunchpadUrl.values()) {
-                    if (S.b(task.launchpadUrl)) {
+                    if (S.b(task.dispatcherUrl)) {
                         forDelition.add(task.taskId);
                     }
                     if (!task.completed && task.finishedOn == null && task.assetsPrepared==assetsPreparedStatus) {
@@ -459,7 +459,7 @@ public class StationTaskService {
                     }
                 }
                 forDelition.forEach(id-> {
-                    log.warn("#713.147 task #{} from launchpad {} was deleted from global map with tasks", id, launchpadUrl);
+                    log.warn("#713.147 task #{} from dispatcher {} was deleted from global map with tasks", id, dispatcherUrl);
                     mapForLaunchpadUrl.remove(id);
                 });
             }
@@ -467,26 +467,26 @@ public class StationTaskService {
         }
     }
 
-    private Stream<StationTask> findAllByFinishedOnIsNotNull(String launchpadUrl) {
-        return getMapForLaunchpadUrl(launchpadUrl).values().stream().filter( o -> o.finishedOn!=null);
+    private Stream<StationTask> findAllByFinishedOnIsNotNull(String dispatcherUrl) {
+        return getMapForLaunchpadUrl(dispatcherUrl).values().stream().filter( o -> o.finishedOn!=null);
     }
 
-    public StationCommParamsYaml.ReportStationTaskStatus produceStationTaskStatus(String launchpadUrl) {
+    public StationCommParamsYaml.ReportStationTaskStatus produceStationTaskStatus(String dispatcherUrl) {
         List<StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus> statuses = new ArrayList<>();
-        List<StationTask> list = findAll(launchpadUrl);
+        List<StationTask> list = findAll(dispatcherUrl);
         for (StationTask task : list) {
             statuses.add( new StationCommParamsYaml.ReportStationTaskStatus.SimpleStatus(task.getTaskId()));
         }
         return new StationCommParamsYaml.ReportStationTaskStatus(statuses);
     }
 
-    public void createTask(String launchpadUrl, long taskId, Long execContextId, String params) {
-        if (launchpadUrl==null) {
-            throw new IllegalStateException("#713.150 launchpadUrl is null");
+    public void createTask(String dispatcherUrl, long taskId, Long execContextId, String params) {
+        if (dispatcherUrl==null) {
+            throw new IllegalStateException("#713.150 dispatcherUrl is null");
         }
         synchronized (StationSyncHolder.stationGlobalSync) {
             log.info("Assign new task #{}, params:\n{}", taskId, params );
-            Map<Long, StationTask> mapForLaunchpadUrl = getMapForLaunchpadUrl(launchpadUrl);
+            Map<Long, StationTask> mapForLaunchpadUrl = getMapForLaunchpadUrl(dispatcherUrl);
             StationTask task = mapForLaunchpadUrl.computeIfAbsent(taskId, k -> new StationTask());
 
             task.taskId = taskId;
@@ -496,7 +496,7 @@ public class StationTaskService {
             task.functionExecResult = null;
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
             task.clean = taskParamYaml.taskYaml.clean;
-            task.launchpadUrl = launchpadUrl;
+            task.dispatcherUrl = dispatcherUrl;
             task.createdOn = System.currentTimeMillis();
             task.assetsPrepared = false;
             task.launchedOn = null;
@@ -507,9 +507,9 @@ public class StationTaskService {
             task.resourceUploaded = false;
             task.completed = false;
 
-            File launchpadDir = new File(globals.stationTaskDir, metadataService.dispatcherUrlAsCode(launchpadUrl).code);
+            File dispatcherDir = new File(globals.stationTaskDir, metadataService.dispatcherUrlAsCode(dispatcherUrl).code);
             String path = getTaskPath(taskId);
-            File taskDir = new File(launchpadDir, path);
+            File taskDir = new File(dispatcherDir, path);
             try {
                 //noinspection StatementWithEmptyBody
                 if (taskDir.exists()) {
@@ -532,9 +532,9 @@ public class StationTaskService {
         }
     }
 
-    public StationTask resetTask(String launchpadUrl, Long taskId) {
+    public StationTask resetTask(String dispatcherUrl, Long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            StationTask task = findById(launchpadUrl, taskId);
+            StationTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
                 return null;
             }
@@ -543,9 +543,9 @@ public class StationTaskService {
         }
     }
 
-    public StationTask setLaunchOn(String launchpadUrl, long taskId) {
+    public StationTask setLaunchOn(String dispatcherUrl, long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            StationTask task = findById(launchpadUrl, taskId);
+            StationTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
                 return null;
             }
@@ -555,7 +555,7 @@ public class StationTaskService {
     }
 
     private StationTask save(StationTask task) {
-        File taskDir = prepareTaskDir(task.launchpadUrl, task.taskId);
+        File taskDir = prepareTaskDir(task.dispatcherUrl, task.taskId);
         File taskYaml = new File(taskDir, Consts.TASK_YAML);
 
         if (taskYaml.exists()) {
@@ -579,9 +579,9 @@ public class StationTaskService {
         return task;
     }
 
-    public StationTask findById(String launchpadUrl, Long taskId) {
+    public StationTask findById(String dispatcherUrl, Long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            return getMapForLaunchpadUrl(launchpadUrl)
+            return getMapForLaunchpadUrl(dispatcherUrl)
                     .entrySet()
                     .stream()
                     .filter(e -> e.getValue().taskId == taskId)
@@ -591,9 +591,9 @@ public class StationTaskService {
         }
     }
 
-    public List<StationTask> findAll(String launchpadUrl) {
+    public List<StationTask> findAll(String dispatcherUrl) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            Collection<StationTask> values = getMapForLaunchpadUrl(launchpadUrl).values();
+            Collection<StationTask> values = getMapForLaunchpadUrl(dispatcherUrl).values();
             return List.copyOf(values);
         }
     }
@@ -601,26 +601,26 @@ public class StationTaskService {
     public List<StationTask> findAll() {
         synchronized (StationSyncHolder.stationGlobalSync) {
             List<StationTask> list = new ArrayList<>();
-            for (String launchpadUrl : map.keySet()) {
-                list.addAll( getMapForLaunchpadUrl(launchpadUrl).values());
+            for (String dispatcherUrl : map.keySet()) {
+                list.addAll( getMapForLaunchpadUrl(dispatcherUrl).values());
             }
             return list;
         }
     }
 
-    public void delete(String launchpadUrl, final long taskId) {
-        Metadata.DispatcherInfo launchpadCode = metadataService.dispatcherUrlAsCode(launchpadUrl);
+    public void delete(String dispatcherUrl, final long taskId) {
+        Metadata.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
 
         synchronized (StationSyncHolder.stationGlobalSync) {
             final String path = getTaskPath(taskId);
 
-            final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.code);
-            final File taskDir = new File(launchpadDir, path);
+            final File dispatcherDir = new File(globals.stationTaskDir, dispatcherCode.code);
+            final File taskDir = new File(dispatcherDir, path);
             try {
                 if (taskDir.exists()) {
                     deleteDir(taskDir, "delete dir in StationTaskService.delete()");
                 }
-                Map<Long, StationTask> mapTask = getMapForLaunchpadUrl(launchpadUrl);
+                Map<Long, StationTask> mapTask = getMapForLaunchpadUrl(dispatcherUrl);
                 log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
                 mapTask.remove(taskId);
                 log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
@@ -635,14 +635,14 @@ public class StationTaskService {
         return ""+power.power7+File.separatorChar+power.power4+File.separatorChar;
     }
 
-    File prepareTaskDir(String launchpadUrl, Long taskId) {
-        Metadata.DispatcherInfo launchpadCode = metadataService.dispatcherUrlAsCode(launchpadUrl);
-        return prepareTaskDir(launchpadCode, taskId);
+    File prepareTaskDir(String dispatcherUrl, Long taskId) {
+        Metadata.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
+        return prepareTaskDir(dispatcherCode, taskId);
     }
 
-    File prepareTaskDir(Metadata.DispatcherInfo launchpadCode, Long taskId) {
-        final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.code);
-        File taskDir = new File(launchpadDir, getTaskPath(taskId));
+    File prepareTaskDir(Metadata.DispatcherInfo dispatcherCode, Long taskId) {
+        final File dispatcherDir = new File(globals.stationTaskDir, dispatcherCode.code);
+        File taskDir = new File(dispatcherDir, getTaskPath(taskId));
         if (taskDir.exists()) {
             return taskDir;
         }

@@ -76,7 +76,7 @@ public class TestSourceCodeParamsYamlCloning {
         assertEquals(1, p1.output.size());
         SourceCodeParamsYaml.Variable params = p1.output.get(0);
 
-        assertEquals(EnumsApi.DataSourcing.launchpad, params.sourcing);
+        assertEquals(EnumsApi.DataSourcing.dispatcher, params.sourcing);
         assertEquals("output-code", params.name);
 
         assertNotNull(p.metas);

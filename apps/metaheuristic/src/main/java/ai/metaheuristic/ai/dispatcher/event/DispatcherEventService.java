@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.CompanyData;
-import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
+import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
@@ -69,11 +69,11 @@ public class DispatcherEventService {
     private final CompanyRepository companyRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    public void publishExecContextLockingEvent(EnumsApi.LaunchpadEventType event, Long stationId, Long taskId, Long execContextId) {
+    public void publishExecContextLockingEvent(EnumsApi.DispatcherEventType event, Long stationId, Long taskId, Long execContextId) {
         if (!globals.isEventEnabled) {
             return;
         }
-        LaunchpadEventYaml.TaskEventData taskEventData = new LaunchpadEventYaml.TaskEventData();
+        DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
         taskEventData.stationId = stationId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
@@ -81,15 +81,15 @@ public class DispatcherEventService {
     }
 
     public void publishBatchEvent(
-            EnumsApi.LaunchpadEventType event, Long companyUniqueId, String filename,
+            EnumsApi.DispatcherEventType event, Long companyUniqueId, String filename,
             Long size, Long batchId, Long execContextId, DispatcherContext dispatcherContext) {
         if (!globals.isEventEnabled) {
             return;
         }
-        if (event==EnumsApi.LaunchpadEventType.BATCH_CREATED && (batchId==null || dispatcherContext ==null)) {
-            throw new IllegalStateException("Error (event==Enums.LaunchpadEventType.BATCH_CREATED && (batchId==null || dispatcherContext==null))");
+        if (event== EnumsApi.DispatcherEventType.BATCH_CREATED && (batchId==null || dispatcherContext ==null)) {
+            throw new IllegalStateException("Error (event==Enums.DispatcherEventType.BATCH_CREATED && (batchId==null || dispatcherContext==null))");
         }
-        LaunchpadEventYaml.BatchEventData batchEventData = new LaunchpadEventYaml.BatchEventData();
+        DispatcherEventYaml.BatchEventData batchEventData = new DispatcherEventYaml.BatchEventData();
         batchEventData.filename = filename;
         batchEventData.size = size;
         batchEventData.batchId = batchId;
@@ -103,11 +103,11 @@ public class DispatcherEventService {
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, companyUniqueId, contextId, batchEventData));
     }
 
-    public void publishTaskEvent(EnumsApi.LaunchpadEventType event, Long stationId, Long taskId, Long execContextId) {
+    public void publishTaskEvent(EnumsApi.DispatcherEventType event, Long stationId, Long taskId, Long execContextId) {
         if (!globals.isEventEnabled) {
             return;
         }
-        LaunchpadEventYaml.TaskEventData taskEventData = new LaunchpadEventYaml.TaskEventData();
+        DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
         taskEventData.stationId = stationId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
@@ -122,9 +122,9 @@ public class DispatcherEventService {
         }
         DispatcherEvent le = new DispatcherEvent();
         le.companyId = event.companyUniqueId;
-        le.period = getPeriod( LocalDateTime.parse( event.launchpadEventYaml.createdOn, EVENT_DATE_TIME_FORMATTER) );
-        le.event = event.launchpadEventYaml.event.toString();
-        le.params = LaunchpadEventYamlUtils.BASE_YAML_UTILS.toString(event.launchpadEventYaml);
+        le.period = getPeriod( LocalDateTime.parse( event.dispatcherEventYaml.createdOn, EVENT_DATE_TIME_FORMATTER) );
+        le.event = event.dispatcherEventYaml.event.toString();
+        le.params = LaunchpadEventYamlUtils.BASE_YAML_UTILS.toString(event.dispatcherEventYaml);
         dispatcherEventRepository.save(le);
     }
 

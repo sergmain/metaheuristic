@@ -34,10 +34,10 @@ public class TestMetadataYaml {
             Metadata m = MetadataUtils.to(is);
             assertNotNull(m);
             assertNotNull(m.getMetadata());
-            assertNotNull(m.getLaunchpad());
+            assertNotNull(m.getDispatcher());
             assertEquals(1, m.getMetadata().size());
-            assertEquals(2, m.getLaunchpad().size());
-            Set<Map.Entry<String, Metadata.DispatcherInfo>> entry = m.getLaunchpad().entrySet();
+            assertEquals(2, m.getDispatcher().size());
+            Set<Map.Entry<String, Metadata.DispatcherInfo>> entry = m.getDispatcher().entrySet();
             Iterator<Map.Entry<String, Metadata.DispatcherInfo>> iterator = entry.iterator();
             Map.Entry<String, Metadata.DispatcherInfo> map = iterator.next();
             Map.Entry<String, Metadata.DispatcherInfo> map1 = iterator.next();
@@ -58,9 +58,9 @@ public class TestMetadataYaml {
             Metadata m = MetadataUtils.to(is);
             assertNotNull(m);
             assertNotNull(m.metadata);
-            assertNotNull(m.launchpad);
+            assertNotNull(m.dispatcher);
             assertEquals(0, m.getMetadata().size());
-            assertEquals(0, m.getLaunchpad().size());
+            assertEquals(0, m.getDispatcher().size());
         }
     }
 
@@ -70,9 +70,9 @@ public class TestMetadataYaml {
             Metadata m = MetadataUtils.to(is);
             assertNotNull(m);
             assertNotNull(m.metadata);
-            assertNotNull(m.launchpad);
+            assertNotNull(m.dispatcher);
             assertEquals(0, m.getMetadata().size());
-            assertEquals(0, m.getLaunchpad().size());
+            assertEquals(0, m.getDispatcher().size());
         }
     }
 

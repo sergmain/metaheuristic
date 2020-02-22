@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.station.function;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.station.net.HttpClientExecutor;
 import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
@@ -58,8 +58,8 @@ public class StationFunctionService {
     }
 
     public DownloadedFunctionConfigStatus downloadFunctionConfig(
-            String launchpadUrl,
-            LaunchpadLookupConfig.Asset asset, String functionCode, String stationId) {
+            String dispatcherUrl,
+            DispatcherLookupConfig.Asset asset, String functionCode, String stationId) {
 
         final String functionChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/function-config";
         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +'-' + stationId;
@@ -97,11 +97,11 @@ public class StationFunctionService {
                 log.error("#813.220 HttpResponseException", e);
             }
         } catch (SocketTimeoutException e) {
-            log.error("#813.170 SocketTimeoutException: {}, function: {}, launchpad: {}, assetUrl: {}", e.toString(), functionCode, launchpadUrl, asset.url);
+            log.error("#813.170 SocketTimeoutException: {}, function: {}, dispatcher: {}, assetUrl: {}", e.toString(), functionCode, dispatcherUrl, asset.url);
         } catch (IOException e) {
-            log.error(S.f("#813.180 IOException, function: %s, launchpad: %s, assetUrl: %s",functionCode, launchpadUrl), e);
+            log.error(S.f("#813.180 IOException, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl), e);
         } catch (Throwable th) {
-            log.error(S.f("#813.190 Throwable, function: %s, launchpad: %s, assetUrl: %s",functionCode, launchpadUrl, asset.url), th);
+            log.error(S.f("#813.190 Throwable, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl, asset.url), th);
         }
         return functionConfigStatus;
     }

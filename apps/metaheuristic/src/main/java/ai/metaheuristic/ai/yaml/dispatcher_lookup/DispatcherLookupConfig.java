@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.launchpad_lookup;
+package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
 import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
@@ -28,10 +28,10 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class LaunchpadLookupConfig {
-    public List<LaunchpadLookup> launchpads = new ArrayList<>();
+public class DispatcherLookupConfig {
+    public List<DispatcherLookup> dispatchers = new ArrayList<>();
 
-    public enum LaunchpadLookupType {
+    public enum DispatcherLookupType {
         direct, registry
     }
 
@@ -51,7 +51,7 @@ public class LaunchpadLookupConfig {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class LaunchpadLookup {
+    public static class DispatcherLookup {
         // fields, which are specific to concrete installation
         // actually, it's a schedule
         public String taskProcessingTime;
@@ -61,7 +61,7 @@ public class LaunchpadLookupConfig {
         public String url;
         public boolean signatureRequired;
         public String publicKey;
-        public LaunchpadLookupType lookupType;
+        public DispatcherLookupType lookupType;
         public AuthType authType;
 
         public String restPassword;

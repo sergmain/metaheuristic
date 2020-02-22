@@ -138,7 +138,7 @@ public class VariableService {
             data.setName(variable);
             data.setFilename(filename);
             data.setExecContextId(execContextId);
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
+            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setContextId(internalContextId);
 
@@ -168,9 +168,9 @@ public class VariableService {
             data.inited = false;
             data.setName(variable);
             data.setExecContextId(execContextId);
-            // TODO right now only DataSourcing.launchpad is supporting as internal variable.
+            // TODO right now only DataSourcing.dispatcher is supporting as internal variable.
             //  the code has to be added for another type of sourcing
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
+            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setContextId(contextId);
             variableRepository.save(data);

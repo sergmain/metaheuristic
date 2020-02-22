@@ -68,7 +68,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
         DownloadResourceTask task;
         while ((task = poll()) != null) {
-            StationTask stationTask = stationTaskService.findById(task.launchpad.url, task.taskId);
+            StationTask stationTask = stationTaskService.findById(task.dispatcher.url, task.taskId);
             if (stationTask!=null && stationTask.finishedOn!=null) {
                 log.info("Task #{} was already finished, skip it", task.taskId);
                 continue;
@@ -85,14 +85,14 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
             log.info("Start processing the download task {}", task);
             try {
-                final String payloadRestUrl = task.launchpad.url + "/rest/v1/payload/resource/data";
+                final String payloadRestUrl = task.dispatcher.url + "/rest/v1/payload/resource/data";
                 final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.stationId+ '-' + task.taskId + '-' + URLEncoder.encode(task.resourceId, StandardCharsets.UTF_8.toString());
 
                 File parentDir = assetFile.file.getParentFile();
                 if (parentDir==null) {
                     String es = "#810.020 Can't get parent dir for asset file " + assetFile.file.getAbsolutePath();
                     log.error(es);
-                    stationTaskService.markAsFinishedWithError(task.launchpad.url, task.taskId, es);
+                    stationTaskService.markAsFinishedWithError(task.dispatcher.url, task.taskId, es);
                     continue;
                 }
                 File tempFile;
@@ -101,7 +101,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 } catch (IOException e) {
                     String es = "#810.030 Error creating temp file in parent dir: " + parentDir.getAbsolutePath();
                     log.error(es, e);
-                    stationTaskService.markAsFinishedWithError(task.launchpad.url, task.taskId, es);
+                    stationTaskService.markAsFinishedWithError(task.dispatcher.url, task.taskId, es);
                     continue;
                 }
 
@@ -124,7 +124,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                         RestUtils.addHeaders(request);
 
                         Response response = HttpClientExecutor.getExecutor(
-                                task.launchpad.url, task.launchpad.restUsername, task.launchpad.restPassword).execute(request);
+                                task.dispatcher.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
                         File partFile = new File(dir, String.format(mask, idx));
                         final HttpResponse httpResponse = response.returnResponse();
                         try (final FileOutputStream out = new FileOutputStream(partFile)) {
@@ -152,23 +152,23 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                         }
                     } catch (HttpResponseException e) {
                         if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                            final String es = String.format("#810.035 Resource %s wasn't found on launchpad. Task #%s is finished.", task.resourceId, task.getTaskId());
+                            final String es = String.format("#810.035 Resource %s wasn't found on dispatcher. Task #%s is finished.", task.resourceId, task.getTaskId());
                             log.warn(es);
-                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            stationTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.resource_doesnt_exist;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
                             final String es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.resourceId, task.getTaskId());
                             log.warn(es);
-                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            stationTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.unknown_error;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
                             final String es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.resourceId, task.getTaskId());
                             log.warn(es);
-                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            stationTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.unknown_error;
                             break;
                         }

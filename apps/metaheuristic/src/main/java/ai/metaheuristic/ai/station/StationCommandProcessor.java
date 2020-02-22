@@ -43,75 +43,75 @@ public class StationCommandProcessor {
     private final CurrentExecState currentExecState;
 
     // this method is synchronized outside
-    public void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String launchpadUrl, DispatcherCommParamsYaml launchpadYaml) {
-        scpy.resendTaskOutputResourceResult = resendTaskOutputResource(launchpadUrl, launchpadYaml);
-        processExecContextStatus(launchpadUrl, launchpadYaml);
-        processReportResultDelivering(launchpadUrl, launchpadYaml);
-        processAssignedTask(launchpadUrl, launchpadYaml);
-        storeStationId(launchpadUrl, launchpadYaml);
-        reAssignStationId(launchpadUrl, launchpadYaml);
-        registerFunctions(scpy.functionDownloadStatus, launchpadUrl, launchpadYaml);
+    public void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
+        scpy.resendTaskOutputResourceResult = resendTaskOutputResource(dispatcherUrl, dispatcherYaml);
+        processExecContextStatus(dispatcherUrl, dispatcherYaml);
+        processReportResultDelivering(dispatcherUrl, dispatcherYaml);
+        processAssignedTask(dispatcherUrl, dispatcherYaml);
+        storeStationId(dispatcherUrl, dispatcherYaml);
+        reAssignStationId(dispatcherUrl, dispatcherYaml);
+        registerFunctions(scpy.functionDownloadStatus, dispatcherUrl, dispatcherYaml);
     }
 
-    private void registerFunctions(StationCommParamsYaml.FunctionDownloadStatus functionDownloadStatus, String launchpadUrl, DispatcherCommParamsYaml launchpadYaml) {
-        List<FunctionDownloadStatusYaml.Status> statuses = metadataService.registerNewFunctionCode(launchpadUrl, launchpadYaml.functions.infos);
+    private void registerFunctions(StationCommParamsYaml.FunctionDownloadStatus functionDownloadStatus, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
+        List<FunctionDownloadStatusYaml.Status> statuses = metadataService.registerNewFunctionCode(dispatcherUrl, dispatcherYaml.functions.infos);
         for (FunctionDownloadStatusYaml.Status status : statuses) {
             functionDownloadStatus.statuses.add(new StationCommParamsYaml.FunctionDownloadStatus.Status(status.functionState, status.code));
         }
     }
 
     // processing at station side
-    private StationCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(String launchpadUrl, DispatcherCommParamsYaml request) {
+    private StationCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(String dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.resendTaskOutputResource==null || request.resendTaskOutputResource.taskIds==null || request.resendTaskOutputResource.taskIds.isEmpty()) {
             return null;
         }
         List<StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
         for (Long taskId : request.resendTaskOutputResource.taskIds) {
-            Enums.ResendTaskOutputResourceStatus status = stationService.resendTaskOutputResource(launchpadUrl, taskId);
+            Enums.ResendTaskOutputResourceStatus status = stationService.resendTaskOutputResource(dispatcherUrl, taskId);
             statuses.add( new StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(taskId, status));
         }
         return new StationCommParamsYaml.ResendTaskOutputResourceResult(statuses);
     }
 
-    private void processExecContextStatus(String launchpadUrl, DispatcherCommParamsYaml request) {
+    private void processExecContextStatus(String dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.execContextStatus ==null) {
             return;
         }
-        currentExecState.register(launchpadUrl, request.execContextStatus.statuses);
+        currentExecState.register(dispatcherUrl, request.execContextStatus.statuses);
     }
 
     // processing at station side
-    private void processReportResultDelivering(String launchpadUrl, DispatcherCommParamsYaml request) {
+    private void processReportResultDelivering(String dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.reportResultDelivering==null) {
             return;
         }
-        stationService.markAsDelivered(launchpadUrl, request.reportResultDelivering.getIds());
+        stationService.markAsDelivered(dispatcherUrl, request.reportResultDelivering.getIds());
     }
 
-    private void processAssignedTask(String launchpadUrl, DispatcherCommParamsYaml request) {
+    private void processAssignedTask(String dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.assignedTask==null) {
             return;
         }
-        stationService.assignTasks(launchpadUrl, request.assignedTask);
+        stationService.assignTasks(dispatcherUrl, request.assignedTask);
     }
 
     // processing at station side
-    private void storeStationId(String launchpadUrl, DispatcherCommParamsYaml request) {
+    private void storeStationId(String dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.assignedStationId==null) {
             return;
         }
         log.info("storeStationId() new station Id: {}", request.assignedStationId);
         metadataService.setStationIdAndSessionId(
-                launchpadUrl, request.assignedStationId.assignedStationId, request.assignedStationId.assignedSessionId);
+                dispatcherUrl, request.assignedStationId.assignedStationId, request.assignedStationId.assignedSessionId);
     }
 
     // processing at station side
-    private void reAssignStationId(String launchpadUrl, DispatcherCommParamsYaml request) {
+    private void reAssignStationId(String dispatcherUrl, DispatcherCommParamsYaml request) {
         if (request.reAssignedStationId==null) {
             return;
         }
-        final String currStationId = metadataService.getStationId(launchpadUrl);
-        final String currSessionId = metadataService.getSessionId(launchpadUrl);
+        final String currStationId = metadataService.getStationId(dispatcherUrl);
+        final String currSessionId = metadataService.getSessionId(dispatcherUrl);
         if (currStationId!=null && currSessionId!=null &&
                 currStationId.equals(request.reAssignedStationId.getReAssignedStationId()) &&
                 currSessionId.equals(request.reAssignedStationId.sessionId)
@@ -125,7 +125,7 @@ public class StationCommandProcessor {
                 request.reAssignedStationId.getReAssignedStationId(), request.reAssignedStationId.sessionId
         );
         metadataService.setStationIdAndSessionId(
-                launchpadUrl, request.reAssignedStationId.getReAssignedStationId(), request.reAssignedStationId.sessionId);
+                dispatcherUrl, request.reAssignedStationId.getReAssignedStationId(), request.reAssignedStationId.sessionId);
     }
 
 }

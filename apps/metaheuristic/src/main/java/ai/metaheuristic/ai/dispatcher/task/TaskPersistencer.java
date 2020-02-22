@@ -142,7 +142,7 @@ public class TaskPersistencer {
             EnumsApi.TaskExecState state = functionExec.allFunctionsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
             Task t = prepareAndSaveTask(result, state);
             dispatcherEventService.publishTaskEvent(
-                    state==EnumsApi.TaskExecState.OK ? EnumsApi.LaunchpadEventType.TASK_FINISHED : EnumsApi.LaunchpadEventType.TASK_ERROR,
+                    state==EnumsApi.TaskExecState.OK ? EnumsApi.DispatcherEventType.TASK_FINISHED : EnumsApi.DispatcherEventType.TASK_ERROR,
                     null, result.taskId, t.getExecContextId());
             action.accept(t);
             return t;
@@ -180,7 +180,7 @@ public class TaskPersistencer {
             task.setResultReceived(true);
 
             task = taskRepository.save(task);
-            dispatcherEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ERROR,null, task.id, task.getExecContextId());
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.getExecContextId());
 
             return task;
         });

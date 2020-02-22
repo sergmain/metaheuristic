@@ -66,12 +66,12 @@ public class Schedulers {
         /**
          * update status of all execContexts which are in 'started' state. Also, if execContext is finished, atlas will be produced
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.process-exec-context'), 1, 40, 3)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.process-exec-context'), 1, 40, 3)*1000 }")
         public void updateExecContextStatuses() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isLaunchpadEnabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.info("Invoking ExecContextService.updateExecContextStatuses()");
@@ -96,60 +96,60 @@ public class Schedulers {
         /**
          * update statuses of all batches if all related execContexts are finished
          */
-        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.update-batch-statuses'), 5, 60, 5)*1000 }")
+        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.update-batch-statuses'), 5, 60, 5)*1000 }")
         public void updateBatchStatuses() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isLaunchpadEnabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.info("Invoking batchService.updateBatchStatuses()");
             batchService.updateBatchStatuses();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.create-all-tasks'), 5, 40, 5)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.create-all-tasks'), 5, 40, 5)*1000 }")
         public void createAllTasks() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isLaunchpadEnabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.info("Invoking sourceCodeService.createAllTasks()");
             sourceCodeService.createAllTasks();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.artifact-cleaner'), 30, 300, 60)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.artifact-cleaner'), 30, 300, 60)*1000 }")
         public void artifactCleanerAtLaunchpad() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isLaunchpadEnabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.info("Invoking artifactCleanerAtLaunchpad.fixedDelay()");
             artifactCleanerAtDispatcher.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.timeout.exteriment-finisher'), 5, 300, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.exteriment-finisher'), 5, 300, 10)*1000 }")
         public void experimentFinisher() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isLaunchpadEnabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.info("Invoking experimentService.experimentFinisher()");
             experimentService.experimentFinisher();
         }
 
-        @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
+        @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
         public void garbageCollectionAtLaunchpad() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isLaunchpadEnabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.debug("Invoking System.gc()");
@@ -158,12 +158,12 @@ public class Schedulers {
             log.warn("Memory after GC. Free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
         }
 
-        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.asset.sync-timeout'), 30, 3600, 120)*1000 }")
+        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.asset.sync-timeout'), 30, 3600, 120)*1000 }")
         public void syncReplication() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isLaunchpadEnabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.debug("Invoking replicationService.sync()");
@@ -193,7 +193,7 @@ public class Schedulers {
         private final StationCommandProcessor stationCommandProcessor;
 
         private final RoundRobinForDispatcher roundRobin;
-        private final Map<String, DispatcherRequestor> launchpadRequestorMap = new HashMap<>();
+        private final Map<String, DispatcherRequestor> dispatcherRequestorMap = new HashMap<>();
 
         public StationSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadFunctionActor downloadFunctionActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, MetadataService metadataService, DispatcherLookupExtendedService dispatcherLookupExtendedService, CurrentExecState currentExecState, EnvService envService, StationCommandProcessor stationCommandProcessor) {
             this.globals = globals;
@@ -207,20 +207,20 @@ public class Schedulers {
             this.stationCommandProcessor = stationCommandProcessor;
 
             if (dispatcherLookupExtendedService.lookupExtendedMap==null) {
-                throw new IllegalStateException("launchpad.yaml wasn't configured");
+                throw new IllegalStateException("dispatcher.yaml wasn't configured");
             }
             this.roundRobin = new RoundRobinForDispatcher(dispatcherLookupExtendedService.lookupExtendedMap);
             this.metadataService = metadataService;
             this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
             this.currentExecState = currentExecState;
 
-            for (Map.Entry<String, DispatcherLookupExtendedService.LaunchpadLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
-                final DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad = entry.getValue();
-                final DispatcherRequestor requestor = new DispatcherRequestor(launchpad.launchpadLookup.url, globals,
+            for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
+                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = entry.getValue();
+                final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.dispatcherLookup.url, globals,
                         stationTaskService, stationService, this.metadataService, this.currentExecState,
                         this.dispatcherLookupExtendedService, this.stationCommandProcessor);
 
-                launchpadRequestorMap.put(launchpad.launchpadLookup.url, requestor);
+                dispatcherRequestorMap.put(dispatcher.dispatcherLookup.url, requestor);
             }
         }
 
@@ -239,8 +239,8 @@ public class Schedulers {
         /**
          * this scheduler is being run at the station side
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.request-launchpad'), 3, 20, 6)*1000 }")
-        public void launchRequester() {
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.request-dispatcher'), 3, 20, 6)*1000 }")
+        public void dispatcherRequester() {
             if (globals.isUnitTesting) {
                 return;
             }
@@ -251,22 +251,22 @@ public class Schedulers {
 /*
             String url = roundRobin.next();
             if (url==null) {
-                log.info("Can't find any enabled launchpad");
+                log.info("Can't find any enabled dispatcher");
                 return;
             }
 */
-            Set<String> launchpads = roundRobin.getActiveLaunchpads();
-            if (launchpads.isEmpty()) {
-                log.info("Can't find any enabled launchpad");
+            Set<String> dispatchers = roundRobin.getActiveLaunchpads();
+            if (dispatchers.isEmpty()) {
+                log.info("Can't find any enabled dispatcher");
                 return;
             }
 
-            for (String launchpad : launchpads) {
-                log.info("Run launchpadRequestor.fixedDelay() for url {}", launchpad);
+            for (String dispatcher : dispatchers) {
+                log.info("Run dispatcherRequestor.proceedWithRequest() for url {}", dispatcher);
                 try {
-                    launchpadRequestorMap.get(launchpad).proceedWithRequest();
+                    dispatcherRequestorMap.get(dispatcher).proceedWithRequest();
                 } catch (Throwable th) {
-                    log.error("StationSchedulers.launchRequester()", th);
+                    log.error("StationSchedulers.dispatcherRequester()", th);
                 }
             }
         }

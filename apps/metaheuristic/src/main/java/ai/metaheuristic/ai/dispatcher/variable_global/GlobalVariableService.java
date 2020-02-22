@@ -121,7 +121,7 @@ public class GlobalVariableService {
             GlobalVariable data = new GlobalVariable();
             data.setVariable(variable);
             data.setFilename(filename);
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
+            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);

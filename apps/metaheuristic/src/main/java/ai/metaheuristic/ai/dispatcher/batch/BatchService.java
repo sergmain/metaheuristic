@@ -165,7 +165,7 @@ public class BatchService {
                 return b;
             }
             b.execState = Enums.BatchExecState.Processing.code;
-            dispatcherEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
+            dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
             return batchCache.save(b);
         }
     }
@@ -202,7 +202,7 @@ public class BatchService {
                     log.warn("#990.065 error while updating the status of batch #" + batchId, th);
                     // TODO 2019-12-15 this isn't good solution but need more info about behaviour with this error
                 }
-                dispatcherEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_FINISHED, null, null, null, batchId, null, null );
+                dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_FINISHED, null, null, null, batchId, null, null );
             }
         }
     }
@@ -237,7 +237,7 @@ public class BatchService {
                 return b;
             }
             finally {
-                dispatcherEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
+                dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
             }
         }
     }

@@ -59,7 +59,7 @@ import static org.apache.http.client.config.RequestConfig.custom;
 @Slf4j
 public class DispatcherRequestor {
 
-    private final String launchpadUrl;
+    private final String dispatcherUrl;
     private final Globals globals;
 
     private final StationTaskService stationTaskService;
@@ -72,11 +72,11 @@ public class DispatcherRequestor {
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = getHttpRequestFactory();
     private RestTemplate restTemplate;
 
-    private DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad;
+    private DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
     private String serverRestUrl;
 
-    public DispatcherRequestor(String launchpadUrl, Globals globals, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, StationCommandProcessor stationCommandProcessor) {
-        this.launchpadUrl = launchpadUrl;
+    public DispatcherRequestor(String dispatcherUrl, Globals globals, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, StationCommandProcessor stationCommandProcessor) {
+        this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.stationTaskService = stationTaskService;
         this.stationService = stationService;
@@ -87,11 +87,11 @@ public class DispatcherRequestor {
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-        this.launchpad = this.dispatcherLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
-        if (launchpad == null) {
-            throw new IllegalStateException("#775.010 Can'r find launchpad config for url " + launchpadUrl);
+        this.dispatcher = this.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+        if (dispatcher == null) {
+            throw new IllegalStateException("#775.010 Can'r find dispatcher config for url " + dispatcherUrl);
         }
-        serverRestUrl = launchpadUrl + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
+        serverRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
         nextRequest = new StationCommParamsYaml();
     }
 
@@ -166,35 +166,35 @@ public class DispatcherRequestor {
         withSync(() -> { scpy.reportTaskProcessingResult = reportTaskProcessingResult; return null; });
     }
 
-    private void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String launchpadUrl, DispatcherCommParamsYaml launchpadYaml) {
-        log.debug("#775.020 DispatcherCommParamsYaml:\n{}", launchpadYaml);
+    private void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
+        log.debug("#775.020 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
         withSync(() -> {
-            storeLaunchpadContext(launchpadUrl, launchpadYaml);
-            stationCommandProcessor.processLaunchpadCommParamsYaml(scpy, launchpadUrl, launchpadYaml);
+            storeLaunchpadContext(dispatcherUrl, dispatcherYaml);
+            stationCommandProcessor.processLaunchpadCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
             return null;
         });
     }
 
-    private void storeLaunchpadContext(String launchpadUrl, DispatcherCommParamsYaml dispatcherCommParamsYaml) {
-        if (dispatcherCommParamsYaml ==null || dispatcherCommParamsYaml.launchpadCommContext==null) {
+    private void storeLaunchpadContext(String dispatcherUrl, DispatcherCommParamsYaml dispatcherCommParamsYaml) {
+        if (dispatcherCommParamsYaml ==null || dispatcherCommParamsYaml.dispatcherCommContext ==null) {
             return;
         }
-        DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad =
-                dispatcherLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
+        DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+                dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
-        if (launchpad==null) {
+        if (dispatcher==null) {
             return;
         }
-        storeLaunchpadContext(dispatcherCommParamsYaml, launchpad);
+        storeLaunchpadContext(dispatcherCommParamsYaml, dispatcher);
     }
 
-    private void storeLaunchpadContext(DispatcherCommParamsYaml dispatcherCommParamsYaml, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad) {
-        if (dispatcherCommParamsYaml.launchpadCommContext==null) {
+    private void storeLaunchpadContext(DispatcherCommParamsYaml dispatcherCommParamsYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher) {
+        if (dispatcherCommParamsYaml.dispatcherCommContext ==null) {
             return;
         }
-        launchpad.context.chunkSize = dispatcherCommParamsYaml.launchpadCommContext.chunkSize;
-        launchpad.context.maxVersionOfStation = dispatcherCommParamsYaml.launchpadCommContext.stationCommVersion!=null
-            ? dispatcherCommParamsYaml.launchpadCommContext.stationCommVersion
+        dispatcher.context.chunkSize = dispatcherCommParamsYaml.dispatcherCommContext.chunkSize;
+        dispatcher.context.maxVersionOfStation = dispatcherCommParamsYaml.dispatcherCommContext.stationCommVersion!=null
+            ? dispatcherCommParamsYaml.dispatcherCommContext.stationCommVersion
             : 3;
     }
 
@@ -218,8 +218,8 @@ public class DispatcherRequestor {
             Monitoring.log("##010", Enums.Monitor.MEMORY);
             StationCommParamsYaml scpy = swap();
 
-            final String stationId = metadataService.getStationId(launchpadUrl);
-            final String sessionId = metadataService.getSessionId(launchpadUrl);
+            final String stationId = metadataService.getStationId(dispatcherUrl);
+            final String sessionId = metadataService.getSessionId(dispatcherUrl);
 
             if (stationId == null || sessionId==null) {
                 setRequestStationId(scpy, new StationCommParamsYaml.RequestStationId());
@@ -228,25 +228,25 @@ public class DispatcherRequestor {
                 setStationCommContext(scpy, new StationCommParamsYaml.StationCommContext(stationId, sessionId));
 
                 // always report about current active tasks, if we have actual stationId
-                setReportStationTaskStatus(scpy, stationTaskService.produceStationTaskStatus(launchpadUrl));
-                setReportStationStatus(scpy, stationService.produceReportStationStatus(launchpadUrl, launchpad.schedule));
+                setReportStationTaskStatus(scpy, stationTaskService.produceStationTaskStatus(dispatcherUrl));
+                setReportStationStatus(scpy, stationService.produceReportStationStatus(dispatcherUrl, dispatcher.schedule));
 
                 // we have to pull new tasks from server constantly
-                if (currentExecState.isInited(launchpadUrl)) {
+                if (currentExecState.isInited(dispatcherUrl)) {
                     Monitoring.log("##011", Enums.Monitor.MEMORY);
-                    final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
+                    final boolean b = stationTaskService.isNeedNewTask(dispatcherUrl, stationId);
                     Monitoring.log("##012", Enums.Monitor.MEMORY);
-                    if (b && !launchpad.schedule.isCurrentTimeInactive()) {
-                        setRequestTask(scpy, new StationCommParamsYaml.RequestTask(launchpad.launchpadLookup.acceptOnlySignedFunctions));
+                    if (b && !dispatcher.schedule.isCurrentTimeInactive()) {
+                        setRequestTask(scpy, new StationCommParamsYaml.RequestTask(dispatcher.dispatcherLookup.acceptOnlySignedFunctions));
                     }
                     else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
                             // let's check resources for non-completed and not-sending yet tasks
-                            List<StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = stationTaskService.findAllByCompletedIsFalse(launchpadUrl).stream()
+                            List<StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = stationTaskService.findAllByCompletedIsFalse(dispatcherUrl).stream()
                                     .filter(t -> t.delivered && t.finishedOn!=null && !t.resourceUploaded)
                                     .map(t->
                                             new StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(
-                                                    t.taskId, stationService.resendTaskOutputResource(launchpadUrl, t.taskId)
+                                                    t.taskId, stationService.resendTaskOutputResource(dispatcherUrl, t.taskId)
                                             )
                                     ).collect(Collectors.toList());
 
@@ -261,10 +261,10 @@ public class DispatcherRequestor {
                 }
 
                 Monitoring.log("##013", Enums.Monitor.MEMORY);
-                setReportTaskProcessingResult(scpy, stationTaskService.reportTaskProcessingResult(launchpadUrl));
+                setReportTaskProcessingResult(scpy, stationTaskService.reportTaskProcessingResult(dispatcherUrl));
                 Monitoring.log("##014", Enums.Monitor.MEMORY);
 
-                scpy.functionDownloadStatus.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(launchpadUrl));
+                scpy.functionDownloadStatus.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(dispatcherUrl));
             }
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;
@@ -273,7 +273,7 @@ public class DispatcherRequestor {
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
 
-                String auth = launchpad.launchpadLookup.restUsername + ':' + launchpad.launchpadLookup.restPassword;
+                String auth = dispatcher.dispatcherLookup.restUsername + ':' + dispatcher.dispatcherLookup.restPassword;
                 byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
                 String authHeader = "Basic " + new String(encodedAuth);
                 headers.set(HttpHeaders.AUTHORIZATION, authHeader);
@@ -282,24 +282,24 @@ public class DispatcherRequestor {
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);
                 Monitoring.log("##015", Enums.Monitor.MEMORY);
 
-                log.debug("Start to request a launchpad at {}", url);
+                log.debug("Start to request a dispatcher at {}", url);
                 log.debug("ExchangeData:\n{}", yaml);
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
                 Monitoring.log("##016", Enums.Monitor.MEMORY);
                 String result = response.getBody();
-                log.debug("ExchangeData from launchpad:\n{}", result);
+                log.debug("ExchangeData from dispatcher:\n{}", result);
                 if (result == null) {
                     log.warn("#775.050 Launchpad returned null as a result");
                     return;
                 }
-                DispatcherCommParamsYaml launchpadYaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
+                DispatcherCommParamsYaml dispatcherYaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
 
-                if (!launchpadYaml.success) {
-                    log.error("#775.060 Something wrong at the launchpad {}. Check the launchpad's logs for more info.", launchpadUrl );
+                if (!dispatcherYaml.success) {
+                    log.error("#775.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
                     return;
                 }
                 Monitoring.log("##017", Enums.Monitor.MEMORY);
-                processLaunchpadCommParamsYaml(scpy, launchpadUrl, launchpadYaml);
+                processLaunchpadCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
                 Monitoring.log("##018", Enums.Monitor.MEMORY);
             } catch (HttpClientErrorException e) {
                 switch(e.getStatusCode()) {

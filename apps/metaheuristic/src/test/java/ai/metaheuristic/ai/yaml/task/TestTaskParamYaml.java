@@ -94,7 +94,7 @@ public class TestTaskParamYaml {
                 "file.txt",
                 "112233",
                 "python.exe",
-                EnumsApi.FunctionSourcing.launchpad,
+                EnumsApi.FunctionSourcing.dispatcher,
                 null,
                 new FunctionConfigYaml.FunctionInfo(),
                 null,

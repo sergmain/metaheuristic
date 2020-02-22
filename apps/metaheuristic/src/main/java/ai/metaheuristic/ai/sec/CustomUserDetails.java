@@ -87,7 +87,7 @@ public class CustomUserDetails implements UserDetailsService {
             throw new UsernameNotFoundException("Username not found");
         }
 
-        if (StringUtils.equals(globals.launchpadMasterUsername, complexUsername.getUsername())) {
+        if (StringUtils.equals(globals.dispatcherMasterUsername, complexUsername.getUsername())) {
 
             Account account = new Account();
 
@@ -97,12 +97,12 @@ public class CustomUserDetails implements UserDetailsService {
 
             // master admin will belong to companyUniqueId==1
             account.setCompanyId( 1L );
-            account.setUsername(globals.launchpadMasterUsername);
+            account.setUsername(globals.dispatcherMasterUsername);
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
-            account.setPassword(globals.launchpadMasterPassword);
+            account.setPassword(globals.dispatcherMasterPassword);
 
             account.setRoles(SecConsts.ROLE_MASTER_ADMIN);
             return account;

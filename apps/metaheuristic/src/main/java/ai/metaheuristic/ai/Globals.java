@@ -71,81 +71,81 @@ public class Globals {
     @Value("${mh.is-event-enabled:#{false}}")
     public boolean isEventEnabled = false;
 
-    // Launchpad's globals
+    // Globals of Dispatcher
 
-    @Value("${mh.launchpad.is-security-enabled:#{true}}")
+    @Value("${mh.dispatcher.is-security-enabled:#{true}}")
     public boolean isSecurityEnabled;
 
-    @Value("${mh.launchpad.is-ssl-required:#{true}}")
+    @Value("${mh.dispatcher.is-ssl-required:#{true}}")
     public boolean isSslRequired = true;
 
-    @Value("${mh.launchpad.function-checksum-required:#{true}}")
+    @Value("${mh.dispatcher.function-checksum-required:#{true}}")
     public boolean isFunctionChecksumRequired = true;
 
-    @Value("${mh.launchpad.function-signature-required:#{true}}")
+    @Value("${mh.dispatcher.function-signature-required:#{true}}")
     public boolean isFunctionSignatureRequired = true;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-username')) }")
-    public String launchpadMasterUsername;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.master-username')) }")
+    public String dispatcherMasterUsername;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-password')) }")
-    public String launchpadMasterPassword;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.master-password')) }")
+    public String dispatcherMasterPassword;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.public-key')) }")
-    public String launchpadPublicKeyStr;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.public-key')) }")
+    public String dispatcherPublicKeyStr;
 
-    @Value("${mh.launchpad.enabled:#{false}}")
-    public boolean isLaunchpadEnabled = true;
+    @Value("${mh.dispatcher.enabled:#{false}}")
+    public boolean dispatcherEnabled = true;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.launchpad.dir' )) }")
-    public File launchpadDir;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.dispatcher.dir' )) }")
+    public File dispatcherDir;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.max-tasks-per-exec-context'), 1, 100000, 5000) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.max-tasks-per-exec-context'), 1, 100000, 5000) }")
     public int maxTasksPerExecContext;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.global-variable-table-rows-limit'), 5, 100, 20) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.global-variable-table-rows-limit'), 5, 100, 20) }")
     public int globalVariableRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.experiment-table-rows-limit'), 5, 30, 10) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.experiment-table-rows-limit'), 5, 30, 10) }")
     public int experimentRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.atlas-experiment-table-rows-limit'), 5, 100, 20) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.atlas-experiment-table-rows-limit'), 5, 100, 20) }")
     public int atlasExperimentRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.source-code-table-rows-limit'), 5, 50, 10) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.source-code-table-rows-limit'), 5, 50, 10) }")
     public int sourceCodeRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.exec-context-table-rows-limit'), 5, 50, 20) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.exec-context-table-rows-limit'), 5, 50, 20) }")
     public int execContextRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.station-table-rows-limit'), 5, 100, 50) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.station-table-rows-limit'), 5, 100, 50) }")
     public int stationRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.account-table-rows-limit'), 5, 100, 20) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.account-table-rows-limit'), 5, 100, 20) }")
     public int accountRowsLimit;
 
     // left here for compatibility
     @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated
-    @Value("${mh.launchpad.is-replace-snapshot:#{null}}")
+    @Value("${mh.dispatcher.is-replace-snapshot:#{null}}")
     public Boolean isReplaceSnapshot;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.default-result-file-extension')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.default-result-file-extension')) }")
     public String defaultResultFileExtension;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.chunk-size')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.chunk-size')) }")
     public String chunkSizeStr;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset.mode')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.mode')) }")
     public String assetModeStr;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset.source-url')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.source-url')) }")
     public String assetSourceUrl;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset.username')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.username')) }")
     public String assetUsername;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.asset.password')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.password')) }")
     public String assetPassword;
 
     // Station's globals
@@ -159,8 +159,8 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.dir' )) }")
     public File stationDir;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.default-launchpad-yaml-file' )) }")
-    public File defaultLaunchpadYamlFile;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.default-dispatcher-yaml-file' )) }")
+    public File defaultDispatcherYamlFile;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.default-env-yaml-file' )) }")
     public File defaultEnvYamlFile;
@@ -170,14 +170,14 @@ public class Globals {
 
 
     // some fields
-    public File launchpadTempDir;
-    public File launchpadResourcesDir;
+    public File dispatcherTempDir;
+    public File dispatcherResourcesDir;
 
     public File stationResourcesDir;
     public File stationTaskDir;
     public File stationEnvHotDeployDir;
 
-    public PublicKey launchpadPublicKey = null;
+    public PublicKey dispatcherPublicKey = null;
 
     public Long chunkSize = null;
 
@@ -191,15 +191,15 @@ public class Globals {
     @PostConstruct
     public void init() {
         if (!isSecurityEnabled) {
-            throw new GlobalConfigurationException("mh.launchpad.is-security-enabled==false isn't supported any more\nNeed to change to true and set up master's login/password");
+            throw new GlobalConfigurationException("mh.dispatcher.is-security-enabled==false isn't supported any more\nNeed to change to true and set up master's login/password");
         }
         String publicKeyAsStr = env.getProperty("MH_PUBLIC_KEY");
         if (publicKeyAsStr!=null && !publicKeyAsStr.isBlank()) {
-            launchpadPublicKeyStr = publicKeyAsStr;
+            dispatcherPublicKeyStr = publicKeyAsStr;
         }
 
-        if (launchpadPublicKeyStr!=null) {
-            launchpadPublicKey = SecUtils.getPublicKey(launchpadPublicKeyStr);
+        if (dispatcherPublicKeyStr !=null) {
+            dispatcherPublicKey = SecUtils.getPublicKey(dispatcherPublicKeyStr);
         }
         String threadNumberAsStr = env.getProperty("MH_THREAD_NUMBER");
         if (threadNumberAsStr!=null && !threadNumberAsStr.isBlank()) {
@@ -260,9 +260,9 @@ public class Globals {
         }
 
         if (assetMode== EnumsApi.DispatcherAssetMode.replicated && S.b(assetSourceUrl)) {
-            throw new GlobalConfigurationException("Wrong value of assertSourceUrl, must be not null when launchpadAssetMode==EnumsApi.DispatcherAssetMode.replicate");
+            throw new GlobalConfigurationException("Wrong value of assertSourceUrl, must be not null when dispatcherAssetMode==EnumsApi.DispatcherAssetMode.replicate");
         }
-        if (!isLaunchpadEnabled) {
+        if (!dispatcherEnabled) {
             log.warn("Launchpad wasn't enabled, assetMode will be set to DispatcherAssetMode.local");
             assetMode = EnumsApi.DispatcherAssetMode.local;
         }
@@ -308,14 +308,14 @@ public class Globals {
 //            checkOwnership(stationEnvHotDeployDir);
         }
 
-        String launchpadDirAsStr = env.getProperty("MH_LAUNCHPAD_DIR");
-        if (launchpadDirAsStr!=null && !launchpadDirAsStr.isBlank()) {
+        String dispatcherDirAsStr = env.getProperty("MH_LAUNCHPAD_DIR");
+        if (dispatcherDirAsStr!=null && !dispatcherDirAsStr.isBlank()) {
             try {
-                launchpadDir = new File(launchpadDirAsStr);
+                dispatcherDir = new File(dispatcherDirAsStr);
             } catch (Throwable th) {
                 log.error("Wrong value in env MH_LAUNCHPAD_DIR, must be a correct path to dir, " +
-                        "actual: " + launchpadDirAsStr);
-                launchpadDir = null;
+                        "actual: " + dispatcherDirAsStr);
+                dispatcherDir = null;
             }
         }
         String tempBranding = env.getProperty("MH_BRANDING");
@@ -326,24 +326,24 @@ public class Globals {
             branding = "Metaheuristic project";
         }
 
-        if (isLaunchpadEnabled && launchpadDir==null) {
-            launchpadDir = new File("target/mh-launchpad");
-            log.warn("Launchpad is enabled, but launchpadDir in null. " +
-                    "Will be used a default value as: {}", launchpadDir.getAbsolutePath());
+        if (dispatcherEnabled && dispatcherDir==null) {
+            dispatcherDir = new File("target/mh-dispatcher");
+            log.warn("Dispatcher is enabled, but dispatcherDir in null. " +
+                    "Will be used a default value as: {}", dispatcherDir.getAbsolutePath());
         }
 
-        if (isLaunchpadEnabled) {
-            if (launchpadMasterUsername==null || launchpadMasterPassword==null) {
+        if (dispatcherEnabled) {
+            if (dispatcherMasterUsername ==null || dispatcherMasterPassword ==null) {
                 throw new GlobalConfigurationException(
-                        "if mh.secure-rest-url=true, then mh.launchpad.master-username, " +
-                                "and mh.launchpad.master-password have to be not null");
+                        "if mh.secure-rest-url=true, then mh.dispatcher.master-username, " +
+                                "and mh.dispatcher.master-password have to be not null");
             }
 
-            launchpadTempDir = new File(launchpadDir, "temp");
-            launchpadTempDir.mkdirs();
+            dispatcherTempDir = new File(dispatcherDir, "temp");
+            dispatcherTempDir.mkdirs();
 
-            launchpadResourcesDir = new File(launchpadDir, Consts.RESOURCES_DIR);
-            launchpadResourcesDir.mkdirs();
+            dispatcherResourcesDir = new File(dispatcherDir, Consts.RESOURCES_DIR);
+            dispatcherResourcesDir.mkdirs();
 
             String ext = env.getProperty("MH_DEFAULT_RESULT_FILE_EXTENSION");
             if (ext!=null && !ext.isBlank()) {
@@ -373,7 +373,7 @@ public class Globals {
 
     private void logDepricated() {
         if (isReplaceSnapshot!=null) {
-            log.warn("property 'mh.launchpad.is-replace-snapshot' isn't supported any more and need to be deleted");
+            log.warn("property 'mh.dispatcher.is-replace-snapshot' isn't supported any more and need to be deleted");
         }
     }
 
@@ -464,8 +464,8 @@ public class Globals {
         log.info("'\tisUnitTesting: {}", isUnitTesting);
         log.info("'\tisSecurityEnabled: {}", isSecurityEnabled);
         log.info("'\tisSslRequired: {}", isSslRequired);
-        log.info("'\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
-        log.info("'\tlaunchpadDir: {}", launchpadDir!=null ? launchpadDir.getAbsolutePath() : null);
+        log.info("'\tisLaunchpadEnabled: {}", dispatcherEnabled);
+        log.info("'\tdispatcherDir: {}", dispatcherDir!=null ? dispatcherDir.getAbsolutePath() : null);
         log.info("'\tassetMode: {}", assetMode);
         log.info("'\tassetUsername: {}", assetUsername);
         log.info("'\tassetSourceUrl: {}", assetSourceUrl);
@@ -487,7 +487,7 @@ public class Globals {
             throw new IllegalStateException("Prefix is blank");
         }
         //noinspection UnnecessaryLocalVariable
-        File tempFile = new File(launchpadTempDir,
+        File tempFile = new File(dispatcherTempDir,
                 prefix + r.nextInt(99999999) + '-' + System.nanoTime()
         );
         return tempFile;

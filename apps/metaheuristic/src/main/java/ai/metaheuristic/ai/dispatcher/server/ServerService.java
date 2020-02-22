@@ -86,7 +86,7 @@ public class ServerService {
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
     public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
-    // Station's version for communicating with launchpad
+    // Station's version for communicating with dispatcher
     private static final int STATION_COMM_VERSION = new StationCommParamsYaml().version;
 
     private final Globals globals;
@@ -201,11 +201,11 @@ public class ServerService {
         BiConsumer<String, File> dataSaver;
         switch (binaryType) {
             case function:
-                assetFile = ResourceUtils.prepareFunctionFile(globals.launchpadResourcesDir, resourceId, null);
+                assetFile = ResourceUtils.prepareFunctionFile(globals.dispatcherResourcesDir, resourceId, null);
                 dataSaver = functionDataService::storeToFile;
                 break;
             case data:
-                assetFile = ResourceUtils.prepareDataFile(globals.launchpadTempDir, resourceId, null);
+                assetFile = ResourceUtils.prepareDataFile(globals.dispatcherTempDir, resourceId, null);
                 dataSaver = variableService::storeToFile;
                 break;
             default:
@@ -334,10 +334,10 @@ public class ServerService {
     }
 
     private void setLaunchpadCommContext(DispatcherCommParamsYaml lcpy) {
-        DispatcherCommParamsYaml.LaunchpadCommContext lcc = new DispatcherCommParamsYaml.LaunchpadCommContext();
+        DispatcherCommParamsYaml.DispatcherCommContext lcc = new DispatcherCommParamsYaml.DispatcherCommContext();
         lcc.chunkSize = globals.chunkSize;
         lcc.stationCommVersion = STATION_COMM_VERSION;
-        lcpy.launchpadCommContext = lcc;
+        lcpy.dispatcherCommContext = lcc;
     }
 
     @SuppressWarnings("UnnecessaryReturnStatement")

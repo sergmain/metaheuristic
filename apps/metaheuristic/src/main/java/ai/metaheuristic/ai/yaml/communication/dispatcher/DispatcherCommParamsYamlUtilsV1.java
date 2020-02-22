@@ -46,10 +46,10 @@ public class DispatcherCommParamsYamlUtilsV1 extends
     public DispatcherCommParamsYaml upgradeTo(DispatcherCommParamsYamlV1 v1, Long ... vars) {
         DispatcherCommParamsYaml t = new DispatcherCommParamsYaml();
 
-        if( v1.launchpadCommContext!=null ) {
-            t.launchpadCommContext = new DispatcherCommParamsYaml.LaunchpadCommContext();
-            t.launchpadCommContext.chunkSize = v1.launchpadCommContext.chunkSize;
-            t.launchpadCommContext.stationCommVersion = v1.launchpadCommContext.stationCommVersion;
+        if( v1.dispatcherCommContext !=null ) {
+            t.dispatcherCommContext = new DispatcherCommParamsYaml.DispatcherCommContext();
+            t.dispatcherCommContext.chunkSize = v1.dispatcherCommContext.chunkSize;
+            t.dispatcherCommContext.stationCommVersion = v1.dispatcherCommContext.stationCommVersion;
         }
         if (v1.functions !=null) {
             t.functions = new DispatcherCommParamsYaml.Functions();
@@ -102,9 +102,9 @@ public class DispatcherCommParamsYamlUtilsV1 extends
 /*
         DispatcherCommParamsYamlV1 t = new DispatcherCommParamsYamlV1();
 
-        if( yaml.launchpadCommContext!=null ) {
-            t.launchpadCommContext = new DispatcherCommParamsYamlV1.LaunchpadCommContextV1();
-            t.launchpadCommContext.chunkSize = yaml.launchpadCommContext.chunkSize;
+        if( yaml.dispatcherCommContext!=null ) {
+            t.dispatcherCommContext = new DispatcherCommParamsYamlV1.DispatcherCommContextV1();
+            t.dispatcherCommContext.chunkSize = yaml.dispatcherCommContext.chunkSize;
         }
         if (yaml.assignedTask!=null) {
             t.assignedTask = new DispatcherCommParamsYamlV1.AssignedTaskV1();

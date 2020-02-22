@@ -61,7 +61,7 @@ public class StationTopLevelService {
     private final TaskRepository taskRepository;
 
     // Attention, this value must be greater than
-    // ai.metaheuristic.ai.launchpad.server.ServerService.SESSION_UPDATE_TIMEOUT
+    // ai.metaheuristic.ai.dispatcher.server.ServerService.SESSION_UPDATE_TIMEOUT
     // at least for 20 seconds
     public static final long STATION_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
 

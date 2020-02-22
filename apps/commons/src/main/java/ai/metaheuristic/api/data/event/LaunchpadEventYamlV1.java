@@ -31,7 +31,7 @@ public class LaunchpadEventYamlV1 implements BaseParams {
 
     // representation of LocalDateTime
     public String createdOn;
-    public EnumsApi.LaunchpadEventType event;
+    public EnumsApi.DispatcherEventType event;
     public String contextId;
 
     public BatchEventDataV1 batchData;

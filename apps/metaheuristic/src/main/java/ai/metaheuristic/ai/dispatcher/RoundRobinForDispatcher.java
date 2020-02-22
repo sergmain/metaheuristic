@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.station.DispatcherLookupExtendedService;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -28,16 +28,16 @@ public class RoundRobinForDispatcher {
 
     private final Map<String, AtomicBoolean> urls;
 
-    public RoundRobinForDispatcher(Map<String, DispatcherLookupExtendedService.LaunchpadLookupExtended> launchpads) {
+    public RoundRobinForDispatcher(Map<String, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers) {
         Map<String, AtomicBoolean> map = new HashMap<>();
-        for (Map.Entry<String, DispatcherLookupExtendedService.LaunchpadLookupExtended> entry : launchpads.entrySet()) {
-            LaunchpadLookupConfig.LaunchpadLookup launchpadLookup = entry.getValue().launchpadLookup;
-            if (launchpadLookup.disabled) {
-                log.info("launchpad {} is disabled", launchpadLookup.url);
+        for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet()) {
+            DispatcherLookupConfig.DispatcherLookup dispatcherLookup = entry.getValue().dispatcherLookup;
+            if (dispatcherLookup.disabled) {
+                log.info("dispatcher {} is disabled", dispatcherLookup.url);
                 continue;
             }
-            log.info("launchpad {} was added to round-robin", launchpadLookup.url);
-            map.putIfAbsent(launchpadLookup.url, new AtomicBoolean(true));
+            log.info("dispatcher {} was added to round-robin", dispatcherLookup.url);
+            map.putIfAbsent(dispatcherLookup.url, new AtomicBoolean(true));
         }
         urls = Collections.unmodifiableMap(map);
     }

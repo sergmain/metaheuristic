@@ -86,7 +86,7 @@ public class DispatcherCommandProcessor {
         return functionInfosCache;
     }
 
-    // processing at launchpad side
+    // processing at dispatcher side
     public DispatcherCommParamsYaml.ResendTaskOutputResource checkForMissingOutputResources(StationCommParamsYaml request) {
         if (request.checkForMissingOutputResources==null) {
             return null;
@@ -96,7 +96,7 @@ public class DispatcherCommandProcessor {
         return new DispatcherCommParamsYaml.ResendTaskOutputResource(ids);
     }
 
-    // processing at launchpad side
+    // processing at dispatcher side
     public void processResendTaskOutputResourceResult(StationCommParamsYaml request) {
         if (request.resendTaskOutputResourceResult==null) {
             return;
@@ -106,7 +106,7 @@ public class DispatcherCommandProcessor {
         }
     }
 
-    // processing at launchpad side
+    // processing at dispatcher side
     public void processStationTaskStatus(StationCommParamsYaml request) {
         if (request.reportStationTaskStatus==null || request.reportStationTaskStatus.statuses==null) {
             return;
@@ -114,7 +114,7 @@ public class DispatcherCommandProcessor {
         stationTopLevelService.reconcileStationTasks(request.stationCommContext.stationId, request.reportStationTaskStatus.statuses);
     }
 
-    // processing at launchpad side
+    // processing at dispatcher side
     public DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(StationCommParamsYaml request) {
         if (request.reportTaskProcessingResult==null || request.reportTaskProcessingResult.results==null) {
             return null;
@@ -126,7 +126,7 @@ public class DispatcherCommandProcessor {
         return cmd1;
     }
 
-    // processing at launchpad side
+    // processing at dispatcher side
     public void processReportStationStatus(StationCommParamsYaml request) {
         if (request.reportStationStatus==null) {
             return;
@@ -135,7 +135,7 @@ public class DispatcherCommandProcessor {
         stationTopLevelService.storeStationStatuses(request.stationCommContext.stationId, request.reportStationStatus, request.functionDownloadStatus);
     }
 
-    // processing at launchpad side
+    // processing at dispatcher side
     public DispatcherCommParamsYaml.AssignedTask processRequestTask(StationCommParamsYaml request) {
         if (request.requestTask==null) {
             return null;
@@ -157,7 +157,7 @@ public class DispatcherCommandProcessor {
         }
     }
 
-    // processing at launchpad side
+    // processing at dispatcher side
     public DispatcherCommParamsYaml.AssignedStationId getNewStationId(StationCommParamsYaml.RequestStationId request) {
         if (request==null) {
             return null;

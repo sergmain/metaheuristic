@@ -76,7 +76,7 @@ public class SourceCodeParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Variable {
-        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.launchpad;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
         public String name;

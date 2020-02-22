@@ -132,8 +132,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.code = "assembly-raw-file";
 
             p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("function-01:1.1");
-            p.input.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, PreparingPlan.TEST_GLOBAL_VARIABLE));
-            p.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "assembled-raw-output"));
+            p.input.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, PreparingPlan.TEST_GLOBAL_VARIABLE));
+            p.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "assembled-raw-output"));
 //      input:
 //        - variable: test-variable
 //          sourcing: launchpad
@@ -149,8 +149,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.code = "dataset-processing";
 
             p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("function-02:1.1");
-            p.input.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "assembled-raw-output"));
-            p.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
+            p.input.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "assembled-raw-output"));
+            p.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "dataset-processing-output"));
 
             planParamsYaml.source.processes.add(p);
 
@@ -161,22 +161,22 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p1.name = "feature-processing-1";
             p1.code = "feature-processing-1";
             p1.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("function-03:1.1");
-            p1.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
-            p1.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "feature-output-1"));
+            p1.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "dataset-processing-output"));
+            p1.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "feature-output-1"));
 
             SourceCodeParamsYamlV1.ProcessV1 p2 = new SourceCodeParamsYamlV1.ProcessV1();
             p2.name = "feature-processing-2";
             p2.code = "feature-processing-2";
             p2.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("function-04:1.1");
-            p2.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
-            p2.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "feature-output-2"));
+            p2.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "dataset-processing-output"));
+            p2.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "feature-output-2"));
 
             SourceCodeParamsYamlV1.ProcessV1 p3 = new SourceCodeParamsYamlV1.ProcessV1();
             p3.name = "feature-processing-3";
             p3.code = "feature-processing-3";
             p3.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("function-05:1.1");
-            p3.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
-            p3.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "feature-output-3"));
+            p3.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "dataset-processing-output"));
+            p3.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "feature-output-3"));
 
             p.subProcesses.processes = List.of(p1, p2);
         }
@@ -198,7 +198,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
             p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("mh.permute-variables-and-hyper-params", EnumsApi.FunctionExecContext.internal);
             p.metas = List.of(new Meta("variables", "feature-output-1,feature-output-2,feature-output-3", null));
-            p.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "feature-per-task"));
+            p.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "feature-per-task"));
 
             planParamsYaml.source.processes.add(p);
 
@@ -215,28 +215,28 @@ public abstract class PreparingPlan extends PreparingExperiment {
 //            output:
 //              - variable: model
 //                sourcing: launchpad
-            p1.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
-            p1.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "feature-per-task"));
-            p1.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "model"));
+            p1.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "dataset-processing-output"));
+            p1.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "feature-per-task"));
+            p1.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "model"));
 
             SourceCodeParamsYamlV1.ProcessV1 p2 = new SourceCodeParamsYamlV1.ProcessV1();
             p2.name = "feature-processing-2";
             p2.code = "feature-processing-2";
             p2.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(TEST_PREDICT_FUNCTION);
-            p2.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "dataset-processing-output"));
+            p2.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "dataset-processing-output"));
 //              - variable: metrics
 //                sourcing: launchpad
 //              - variable: predicted
 //                sourcing: launchpad
-            p2.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "metrics"));
-            p2.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "predicted"));
+            p2.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "metrics"));
+            p2.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "predicted"));
 
             SourceCodeParamsYamlV1.ProcessV1 p3 = new SourceCodeParamsYamlV1.ProcessV1();
             p3.name = "feature-processing-3";
             p3.code = "feature-processing-3";
             p3.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(TEST_FITTING_FUNCTION);
-            p3.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "predicted"));
-            p3.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad, "overfitting"));
+            p3.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "predicted"));
+            p3.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "overfitting"));
 
             p.subProcesses.processes = List.of(p1, p2);
         }

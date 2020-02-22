@@ -26,12 +26,12 @@ import lombok.Data;
  * Time: 5:36 PM
  */
 @Data
-public class LaunchpadEventYaml implements BaseParams {
+public class DispatcherEventYaml implements BaseParams {
     public final int version = 1;
 
     // representation of LocalDateTime
     public String createdOn;
-    public EnumsApi.LaunchpadEventType event;
+    public EnumsApi.DispatcherEventType event;
     public String contextId;
 
     public BatchEventData batchData;

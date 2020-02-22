@@ -37,5 +37,5 @@ public class Metadata {
     }
 
     public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
-    public LinkedHashMap<String, DispatcherInfo> launchpad = new LinkedHashMap<>();
+    public LinkedHashMap<String, DispatcherInfo> dispatcher = new LinkedHashMap<>();
 }

@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.station.net.HttpClientExecutor;
 import ai.metaheuristic.ai.station.function.StationFunctionService;
 import ai.metaheuristic.ai.station.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -79,66 +79,66 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
         DownloadFunctionTask task;
         while((task = poll())!=null) {
             final String functionCode = task.functionCode;
-            final LaunchpadLookupConfig.LaunchpadLookup launchpad = task.launchpad;
-            final LaunchpadLookupConfig.Asset asset = launchpad.asset!=null
-                    ? launchpad.asset
-                    : new LaunchpadLookupConfig.Asset(launchpad.url, launchpad.restUsername, launchpad.restPassword);
+            final DispatcherLookupConfig.DispatcherLookup dispatcher = task.dispatcher;
+            final DispatcherLookupConfig.Asset asset = dispatcher.asset!=null
+                    ? dispatcher.asset
+                    : new DispatcherLookupConfig.Asset(dispatcher.url, dispatcher.restUsername, dispatcher.restPassword);
 
             if (task.chunkSize==null) {
-                log.error("#811.007 (task.chunkSize==null), launchpad.url: {}, asset.url: {}", launchpad.url, asset.url);
+                log.error("#811.007 (task.chunkSize==null), dispatcher.url: {}, asset.url: {}", dispatcher.url, asset.url);
                 continue;
             }
 
             // it could be null if this function was deleted
-            FunctionDownloadStatusYaml.Status sdsy = metadataService.syncFunctionStatus(launchpad.url, asset, functionCode);
+            FunctionDownloadStatusYaml.Status sdsy = metadataService.syncFunctionStatus(dispatcher.url, asset, functionCode);
             if (sdsy==null || sdsy.functionState == Enums.FunctionState.ready) {
                 continue;
             }
 
-            final FunctionDownloadStatusYaml.Status functionDownloadStatus = metadataService.getFunctionDownloadStatuses(launchpad.url, functionCode);
-            if (functionDownloadStatus.sourcing!= EnumsApi.FunctionSourcing.launchpad) {
-                log.warn("#811.010 Function {} can't be downloaded from {} because a sourcing isn't 'launchpad'.", functionCode, launchpad.url);
+            final FunctionDownloadStatusYaml.Status functionDownloadStatus = metadataService.getFunctionDownloadStatuses(dispatcher.url, functionCode);
+            if (functionDownloadStatus.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
+                log.warn("#811.010 Function {} can't be downloaded from {} because a sourcing isn't 'dispatcher'.", functionCode, dispatcher.url);
                 continue;
             }
             if (functionDownloadStatus.functionState != Enums.FunctionState.none) {
-                log.warn("#811.013 Function {} from {} was already processed and has a state {}.", functionCode, launchpad.url, functionDownloadStatus.functionState);
+                log.warn("#811.013 Function {} from {} was already processed and has a state {}.", functionCode, dispatcher.url, functionDownloadStatus.functionState);
                 continue;
             }
 
             // task.functionConfig is null when we are downloading a function proactively, without any task
             TaskParamsYaml.FunctionConfig functionConfig = task.functionConfig;
             if (functionConfig ==null) {
-                StationFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus = stationFunctionService.downloadFunctionConfig(launchpad.url, asset, functionCode, task.stationId);
+                StationFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus = stationFunctionService.downloadFunctionConfig(dispatcher.url, asset, functionCode, task.stationId);
                 if (downloadedFunctionConfigStatus.status == StationFunctionService.ConfigStatus.error) {
-                    metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.function_config_error);
+                    metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.function_config_error);
                     continue;
                 }
                 if (downloadedFunctionConfigStatus.status == StationFunctionService.ConfigStatus.not_found) {
-                    metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.not_found);
+                    metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.not_found);
                     continue;
                 }
                 functionConfig = downloadedFunctionConfigStatus.functionConfig;
             }
-            MetadataService.ChecksumState checksumState = metadataService.prepareChecksum(functionCode, launchpad.url, functionConfig);
+            MetadataService.ChecksumState checksumState = metadataService.prepareChecksum(functionCode, dispatcher.url, functionConfig);
             if (!checksumState.signatureIsOk) {
                 continue;
             }
             Checksum checksum = checksumState.getChecksum();
 
-            final Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(launchpad.url);
+            final Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(dispatcher.url);
             final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo);
             final AssetFile assetFile = ResourceUtils.prepareFunctionFile(baseResourceDir, functionCode, functionConfig.file);
 
             switch (functionDownloadStatus.functionState) {
                 case none:
                     if (assetFile.isError) {
-                        metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.asset_error);
+                        metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.asset_error);
                         continue;
                     }
                     break;
                 case ok:
-                    log.error("#811.020 Unexpected state of function {}, launchpad {}, will be resetted to none", functionCode, launchpad.url);
-                    metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.none);
+                    log.error("#811.020 Unexpected state of function {}, dispatcher {}, will be resetted to none", functionCode, dispatcher.url);
+                    metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.none);
                     break;
                 case signature_wrong:
                 case signature_not_found:
@@ -146,21 +146,21 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
                 case not_supported_os:
                 case asset_error:
                 case download_error:
-                    log.warn("#811.030 Function {} can't be downloaded from {}. The current status is {}", functionCode, launchpad.url, functionDownloadStatus.functionState);
+                    log.warn("#811.030 Function {} can't be downloaded from {}. The current status is {}", functionCode, dispatcher.url, functionDownloadStatus.functionState);
                     continue;
                 case function_config_error:
-                    log.warn("#811.030 Config for function {} wasn't downloaded from {}, State will be reseted to none", functionCode, launchpad.url);
+                    log.warn("#811.030 Config for function {} wasn't downloaded from {}, State will be reseted to none", functionCode, dispatcher.url);
                     // reset to none for trying again
-                    metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.none);
+                    metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.none);
                     continue;
                 case not_found:
-                    log.warn("#811.033 Config for function {} wasn't found on {}, State will be reseted to none", functionCode, launchpad.url);
-                    metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.none);
+                    log.warn("#811.033 Config for function {} wasn't found on {}, State will be reseted to none", functionCode, dispatcher.url);
+                    metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.none);
                     continue;
                 case ready:
                     if (assetFile.isError || !assetFile.isContent ) {
-                        log.warn("#811.040 Function {} from {} is broken. Set state to asset_error", functionCode, launchpad.url);
-                        metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.asset_error);
+                        log.warn("#811.040 Function {} from {} is broken. Set state to asset_error", functionCode, dispatcher.url);
+                        metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.asset_error);
                     }
                     continue;
             }
@@ -205,7 +205,7 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
                         final Header[] headers = httpResponse.getAllHeaders();
                         if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
                             log.error("#811.060 error while downloading chunk of function {}, size is different", functionCode);
-                            metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.download_error);
+                            metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.download_error);
                             resourceState = Enums.FunctionState.download_error;
                             break;
                         }
@@ -219,23 +219,23 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
                         }
                     } catch (HttpResponseException e) {
                         if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                            final String es = S.f("#811.070 Function %s wasn't found on launchpad %s.", task.functionCode, launchpad.url);
+                            final String es = S.f("#811.070 Function %s wasn't found on dispatcher %s.", task.functionCode, dispatcher.url);
                             log.warn(es);
-                            metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.not_found);
+                            metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.not_found);
                             resourceState = Enums.FunctionState.not_found;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
-                            final String es = S.f("#811.080 Unknown error with a function %s from launchpad %s.", task.functionCode, launchpad.url);
+                            final String es = S.f("#811.080 Unknown error with a function %s from dispatcher %s.", task.functionCode, dispatcher.url);
                             log.warn(es);
-                            metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.download_error);
+                            metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.download_error);
                             resourceState = Enums.FunctionState.download_error;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
-                            final String es = S.f("#811.090 Unknown error with a resource %s from launchpad %s.", task.functionCode, launchpad.url);
+                            final String es = S.f("#811.090 Unknown error with a resource %s from dispatcher %s.", task.functionCode, dispatcher.url);
                             log.warn(es);
-                            metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.download_error);
+                            metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.download_error);
                             resourceState = Enums.FunctionState.download_error;
                             break;
                         }
@@ -261,11 +261,11 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
                     }
                 }
 
-                CheckSumAndSignatureStatus status = metadataService.getCheckSumAndSignatureStatus(functionCode, launchpad, checksum, functionTempFile);
+                CheckSumAndSignatureStatus status = metadataService.getCheckSumAndSignatureStatus(functionCode, dispatcher, checksum, functionTempFile);
                 if (status.checksum==CheckSumAndSignatureStatus.Status.correct && status.signature==CheckSumAndSignatureStatus.Status.correct) {
                     //noinspection ResultOfMethodCallIgnored
                     functionTempFile.renameTo(assetFile.file);
-                    metadataService.setFunctionState(launchpad.url, functionCode, Enums.FunctionState.ready);
+                    metadataService.setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.ready);
                 }
                 else {
                     //noinspection ResultOfMethodCallIgnored
@@ -288,21 +288,21 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
 
     public void prepareFunctionForDownloading() {
         metadataService.getFunctionDownloadStatusYaml().statuses.forEach(o -> {
-            if (o.sourcing== EnumsApi.FunctionSourcing.launchpad && (o.functionState == Enums.FunctionState.none || !o.verified)) {
-                final DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad =
-                        dispatcherLookupExtendedService.lookupExtendedMap.get(o.launchpadUrl);
+            if (o.sourcing== EnumsApi.FunctionSourcing.dispatcher && (o.functionState == Enums.FunctionState.none || !o.verified)) {
+                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+                        dispatcherLookupExtendedService.lookupExtendedMap.get(o.dispatcherUrl);
 
-                if (launchpad==null || launchpad.context.chunkSize==null) {
-                    log.info("#811.195 (launchpad==null || launchpad.config.chunkSize==null), launchpadUrl: {}", o.launchpadUrl);
+                if (dispatcher==null || dispatcher.context.chunkSize==null) {
+                    log.info("#811.195 (dispatcher==null || dispatcher.config.chunkSize==null), dispatcherUrl: {}", o.dispatcherUrl);
                     return;
                 }
 
                 log.info("Create new DownloadFunctionTask for downloading function {} from {}, chunck size: {}",
-                        o.code, o.launchpadUrl, launchpad.context.chunkSize);
-                Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(o.launchpadUrl);
+                        o.code, o.dispatcherUrl, dispatcher.context.chunkSize);
+                Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(o.dispatcherUrl);
 
-                DownloadFunctionTask functionTask = new DownloadFunctionTask(launchpad.context.chunkSize, o.code, null);
-                functionTask.launchpad = launchpad.launchpadLookup;
+                DownloadFunctionTask functionTask = new DownloadFunctionTask(dispatcher.context.chunkSize, o.code, null);
+                functionTask.dispatcher = dispatcher.dispatcherLookup;
                 functionTask.stationId = dispatcherInfo.stationId;
                 add(functionTask);
             }

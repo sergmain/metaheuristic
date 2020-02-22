@@ -90,7 +90,7 @@ public class FunctionCoreUtils {
             return new FunctionApiData.FunctionConfigStatus(false, "#401.25 Field 'sourcing' is absent");
         }
         switch (functionConfig.sourcing) {
-            case launchpad:
+            case dispatcher:
                 if (StringUtils.isBlank(functionConfig.file)) {
                     return new FunctionApiData.FunctionConfigStatus(false, "#401.30 sourcing is 'launchpad' but file is empty: " + functionConfig.toString());
                 }

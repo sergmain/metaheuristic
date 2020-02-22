@@ -449,7 +449,7 @@ public class ExecContextService {
 
         taskRepository.save((TaskImpl)resultTask);
         execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
-        dispatcherEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), execContextId);
+        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), execContextId);
 
         return assignedTask;
     }

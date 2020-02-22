@@ -98,7 +98,7 @@ public class GlobalVariableTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
         DataStorageParams dsp = DataStorageParamsUtils.to(params);
-        if (dsp.sourcing==null || dsp.sourcing== EnumsApi.DataSourcing.launchpad) {
+        if (dsp.sourcing==null || dsp.sourcing== EnumsApi.DataSourcing.dispatcher) {
             String es = "#172.055 Sourcing must be "+ EnumsApi.DataSourcing.disk + " or " +EnumsApi.DataSourcing.git +", actual: " + dsp.sourcing;
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);

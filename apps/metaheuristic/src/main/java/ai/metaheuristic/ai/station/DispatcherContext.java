@@ -24,7 +24,7 @@ import lombok.Data;
  * Time: 12:45 AM
  */
 @Data
-public class LaunchpadContext {
+public class DispatcherContext {
 
     // this was the version of StationCommParamsYaml when the maxVersionOfStation was added to code;
     // Never change it value

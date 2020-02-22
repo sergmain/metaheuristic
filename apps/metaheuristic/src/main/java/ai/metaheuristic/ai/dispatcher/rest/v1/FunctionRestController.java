@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/rest/v1/launchpad/function")
+@RequestMapping("/rest/v1/dispatcher/function")
 @Profile("dispatcher")
 @CrossOrigin
 @RequiredArgsConstructor

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.event;
 
-import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
+import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
@@ -31,7 +31,7 @@ public class LaunchpadEventYamlUtils {
     private static final LaunchpadEventYamlUtilsV1 YAML_UTILS_V_1 = new LaunchpadEventYamlUtilsV1();
     private static final LaunchpadEventYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    public static final BaseYamlUtils<LaunchpadEventYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<DispatcherEventYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1
             ),

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
-import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
+import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.Data;
@@ -31,25 +31,25 @@ import java.time.LocalDateTime;
 @Data
 public class DispatcherApplicationEvent {
 
-    public final LaunchpadEventYaml launchpadEventYaml;
+    public final DispatcherEventYaml dispatcherEventYaml;
     public Long companyUniqueId;
 
-    public DispatcherApplicationEvent(EnumsApi.LaunchpadEventType event, Long companyUniqueId, String contextId, LaunchpadEventYaml.BatchEventData batchEventData) {
+    public DispatcherApplicationEvent(EnumsApi.DispatcherEventType event, Long companyUniqueId, String contextId, DispatcherEventYaml.BatchEventData batchEventData) {
         this.companyUniqueId = companyUniqueId;
-        LaunchpadEventYaml launchpadEventYaml = new LaunchpadEventYaml();
-        launchpadEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
-        launchpadEventYaml.event = event;
-        launchpadEventYaml.contextId = contextId;
-        launchpadEventYaml.contextId = contextId;
-        launchpadEventYaml.batchData = batchEventData;
-        this.launchpadEventYaml = launchpadEventYaml;
+        DispatcherEventYaml dispatcherEventYaml = new DispatcherEventYaml();
+        dispatcherEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
+        dispatcherEventYaml.event = event;
+        dispatcherEventYaml.contextId = contextId;
+        dispatcherEventYaml.contextId = contextId;
+        dispatcherEventYaml.batchData = batchEventData;
+        this.dispatcherEventYaml = dispatcherEventYaml;
     }
 
-    public DispatcherApplicationEvent(EnumsApi.LaunchpadEventType event, LaunchpadEventYaml.TaskEventData taskEventData) {
-        LaunchpadEventYaml launchpadEventYaml = new LaunchpadEventYaml();
-        launchpadEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
-        launchpadEventYaml.event = event;
-        launchpadEventYaml.taskData = taskEventData;
-        this.launchpadEventYaml = launchpadEventYaml;
+    public DispatcherApplicationEvent(EnumsApi.DispatcherEventType event, DispatcherEventYaml.TaskEventData taskEventData) {
+        DispatcherEventYaml dispatcherEventYaml = new DispatcherEventYaml();
+        dispatcherEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
+        dispatcherEventYaml.event = event;
+        dispatcherEventYaml.taskData = taskEventData;
+        this.dispatcherEventYaml = dispatcherEventYaml;
     }
 }

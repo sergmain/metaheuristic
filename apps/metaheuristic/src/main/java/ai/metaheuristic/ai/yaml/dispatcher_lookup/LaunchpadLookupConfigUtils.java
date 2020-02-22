@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.launchpad_lookup;
+package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -28,14 +28,14 @@ import java.io.InputStream;
 public class LaunchpadLookupConfigUtils {
 
     private static Yaml getYaml() {
-        return YamlUtils.init(LaunchpadLookupConfig.class);
+        return YamlUtils.init(DispatcherLookupConfig.class);
     }
 
-    public static String toString(LaunchpadLookupConfig config) {
-        if (config==null || config.launchpads ==null) {
-            throw new IllegalStateException("LaunchpadLookupConfig is null");
+    public static String toString(DispatcherLookupConfig config) {
+        if (config==null || config.dispatchers ==null) {
+            throw new IllegalStateException("DispatcherLookupConfig is null");
         }
-        for (LaunchpadLookupConfig.LaunchpadLookup signatureConfig : config.launchpads) {
+        for (DispatcherLookupConfig.DispatcherLookup signatureConfig : config.dispatchers) {
             if (signatureConfig.signatureRequired && StringUtils.isBlank(signatureConfig.publicKey)) {
                 throw new IllegalStateException("signatureConfig.publicKey is blank");
             }
@@ -46,15 +46,15 @@ public class LaunchpadLookupConfigUtils {
         return YamlUtils.toString(config, getYaml());
     }
 
-    public static LaunchpadLookupConfig to(String s) {
-        return (LaunchpadLookupConfig) YamlUtils.to(s, getYaml());
+    public static DispatcherLookupConfig to(String s) {
+        return (DispatcherLookupConfig) YamlUtils.to(s, getYaml());
     }
 
-    public static LaunchpadLookupConfig to(InputStream is) {
-        return (LaunchpadLookupConfig) YamlUtils.to(is, getYaml());
+    public static DispatcherLookupConfig to(InputStream is) {
+        return (DispatcherLookupConfig) YamlUtils.to(is, getYaml());
     }
 
-    public static LaunchpadLookupConfig to(File file) {
-        return (LaunchpadLookupConfig) YamlUtils.to(file, getYaml());
+    public static DispatcherLookupConfig to(File file) {
+        return (DispatcherLookupConfig) YamlUtils.to(file, getYaml());
     }
 }

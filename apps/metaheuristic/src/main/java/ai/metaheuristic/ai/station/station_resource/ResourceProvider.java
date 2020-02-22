@@ -29,20 +29,20 @@ import java.util.List;
 
 public interface ResourceProvider {
     List<AssetFile> prepareForDownloadingDataFile(
-            File taskDir, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, Metadata.DispatcherInfo launchpadCode,
+            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            StationTask task, Metadata.DispatcherInfo dispatcherCode,
             String resourceId, SourceCodeParamsYaml.Variable dataStorageParams);
 
     FunctionApiData.SystemExecResult processResultingFile(
-            DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, Metadata.DispatcherInfo launchpadCode,
+            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            StationTask task, Metadata.DispatcherInfo dispatcherCode,
             String outputResourceId,
             TaskParamsYaml.FunctionConfig functionConfig
     );
 
     File getOutputResourceFile(
             File taskDir,
-            DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
+            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             StationTask task,
             String outputResourceId, SourceCodeParamsYaml.Variable dataStorageParams);
 }

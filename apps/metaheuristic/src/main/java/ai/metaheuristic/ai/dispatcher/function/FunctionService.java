@@ -210,10 +210,10 @@ public class FunctionService {
                 File file = null;
                 if (globals.isFunctionChecksumRequired) {
                     switch(functionConfig.sourcing) {
-                        case launchpad:
+                        case dispatcher:
                             file = new File(srcDir, functionConfig.file);
                             if (!file.exists()) {
-                                final String es = "#295.030 Function has a sourcing as 'launchpad' but file " + functionConfig.file + " wasn't found.";
+                                final String es = "#295.030 Function has a sourcing as 'dispatcher' but file " + functionConfig.file + " wasn't found.";
                                 status = new FunctionApiData.FunctionConfigStatus(false, es);
                                 log.warn(es+" Temp dir: " + srcDir.getAbsolutePath());
                                 continue;

@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.yaml.launchpad_lookup;
+package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
 import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;

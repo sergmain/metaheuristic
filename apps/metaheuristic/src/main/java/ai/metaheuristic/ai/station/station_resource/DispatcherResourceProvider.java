@@ -43,22 +43,22 @@ import java.util.List;
 @Slf4j
 @Profile("station")
 @RequiredArgsConstructor
-public class LaunchpadResourceProvider implements ResourceProvider {
+public class DispatcherResourceProvider implements ResourceProvider {
 
     private final DownloadResourceActor downloadResourceActor;
     private final UploadResourceActor uploadResourceActor;
 
     @Override
     public List<AssetFile> prepareForDownloadingDataFile(
-            File taskDir, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, Metadata.DispatcherInfo launchpadCode,
+            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            StationTask task, Metadata.DispatcherInfo dispatcherCode,
             String resourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
 
-        // process it only if the launchpad has already sent its config
-        if (launchpad.context.chunkSize != null) {
-            DownloadResourceTask resourceTask = new DownloadResourceTask(resourceId, task.getTaskId(), taskDir, launchpad.context.chunkSize);
-            resourceTask.launchpad = launchpad.launchpadLookup;
-            resourceTask.stationId = launchpadCode.stationId;
+        // process it only if the dispatcher has already sent its config
+        if (dispatcher.context.chunkSize != null) {
+            DownloadResourceTask resourceTask = new DownloadResourceTask(resourceId, task.getTaskId(), taskDir, dispatcher.context.chunkSize);
+            resourceTask.dispatcher = dispatcher.dispatcherLookup;
+            resourceTask.stationId = dispatcherCode.stationId;
             downloadResourceActor.add(resourceTask);
         }
         return Collections.singletonList(ResourceUtils.prepareDataFile(taskDir, resourceId, null));
@@ -66,15 +66,15 @@ public class LaunchpadResourceProvider implements ResourceProvider {
 
     @Override
     public FunctionApiData.SystemExecResult processResultingFile(
-            DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, Metadata.DispatcherInfo launchpadCode,
+            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            StationTask task, Metadata.DispatcherInfo dispatcherCode,
             String outputResourceId, TaskParamsYaml.FunctionConfig functionConfig) {
         File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
         if (outputResourceFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputResourceFile.getPath());
             UploadResourceTask uploadResourceTask = new UploadResourceTask(task.taskId, outputResourceFile);
-            uploadResourceTask.launchpad = launchpad.launchpadLookup;
-            uploadResourceTask.stationId = launchpadCode.stationId;
+            uploadResourceTask.dispatcher = dispatcher.dispatcherLookup;
+            uploadResourceTask.stationId = dispatcherCode.stationId;
             uploadResourceActor.add(uploadResourceTask);
         } else {
             String es = "Result data file doesn't exist, resultDataFile: " + outputResourceFile.getPath();
@@ -86,7 +86,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
 
     @Override
     public File getOutputResourceFile(
-            File taskDir, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
+            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             StationTask task, String outputResourceCode, SourceCodeParamsYaml.Variable dataStorageParams) {
 
         //noinspection UnnecessaryLocalVariable

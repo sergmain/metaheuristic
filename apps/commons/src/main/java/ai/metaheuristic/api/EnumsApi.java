@@ -76,8 +76,8 @@ public class EnumsApi {
 
     @ToString
     public enum DataSourcing {
-        // data will be downloaded from launchpad
-        launchpad(1),
+        // data will be downloaded from dispatcher
+        dispatcher(1),
         // function already has been deployed locally at station
         disk(2),
         // function will be downloaded from git
@@ -96,7 +96,7 @@ public class EnumsApi {
             switch (value) {
                 case 1:
                     //noinspection
-                    return launchpad;
+                    return dispatcher;
                 case 2:
                     return disk;
                 case 3:
@@ -104,7 +104,7 @@ public class EnumsApi {
                 case 4:
                     return inline;
                 default:
-                    return launchpad;
+                    return dispatcher;
             }
         }
 
@@ -117,8 +117,8 @@ public class EnumsApi {
 
     @ToString
     public enum FunctionSourcing {
-        // function will be downloaded from launchpad
-        launchpad(1),
+        // function will be downloaded from dispatcher
+        dispatcher(1),
         // function already has been deployed locally at station
         station(2),
         // function will be downloaded from git
@@ -135,13 +135,13 @@ public class EnumsApi {
             switch (value) {
                 case 1:
                     //noinspection
-                    return launchpad;
+                    return dispatcher;
                 case 2:
                     return station;
                 case 3:
                     return git;
                 default:
-                    return launchpad;
+                    return dispatcher;
             }
         }
 
@@ -350,7 +350,7 @@ public class EnumsApi {
 
     }
 
-    public enum LaunchpadEventType {
+    public enum DispatcherEventType {
         BATCH_FILE_UPLOADED, BATCH_CREATED, BATCH_PROCESSING_STARTED, BATCH_PROCESSING_FINISHED, BATCH_FINISHED_WITH_ERROR,
         TASK_ASSIGNED, TASK_FINISHED, TASK_ERROR
 

@@ -42,7 +42,7 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
         return true;
     }
 
-    public LaunchpadCommContextV1 launchpadCommContext;
+    public DispatcherCommContextV1 dispatcherCommContext;
 
     // always send info about functions
     public FunctionsV1 functions = new FunctionsV1();
@@ -129,9 +129,9 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class LaunchpadCommContextV1 {
+    public static class DispatcherCommContextV1 {
         public Long chunkSize;
-        // Station's version for communicating with launchpad
+        // Station's version for communicating with dispatcher
         public Integer stationCommVersion;
     }
 

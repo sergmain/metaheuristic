@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfigUtils;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.LaunchpadLookupConfigUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -46,69 +46,69 @@ public class DispatcherLookupExtendedService {
     private final Globals globals;
 
     // Collections.unmodifiableMap
-    public Map<String, LaunchpadLookupExtended> lookupExtendedMap = null;
+    public Map<String, DispatcherLookupExtended> lookupExtendedMap = null;
 
     @Data
-    public static class LaunchpadLookupExtended {
-        public LaunchpadLookupConfig.LaunchpadLookup launchpadLookup;
+    public static class DispatcherLookupExtended {
+        public DispatcherLookupConfig.DispatcherLookup dispatcherLookup;
         public LaunchpadSchedule schedule;
-        public final LaunchpadContext context = new LaunchpadContext();
+        public final DispatcherContext context = new DispatcherContext();
     }
 
     @PostConstruct
     public void init() {
-        final File launchpadFile = new File(globals.stationDir, Consts.DISPATCHER_YAML_FILE_NAME);
+        final File dispatcherFile = new File(globals.stationDir, Consts.DISPATCHER_YAML_FILE_NAME);
         final String cfg;
-        if (!launchpadFile.exists()) {
-            if (globals.defaultLaunchpadYamlFile == null) {
-                log.warn("Station's launchpad config file {} doesn't exist and default file wasn't specified", launchpadFile.getPath());
+        if (!dispatcherFile.exists()) {
+            if (globals.defaultDispatcherYamlFile == null) {
+                log.warn("Station's dispatcher config file {} doesn't exist and default file wasn't specified", dispatcherFile.getPath());
                 return;
             }
-            if (!globals.defaultLaunchpadYamlFile.exists()) {
-                log.warn("Station's default launchpad.yaml file doesn't exist: {}", globals.defaultLaunchpadYamlFile.getAbsolutePath());
+            if (!globals.defaultDispatcherYamlFile.exists()) {
+                log.warn("Station's default dispatcher.yaml file doesn't exist: {}", globals.defaultDispatcherYamlFile.getAbsolutePath());
                 return;
             }
             try {
-                FileUtils.copyFile(globals.defaultLaunchpadYamlFile, launchpadFile);
+                FileUtils.copyFile(globals.defaultDispatcherYamlFile, dispatcherFile);
             } catch (IOException e) {
                 log.error("Error", e);
-                throw new IllegalStateException("Error while copying "+ globals.defaultLaunchpadYamlFile.getAbsolutePath()+" to " + launchpadFile.getAbsolutePath(), e);
+                throw new IllegalStateException("Error while copying "+ globals.defaultDispatcherYamlFile.getAbsolutePath()+" to " + dispatcherFile.getAbsolutePath(), e);
             }
         }
 
         try {
-            cfg = FileUtils.readFileToString(launchpadFile, Charsets.UTF_8);
+            cfg = FileUtils.readFileToString(dispatcherFile, Charsets.UTF_8);
         } catch (IOException e) {
             log.error("Error", e);
-            throw new IllegalStateException("Error while reading file: " + launchpadFile.getAbsolutePath(), e);
+            throw new IllegalStateException("Error while reading file: " + dispatcherFile.getAbsolutePath(), e);
         }
 
-        LaunchpadLookupConfig launchpadLookupConfig = LaunchpadLookupConfigUtils.to(cfg);
+        DispatcherLookupConfig dispatcherLookupConfig = LaunchpadLookupConfigUtils.to(cfg);
 
-        if (launchpadLookupConfig == null) {
+        if (dispatcherLookupConfig == null) {
             log.error("{} wasn't found or empty. path: {}{}{}",
                     Consts.DISPATCHER_YAML_FILE_NAME, globals.stationDir,
                     File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
-            throw new IllegalStateException("Station isn't configured, launchpad.yaml is empty or doesn't exist");
+            throw new IllegalStateException("Station isn't configured, dispatcher.yaml is empty or doesn't exist");
         }
-        final Map<String, LaunchpadLookupExtended> map = new HashMap<>();
-        for (LaunchpadLookupConfig.LaunchpadLookup launchpad : launchpadLookupConfig.launchpads) {
-            LaunchpadLookupExtended lookupExtended = new LaunchpadLookupExtended();
-            lookupExtended.launchpadLookup = launchpad;
-            lookupExtended.schedule = new LaunchpadSchedule(launchpad.taskProcessingTime);
-            map.put(launchpad.url, lookupExtended);
+        final Map<String, DispatcherLookupExtended> map = new HashMap<>();
+        for (DispatcherLookupConfig.DispatcherLookup dispatcher : dispatcherLookupConfig.dispatchers) {
+            DispatcherLookupExtended lookupExtended = new DispatcherLookupExtended();
+            lookupExtended.dispatcherLookup = dispatcher;
+            lookupExtended.schedule = new LaunchpadSchedule(dispatcher.taskProcessingTime);
+            map.put(dispatcher.url, lookupExtended);
         }
         lookupExtendedMap = Collections.unmodifiableMap(map);
     }
 
-    public File prepareBaseResourceDir(Metadata.DispatcherInfo launchpadCode) {
-        final File launchpadDir = new File(globals.stationResourcesDir, launchpadCode.code);
-        if (launchpadDir.exists()) {
-            return launchpadDir;
+    public File prepareBaseResourceDir(Metadata.DispatcherInfo dispatcherCode) {
+        final File dispatcherDir = new File(globals.stationResourcesDir, dispatcherCode.code);
+        if (dispatcherDir.exists()) {
+            return dispatcherDir;
         }
         //noinspection unused
-        boolean status = launchpadDir.mkdirs();
-        return launchpadDir;
+        boolean status = dispatcherDir.mkdirs();
+        return dispatcherDir;
     }
 
 

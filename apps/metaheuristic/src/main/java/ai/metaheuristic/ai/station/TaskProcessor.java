@@ -26,8 +26,8 @@ import ai.metaheuristic.ai.station.env.EnvService;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.station.station_resource.ResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.ExtendedTimePeriod;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriod;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.ConstsApi;
@@ -99,31 +99,31 @@ public class TaskProcessor {
             if (task.launchedOn!=null && task.finishedOn!=null && currentTaskId==null) {
                 log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched and then finished", task.taskId);
             }
-            if (StringUtils.isBlank(task.launchpadUrl)) {
-                final String es = "#100.005 task.launchpadUrl is blank for task #" + task.taskId;
+            if (StringUtils.isBlank(task.dispatcherUrl)) {
+                final String es = "#100.005 task.dispatcherUrl is blank for task #" + task.taskId;
                 log.warn(es);
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
+                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
                 continue;
             }
 
-            final Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(task.launchpadUrl);
+            final Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(task.dispatcherUrl);
             if (dispatcherInfo ==null) {
-                final String es = "#100.010 dispatcherInfo is null for "+task.launchpadUrl+". task #" + task.taskId;
+                final String es = "#100.010 dispatcherInfo is null for "+task.dispatcherUrl+". task #" + task.taskId;
                 log.warn(es);
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
+                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
                 continue;
             }
 
-            DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad = dispatcherLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
-            if (launchpad==null) {
-                final String es = "#100.020 Broken task #"+task.taskId+". Launchpad wasn't found for url " + task.launchpadUrl;
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
+            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(task.dispatcherUrl);
+            if (dispatcher==null) {
+                final String es = "#100.020 Broken task #"+task.taskId+". dispatcher wasn't found for url " + task.dispatcherUrl;
+                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
                 continue;
             }
 
-            if (launchpad.schedule.isCurrentTimeInactive()) {
-                stationTaskService.delete(task.launchpadUrl, task.taskId);
-                log.info("Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.launchpadUrl, new Date(), launchpad.schedule.asString);
+            if (dispatcher.schedule.isCurrentTimeInactive()) {
+                stationTaskService.delete(task.dispatcherUrl, task.taskId);
+                log.info("Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.dispatcherUrl, new Date(), dispatcher.schedule.asString);
                 return;
             }
 
@@ -132,60 +132,60 @@ public class TaskProcessor {
                 continue;
             }
 
-            EnumsApi.ExecContextState state = currentExecState.getState(task.launchpadUrl, task.execContextId);
+            EnumsApi.ExecContextState state = currentExecState.getState(task.dispatcherUrl, task.execContextId);
             if (state== EnumsApi.ExecContextState.UNKNOWN) {
-                stationTaskService.delete(task.launchpadUrl, task.taskId);
-                log.info("The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.execContextId, task.launchpadUrl, task.taskId);
+                stationTaskService.delete(task.dispatcherUrl, task.taskId);
+                log.info("The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.execContextId, task.dispatcherUrl, task.taskId);
                 continue;
             }
 
             if (state!= EnumsApi.ExecContextState.STARTED) {
-                stationTaskService.delete(task.launchpadUrl, task.taskId);
-                log.info("The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.execContextId, task.launchpadUrl, state, task.taskId);
+                stationTaskService.delete(task.dispatcherUrl, task.taskId);
+                log.info("The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.execContextId, task.dispatcherUrl, state, task.taskId);
                 continue;
             }
 
             log.info("Start processing task {}", task);
-            File taskDir = stationTaskService.prepareTaskDir(task.launchpadUrl, task.taskId);
+            File taskDir = stationTaskService.prepareTaskDir(task.dispatcherUrl, task.taskId);
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
-            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, dispatcherInfo, taskParamYaml, launchpad, taskDir);
+            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, dispatcherInfo, taskParamYaml, dispatcher, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
             boolean isAllLoaded = resultOfChecking.isAllLoaded;
-            File outputResourceFile = stationService.getOutputResourceFile(task, taskParamYaml, launchpad, taskDir);
+            File outputResourceFile = stationService.getOutputResourceFile(task, taskParamYaml, dispatcher, taskDir);
             if (outputResourceFile==null) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
+                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
                 continue;
             }
             SourceCodeParamsYaml.Variable dsp = taskParamYaml.taskYaml.getResourceStorageUrls()
                     .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
             if (dsp==null) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.050 Broken task. Can't find params for outputResourceCode");
+                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.050 Broken task. Can't find params for outputResourceCode");
                 continue;
             }
             if (taskParamYaml.taskYaml.function ==null) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.080 Broken task. Function isn't defined");
+                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.080 Broken task. Function isn't defined");
                 continue;
             }
 
             File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
             if (artifactDir == null) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
+                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 
             File systemDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
             if (systemDir == null) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
+                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
                 continue;
             }
 
             String status = stationTaskService.prepareEnvironment(artifactDir);
             if (status!=null) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, status);
+                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, status);
             }
 
             boolean isNotReady = false;
@@ -193,9 +193,9 @@ public class TaskProcessor {
             int idx = 0;
             FunctionPrepareResult result;
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.taskYaml.preFunctions) {
-                result = prepareFunction(task.launchpadUrl, dispatcherInfo, preFunctionConfig);
+                result = prepareFunction(task.dispatcherUrl, dispatcherInfo, preFunctionConfig);
                 if (result.isError) {
-                    markFunctionAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
+                    markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
                     isNotReady = true;
                     break;
                 }
@@ -209,9 +209,9 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = prepareFunction(task.launchpadUrl, dispatcherInfo, taskParamYaml.taskYaml.getFunction());
+            result = prepareFunction(task.dispatcherUrl, dispatcherInfo, taskParamYaml.taskYaml.getFunction());
             if (result.isError) {
-                markFunctionAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
+                markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
                 continue;
             }
             results[idx++] = result;
@@ -220,9 +220,9 @@ public class TaskProcessor {
             }
 
             for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.taskYaml.postFunctions) {
-                result = prepareFunction(task.launchpadUrl, dispatcherInfo, postFunctionConfig);
+                result = prepareFunction(task.dispatcherUrl, dispatcherInfo, postFunctionConfig);
                 if (result.isError) {
-                    markFunctionAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
+                    markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
                     isNotReady = true;
                     break;
                 }
@@ -241,14 +241,14 @@ public class TaskProcessor {
             }
 
             // at this point all required resources have to be prepared
-            task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
+            task = stationTaskService.setLaunchOn(task.dispatcherUrl, task.taskId);
             try {
                 currentTaskId = task.taskId;
-                execAllFunctions(task, dispatcherInfo, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, results);
+                execAllFunctions(task, dispatcherInfo, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
             }
             catch(ScheduleInactivePeriodException e) {
-                stationTaskService.resetTask(task.launchpadUrl, task.taskId);
-                stationTaskService.delete(task.launchpadUrl, task.taskId);
+                stationTaskService.resetTask(task.dispatcherUrl, task.taskId);
+                stationTaskService.delete(task.dispatcherUrl, task.taskId);
                 log.info("An execution of task #{} was terminated because of the beginning of inactivity period. " +
                         "This task will be processed later", task.taskId);
             }
@@ -258,26 +258,26 @@ public class TaskProcessor {
         }
     }
 
-    private void markFunctionAsFinishedWithPermanentError(String launchpadUrl, Long taskId, FunctionPrepareResult result) {
+    private void markFunctionAsFinishedWithPermanentError(String dispatcherUrl, Long taskId, FunctionPrepareResult result) {
         FunctionApiData.SystemExecResult execResult = new FunctionApiData.SystemExecResult(
                 result.getFunction().code, false, -990,
                 "#100.105 Function "+result.getFunction().code+" has permanent error: " + result.getSystemExecResult().console);
-        stationTaskService.markAsFinished(launchpadUrl, taskId,
+        stationTaskService.markAsFinished(dispatcherUrl, taskId,
                 new FunctionApiData.FunctionExec(null, null, null, execResult));
 
     }
 
     private void execAllFunctions(
             StationTask task, Metadata.DispatcherInfo dispatcherInfo,
-            DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
+            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
             File systemDir, FunctionPrepareResult[] results) {
         List<FunctionApiData.SystemExecResult> preSystemExecResult = new ArrayList<>();
         List<FunctionApiData.SystemExecResult> postSystemExecResult = new ArrayList<>();
         boolean isOk = true;
         int idx = 0;
-        LaunchpadSchedule schedule = launchpad.schedule!=null && launchpad.schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
-                ? launchpad.schedule : null;
+        LaunchpadSchedule schedule = dispatcher.schedule!=null && dispatcher.schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
+                ? dispatcher.schedule : null;
         for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.taskYaml.preFunctions) {
             FunctionPrepareResult result = results[idx++];
             FunctionApiData.SystemExecResult execResult;
@@ -331,15 +331,15 @@ public class TaskProcessor {
                     }
                     if (isOk && systemExecResult.isOk()) {
                         try {
-                            stationTaskService.storeMetrics(task.launchpadUrl, task, mainFunctionConfig, artifactDir);
-                            stationTaskService.storePredictedData(task.launchpadUrl, task, mainFunctionConfig, artifactDir);
-                            stationTaskService.storeFittingCheck(task.launchpadUrl, task, mainFunctionConfig, artifactDir);
+                            stationTaskService.storeMetrics(task.dispatcherUrl, task, mainFunctionConfig, artifactDir);
+                            stationTaskService.storePredictedData(task.dispatcherUrl, task, mainFunctionConfig, artifactDir);
+                            stationTaskService.storeFittingCheck(task.dispatcherUrl, task, mainFunctionConfig, artifactDir);
 
                             final SourceCodeParamsYaml.Variable params = taskParamYaml.taskYaml.resourceStorageUrls
                                     .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
                             ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                             generalExec = resourceProvider.processResultingFile(
-                                    launchpad, task, dispatcherInfo,
+                                    dispatcher, task, dispatcherInfo,
                                     taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
                                     mainFunctionConfig
                             );
@@ -355,7 +355,7 @@ public class TaskProcessor {
             }
         }
 
-        stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(),
+        stationTaskService.markAsFinished(task.dispatcherUrl, task.getTaskId(),
                 new FunctionApiData.FunctionExec(systemExecResult, preSystemExecResult, postSystemExecResult, generalExec));
     }
 
@@ -431,7 +431,7 @@ public class TaskProcessor {
         FunctionApiData.SystemExecResult systemExecResult;
         try {
             switch (functionPrepareResult.function.sourcing) {
-                case launchpad:
+                case dispatcher:
                 case git:
                     if (functionPrepareResult.functionAssetFile ==null) {
                         throw new IllegalStateException("#100.160 functionAssetFile is null");
@@ -499,24 +499,24 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(String launchpadUrl, Metadata.DispatcherInfo launchpadCode, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(String dispatcherUrl, Metadata.DispatcherInfo dispatcherCode, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
-        if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.launchpad) {
-            final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(launchpadCode);
+        if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
+            final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherCode);
             functionPrepareResult.functionAssetFile = ResourceUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
             // is this function prepared?
             if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
                 log.info("Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
                 functionPrepareResult.isLoaded = false;
 
-                metadataService.setFunctionDownloadStatus(launchpadUrl, function.code, EnumsApi.FunctionSourcing.launchpad, Enums.FunctionState.none);
+                metadataService.setFunctionDownloadStatus(dispatcherUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, Enums.FunctionState.none);
 
             }
         }
         else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {
-            final File resourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(launchpadCode);
+            final File resourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherCode);
             log.info("Root dir for function: " + resourceDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
             if (!result.ok) {

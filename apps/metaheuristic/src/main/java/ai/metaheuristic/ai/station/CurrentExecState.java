@@ -32,23 +32,23 @@ public class CurrentExecState {
 
     private Map<String, AtomicBoolean> isInit = new HashMap<>();
 
-    public boolean isInited(String launchpadUrl) {
+    public boolean isInited(String dispatcherUrl) {
         synchronized(execContextState) {
-            return isInit.computeIfAbsent(launchpadUrl, v -> new AtomicBoolean(false)).get();
+            return isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean(false)).get();
         }
     }
 
-    public void register(String launchpadUrl, List<DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus> statuses) {
+    public void register(String dispatcherUrl, List<DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus> statuses) {
         synchronized(execContextState) {
-            isInit.computeIfAbsent(launchpadUrl, v -> new AtomicBoolean()).set(true);
+            isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean()).set(true);
             // statuses==null when there isn't any execContext
             if (statuses==null) {
-                execContextState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).clear();
+                execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).clear();
                 return;
             }
-            statuses.forEach(status -> execContextState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).put(status.execContextId, status.state));
+            statuses.forEach(status -> execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).put(status.execContextId, status.state));
             execContextState.forEach((k, v) -> {
-                if (!k.equals(launchpadUrl)) {
+                if (!k.equals(dispatcherUrl)) {
                     return;
                 }
                 List<Long> ids = new ArrayList<>();
@@ -72,12 +72,12 @@ public class CurrentExecState {
         }
     }
 
-    boolean isState(String launchpadUrl, Long execContextId, EnumsApi.ExecContextState state) {
-        EnumsApi.ExecContextState currState = getState(launchpadUrl, execContextId);
+    boolean isState(String dispatcherUrl, Long execContextId, EnumsApi.ExecContextState state) {
+        EnumsApi.ExecContextState currState = getState(dispatcherUrl, execContextId);
         return currState!=null && currState==state;
     }
 
-    boolean isStarted(String launchpadUrl, Long execContextId) {
-        return isState(launchpadUrl, execContextId, EnumsApi.ExecContextState.STARTED);
+    boolean isStarted(String dispatcherUrl, Long execContextId) {
+        return isState(dispatcherUrl, execContextId, EnumsApi.ExecContextState.STARTED);
     }
 }

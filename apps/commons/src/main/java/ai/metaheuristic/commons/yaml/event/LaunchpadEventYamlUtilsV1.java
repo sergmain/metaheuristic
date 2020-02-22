@@ -17,7 +17,7 @@
 package ai.metaheuristic.commons.yaml.event;
 
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.api.data.event.LaunchpadEventYaml;
+import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.api.data.event.LaunchpadEventYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -29,7 +29,7 @@ import org.yaml.snakeyaml.Yaml;
  * Time: 12:10 AM
  */
 public class LaunchpadEventYamlUtilsV1
-        extends AbstractParamsYamlUtils<LaunchpadEventYamlV1, LaunchpadEventYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<LaunchpadEventYamlV1, DispatcherEventYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -42,14 +42,14 @@ public class LaunchpadEventYamlUtilsV1
     }
 
     @Override
-    public LaunchpadEventYaml upgradeTo(LaunchpadEventYamlV1 src, Long ... vars) {
+    public DispatcherEventYaml upgradeTo(LaunchpadEventYamlV1 src, Long ... vars) {
         src.checkIntegrity();
-        LaunchpadEventYaml trg = new LaunchpadEventYaml();
+        DispatcherEventYaml trg = new DispatcherEventYaml();
         trg.createdOn = src.createdOn;
         trg.event = src.event;
         trg.contextId = src.contextId;
         if (src.batchData!=null) {
-            trg.batchData = new LaunchpadEventYaml.BatchEventData();
+            trg.batchData = new DispatcherEventYaml.BatchEventData();
             trg.batchData.batchId = src.batchData.batchId;
             trg.batchData.execContextId = src.batchData.execContextId;
             trg.batchData.username = src.batchData.username;
@@ -58,7 +58,7 @@ public class LaunchpadEventYamlUtilsV1
             trg.batchData.companyId = src.batchData.companyId;
         }
         if (src.taskData!=null) {
-            trg.taskData = new LaunchpadEventYaml.TaskEventData();
+            trg.taskData = new DispatcherEventYaml.TaskEventData();
             trg.taskData.stationId = src.taskData.stationId;
             trg.taskData.taskId = src.taskData.taskId;
             trg.taskData.execContextId = src.taskData.execContextId;

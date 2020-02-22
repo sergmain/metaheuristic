@@ -56,8 +56,8 @@ public class DiskResourceProvider implements ResourceProvider {
 
     @Override
     public List<AssetFile> prepareForDownloadingDataFile(
-            File taskDir, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, Metadata.DispatcherInfo launchpadCode,
+            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            StationTask task, Metadata.DispatcherInfo dispatcherCode,
             String resourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
 
         if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.disk) {
@@ -103,14 +103,14 @@ public class DiskResourceProvider implements ResourceProvider {
 
     @Override
     public FunctionApiData.SystemExecResult processResultingFile(
-            DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, Metadata.DispatcherInfo launchpadCode,
+            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            StationTask task, Metadata.DispatcherInfo dispatcherCode,
             String outputResourceId, TaskParamsYaml.FunctionConfig functionConfig
     ) {
         File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
         if (outputResourceFile.exists()) {
-            log.info("The result data was already written to file {}, no need to upload to launchpad", outputResourceFile.getPath());
-            stationTaskService.setResourceUploadedAndCompleted(launchpad.launchpadLookup.url, task.taskId);
+            log.info("The result data was already written to file {}, no need to upload to dispatcher", outputResourceFile.getPath());
+            stationTaskService.setResourceUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId);
         } else {
             String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
@@ -121,7 +121,7 @@ public class DiskResourceProvider implements ResourceProvider {
 
     @Override
     public File getOutputResourceFile(
-            File taskDir, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
+            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             StationTask task, String outputResourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
 
         EnvYaml env = envService.getEnvYaml();
