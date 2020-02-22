@@ -6,13 +6,13 @@
   "spring.datasource.continue-on-error": false,
 
   "mh.thread-number": 4,
-  "mh.launchpad.is-ssl-required": true,
-  "mh.launchpad.master-password": "<password>",
-  "mh.launchpad.master-username": "<username>",
-  "mh.launchpad.public-key": "<public-key>",
-  "mh.launchpad.enabled": true,
-  "mh.launchpad.dir": "./mh-launchpad",
-  "mh.launchpad.is-replace-snapshot": false,
-  "mh.launchpad.chunk-size": "900k",
+  "mh.dispatcher.is-ssl-required": true,
+  "mh.dispatcher.master-password": "<password>",
+  "mh.dispatcher.master-username": "<username>",
+  "mh.dispatcher.public-key": "<public-key>",
+  "mh.dispatcher.enabled": true,
+  "mh.dispatcher.dir": "./mh-launchpad",
+  "mh.dispatcher.is-replace-snapshot": false,
+  "mh.dispatcher.chunk-size": "900k",
   "mh.station.enabled": false
 }

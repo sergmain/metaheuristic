@@ -136,10 +136,10 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "assembled-raw-output"));
 //      input:
 //        - variable: test-variable
-//          sourcing: launchpad
+//          sourcing: dispatcher
 //      output:
 //        - variable: assembled-raw-output
-//          sourcing: launchpad
+//          sourcing: dispatcher
 
             planParamsYaml.source.processes.add(p);
         }
@@ -190,7 +190,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
 //        - code: mh.permute-variables-and-hyper-params
 //      output:
 //        - variable: feature-per-task
-//          sourcing: launchpad
+//          sourcing: dispatcher
 
             SourceCodeParamsYamlV1.ProcessV1 p = new SourceCodeParamsYamlV1.ProcessV1();
             p.name = "permute variables and hyper params";
@@ -211,10 +211,10 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p1.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(TEST_FIT_FUNCTION);
 //            input:
 //              - variable: feature-per-task
-//                sourcing: launchpad
+//                sourcing: dispatcher
 //            output:
 //              - variable: model
-//                sourcing: launchpad
+//                sourcing: dispatcher
             p1.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "dataset-processing-output"));
             p1.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "feature-per-task"));
             p1.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "model"));
@@ -225,9 +225,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p2.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(TEST_PREDICT_FUNCTION);
             p2.input.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "dataset-processing-output"));
 //              - variable: metrics
-//                sourcing: launchpad
+//                sourcing: dispatcher
 //              - variable: predicted
-//                sourcing: launchpad
+//                sourcing: dispatcher
             p2.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "metrics"));
             p2.output.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "predicted"));
 
