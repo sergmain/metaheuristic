@@ -33,7 +33,7 @@ public interface ResourceProvider {
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String resourceId, SourceCodeParamsYaml.Variable dataStorageParams);
 
-    FunctionApiData.FunctionExecResult processResultingFile(
+    FunctionApiData.SystemExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String outputResourceId,

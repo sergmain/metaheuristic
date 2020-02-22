@@ -112,10 +112,10 @@ public class Consts {
     public static final String RESULT_ZIP = "result.zip";
     public static final Long ID_1 = 1L;
 
-    public static final String MH_RESOURCE_SPLITTER_FUNCTION = "mh.resource-splitter";
+    public static final String MH_VARIABLE_SPLITTER_FUNCTION = "mh.variable-splitter";
     public static final String MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION = "mh.permute-variables-and-hyper-params";
     public static final String MH_FINISH_FUNCTION = "mh.finish";
-    public static final List<String> MH_INTERNAL_FUNCTIONS = List.of(MH_RESOURCE_SPLITTER_FUNCTION, MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION, MH_FINISH_FUNCTION);
+    public static final List<String> MH_INTERNAL_FUNCTIONS = List.of(MH_VARIABLE_SPLITTER_FUNCTION, MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION, MH_FINISH_FUNCTION);
 
     public static final String EMPTY_GRAPH = "strict digraph G { }";
 }

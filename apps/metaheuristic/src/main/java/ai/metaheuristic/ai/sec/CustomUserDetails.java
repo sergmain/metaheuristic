@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.account.AccountCache;
-import ai.metaheuristic.ai.launchpad.beans.Account;
+import ai.metaheuristic.ai.dispatcher.account.AccountCache;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Service;
  * Time: 23:17
  */
 @Service
-@Profile("launchpad")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetailsService {
 

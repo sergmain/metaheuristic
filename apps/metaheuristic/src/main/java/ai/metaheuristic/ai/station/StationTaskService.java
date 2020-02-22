@@ -284,7 +284,7 @@ public class StationTaskService {
             markAsFinished(launchpadUrl, taskId,
                     new FunctionApiData.FunctionExec(
                             null, null, null,
-                            new FunctionApiData.FunctionExecResult("system-error", false, -991, es)));
+                            new FunctionApiData.SystemExecResult("system-error", false, -991, es)));
         }
     }
 

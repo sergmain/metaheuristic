@@ -65,7 +65,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     }
 
     @Override
-    public FunctionApiData.FunctionExecResult processResultingFile(
+    public FunctionApiData.SystemExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String outputResourceId, TaskParamsYaml.FunctionConfig functionConfig) {
@@ -79,7 +79,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
         } else {
             String es = "Result data file doesn't exist, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
-            return new FunctionApiData.FunctionExecResult(functionConfig.code,false, -1, es);
+            return new FunctionApiData.SystemExecResult(functionConfig.code,false, -1, es);
         }
         return null;
     }

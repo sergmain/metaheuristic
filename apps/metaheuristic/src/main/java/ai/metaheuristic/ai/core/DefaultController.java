@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * Time: 15:17
  */
 @Controller
-@Profile("launchpad")
+@Profile("dispatcher")
 public class DefaultController {
 
     @RequestMapping("/")

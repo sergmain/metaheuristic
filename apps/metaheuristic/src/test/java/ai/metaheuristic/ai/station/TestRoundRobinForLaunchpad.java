@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.station;
 
-import ai.metaheuristic.ai.launchpad.RoundRobinForLaunchpad;
+import ai.metaheuristic.ai.dispatcher.RoundRobinForLaunchpad;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import org.junit.Test;
 

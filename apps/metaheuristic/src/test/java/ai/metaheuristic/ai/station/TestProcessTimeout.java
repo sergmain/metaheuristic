@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.station;
 
-import ai.metaheuristic.ai.core.ExecProcessService;
+import ai.metaheuristic.ai.core.SystemProcessService;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -42,7 +42,7 @@ public class TestProcessTimeout {
         pb.redirectErrorStream(true);
         final Process process = pb.start();
 
-        final ExecProcessService.StreamHolder streamHolder = new ExecProcessService.StreamHolder();
+        final SystemProcessService.StreamHolder streamHolder = new SystemProcessService.StreamHolder();
         int exitCode;
         long timeout = TimeUnit.SECONDS.toMillis(15);
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();

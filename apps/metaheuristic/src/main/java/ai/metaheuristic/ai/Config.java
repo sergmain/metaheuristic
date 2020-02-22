@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.launchpad.batch.RefToBatchRepositories;
-import ai.metaheuristic.ai.launchpad.repositories.RefToLaunchpadRepositories;
+import ai.metaheuristic.ai.dispatcher.batch.RefToBatchRepositories;
+import ai.metaheuristic.ai.dispatcher.repositories.RefToLaunchpadRepositories;
 import ai.metaheuristic.ai.resource.ResourceCleanerInterceptor;
 import lombok.RequiredArgsConstructor;
 import nz.net.ultraq.thymeleaf.LayoutDialect;

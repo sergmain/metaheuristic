@@ -1,0 +1,46 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+     layout:decorate="~{layout-dispatcher}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">Delete the source code</h1>
+
+        <!--/*@thymesVar id="sourceCode" type="ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${sourceCode}">
+            <fieldset>
+                <label for="uid">UID of source code</label>
+                <pre id="uid" th:text="*{uid}" ></pre>
+
+                <label for="sourceCodeYamlAsStr">Parameters of source code</label>
+                <pre id="sourceCodeYamlAsStr" th:text="${sourceCodeYamlAsStr}" ></pre>
+            </fieldset>
+        </form>
+
+        <table>
+            <tr>
+                <td>
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${sourceCode}" th:method="post" th:action="@{/launchpad/source-code/source-code-delete-commit}"
+                          accept-charset="UTF-8"
+                          id="sourceCode-delete-commit"
+                          name="f">
+                        <input type="hidden" th:field="*{id}"/>
+                        <fieldset>
+                            <button type="submit" class="pure-button pure-button-primary">Delete</button>
+                        </fieldset>
+                    </form>
+                </td>
+                <td>
+                    &nbsp;
+                </td>
+                <td>
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/source-code/source-codes}" accept-charset="UTF-8" id="source-code-delete-cancel" name="f">
+                        <fieldset>
+                            <button type="submit" class="pure-button pure-button-primary">Cancel</button>
+                        </fieldset>
+                    </form>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

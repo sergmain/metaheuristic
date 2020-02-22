@@ -15,13 +15,13 @@
  */
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.launchpad.ArtifactCleanerAtLaunchpad;
-import ai.metaheuristic.ai.launchpad.RoundRobinForLaunchpad;
-import ai.metaheuristic.ai.launchpad.batch.BatchService;
-import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
-import ai.metaheuristic.ai.launchpad.source_code.SourceCodeService;
-import ai.metaheuristic.ai.launchpad.replication.ReplicationService;
-import ai.metaheuristic.ai.launchpad.exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.dispatcher.ArtifactCleanerAtLaunchpad;
+import ai.metaheuristic.ai.dispatcher.RoundRobinForLaunchpad;
+import ai.metaheuristic.ai.dispatcher.batch.BatchService;
+import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.station.*;
 import ai.metaheuristic.ai.station.actors.DownloadResourceActor;
 import ai.metaheuristic.ai.station.actors.DownloadFunctionActor;
@@ -46,7 +46,7 @@ public class Schedulers {
     @Service
     @EnableScheduling
     @Slf4j
-    @Profile("launchpad")
+    @Profile("dispatcher")
     @RequiredArgsConstructor
     public static class LaunchpadSchedulers {
 

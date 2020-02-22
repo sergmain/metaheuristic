@@ -31,7 +31,7 @@ public class TestFunctionExec {
     @Test
     public void testMarshaling() {
         FunctionApiData.FunctionExec output = new FunctionApiData.FunctionExec();
-        output.exec = new FunctionApiData.FunctionExecResult("output-of-a-function",true, 0, "output#1");
+        output.exec = new FunctionApiData.SystemExecResult("output-of-a-function",true, 0, "output#1");
 
         String yaml = FunctionExecUtils.toString(output);
         FunctionApiData.FunctionExec output1 = FunctionExecUtils.to(yaml);

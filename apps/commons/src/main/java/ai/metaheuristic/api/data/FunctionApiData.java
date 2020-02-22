@@ -34,7 +34,7 @@ public class FunctionApiData {
     @AllArgsConstructor
     @NoArgsConstructor
     @ToString(exclude = {"console"})
-    public static class FunctionExecResult {
+    public static class SystemExecResult {
         public String functionCode;
         public boolean isOk;
         public int exitCode;
@@ -45,10 +45,10 @@ public class FunctionApiData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class FunctionExec {
-        public FunctionExecResult exec = new FunctionExecResult();
-        public List<FunctionExecResult> preExecs;
-        public List<FunctionExecResult> postExecs;
-        public FunctionExecResult generalExec;
+        public SystemExecResult exec = new SystemExecResult();
+        public List<SystemExecResult> preExecs;
+        public List<SystemExecResult> postExecs;
+        public SystemExecResult generalExec;
 
         public boolean allFunctionsAreOk() {
             if (exec==null || !exec.isOk) {
@@ -58,14 +58,14 @@ public class FunctionApiData {
                 return false;
             }
             if (preExecs!=null) {
-                for (FunctionExecResult preExec : preExecs) {
+                for (SystemExecResult preExec : preExecs) {
                     if (!preExec.isOk) {
                         return false;
                     }
                 }
             }
             if (postExecs!=null) {
-                for (FunctionExecResult postExec : postExecs) {
+                for (SystemExecResult postExec : postExecs) {
                     if (!postExec.isOk) {
                         return false;
                     }

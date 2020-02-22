@@ -1,0 +1,52 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
+     layout:decorate="~{layout-batch}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">Upload file for processing</h1>
+
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.SourceCodeData$SourceCodesForCompany"*/-->
+        <!--/*@thymesVar id="companyUniqueId" type="java.lang.Long"*/-->
+        <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
+              th:action="@{/launchpad/company/batch/company-batch-upload-from-file/{companyUniqueId}(companyUniqueId=${companyUniqueId})}"
+        >
+            <fieldset>
+
+                <label for="sourceCodeId">List of sourceCodes</label>
+                <select  id="sourceCodeId" class="pure-input-medium" th:name="sourceCodeId">
+                    <option th:each="o : ${result.items}" th:value="${o.id}" th:text="${o.uid} "></option>
+                </select>
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="uploadFile">File for uploading, only .xml and .zip files are supported</label>
+                <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:size="100" style="color:black; background-color:white"/>
+                <div class="fileUpload pure-button pure-button-primary">
+                    <span>Select file</span>
+                    <input name="file" id="uploadBtn" type="file" class="upload">
+                </div>
+                <span class="pure-form-message">This is a required field.</span>
+
+                <table>
+                    <tr>
+                        <td>
+                            <button type="submit" class="pure-button pure-button-primary">Upload file</button>
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td>
+                            <a class="pure-button pure-button-primary" href="company-batches.html" th:href="${'/launchpad/company/batch/company-batches/'+companyUniqueId}">Cancel</a>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+        <script>
+            document.getElementById("uploadBtn").onchange = function () {
+                document.getElementById("uploadFile").value = this.value;
+            };
+        </script>
+
+    </div>
+</div>

@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.station;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.core.ExecProcessService;
+import ai.metaheuristic.ai.core.SystemProcessService;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
@@ -63,7 +63,7 @@ public class TaskProcessor {
 
     private final Globals globals;
 
-    private final ExecProcessService execProcessService;
+    private final SystemProcessService systemProcessService;
     private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService ;
@@ -72,13 +72,14 @@ public class TaskProcessor {
     private final StationService stationService;
     private final ResourceProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
-    private final TaskProcessorStateService taskProcessorStateService;
+
+    private Long currentTaskId;
 
     @Data
     public static class FunctionPrepareResult {
         public TaskParamsYaml.FunctionConfig function;
         public AssetFile functionAssetFile;
-        public FunctionApiData.FunctionExecResult functionExecResult;
+        public FunctionApiData.SystemExecResult systemExecResult;
         boolean isLoaded = true;
         boolean isError = false;
     }
@@ -95,7 +96,7 @@ public class TaskProcessor {
         List<StationTask> tasks = stationTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
 
-            if (task.launchedOn!=null && task.finishedOn!=null && taskProcessorStateService.currentTaskId==null) {
+            if (task.launchedOn!=null && task.finishedOn!=null && currentTaskId==null) {
                 log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched and then finished", task.taskId);
             }
             if (StringUtils.isBlank(task.launchpadUrl)) {
@@ -242,7 +243,7 @@ public class TaskProcessor {
             // at this point all required resources have to be prepared
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
             try {
-                taskProcessorStateService.currentTaskId = task.taskId;
+                currentTaskId = task.taskId;
                 execAllFunctions(task, launchpadInfo, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, results);
             }
             catch(ScheduleInactivePeriodException e) {
@@ -252,15 +253,15 @@ public class TaskProcessor {
                         "This task will be processed later", task.taskId);
             }
             finally {
-                taskProcessorStateService.currentTaskId = null;
+                currentTaskId = null;
             }
         }
     }
 
     private void markFunctionAsFinishedWithPermanentError(String launchpadUrl, Long taskId, FunctionPrepareResult result) {
-        FunctionApiData.FunctionExecResult execResult = new FunctionApiData.FunctionExecResult(
+        FunctionApiData.SystemExecResult execResult = new FunctionApiData.SystemExecResult(
                 result.getFunction().code, false, -990,
-                "#100.105 Function "+result.getFunction().code+" has permanent error: " + result.getFunctionExecResult().console);
+                "#100.105 Function "+result.getFunction().code+" has permanent error: " + result.getSystemExecResult().console);
         stationTaskService.markAsFinished(launchpadUrl, taskId,
                 new FunctionApiData.FunctionExec(null, null, null, execResult));
 
@@ -271,64 +272,64 @@ public class TaskProcessor {
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
             File systemDir, FunctionPrepareResult[] results) {
-        List<FunctionApiData.FunctionExecResult> preFunctionExecResult = new ArrayList<>();
-        List<FunctionApiData.FunctionExecResult> postFunctionExecResult = new ArrayList<>();
+        List<FunctionApiData.SystemExecResult> preSystemExecResult = new ArrayList<>();
+        List<FunctionApiData.SystemExecResult> postSystemExecResult = new ArrayList<>();
         boolean isOk = true;
         int idx = 0;
         LaunchpadSchedule schedule = launchpad.schedule!=null && launchpad.schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
                 ? launchpad.schedule : null;
         for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.taskYaml.preFunctions) {
             FunctionPrepareResult result = results[idx++];
-            FunctionApiData.FunctionExecResult execResult;
+            FunctionApiData.SystemExecResult execResult;
             if (result==null) {
-                execResult = new FunctionApiData.FunctionExecResult(
+                execResult = new FunctionApiData.SystemExecResult(
                         preFunctionConfig.code, false, -999,
                         "#100.110 Illegal State, result of preparing of function "+ preFunctionConfig.code+" is null");
             }
             else {
                 execResult = execFunction(task, taskDir, taskParamYaml, systemDir, result, schedule);
             }
-            preFunctionExecResult.add(execResult);
+            preSystemExecResult.add(execResult);
             if (!execResult.isOk) {
                 isOk = false;
                 break;
             }
         }
-        FunctionApiData.FunctionExecResult functionExecResult = null;
-        FunctionApiData.FunctionExecResult generalExec = null;
+        FunctionApiData.SystemExecResult systemExecResult = null;
+        FunctionApiData.SystemExecResult generalExec = null;
         if (isOk) {
             FunctionPrepareResult result = results[idx++];
             if (result==null) {
-                functionExecResult = new FunctionApiData.FunctionExecResult(
+                systemExecResult = new FunctionApiData.SystemExecResult(
                         taskParamYaml.taskYaml.getFunction().code, false, -999,
                         "#100.120 Illegal State, result of preparing of function "+taskParamYaml.taskYaml.getFunction()+" is null");
                 isOk = false;
             }
             if (isOk) {
                 TaskParamsYaml.FunctionConfig mainFunctionConfig = result.function;
-                functionExecResult = execFunction(task, taskDir, taskParamYaml, systemDir, result, schedule);
-                if (!functionExecResult.isOk) {
+                systemExecResult = execFunction(task, taskDir, taskParamYaml, systemDir, result, schedule);
+                if (!systemExecResult.isOk) {
                     isOk = false;
                 }
                 if (isOk) {
                     for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.taskYaml.postFunctions) {
                         result = results[idx++];
-                        FunctionApiData.FunctionExecResult execResult;
+                        FunctionApiData.SystemExecResult execResult;
                         if (result==null) {
-                            execResult = new FunctionApiData.FunctionExecResult(
+                            execResult = new FunctionApiData.SystemExecResult(
                                     postFunctionConfig.code, false, -999,
                                     "#100.130 Illegal State, result of preparing of function "+ postFunctionConfig.code+" is null");
                         }
                         else {
                             execResult = execFunction(task, taskDir, taskParamYaml, systemDir, result, schedule);
                         }
-                        postFunctionExecResult.add(execResult);
+                        postSystemExecResult.add(execResult);
                         if (!execResult.isOk) {
                             isOk = false;
                             break;
                         }
                     }
-                    if (isOk && functionExecResult.isOk()) {
+                    if (isOk && systemExecResult.isOk()) {
                         try {
                             stationTaskService.storeMetrics(task.launchpadUrl, task, mainFunctionConfig, artifactDir);
                             stationTaskService.storePredictedData(task.launchpadUrl, task, mainFunctionConfig, artifactDir);
@@ -344,7 +345,7 @@ public class TaskProcessor {
                             );
                         }
                         catch (Throwable th) {
-                            generalExec = new FunctionApiData.FunctionExecResult(
+                            generalExec = new FunctionApiData.SystemExecResult(
                                     mainFunctionConfig.code, false, -997,
                                     "#100.132 Error storing function's result, error: " + th.getMessage());
 
@@ -355,7 +356,7 @@ public class TaskProcessor {
         }
 
         stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(),
-                new FunctionApiData.FunctionExec(functionExecResult, preFunctionExecResult, postFunctionExecResult, generalExec));
+                new FunctionApiData.FunctionExec(systemExecResult, preSystemExecResult, postSystemExecResult, generalExec));
     }
 
     private boolean prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml, FunctionPrepareResult[] results) {
@@ -401,7 +402,7 @@ public class TaskProcessor {
 
     @SuppressWarnings({"WeakerAccess", "deprecation"})
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionApiData.FunctionExecResult execFunction(
+    public FunctionApiData.SystemExecResult execFunction(
             StationTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, FunctionPrepareResult functionPrepareResult,
             LaunchpadSchedule schedule) {
 
@@ -427,7 +428,7 @@ public class TaskProcessor {
 
         log.info("All systems are checked for the task #{}, lift off", task.taskId );
 
-        FunctionApiData.FunctionExecResult functionExecResult;
+        FunctionApiData.SystemExecResult systemExecResult;
         try {
             switch (functionPrepareResult.function.sourcing) {
                 case launchpad:
@@ -471,7 +472,7 @@ public class TaskProcessor {
             File consoleLogFile = new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
             // Exec function
-            functionExecResult = execProcessService.execCommand(
+            systemExecResult = systemProcessService.execCommand(
                     cmd, taskDir, consoleLogFile, taskParamYaml.taskYaml.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule);
 
         }
@@ -486,10 +487,10 @@ public class TaskProcessor {
                     ? functionPrepareResult.functionAssetFile.file.getAbsolutePath()
                     : functionPrepareResult.function.file) +"\n" +
                     "\tparams", th);
-            functionExecResult = new FunctionApiData.FunctionExecResult(
+            systemExecResult = new FunctionApiData.SystemExecResult(
                     functionPrepareResult.function.code, false, -1, ExceptionUtils.getStackTrace(th));
         }
-        return functionExecResult;
+        return systemExecResult;
     }
 
     private String toFilename(String functionCode) {
@@ -520,7 +521,7 @@ public class TaskProcessor {
             GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
             if (!result.ok) {
                 log.warn("Function {} has a permanent error, {}", functionPrepareResult.function.code, result.error);
-                functionPrepareResult.functionExecResult = new FunctionApiData.FunctionExecResult(function.code, false, -1, result.error);
+                functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, result.error);
                 functionPrepareResult.isLoaded = false;
                 functionPrepareResult.isError = true;
                 return functionPrepareResult;

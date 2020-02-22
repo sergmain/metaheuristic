@@ -60,7 +60,7 @@ public class StationCommandProcessor {
         }
     }
 
-    // processing on station side
+    // processing at station side
     private StationCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(String launchpadUrl, LaunchpadCommParamsYaml request) {
         if (request.resendTaskOutputResource==null || request.resendTaskOutputResource.taskIds==null || request.resendTaskOutputResource.taskIds.isEmpty()) {
             return null;
@@ -80,7 +80,7 @@ public class StationCommandProcessor {
         currentExecState.register(launchpadUrl, request.execContextStatus.statuses);
     }
 
-    // processing on station side
+    // processing at station side
     private void processReportResultDelivering(String launchpadUrl, LaunchpadCommParamsYaml request) {
         if (request.reportResultDelivering==null) {
             return;
@@ -95,7 +95,7 @@ public class StationCommandProcessor {
         stationService.assignTasks(launchpadUrl, request.assignedTask);
     }
 
-    // processing on station side
+    // processing at station side
     private void storeStationId(String launchpadUrl, LaunchpadCommParamsYaml request) {
         if (request.assignedStationId==null) {
             return;
@@ -105,7 +105,7 @@ public class StationCommandProcessor {
                 launchpadUrl, request.assignedStationId.assignedStationId, request.assignedStationId.assignedSessionId);
     }
 
-    // processing on station side
+    // processing at station side
     private void reAssignStationId(String launchpadUrl, LaunchpadCommParamsYaml request) {
         if (request.reAssignedStationId==null) {
             return;

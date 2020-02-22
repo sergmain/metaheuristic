@@ -17,15 +17,15 @@
 package ai.metaheuristic.ai.dsl;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.launchpad.LaunchpadContext;
-import ai.metaheuristic.ai.launchpad.batch.BatchCache;
-import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.launchpad.beans.Account;
-import ai.metaheuristic.ai.launchpad.data.BatchData;
-import ai.metaheuristic.ai.launchpad.source_code.SourceCodeTopLevelService;
-import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
-import ai.metaheuristic.ai.launchpad.task.TaskService;
-import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.LaunchpadContext;
+import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
+import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.data.BatchData;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -65,10 +65,10 @@ public class TestUploadFileForBatch extends PreparingPlan {
         planParamsYaml.source.uid = "SourceCode for testing uploading batch file";
         {
             SourceCodeParamsYamlV1.ProcessV1 p = new SourceCodeParamsYamlV1.ProcessV1();
-            p.name = "Plocess mh.resource-splitter";
-            p.code = "process-mh.resource-splitter";
+            p.name = "Plocess mh.variable-splitter";
+            p.code = "process-mh.variable-splitter";
 
-            p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(Consts.MH_RESOURCE_SPLITTER_FUNCTION, EnumsApi.FunctionExecContext.internal);
+            p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(Consts.MH_VARIABLE_SPLITTER_FUNCTION, EnumsApi.FunctionExecContext.internal);
             p.output.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.launchpad,"batch-array"));
 
             planParamsYaml.source.processes.add(p);

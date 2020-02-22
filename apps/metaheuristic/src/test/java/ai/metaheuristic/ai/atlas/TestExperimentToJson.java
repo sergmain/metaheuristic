@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.atlas;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
-import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
+import ai.metaheuristic.ai.dispatcher.atlas.AtlasService;
+import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;

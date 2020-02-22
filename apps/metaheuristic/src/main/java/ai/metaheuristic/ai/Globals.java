@@ -103,8 +103,8 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.max-tasks-per-exec-context'), 1, 100000, 5000) }")
     public int maxTasksPerExecContext;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.resource-table-rows-limit'), 5, 100, 20) }")
-    public int resourceRowsLimit;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.global-variable-table-rows-limit'), 5, 100, 20) }")
+    public int globalVariableRowsLimit;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.experiment-table-rows-limit'), 5, 30, 10) }")
     public int experimentRowsLimit;
@@ -470,7 +470,7 @@ public class Globals {
         log.info("'\tassetUsername: {}", assetUsername);
         log.info("'\tassetSourceUrl: {}", assetSourceUrl);
         log.info("'\tchunkSize: {}", chunkSize);
-        log.info("'\tresourceRowsLimit: {}", resourceRowsLimit);
+        log.info("'\tresourceRowsLimit: {}", globalVariableRowsLimit);
         log.info("'\texperimentRowsLimit: {}", experimentRowsLimit);
         log.info("'\tsourceCodeRowsLimit: {}", sourceCodeRowsLimit);
         log.info("'\texecContextRowsLimit: {}", execContextRowsLimit);

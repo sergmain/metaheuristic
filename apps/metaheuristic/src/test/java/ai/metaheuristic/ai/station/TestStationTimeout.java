@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.station;
 
-import ai.metaheuristic.ai.launchpad.server.ServerService;
-import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
+import ai.metaheuristic.ai.dispatcher.server.ServerService;
+import ai.metaheuristic.ai.dispatcher.station.StationTopLevelService;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;

@@ -1,0 +1,48 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+     xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+     layout:decorate="~{layout-dispatcher}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">Edit company</h1>
+
+        <!--/*@thymesVar id="company" type="ai.metaheuristic.ai.dispatcher.beans.Company"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${company}" method="post" action="#" th:method="POST"
+              th:action="@{/launchpad/company/company-edit-commit}" accept-charset="UTF-8" id="company-form"
+              name="f">
+            <input type="hidden" th:name="companyUniqueId" th:value="${company.uniqueId}"/>
+            <fieldset>
+
+                <label for="name">Name of company</label>
+                <input name="name" id="name" type="text" placeholder="Name of company" th:value="${company.name}">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="groups">Company's groups</label>
+                <input name="groups" id="groups" type="text" placeholder="Groups" size="100" th:value="${groups}">
+
+<!--
+                <label for="companyYamlAsStr">Parameters of company</label>
+                <textarea name="companyYamlAsStr" id="companyYamlAsStr" placeholder="Parameters of company" cols="70" rows="15"
+                          th:text="${companyYamlAsStr}" maxlength="10000"></textarea>
+                <span class="pure-form-message">This is a required field.</span>
+-->
+
+                <table>
+                    <tr>
+                        <td>
+                            <button type="submit" class="pure-button pure-button-primary">Save changes</button>
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td>
+                            <a class="pure-button pure-button-primary" href="companies.html"
+                               th:href="${'/launchpad/company/companies'}">Cancel</a>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+    </div>
+</div>

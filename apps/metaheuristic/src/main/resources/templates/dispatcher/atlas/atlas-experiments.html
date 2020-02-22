@@ -1,0 +1,116 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     layout:decorate="~{layout-dispatcher}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+>
+
+    <script>
+        var table = function (html) {
+            $('#table').html(html).find('.ajax-elem').each(function () {
+                $(this).click(function () {
+                    $.post($(this).attr('href'), table);
+                    return false;
+                });
+            });
+        };
+
+        $(function () {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+
+            $(document).ajaxSend(function (e, xhr, options) {
+                xhr.setRequestHeader(header, token);
+            });
+            $.post('/launchpad/atlas/atlas-experiments-part', table);
+        });
+
+    </script>
+
+    <h1 class="widget-header">Experiments</h1>
+
+    <p></p>
+
+    <div align="right">
+        <a class="pure-button pure-button-primary" href="atlas-experiment-import.html" th:href="${'/launchpad/atlas/atlas-experiment-import'}">Import experiment</a>
+    </div>
+
+    <p></p>
+    <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+        <thead>
+        <tr>
+            <th colspan="5">Experiment info</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.AtlasData$AtlasSimpleExperiments"*/-->
+        <div th:remove="tag" th:each="r : ${result.items}" >
+            <tr>
+                <td>
+<!--                    <div th:text="${'Code: ' + r.code}">code</div>-->
+                    <div th:text="${'Name: ' + r.name}">Name</div>
+                    <div th:text="${'Desc: ' + r.description}">Description</div>
+                </td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-info/' + r.id}">Details</a></td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-export/' + r.id}">Export</a></td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-delete/' + r.id}">Delete</a></td>
+            </tr>
+            <tr valign="top">
+                <td>
+                    <table>
+                        <tr valign="top">
+                            <td>
+                                <table class="pure-table pure-table-bordered">
+                                    <tbody>
+                                    <tr>
+                                        <td>#Id</td>
+                                        <td th:text="${r.id}">#Id</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Name</td>
+                                        <td th:text="${r.name}">name</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                            <td>
+                                <table class="pure-table pure-table-bordered">
+                                    <tbody>
+                                    <tr>
+                                        <td>Created on</td>
+                                        <td th:text="${#dates.format(r.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </div>
+        <tr>
+            <td colspan="5">
+                <div>
+                    <ul class='pagination pagination-centered'>
+                        <li class="table-nav-padding">
+                            <span th:if='${result.items.first}' class="table-nav-button">« First</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
+                               th:href="@{/launchpad/atlas/atlas-experiments-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                        </li>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
+                               th:href="@{/launchpad/atlas/atlas-experiments-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                        </li>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
+                               th:href='@{/launchpad/atlas/atlas-experiments-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
+                        </li>
+                    </ul>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>

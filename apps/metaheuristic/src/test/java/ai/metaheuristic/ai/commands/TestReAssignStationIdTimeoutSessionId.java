@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.ai.commands;
 
-import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
-import ai.metaheuristic.ai.launchpad.server.ServerService;
-import ai.metaheuristic.ai.launchpad.station.StationCache;
+import ai.metaheuristic.ai.dispatcher.beans.Station;
+import ai.metaheuristic.ai.dispatcher.repositories.StationsRepository;
+import ai.metaheuristic.ai.dispatcher.server.ServerService;
+import ai.metaheuristic.ai.dispatcher.station.StationCache;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;

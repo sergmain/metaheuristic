@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.binary_data;
 
-import ai.metaheuristic.ai.launchpad.beans.Variable;
-import ai.metaheuristic.ai.launchpad.variable.VariableService;
-import ai.metaheuristic.ai.launchpad.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;

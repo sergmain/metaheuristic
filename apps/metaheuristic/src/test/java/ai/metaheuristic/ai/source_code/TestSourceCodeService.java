@@ -16,12 +16,12 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
-import ai.metaheuristic.ai.launchpad.task.TaskService;
-import ai.metaheuristic.ai.launchpad.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.launchpad.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.launchpad.exec_context.ExecContextSchedulerService;
-import ai.metaheuristic.ai.launchpad.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
@@ -230,7 +230,7 @@ public class TestSourceCodeService extends PreparingPlan {
 
     private String getOKExecResult() {
         FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec(
-                new FunctionApiData.FunctionExecResult("output-of-a-function",true, 0, "Everything is Ok."),
+                new FunctionApiData.SystemExecResult("output-of-a-function",true, 0, "Everything is Ok."),
                 null, null, null);
 
         return FunctionExecUtils.toString(functionExec);

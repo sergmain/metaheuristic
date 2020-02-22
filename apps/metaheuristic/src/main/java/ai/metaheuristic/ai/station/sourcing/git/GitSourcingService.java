@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.station.sourcing.git;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.core.ExecProcessService;
+import ai.metaheuristic.ai.core.SystemProcessService;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.station.env.EnvService;
 import ai.metaheuristic.api.EnumsApi;
@@ -46,13 +46,13 @@ public class GitSourcingService {
     private static final String GIT_VERSION_PREFIX = "git version";
     private static final String GIT_PREFIX = "git";
 
-    private final ExecProcessService execProcessService;
+    private final SystemProcessService systemProcessService;
     private final EnvService envService;
 
     public final GitStatusInfo gitStatusInfo;
 
-    public GitSourcingService(ExecProcessService execProcessService, EnvService envService) {
-        this.execProcessService = execProcessService;
+    public GitSourcingService(SystemProcessService systemProcessService, EnvService envService) {
+        this.systemProcessService = systemProcessService;
         this.envService = envService;
         this.gitStatusInfo = getGitStatus();
     }
@@ -63,12 +63,12 @@ public class GitSourcingService {
     @ToString
     public static class GitExecResult {
         public File functionDir;
-        public FunctionApiData.FunctionExecResult functionExecResult;
+        public FunctionApiData.SystemExecResult systemExecResult;
         public boolean ok;
         public String error;
 
-        public GitExecResult(FunctionApiData.FunctionExecResult functionExecResult, boolean ok, String error) {
-            this.functionExecResult = functionExecResult;
+        public GitExecResult(FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
+            this.systemExecResult = systemExecResult;
             this.ok = ok;
             this.error = error;
         }
@@ -98,26 +98,26 @@ public class GitSourcingService {
             log.warn("\tresult.ok: {}",  result.ok);
             log.warn("\tresult.error: {}",  result.error);
             log.warn("\tresult.functionDir: {}",  result.functionDir !=null ? result.functionDir.getPath() : null);
-            log.warn("\tresult.functionExecResult: {}",  result.functionExecResult);
+            log.warn("\tresult.systemExecResult: {}",  result.systemExecResult);
             return new GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
         }
 
-        if (result.functionExecResult.exitCode!=0) {
+        if (result.systemExecResult.exitCode!=0) {
             return new GitStatusInfo(
                     Enums.GitStatus.not_found, null,
-                    "#027.013 Console: " + result.functionExecResult.console);
+                    "#027.013 Console: " + result.systemExecResult.console);
         }
-        return new GitStatusInfo(Enums.GitStatus.installed, getGitVersion(result.functionExecResult.console.toLowerCase()), null);
+        return new GitStatusInfo(Enums.GitStatus.installed, getGitVersion(result.systemExecResult.console.toLowerCase()), null);
     }
 
     private GitExecResult execGitCmd(List<String> gitVersionCmd, long timeout) {
         File consoleLogFile = null;
         try {
             consoleLogFile = File.createTempFile("console-", ".log");
-            FunctionApiData.FunctionExecResult functionExecResult = execProcessService.execCommand(
+            FunctionApiData.SystemExecResult systemExecResult = systemProcessService.execCommand(
                     gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec", null );
-            log.info("functionExecResult: {}" , functionExecResult);
-            return new GitExecResult(functionExecResult, functionExecResult.isOk, functionExecResult.console);
+            log.info("systemExecResult: {}" , systemExecResult);
+            return new GitExecResult(systemExecResult, systemExecResult.isOk, systemExecResult.console);
         } catch (InterruptedException | IOException e) {
             log.error("#027.020 Error", e);
             return new GitExecResult(null, false, "#027.020 Error: " + e.getMessage());
@@ -164,7 +164,7 @@ public class GitSourcingService {
         if (!repoDir.exists()) {
             GitExecResult result = execClone(functionDir, functionConfig);
             log.info("#027.080 Result of cloning repo: {}", result.toString());
-            if (!result.ok || !result.functionExecResult.isOk()) {
+            if (!result.ok || !result.systemExecResult.isOk()) {
                 result = tryToRepairRepo(functionDir, functionConfig);
                 log.info("#027.090 Result of repairing of repo: {}", result.toString());
                 return result;
@@ -175,17 +175,17 @@ public class GitSourcingService {
         if (!result.ok) {
             return result;
         }
-        if (!result.functionExecResult.isOk) {
-            return new GitExecResult(null,false, result.functionExecResult.console);
+        if (!result.systemExecResult.isOk) {
+            return new GitExecResult(null,false, result.systemExecResult.console);
         }
-        if (!"true".equals(result.functionExecResult.console.strip())) {
+        if (!"true".equals(result.systemExecResult.console.strip())) {
             result = tryToRepairRepo(repoDir, functionConfig);
             log.info("#027.110 Result of tryToRepairRepo: {}", result.toString());
             if (!result.ok) {
                 return result;
             }
-            if (!result.functionExecResult.isOk) {
-                return new GitExecResult(null,false, result.functionExecResult.console);
+            if (!result.systemExecResult.isOk) {
+                return new GitExecResult(null,false, result.systemExecResult.console);
             }
         }
 
@@ -194,8 +194,8 @@ public class GitSourcingService {
         if (!result.ok) {
             return result;
         }
-        if (!result.functionExecResult.isOk) {
-            return new GitExecResult(null,false, result.functionExecResult.console);
+        if (!result.systemExecResult.isOk) {
+            return new GitExecResult(null,false, result.systemExecResult.console);
         }
 
         result = execCleanDF(repoDir);
@@ -203,8 +203,8 @@ public class GitSourcingService {
         if (!result.ok) {
             return result;
         }
-        if (!result.functionExecResult.isOk) {
-            return new GitExecResult(null,false, result.functionExecResult.console);
+        if (!result.systemExecResult.isOk) {
+            return new GitExecResult(null,false, result.systemExecResult.console);
         }
 
         result = execPullOrigin(repoDir, functionConfig);
@@ -212,8 +212,8 @@ public class GitSourcingService {
         if (!result.ok) {
             return result;
         }
-        if (!result.functionExecResult.isOk) {
-            return new GitExecResult(null,false, result.functionExecResult.console);
+        if (!result.systemExecResult.isOk) {
+            return new GitExecResult(null,false, result.systemExecResult.console);
         }
 
         result = execCheckoutRevision(repoDir, functionConfig);
@@ -221,12 +221,12 @@ public class GitSourcingService {
         if (!result.ok) {
             return result;
         }
-        if (!result.functionExecResult.isOk) {
-            return new GitExecResult(null,false, result.functionExecResult.console);
+        if (!result.systemExecResult.isOk) {
+            return new GitExecResult(null,false, result.systemExecResult.console);
         }
         log.info("#027.160 repoDir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists());
 
-        return new GitExecResult(repoDir, new FunctionApiData.FunctionExecResult(functionConfig.code, true, 0, "" ), true, null);
+        return new GitExecResult(repoDir, new FunctionApiData.SystemExecResult(functionConfig.code, true, 0, "" ), true, null);
     }
 
     public GitExecResult tryToRepairRepo(File functionDir, TaskParamsYaml.FunctionConfig functionConfig) {

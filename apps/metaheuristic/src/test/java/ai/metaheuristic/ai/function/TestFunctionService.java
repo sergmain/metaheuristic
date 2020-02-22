@@ -17,11 +17,11 @@
 package ai.metaheuristic.ai.function;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.beans.Function;
-import ai.metaheuristic.ai.launchpad.repositories.FunctionRepository;
-import ai.metaheuristic.ai.launchpad.function.FunctionDataService;
-import ai.metaheuristic.ai.launchpad.function.FunctionCache;
-import ai.metaheuristic.ai.launchpad.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;

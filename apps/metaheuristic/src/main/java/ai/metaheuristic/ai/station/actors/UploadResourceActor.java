@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.station.actors;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.server.UploadResult;
+import ai.metaheuristic.ai.dispatcher.server.UploadResult;
 import ai.metaheuristic.ai.station.StationTaskService;
 import ai.metaheuristic.ai.station.net.HttpClientExecutor;
 import ai.metaheuristic.ai.station.tasks.UploadResourceTask;

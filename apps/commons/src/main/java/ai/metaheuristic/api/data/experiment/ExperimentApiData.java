@@ -137,7 +137,7 @@ public class ExperimentApiData {
     public static class ExperimentFeatureData {
         public Long id;
         public Integer version;
-        public String resourceCodes;
+        public String variables;
         public String checksumIdCodes;
         public int execStatus;
         public String execStatusAsString;

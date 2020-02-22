@@ -74,7 +74,7 @@ public class ExperimentParamsYaml implements BaseParams {
     public static class ExperimentFeature {
 
         public Long id;
-        public String resourceCodes;
+        public String variables;
         public String checksumIdCodes;
         public int execStatus;
         public Long experimentId;

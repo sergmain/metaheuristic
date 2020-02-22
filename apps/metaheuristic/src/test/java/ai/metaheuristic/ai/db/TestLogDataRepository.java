@@ -16,10 +16,9 @@
 
 package ai.metaheuristic.ai.db;
 
-import ai.metaheuristic.ai.launchpad.beans.LogData;
-import ai.metaheuristic.ai.launchpad.repositories.LogDataRepository;
+import ai.metaheuristic.ai.dispatcher.beans.LogData;
+import ai.metaheuristic.ai.dispatcher.repositories.LogDataRepository;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

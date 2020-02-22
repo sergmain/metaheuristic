@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.repo;
 
-import ai.metaheuristic.ai.launchpad.beans.Variable;
-import ai.metaheuristic.ai.launchpad.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
