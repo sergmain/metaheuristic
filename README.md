@@ -119,8 +119,8 @@ For commercial use you must buy commercial license with annual subscription if n
 | Personal use  (using in commercial project prohibited) | Free to use         |
 | Scientific researches                                  | Free to use, citing | 
 | Non-profit organizations                               | Free to use, citing | 
-| Commercial use, less than active 50 Stations\*                | Free to use         | 
-| All other cases when there are active 50 Stations\* or more   | Annual subscription, $50k for Dispatcher\*\*, $200 per station | 
+| Commercial use, less than 50 active concurrent Stations\*                | Free to use         | 
+| All other cases when there are 50 active concurrent Stations\* or more   | Annual subscription, $50k for Dispatcher\*\*, $200 per Station | 
 
 \* Station is a client part of metaheuristic which is processing tasks.   
 \*\* Dispatcher is a server part of metaheuristic which is serving all configurations 
