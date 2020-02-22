@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.internal_functions.resource_splitter;
+package ai.metaheuristic.ai.mh.dispatcher..internal_functions.resource_splitter;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
@@ -22,20 +22,20 @@ import ai.metaheuristic.ai.exceptions.BatchConfigYamlException;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
-import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.dispatcher.beans.Ids;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionOutput;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.mh.dispatcher..batch.BatchTopLevelService;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Ids;
+import ai.metaheuristic.ai.mh.dispatcher..beans.SourceCodeImpl;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Variable;
+import ai.metaheuristic.ai.mh.dispatcher..internal_functions.InternalFunction;
+import ai.metaheuristic.ai.mh.dispatcher..internal_functions.InternalFunctionOutput;
+import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeCache;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.IdsRepository;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.VariableRepository;
+import ai.metaheuristic.ai.mh.dispatcher..variable.VariableService;
+import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextCache;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.mh.dispatcher..ExecContext;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -70,7 +70,7 @@ import static ai.metaheuristic.ai.Consts.ZIP_EXT;
  */
 @Service
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @RequiredArgsConstructor
 public class ResourceSplitterFunction implements InternalFunction {
 

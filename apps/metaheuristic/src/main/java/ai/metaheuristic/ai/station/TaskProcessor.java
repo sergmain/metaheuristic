@@ -26,8 +26,8 @@ import ai.metaheuristic.ai.station.env.EnvService;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.station.station_resource.ResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriod;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.LaunchpadSchedule;
+import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.ExtendedTimePeriod;
+import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.ConstsApi;
@@ -66,7 +66,7 @@ public class TaskProcessor {
     private final SystemProcessService systemProcessService;
     private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
+    private final DispatcherLookupExtendedService mh.dispatcher.LookupExtendedService;
     private final MetadataService metadataService;
     private final EnvService envService;
     private final StationService stationService;
@@ -99,31 +99,31 @@ public class TaskProcessor {
             if (task.launchedOn!=null && task.finishedOn!=null && currentTaskId==null) {
                 log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched and then finished", task.taskId);
             }
-            if (StringUtils.isBlank(task.dispatcherUrl)) {
-                final String es = "#100.005 task.dispatcherUrl is blank for task #" + task.taskId;
+            if (StringUtils.isBlank(task.mh.dispatcher.Url)) {
+                final String es = "#100.005 task.mh.dispatcher.Url is blank for task #" + task.taskId;
                 log.warn(es);
-                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
+                stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, es);
                 continue;
             }
 
-            final Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(task.dispatcherUrl);
-            if (dispatcherInfo ==null) {
-                final String es = "#100.010 dispatcherInfo is null for "+task.dispatcherUrl+". task #" + task.taskId;
+            final Metadata.DispatcherInfo mh.dispatcher.Info = metadataService.mh.dispatcher.UrlAsCode(task.mh.dispatcher.Url);
+            if (mh.dispatcher.Info ==null) {
+                final String es = "#100.010 mh.dispatcher.Info is null for "+task.mh.dispatcher.Url+". task #" + task.taskId;
                 log.warn(es);
-                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
+                stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, es);
                 continue;
             }
 
-            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(task.dispatcherUrl);
-            if (dispatcher==null) {
-                final String es = "#100.020 Broken task #"+task.taskId+". dispatcher wasn't found for url " + task.dispatcherUrl;
-                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
+            DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher. = mh.dispatcher.LookupExtendedService.lookupExtendedMap.get(task.mh.dispatcher.Url);
+            if (mh.dispatcher.==null) {
+                final String es = "#100.020 Broken task #"+task.taskId+". mh.dispatcher. wasn't found for url " + task.mh.dispatcher.Url;
+                stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, es);
                 continue;
             }
 
-            if (dispatcher.schedule.isCurrentTimeInactive()) {
-                stationTaskService.delete(task.dispatcherUrl, task.taskId);
-                log.info("Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.dispatcherUrl, new Date(), dispatcher.schedule.asString);
+            if (mh.dispatcher..schedule.isCurrentTimeInactive()) {
+                stationTaskService.delete(task.mh.dispatcher.Url, task.taskId);
+                log.info("Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.mh.dispatcher.Url, new Date(), mh.dispatcher..schedule.asString);
                 return;
             }
 
@@ -132,60 +132,60 @@ public class TaskProcessor {
                 continue;
             }
 
-            EnumsApi.ExecContextState state = currentExecState.getState(task.dispatcherUrl, task.execContextId);
+            EnumsApi.ExecContextState state = currentExecState.getState(task.mh.dispatcher.Url, task.execContextId);
             if (state== EnumsApi.ExecContextState.UNKNOWN) {
-                stationTaskService.delete(task.dispatcherUrl, task.taskId);
-                log.info("The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.execContextId, task.dispatcherUrl, task.taskId);
+                stationTaskService.delete(task.mh.dispatcher.Url, task.taskId);
+                log.info("The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.execContextId, task.mh.dispatcher.Url, task.taskId);
                 continue;
             }
 
             if (state!= EnumsApi.ExecContextState.STARTED) {
-                stationTaskService.delete(task.dispatcherUrl, task.taskId);
-                log.info("The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.execContextId, task.dispatcherUrl, state, task.taskId);
+                stationTaskService.delete(task.mh.dispatcher.Url, task.taskId);
+                log.info("The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.execContextId, task.mh.dispatcher.Url, state, task.taskId);
                 continue;
             }
 
             log.info("Start processing task {}", task);
-            File taskDir = stationTaskService.prepareTaskDir(task.dispatcherUrl, task.taskId);
+            File taskDir = stationTaskService.prepareTaskDir(task.mh.dispatcher.Url, task.taskId);
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
-            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, dispatcherInfo, taskParamYaml, dispatcher, taskDir);
+            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, mh.dispatcher.Info, taskParamYaml, mh.dispatcher., taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
             boolean isAllLoaded = resultOfChecking.isAllLoaded;
-            File outputResourceFile = stationService.getOutputResourceFile(task, taskParamYaml, dispatcher, taskDir);
+            File outputResourceFile = stationService.getOutputResourceFile(task, taskParamYaml, mh.dispatcher., taskDir);
             if (outputResourceFile==null) {
-                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
+                stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
                 continue;
             }
             SourceCodeParamsYaml.Variable dsp = taskParamYaml.taskYaml.getResourceStorageUrls()
                     .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
             if (dsp==null) {
-                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.050 Broken task. Can't find params for outputResourceCode");
+                stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, "#100.050 Broken task. Can't find params for outputResourceCode");
                 continue;
             }
             if (taskParamYaml.taskYaml.function ==null) {
-                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.080 Broken task. Function isn't defined");
+                stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, "#100.080 Broken task. Function isn't defined");
                 continue;
             }
 
             File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
             if (artifactDir == null) {
-                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
+                stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 
             File systemDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
             if (systemDir == null) {
-                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
+                stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
                 continue;
             }
 
             String status = stationTaskService.prepareEnvironment(artifactDir);
             if (status!=null) {
-                stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, status);
+                stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, status);
             }
 
             boolean isNotReady = false;
@@ -193,9 +193,9 @@ public class TaskProcessor {
             int idx = 0;
             FunctionPrepareResult result;
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.taskYaml.preFunctions) {
-                result = prepareFunction(task.dispatcherUrl, dispatcherInfo, preFunctionConfig);
+                result = prepareFunction(task.mh.dispatcher.Url, mh.dispatcher.Info, preFunctionConfig);
                 if (result.isError) {
-                    markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
+                    markFunctionAsFinishedWithPermanentError(task.mh.dispatcher.Url, task.taskId, result);
                     isNotReady = true;
                     break;
                 }
@@ -209,9 +209,9 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = prepareFunction(task.dispatcherUrl, dispatcherInfo, taskParamYaml.taskYaml.getFunction());
+            result = prepareFunction(task.mh.dispatcher.Url, mh.dispatcher.Info, taskParamYaml.taskYaml.getFunction());
             if (result.isError) {
-                markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
+                markFunctionAsFinishedWithPermanentError(task.mh.dispatcher.Url, task.taskId, result);
                 continue;
             }
             results[idx++] = result;
@@ -220,9 +220,9 @@ public class TaskProcessor {
             }
 
             for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.taskYaml.postFunctions) {
-                result = prepareFunction(task.dispatcherUrl, dispatcherInfo, postFunctionConfig);
+                result = prepareFunction(task.mh.dispatcher.Url, mh.dispatcher.Info, postFunctionConfig);
                 if (result.isError) {
-                    markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
+                    markFunctionAsFinishedWithPermanentError(task.mh.dispatcher.Url, task.taskId, result);
                     isNotReady = true;
                     break;
                 }
@@ -241,14 +241,14 @@ public class TaskProcessor {
             }
 
             // at this point all required resources have to be prepared
-            task = stationTaskService.setLaunchOn(task.dispatcherUrl, task.taskId);
+            task = stationTaskService.setLaunchOn(task.mh.dispatcher.Url, task.taskId);
             try {
                 currentTaskId = task.taskId;
-                execAllFunctions(task, dispatcherInfo, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
+                execAllFunctions(task, mh.dispatcher.Info, mh.dispatcher., taskDir, taskParamYaml, artifactDir, systemDir, results);
             }
             catch(ScheduleInactivePeriodException e) {
-                stationTaskService.resetTask(task.dispatcherUrl, task.taskId);
-                stationTaskService.delete(task.dispatcherUrl, task.taskId);
+                stationTaskService.resetTask(task.mh.dispatcher.Url, task.taskId);
+                stationTaskService.delete(task.mh.dispatcher.Url, task.taskId);
                 log.info("An execution of task #{} was terminated because of the beginning of inactivity period. " +
                         "This task will be processed later", task.taskId);
             }
@@ -258,26 +258,26 @@ public class TaskProcessor {
         }
     }
 
-    private void markFunctionAsFinishedWithPermanentError(String dispatcherUrl, Long taskId, FunctionPrepareResult result) {
+    private void markFunctionAsFinishedWithPermanentError(String mh.dispatcher.Url, Long taskId, FunctionPrepareResult result) {
         FunctionApiData.SystemExecResult execResult = new FunctionApiData.SystemExecResult(
                 result.getFunction().code, false, -990,
                 "#100.105 Function "+result.getFunction().code+" has permanent error: " + result.getSystemExecResult().console);
-        stationTaskService.markAsFinished(dispatcherUrl, taskId,
+        stationTaskService.markAsFinished(mh.dispatcher.Url, taskId,
                 new FunctionApiData.FunctionExec(null, null, null, execResult));
 
     }
 
     private void execAllFunctions(
-            StationTask task, Metadata.DispatcherInfo dispatcherInfo,
-            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            StationTask task, Metadata.DispatcherInfo mh.dispatcher.Info,
+            DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher.,
             File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
             File systemDir, FunctionPrepareResult[] results) {
         List<FunctionApiData.SystemExecResult> preSystemExecResult = new ArrayList<>();
         List<FunctionApiData.SystemExecResult> postSystemExecResult = new ArrayList<>();
         boolean isOk = true;
         int idx = 0;
-        LaunchpadSchedule schedule = dispatcher.schedule!=null && dispatcher.schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
-                ? dispatcher.schedule : null;
+        LaunchpadSchedule schedule = mh.dispatcher..schedule!=null && mh.dispatcher..schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
+                ? mh.dispatcher..schedule : null;
         for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.taskYaml.preFunctions) {
             FunctionPrepareResult result = results[idx++];
             FunctionApiData.SystemExecResult execResult;
@@ -331,15 +331,15 @@ public class TaskProcessor {
                     }
                     if (isOk && systemExecResult.isOk()) {
                         try {
-                            stationTaskService.storeMetrics(task.dispatcherUrl, task, mainFunctionConfig, artifactDir);
-                            stationTaskService.storePredictedData(task.dispatcherUrl, task, mainFunctionConfig, artifactDir);
-                            stationTaskService.storeFittingCheck(task.dispatcherUrl, task, mainFunctionConfig, artifactDir);
+                            stationTaskService.storeMetrics(task.mh.dispatcher.Url, task, mainFunctionConfig, artifactDir);
+                            stationTaskService.storePredictedData(task.mh.dispatcher.Url, task, mainFunctionConfig, artifactDir);
+                            stationTaskService.storeFittingCheck(task.mh.dispatcher.Url, task, mainFunctionConfig, artifactDir);
 
                             final SourceCodeParamsYaml.Variable params = taskParamYaml.taskYaml.resourceStorageUrls
                                     .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
                             ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                             generalExec = resourceProvider.processResultingFile(
-                                    dispatcher, task, dispatcherInfo,
+                                    mh.dispatcher., task, mh.dispatcher.Info,
                                     taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
                                     mainFunctionConfig
                             );
@@ -355,7 +355,7 @@ public class TaskProcessor {
             }
         }
 
-        stationTaskService.markAsFinished(task.dispatcherUrl, task.getTaskId(),
+        stationTaskService.markAsFinished(task.mh.dispatcher.Url, task.getTaskId(),
                 new FunctionApiData.FunctionExec(systemExecResult, preSystemExecResult, postSystemExecResult, generalExec));
     }
 
@@ -431,7 +431,7 @@ public class TaskProcessor {
         FunctionApiData.SystemExecResult systemExecResult;
         try {
             switch (functionPrepareResult.function.sourcing) {
-                case dispatcher:
+                case mh.dispatcher.:
                 case git:
                     if (functionPrepareResult.functionAssetFile ==null) {
                         throw new IllegalStateException("#100.160 functionAssetFile is null");
@@ -499,24 +499,24 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(String dispatcherUrl, Metadata.DispatcherInfo dispatcherCode, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(String mh.dispatcher.Url, Metadata.DispatcherInfo mh.dispatcher.Code, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
-        if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherCode);
+        if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.mh.dispatcher.) {
+            final File baseResourceDir = mh.dispatcher.LookupExtendedService.prepareBaseResourceDir(mh.dispatcher.Code);
             functionPrepareResult.functionAssetFile = ResourceUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
             // is this function prepared?
             if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
                 log.info("Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
                 functionPrepareResult.isLoaded = false;
 
-                metadataService.setFunctionDownloadStatus(dispatcherUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, Enums.FunctionState.none);
+                metadataService.setFunctionDownloadStatus(mh.dispatcher.Url, function.code, EnumsApi.FunctionSourcing.mh.dispatcher., Enums.FunctionState.none);
 
             }
         }
         else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {
-            final File resourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherCode);
+            final File resourceDir = mh.dispatcher.LookupExtendedService.prepareBaseResourceDir(mh.dispatcher.Code);
             log.info("Root dir for function: " + resourceDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
             if (!result.ok) {

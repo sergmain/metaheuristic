@@ -44,7 +44,7 @@ public class FunctionDownloadStatusYamlV1 implements BaseParams {
     public static class StatusV1 {
         public Enums.FunctionState functionState;
         public String code;
-        public String dispatcherUrl;
+        public String mh.dispatcher.Url;
         public EnumsApi.FunctionSourcing sourcing;
         public boolean verified;
     }

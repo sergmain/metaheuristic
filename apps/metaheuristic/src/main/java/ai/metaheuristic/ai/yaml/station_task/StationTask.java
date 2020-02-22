@@ -41,7 +41,7 @@ public class StationTask {
     // need to clean a dir of task after processing this task?
     public boolean clean;
 
-    public String dispatcherUrl;
+    public String mh.dispatcher.Url;
 
     // when task was created
     public long createdOn;
@@ -55,16 +55,16 @@ public class StationTask {
     // when execution of function finished
     public Long finishedOn;
 
-    // when status and console output were reported to dispatcher
+    // when status and console output were reported to mh.dispatcher.
     public Long reportedOn;
 
-    // was this task reported to dispatcher?
+    // was this task reported to mh.dispatcher.?
     public boolean reported;
 
-    // were status and console result received by dispatcher?
+    // were status and console result received by mh.dispatcher.?
     public boolean delivered;
 
-    // was resource(output resource as the result of execution of function) uploaded to dispatcher?
+    // was resource(output resource as the result of execution of function) uploaded to mh.dispatcher.?
     public boolean resourceUploaded;
 
     // processing of this task was completed (it doesn't matter with which outcome)

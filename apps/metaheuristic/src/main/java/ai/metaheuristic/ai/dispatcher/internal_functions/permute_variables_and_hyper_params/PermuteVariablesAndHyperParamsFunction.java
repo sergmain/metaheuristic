@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params;
+package ai.metaheuristic.ai.mh.dispatcher..internal_functions.permute_variables_and_hyper_params;
 
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionOutput;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Variable;
+import ai.metaheuristic.ai.mh.dispatcher..internal_functions.InternalFunction;
+import ai.metaheuristic.ai.mh.dispatcher..internal_functions.InternalFunctionOutput;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.VariableRepository;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @RequiredArgsConstructor
 public class PermuteVariablesAndHyperParamsFunction implements InternalFunction {
 

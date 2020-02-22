@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.rest.v1;
+package ai.metaheuristic.ai.mh.dispatcher..rest.v1;
 
-import ai.metaheuristic.ai.dispatcher.beans.Account;
-import ai.metaheuristic.ai.dispatcher.data.UserData;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
+import ai.metaheuristic.ai.mh.dispatcher..data.UserData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -30,7 +30,7 @@ import java.util.Collection;
 
 @RestController
 @RequestMapping("/rest/v1")
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
 public class AuthRestController {

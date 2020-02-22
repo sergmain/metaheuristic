@@ -20,7 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.task.TaskApiData;
-import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.mh.dispatcher..ExecContext;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

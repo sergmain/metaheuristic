@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.source_code;
+package ai.metaheuristic.ai.mh.dispatcher..source_code;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
+import ai.metaheuristic.ai.mh.dispatcher..context.UserContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -40,13 +40,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 @Controller
-@RequestMapping("/dispatcher/source-code")
+@RequestMapping("/mh.dispatcher./source-code")
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @RequiredArgsConstructor
 public class SourceCodeController {
 
-    public static final String REDIRECT_LAUNCHPAD_SOURCE_CODES = "redirect:/dispatcher/source-code/source-codes";
+    public static final String REDIRECT_LAUNCHPAD_SOURCE_CODES = "redirect:/mh.dispatcher./source-code/source-codes";
 
     private final Globals globals;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
@@ -61,7 +61,7 @@ public class SourceCodeController {
         SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeTopLevelService.getSourceCodes(pageable, false, context);
         ControllerUtils.addMessagesToModel(model, sourceCodesResultRest);
         model.addAttribute("result", sourceCodesResultRest);
-        return "dispatcher/source-code/source-codes";
+        return "mh.dispatcher./source-code/source-codes";
     }
 
     // for AJAX
@@ -71,14 +71,14 @@ public class SourceCodeController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeTopLevelService.getSourceCodes(pageable, false, context);
         model.addAttribute("result", sourceCodesResultRest);
-        return "dispatcher/source-code/source-codes :: table";
+        return "mh.dispatcher./source-code/source-codes :: table";
     }
 
     @GetMapping(value = "/source-code-add")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String add(Model model) {
         model.addAttribute("sourceCodeYamlAsStr", "");
-        return "dispatcher/source-code/source-code-add";
+        return "mh.dispatcher./source-code/source-code-add";
     }
 
     @GetMapping(value = "/source-code-edit/{id}")
@@ -96,7 +96,7 @@ public class SourceCodeController {
         }
         model.addAttribute("source-code", sourceCodeResultRest.sourceCode);
         model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
-        return "dispatcher/source-code/source-code-edit";
+        return "mh.dispatcher./source-code/source-code-edit";
     }
 
     @GetMapping(value = "/source-code-validate/{id}")
@@ -113,7 +113,7 @@ public class SourceCodeController {
         model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
         model.addAttribute("infoMessages", sourceCodeResultRest.infoMessages);
         model.addAttribute("errorMessage", sourceCodeResultRest.errorMessages);
-        return "dispatcher/source-code/source-code-edit";
+        return "mh.dispatcher./source-code/source-code-edit";
     }
 
     @PostMapping(value = "/source-code-upload-from-file")
@@ -148,13 +148,13 @@ public class SourceCodeController {
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.updateSourceCode(sourceCodeId, sourceCodeYamlAsStr, context);
         if (sourceCodeResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", sourceCodeResultRest.errorMessages);
-            return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.sourceCode.getId();
+            return "redirect:/mh.dispatcher./source-code/source-code-edit/"+ sourceCodeResultRest.sourceCode.getId();
         }
 
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
-        return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.sourceCode.getId();
+        return "redirect:/mh.dispatcher./source-code/source-code-edit/"+ sourceCodeResultRest.sourceCode.getId();
     }
 
     @GetMapping("/source-code-delete/{id}")
@@ -172,7 +172,7 @@ public class SourceCodeController {
         }
         model.addAttribute("sourceCode", sourceCodeResultRest.sourceCode);
         model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
-        return "dispatcher/source-code/source-code-delete";
+        return "mh.dispatcher./source-code/source-code-delete";
     }
 
     @PostMapping("/source-code-delete-commit")
@@ -197,7 +197,7 @@ public class SourceCodeController {
         }
         model.addAttribute("sourceCode", sourceCodeResultRest.sourceCode);
         model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
-        return "dispatcher/source-code/source-code-archive";
+        return "mh.dispatcher./source-code/source-code-archive";
     }
 
     @PostMapping("/source-code-archive-commit")

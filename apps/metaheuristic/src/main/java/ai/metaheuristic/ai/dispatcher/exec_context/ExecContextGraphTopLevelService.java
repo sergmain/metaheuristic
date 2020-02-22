@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.exec_context;
+package ai.metaheuristic.ai.mh.dispatcher..exec_context;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.mh.dispatcher..beans.ExecContextImpl;
+import ai.metaheuristic.ai.mh.dispatcher..task.TaskPersistencer;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Time: 1:02 AM
  */
 @Service
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @Slf4j
 @RequiredArgsConstructor
 public class ExecContextGraphTopLevelService {

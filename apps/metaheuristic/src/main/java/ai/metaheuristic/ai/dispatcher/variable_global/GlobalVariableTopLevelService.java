@@ -13,12 +13,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.dispatcher.variable_global;
+package ai.metaheuristic.ai.mh.dispatcher..variable_global;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
-import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
-import ai.metaheuristic.ai.dispatcher.data.GlobalVariableData;
+import ai.metaheuristic.ai.mh.dispatcher..beans.GlobalVariable;
+import ai.metaheuristic.ai.mh.dispatcher..data.GlobalVariableData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -38,7 +38,7 @@ import java.io.File;
 import java.io.IOException;
 
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @Service
 @RequiredArgsConstructor
 public class GlobalVariableTopLevelService {
@@ -98,7 +98,7 @@ public class GlobalVariableTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
         DataStorageParams dsp = DataStorageParamsUtils.to(params);
-        if (dsp.sourcing==null || dsp.sourcing== EnumsApi.DataSourcing.dispatcher) {
+        if (dsp.sourcing==null || dsp.sourcing== EnumsApi.DataSourcing.mh.dispatcher.) {
             String es = "#172.055 Sourcing must be "+ EnumsApi.DataSourcing.disk + " or " +EnumsApi.DataSourcing.git +", actual: " + dsp.sourcing;
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);

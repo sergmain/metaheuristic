@@ -1,11 +1,11 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <div>
         <h1 class="widget-header">Deletion of part of global variable</h1>
 
-        <!--/*@thymesVar id="globalVariable" type="ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable"*/-->
+        <!--/*@thymesVar id="globalVariable" type="ai.metaheuristic.ai.mh.dispatcher..variable_global.SimpleGlobalVariable"*/-->
         <form class="form-horizontal" th:object="${globalVariable}">
             <div class="form-group">
                 <label class="col-sm-2 control-label">Id:</label>
@@ -37,7 +37,7 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${globalVariable}" th:method="post" th:action="@{/dispatcher/global-variable/global-variable-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${globalVariable}" th:method="post" th:action="@{/mh.dispatcher./global-variable/global-variable-delete-commit}"
                           accept-charset="UTF-8"
                           id="global-variable-delete-commit"
                           name="f">
@@ -51,7 +51,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/global-variable/global-variables}" accept-charset="UTF-8" id="global-variable-delete-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/mh.dispatcher./global-variable/global-variables}" accept-charset="UTF-8" id="global-variable-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

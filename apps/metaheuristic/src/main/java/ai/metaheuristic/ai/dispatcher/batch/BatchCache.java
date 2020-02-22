@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.batch;
+package ai.metaheuristic.ai.mh.dispatcher..batch;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.Batch;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Batch;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,7 +26,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @Slf4j
 public class BatchCache {
 

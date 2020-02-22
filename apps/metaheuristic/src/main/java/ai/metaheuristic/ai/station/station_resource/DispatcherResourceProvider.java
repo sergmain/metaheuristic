@@ -50,15 +50,15 @@ public class DispatcherResourceProvider implements ResourceProvider {
 
     @Override
     public List<AssetFile> prepareForDownloadingDataFile(
-            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            StationTask task, Metadata.DispatcherInfo dispatcherCode,
+            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher.,
+            StationTask task, Metadata.DispatcherInfo mh.dispatcher.Code,
             String resourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
 
-        // process it only if the dispatcher has already sent its config
-        if (dispatcher.context.chunkSize != null) {
-            DownloadResourceTask resourceTask = new DownloadResourceTask(resourceId, task.getTaskId(), taskDir, dispatcher.context.chunkSize);
-            resourceTask.dispatcher = dispatcher.dispatcherLookup;
-            resourceTask.stationId = dispatcherCode.stationId;
+        // process it only if the mh.dispatcher. has already sent its config
+        if (mh.dispatcher..context.chunkSize != null) {
+            DownloadResourceTask resourceTask = new DownloadResourceTask(resourceId, task.getTaskId(), taskDir, mh.dispatcher..context.chunkSize);
+            resourceTask.mh.dispatcher. = mh.dispatcher..mh.dispatcher.Lookup;
+            resourceTask.stationId = mh.dispatcher.Code.stationId;
             downloadResourceActor.add(resourceTask);
         }
         return Collections.singletonList(ResourceUtils.prepareDataFile(taskDir, resourceId, null));
@@ -66,15 +66,15 @@ public class DispatcherResourceProvider implements ResourceProvider {
 
     @Override
     public FunctionApiData.SystemExecResult processResultingFile(
-            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            StationTask task, Metadata.DispatcherInfo dispatcherCode,
+            DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher.,
+            StationTask task, Metadata.DispatcherInfo mh.dispatcher.Code,
             String outputResourceId, TaskParamsYaml.FunctionConfig functionConfig) {
         File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
         if (outputResourceFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputResourceFile.getPath());
             UploadResourceTask uploadResourceTask = new UploadResourceTask(task.taskId, outputResourceFile);
-            uploadResourceTask.dispatcher = dispatcher.dispatcherLookup;
-            uploadResourceTask.stationId = dispatcherCode.stationId;
+            uploadResourceTask.mh.dispatcher. = mh.dispatcher..mh.dispatcher.Lookup;
+            uploadResourceTask.stationId = mh.dispatcher.Code.stationId;
             uploadResourceActor.add(uploadResourceTask);
         } else {
             String es = "Result data file doesn't exist, resultDataFile: " + outputResourceFile.getPath();
@@ -86,7 +86,7 @@ public class DispatcherResourceProvider implements ResourceProvider {
 
     @Override
     public File getOutputResourceFile(
-            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher.,
             StationTask task, String outputResourceCode, SourceCodeParamsYaml.Variable dataStorageParams) {
 
         //noinspection UnnecessaryLocalVariable

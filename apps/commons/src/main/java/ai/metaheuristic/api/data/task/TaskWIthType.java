@@ -17,7 +17,7 @@
 package ai.metaheuristic.api.data.task;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.api.mh.dispatcher..Task;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

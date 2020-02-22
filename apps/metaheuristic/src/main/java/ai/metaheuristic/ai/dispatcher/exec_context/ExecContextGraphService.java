@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.exec_context;
+package ai.metaheuristic.ai.mh.dispatcher..exec_context;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.mh.dispatcher..beans.ExecContextImpl;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
  * Time: 10:42 PM
  */
 @Service
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @Slf4j
 @RequiredArgsConstructor
 class ExecContextGraphService {

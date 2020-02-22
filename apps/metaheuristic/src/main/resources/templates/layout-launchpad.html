@@ -30,8 +30,8 @@
     <meta http-equiv="expires" content="0" />
     <meta http-equiv="pragma" content="no-cache" />
 
-    <script th:if="${#httpServletRequest.requestURI.startsWith('/dispatcher/experiment/experiment-feature-progress') ||
-    #httpServletRequest.requestURI.startsWith('/dispatcher/atlas/atlas-experiment-feature-progress') }" src="/webjars/plotly.js/1.48.3/dist/plotly.min.js"></script>
+    <script th:if="${#httpServletRequest.requestURI.startsWith('/mh.dispatcher./experiment/experiment-feature-progress') ||
+    #httpServletRequest.requestURI.startsWith('/mh.dispatcher./atlas/atlas-experiment-feature-progress') }" src="/webjars/plotly.js/1.48.3/dist/plotly.min.js"></script>
     <script src="/webjars/jquery/3.2.1/jquery.min.js"></script>
     <script src="/webjars/jquery-ui/1.12.1/jquery-ui.js"></script>
     <script src="/static/js/my-scripts.js" th:src="@{/js/my-scripts.js}"></script>
@@ -98,7 +98,7 @@
                                 <div class="pure-u-11-12">
                                     <div class="pure-g">
                                         <div class="pure-u-1">
-                                            <div th:replace="menu-dispatcher-fragment"></div>
+                                            <div th:replace="menu-mh.dispatcher.-fragment"></div>
                                         </div>
                                     </div>
                                     <div th:remove="tag" th:replace="messages-fragment"></div>

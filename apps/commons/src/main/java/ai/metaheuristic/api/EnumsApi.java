@@ -76,8 +76,8 @@ public class EnumsApi {
 
     @ToString
     public enum DataSourcing {
-        // data will be downloaded from dispatcher
-        dispatcher(1),
+        // data will be downloaded from mh.dispatcher.
+        mh.dispatcher.(1),
         // function already has been deployed locally at station
         disk(2),
         // function will be downloaded from git
@@ -96,7 +96,7 @@ public class EnumsApi {
             switch (value) {
                 case 1:
                     //noinspection
-                    return dispatcher;
+                    return mh.dispatcher.;
                 case 2:
                     return disk;
                 case 3:
@@ -104,7 +104,7 @@ public class EnumsApi {
                 case 4:
                     return inline;
                 default:
-                    return dispatcher;
+                    return mh.dispatcher.;
             }
         }
 
@@ -117,8 +117,8 @@ public class EnumsApi {
 
     @ToString
     public enum FunctionSourcing {
-        // function will be downloaded from dispatcher
-        dispatcher(1),
+        // function will be downloaded from mh.dispatcher.
+        mh.dispatcher.(1),
         // function already has been deployed locally at station
         station(2),
         // function will be downloaded from git
@@ -135,13 +135,13 @@ public class EnumsApi {
             switch (value) {
                 case 1:
                     //noinspection
-                    return dispatcher;
+                    return mh.dispatcher.;
                 case 2:
                     return station;
                 case 3:
                     return git;
                 default:
-                    return dispatcher;
+                    return mh.dispatcher.;
             }
         }
 

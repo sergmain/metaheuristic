@@ -1,17 +1,17 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
      xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Edit account</h1>
 
-        <!--/*@thymesVar id="account" type="ai.metaheuristic.ai.dispatcher.beans.Account"*/-->
+        <!--/*@thymesVar id="account" type="ai.metaheuristic.ai.mh.dispatcher..beans.Account"*/-->
         <p th:text="${'Username: ' + account.username}">username</p>
 
         <form class="pure-form pure-form-stacked" th:object="${account}" method="post" action="#" th:method="POST"
-              th:action="@{/dispatcher/company/company-account-edit-commit/{companyUniqueId}(companyUniqueId=${companyUniqueId})}" accept-charset="UTF-8" id="account-form"
+              th:action="@{/mh.dispatcher./company/company-account-edit-commit/{companyUniqueId}(companyUniqueId=${companyUniqueId})}" accept-charset="UTF-8" id="account-form"
               name="f">
             <input type="hidden" th:name="id" th:value="${account.id}"/>
             <fieldset>
@@ -34,7 +34,7 @@
                         </td>
                         <td>
                             <a class="pure-button pure-button-primary" href="company-accounts.html"
-                               th:href="${'/dispatcher/company/company-accounts/'+ companyUniqueId}">Cancel</a>
+                               th:href="${'/mh.dispatcher./company/company-accounts/'+ companyUniqueId}">Cancel</a>
                         </td>
                     </tr>
                 </table>

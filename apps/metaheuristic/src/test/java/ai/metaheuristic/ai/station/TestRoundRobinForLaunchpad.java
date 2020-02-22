@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.station;
 
-import ai.metaheuristic.ai.dispatcher.RoundRobinForDispatcher;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.mh.dispatcher..RoundRobinForDispatcher;
+import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.DispatcherLookupConfig;
 import org.junit.Test;
 
 import java.util.LinkedHashMap;
@@ -32,13 +32,13 @@ public class TestRoundRobinForLaunchpad {
         LinkedHashMap<String, DispatcherLookupExtendedService.DispatcherLookupExtended> lookupExtendedMap = new LinkedHashMap<>();
 
         DispatcherLookupExtendedService.DispatcherLookupExtended lle1 = new DispatcherLookupExtendedService.DispatcherLookupExtended();
-        lle1.dispatcherLookup = new DispatcherLookupConfig.DispatcherLookup();
-        lle1.dispatcherLookup.url = "url1";
+        lle1.mh.dispatcher.Lookup = new DispatcherLookupConfig.DispatcherLookup();
+        lle1.mh.dispatcher.Lookup.url = "url1";
         lookupExtendedMap.put( "url1", lle1);
 
         DispatcherLookupExtendedService.DispatcherLookupExtended lle2 = new DispatcherLookupExtendedService.DispatcherLookupExtended();
-        lle2.dispatcherLookup = new DispatcherLookupConfig.DispatcherLookup();
-        lle2.dispatcherLookup.url = "url2";
+        lle2.mh.dispatcher.Lookup = new DispatcherLookupConfig.DispatcherLookup();
+        lle2.mh.dispatcher.Lookup.url = "url2";
         lookupExtendedMap.put( "url2", lle2);
 
         RoundRobinForDispatcher rr = new RoundRobinForDispatcher(lookupExtendedMap);

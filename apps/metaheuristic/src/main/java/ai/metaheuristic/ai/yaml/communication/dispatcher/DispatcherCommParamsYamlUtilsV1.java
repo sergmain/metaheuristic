@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.communication.dispatcher;
+package ai.metaheuristic.ai.yaml.communication.mh.dispatcher.;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -46,10 +46,10 @@ public class DispatcherCommParamsYamlUtilsV1 extends
     public DispatcherCommParamsYaml upgradeTo(DispatcherCommParamsYamlV1 v1, Long ... vars) {
         DispatcherCommParamsYaml t = new DispatcherCommParamsYaml();
 
-        if( v1.dispatcherCommContext !=null ) {
-            t.dispatcherCommContext = new DispatcherCommParamsYaml.DispatcherCommContext();
-            t.dispatcherCommContext.chunkSize = v1.dispatcherCommContext.chunkSize;
-            t.dispatcherCommContext.stationCommVersion = v1.dispatcherCommContext.stationCommVersion;
+        if( v1.mh.dispatcher.CommContext !=null ) {
+            t.mh.dispatcher.CommContext = new DispatcherCommParamsYaml.DispatcherCommContext();
+            t.mh.dispatcher.CommContext.chunkSize = v1.mh.dispatcher.CommContext.chunkSize;
+            t.mh.dispatcher.CommContext.stationCommVersion = v1.mh.dispatcher.CommContext.stationCommVersion;
         }
         if (v1.functions !=null) {
             t.functions = new DispatcherCommParamsYaml.Functions();
@@ -102,9 +102,9 @@ public class DispatcherCommParamsYamlUtilsV1 extends
 /*
         DispatcherCommParamsYamlV1 t = new DispatcherCommParamsYamlV1();
 
-        if( yaml.dispatcherCommContext!=null ) {
-            t.dispatcherCommContext = new DispatcherCommParamsYamlV1.DispatcherCommContextV1();
-            t.dispatcherCommContext.chunkSize = yaml.dispatcherCommContext.chunkSize;
+        if( yaml.mh.dispatcher.CommContext!=null ) {
+            t.mh.dispatcher.CommContext = new DispatcherCommParamsYamlV1.DispatcherCommContextV1();
+            t.mh.dispatcher.CommContext.chunkSize = yaml.mh.dispatcher.CommContext.chunkSize;
         }
         if (yaml.assignedTask!=null) {
             t.assignedTask = new DispatcherCommParamsYamlV1.AssignedTaskV1();

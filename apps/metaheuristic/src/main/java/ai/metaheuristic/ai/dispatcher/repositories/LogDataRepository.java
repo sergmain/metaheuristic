@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.repositories;
+package ai.metaheuristic.ai.mh.dispatcher..repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.LogData;
+import ai.metaheuristic.ai.mh.dispatcher..beans.LogData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Repository
 @Transactional
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 public interface LogDataRepository extends JpaRepository<LogData, Long> {
     List<LogData> findAllByLogType(int logType);
 }

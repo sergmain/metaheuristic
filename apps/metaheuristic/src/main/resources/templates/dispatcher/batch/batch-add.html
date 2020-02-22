@@ -1,14 +1,14 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
      layout:decorate="~{layout-batch}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Upload file for processing</h1>
 
-        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.SourceCodeData$SourceCodesForCompany"*/-->
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData$SourceCodesForCompany"*/-->
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-              th:action="@{/dispatcher/batch/batch-upload-from-file}"
+              th:action="@{/mh.dispatcher./batch/batch-upload-from-file}"
         >
             <fieldset>
 
@@ -35,7 +35,7 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="batches.html" th:href="${'/dispatcher/batch/batches'}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="batches.html" th:href="${'/mh.dispatcher./batch/batches'}">Cancel</a>
                         </td>
                     </tr>
                 </table>

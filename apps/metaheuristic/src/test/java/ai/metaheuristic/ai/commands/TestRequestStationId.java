@@ -16,11 +16,11 @@
 
 package ai.metaheuristic.ai.commands;
 
-import ai.metaheuristic.ai.dispatcher.beans.Station;
-import ai.metaheuristic.ai.dispatcher.server.ServerService;
-import ai.metaheuristic.ai.dispatcher.station.StationCache;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Station;
+import ai.metaheuristic.ai.mh.dispatcher..server.ServerService;
+import ai.metaheuristic.ai.mh.dispatcher..station.StationCache;
+import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;

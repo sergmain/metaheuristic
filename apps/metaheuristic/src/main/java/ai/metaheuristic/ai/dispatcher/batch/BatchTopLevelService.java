@@ -14,26 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.batch;
+package ai.metaheuristic.ai.mh.dispatcher..batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
-import ai.metaheuristic.ai.dispatcher.beans.Account;
-import ai.metaheuristic.ai.dispatcher.beans.Batch;
-import ai.metaheuristic.ai.dispatcher.beans.Ids;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.data.BatchData;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils;
-import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.mh.dispatcher..batch.data.BatchStatusProcessor;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Batch;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Ids;
+import ai.metaheuristic.ai.mh.dispatcher..beans.SourceCodeImpl;
+import ai.metaheuristic.ai.mh.dispatcher..variable.VariableService;
+import ai.metaheuristic.ai.mh.dispatcher..data.BatchData;
+import ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData;
+import ai.metaheuristic.ai.mh.dispatcher..event.DispatcherEventService;
+import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeService;
+import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeUtils;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.IdsRepository;
+import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -85,7 +85,7 @@ import static ai.metaheuristic.ai.Consts.ZIP_EXT;
  * Time: 11:52 PM
  */
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @Service
 @RequiredArgsConstructor
 public class BatchTopLevelService {
@@ -98,7 +98,7 @@ public class BatchTopLevelService {
     private final BatchRepository batchRepository;
     private final BatchService batchService;
     private final BatchCache batchCache;
-    private final DispatcherEventService dispatcherEventService;
+    private final DispatcherEventService mh.dispatcher.EventService;
     private final ExecContextService execContextService;
     private final IdsRepository idsRepository;
 
@@ -187,7 +187,7 @@ public class BatchTopLevelService {
         if (!sourceCode.getId().equals(sourceCodeId)) {
             return new BatchData.UploadingStatus("#995.038 Fatal error in configuration of sourceCode, report to developers immediately");
         }
-        dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
+        mh.dispatcher.EventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
 
         // TODO 2019-07-06 Do we need to validate the sourceCode here in case that there is another check?
         //  2019-10-28 it's working so left it as is until an issue with this will be found
@@ -233,7 +233,7 @@ public class BatchTopLevelService {
             b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
             b = batchCache.save(b);
 
-            dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_CREATED, context.getCompanyId(), sourceCode.uid, null, b.id, producingResult.execContext.getId(), context );
+            mh.dispatcher.EventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_CREATED, context.getCompanyId(), sourceCode.uid, null, b.id, producingResult.execContext.getId(), context );
 
             final Batch batch = batchService.changeStateToPreparing(b.id);
             // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed

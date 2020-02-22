@@ -14,15 +14,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.batch;
+package ai.metaheuristic.ai.mh.dispatcher..batch;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.dispatcher.context.UserContextService;
-import ai.metaheuristic.ai.dispatcher.data.BatchData;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.mh.dispatcher..context.UserContextService;
+import ai.metaheuristic.ai.mh.dispatcher..data.BatchData;
+import ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData;
+import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -49,14 +49,14 @@ import java.io.IOException;
 
 @SuppressWarnings("DuplicatedCode")
 @Controller
-@RequestMapping("/dispatcher/batch")
+@RequestMapping("/mh.dispatcher./batch")
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
 @RequiredArgsConstructor
 public class BatchController {
 
-    private static final String REDIRECT_BATCH_BATCHES = "redirect:/dispatcher/batch/batches";
+    private static final String REDIRECT_BATCH_BATCHES = "redirect:/mh.dispatcher./batch/batches";
 
     private final BatchTopLevelService batchTopLevelService;
     private final UserContextService userContextService;
@@ -64,7 +64,7 @@ public class BatchController {
 
     @GetMapping("/index")
     public String index() {
-        return "dispatcher/batch/index";
+        return "mh.dispatcher./batch/index";
     }
 
     @GetMapping("/batches")
@@ -79,7 +79,7 @@ public class BatchController {
         BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false, filterBatches);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
-        return "dispatcher/batch/batches";
+        return "mh.dispatcher./batch/batches";
     }
 
     @PostMapping("/batches-part")
@@ -91,7 +91,7 @@ public class BatchController {
         BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, context, false, filterBatches);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
-        return "dispatcher/batch/batches :: table";
+        return "mh.dispatcher./batch/batches :: table";
     }
 
     @GetMapping(value = "/batch-add")
@@ -100,7 +100,7 @@ public class BatchController {
         SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeService.getAvailableSourceCodesForCompany(context);
         ControllerUtils.addMessagesToModel(model, sourceCodes);
         model.addAttribute("result", sourceCodes);
-        return "dispatcher/batch/batch-add";
+        return "mh.dispatcher./batch/batch-add";
     }
 
     @GetMapping("/batch-delete/{batchId}")
@@ -114,7 +114,7 @@ public class BatchController {
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.console);
         model.addAttribute("isOk", status.ok);
-        return "dispatcher/batch/batch-delete";
+        return "mh.dispatcher./batch/batch-delete";
     }
 
     @PostMapping("/batch-delete-commit")
@@ -148,7 +148,7 @@ public class BatchController {
         }
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.console);
-        return "dispatcher/batch/batch-status";
+        return "mh.dispatcher./batch/batch-status";
     }
 
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)

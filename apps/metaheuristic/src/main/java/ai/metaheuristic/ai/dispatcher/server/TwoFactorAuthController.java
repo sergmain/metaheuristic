@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.server;
+package ai.metaheuristic.ai.mh.dispatcher..server;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.Account;
-import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
+import ai.metaheuristic.ai.mh.dispatcher..context.UserContextService;
 import ai.metaheuristic.ai.sec.GoogleAuthenticator;
 import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.commons.S;
@@ -50,7 +50,7 @@ import javax.validation.constraints.Size;
 @RequestMapping("/2fa")
 @Controller
 @RequiredArgsConstructor
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 public class TwoFactorAuthController {
 
     private static final String ISSUER = "Metaheuristic";

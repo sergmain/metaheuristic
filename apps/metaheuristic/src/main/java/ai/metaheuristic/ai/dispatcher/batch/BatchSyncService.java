@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.batch;
+package ai.metaheuristic.ai.mh.dispatcher..batch;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.Batch;
+import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Batch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -34,7 +34,7 @@ import java.util.function.Function;
  */
 @Service
 @RequiredArgsConstructor
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 public class BatchSyncService {
 
     private final BatchRepository batchRepository;

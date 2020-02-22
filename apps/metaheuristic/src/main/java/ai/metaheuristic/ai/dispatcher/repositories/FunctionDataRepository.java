@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.repositories;
+package ai.metaheuristic.ai.mh.dispatcher..repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
+import ai.metaheuristic.ai.mh.dispatcher..beans.FunctionData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -31,7 +31,7 @@ import java.sql.Blob;
  * Time: 9:31 PM
  */
 @Repository
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 public interface FunctionDataRepository extends CrudRepository<FunctionData, Long> {
 
     @Transactional(readOnly = true)

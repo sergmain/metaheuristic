@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.workbook;
 
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextService;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.junit.Test;
 

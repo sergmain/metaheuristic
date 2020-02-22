@@ -58,7 +58,7 @@ public class TestMetadataYaml {
             Metadata m = MetadataUtils.to(is);
             assertNotNull(m);
             assertNotNull(m.metadata);
-            assertNotNull(m.dispatcher);
+            assertNotNull(m.mh.dispatcher.);
             assertEquals(0, m.getMetadata().size());
             assertEquals(0, m.getDispatcher().size());
         }
@@ -70,7 +70,7 @@ public class TestMetadataYaml {
             Metadata m = MetadataUtils.to(is);
             assertNotNull(m);
             assertNotNull(m.metadata);
-            assertNotNull(m.dispatcher);
+            assertNotNull(m.mh.dispatcher.);
             assertEquals(0, m.getMetadata().size());
             assertEquals(0, m.getDispatcher().size());
         }

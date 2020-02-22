@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.communication;
 
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYamlUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.dispatcher.experiment;
+package ai.metaheuristic.ai.mh.dispatcher..experiment;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;

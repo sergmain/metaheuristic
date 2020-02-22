@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.event;
+package ai.metaheuristic.ai.mh.dispatcher..event;
 
 import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -31,25 +31,25 @@ import java.time.LocalDateTime;
 @Data
 public class DispatcherApplicationEvent {
 
-    public final DispatcherEventYaml dispatcherEventYaml;
+    public final DispatcherEventYaml mh.dispatcher.EventYaml;
     public Long companyUniqueId;
 
     public DispatcherApplicationEvent(EnumsApi.DispatcherEventType event, Long companyUniqueId, String contextId, DispatcherEventYaml.BatchEventData batchEventData) {
         this.companyUniqueId = companyUniqueId;
-        DispatcherEventYaml dispatcherEventYaml = new DispatcherEventYaml();
-        dispatcherEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
-        dispatcherEventYaml.event = event;
-        dispatcherEventYaml.contextId = contextId;
-        dispatcherEventYaml.contextId = contextId;
-        dispatcherEventYaml.batchData = batchEventData;
-        this.dispatcherEventYaml = dispatcherEventYaml;
+        DispatcherEventYaml mh.dispatcher.EventYaml = new DispatcherEventYaml();
+        mh.dispatcher.EventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
+        mh.dispatcher.EventYaml.event = event;
+        mh.dispatcher.EventYaml.contextId = contextId;
+        mh.dispatcher.EventYaml.contextId = contextId;
+        mh.dispatcher.EventYaml.batchData = batchEventData;
+        this.mh.dispatcher.EventYaml = mh.dispatcher.EventYaml;
     }
 
     public DispatcherApplicationEvent(EnumsApi.DispatcherEventType event, DispatcherEventYaml.TaskEventData taskEventData) {
-        DispatcherEventYaml dispatcherEventYaml = new DispatcherEventYaml();
-        dispatcherEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
-        dispatcherEventYaml.event = event;
-        dispatcherEventYaml.taskData = taskEventData;
-        this.dispatcherEventYaml = dispatcherEventYaml;
+        DispatcherEventYaml mh.dispatcher.EventYaml = new DispatcherEventYaml();
+        mh.dispatcher.EventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
+        mh.dispatcher.EventYaml.event = event;
+        mh.dispatcher.EventYaml.taskData = taskEventData;
+        this.mh.dispatcher.EventYaml = mh.dispatcher.EventYaml;
     }
 }

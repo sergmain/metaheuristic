@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.batch;
 
-import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
+import ai.metaheuristic.ai.mh.dispatcher..batch.BatchTopLevelService;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;

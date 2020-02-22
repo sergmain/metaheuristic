@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.communication.dispatcher;
+package ai.metaheuristic.ai.yaml.communication.mh.dispatcher.;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -42,7 +42,7 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
         return true;
     }
 
-    public DispatcherCommContextV1 dispatcherCommContext;
+    public DispatcherCommContextV1 mh.dispatcher.CommContext;
 
     // always send info about functions
     public FunctionsV1 functions = new FunctionsV1();
@@ -131,7 +131,7 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class DispatcherCommContextV1 {
         public Long chunkSize;
-        // Station's version for communicating with dispatcher
+        // Station's version for communicating with mh.dispatcher.
         public Integer stationCommVersion;
     }
 

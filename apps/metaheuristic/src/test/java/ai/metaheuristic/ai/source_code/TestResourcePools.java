@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -63,7 +63,7 @@ public class TestResourcePools {
 
         assertEquals(2, p.inputStorageUrls.keySet().size());
         SourceCodeParamsYaml.Variable variable = p.inputStorageUrls.get("aaa");
-        assertEquals(new DataStorageParams(EnumsApi.DataSourcing.dispatcher).sourcing, variable.sourcing);
+        assertEquals(new DataStorageParams(EnumsApi.DataSourcing.mh.dispatcher.).sourcing, variable.sourcing);
 
         variable = p.inputStorageUrls.get("bbb");
         assertEquals(SOURCING_DISK_PARAMS.sourcing, variable.sourcing);

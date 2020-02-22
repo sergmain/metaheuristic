@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.station.function;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.station.net.HttpClientExecutor;
 import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.DispatcherLookupConfig;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
@@ -58,7 +58,7 @@ public class StationFunctionService {
     }
 
     public DownloadedFunctionConfigStatus downloadFunctionConfig(
-            String dispatcherUrl,
+            String mh.dispatcher.Url,
             DispatcherLookupConfig.Asset asset, String functionCode, String stationId) {
 
         final String functionChecksumUrl = asset.url + Consts.REST_ASSET_URL + "/function-config";
@@ -97,11 +97,11 @@ public class StationFunctionService {
                 log.error("#813.220 HttpResponseException", e);
             }
         } catch (SocketTimeoutException e) {
-            log.error("#813.170 SocketTimeoutException: {}, function: {}, dispatcher: {}, assetUrl: {}", e.toString(), functionCode, dispatcherUrl, asset.url);
+            log.error("#813.170 SocketTimeoutException: {}, function: {}, mh.dispatcher.: {}, assetUrl: {}", e.toString(), functionCode, mh.dispatcher.Url, asset.url);
         } catch (IOException e) {
-            log.error(S.f("#813.180 IOException, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl), e);
+            log.error(S.f("#813.180 IOException, function: %s, mh.dispatcher.: %s, assetUrl: %s",functionCode, mh.dispatcher.Url), e);
         } catch (Throwable th) {
-            log.error(S.f("#813.190 Throwable, function: %s, dispatcher: %s, assetUrl: %s",functionCode, dispatcherUrl, asset.url), th);
+            log.error(S.f("#813.190 Throwable, function: %s, mh.dispatcher.: %s, assetUrl: %s",functionCode, mh.dispatcher.Url, asset.url), th);
         }
         return functionConfigStatus;
     }

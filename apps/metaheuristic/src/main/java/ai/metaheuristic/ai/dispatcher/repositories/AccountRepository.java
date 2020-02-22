@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.repositories;
+package ai.metaheuristic.ai.mh.dispatcher..repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,7 +34,7 @@ import java.util.List;
  */
 @Repository
 @Transactional
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 public interface AccountRepository extends CrudRepository<Account, Long> {
 
     @Query(value="select a from Account a where a.id=:id")

@@ -49,7 +49,7 @@ public class TestFunctionConfigYaml {
         assertEquals(sc2.file, "sc.file");
         assertEquals(sc2.params, "sc.params");
         assertEquals(sc2.env, "sc.env");
-        assertEquals(sc2.sourcing, EnumsApi.FunctionSourcing.dispatcher);
+        assertEquals(sc2.sourcing, EnumsApi.FunctionSourcing.mh.dispatcher.);
         assertNotNull(sc2.ml);
         assertTrue(sc2.ml.metrics);
         assertEquals(1, sc2.checksumMap.size());
@@ -81,7 +81,7 @@ public class TestFunctionConfigYaml {
         sc.file = "sc.file";
         sc.params = "sc.params";
         sc.env = "sc.env";
-        sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+        sc.sourcing = EnumsApi.FunctionSourcing.mh.dispatcher.;
         sc.metrics = true;
         sc.checksumMap = new HashMap<>(Map.of(EnumsApi.Type.SHA256, "qwe321"));
         sc.info = new FunctionConfigYamlV1.FunctionInfoV1(true, 42);
@@ -100,7 +100,7 @@ public class TestFunctionConfigYaml {
         sc.file = "sc.file";
         sc.params = "sc.params";
         sc.env = "sc.env";
-        sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+        sc.sourcing = EnumsApi.FunctionSourcing.mh.dispatcher.;
         sc.ml = new FunctionConfigYaml.MachineLearning(true, false);
         sc.checksumMap = new HashMap<>(Map.of(EnumsApi.Type.SHA256, "qwe321"));
         sc.info = new FunctionConfigYaml.FunctionInfo(true, 42);
@@ -124,7 +124,7 @@ public class TestFunctionConfigYaml {
         assertEquals(sc.file, "sc.file");
         assertEquals(sc.params, "sc.params");
         assertEquals(sc.env, "sc.env");
-        assertEquals(sc.sourcing, EnumsApi.FunctionSourcing.dispatcher);
+        assertEquals(sc.sourcing, EnumsApi.FunctionSourcing.mh.dispatcher.);
         assertNotNull(sc.ml);
         assertTrue(sc.ml.metrics);
         assertEquals(1, sc.checksumMap.size());
@@ -149,7 +149,7 @@ public class TestFunctionConfigYaml {
         sc.file = "sc.file";
         sc.params = "sc.params";
         sc.env = "sc.env";
-        sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+        sc.sourcing = EnumsApi.FunctionSourcing.mh.dispatcher.;
         sc.ml = new FunctionConfigYaml.MachineLearning(true, false);
         sc.checksumMap = null;
         sc.info = null;
@@ -165,7 +165,7 @@ public class TestFunctionConfigYaml {
         assertEquals(sc1.file, "sc.file");
         assertEquals(sc1.params, "sc.params");
         assertEquals(sc1.env, "sc.env");
-        assertEquals(sc1.sourcing, EnumsApi.FunctionSourcing.dispatcher);
+        assertEquals(sc1.sourcing, EnumsApi.FunctionSourcing.mh.dispatcher.);
         assertNotNull(sc1.ml);
         assertTrue(sc1.ml.metrics);
         assertNull(sc1.checksumMap);

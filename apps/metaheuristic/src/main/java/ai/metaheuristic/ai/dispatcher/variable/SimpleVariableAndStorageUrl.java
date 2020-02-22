@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.variable;
+package ai.metaheuristic.ai.mh.dispatcher..variable;
 
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;

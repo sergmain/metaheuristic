@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.rest.v1;
+package ai.metaheuristic.ai.mh.dispatcher..rest.v1;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.context.UserContextService;
-import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
+import ai.metaheuristic.ai.mh.dispatcher..context.UserContextService;
+import ai.metaheuristic.ai.mh.dispatcher..experiment.ExperimentTopLevelService;
+import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
@@ -34,9 +34,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/rest/v1/dispatcher/experiment")
+@RequestMapping("/rest/v1/mh.dispatcher./experiment")
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
 @RequiredArgsConstructor

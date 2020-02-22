@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.company;
+package ai.metaheuristic.ai.mh.dispatcher..company;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.Company;
-import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Company;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.CompanyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @RequiredArgsConstructor
 public class CompanyCache {
 

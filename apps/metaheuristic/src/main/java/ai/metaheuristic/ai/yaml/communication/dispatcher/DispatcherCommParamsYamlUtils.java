@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.communication.dispatcher;
+package ai.metaheuristic.ai.yaml.communication.mh.dispatcher.;
 
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 

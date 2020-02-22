@@ -13,11 +13,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.dispatcher.beans;
+package ai.metaheuristic.ai.mh.dispatcher..beans;
 
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.mh.dispatcher..ExecContext;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 

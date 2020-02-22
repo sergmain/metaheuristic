@@ -14,18 +14,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher;
+package ai.metaheuristic.ai.mh.dispatcher.;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.Station;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
-import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.station.StationCache;
-import ai.metaheuristic.ai.dispatcher.station.StationTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Station;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.FunctionRepository;
+import ai.metaheuristic.ai.mh.dispatcher..function.FunctionCache;
+import ai.metaheuristic.ai.mh.dispatcher..station.StationCache;
+import ai.metaheuristic.ai.mh.dispatcher..station.StationTopLevelService;
+import ai.metaheuristic.ai.mh.dispatcher..task.TaskService;
+import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextService;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @RequiredArgsConstructor
 public class DispatcherCommandProcessor {
 
@@ -86,7 +86,7 @@ public class DispatcherCommandProcessor {
         return functionInfosCache;
     }
 
-    // processing at dispatcher side
+    // processing at mh.dispatcher. side
     public DispatcherCommParamsYaml.ResendTaskOutputResource checkForMissingOutputResources(StationCommParamsYaml request) {
         if (request.checkForMissingOutputResources==null) {
             return null;
@@ -96,7 +96,7 @@ public class DispatcherCommandProcessor {
         return new DispatcherCommParamsYaml.ResendTaskOutputResource(ids);
     }
 
-    // processing at dispatcher side
+    // processing at mh.dispatcher. side
     public void processResendTaskOutputResourceResult(StationCommParamsYaml request) {
         if (request.resendTaskOutputResourceResult==null) {
             return;
@@ -106,7 +106,7 @@ public class DispatcherCommandProcessor {
         }
     }
 
-    // processing at dispatcher side
+    // processing at mh.dispatcher. side
     public void processStationTaskStatus(StationCommParamsYaml request) {
         if (request.reportStationTaskStatus==null || request.reportStationTaskStatus.statuses==null) {
             return;
@@ -114,7 +114,7 @@ public class DispatcherCommandProcessor {
         stationTopLevelService.reconcileStationTasks(request.stationCommContext.stationId, request.reportStationTaskStatus.statuses);
     }
 
-    // processing at dispatcher side
+    // processing at mh.dispatcher. side
     public DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(StationCommParamsYaml request) {
         if (request.reportTaskProcessingResult==null || request.reportTaskProcessingResult.results==null) {
             return null;
@@ -126,7 +126,7 @@ public class DispatcherCommandProcessor {
         return cmd1;
     }
 
-    // processing at dispatcher side
+    // processing at mh.dispatcher. side
     public void processReportStationStatus(StationCommParamsYaml request) {
         if (request.reportStationStatus==null) {
             return;
@@ -135,7 +135,7 @@ public class DispatcherCommandProcessor {
         stationTopLevelService.storeStationStatuses(request.stationCommContext.stationId, request.reportStationStatus, request.functionDownloadStatus);
     }
 
-    // processing at dispatcher side
+    // processing at mh.dispatcher. side
     public DispatcherCommParamsYaml.AssignedTask processRequestTask(StationCommParamsYaml request) {
         if (request.requestTask==null) {
             return null;
@@ -157,7 +157,7 @@ public class DispatcherCommandProcessor {
         }
     }
 
-    // processing at dispatcher side
+    // processing at mh.dispatcher. side
     public DispatcherCommParamsYaml.AssignedStationId getNewStationId(StationCommParamsYaml.RequestStationId request) {
         if (request==null) {
             return null;

@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.account;
+package ai.metaheuristic.ai.mh.dispatcher..account;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.Account;
-import ai.metaheuristic.ai.dispatcher.data.AccountData;
+import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
+import ai.metaheuristic.ai.mh.dispatcher..data.AccountData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @Service
 @RequiredArgsConstructor
 public class AccountTopLevelService {

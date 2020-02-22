@@ -1,12 +1,12 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Archive the sourceCode</h1>
 
-        <!--/*@thymesVar id="sourceCode" type="ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl"*/-->
+        <!--/*@thymesVar id="sourceCode" type="ai.metaheuristic.ai.mh.dispatcher..beans.SourceCodeImpl"*/-->
         <form class="pure-form pure-form-stacked" th:object="${sourceCode}">
             <fieldset>
                 <label for="code">Code of sourceCode</label>
@@ -22,7 +22,7 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${sourceCode}" th:method="post" th:action="@{/dispatcher/source-code/source-code-archive-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${sourceCode}" th:method="post" th:action="@{/mh.dispatcher./source-code/source-code-archive-commit}"
                           accept-charset="UTF-8"
                           id="sourceCode-archive-commit"
                           name="f">
@@ -36,7 +36,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/source-code/sourceCodes}" accept-charset="UTF-8" id="sourceCode-archive-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/mh.dispatcher./source-code/sourceCodes}" accept-charset="UTF-8" id="sourceCode-archive-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

@@ -14,21 +14,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.atlas;
+package ai.metaheuristic.ai.mh.dispatcher..atlas;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.beans.*;
-import ai.metaheuristic.ai.dispatcher.data.AtlasData;
-import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.repositories.AtlasRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.AtlasTaskRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.mh.dispatcher..beans.*;
+import ai.metaheuristic.ai.mh.dispatcher..data.AtlasData;
+import ai.metaheuristic.ai.mh.dispatcher..experiment.ExperimentCache;
+import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeCache;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.AtlasRepository;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.AtlasTaskRepository;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.ExperimentRepository;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.TaskRepository;
+import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextCache;
+import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
@@ -39,7 +39,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.api.mh.dispatcher..Task;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -54,7 +54,7 @@ import java.util.Collections;
 
 @Slf4j
 @Service
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @RequiredArgsConstructor
 public class AtlasService {
 
@@ -160,7 +160,7 @@ public class AtlasService {
                     atpy.taskId = t.getId();
                     atpy.taskParams = t.getParams();
                     // typeAsString will be initialized when AtlasTaskParamsYaml will be requested
-                    // see method ai.metaheuristic.ai.dispatcher.atlas.AtlasTopLevelService.findTasks
+                    // see method ai.metaheuristic.ai.mh.dispatcher..atlas.AtlasTopLevelService.findTasks
                     atpy.typeAsString = null;
                     atpy.functionExecResults = t.getFunctionExecResults();
                     atpy.metrics = t.getMetrics();

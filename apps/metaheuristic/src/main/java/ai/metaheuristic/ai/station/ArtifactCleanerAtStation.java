@@ -37,31 +37,31 @@ public class ArtifactCleanerAtStation {
     private final CurrentExecState currentExecState;
     private final Globals globals;
     private final MetadataService metadataService;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
+    private final DispatcherLookupExtendedService mh.dispatcher.LookupExtendedService;
 
     public void fixedDelay() {
-        for (String dispatcherUrl : dispatcherLookupExtendedService.lookupExtendedMap.keySet()) {
-            if (!globals.isStationEnabled || !currentExecState.isInited(dispatcherUrl)) {
+        for (String mh.dispatcher.Url : mh.dispatcher.LookupExtendedService.lookupExtendedMap.keySet()) {
+            if (!globals.isStationEnabled || !currentExecState.isInited(mh.dispatcher.Url)) {
                 // don't delete anything until the station has received the list of actual ExecContexts
                 continue;
             }
 
-            Metadata.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
-            final File dispatcherDir = new File(globals.stationTaskDir, dispatcherCode.code);
-            if (!dispatcherDir.exists()) {
-                dispatcherDir.mkdir();
+            Metadata.DispatcherInfo mh.dispatcher.Code = metadataService.mh.dispatcher.UrlAsCode(mh.dispatcher.Url);
+            final File mh.dispatcher.Dir = new File(globals.stationTaskDir, mh.dispatcher.Code.code);
+            if (!mh.dispatcher.Dir.exists()) {
+                mh.dispatcher.Dir.mkdir();
             }
 
-            List<StationTask> all = stationTaskService.findAll(dispatcherUrl);
+            List<StationTask> all = stationTaskService.findAll(mh.dispatcher.Url);
             for (StationTask task : all) {
-                if (currentExecState.isState(dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
-                    log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), dispatcherUrl);
-                    stationTaskService.delete(dispatcherUrl, task.getTaskId());
+                if (currentExecState.isState(mh.dispatcher.Url, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
+                    log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), mh.dispatcher.Url);
+                    stationTaskService.delete(mh.dispatcher.Url, task.getTaskId());
                     continue;
                 }
                 if (task.clean && task.delivered && task.completed) {
-                    log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), dispatcherUrl);
-                    stationTaskService.delete(dispatcherUrl, task.getTaskId());
+                    log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), mh.dispatcher.Url);
+                    stationTaskService.delete(mh.dispatcher.Url, task.getTaskId());
                 }
             }
 
@@ -69,7 +69,7 @@ public class ArtifactCleanerAtStation {
             synchronized (StationSyncHolder.stationGlobalSync) {
                 try {
                     final AtomicBoolean isEmpty = new AtomicBoolean(true);
-                    Files.list(dispatcherDir.toPath()).forEach(s -> {
+                    Files.list(mh.dispatcher.Dir.toPath()).forEach(s -> {
                         isEmpty.set(true);
                         try {
                             Files.list(s).forEach(t -> {

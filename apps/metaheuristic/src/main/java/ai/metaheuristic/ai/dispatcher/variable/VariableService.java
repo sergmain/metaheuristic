@@ -14,16 +14,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.variable;
+package ai.metaheuristic.ai.mh.dispatcher..variable;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Variable;
+import ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData;
+import ai.metaheuristic.ai.mh.dispatcher..variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.VariableRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +57,7 @@ import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 @Service
 @Transactional
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @RequiredArgsConstructor
 public class VariableService {
 
@@ -138,7 +138,7 @@ public class VariableService {
             data.setName(variable);
             data.setFilename(filename);
             data.setExecContextId(execContextId);
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher)));
+            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.mh.dispatcher.)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setContextId(internalContextId);
 
@@ -168,9 +168,9 @@ public class VariableService {
             data.inited = false;
             data.setName(variable);
             data.setExecContextId(execContextId);
-            // TODO right now only DataSourcing.dispatcher is supporting as internal variable.
+            // TODO right now only DataSourcing.mh.dispatcher. is supporting as internal variable.
             //  the code has to be added for another type of sourcing
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher)));
+            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.mh.dispatcher.)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setContextId(contextId);
             variableRepository.save(data);

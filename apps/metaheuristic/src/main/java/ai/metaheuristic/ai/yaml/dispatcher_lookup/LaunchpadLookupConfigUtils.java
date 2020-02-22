@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.dispatcher_lookup;
+package ai.metaheuristic.ai.yaml.mh.dispatcher._lookup;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -32,10 +32,10 @@ public class LaunchpadLookupConfigUtils {
     }
 
     public static String toString(DispatcherLookupConfig config) {
-        if (config==null || config.dispatchers ==null) {
+        if (config==null || config.mh.dispatcher.s ==null) {
             throw new IllegalStateException("DispatcherLookupConfig is null");
         }
-        for (DispatcherLookupConfig.DispatcherLookup signatureConfig : config.dispatchers) {
+        for (DispatcherLookupConfig.DispatcherLookup signatureConfig : config.mh.dispatcher.s) {
             if (signatureConfig.signatureRequired && StringUtils.isBlank(signatureConfig.publicKey)) {
                 throw new IllegalStateException("signatureConfig.publicKey is blank");
             }

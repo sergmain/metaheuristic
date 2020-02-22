@@ -1,7 +1,7 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
      xmlns:th="http://www.thymeleaf.org"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <script>
         'use strict';
@@ -15,7 +15,7 @@
             console.log("Start deleteFunction("+id+")");
             my_confirm('Do you really want to delete this function?', 'Delete function?', "Delete", function() {
                 console.log("Deletion of function was confirmed.");
-                $.get('/dispatcher/function/function-delete/' + id, function(status) {
+                $.get('/mh.dispatcher./function/function-delete/' + id, function(status) {
                     console.log("task-rerun is finished, Status: " + status);
                     var text;
                     if (status==="true") {
@@ -25,7 +25,7 @@
                         text = 'There is some problem with deleting of function. Status: '+status;
                     }
                     my_alert_with_action(text, 'Status', function(status) {
-                        window.location.replace("/dispatcher/function/functions");
+                        window.location.replace("/mh.dispatcher./function/functions");
                     });
                 });
             });
@@ -63,7 +63,7 @@
     <div th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
         <h2 class="widget-header">Upload function </h2>
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-              th:action="@{/dispatcher/function/function-upload-from-file}"
+              th:action="@{/mh.dispatcher./function/function-upload-from-file}"
         >
             <table>
                 <tr>
@@ -101,7 +101,7 @@
         </label>
     </div>
 
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.FunctionData.FunctionsResult"*/-->
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.mh.dispatcher..data.FunctionData.FunctionsResult"*/-->
     <table class="pure-table pure-table-bordered" id="table-ds-path-cols">
         <thead>
         <tr>

@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.repositories;
+package ai.metaheuristic.ai.mh.dispatcher..repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
-import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.mh.dispatcher..beans.GlobalVariable;
+import ai.metaheuristic.ai.mh.dispatcher..variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.mh.dispatcher..variable_global.SimpleGlobalVariable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,10 +38,10 @@ import java.util.List;
  * Time: 6:17 PM
  */
 @Repository
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 public interface GlobalVariableRepository extends CrudRepository<GlobalVariable, Long> {
 
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(" +
+    @Query(value="select new ai.metaheuristic.ai.mh.dispatcher..variable.SimpleVariableAndStorageUrl(" +
             "b.id, b.variable, b.params, b.filename ) " +
             "from GlobalVariable b where b.variable in :vars")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(List<String> vars);
@@ -67,14 +67,14 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
     void deleteByVariable(String variable);
 
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleVariable(" +
+    @Query(value="select new ai.metaheuristic.ai.mh.dispatcher..variable_global.SimpleVariable(" +
             "b.id, b.version, b.variable, b.uploadTs, b.filename, b.params ) " +
             "from GlobalVariable b " +
             "order by b.uploadTs desc ")
     Slice<SimpleGlobalVariable> getAllAsSimpleGlobalVariable(Pageable pageable);
 
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleVariable(" +
+    @Query(value="select new ai.metaheuristic.ai.mh.dispatcher..variable_global.SimpleVariable(" +
             "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
             "from Variable b " +
             "where b.id=:id")

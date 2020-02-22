@@ -1,7 +1,7 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
 
 <script>
@@ -22,12 +22,12 @@
                 xhr.setRequestHeader(header, token);
             });
             // is this the right usage?
-            $.post('/dispatcher/company/companies-part', table);
+            $.post('/mh.dispatcher./company/companies-part', table);
         });
 
     </script>
 
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.CompanyData$CompaniesResult"*/-->
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.mh.dispatcher..data.CompanyData$CompaniesResult"*/-->
     <h1 class="widget-header">Companies</h1>
 
     <h1 class="widget-header">Accounts</h1>
@@ -36,7 +36,7 @@
     </div>
 
     <div th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
-        <a class="pure-button pure-button-primary" href="company-add.html" th:href="@{/dispatcher/company/company-add}">Add new company</a>
+        <a class="pure-button pure-button-primary" href="company-add.html" th:href="@{/mh.dispatcher./company/company-add}">Add new company</a>
         <p></p>
     </div>
 
@@ -54,12 +54,12 @@
             <td th:text="${r.uniqueId}">#Id</td>
             <td th:text="${r.name}">Name</td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
-                <a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/dispatcher/company/company-edit/' + r.uniqueId}">Edit</a></td>
+                <a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/mh.dispatcher./company/company-edit/' + r.uniqueId}">Edit</a></td>
             <td>
-                <a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/dispatcher/company/company-accounts/' + r.uniqueId}">Accounts</a></td>
+                <a sec:authorize="hasAnyRole('MASTER_ADMIN')" class="pure-button pure-button-primary" th:href="${'/mh.dispatcher./company/company-accounts/' + r.uniqueId}">Accounts</a></td>
             <td>
                 <a sec:authorize="hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')"
-                   th:if='${r.uniqueId!=1}' class="pure-button pure-button-primary" th:href="${'/dispatcher/company/batch/company-batches/' + r.uniqueId}">Batches</a></td>
+                   th:if='${r.uniqueId!=1}' class="pure-button pure-button-primary" th:href="${'/mh.dispatcher./company/batch/company-batches/' + r.uniqueId}">Batches</a></td>
         </tr>
         <tr>
             <td  th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated} ? 8 : 7">
@@ -68,17 +68,17 @@
                         <li class="table-nav-padding">
                             <span th:if='${result.companies.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.companies.first}'
-                               th:href="@{/dispatcher/company/companies-part(page=0,size=${result.companies.pageable.pageSize})}">« First</a>
+                               th:href="@{/mh.dispatcher./company/companies-part(page=0,size=${result.companies.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.companies.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.companies.hasPrevious()}'
-                               th:href="@{/dispatcher/company/companies-part(page=${result.companies.pageable.pageNumber - 1},size=${result.companies.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/mh.dispatcher./company/companies-part(page=${result.companies.pageable.pageNumber - 1},size=${result.companies.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.companies.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.companies.hasNext()}'
-                               th:href='@{/dispatcher/company/companies-part(page=${result.companies.pageable.pageNumber + 1},size=${result.companies.pageable.pageSize})}' title='Go to next page'>→</a>
+                               th:href='@{/mh.dispatcher./company/companies-part(page=${result.companies.pageable.pageNumber + 1},size=${result.companies.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>

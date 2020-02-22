@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.atlas;
+package ai.metaheuristic.ai.mh.dispatcher..atlas;
 
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.Data;

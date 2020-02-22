@@ -31,7 +31,7 @@ public class TestController {
     public static final String TEST_MSG = "ИИИ, 日本語, natürlich";
 
     @Controller
-    @Profile("dispatcher")
+    @Profile("mh.dispatcher.")
     public static class Simple {
 
         @GetMapping("/test/simple")
@@ -42,7 +42,7 @@ public class TestController {
     }
 
     @RestController
-    @Profile("dispatcher")
+    @Profile("mh.dispatcher.")
     public static class Rest {
 
         @PostMapping("/test/rest")

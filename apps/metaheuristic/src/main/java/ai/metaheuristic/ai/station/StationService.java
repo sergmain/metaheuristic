@@ -28,9 +28,9 @@ import ai.metaheuristic.ai.station.station_resource.DiskResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
 import ai.metaheuristic.ai.station.tasks.UploadResourceTask;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.LaunchpadSchedule;
+import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -61,12 +61,12 @@ public class StationService {
     private final StationTaskService stationTaskService;
     private final UploadResourceActor uploadResourceActor;
     private final MetadataService metadataService;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
+    private final DispatcherLookupExtendedService mh.dispatcher.LookupExtendedService;
     private final EnvService envService;
     private final ResourceProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
-    StationCommParamsYaml.ReportStationStatus produceReportStationStatus(String dispatcherUrl, LaunchpadSchedule schedule) {
+    StationCommParamsYaml.ReportStationStatus produceReportStationStatus(String mh.dispatcher.Url, LaunchpadSchedule schedule) {
 
         // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
         // TODO 2019-08-29 why not? do we have to use a different type?
@@ -74,7 +74,7 @@ public class StationService {
                 envService.getEnvYaml(),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
-                metadataService.getSessionId(dispatcherUrl),
+                metadataService.getSessionId(mh.dispatcher.Url),
                 System.currentTimeMillis(),
                 "[unknown]", "[unknown]", null, globals.logFile!=null && globals.logFile.exists(),
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
@@ -94,36 +94,36 @@ public class StationService {
 
     /**
      * mark tasks as delivered.
-     * By delivering it means that result of exec was delivered to dispatcher
+     * By delivering it means that result of exec was delivered to mh.dispatcher.
      *
-     * @param dispatcherUrl String
+     * @param mh.dispatcher.Url String
      * @param ids List&lt;String> list if task ids
      */
-    public void markAsDelivered(String dispatcherUrl, List<Long> ids) {
+    public void markAsDelivered(String mh.dispatcher.Url, List<Long> ids) {
         for (Long id : ids) {
-            stationTaskService.setDelivered(dispatcherUrl, id);
+            stationTaskService.setDelivered(mh.dispatcher.Url, id);
         }
     }
 
-    public void assignTasks(String dispatcherUrl, DispatcherCommParamsYaml.AssignedTask task) {
+    public void assignTasks(String mh.dispatcher.Url, DispatcherCommParamsYaml.AssignedTask task) {
         if (task==null) {
             return;
         }
         synchronized (StationSyncHolder.stationGlobalSync) {
-            stationTaskService.createTask(dispatcherUrl, task.taskId, task.execContextId, task.params);
+            stationTaskService.createTask(mh.dispatcher.Url, task.taskId, task.execContextId, task.params);
         }
     }
 
-    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(String dispatcherUrl, long taskId) {
-        if (dispatcherUrl==null) {
-            throw new IllegalStateException("#749.020 dispatcherUrl is null");
+    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(String mh.dispatcher.Url, long taskId) {
+        if (mh.dispatcher.Url==null) {
+            throw new IllegalStateException("#749.020 mh.dispatcher.Url is null");
         }
-        StationTask task = stationTaskService.findById(dispatcherUrl, taskId);
+        StationTask task = stationTaskService.findById(mh.dispatcher.Url, taskId);
         if (task==null) {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
         }
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-        File taskDir = stationTaskService.prepareTaskDir(metadataService.dispatcherUrlAsCode(dispatcherUrl), taskId);
+        File taskDir = stationTaskService.prepareTaskDir(metadataService.mh.dispatcher.UrlAsCode(mh.dispatcher.Url), taskId);
 
         final SourceCodeParamsYaml.Variable dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
                 .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
@@ -146,18 +146,18 @@ public class StationService {
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
             log.warn("#749.040 Resource wasn't found. Considering that this task is broken, {}", assetFile);
-            stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId,
+            stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId,
                     "#749.050 Resource wasn't found. Considering that this task is broken");
-            stationTaskService.setCompleted(task.dispatcherUrl, task.taskId);
+            stationTaskService.setCompleted(task.mh.dispatcher.Url, task.taskId);
             return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
         }
-        final Metadata.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
-        final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+        final Metadata.DispatcherInfo mh.dispatcher.Code = metadataService.mh.dispatcher.UrlAsCode(mh.dispatcher.Url);
+        final DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher. =
+                mh.dispatcher.LookupExtendedService.lookupExtendedMap.get(mh.dispatcher.Url);
 
         UploadResourceTask uploadResourceTask = new UploadResourceTask(taskId, assetFile.file);
-        uploadResourceTask.dispatcher = dispatcher.dispatcherLookup;
-        uploadResourceTask.stationId = dispatcherCode.stationId;
+        uploadResourceTask.mh.dispatcher. = mh.dispatcher..mh.dispatcher.Lookup;
+        uploadResourceTask.stationId = mh.dispatcher.Code.stationId;
         uploadResourceActor.add(uploadResourceTask);
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
@@ -169,7 +169,7 @@ public class StationService {
         public Map<String, List<AssetFile>> assetFiles = new HashMap<>();
     }
 
-    public StationService.ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.DispatcherInfo dispatcherCode, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+    public StationService.ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.DispatcherInfo mh.dispatcher.Code, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher., File taskDir) {
         StationService.ResultOfChecking result = new StationService.ResultOfChecking();
         try {
             taskParamYaml.taskYaml.inputResourceIds.forEach((key, value) -> {
@@ -181,7 +181,7 @@ public class StationService {
                         throw new BreakFromForEachException(es);
                     }
                     ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
-                    List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, dispatcher, task, dispatcherCode, resourceCode, params);
+                    List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, mh.dispatcher., task, mh.dispatcher.Code, resourceCode, params);
                     result.assetFiles.computeIfAbsent(key, o -> new ArrayList<>()).addAll(assetFiles);
                     for (AssetFile assetFile : assetFiles) {
                         // is this resource prepared?
@@ -194,13 +194,13 @@ public class StationService {
             });
         }
         catch (BreakFromForEachException e) {
-            stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, e.getMessage());
+            stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, e.getMessage());
             result.isError = true;
             return result;
         }
         catch (ResourceProviderException e) {
             log.error("#749.070 Error", e);
-            stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, e.toString());
+            stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, e.toString());
             result.isError = true;
             return result;
         }
@@ -209,7 +209,7 @@ public class StationService {
         }
         if (!result.isAllLoaded) {
             if (task.assetsPrepared) {
-                stationTaskService.markAsAssetPrepared(task.dispatcherUrl, task.taskId, false);
+                stationTaskService.markAsAssetPrepared(task.mh.dispatcher.Url, task.taskId, false);
             }
             result.isError = true;
             return result;
@@ -218,7 +218,7 @@ public class StationService {
         return result;
     }
 
-    public File getOutputResourceFile(StationTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+    public File getOutputResourceFile(StationTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher., File taskDir) {
         try {
             final SourceCodeParamsYaml.Variable dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
                     .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
@@ -226,12 +226,12 @@ public class StationService {
             ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
             //noinspection UnnecessaryLocalVariable
             File outputResourceFile = resourceProvider.getOutputResourceFile(
-                    taskDir, dispatcher, task, taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), dataStorageParams);
+                    taskDir, mh.dispatcher., task, taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), dataStorageParams);
             return outputResourceFile;
         } catch (ResourceProviderException e) {
             final String msg = "#749.080 Error: " + e.toString();
             log.error(msg, e);
-            stationTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, msg);
+            stationTaskService.markAsFinishedWithError(task.mh.dispatcher.Url, task.taskId, msg);
             return null;
         }
     }

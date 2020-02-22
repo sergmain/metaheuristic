@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.dispatcher_lookup;
+package ai.metaheuristic.ai.yaml.mh.dispatcher._lookup;
 
 import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
@@ -29,7 +29,7 @@ import java.util.Map;
 
 @Data
 public class DispatcherLookupConfig {
-    public List<DispatcherLookup> dispatchers = new ArrayList<>();
+    public List<DispatcherLookup> mh.dispatcher.s = new ArrayList<>();
 
     public enum DispatcherLookupType {
         direct, registry

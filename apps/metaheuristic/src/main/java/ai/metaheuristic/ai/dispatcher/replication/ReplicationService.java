@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.replication;
+package ai.metaheuristic.ai.mh.dispatcher..replication;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
+import ai.metaheuristic.ai.mh.dispatcher..data.ReplicationData;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 public class ReplicationService {
 
     public final Globals globals;

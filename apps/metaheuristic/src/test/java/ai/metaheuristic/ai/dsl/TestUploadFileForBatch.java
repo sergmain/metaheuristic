@@ -17,15 +17,15 @@
 package ai.metaheuristic.ai.dsl;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
-import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.dispatcher.beans.Account;
-import ai.metaheuristic.ai.dispatcher.data.BatchData;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
+import ai.metaheuristic.ai.mh.dispatcher..batch.BatchCache;
+import ai.metaheuristic.ai.mh.dispatcher..batch.BatchTopLevelService;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
+import ai.metaheuristic.ai.mh.dispatcher..data.BatchData;
+import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeTopLevelService;
+import ai.metaheuristic.ai.mh.dispatcher..task.TaskPersistencer;
+import ai.metaheuristic.ai.mh.dispatcher..task.TaskService;
+import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -69,7 +69,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
             p.code = "process-mh.variable-splitter";
 
             p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(Consts.MH_VARIABLE_SPLITTER_FUNCTION, EnumsApi.FunctionExecContext.internal);
-            p.output.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher,"batch-array"));
+            p.output.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.mh.dispatcher.,"batch-array"));
 
             planParamsYaml.source.processes.add(p);
         }

@@ -1,13 +1,13 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New experiment</h1>
 
-        <!--/*@thymesVar id="experiment" type="ai.metaheuristic.ai.dispatcher.beans.Experiment"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${experiment}" method="post" action="#" th:method="POST" th:action="@{/dispatcher/experiment/experiment-add-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
+        <!--/*@thymesVar id="experiment" type="ai.metaheuristic.ai.mh.dispatcher..beans.Experiment"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${experiment}" method="post" action="#" th:method="POST" th:action="@{/mh.dispatcher./experiment/experiment-add-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <input type="hidden" th:field="*{version}"/>
             <fieldset>
@@ -37,7 +37,7 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/dispatcher/experiment/experiments'}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/mh.dispatcher./experiment/experiments'}">Cancel</a>
                         </td>
                     </tr>
                 </table>
@@ -47,7 +47,7 @@
 
         <h2 class="widget-header">Upload experiment from file </h2>
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-              th:action="@{/dispatcher/experiment/experiment-upload-from-file}"
+              th:action="@{/mh.dispatcher./experiment/experiment-upload-from-file}"
         >
             <table>
                 <tr>

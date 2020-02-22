@@ -49,7 +49,7 @@ public class FunctionDownloadStatusYamlUtilsV1
             FunctionDownloadStatusYaml.Status target = new FunctionDownloadStatusYaml.Status();
             target.functionState = source.functionState;
             target.code = source.code;
-            target.dispatcherUrl = source.dispatcherUrl;
+            target.mh.dispatcher.Url = source.mh.dispatcher.Url;
             target.sourcing = source.sourcing;
             target.verified = source.verified;
             return target;

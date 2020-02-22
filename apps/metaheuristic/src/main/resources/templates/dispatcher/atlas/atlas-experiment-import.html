@@ -1,11 +1,11 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
      xmlns:th="http://www.thymeleaf.org"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <h2 class="widget-header">Import an experiment to atlas from file</h2>
     <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-          th:action="@{/dispatcher/atlas/atlas-experiment-upload-from-file}"
+          th:action="@{/mh.dispatcher./atlas/atlas-experiment-upload-from-file}"
     >
         <table>
             <tr>

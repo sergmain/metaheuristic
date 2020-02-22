@@ -14,20 +14,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.task;
+package ai.metaheuristic.ai.mh.dispatcher..task;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
+import ai.metaheuristic.ai.mh.dispatcher..beans.TaskImpl;
+import ai.metaheuristic.ai.mh.dispatcher..event.DispatcherEventService;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.TaskRepository;
+import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.api.mh.dispatcher..Task;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task_extended_result.TaskExtendedResultYaml;
@@ -48,13 +48,13 @@ import java.util.function.Consumer;
 
 @Service
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @RequiredArgsConstructor
 public class TaskPersistencer {
 
     private static final int NUMBER_OF_TRY = 2;
     private final TaskRepository taskRepository;
-    private final DispatcherEventService dispatcherEventService;
+    private final DispatcherEventService mh.dispatcher.EventService;
 
     public TaskImpl setParams(Long taskId, String taskParams) {
         return TaskFunctions.getWithSync(taskId, () -> {
@@ -141,7 +141,7 @@ public class TaskPersistencer {
         try {
             EnumsApi.TaskExecState state = functionExec.allFunctionsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
             Task t = prepareAndSaveTask(result, state);
-            dispatcherEventService.publishTaskEvent(
+            mh.dispatcher.EventService.publishTaskEvent(
                     state==EnumsApi.TaskExecState.OK ? EnumsApi.DispatcherEventType.TASK_FINISHED : EnumsApi.DispatcherEventType.TASK_ERROR,
                     null, result.taskId, t.getExecContextId());
             action.accept(t);
@@ -180,7 +180,7 @@ public class TaskPersistencer {
             task.setResultReceived(true);
 
             task = taskRepository.save(task);
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.getExecContextId());
+            mh.dispatcher.EventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.getExecContextId());
 
             return task;
         });

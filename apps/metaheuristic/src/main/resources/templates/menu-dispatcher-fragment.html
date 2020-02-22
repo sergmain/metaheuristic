@@ -1,43 +1,43 @@
 <div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <a class="pure-menu-heading">Control panel</a>
     <ul>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER')"
-            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/index.html" th:href="@{/dispatcher/index}">Control panel</a>
+            th:attr="class=${#httpServletRequest.requestURI=='/mh.dispatcher./index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="mh.dispatcher./index.html" th:href="@{/mh.dispatcher./index}">Control panel</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER')"
-            th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/sourceCode/sourceCode')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/source-code/source-codes.html" th:href="@{/dispatcher/source-code/source-codes}">Source codes</a>
+            th:attr="class=${#httpServletRequest.requestURI.startsWith('/mh.dispatcher./sourceCode/sourceCode')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="mh.dispatcher./source-code/source-codes.html" th:href="@{/mh.dispatcher./source-code/source-codes}">Source codes</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/experiments'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/experiment/experiments.html" th:href="@{/dispatcher/experiment/experiments}">Experiments</a>
+            th:attr="class=${#httpServletRequest.requestURI=='/mh.dispatcher./experiments'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="mh.dispatcher./experiment/experiments.html" th:href="@{/mh.dispatcher./experiment/experiments}">Experiments</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/atlas/atlas')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/atlas/atlas-experiments.html" th:href="@{/dispatcher/atlas/atlas-experiments}">Atlas</a>
+            th:attr="class=${#httpServletRequest.requestURI.startsWith('/mh.dispatcher./atlas/atlas')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="mh.dispatcher./atlas/atlas-experiments.html" th:href="@{/mh.dispatcher./atlas/atlas-experiments}">Atlas</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/global-variables'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/global-variable/global-variables.html" th:href="@{/dispatcher/global-variable/global-variables}">Resources</a>
+            th:attr="class=${#httpServletRequest.requestURI=='/mh.dispatcher./global-variables'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="mh.dispatcher./global-variable/global-variables.html" th:href="@{/mh.dispatcher./global-variable/global-variables}">Resources</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/functions'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/function/functions.html" th:href="@{/dispatcher/function/functions}">Functions</a>
+            th:attr="class=${#httpServletRequest.requestURI=='/mh.dispatcher./functions'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="mh.dispatcher./function/functions.html" th:href="@{/mh.dispatcher./function/functions}">Functions</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/stations'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/station/stations.html" th:href="@{/dispatcher/station/stations}">Stations</a>
+            th:attr="class=${#httpServletRequest.requestURI=='/mh.dispatcher./stations'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="mh.dispatcher./station/stations.html" th:href="@{/mh.dispatcher./station/stations}">Stations</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN')"
-                th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/account/accounts'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/account/accounts.html" th:href="@{/dispatcher/account/accounts}">Accounts</a>
+                th:attr="class=${#httpServletRequest.requestURI=='/mh.dispatcher./account/accounts'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="mh.dispatcher./account/accounts.html" th:href="@{/mh.dispatcher./account/accounts}">Accounts</a>
         </li>
         <li sec:authorize="hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT')"
-                th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/company/companies'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/company/companies.html" th:href="@{/dispatcher/company/companies}">Company</a>
+                th:attr="class=${#httpServletRequest.requestURI=='/mh.dispatcher./company/companies'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="mh.dispatcher./company/companies.html" th:href="@{/mh.dispatcher./company/companies}">Company</a>
         </li>
 <!--
         <li  sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER')"

@@ -1,7 +1,7 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Delete execContext</h1>
@@ -22,7 +22,7 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/dispatcher/source-code/exec-context-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/mh.dispatcher./source-code/exec-context-delete-commit}"
                           accept-charset="UTF-8"
                           id="execContext-delete-commit"
                           name="f">
@@ -37,8 +37,8 @@
                     &nbsp;
                 </td>
                 <td>
-                    <!--<a class="pure-button pure-button-primary" href="exec-contexts.html" th:href="${'/dispatcher/source-code/exec-contexts/' + result.sourceCode.id}">Cancel</a>-->
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="${'/dispatcher/source-code/exec-contexts/' + result.sourceCode.id}" accept-charset="UTF-8" id="execContext-delete-cancel" name="f">
+                    <!--<a class="pure-button pure-button-primary" href="exec-contexts.html" th:href="${'/mh.dispatcher./source-code/exec-contexts/' + result.sourceCode.id}">Cancel</a>-->
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="${'/mh.dispatcher./source-code/exec-contexts/' + result.sourceCode.id}" accept-charset="UTF-8" id="execContext-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

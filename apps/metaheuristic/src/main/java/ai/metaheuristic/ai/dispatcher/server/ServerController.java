@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.server;
+package ai.metaheuristic.ai.mh.dispatcher..server;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
@@ -41,7 +41,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 @RestController
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @RequestMapping("/rest/v1")
 @PreAuthorize("hasAnyRole('SERVER_REST_ACCESS')")
 @RequiredArgsConstructor

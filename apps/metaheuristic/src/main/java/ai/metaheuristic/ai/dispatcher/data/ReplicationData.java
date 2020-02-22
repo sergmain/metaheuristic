@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.data;
+package ai.metaheuristic.ai.mh.dispatcher..data;
 
-import ai.metaheuristic.ai.dispatcher.beans.Account;
-import ai.metaheuristic.ai.dispatcher.beans.Company;
-import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Company;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Function;
+import ai.metaheuristic.ai.mh.dispatcher..beans.SourceCodeImpl;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.AllArgsConstructor;
 import lombok.Data;

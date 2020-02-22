@@ -45,8 +45,8 @@ public class FunctionDownloadStatusYaml implements BaseParams {
         public Enums.FunctionState functionState;
         public String code;
 
-        // actually this is assetUrl. left it as dispatcherUrl until there will be versioning of this config
-        public String dispatcherUrl;
+        // actually this is assetUrl. left it as mh.dispatcher.Url until there will be versioning of this config
+        public String mh.dispatcher.Url;
         public EnumsApi.FunctionSourcing sourcing;
         public boolean verified;
     }

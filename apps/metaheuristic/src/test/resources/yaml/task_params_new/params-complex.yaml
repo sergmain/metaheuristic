@@ -18,17 +18,17 @@ inputResourceCodes:
 outputResourceCode: task-51648-ml_model.bin
 resourceStorageUrls:
   649-941-3-snippet-03-1_1-feature-processing: &id001
-    sourcing: dispatcher
+    sourcing: mh.dispatcher.
     storageType: feature-output
   649-941-1-snippet-01-1_1-assembly-raw-file:
-    sourcing: dispatcher
+    sourcing: mh.dispatcher.
     storageType: assembled-raw-output
   task-51648-ml_model.bin:
-    sourcing: dispatcher
+    sourcing: mh.dispatcher.
   649-941-3-snippet-04-1_1-feature-processing: *id001
   649-941-3-snippet-05-1_1-feature-processing: *id001
   649-941-2-snippet-02-1_1-dataset-processing:
-    sourcing: dispatcher
+    sourcing: mh.dispatcher.
     storageType: dataset-processing-output
 snippet:
   checksum: sha2

@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.source_code;
+package ai.metaheuristic.ai.mh.dispatcher..source_code;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.api.mh.dispatcher..SourceCode;
 
 public interface ProcessValidator {
     EnumsApi.SourceCodeValidateStatus validate(SourceCode sourceCode, SourceCodeParamsYaml.Process process, boolean isFirst);

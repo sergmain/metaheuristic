@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.billing;
+package ai.metaheuristic.ai.mh.dispatcher..billing;
 
 /**
  * @author Serge

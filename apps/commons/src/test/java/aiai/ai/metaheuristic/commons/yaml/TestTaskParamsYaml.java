@@ -43,7 +43,7 @@ public class TestTaskParamsYaml {
         ty.inputResourceIds = Map.of("code-1", List.of("value-1-1", "value-1-2"));
         ty.outputResourceIds = Map.of("output-code-1", "1");
         ty.resourceStorageUrls = Map.of(
-                "value-1-1", new DataStorageParams(EnumsApi.DataSourcing.dispatcher),
+                "value-1-1", new DataStorageParams(EnumsApi.DataSourcing.mh.dispatcher.),
                 "value-1-2", new DataStorageParams(EnumsApi.DataSourcing.disk)
         );
         ty.clean = true;
@@ -64,7 +64,7 @@ public class TestTaskParamsYaml {
 
         final TaskParamsYamlV1.FunctionConfigV1 postFunction = new TaskParamsYamlV1.FunctionConfigV1();
         postFunction.code = "post-function-code";
-        postFunction.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+        postFunction.sourcing = EnumsApi.FunctionSourcing.mh.dispatcher.;
         ty.postFunctions = List.of(postFunction);
 
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(v2);
@@ -93,7 +93,7 @@ public class TestTaskParamsYaml {
         assertTrue(tpy.taskYaml.inputResourceIds.get("code-1").contains("value-1-2"));
         ty.outputResourceIds = Map.of("output-code-1", "1");
         ty.resourceStorageUrls = Map.of(
-                "value-1-1", new DataStorageParams(EnumsApi.DataSourcing.dispatcher),
+                "value-1-1", new DataStorageParams(EnumsApi.DataSourcing.mh.dispatcher.),
                 "value-1-2", new DataStorageParams(EnumsApi.DataSourcing.disk)
         );
 
@@ -112,7 +112,7 @@ public class TestTaskParamsYaml {
 
         assertEquals(1, tpy.taskYaml.postFunctions.size());
         assertEquals("post-function-code", tpy.taskYaml.postFunctions.get(0).code);
-        assertEquals(EnumsApi.FunctionSourcing.dispatcher, tpy.taskYaml.postFunctions.get(0).sourcing);
+        assertEquals(EnumsApi.FunctionSourcing.mh.dispatcher., tpy.taskYaml.postFunctions.get(0).sourcing);
 
     }
 }

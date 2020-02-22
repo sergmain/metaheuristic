@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.server;
+package ai.metaheuristic.ai.mh.dispatcher..server;
 
-import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
-import ai.metaheuristic.ai.dispatcher.replication.ReplicationSourceService;
+import ai.metaheuristic.ai.mh.dispatcher..data.ReplicationData;
+import ai.metaheuristic.ai.mh.dispatcher..replication.ReplicationSourceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @RequestMapping("/rest/v1/replication")
 @PreAuthorize("hasAnyRole('ASSET_REST_ACCESS')")
 @RequiredArgsConstructor

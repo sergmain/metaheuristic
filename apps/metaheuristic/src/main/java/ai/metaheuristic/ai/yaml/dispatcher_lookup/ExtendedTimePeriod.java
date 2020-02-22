@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.dispatcher_lookup;
+package ai.metaheuristic.ai.yaml.mh.dispatcher._lookup;
 
 import lombok.Data;
 

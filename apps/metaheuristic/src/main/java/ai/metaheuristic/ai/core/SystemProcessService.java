@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.core;
 
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.LaunchpadSchedule;
+import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.LaunchpadSchedule;
 import ai.metaheuristic.api.data.FunctionApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

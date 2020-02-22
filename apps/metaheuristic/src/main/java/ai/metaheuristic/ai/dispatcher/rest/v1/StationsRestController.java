@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.rest.v1;
+package ai.metaheuristic.ai.mh.dispatcher..rest.v1;
 
-import ai.metaheuristic.ai.dispatcher.beans.Station;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Station;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.ai.dispatcher.data.StationData;
-import ai.metaheuristic.ai.dispatcher.station.StationTopLevelService;
+import ai.metaheuristic.ai.mh.dispatcher..data.StationData;
+import ai.metaheuristic.ai.mh.dispatcher..station.StationTopLevelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -28,8 +28,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/rest/v1/dispatcher")
-@Profile("dispatcher")
+@RequestMapping("/rest/v1/mh.dispatcher.")
+@Profile("mh.dispatcher.")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
 @RequiredArgsConstructor

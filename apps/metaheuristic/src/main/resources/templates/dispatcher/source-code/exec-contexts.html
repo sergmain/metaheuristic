@@ -1,6 +1,6 @@
 <div xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" layout:fragment="content"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.source_code.SourceCodeApiData$ExecContextsResult"*/-->
     <script>
@@ -20,7 +20,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/dispatcher/source-code/exec-contexts-part/'+ [[${result.currentSourceCodeId}]] , table);
+            $.post('/mh.dispatcher./source-code/exec-contexts-part/'+ [[${result.currentSourceCodeId}]] , table);
         });
 
     </script>
@@ -28,7 +28,7 @@
     <h1 class="widget-header">Exec contexts</h1>
 
     <a class="pure-button pure-button-primary" href="exec-context-add.html"
-       th:href="${'/dispatcher/source-code/exec-context-add/' + result.currentSourceCodeId}">Add new exec context</a>
+       th:href="${'/mh.dispatcher./source-code/exec-context-add/' + result.currentSourceCodeId}">Add new exec context</a>
     <p></p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
@@ -61,19 +61,19 @@
                    i.valid and
                    result.sourceCodes.get(i.id).valid
                    }"
-                   th:href="${'/dispatcher/source-code/exec-context-target-exec-state/'+i.sourceCodeId+'/producing/' + i.id}">Produce</a>
+                   th:href="${'/mh.dispatcher./source-code/exec-context-target-exec-state/'+i.sourceCodeId+'/producing/' + i.id}">Produce</a>
                 <a class="pure-button pure-button-primary"
                    th:if="${i.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).PRODUCED.code or
                    i.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STOPPED.code}"
-                   th:href="${'/dispatcher/source-code/exec-context-target-exec-state/'+i.sourceCodeId+'/started/' + i.id}">Start</a>
+                   th:href="${'/mh.dispatcher./source-code/exec-context-target-exec-state/'+i.sourceCodeId+'/started/' + i.id}">Start</a>
                 <a class="pure-button pure-button-primary"
                    th:if="${i.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STARTED.code}"
-                   th:href="${'/dispatcher/source-code/exec-context-target-exec-state/'+i.sourceCodeId+'/stopped/' + i.id}">Stop</a>
+                   th:href="${'/mh.dispatcher./source-code/exec-context-target-exec-state/'+i.sourceCodeId+'/stopped/' + i.id}">Stop</a>
             </td>
             <td><a class="pure-button pure-button-primary"
                    th:if="${not i.valid}"
-                   th:href="${'/dispatcher/source-code/exec-context-validate/' + i.id}">Validate</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/source-code/exec-context-delete/'+i.sourceCodeId+'/' + i.id}">Delete</a></td>
+                   th:href="${'/mh.dispatcher./source-code/exec-context-validate/' + i.id}">Validate</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/mh.dispatcher./source-code/exec-context-delete/'+i.sourceCodeId+'/' + i.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="11">
@@ -82,17 +82,17 @@
                         <li class="table-nav-padding">
                             <span th:if='${result.instances.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.instances.first}'
-                               th:href="@{/dispatcher/source-code/exec-contexts-part/{id}(id=${result.currentSourceCodeId},page=0,size=${result.instances.pageable.pageSize})}">« First</a>
+                               th:href="@{/mh.dispatcher./source-code/exec-contexts-part/{id}(id=${result.currentSourceCodeId},page=0,size=${result.instances.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.instances.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.instances.hasPrevious()}'
-                               th:href="@{/dispatcher/source-code/exec-contexts-part/{id}(id=${result.currentSourceCodeId},page=${result.instances.pageable.pageNumber - 1},size=${result.instances.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/mh.dispatcher./source-code/exec-contexts-part/{id}(id=${result.currentSourceCodeId},page=${result.instances.pageable.pageNumber - 1},size=${result.instances.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.instances.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.instances.hasNext()}'
-                               th:href="@{/dispatcher/source-code/exec-contexts-part/{id}(id=${result.currentSourceCodeId},page=${result.instances.pageable.pageNumber + 1},size=${result.instances.pageable.pageSize})}" title='Go to next page'>→</a>
+                               th:href="@{/mh.dispatcher./source-code/exec-contexts-part/{id}(id=${result.currentSourceCodeId},page=${result.instances.pageable.pageNumber + 1},size=${result.instances.pageable.pageSize})}" title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>
@@ -102,6 +102,6 @@
     </table>
     <p></p>
 
-    <a class="pure-button pure-button-primary" href="source-codes.html" th:href="${'/dispatcher/source-code/source-codes'  }">To source codes</a>
+    <a class="pure-button pure-button-primary" href="source-codes.html" th:href="${'/mh.dispatcher./source-code/source-codes'  }">To source codes</a>
 
 </div>

@@ -32,7 +32,7 @@ import java.util.Map;
  */
 @Service
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 public class CacheForTest {
 
     public static Map<Integer, SimpleBeanForTest> map = new HashMap<>();

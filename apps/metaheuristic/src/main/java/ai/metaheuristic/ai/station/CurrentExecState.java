@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.station;
 
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -32,23 +32,23 @@ public class CurrentExecState {
 
     private Map<String, AtomicBoolean> isInit = new HashMap<>();
 
-    public boolean isInited(String dispatcherUrl) {
+    public boolean isInited(String mh.dispatcher.Url) {
         synchronized(execContextState) {
-            return isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean(false)).get();
+            return isInit.computeIfAbsent(mh.dispatcher.Url, v -> new AtomicBoolean(false)).get();
         }
     }
 
-    public void register(String dispatcherUrl, List<DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus> statuses) {
+    public void register(String mh.dispatcher.Url, List<DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus> statuses) {
         synchronized(execContextState) {
-            isInit.computeIfAbsent(dispatcherUrl, v -> new AtomicBoolean()).set(true);
+            isInit.computeIfAbsent(mh.dispatcher.Url, v -> new AtomicBoolean()).set(true);
             // statuses==null when there isn't any execContext
             if (statuses==null) {
-                execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).clear();
+                execContextState.computeIfAbsent(mh.dispatcher.Url, m -> new HashMap<>()).clear();
                 return;
             }
-            statuses.forEach(status -> execContextState.computeIfAbsent(dispatcherUrl, m -> new HashMap<>()).put(status.execContextId, status.state));
+            statuses.forEach(status -> execContextState.computeIfAbsent(mh.dispatcher.Url, m -> new HashMap<>()).put(status.execContextId, status.state));
             execContextState.forEach((k, v) -> {
-                if (!k.equals(dispatcherUrl)) {
+                if (!k.equals(mh.dispatcher.Url)) {
                     return;
                 }
                 List<Long> ids = new ArrayList<>();
@@ -72,12 +72,12 @@ public class CurrentExecState {
         }
     }
 
-    boolean isState(String dispatcherUrl, Long execContextId, EnumsApi.ExecContextState state) {
-        EnumsApi.ExecContextState currState = getState(dispatcherUrl, execContextId);
+    boolean isState(String mh.dispatcher.Url, Long execContextId, EnumsApi.ExecContextState state) {
+        EnumsApi.ExecContextState currState = getState(mh.dispatcher.Url, execContextId);
         return currState!=null && currState==state;
     }
 
-    boolean isStarted(String dispatcherUrl, Long execContextId) {
-        return isState(dispatcherUrl, execContextId, EnumsApi.ExecContextState.STARTED);
+    boolean isStarted(String mh.dispatcher.Url, Long execContextId) {
+        return isState(mh.dispatcher.Url, execContextId, EnumsApi.ExecContextState.STARTED);
     }
 }

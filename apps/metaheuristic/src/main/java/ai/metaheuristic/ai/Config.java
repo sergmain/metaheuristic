@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.dispatcher.batch.RefToBatchRepositories;
-import ai.metaheuristic.ai.dispatcher.repositories.RefToLaunchpadRepositories;
+import ai.metaheuristic.ai.mh.dispatcher..batch.RefToBatchRepositories;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.RefToLaunchpadRepositories;
 import ai.metaheuristic.ai.resource.ResourceCleanerInterceptor;
 import lombok.RequiredArgsConstructor;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
@@ -189,8 +189,8 @@ public class Config {
             }
             return builder
                     .dataSource(dataSource)
-                    .packages("ai.metaheuristic.ai.dispatcher.beans")
-                    .persistenceUnit("dispatcher")
+                    .packages("ai.metaheuristic.ai.mh.dispatcher..beans")
+                    .persistenceUnit("mh.dispatcher.")
                     .build();
         }
 

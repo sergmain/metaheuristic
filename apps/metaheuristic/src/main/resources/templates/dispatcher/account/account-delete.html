@@ -1,12 +1,12 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Delete Message</h1>
 
-        <!--/*@thymesVar id="account" type="ai.metaheuristic.ai.dispatcher.beans.Account"*/-->
+        <!--/*@thymesVar id="account" type="ai.metaheuristic.ai.mh.dispatcher..beans.Account"*/-->
         <form class="form-horizontal" th:object="${account}">
             <div class="form-group">
                 <label class="col-sm-2 control-label">Username:</label>
@@ -45,7 +45,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/account}" accept-charset="UTF-8" id="account-delete-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/mh.dispatcher./account}" accept-charset="UTF-8" id="account-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.service;
 
 import ai.metaheuristic.ai.preparing.FeatureMethods;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;

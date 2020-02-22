@@ -26,17 +26,17 @@ import org.springframework.stereotype.Service;
 public class ResourceProviderFactory {
 
     private final DiskResourceProvider diskResourceProvider;
-    private final DispatcherResourceProvider dispatcherResourceProvider;
+    private final DispatcherResourceProvider mh.dispatcher.ResourceProvider;
 
-    public ResourceProviderFactory(DiskResourceProvider diskResourceProvider, DispatcherResourceProvider dispatcherResourceProvider) {
+    public ResourceProviderFactory(DiskResourceProvider diskResourceProvider, DispatcherResourceProvider mh.dispatcher.ResourceProvider) {
         this.diskResourceProvider = diskResourceProvider;
-        this.dispatcherResourceProvider = dispatcherResourceProvider;
+        this.mh.dispatcher.ResourceProvider = mh.dispatcher.ResourceProvider;
     }
 
     public ResourceProvider getResourceProvider(EnumsApi.DataSourcing sourcing) {
         switch(sourcing) {
-            case dispatcher:
-                return dispatcherResourceProvider;
+            case mh.dispatcher.:
+                return mh.dispatcher.ResourceProvider;
             case disk:
                 return diskResourceProvider;
             default:

@@ -13,11 +13,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.dispatcher.experiment;
+package ai.metaheuristic.ai.mh.dispatcher..experiment;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.Experiment;
-import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.mh.dispatcher..beans.Experiment;
+import ai.metaheuristic.ai.mh.dispatcher..repositories.ExperimentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,7 +26,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @Slf4j
 public class ExperimentCache {
 

@@ -13,9 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.dispatcher.function;
+package ai.metaheuristic.ai.mh.dispatcher..function;
 
-import ai.metaheuristic.ai.dispatcher.data.FunctionData;
+import ai.metaheuristic.ai.mh.dispatcher..data.FunctionData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import lombok.RequiredArgsConstructor;
@@ -30,13 +30,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/dispatcher/function")
+@RequestMapping("/mh.dispatcher./function")
 @Slf4j
-@Profile("dispatcher")
+@Profile("mh.dispatcher.")
 @RequiredArgsConstructor
 public class FunctionController {
 
-    private static final String REDIRECT_LAUNCHPAD_FUNCTIONS = "redirect:/dispatcher/function/functions";
+    private static final String REDIRECT_LAUNCHPAD_FUNCTIONS = "redirect:/mh.dispatcher./function/functions";
 
     private final FunctionTopLevelService functionTopLevelService;
 
@@ -48,7 +48,7 @@ public class FunctionController {
         FunctionData.FunctionsResult functionsResult = functionTopLevelService.getFunctions();
         ControllerUtils.addMessagesToModel(model, functionsResult);
         model.addAttribute("result", functionsResult);
-        return "dispatcher/function/functions";
+        return "mh.dispatcher./function/functions";
     }
 
     @GetMapping("/function-delete/{id}")

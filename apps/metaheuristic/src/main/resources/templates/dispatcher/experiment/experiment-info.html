@@ -1,7 +1,7 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
     <h1 class="widget-header">The experiment info</h1>
 
@@ -30,32 +30,32 @@
             <td valign="top">
                 <a class="pure-button pure-button-primary" href="#"
                    th:if="${experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).NONE.code}"
-                   th:href="${'/dispatcher/experiment/exec-context-target-exec-state/'+experiment.id+'/producing/' + experimentResult.execContext.id}">Produce tasks</a>
+                   th:href="${'/mh.dispatcher./experiment/exec-context-target-exec-state/'+experiment.id+'/producing/' + experimentResult.execContext.id}">Produce tasks</a>
                 <a class="pure-button pure-button-primary" href="#"
                    th:if="${experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).PRODUCED.code or
                    experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STOPPED.code}"
-                   th:href="${'/dispatcher/experiment/exec-context-target-exec-state/'+experiment.id+'/started/' + experimentResult.execContext.id}">Start</a>
+                   th:href="${'/mh.dispatcher./experiment/exec-context-target-exec-state/'+experiment.id+'/started/' + experimentResult.execContext.id}">Start</a>
                 <a class="pure-button pure-button-primary" href="#"
                    th:if="${experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STARTED.code}"
-                   th:href="${'/dispatcher/experiment/exec-context-target-exec-state/'+experiment.id+'/stopped/' + experimentResult.execContext.id}">Stop</a>
+                   th:href="${'/mh.dispatcher./experiment/exec-context-target-exec-state/'+experiment.id+'/stopped/' + experimentResult.execContext.id}">Stop</a>
             </td>
             <td width="20">&nbsp; </td>
             <td valign="top">
                 <a class="pure-button table-nav-button-fill pure-button-primary" href="#"
                    th:if="${experimentResult.execContext.execState!=T(ai.metaheuristic.api.EnumsApi.ExecContextState).EXPORTING_TO_ATLAS_WAS_STARTED.code and
                    experimentResult.execContext.execState!=T(ai.metaheuristic.api.EnumsApi.ExecContextState).EXPORTING_TO_ATLAS.code}"
-                   th:href="${'/dispatcher/experiment/experiment-to-atlas/'+ experiment.id }">Export to Atlas</a>
+                   th:href="${'/mh.dispatcher./experiment/experiment-to-atlas/'+ experiment.id }">Export to Atlas</a>
             </td>
             <td width="20">&nbsp; </td>
             <td valign="top">
                 <a class="pure-button table-nav-button-fill pure-button-primary" href="#"
                    th:if="${experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).FINISHED.code}"
-                   th:href="${'/dispatcher/experiment/task-reset-all-broken/' + experimentResult.execContext.id +'/'+ experiment.id }">Reset broken tasks</a>
+                   th:href="${'/mh.dispatcher./experiment/task-reset-all-broken/' + experimentResult.execContext.id +'/'+ experiment.id }">Reset broken tasks</a>
             </td>
             <td width="20">&nbsp; </td>
             <td valign="top">
                 <a class="pure-button pure-button-primary" href="experiments.html"
-                   th:href="${'/dispatcher/experiment/experiments'}">To list of experiments</a>
+                   th:href="${'/mh.dispatcher./experiment/experiments'}">To list of experiments</a>
             </td>
         </tr>
     </table>
@@ -157,14 +157,14 @@
                 <td th:text="${f.execStatusAsString}">Exec status</td>
                 <td th:text="${f.maxValue!=null ? f.maxValue : 0 }">Max value</td>
                 <td><a class="pure-button table-nav-button-fill pure-button-primary"
-                       th:href="${'/dispatcher/experiment/experiment-feature-progress/'+ experiment.id + '/' + f.id}">Info</a></td>
+                       th:href="${'/mh.dispatcher./experiment/experiment-feature-progress/'+ experiment.id + '/' + f.id}">Info</a></td>
             </tr>
             </tbody>
         </table>
         <p>&nbsp;</p>
     </div>
 
-    <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/dispatcher/experiment/experiments'}">To list of experiments</a>
+    <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/mh.dispatcher./experiment/experiments'}">To list of experiments</a>
 
 
 </div>

@@ -1,6 +1,6 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
-     layout:decorate="~{layout-dispatcher}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+     layout:decorate="~{layout-mh.dispatcher.}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
 >
 
     <script>
@@ -20,7 +20,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/dispatcher/global-variable/global-variables-part', table);
+            $.post('/mh.dispatcher./global-variable/global-variables-part', table);
         });
 
     </script>
@@ -28,7 +28,7 @@
     <h1 class="widget-header">Create global variable from file</h1>
 
     <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-          th:action="@{/dispatcher/global-variable/global-variable-upload-from-file}"
+          th:action="@{/mh.dispatcher./global-variable/global-variable-upload-from-file}"
     >
         <fieldset>
             <label for="uploadFile">File for uploading</label>
@@ -58,7 +58,7 @@
 
     <h1 class="widget-header">Create global variable with external storage</h1>
     <form class="pure-form pure-form-stacked" action="#" th:method="POST"
-          th:action="@{/dispatcher/global-variable/global-variable-in-external-storage}" accept-charset="UTF-8" id="execContext-multiply-add-form" name="f">
+          th:action="@{/mh.dispatcher./global-variable/global-variable-in-external-storage}" accept-charset="UTF-8" id="execContext-multiply-add-form" name="f">
         <fieldset>
             <label for="variable">Variable</label>
             <input name="variable" id="variable1" type="text" placeholder="variable">
@@ -103,7 +103,7 @@ git:
     <p>&nbsp;</p>
 
     <h1 class="widget-header">List of global variables</h1>
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.GlobalVariableData.GlobalVariablesResult"*/-->
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.mh.dispatcher..data.GlobalVariableData.GlobalVariablesResult"*/-->
     <table class="pure-table pure-table-bordered" id="fragment-table" th:fragment="fragment-table">
         <thead>
         <tr>
@@ -122,7 +122,7 @@ git:
             <td th:text="${p.variable}">Variable</td>
             <td th:text="${p.filename}">Filename</td>
             <td th:text="${p.storageUrl}">Storage url</td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/global-variable/global-variable-delete/' + p.id}">Delete</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/mh.dispatcher./global-variable/global-variable-delete/' + p.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="12">
@@ -131,17 +131,17 @@ git:
                         <li class="table-nav-padding">
                             <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                               th:href="@{/dispatcher/global-variable/global-variables-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                               th:href="@{/mh.dispatcher./global-variable/global-variables-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                               th:href="@{/dispatcher/global-variable/global-variables-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/mh.dispatcher./global-variable/global-variables-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                               th:href='@{/dispatcher/global-variable/global-variables-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
+                               th:href='@{/mh.dispatcher./global-variable/global-variables-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>

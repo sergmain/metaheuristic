@@ -104,7 +104,7 @@ public class PackageSnippet implements CommandLineRunner {
                 System.out.println(verify.error);
                 isError=true;
             }
-            if (snippet.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
+            if (snippet.sourcing== EnumsApi.FunctionSourcing.mh.dispatcher.) {
                 File sn = new File(snippetYamlFile.getParent(), snippet.file);
                 if (!sn.exists()) {
                     System.out.println("File " + sn.getPath() + " wasn't found");
@@ -135,7 +135,7 @@ public class PackageSnippet implements CommandLineRunner {
                 String s = FunctionCoreUtils.getDataForChecksumWhenGitSourcing(functionConfig);
                 sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(s.getBytes()));
             }
-            else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
+            else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.mh.dispatcher.) {
                 final File snippetFile = new File(targetDir, functionConfig.file);
                 FileUtils.copyFile(new File(functionConfig.file), snippetFile);
                 try (FileInputStream fis = new FileInputStream(snippetFile)) {
