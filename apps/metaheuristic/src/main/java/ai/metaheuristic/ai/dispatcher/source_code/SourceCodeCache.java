@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..source_code;
+package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.mh.dispatcher..SourceCode;
-import ai.metaheuristic.ai.mh.dispatcher..beans.SourceCodeImpl;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.SourceCodeRepository;
+import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public class SourceCodeCache {
 
     private final SourceCodeRepository sourceCodeRepository;

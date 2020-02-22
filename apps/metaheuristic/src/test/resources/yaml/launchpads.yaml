@@ -1,9 +1,0 @@
-launchpads:
-  - signatureRequired: false
-    url: http://localhost:8080
-    lookupType: direct
-  - publicKey: some-public-key
-    signatureRequired: true
-    url: https://host
-    lookupType: registry
-    disabled: true

@@ -14,17 +14,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..source_code;
+package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
-import ai.metaheuristic.ai.mh.dispatcher..beans.SourceCodeImpl;
-import ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData;
-import ai.metaheuristic.ai.mh.dispatcher..event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextCache;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextService;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.mh.dispatcher..variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -32,8 +32,8 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.api.mh.dispatcher..ExecContext;
-import ai.metaheuristic.api.mh.dispatcher..SourceCode;
+import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -64,7 +64,7 @@ import static ai.metaheuristic.ai.Consts.YAML_EXT;
 import static ai.metaheuristic.ai.Consts.YML_EXT;
 
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Service
 @RequiredArgsConstructor
 public class SourceCodeTopLevelService {

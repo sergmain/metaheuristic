@@ -14,13 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..account;
+package ai.metaheuristic.ai.dispatcher.account;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
-import ai.metaheuristic.ai.mh.dispatcher..data.AccountData;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.AccountRepository;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.data.AccountData;
+import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * Time: 1:21 AM
  */
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class AccountService {
 

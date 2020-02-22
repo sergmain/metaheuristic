@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..variable_global;
+package ai.metaheuristic.ai.dispatcher.variable_global;
 
-import ai.metaheuristic.ai.mh.dispatcher..data.GlobalVariableData;
+import ai.metaheuristic.ai.dispatcher.data.GlobalVariableData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +39,9 @@ import java.util.ArrayList;
  * Time: 20:21
  */
 @Controller
-@RequestMapping("/mh.dispatcher./global-variable")
+@RequestMapping("/dispatcher/global-variable")
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class GlobalVariableController {
@@ -55,7 +55,7 @@ public class GlobalVariableController {
         GlobalVariableData.GlobalVariablesResult globalVariablesResultRest = globalVariableTopLevelService.getGlobalVariables(pageable);
         ControllerUtils.addMessagesToModel(model, globalVariablesResultRest);
         model.addAttribute("result", globalVariablesResultRest);
-        return "mh.dispatcher./global-variable/global-variables";
+        return "dispatcher/global-variable/global-variables";
     }
 
     // for AJAX
@@ -63,7 +63,7 @@ public class GlobalVariableController {
     public String getGlobalVariablesForAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
         GlobalVariableData.GlobalVariablesResult globalVariablesResultRest = globalVariableTopLevelService.getGlobalVariables(pageable);
         model.addAttribute("result", globalVariablesResultRest);
-        return "mh.dispatcher./global-variable/global-variables :: fragment-table";
+        return "dispatcher/global-variable/global-variables :: fragment-table";
     }
 
     @PostMapping(value = "/global-variable-upload-from-file")
@@ -76,7 +76,7 @@ public class GlobalVariableController {
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
-        return "redirect:/mh.dispatcher./global-variable/global-variables";
+        return "redirect:/dispatcher/global-variable/global-variables";
     }
 
     @PostMapping(value = "/global-variable-in-external-storage")
@@ -89,7 +89,7 @@ public class GlobalVariableController {
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
-        return "redirect:/mh.dispatcher./global-variable/global-variables";
+        return "redirect:/dispatcher/global-variable/global-variables";
     }
 
     @GetMapping("/global-variable-delete/{id}")
@@ -97,10 +97,10 @@ public class GlobalVariableController {
         GlobalVariableData.GlobalVariableResult globalVariableResultRest = globalVariableTopLevelService.getGlobalVariableById(id);
         if (globalVariableResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", globalVariableResultRest.errorMessages);
-            return "redirect:/mh.dispatcher./global-variables";
+            return "redirect:/dispatcher/global-variables";
         }
         model.addAttribute("globalVariable", globalVariableResultRest.data);
-        return "mh.dispatcher./global-variable/global-variable-delete";
+        return "dispatcher/global-variable/global-variable-delete";
     }
 
     @PostMapping("/global-variable-delete-commit")
@@ -109,6 +109,6 @@ public class GlobalVariableController {
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
-        return "redirect:/mh.dispatcher./global-variable/global-variables";
+        return "redirect:/dispatcher/global-variable/global-variables";
     }
 }

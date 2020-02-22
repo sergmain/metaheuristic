@@ -252,7 +252,7 @@
   "tasks": [
     {
       "id": 20988,
-      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20988-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-20988-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20988-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-20988-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806139573,
       "completedOn": 1552806154561,
@@ -268,7 +268,7 @@
     },
     {
       "id": 20989,
-      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20988-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20989-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-20988-ml_model.bin: launchpad://\n  task-20989-output-stub-for-predict: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20988-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20989-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-20988-ml_model.bin: dispatcher://\n  task-20989-output-stub-for-predict: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806496823,
       "completedOn": 1552806517284,
@@ -284,7 +284,7 @@
     },
     {
       "id": 20990,
-      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20990-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-20990-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20990-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-20990-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806170225,
       "completedOn": 1552806184933,
@@ -300,7 +300,7 @@
     },
     {
       "id": 20991,
-      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20990-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20991-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-20990-ml_model.bin: launchpad://\n  task-20991-output-stub-for-predict: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20990-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20991-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-20990-ml_model.bin: dispatcher://\n  task-20991-output-stub-for-predict: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806527392,
       "completedOn": 1552806538615,
@@ -316,7 +316,7 @@
     },
     {
       "id": 20992,
-      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20992-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-20992-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20992-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-20992-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806200829,
       "completedOn": 1552806218386,
@@ -332,7 +332,7 @@
     },
     {
       "id": 20993,
-      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20992-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20993-output-stub-for-predict\nresourceStorageUrls:\n  task-20993-output-stub-for-predict: launchpad://\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-20992-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb1\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20992-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20993-output-stub-for-predict\nresourceStorageUrls:\n  task-20993-output-stub-for-predict: dispatcher://\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-20992-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806547871,
       "completedOn": 1552806559948,
@@ -348,7 +348,7 @@
     },
     {
       "id": 20994,
-      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20994-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-20994-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20994-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-20994-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806231501,
       "completedOn": 1552806248859,
@@ -364,7 +364,7 @@
     },
     {
       "id": 20995,
-      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20994-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20995-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-20994-ml_model.bin: launchpad://\n  task-20995-output-stub-for-predict: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20994-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20995-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-20994-ml_model.bin: dispatcher://\n  task-20995-output-stub-for-predict: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806578401,
       "completedOn": 1552806593331,
@@ -380,7 +380,7 @@
     },
     {
       "id": 20996,
-      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20996-ml_model.bin\nresourceStorageUrls:\n  task-20996-ml_model.bin: launchpad://\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20996-ml_model.bin\nresourceStorageUrls:\n  task-20996-ml_model.bin: dispatcher://\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806261993,
       "completedOn": 1552806282600,
@@ -396,7 +396,7 @@
     },
     {
       "id": 20997,
-      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20996-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20997-output-stub-for-predict\nresourceStorageUrls:\n  task-20996-ml_model.bin: launchpad://\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-20997-output-stub-for-predict: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20996-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20997-output-stub-for-predict\nresourceStorageUrls:\n  task-20996-ml_model.bin: dispatcher://\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-20997-output-stub-for-predict: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806609018,
       "completedOn": 1552806626756,
@@ -412,7 +412,7 @@
     },
     {
       "id": 20998,
-      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20998-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-20998-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-20998-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-20998-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806292693,
       "completedOn": 1552806313273,
@@ -428,7 +428,7 @@
     },
     {
       "id": 20999,
-      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20998-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20999-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-20998-ml_model.bin: launchpad://\n  task-20999-output-stub-for-predict: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb1\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-20998-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-20999-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-20998-ml_model.bin: dispatcher://\n  task-20999-output-stub-for-predict: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806639603,
       "completedOn": 1552806657234,
@@ -444,7 +444,7 @@
     },
     {
       "id": 21000,
-      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21000-ml_model.bin\nresourceStorageUrls:\n  task-21000-ml_model.bin: launchpad://\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21000-ml_model.bin\nresourceStorageUrls:\n  task-21000-ml_model.bin: dispatcher://\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806323409,
       "completedOn": 1552806334621,
@@ -460,7 +460,7 @@
     },
     {
       "id": 21001,
-      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21000-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21001-output-stub-for-predict\nresourceStorageUrls:\n  task-21000-ml_model.bin: launchpad://\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-21001-output-stub-for-predict: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21000-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21001-output-stub-for-predict\nresourceStorageUrls:\n  task-21000-ml_model.bin: dispatcher://\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-21001-output-stub-for-predict: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806670101,
       "completedOn": 1552806678641,
@@ -476,7 +476,7 @@
     },
     {
       "id": 21002,
-      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21002-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-21002-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21002-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-21002-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806343919,
       "completedOn": 1552806355994,
@@ -492,7 +492,7 @@
     },
     {
       "id": 21003,
-      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21002-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21003-output-stub-for-predict\nresourceStorageUrls:\n  task-21003-output-stub-for-predict: launchpad://\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-21002-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21002-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21003-output-stub-for-predict\nresourceStorageUrls:\n  task-21003-output-stub-for-predict: dispatcher://\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-21002-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806690498,
       "completedOn": 1552806712031,
@@ -508,7 +508,7 @@
     },
     {
       "id": 21004,
-      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21004-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-21004-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21004-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-21004-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806374440,
       "completedOn": 1552806389508,
@@ -524,7 +524,7 @@
     },
     {
       "id": 21005,
-      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21004-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21005-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-21005-output-stub-for-predict: launchpad://\n  task-21004-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb2\n  ccc: ccc_1\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21004-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21005-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-21005-output-stub-for-predict: dispatcher://\n  task-21004-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806721054,
       "completedOn": 1552806742428,
@@ -540,7 +540,7 @@
     },
     {
       "id": 21006,
-      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21006-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-21006-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21006-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-21006-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806405059,
       "completedOn": 1552806419989,
@@ -556,7 +556,7 @@
     },
     {
       "id": 21007,
-      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21006-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21007-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-21006-ml_model.bin: launchpad://\n  task-21007-output-stub-for-predict: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '10'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21006-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21007-output-stub-for-predict\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-21006-ml_model.bin: dispatcher://\n  task-21007-output-stub-for-predict: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806761729,
       "completedOn": 1552806775850,
@@ -572,7 +572,7 @@
     },
     {
       "id": 21008,
-      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21008-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-21008-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21008-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-21008-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806435699,
       "completedOn": 1552806453399,
@@ -588,7 +588,7 @@
     },
     {
       "id": 21009,
-      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21008-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21009-output-stub-for-predict\nresourceStorageUrls:\n  task-21009-output-stub-for-predict: launchpad://\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-21008-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '20'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21008-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21009-output-stub-for-predict\nresourceStorageUrls:\n  task-21009-output-stub-for-predict: dispatcher://\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-21008-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806792301,
       "completedOn": 1552806806281,
@@ -604,7 +604,7 @@
     },
     {
       "id": 21010,
-      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21010-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-21010-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\noutputResourceAbsolutePath: null\noutputResourceCode: task-21010-ml_model.bin\nresourceStorageUrls:\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-21010-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"845efccfb2728e7f90ce665027e6aceedf32871892f16982b68d9404f23ccd17\"}}'\n  code: simple-metrics.fit:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-fit.py\n  metrics: false\n  params: null\n  type: fit\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806466272,
       "completedOn": 1552806483846,
@@ -620,7 +620,7 @@
     },
     {
       "id": 21011,
-      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21010-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21011-output-stub-for-predict\nresourceStorageUrls:\n  task-21011-output-stub-for-predict: launchpad://\n  simple-dataset-IRIS_input_output_v2.txt: launchpad://\n  task-21010-ml_model.bin: launchpad://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
+      "params": "clean: false\nhyperParams:\n  aaa: '30'\n  bbb: bbb2\n  ccc: ccc_2\n  ddd: '10'\n  seed: '1'\ninputResourceAbsolutePaths: {\n  }\ninputResourceCodes:\n  feature:\n  - simple-dataset-IRIS_input_output_v2.txt\n  model:\n  - task-21010-ml_model.bin\noutputResourceAbsolutePath: null\noutputResourceCode: task-21011-output-stub-for-predict\nresourceStorageUrls:\n  task-21011-output-stub-for-predict: dispatcher://\n  simple-dataset-IRIS_input_output_v2.txt: dispatcher://\n  task-21010-ml_model.bin: dispatcher://\nsnippet:\n  checksum: '{\"checksums\":{\"SHA256\":\"2bb8fff0bd8ed9e52060454c9e1a4a9be0018afb138a4419cd725e1d45179966\"}}'\n  code: simple-metrics.predict:1.1\n  env: python-3\n  fileProvided: false\n  filename: simple-metrics-predict.py\n  metrics: true\n  params: null\n  type: predict\nworkingPath: null\n",
       "stationId": 86,
       "assignedOn": 1552806822829,
       "completedOn": 1552806839759,

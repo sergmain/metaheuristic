@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..experiment;
+package ai.metaheuristic.ai.dispatcher.experiment;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Experiment;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.beans.Experiment;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Slf4j
 public class ParamsSetter {
 

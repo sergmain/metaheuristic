@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.repo;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.GlobalVariable;
-import ai.metaheuristic.ai.mh.dispatcher..variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestGlobalBinaryDataRepository {
 
     @Autowired

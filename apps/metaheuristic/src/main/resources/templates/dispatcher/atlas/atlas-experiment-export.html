@@ -1,7 +1,7 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
      xmlns:th="http://www.thymeleaf.org"
-     layout:decorate="~{layout-mh.dispatcher.}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
+     layout:decorate="~{layout-dispatcher}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <!--/*@thymesVar id="atlasId" type="java.lang.Long"*/-->
     <h1 class="widget-header">Export an experiment from atlas</h1>
@@ -10,14 +10,14 @@
         <tr>
             <td>
                 <a class="pure-button pure-button-primary" href="#"
-                   th:href="${'/mh.dispatcher./atlas/atlas-experiment-export/atlas-' + atlasId + '.yaml'}">Export</a>
+                   th:href="${'/dispatcher/atlas/atlas-experiment-export/atlas-' + atlasId + '.yaml'}">Export</a>
             </td>
             <td>
                 &nbsp;
             </td>
             <td>
                 <a class="pure-button pure-button-primary" href="atlas-experiments.html"
-                   th:href="${'/mh.dispatcher./atlas/atlas-experiments'}">Cancel</a>
+                   th:href="${'/dispatcher/atlas/atlas-experiments'}">Cancel</a>
             </td>
         </tr>
     </table>

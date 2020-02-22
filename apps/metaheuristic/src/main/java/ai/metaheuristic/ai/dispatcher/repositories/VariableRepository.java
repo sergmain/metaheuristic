@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..repositories;
+package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Variable;
-import ai.metaheuristic.ai.mh.dispatcher..variable.SimpleVariableAndStorageUrl;
-import ai.metaheuristic.ai.mh.dispatcher..variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,7 +41,7 @@ import java.util.Set;
  * Time: 15:41
  */
 @Repository
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public interface VariableRepository extends CrudRepository<Variable, Long> {
 
     @Transactional(readOnly = true)
@@ -49,7 +49,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
             "select d.id from mh_variable d where d.EXEC_CONTEXT_ID is not null and d.EXEC_CONTEXT_ID not in (select z.id from mh_exec_context z)")
     List<Long> findAllOrphanExecContextData();
 
-    @Query(value="select new ai.metaheuristic.ai.mh.dispatcher..variable.SimpleVariableAndStorageUrl(" +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(" +
             "b.id, b.name, b.params, b.filename ) " +
             "from Variable b where b.name in :vars and " +
             "b.execContextId=:execContextId")
@@ -60,7 +60,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
             "where b.execContextId in :ids ")
     List<Object[]> getFilenamesForBatchIds(Collection<Long> ids);
 
-    @Query(value="select new ai.metaheuristic.ai.mh.dispatcher..variable.SimpleVariableAndStorageUrl(" +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(" +
             "b.id, b.name, b.params, b.filename ) " +
             "from Variable b where b.name in :vars")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(Set<String> vars);
@@ -99,7 +99,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     void deleteByName(String variable);
 
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.mh.dispatcher..variable_global.SimpleVariable(" +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleVariable(" +
             "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
             "from Variable b " +
             "order by b.uploadTs desc ")

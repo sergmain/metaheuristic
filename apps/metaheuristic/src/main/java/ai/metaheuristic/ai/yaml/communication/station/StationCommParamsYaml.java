@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Communication file which is transferred from a Station to Launchpad
+ * Communication file which is transferred from a Station to Dispatcher
  *
  * @author Serge
  * Date: 8/29/2019

@@ -13,11 +13,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.mh.dispatcher..function;
+package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Function;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.FunctionRepository;
+import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -27,7 +27,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
 public class FunctionCache {

@@ -8,13 +8,13 @@
             <a class="pure-menu-link" href="about.html" th:href="@{/about}">About</a>
         </li>
         <li sec:authorize="hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT', 'ADMIN', 'DATA', 'MANAGER')"
-            th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
-            th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/mh.dispatcher./') && !#strings.startsWith(#httpServletRequest.requestURI, '/mh.dispatcher./batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="mh.dispatcher./index.html" th:href="@{/mh.dispatcher./index}">Control panel</a>
+            th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
+            th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/dispatcher/') && !#strings.startsWith(#httpServletRequest.requestURI, '/dispatcher/batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="dispatcher/index.html" th:href="@{/dispatcher/index}">Control panel</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')"
-            th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/mh.dispatcher./batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="mh.dispatcher./batch/index.html" th:href="@{/mh.dispatcher./batch/index}">Batch</a>
+            th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/dispatcher/batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="dispatcher/batch/index.html" th:href="@{/dispatcher/batch/index}">Batch</a>
         </li>
         <li sec:authorize="isAnonymous()" th:attr="class=${#httpServletRequest.requestURI=='/login'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="/login" th:href="@{/login}">Sign in</a>

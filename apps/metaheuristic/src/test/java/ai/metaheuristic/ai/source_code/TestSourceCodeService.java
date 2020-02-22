@@ -16,14 +16,14 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.mh.dispatcher..task.TaskPersistencer;
-import ai.metaheuristic.ai.mh.dispatcher..task.TaskService;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextSchedulerService;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -32,7 +32,7 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.mh.dispatcher..Task;
+import ai.metaheuristic.api.dispatcher.Task;
 import org.apache.commons.lang3.NotImplementedException;
 import org.junit.After;
 import org.junit.Test;
@@ -48,7 +48,7 @@ import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestSourceCodeService extends PreparingPlan {
 
     @Autowired

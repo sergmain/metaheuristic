@@ -14,20 +14,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..experiment;
+package ai.metaheuristic.ai.dispatcher.experiment;
 
-import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Experiment;
-import ai.metaheuristic.ai.mh.dispatcher..context.UserContextService;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeController;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeTopLevelService;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextCache;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.Experiment;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.mh.dispatcher..ExecContext;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -50,14 +50,14 @@ import java.util.ArrayList;
  */
 @SuppressWarnings("Duplicates")
 @Controller
-@RequestMapping("/mh.dispatcher./experiment")
+@RequestMapping("/dispatcher/experiment")
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class ExperimentController {
 
-    private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/mh.dispatcher./experiment/experiments";
+    private static final String REDIRECT_DISPATCHER_EXPERIMENTS = "redirect:/dispatcher/experiment/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
     private final ExecContextService execContextService;
     private final ExecContextCache execContextCache;
@@ -72,7 +72,7 @@ public class ExperimentController {
         ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
         ControllerUtils.addMessagesToModel(model, experiments);
         model.addAttribute("result", experiments);
-        return "mh.dispatcher./experiment/experiments";
+        return "dispatcher/experiment/experiments";
     }
 
     // for AJAX
@@ -80,7 +80,7 @@ public class ExperimentController {
     public String getExperimentsAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
         ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
         model.addAttribute("result", experiments);
-        return "mh.dispatcher./experiment/experiments :: table";
+        return "dispatcher/experiment/experiments :: table";
     }
 
     @PostMapping("/experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
@@ -95,7 +95,7 @@ public class ExperimentController {
     public String getTasksConsolePart(Model model, @PathVariable(name="taskId") Long taskId) {
         ExperimentApiData.ConsoleResult result = experimentTopLevelService.getTasksConsolePart(taskId);
         model.addAttribute("consoleResult", result);
-        return "mh.dispatcher./experiment/experiment-feature-progress :: fragment-console-table";
+        return "dispatcher/experiment/experiment-feature-progress :: fragment-console-table";
     }
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
@@ -110,7 +110,7 @@ public class ExperimentController {
         model.addAttribute("feature", experimentProgressResult.experimentFeature);
         model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
 
-        return "mh.dispatcher./experiment/experiment-feature-progress :: fragment-table";
+        return "dispatcher/experiment/experiment-feature-progress :: fragment-table";
     }
 
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
@@ -119,7 +119,7 @@ public class ExperimentController {
             experimentTopLevelService.getExperimentFeatureExtended(experimentId, featureId);
         if (experimentProgressResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", experimentProgressResult.errorMessages);
-            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+            return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
         model.addAttribute("metrics", experimentProgressResult.metricsResult);
         model.addAttribute("params", experimentProgressResult.hyperParamResult);
@@ -128,13 +128,13 @@ public class ExperimentController {
         model.addAttribute("feature", experimentProgressResult.experimentFeature);
         model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
 
-        return "mh.dispatcher./experiment/experiment-feature-progress";
+        return "dispatcher/experiment/experiment-feature-progress";
     }
 
     @GetMapping(value = "/experiment-add")
     public String add(@ModelAttribute("experiment") ExperimentApiData.ExperimentData experiment) {
         experiment.setSeed(1);
-        return "mh.dispatcher./experiment/experiment-add-form";
+        return "dispatcher/experiment/experiment-add-form";
     }
 
     @GetMapping(value = "/experiment-info/{id}")
@@ -142,7 +142,7 @@ public class ExperimentController {
         ExperimentApiData.ExperimentInfoExtendedResult result = experimentTopLevelService.getExperimentInfo(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
-            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+            return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
 
         if (result.isInfoMessages()) {
@@ -153,7 +153,7 @@ public class ExperimentController {
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("experimentResult", result.experimentInfo);
         model.addAttribute("progress", result.progress);
-        return "mh.dispatcher./experiment/experiment-info";
+        return "dispatcher/experiment/experiment-info";
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
@@ -161,13 +161,13 @@ public class ExperimentController {
         ExperimentApiData.ExperimentsEditResult r = experimentTopLevelService.editExperiment(id);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
-            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+            return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
 
         model.addAttribute("hyperParams", r.hyperParams);
         model.addAttribute("simpleExperiment", r.simpleExperiment);
         model.addAttribute("functionResult", r.functionResult);
-        return "mh.dispatcher./experiment/experiment-edit-form";
+        return "dispatcher/experiment/experiment-edit-form";
     }
 
     @GetMapping("/exec-context-target-exec-state/{experimentId}/{state}/{id}")
@@ -177,9 +177,9 @@ public class ExperimentController {
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeExecContextState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
+            return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-info/" + experimentId;
+        return "redirect:/dispatcher/experiment/experiment-info/" + experimentId;
     }
 
     @PostMapping(value = "/experiment-upload-from-file")
@@ -188,7 +188,7 @@ public class ExperimentController {
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
-        return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+        return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
 
     @PostMapping("/experiment-add-form-commit")
@@ -196,9 +196,9 @@ public class ExperimentController {
         OperationStatusRest status = experimentTopLevelService.addExperimentCommit(experiment);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
-            return "mh.dispatcher./experiment/experiment-add-form";
+            return "dispatcher/experiment/experiment-add-form";
         }
-        return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+        return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
 
     @PostMapping("/experiment-edit-form-commit")
@@ -207,7 +207,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-edit/" + simpleExperiment.getId();
+        return "redirect:/dispatcher/experiment/experiment-edit/" + simpleExperiment.getId();
     }
 
     @PostMapping("/experiment-metadata-add-commit/{id}")
@@ -216,7 +216,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-edit/"+id;
+        return "redirect:/dispatcher/experiment/experiment-edit/"+id;
     }
 
     @PostMapping("/experiment-metadata-edit-commit/{id}")
@@ -225,7 +225,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-edit/"+id;
+        return "redirect:/dispatcher/experiment/experiment-edit/"+id;
     }
 
     @PostMapping("/experiment-function-add-commit/{id}")
@@ -233,9 +233,9 @@ public class ExperimentController {
         OperationStatusRest status = experimentTopLevelService.functionAddCommit(id, code);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
-            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+            return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-edit/"+id;
+        return "redirect:/dispatcher/experiment/experiment-edit/"+id;
     }
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
@@ -244,7 +244,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-edit/" + experimentId;
+        return "redirect:/dispatcher/experiment/experiment-edit/" + experimentId;
     }
 
     @GetMapping("/experiment-metadata-default-add-commit/{experimentId}")
@@ -253,7 +253,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-edit/" + experimentId;
+        return "redirect:/dispatcher/experiment/experiment-edit/" + experimentId;
     }
 
     @GetMapping("/experiment-function-delete-commit/{experimentId}/{functionCode}")
@@ -262,7 +262,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-edit/" + experimentId;
+        return "redirect:/dispatcher/experiment/experiment-edit/" + experimentId;
     }
 
     @GetMapping("/experiment-function-delete-by-type-commit/{experimentId}/{functionType}")
@@ -271,7 +271,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-edit/" + experimentId;
+        return "redirect:/dispatcher/experiment/experiment-edit/" + experimentId;
     }
 
     @GetMapping("/experiment-delete/{id}")
@@ -279,12 +279,12 @@ public class ExperimentController {
         ExperimentApiData.ExperimentResult result = experimentTopLevelService.getExperimentWithoutProcessing(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
-            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+            return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
 
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("params", result.params);
-        return "mh.dispatcher./experiment/experiment-delete";
+        return "dispatcher/experiment/experiment-delete";
     }
 
     @PostMapping("/experiment-delete-commit")
@@ -294,7 +294,7 @@ public class ExperimentController {
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "#285.260 experiment wasn't found, experimentId: " + id);
-            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+            return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
         if (experiment.execContextId !=null) {
             ExecContext wb = execContextCache.findById(experiment.execContextId);
@@ -302,7 +302,7 @@ public class ExperimentController {
                 OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteExecContextById(experiment.execContextId, context);
                 if (operationStatusRest.isErrorMessages()) {
                     redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-                    return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+                    return REDIRECT_DISPATCHER_EXPERIMENTS;
                 }
             }
         }
@@ -310,7 +310,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+        return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
 
     @PostMapping("/experiment-clone-commit")
@@ -319,7 +319,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+        return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
 
     @GetMapping(value = "/experiment-to-atlas/{id}")
@@ -328,7 +328,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-info/"+id;
+        return "redirect:/dispatcher/experiment/experiment-info/"+id;
     }
 
     @PostMapping("/task-rerun/{taskId}")
@@ -343,7 +343,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-info/"+experimentId;
+        return "redirect:/dispatcher/experiment/experiment-info/"+experimentId;
     }
 
     @PostMapping("/bind-experiment-to-source-code-with-resource")
@@ -354,7 +354,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/mh.dispatcher./experiment/experiment-info/"+experimentId;
+        return "redirect:/dispatcher/experiment/experiment-info/"+experimentId;
     }
 
 }

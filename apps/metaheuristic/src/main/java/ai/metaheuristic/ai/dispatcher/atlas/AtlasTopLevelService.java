@@ -14,18 +14,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..atlas;
+package ai.metaheuristic.ai.dispatcher.atlas;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Atlas;
-import ai.metaheuristic.ai.mh.dispatcher..beans.AtlasTask;
-import ai.metaheuristic.ai.mh.dispatcher..beans.ExecContextImpl;
-import ai.metaheuristic.ai.mh.dispatcher..data.AtlasData;
-import ai.metaheuristic.ai.mh.dispatcher..experiment.ExperimentService;
-import ai.metaheuristic.ai.mh.dispatcher..experiment.ExperimentUtils;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.AtlasRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.AtlasTaskRepository;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.beans.Atlas;
+import ai.metaheuristic.ai.dispatcher.beans.AtlasTask;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.data.AtlasData;
+import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
+import ai.metaheuristic.ai.dispatcher.experiment.ExperimentUtils;
+import ai.metaheuristic.ai.dispatcher.repositories.AtlasRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.AtlasTaskRepository;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
@@ -83,7 +83,7 @@ import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.HyperPar
 @SuppressWarnings("Duplicates")
 @Slf4j
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class AtlasTopLevelService {
 

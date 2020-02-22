@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.core;
 
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
-import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.LaunchpadSchedule;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
 import ai.metaheuristic.api.data.FunctionApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,7 +45,7 @@ public class SystemProcessService {
 
     public FunctionApiData.SystemExecResult execCommand(
             List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate, String functionCode,
-            final LaunchpadSchedule schedule) throws IOException, InterruptedException {
+            final DispatcherSchedule schedule) throws IOException, InterruptedException {
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
         log.info("\ttaskDir: {}", execDir.getPath());

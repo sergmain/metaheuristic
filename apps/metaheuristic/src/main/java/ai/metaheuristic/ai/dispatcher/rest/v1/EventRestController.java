@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..rest.v1;
+package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.mh.dispatcher..event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,13 +43,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/rest/v1/event")
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @CrossOrigin
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('BILLING')")
 public class EventRestController {
 
-    private final DispatcherEventService mh.dispatcher.EventService;
+    private final DispatcherEventService dispatcherEventService;
 
     @GetMapping(value="/events-for-period/{periods}/events.zip", produces = "application/zip")
     public ResponseEntity<AbstractResource> getEventsForPeriod(HttpServletRequest request, @PathVariable String[] periods) throws IOException {
@@ -68,7 +68,7 @@ public class EventRestController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = mh.dispatcher.EventService.getEventsForPeriod(list);
+            ResourceWithCleanerInfo resource = dispatcherEventService.getEventsForPeriod(list);
             entity = resource.entity;
             if (resource.toClean!=null) {
                 request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);

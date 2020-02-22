@@ -14,20 +14,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..replication;
+package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mh.dispatcher..account.AccountCache;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Company;
-import ai.metaheuristic.ai.mh.dispatcher..beans.SourceCodeImpl;
-import ai.metaheuristic.ai.mh.dispatcher..company.CompanyCache;
-import ai.metaheuristic.ai.mh.dispatcher..data.ReplicationData;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.AccountRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.CompanyRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.FunctionRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.account.AccountCache;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
+import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
+import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public class ReplicationSourceService {
 
     public final Globals globals;

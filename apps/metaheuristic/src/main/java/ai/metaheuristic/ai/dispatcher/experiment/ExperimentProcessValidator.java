@@ -14,21 +14,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..experiment;
+package ai.metaheuristic.ai.dispatcher.experiment;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Experiment;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Function;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.ProcessValidator;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.ExperimentRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.FunctionRepository;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.beans.Experiment;
+import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.source_code.ProcessValidator;
+import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.mh.dispatcher..ExecContext;
-import ai.metaheuristic.api.mh.dispatcher..SourceCode;
+import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
 public class ExperimentProcessValidator implements ProcessValidator {

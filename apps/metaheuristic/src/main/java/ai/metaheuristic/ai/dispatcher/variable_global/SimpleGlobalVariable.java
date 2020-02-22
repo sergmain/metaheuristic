@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..variable_global;
+package ai.metaheuristic.ai.dispatcher.variable_global;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

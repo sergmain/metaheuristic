@@ -14,33 +14,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..exec_context;
+package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
-import ai.metaheuristic.ai.mh.dispatcher..beans.*;
-import ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData;
-import ai.metaheuristic.ai.mh.dispatcher..event.DispatcherEventService;
-import ai.metaheuristic.ai.mh.dispatcher..event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.ExecContextRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.IdsRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.TaskRepository;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeCache;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeService;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeUtils;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.graph.SourceCodeGraphFactory;
-import ai.metaheuristic.ai.mh.dispatcher..station.StationCache;
-import ai.metaheuristic.ai.mh.dispatcher..task.TaskPersistencer;
-import ai.metaheuristic.ai.mh.dispatcher..task.TaskProducingService;
-import ai.metaheuristic.ai.mh.dispatcher..variable.SimpleVariableAndStorageUrl;
-import ai.metaheuristic.ai.mh.dispatcher..variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils;
+import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.ai.dispatcher.station.StationCache;
+import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
@@ -51,9 +51,9 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.mh.dispatcher..ExecContext;
-import ai.metaheuristic.api.mh.dispatcher..SourceCode;
-import ai.metaheuristic.api.mh.dispatcher..Task;
+import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -74,7 +74,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
 @SuppressWarnings("UnusedReturnValue")
@@ -90,7 +90,7 @@ public class ExecContextService {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
-    private final DispatcherEventService mh.dispatcher.EventService;
+    private final DispatcherEventService dispatcherEventService;
     private final ExecContextFSM execContextFSM;
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
@@ -449,7 +449,7 @@ public class ExecContextService {
 
         taskRepository.save((TaskImpl)resultTask);
         execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
-        mh.dispatcher.EventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), execContextId);
+        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), execContextId);
 
         return assignedTask;
     }

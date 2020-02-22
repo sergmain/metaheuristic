@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..repositories;
+package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.AtlasTask;
+import ai.metaheuristic.ai.dispatcher.beans.AtlasTask;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -30,7 +30,7 @@ import java.util.Set;
 
 @Repository
 @Transactional
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public interface AtlasTaskRepository extends CrudRepository<AtlasTask, Long> {
 
     @Transactional(readOnly = true)

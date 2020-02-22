@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..beans;
+package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;

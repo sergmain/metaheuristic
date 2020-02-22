@@ -14,21 +14,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..atlas;
+package ai.metaheuristic.ai.dispatcher.atlas;
 
-import ai.metaheuristic.ai.mh.dispatcher..experiment.ExperimentUtils;
+import ai.metaheuristic.ai.dispatcher.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.mh.dispatcher..ExecContext;
-import ai.metaheuristic.api.mh.dispatcher..SourceCode;
-import ai.metaheuristic.api.mh.dispatcher..Task;
+import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.api.dispatcher.Task;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import ai.metaheuristic.ai.mh.dispatcher..beans.*;
+import ai.metaheuristic.ai.dispatcher.beans.*;
 import org.springframework.beans.BeanUtils;
 
 import java.util.*;

@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..context;
+package ai.metaheuristic.ai.dispatcher.context;
 
-import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Company;
-import ai.metaheuristic.ai.mh.dispatcher..company.CompanyCache;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.exceptions.BadExecutionContextException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public class UserContextService {
 
     private final CompanyCache companyCache;

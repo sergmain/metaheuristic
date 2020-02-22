@@ -1,13 +1,13 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
-     layout:decorate="~{layout-mh.dispatcher.}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
+     layout:decorate="~{layout-dispatcher}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New company</h1>
 
-        <!--/*@thymesVar id="company" type="ai.metaheuristic.ai.mh.dispatcher..beans.Company"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${company}" method="post" action="#" th:method="POST" th:action="@{/mh.dispatcher./company/company-add-commit}" accept-charset="UTF-8" id="company-form" name="f">
+        <!--/*@thymesVar id="company" type="ai.metaheuristic.ai.dispatcher.beans.Company"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${company}" method="post" action="#" th:method="POST" th:action="@{/dispatcher/company/company-add-commit}" accept-charset="UTF-8" id="company-form" name="f">
             <fieldset>
 
                 <label for="name">Name</label>
@@ -23,7 +23,7 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="companies.html" th:href="${'/mh.dispatcher./company/companies'}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="companies.html" th:href="${'/dispatcher/company/companies'}">Cancel</a>
                         </td>
                     </tr>
                 </table>

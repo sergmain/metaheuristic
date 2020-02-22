@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..exec_context;
+package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.mh.dispatcher..beans.ExecContextImpl;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Service;
  */
 
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
 public class ExecContextCache {

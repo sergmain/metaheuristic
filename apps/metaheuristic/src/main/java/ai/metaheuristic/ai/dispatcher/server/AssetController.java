@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..server;
+package ai.metaheuristic.ai.dispatcher.server;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Function;
-import ai.metaheuristic.ai.mh.dispatcher..function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
@@ -45,7 +45,7 @@ import java.io.IOException;
  */
 @RestController
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequestMapping("/rest/v1/asset")
 @PreAuthorize("hasAnyRole('ASSET_REST_ACCESS')")
 @RequiredArgsConstructor

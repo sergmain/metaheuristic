@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mh.dispatcher..account.AccountCache;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
+import ai.metaheuristic.ai.dispatcher.account.AccountCache;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Service;
  * Time: 23:17
  */
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetailsService {
 
@@ -87,7 +87,7 @@ public class CustomUserDetails implements UserDetailsService {
             throw new UsernameNotFoundException("Username not found");
         }
 
-        if (StringUtils.equals(globals.mh.dispatcher.MasterUsername, complexUsername.getUsername())) {
+        if (StringUtils.equals(globals.dispatcherMasterUsername, complexUsername.getUsername())) {
 
             Account account = new Account();
 
@@ -97,12 +97,12 @@ public class CustomUserDetails implements UserDetailsService {
 
             // master admin will belong to companyUniqueId==1
             account.setCompanyId( 1L );
-            account.setUsername(globals.mh.dispatcher.MasterUsername);
+            account.setUsername(globals.dispatcherMasterUsername);
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
-            account.setPassword(globals.mh.dispatcher.MasterPassword);
+            account.setPassword(globals.dispatcherMasterPassword);
 
             account.setRoles(SecConsts.ROLE_MASTER_ADMIN);
             return account;

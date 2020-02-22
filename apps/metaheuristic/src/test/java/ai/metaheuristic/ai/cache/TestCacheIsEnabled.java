@@ -34,7 +34,7 @@ import static org.junit.Assert.assertFalse;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestCacheIsEnabled {
 
     @Autowired

@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.commons.CommonConsts;
@@ -59,39 +59,39 @@ import static org.apache.http.client.config.RequestConfig.custom;
 @Slf4j
 public class DispatcherRequestor {
 
-    private final String mh.dispatcher.Url;
+    private final String dispatcherUrl;
     private final Globals globals;
 
     private final StationTaskService stationTaskService;
     private final StationService stationService;
     private final MetadataService metadataService;
     private final CurrentExecState currentExecState;
-    private final DispatcherLookupExtendedService mh.dispatcher.LookupExtendedService;
+    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final StationCommandProcessor stationCommandProcessor;
 
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = getHttpRequestFactory();
     private RestTemplate restTemplate;
 
-    private DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher.;
+    private DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
     private String serverRestUrl;
 
-    public DispatcherRequestor(String mh.dispatcher.Url, Globals globals, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService mh.dispatcher.LookupExtendedService, StationCommandProcessor stationCommandProcessor) {
-        this.mh.dispatcher.Url = mh.dispatcher.Url;
+    public DispatcherRequestor(String dispatcherUrl, Globals globals, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, StationCommandProcessor stationCommandProcessor) {
+        this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.stationTaskService = stationTaskService;
         this.stationService = stationService;
         this.metadataService = metadataService;
         this.currentExecState = currentExecState;
-        this.mh.dispatcher.LookupExtendedService = mh.dispatcher.LookupExtendedService;
+        this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
         this.stationCommandProcessor = stationCommandProcessor;
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-        this.mh.dispatcher. = this.mh.dispatcher.LookupExtendedService.lookupExtendedMap.get(mh.dispatcher.Url);
-        if (mh.dispatcher. == null) {
-            throw new IllegalStateException("#775.010 Can'r find mh.dispatcher. config for url " + mh.dispatcher.Url);
+        this.dispatcher = this.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+        if (dispatcher == null) {
+            throw new IllegalStateException("#775.010 Can'r find dispatcher config for url " + dispatcherUrl);
         }
-        serverRestUrl = mh.dispatcher.Url + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
+        serverRestUrl = dispatcherUrl + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
         nextRequest = new StationCommParamsYaml();
     }
 
@@ -166,35 +166,35 @@ public class DispatcherRequestor {
         withSync(() -> { scpy.reportTaskProcessingResult = reportTaskProcessingResult; return null; });
     }
 
-    private void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String mh.dispatcher.Url, DispatcherCommParamsYaml mh.dispatcher.Yaml) {
-        log.debug("#775.020 DispatcherCommParamsYaml:\n{}", mh.dispatcher.Yaml);
+    private void processDispatcherCommParamsYaml(StationCommParamsYaml scpy, String dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
+        log.debug("#775.020 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
         withSync(() -> {
-            storeLaunchpadContext(mh.dispatcher.Url, mh.dispatcher.Yaml);
-            stationCommandProcessor.processLaunchpadCommParamsYaml(scpy, mh.dispatcher.Url, mh.dispatcher.Yaml);
+            storeDispatcherContext(dispatcherUrl, dispatcherYaml);
+            stationCommandProcessor.processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
             return null;
         });
     }
 
-    private void storeLaunchpadContext(String mh.dispatcher.Url, DispatcherCommParamsYaml mh.dispatcher.CommParamsYaml) {
-        if (mh.dispatcher.CommParamsYaml ==null || mh.dispatcher.CommParamsYaml.mh.dispatcher.CommContext ==null) {
+    private void storeDispatcherContext(String dispatcherUrl, DispatcherCommParamsYaml dispatcherCommParamsYaml) {
+        if (dispatcherCommParamsYaml ==null || dispatcherCommParamsYaml.dispatcherCommContext ==null) {
             return;
         }
-        DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher. =
-                mh.dispatcher.LookupExtendedService.lookupExtendedMap.get(mh.dispatcher.Url);
+        DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+                dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
-        if (mh.dispatcher.==null) {
+        if (dispatcher==null) {
             return;
         }
-        storeLaunchpadContext(mh.dispatcher.CommParamsYaml, mh.dispatcher.);
+        storeDispatcherContext(dispatcherCommParamsYaml, dispatcher);
     }
 
-    private void storeLaunchpadContext(DispatcherCommParamsYaml mh.dispatcher.CommParamsYaml, DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher.) {
-        if (mh.dispatcher.CommParamsYaml.mh.dispatcher.CommContext ==null) {
+    private void storeDispatcherContext(DispatcherCommParamsYaml dispatcherCommParamsYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher) {
+        if (dispatcherCommParamsYaml.dispatcherCommContext ==null) {
             return;
         }
-        mh.dispatcher..context.chunkSize = mh.dispatcher.CommParamsYaml.mh.dispatcher.CommContext.chunkSize;
-        mh.dispatcher..context.maxVersionOfStation = mh.dispatcher.CommParamsYaml.mh.dispatcher.CommContext.stationCommVersion!=null
-            ? mh.dispatcher.CommParamsYaml.mh.dispatcher.CommContext.stationCommVersion
+        dispatcher.context.chunkSize = dispatcherCommParamsYaml.dispatcherCommContext.chunkSize;
+        dispatcher.context.maxVersionOfStation = dispatcherCommParamsYaml.dispatcherCommContext.stationCommVersion!=null
+            ? dispatcherCommParamsYaml.dispatcherCommContext.stationCommVersion
             : 3;
     }
 
@@ -218,8 +218,8 @@ public class DispatcherRequestor {
             Monitoring.log("##010", Enums.Monitor.MEMORY);
             StationCommParamsYaml scpy = swap();
 
-            final String stationId = metadataService.getStationId(mh.dispatcher.Url);
-            final String sessionId = metadataService.getSessionId(mh.dispatcher.Url);
+            final String stationId = metadataService.getStationId(dispatcherUrl);
+            final String sessionId = metadataService.getSessionId(dispatcherUrl);
 
             if (stationId == null || sessionId==null) {
                 setRequestStationId(scpy, new StationCommParamsYaml.RequestStationId());
@@ -228,25 +228,25 @@ public class DispatcherRequestor {
                 setStationCommContext(scpy, new StationCommParamsYaml.StationCommContext(stationId, sessionId));
 
                 // always report about current active tasks, if we have actual stationId
-                setReportStationTaskStatus(scpy, stationTaskService.produceStationTaskStatus(mh.dispatcher.Url));
-                setReportStationStatus(scpy, stationService.produceReportStationStatus(mh.dispatcher.Url, mh.dispatcher..schedule));
+                setReportStationTaskStatus(scpy, stationTaskService.produceStationTaskStatus(dispatcherUrl));
+                setReportStationStatus(scpy, stationService.produceReportStationStatus(dispatcherUrl, dispatcher.schedule));
 
                 // we have to pull new tasks from server constantly
-                if (currentExecState.isInited(mh.dispatcher.Url)) {
+                if (currentExecState.isInited(dispatcherUrl)) {
                     Monitoring.log("##011", Enums.Monitor.MEMORY);
-                    final boolean b = stationTaskService.isNeedNewTask(mh.dispatcher.Url, stationId);
+                    final boolean b = stationTaskService.isNeedNewTask(dispatcherUrl, stationId);
                     Monitoring.log("##012", Enums.Monitor.MEMORY);
-                    if (b && !mh.dispatcher..schedule.isCurrentTimeInactive()) {
-                        setRequestTask(scpy, new StationCommParamsYaml.RequestTask(mh.dispatcher..mh.dispatcher.Lookup.acceptOnlySignedFunctions));
+                    if (b && !dispatcher.schedule.isCurrentTimeInactive()) {
+                        setRequestTask(scpy, new StationCommParamsYaml.RequestTask(dispatcher.dispatcherLookup.acceptOnlySignedFunctions));
                     }
                     else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
                             // let's check resources for non-completed and not-sending yet tasks
-                            List<StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = stationTaskService.findAllByCompletedIsFalse(mh.dispatcher.Url).stream()
+                            List<StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = stationTaskService.findAllByCompletedIsFalse(dispatcherUrl).stream()
                                     .filter(t -> t.delivered && t.finishedOn!=null && !t.resourceUploaded)
                                     .map(t->
                                             new StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(
-                                                    t.taskId, stationService.resendTaskOutputResource(mh.dispatcher.Url, t.taskId)
+                                                    t.taskId, stationService.resendTaskOutputResource(dispatcherUrl, t.taskId)
                                             )
                                     ).collect(Collectors.toList());
 
@@ -261,10 +261,10 @@ public class DispatcherRequestor {
                 }
 
                 Monitoring.log("##013", Enums.Monitor.MEMORY);
-                setReportTaskProcessingResult(scpy, stationTaskService.reportTaskProcessingResult(mh.dispatcher.Url));
+                setReportTaskProcessingResult(scpy, stationTaskService.reportTaskProcessingResult(dispatcherUrl));
                 Monitoring.log("##014", Enums.Monitor.MEMORY);
 
-                scpy.functionDownloadStatus.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(mh.dispatcher.Url));
+                scpy.functionDownloadStatus.statuses.addAll(metadataService.getAsFunctionDownloadStatuses(dispatcherUrl));
             }
 
             final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;
@@ -273,7 +273,7 @@ public class DispatcherRequestor {
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
 
-                String auth = mh.dispatcher..mh.dispatcher.Lookup.restUsername + ':' + mh.dispatcher..mh.dispatcher.Lookup.restPassword;
+                String auth = dispatcher.dispatcherLookup.restUsername + ':' + dispatcher.dispatcherLookup.restPassword;
                 byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
                 String authHeader = "Basic " + new String(encodedAuth);
                 headers.set(HttpHeaders.AUTHORIZATION, authHeader);
@@ -282,24 +282,24 @@ public class DispatcherRequestor {
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);
                 Monitoring.log("##015", Enums.Monitor.MEMORY);
 
-                log.debug("Start to request a mh.dispatcher. at {}", url);
+                log.debug("Start to request a dispatcher at {}", url);
                 log.debug("ExchangeData:\n{}", yaml);
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
                 Monitoring.log("##016", Enums.Monitor.MEMORY);
                 String result = response.getBody();
-                log.debug("ExchangeData from mh.dispatcher.:\n{}", result);
+                log.debug("ExchangeData from dispatcher:\n{}", result);
                 if (result == null) {
-                    log.warn("#775.050 Launchpad returned null as a result");
+                    log.warn("#775.050 Dispatcher returned null as a result");
                     return;
                 }
-                DispatcherCommParamsYaml mh.dispatcher.Yaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
+                DispatcherCommParamsYaml dispatcherYaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
 
-                if (!mh.dispatcher.Yaml.success) {
-                    log.error("#775.060 Something wrong at the mh.dispatcher. {}. Check the mh.dispatcher.'s logs for more info.", mh.dispatcher.Url );
+                if (!dispatcherYaml.success) {
+                    log.error("#775.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
                     return;
                 }
                 Monitoring.log("##017", Enums.Monitor.MEMORY);
-                processLaunchpadCommParamsYaml(scpy, mh.dispatcher.Url, mh.dispatcher.Yaml);
+                processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
                 Monitoring.log("##018", Enums.Monitor.MEMORY);
             } catch (HttpClientErrorException e) {
                 switch(e.getStatusCode()) {

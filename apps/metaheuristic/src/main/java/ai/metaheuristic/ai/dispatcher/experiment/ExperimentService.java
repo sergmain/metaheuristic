@@ -13,23 +13,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.mh.dispatcher..experiment;
+package ai.metaheuristic.ai.dispatcher.experiment;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mh.dispatcher..beans.ExecContextImpl;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Experiment;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Function;
-import ai.metaheuristic.ai.mh.dispatcher..beans.TaskImpl;
-import ai.metaheuristic.ai.mh.dispatcher..event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeService;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.ExperimentRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.TaskRepository;
-import ai.metaheuristic.ai.mh.dispatcher..function.FunctionService;
-import ai.metaheuristic.ai.mh.dispatcher..task.TaskPersistencer;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextCache;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Experiment;
+import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
@@ -44,8 +44,8 @@ import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.mh.dispatcher..ExecContext;
-import ai.metaheuristic.api.mh.dispatcher..Task;
+import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -89,7 +89,7 @@ import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
 @Service
 @EnableTransactionManagement
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class ExperimentService {
 
@@ -821,7 +821,7 @@ public class ExperimentService {
 
                             // TODO 2019.05.02 add implementation of disk storage for models
                             yaml.taskYaml.resourceStorageUrls.put(modelFilename, new SourceCodeParamsYaml.Variable("mode"));
-//                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
+//                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.DISPATCHER_STORAGE_URL : process.outputStorageUrl);
                         } else {
                             throw new IllegalStateException("#179.130 Not supported type of function encountered, type: " + function.getType());
                         }

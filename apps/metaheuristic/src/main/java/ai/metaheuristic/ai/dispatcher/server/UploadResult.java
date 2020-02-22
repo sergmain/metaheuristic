@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..server;
+package ai.metaheuristic.ai.dispatcher.server;
 
 import ai.metaheuristic.ai.Enums;
 import lombok.AllArgsConstructor;

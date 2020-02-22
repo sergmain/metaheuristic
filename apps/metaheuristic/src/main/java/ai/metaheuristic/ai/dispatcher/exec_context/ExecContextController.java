@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..exec_context;
+package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
-import ai.metaheuristic.ai.mh.dispatcher..context.UserContextService;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeController;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeTopLevelService;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -41,9 +41,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * Time: 3:53 PM
  */
 @Controller
-@RequestMapping("/mh.dispatcher./source-code")
+@RequestMapping("/dispatcher/source-code")
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class ExecContextController {
 
@@ -59,7 +59,7 @@ public class ExecContextController {
                             @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         model.addAttribute("result", execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context));
-        return "mh.dispatcher./source-code/exec-contexts";
+        return "dispatcher/source-code/exec-contexts";
     }
 
     // for AJAX
@@ -69,7 +69,7 @@ public class ExecContextController {
                                 @PageableDefault(size = 10) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         model.addAttribute("result", execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context));
-        return "mh.dispatcher./source-code/exec-contexts :: table";
+        return "dispatcher/source-code/exec-contexts :: table";
     }
 
     @GetMapping(value = "/exec-context-add/{sourceCodeId}")
@@ -80,10 +80,10 @@ public class ExecContextController {
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(sourceCodeId, context);
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
-            return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
+            return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         result.sourceCode = sourceCodeResultRest.sourceCode;
-        return "mh.dispatcher./source-code/exec-context-add";
+        return "dispatcher/source-code/exec-context-add";
     }
 
     @PostMapping("/source-code-add-commit")
@@ -94,7 +94,7 @@ public class ExecContextController {
         if (execContextResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", execContextResultRest.errorMessages);
         }
-        return "redirect:/mh.dispatcher./source-code/exec-contexts/" + sourceCodeId;
+        return "redirect:/dispatcher/source-code/exec-contexts/" + sourceCodeId;
     }
 
     @GetMapping("/exec-context-delete/{sourceCodeId}/{execContextId}")
@@ -105,10 +105,10 @@ public class ExecContextController {
         SourceCodeApiData.ExecContextResult result = execContextTopLevelService.getExecContextExtendedForDeletion(execContextId, context);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
-            return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
+            return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         model.addAttribute("result", result);
-        return "mh.dispatcher./source-code/exec-context-delete";
+        return "dispatcher/source-code/exec-context-delete";
     }
 
     @PostMapping("/exec-context-delete-commit")
@@ -119,9 +119,9 @@ public class ExecContextController {
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteExecContextById(execContextId, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
+            return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
-        return "redirect:/mh.dispatcher./source-code/exec-contexts/"+ sourceCodeId;
+        return "redirect:/dispatcher/source-code/exec-contexts/"+ sourceCodeId;
     }
 
     @GetMapping("/exec-context-target-state/{sourceCodeId}/{state}/{id}")
@@ -132,9 +132,9 @@ public class ExecContextController {
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeExecContextState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return SourceCodeController.REDIRECT_LAUNCHPAD_SOURCE_CODES;
+            return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
-        return "redirect:/mh.dispatcher./source-code/exec-contexts/" + sourceCodeId;
+        return "redirect:/dispatcher/source-code/exec-contexts/" + sourceCodeId;
     }
 
 

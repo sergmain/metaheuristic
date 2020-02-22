@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.sec;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;

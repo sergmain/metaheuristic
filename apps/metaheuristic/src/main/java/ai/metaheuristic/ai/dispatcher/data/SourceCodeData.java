@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..data;
+package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.Meta;
@@ -40,7 +40,7 @@ public class SourceCodeData {
     @EqualsAndHashCode(callSuper = false)
     public static class SourceCodesForCompany extends BaseDataClass {
         // it must be full name of class, i.e. with packages
-        public List<ai.metaheuristic.api.mh.dispatcher..SourceCode> items;
+        public List<ai.metaheuristic.api.dispatcher.SourceCode> items;
     }
 
     @Data

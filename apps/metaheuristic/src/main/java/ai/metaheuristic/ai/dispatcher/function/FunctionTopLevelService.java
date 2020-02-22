@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..function;
+package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Function;
-import ai.metaheuristic.ai.mh.dispatcher..data.FunctionData;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.FunctionRepository;
+import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.data.FunctionData;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -45,7 +45,7 @@ import static ai.metaheuristic.ai.Consts.*;
 
 @Service
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class FunctionTopLevelService {
 

@@ -14,39 +14,39 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..server;
+package ai.metaheuristic.ai.dispatcher.server;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.mh.dispatcher..DispatcherCommandProcessor;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Variable;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Station;
-import ai.metaheuristic.ai.mh.dispatcher..variable.VariableService;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.IdsRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.StationsRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.TaskRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.ExecContextRepository;
-import ai.metaheuristic.ai.mh.dispatcher..function.FunctionDataService;
-import ai.metaheuristic.ai.mh.dispatcher..station.StationCache;
-import ai.metaheuristic.ai.mh.dispatcher..station.StationTopLevelService;
-import ai.metaheuristic.ai.mh.dispatcher..task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.beans.Station;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.StationsRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
+import ai.metaheuristic.ai.dispatcher.station.StationCache;
+import ai.metaheuristic.ai.dispatcher.station.StationTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.mh.dispatcher..ExecContext;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -77,7 +77,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
 public class ServerService {
@@ -86,13 +86,13 @@ public class ServerService {
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
     public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
-    // Station's version for communicating with mh.dispatcher.
+    // Station's version for communicating with dispatcher
     private static final int STATION_COMM_VERSION = new StationCommParamsYaml().version;
 
     private final Globals globals;
     private final VariableService variableService;
     private final FunctionDataService functionDataService;
-    private final DispatcherCommandProcessor mh.dispatcher.CommandProcessor;
+    private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final StationCache stationCache;
     private final ExecContextRepository execContextRepository;
     private final StationsRepository stationsRepository;
@@ -201,11 +201,11 @@ public class ServerService {
         BiConsumer<String, File> dataSaver;
         switch (binaryType) {
             case function:
-                assetFile = ResourceUtils.prepareFunctionFile(globals.mh.dispatcher.ResourcesDir, resourceId, null);
+                assetFile = ResourceUtils.prepareFunctionFile(globals.dispatcherResourcesDir, resourceId, null);
                 dataSaver = functionDataService::storeToFile;
                 break;
             case data:
-                assetFile = ResourceUtils.prepareDataFile(globals.mh.dispatcher.TempDir, resourceId, null);
+                assetFile = ResourceUtils.prepareDataFile(globals.dispatcherTempDir, resourceId, null);
                 dataSaver = variableService::storeToFile;
                 break;
             default:
@@ -306,7 +306,7 @@ public class ServerService {
         DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
         try {
             if (scpy.stationCommContext==null) {
-                lcpy.assignedStationId = mh.dispatcher.CommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
+                lcpy.assignedStationId = dispatcherCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
                 return lcpy;
             }
             checkStationId(scpy.stationCommContext.getStationId(), scpy.stationCommContext.getSessionId(), remoteAddress, lcpy);
@@ -318,8 +318,8 @@ public class ServerService {
             lcpy.execContextStatus = getExecContextStatuses();
 
             log.debug("Start processing commands");
-            mh.dispatcher.CommandProcessor.process(scpy, lcpy);
-            setLaunchpadCommContext(lcpy);
+            dispatcherCommandProcessor.process(scpy, lcpy);
+            setDispatcherCommContext(lcpy);
         } catch (Throwable th) {
             log.error("#442.040 Error while processing client's request, StationCommParamsYaml:\n{}", scpy);
             log.error("#442.041 Error", th);
@@ -333,18 +333,18 @@ public class ServerService {
         return lcpy!=null && (lcpy.reAssignedStationId!=null || lcpy.assignedStationId!=null);
     }
 
-    private void setLaunchpadCommContext(DispatcherCommParamsYaml lcpy) {
+    private void setDispatcherCommContext(DispatcherCommParamsYaml lcpy) {
         DispatcherCommParamsYaml.DispatcherCommContext lcc = new DispatcherCommParamsYaml.DispatcherCommContext();
         lcc.chunkSize = globals.chunkSize;
         lcc.stationCommVersion = STATION_COMM_VERSION;
-        lcpy.mh.dispatcher.CommContext = lcc;
+        lcpy.dispatcherCommContext = lcc;
     }
 
     @SuppressWarnings("UnnecessaryReturnStatement")
     private void checkStationId(String stationId, String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
         if (StringUtils.isBlank(stationId)) {
             log.warn("#442.045 StringUtils.isBlank(stationId), return RequestStationId()");
-            lcpy.assignedStationId = mh.dispatcher.CommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
+            lcpy.assignedStationId = dispatcherCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
             return;
         }
 

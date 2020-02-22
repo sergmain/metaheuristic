@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.db;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.LogData;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.LogDataRepository;
+import ai.metaheuristic.ai.dispatcher.beans.LogData;
+import ai.metaheuristic.ai.dispatcher.repositories.LogDataRepository;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestLogDataRepository {
 
     @Autowired

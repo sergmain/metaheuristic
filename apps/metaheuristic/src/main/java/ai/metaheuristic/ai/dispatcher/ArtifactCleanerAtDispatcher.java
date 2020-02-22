@@ -13,11 +13,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.mh.dispatcher.;
+package ai.metaheuristic.ai.dispatcher;
 
-import ai.metaheuristic.ai.mh.dispatcher..repositories.VariableRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.TaskRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class ArtifactCleanerAtDispatcher {
 
@@ -51,7 +51,7 @@ public class ArtifactCleanerAtDispatcher {
             return;
         }
 
-        // lets delete no more than 1000 record per call of ai.metaheuristic.ai.mh.dispatcher..ArtifactCleanerAtLaunchpad.deleteOrphanData()
+        // lets delete no more than 1000 record per call of ai.metaheuristic.ai.dispatcher.ArtifactCleanerAtDispatcher.deleteOrphanData()
         for (int i = 0; i < Math.min(ids.size(), 1000); i++) {
             variableRepository.deleteById(ids.get(i));
         }

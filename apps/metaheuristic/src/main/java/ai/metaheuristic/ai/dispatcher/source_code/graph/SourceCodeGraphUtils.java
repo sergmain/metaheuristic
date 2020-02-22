@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..source_code.graph;
+package ai.metaheuristic.ai.dispatcher.source_code.graph;
 
 import org.jgrapht.traverse.BreadthFirstIterator;
 
@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData.SimpleTaskVertex;
-import static ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData.SourceCodeGraph;
+import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SimpleTaskVertex;
+import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph;
 
 /**
  * @author Serge

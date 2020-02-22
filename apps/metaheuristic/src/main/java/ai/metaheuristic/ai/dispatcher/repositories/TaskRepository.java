@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..repositories;
+package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.TaskImpl;
-import ai.metaheuristic.ai.mh.dispatcher..beans.TaskProgress;
-import ai.metaheuristic.api.mh.dispatcher..Task;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskProgress;
+import ai.metaheuristic.api.dispatcher.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 
 @Repository
 @Transactional
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
     @Transactional
@@ -121,7 +121,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
             "order by z.TASK_ORDER asc")
     List<Object[]> getCountPerOrder(Long execContextId);
 
-    @Query(value="select new ai.metaheuristic.ai.mh.dispatcher..beans.TaskProgress(" +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.beans.TaskProgress(" +
             "t.execContextId, count(*), t.execState, t.isCompleted, t.resultReceived ) " +
             "from TaskImpl t where t.execContextId=:execContextId " +
             "group by t.execContextId, t.execState, t.isCompleted, t.resultReceived "

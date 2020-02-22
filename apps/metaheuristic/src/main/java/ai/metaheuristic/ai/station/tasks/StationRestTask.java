@@ -15,11 +15,11 @@
  */
 package ai.metaheuristic.ai.station.tasks;
 
-import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import lombok.Data;
 
 @Data
 public abstract class StationRestTask {
-    public DispatcherLookupConfig.DispatcherLookup mh.dispatcher.;
+    public DispatcherLookupConfig.DispatcherLookup dispatcher;
     public String stationId;
 }

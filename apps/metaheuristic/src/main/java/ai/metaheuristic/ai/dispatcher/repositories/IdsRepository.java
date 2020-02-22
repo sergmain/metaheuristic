@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..repositories;
+package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Ids;
+import ai.metaheuristic.ai.dispatcher.beans.Ids;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -27,6 +27,6 @@ import org.springframework.stereotype.Repository;
  * Time: 8:09 PM
  */
 @Repository
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public interface IdsRepository extends CrudRepository<Ids, Long> {
 }

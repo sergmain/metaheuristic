@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..batch;
+package ai.metaheuristic.ai.dispatcher.batch;
 
-import ai.metaheuristic.ai.mh.dispatcher..batch.data.BatchAndExecContextStates;
-import ai.metaheuristic.ai.mh.dispatcher..batch.data.BatchExecStatus;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Batch;
+import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
+import ai.metaheuristic.ai.dispatcher.batch.data.BatchExecStatus;
+import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public interface BatchRepository extends JpaRepository<Batch, Long> {
 
@@ -58,7 +58,7 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     Page<Long> findAllForAccountExcludeDeletedByOrderByCreatedOnDesc(Pageable pageable, Long companyUniqueId, Long accountId);
 
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.mh.dispatcher..batch.data.BatchExecStatus(b.id, b.execState) " +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.batch.data.BatchExecStatus(b.id, b.execState) " +
             "from Batch b where b.companyId=:companyUniqueId")
     List<BatchExecStatus> getBatchExecStatuses(Long companyUniqueId);
 
@@ -98,7 +98,7 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
             }
 */
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.mh.dispatcher..batch.data.BatchAndExecContextStates(b.id, w.id, b.execState, w.state) " +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates(b.id, w.id, b.execState, w.state) " +
             "from Batch b, ExecContextImpl w " +
             "where b.execContextId=w.id and b.execState=3")
     List<BatchAndExecContextStates> findAllUnfinished();

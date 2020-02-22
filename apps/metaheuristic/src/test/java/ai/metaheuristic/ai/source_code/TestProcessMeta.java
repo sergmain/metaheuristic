@@ -32,7 +32,7 @@ import java.util.Arrays;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestProcessMeta {
 
     @Test

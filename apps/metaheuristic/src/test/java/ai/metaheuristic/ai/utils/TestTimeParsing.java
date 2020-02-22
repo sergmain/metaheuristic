@@ -15,10 +15,10 @@
  */
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.ExtendedTimePeriod;
-import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.ExtendedTimePeriodUtils;
-import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.LaunchpadSchedule;
-import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.TimePeriods;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriod;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriodUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.TimePeriods;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.Data;
 import org.junit.Test;
@@ -96,7 +96,7 @@ public class TestTimeParsing {
         assertEquals(2019, c.get(Calendar.YEAR));
         assertEquals(Calendar.SATURDAY, c.get(Calendar.DAY_OF_WEEK));
 
-        LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
+        DispatcherSchedule schedule = new DispatcherSchedule(holder.holder);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         assertFalse(schedule.isActive(LocalDateTime.parse( "14/01/2019 13:05", fmt)));
         assertTrue(schedule.isActive(LocalDateTime.parse( "15/01/2019 13:05", fmt)));
@@ -137,7 +137,7 @@ public class TestTimeParsing {
         assertEquals(2019, c.get(Calendar.YEAR));
         assertEquals(Calendar.SATURDAY, c.get(Calendar.DAY_OF_WEEK));
 
-        LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
+        DispatcherSchedule schedule = new DispatcherSchedule(holder.holder);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         assertFalse(schedule.isActive(LocalDateTime.parse( "05/08/2019 13:05", fmt)));
@@ -169,7 +169,7 @@ public class TestTimeParsing {
         assertNull(period.holiday);
         assertNull(period.exceptionWorkingDay);
 
-        LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
+        DispatcherSchedule schedule = new DispatcherSchedule(holder.holder);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         assertFalse(schedule.isActive(LocalDateTime.parse( "14/01/2019 13:05", fmt)));
         assertFalse(schedule.isActive(LocalDateTime.parse( "15/01/2019 13:05", fmt)));
@@ -196,7 +196,7 @@ public class TestTimeParsing {
         assertNull(period.holiday);
         assertNull(period.exceptionWorkingDay);
 
-        LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
+        DispatcherSchedule schedule = new DispatcherSchedule(holder.holder);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         assertTrue(schedule.isActive(LocalDateTime.parse( "14/01/2019 23:59", fmt)));
 
@@ -225,7 +225,7 @@ public class TestTimeParsing {
         assertNull(period.holiday);
         assertNull(period.exceptionWorkingDay);
 
-        LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
+        DispatcherSchedule schedule = new DispatcherSchedule(holder.holder);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss.SSS");
         assertFalse(schedule.isActive(LocalDateTime.parse( "27/04/2019 23:59:59.138", fmt)));
         assertTrue(schedule.isActive(LocalDateTime.parse( "27/04/2019 00:01:00.000", fmt)));

@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..internal_functions;
+package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import lombok.Data;
 

@@ -31,7 +31,7 @@ import java.util.Map;
  * Time: 11:36 PM
  */
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class AtlasParamsYamlUtils {
 

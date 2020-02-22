@@ -13,13 +13,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.mh.dispatcher..function;
+package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Function;
-import ai.metaheuristic.ai.mh.dispatcher..data.FunctionData;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.FunctionRepository;
+import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.data.FunctionData;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class FunctionService {
 
@@ -210,10 +210,10 @@ public class FunctionService {
                 File file = null;
                 if (globals.isFunctionChecksumRequired) {
                     switch(functionConfig.sourcing) {
-                        case mh.dispatcher.:
+                        case dispatcher:
                             file = new File(srcDir, functionConfig.file);
                             if (!file.exists()) {
-                                final String es = "#295.030 Function has a sourcing as 'mh.dispatcher.' but file " + functionConfig.file + " wasn't found.";
+                                final String es = "#295.030 Function has a sourcing as 'dispatcher' but file " + functionConfig.file + " wasn't found.";
                                 status = new FunctionApiData.FunctionConfigStatus(false, es);
                                 log.warn(es+" Temp dir: " + srcDir.getAbsolutePath());
                                 continue;

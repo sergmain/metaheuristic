@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..atlas;
+package ai.metaheuristic.ai.dispatcher.atlas;
 
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
-import ai.metaheuristic.api.mh.dispatcher..Task;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.TaskRepository;
+import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.commons.utils.DirUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 
 @Service
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public class ConsoleFormAtlasService {
 
     // TODO 2019-10-02 if at 2019-11-02 there isn't any case for using this code, it has to be deleted

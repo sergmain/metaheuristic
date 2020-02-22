@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..exec_context;
+package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeCache;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Service;
  * Time: 3:56 PM
  */
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Service
 @RequiredArgsConstructor
 public class ExecContextTopLevelService {

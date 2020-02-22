@@ -14,14 +14,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..company;
+package ai.metaheuristic.ai.dispatcher.company;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Company;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Ids;
-import ai.metaheuristic.ai.mh.dispatcher..data.CompanyData;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.CompanyRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.IdsRepository;
+import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.Ids;
+import ai.metaheuristic.ai.dispatcher.data.CompanyData;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
@@ -35,7 +35,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Service
 @RequiredArgsConstructor
 public class CompanyTopLevelService {

@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..task;
+package ai.metaheuristic.ai.dispatcher.task;
 
 import lombok.extern.slf4j.Slf4j;
 

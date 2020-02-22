@@ -31,7 +31,7 @@ import org.yaml.snakeyaml.Yaml;
  * Time: 11:36 PM
  */
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class AtlasParamsYamlUtilsV1
         extends AbstractParamsYamlUtils<AtlasParamsYamlV1, AtlasParamsYaml, Void, Void, Void, Void> {

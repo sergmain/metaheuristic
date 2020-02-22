@@ -14,13 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..internal_functions;
+package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.mh.dispatcher..beans.SourceCodeImpl;
-import ai.metaheuristic.ai.mh.dispatcher..internal_functions.permute_variables_and_hyper_params.PermuteVariablesAndHyperParamsFunction;
-import ai.metaheuristic.ai.mh.dispatcher..internal_functions.resource_splitter.ResourceSplitterFunction;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params.PermuteVariablesAndHyperParamsFunction;
+import ai.metaheuristic.ai.dispatcher.internal_functions.resource_splitter.ResourceSplitterFunction;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ import java.util.Map;
  */
 @Service
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class InternalFunctionProcessor {
 

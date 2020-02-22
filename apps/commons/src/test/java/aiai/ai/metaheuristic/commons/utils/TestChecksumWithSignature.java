@@ -38,7 +38,7 @@ public class TestChecksumWithSignature {
 
         ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(forVerifying);
 
-        assertTrue(ChecksumWithSignatureUtils.isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, globals.launchpadPublicKey));
+        assertTrue(ChecksumWithSignatureUtils.isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey));
 */
     }
 

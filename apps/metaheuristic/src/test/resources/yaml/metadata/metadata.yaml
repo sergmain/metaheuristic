@@ -1,4 +1,4 @@
-launchpad:
+dispatcher:
   http://localhost:8080:
     value: localhost-8080
     stationId: 15

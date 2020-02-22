@@ -1,4 +1,4 @@
-launchpads:
+dispatchers:
   - signatureRequired: false
     securityEnabled: true
     url: http://localhost:8080

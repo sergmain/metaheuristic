@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..rest.v1;
+package ai.metaheuristic.ai.dispatcher.rest.v1;
 
-import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
-import ai.metaheuristic.ai.mh.dispatcher..context.UserContextService;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeTopLevelService;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.AllArgsConstructor;
@@ -39,11 +39,11 @@ import org.springframework.web.bind.annotation.*;
  * Time: 3:55 PM
  */
 
-// all urls in "/rest/v1/mh.dispatcher./source-code" because of angular.
+// all urls in "/rest/v1/dispatcher/source-code" because of angular.
 // need change angular code too but not know
-@RequestMapping("/rest/v1/mh.dispatcher./source-code")
+@RequestMapping("/rest/v1/dispatcher/source-code")
 @RestController
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @CrossOrigin
 @RequiredArgsConstructor
 public class ExecContextRestController {

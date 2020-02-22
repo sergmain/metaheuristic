@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.mh.dispatcher.;
+package ai.metaheuristic.api.dispatcher;
 
 // We need an interface because of not putting an implementation (which is Entity bean) here
 public interface Task {

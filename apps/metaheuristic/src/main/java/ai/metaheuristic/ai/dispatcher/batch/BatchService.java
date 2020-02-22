@@ -14,26 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..batch;
+package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
-import ai.metaheuristic.ai.mh.dispatcher..batch.data.BatchAndExecContextStates;
-import ai.metaheuristic.ai.mh.dispatcher..batch.data.BatchStatusProcessor;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Batch;
-import ai.metaheuristic.ai.mh.dispatcher..beans.ExecContextImpl;
-import ai.metaheuristic.ai.mh.dispatcher..beans.SourceCodeImpl;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Station;
-import ai.metaheuristic.ai.mh.dispatcher..variable.VariableService;
-import ai.metaheuristic.ai.mh.dispatcher..data.BatchData;
-import ai.metaheuristic.ai.mh.dispatcher..event.DispatcherEventService;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeCache;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.TaskRepository;
-import ai.metaheuristic.ai.mh.dispatcher..station.StationCache;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextCache;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
+import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
+import ai.metaheuristic.ai.dispatcher.beans.Batch;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Station;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.data.BatchData;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.station.StationCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -47,9 +47,9 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.api.mh.dispatcher..SourceCode;
-import ai.metaheuristic.api.mh.dispatcher..Task;
-import ai.metaheuristic.api.mh.dispatcher..ExecContext;
+import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -81,7 +81,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"UnusedReturnValue"})
 @Service
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class BatchService {
 
@@ -97,7 +97,7 @@ public class BatchService {
     private final VariableService variableService;
     private final TaskRepository taskRepository;
     private final StationCache stationCache;
-    private final DispatcherEventService mh.dispatcher.EventService;
+    private final DispatcherEventService dispatcherEventService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     private static final ConcurrentHashMap<Long, Object> batchMap = new ConcurrentHashMap<>(100, 0.75f, 10);
@@ -165,7 +165,7 @@ public class BatchService {
                 return b;
             }
             b.execState = Enums.BatchExecState.Processing.code;
-            mh.dispatcher.EventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
+            dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
             return batchCache.save(b);
         }
     }
@@ -202,7 +202,7 @@ public class BatchService {
                     log.warn("#990.065 error while updating the status of batch #" + batchId, th);
                     // TODO 2019-12-15 this isn't good solution but need more info about behaviour with this error
                 }
-                mh.dispatcher.EventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_FINISHED, null, null, null, batchId, null, null );
+                dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_FINISHED, null, null, null, batchId, null, null );
             }
         }
     }
@@ -237,7 +237,7 @@ public class BatchService {
                 return b;
             }
             finally {
-                mh.dispatcher.EventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
+                dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
             }
         }
     }

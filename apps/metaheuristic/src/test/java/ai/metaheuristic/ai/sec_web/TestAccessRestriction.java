@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.sec_web;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import org.junit.Assert;
@@ -53,7 +53,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Import({SpringSecurityWebAuxTestConfig.class})
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestAccessRestriction {
 
     private MockMvc mockMvc;
@@ -112,10 +112,10 @@ public class TestAccessRestriction {
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
 
-        String launchpadYaml = result.getResponse().getContentAsString();
-        System.out.println("yaml = " + launchpadYaml);
+        String dispatcherYaml = result.getResponse().getContentAsString();
+        System.out.println("yaml = " + dispatcherYaml);
 
-        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadYaml);
+        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherYaml);
 
 
         Assert.assertNotNull(d);

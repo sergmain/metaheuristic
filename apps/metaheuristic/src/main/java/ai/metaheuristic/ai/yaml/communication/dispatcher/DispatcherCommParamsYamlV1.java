@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.communication.mh.dispatcher.;
+package ai.metaheuristic.ai.yaml.communication.dispatcher;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Communication file which is transferred from a Launchpad to a Station
+ * Communication file which is transferred from a dispatcher to a Station
  *
  * @author Serge
  * Date: 10/03/2019
@@ -42,7 +42,7 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
         return true;
     }
 
-    public DispatcherCommContextV1 mh.dispatcher.CommContext;
+    public DispatcherCommContextV1 dispatcherCommContext;
 
     // always send info about functions
     public FunctionsV1 functions = new FunctionsV1();
@@ -131,7 +131,7 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class DispatcherCommContextV1 {
         public Long chunkSize;
-        // Station's version for communicating with mh.dispatcher.
+        // Station's version for communicating with dispatcher
         public Integer stationCommVersion;
     }
 

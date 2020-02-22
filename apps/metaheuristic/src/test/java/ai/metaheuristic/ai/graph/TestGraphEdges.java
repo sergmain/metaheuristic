@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.graph;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.ExecContextImpl;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -43,7 +43,7 @@ import static org.junit.Assert.*;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 @Slf4j
 public class TestGraphEdges extends PreparingPlan {
 

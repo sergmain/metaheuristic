@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.DispatcherLookupConfig;
-import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.LaunchpadLookupConfigUtils;
-import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.LaunchpadSchedule;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfigUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -50,65 +50,65 @@ public class DispatcherLookupExtendedService {
 
     @Data
     public static class DispatcherLookupExtended {
-        public DispatcherLookupConfig.DispatcherLookup mh.dispatcher.Lookup;
-        public LaunchpadSchedule schedule;
+        public DispatcherLookupConfig.DispatcherLookup dispatcherLookup;
+        public DispatcherSchedule schedule;
         public final DispatcherContext context = new DispatcherContext();
     }
 
     @PostConstruct
     public void init() {
-        final File mh.dispatcher.File = new File(globals.stationDir, Consts.DISPATCHER_YAML_FILE_NAME);
+        final File dispatcherFile = new File(globals.stationDir, Consts.DISPATCHER_YAML_FILE_NAME);
         final String cfg;
-        if (!mh.dispatcher.File.exists()) {
+        if (!dispatcherFile.exists()) {
             if (globals.defaultDispatcherYamlFile == null) {
-                log.warn("Station's mh.dispatcher. config file {} doesn't exist and default file wasn't specified", mh.dispatcher.File.getPath());
+                log.warn("Station's dispatcher config file {} doesn't exist and default file wasn't specified", dispatcherFile.getPath());
                 return;
             }
             if (!globals.defaultDispatcherYamlFile.exists()) {
-                log.warn("Station's default mh.dispatcher..yaml file doesn't exist: {}", globals.defaultDispatcherYamlFile.getAbsolutePath());
+                log.warn("Station's default dispatcher.yaml file doesn't exist: {}", globals.defaultDispatcherYamlFile.getAbsolutePath());
                 return;
             }
             try {
-                FileUtils.copyFile(globals.defaultDispatcherYamlFile, mh.dispatcher.File);
+                FileUtils.copyFile(globals.defaultDispatcherYamlFile, dispatcherFile);
             } catch (IOException e) {
                 log.error("Error", e);
-                throw new IllegalStateException("Error while copying "+ globals.defaultDispatcherYamlFile.getAbsolutePath()+" to " + mh.dispatcher.File.getAbsolutePath(), e);
+                throw new IllegalStateException("Error while copying "+ globals.defaultDispatcherYamlFile.getAbsolutePath()+" to " + dispatcherFile.getAbsolutePath(), e);
             }
         }
 
         try {
-            cfg = FileUtils.readFileToString(mh.dispatcher.File, Charsets.UTF_8);
+            cfg = FileUtils.readFileToString(dispatcherFile, Charsets.UTF_8);
         } catch (IOException e) {
             log.error("Error", e);
-            throw new IllegalStateException("Error while reading file: " + mh.dispatcher.File.getAbsolutePath(), e);
+            throw new IllegalStateException("Error while reading file: " + dispatcherFile.getAbsolutePath(), e);
         }
 
-        DispatcherLookupConfig mh.dispatcher.LookupConfig = LaunchpadLookupConfigUtils.to(cfg);
+        DispatcherLookupConfig dispatcherLookupConfig = DispatcherLookupConfigUtils.to(cfg);
 
-        if (mh.dispatcher.LookupConfig == null) {
+        if (dispatcherLookupConfig == null) {
             log.error("{} wasn't found or empty. path: {}{}{}",
                     Consts.DISPATCHER_YAML_FILE_NAME, globals.stationDir,
                     File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
-            throw new IllegalStateException("Station isn't configured, mh.dispatcher..yaml is empty or doesn't exist");
+            throw new IllegalStateException("Station isn't configured, dispatcher.yaml is empty or doesn't exist");
         }
         final Map<String, DispatcherLookupExtended> map = new HashMap<>();
-        for (DispatcherLookupConfig.DispatcherLookup mh.dispatcher. : mh.dispatcher.LookupConfig.mh.dispatcher.s) {
+        for (DispatcherLookupConfig.DispatcherLookup dispatcher : dispatcherLookupConfig.dispatchers) {
             DispatcherLookupExtended lookupExtended = new DispatcherLookupExtended();
-            lookupExtended.mh.dispatcher.Lookup = mh.dispatcher.;
-            lookupExtended.schedule = new LaunchpadSchedule(mh.dispatcher..taskProcessingTime);
-            map.put(mh.dispatcher..url, lookupExtended);
+            lookupExtended.dispatcherLookup = dispatcher;
+            lookupExtended.schedule = new DispatcherSchedule(dispatcher.taskProcessingTime);
+            map.put(dispatcher.url, lookupExtended);
         }
         lookupExtendedMap = Collections.unmodifiableMap(map);
     }
 
-    public File prepareBaseResourceDir(Metadata.DispatcherInfo mh.dispatcher.Code) {
-        final File mh.dispatcher.Dir = new File(globals.stationResourcesDir, mh.dispatcher.Code.code);
-        if (mh.dispatcher.Dir.exists()) {
-            return mh.dispatcher.Dir;
+    public File prepareBaseResourceDir(Metadata.DispatcherInfo dispatcherCode) {
+        final File dispatcherDir = new File(globals.stationResourcesDir, dispatcherCode.code);
+        if (dispatcherDir.exists()) {
+            return dispatcherDir;
         }
         //noinspection unused
-        boolean status = mh.dispatcher.Dir.mkdirs();
-        return mh.dispatcher.Dir;
+        boolean status = dispatcherDir.mkdirs();
+        return dispatcherDir;
     }
 
 

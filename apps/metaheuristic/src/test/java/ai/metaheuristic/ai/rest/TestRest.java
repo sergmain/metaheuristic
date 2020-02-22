@@ -21,8 +21,8 @@ import ai.metaheuristic.ai.core.TestController;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.ai.station.DispatcherRequestor;
 import ai.metaheuristic.ai.utils.JsonUtils;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
@@ -63,7 +63,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Import({SpringSecurityWebAuxTestConfig.class, TestRest.JsonTestController.class})
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestRest {
 
     private static final String MSG_TEXT = "test msg, ИИИ, 日本語, natürlich";
@@ -198,10 +198,10 @@ public class TestRest {
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
 
-        String launchpadYaml = result.getResponse().getContentAsString();
-        System.out.println("launchpadYaml = " + launchpadYaml);
+        String dispatcherYaml = result.getResponse().getContentAsString();
+        System.out.println("dispatcherYaml = " + dispatcherYaml);
 
-        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadYaml);
+        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherYaml);
 
         assertNotNull(d);
         Assert.assertTrue(d.isSuccess());

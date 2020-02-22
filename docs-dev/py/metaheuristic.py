@@ -1,5 +1,5 @@
 class ResourceCodeV5:
-    def __init__(self, name=None, input=None, output_sourcing='launchpad'):
+    def __init__(self, name=None, input=None, output_sourcing='dispatcher'):
         if input is None:
             self.__input = {}
         else:
@@ -8,7 +8,7 @@ class ResourceCodeV5:
         self.output_sourcing = output_sourcing
 
 class Variable:
-    def __init__(self, name=None, input=None, output_sourcing='launchpad'):
+    def __init__(self, name=None, input=None, output_sourcing='dispatcher'):
         if input is None:
             self.__input = {}
         else:

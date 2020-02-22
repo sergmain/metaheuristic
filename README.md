@@ -49,10 +49,10 @@ It'll be /mh-root in follow text.
 
 1. Change dir to /mh-root and run command:
     ```
-    java -Dspring.profiles.active=quickstart,launchpad,station -jar metaheuristic/apps/metaheuristic/target/metaheuristic.jar --mh.station.default-launchpad-yaml-file=metaheuristic/docs-dev/cfg/default-cfg/launchpad.yaml --mh.station.default-env-yaml-file=metaheuristic/docs-dev/cfg/default-cfg/env.yaml 
+    java -Dspring.profiles.active=quickstart,dispatcher,station -jar metaheuristic/apps/metaheuristic/target/metaheuristic.jar --mh.station.default-dispatcher-yaml-file=metaheuristic/docs-dev/cfg/default-cfg/dispatcher.yaml --mh.station.default-env-yaml-file=metaheuristic/docs-dev/cfg/default-cfg/env.yaml 
     ```
 
-1. Now you can find our experiment data at http://localhost:8080/launchpad/atlas/atlas-experiments
+1. Now you can find our experiment data at http://localhost:8080/dispatcher/atlas/atlas-experiments
 login - q, password - 123
 
 1. Press 'Details' for experiment info (there should be only one record in atlas)
@@ -99,7 +99,7 @@ and you have to have until status will 'PRODUCED'. You can check current status 
     STOPPED - processing of tasks was stopped  
     FINISHED - processing of tasks was finished  
 
-1. After status will change to FINISHED you can find our experiment at http://localhost:8080/launchpad/experiment/experiments  
+1. After status will change to FINISHED you can find our experiment at http://localhost:8080/dispatcher/experiment/experiments  
 login - q, password - 123
 
 1. Press 'Info' button and on the next page 'Info' button at the bottom of page.
@@ -119,11 +119,11 @@ For commercial use you must buy commercial license with annual subscription if n
 | Personal use  (using in commercial project prohibited) | Free to use         |
 | Scientific researches                                  | Free to use, citing | 
 | Non-profit organizations                               | Free to use, citing | 
-| Commercial use, less than 25 Stations\*                | Free to use         | 
-| All other cases when there are 25 Stations\* or more   | Annual subscription, $50k for Launchpad\*\*, $200 per station | 
+| Commercial use, less than active 50 Stations\*                | Free to use         | 
+| All other cases when there are active 50 Stations\* or more   | Annual subscription, $50k for Dispatcher\*\*, $200 per station | 
 
 \* Station is a client part of metaheuristic which is processing tasks.   
-\*\* Launchpad is a server part of metaheuristic which is serving all configurations 
+\*\* Dispatcher is a server part of metaheuristic which is serving all configurations 
 and managing the process of assigning tasks to Stations.
 
 ## Copyright

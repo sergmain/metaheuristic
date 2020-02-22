@@ -15,13 +15,13 @@
  */
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.mh.dispatcher..ArtifactCleanerAtDispatcher;
-import ai.metaheuristic.ai.mh.dispatcher..RoundRobinForDispatcher;
-import ai.metaheuristic.ai.mh.dispatcher..batch.BatchService;
-import ai.metaheuristic.ai.mh.dispatcher..experiment.ExperimentService;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeService;
-import ai.metaheuristic.ai.mh.dispatcher..replication.ReplicationService;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.dispatcher.ArtifactCleanerAtDispatcher;
+import ai.metaheuristic.ai.dispatcher.RoundRobinForDispatcher;
+import ai.metaheuristic.ai.dispatcher.batch.BatchService;
+import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.station.*;
 import ai.metaheuristic.ai.station.actors.DownloadResourceActor;
 import ai.metaheuristic.ai.station.actors.DownloadFunctionActor;
@@ -46,9 +46,9 @@ public class Schedulers {
     @Service
     @EnableScheduling
     @Slf4j
-    @Profile("mh.dispatcher.")
+    @Profile("dispatcher")
     @RequiredArgsConstructor
-    public static class LaunchpadSchedulers {
+    public static class DispatcherSchedulers {
 
         private final Globals globals;
         private final ExecContextSchedulerService execContextSchedulerService;
@@ -58,7 +58,7 @@ public class Schedulers {
         private final BatchService batchService;
         private final ReplicationService replicationService;
 
-        // Launchpad schedulers
+        // Dispatcher schedulers
 
         private static final long TIMEOUT_BETWEEN_RECONCILIATION = TimeUnit.MINUTES.toMillis(1);
         private long prevReconciliationTime = 0L;
@@ -66,12 +66,12 @@ public class Schedulers {
         /**
          * update status of all execContexts which are in 'started' state. Also, if execContext is finished, atlas will be produced
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.mh.dispatcher..timeout.process-exec-context'), 1, 40, 3)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.process-exec-context'), 1, 40, 3)*1000 }")
         public void updateExecContextStatuses() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.mh.dispatcher.Enabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.info("Invoking ExecContextService.updateExecContextStatuses()");
@@ -96,60 +96,60 @@ public class Schedulers {
         /**
          * update statuses of all batches if all related execContexts are finished
          */
-        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.mh.dispatcher..timeout.update-batch-statuses'), 5, 60, 5)*1000 }")
+        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.update-batch-statuses'), 5, 60, 5)*1000 }")
         public void updateBatchStatuses() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.mh.dispatcher.Enabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.info("Invoking batchService.updateBatchStatuses()");
             batchService.updateBatchStatuses();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.mh.dispatcher..timeout.create-all-tasks'), 5, 40, 5)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.create-all-tasks'), 5, 40, 5)*1000 }")
         public void createAllTasks() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.mh.dispatcher.Enabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.info("Invoking sourceCodeService.createAllTasks()");
             sourceCodeService.createAllTasks();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.mh.dispatcher..timeout.artifact-cleaner'), 30, 300, 60)*1000 }")
-        public void artifactCleanerAtLaunchpad() {
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.artifact-cleaner'), 30, 300, 60)*1000 }")
+        public void artifactCleanerAtDispatcher() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.mh.dispatcher.Enabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
-            log.info("Invoking artifactCleanerAtLaunchpad.fixedDelay()");
+            log.info("Invoking artifactCleanerAtDispatcher.fixedDelay()");
             artifactCleanerAtDispatcher.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.mh.dispatcher..timeout.exteriment-finisher'), 5, 300, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.exteriment-finisher'), 5, 300, 10)*1000 }")
         public void experimentFinisher() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.mh.dispatcher.Enabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.info("Invoking experimentService.experimentFinisher()");
             experimentService.experimentFinisher();
         }
 
-        @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.mh.dispatcher..gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
-        public void garbageCollectionAtLaunchpad() {
+        @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
+        public void garbageCollectionAtDispatcher() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.mh.dispatcher.Enabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.debug("Invoking System.gc()");
@@ -158,12 +158,12 @@ public class Schedulers {
             log.warn("Memory after GC. Free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
         }
 
-        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.mh.dispatcher..asset.sync-timeout'), 30, 3600, 120)*1000 }")
+        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.asset.sync-timeout'), 30, 3600, 120)*1000 }")
         public void syncReplication() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.mh.dispatcher.Enabled) {
+            if (!globals.dispatcherEnabled) {
                 return;
             }
             log.debug("Invoking replicationService.sync()");
@@ -187,15 +187,15 @@ public class Schedulers {
         private final UploadResourceActor uploadResourceActor;
         private final ArtifactCleanerAtStation artifactCleaner;
         private final MetadataService metadataService;
-        private final DispatcherLookupExtendedService mh.dispatcher.LookupExtendedService;
+        private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
         private final CurrentExecState currentExecState;
         private final EnvService envService;
         private final StationCommandProcessor stationCommandProcessor;
 
         private final RoundRobinForDispatcher roundRobin;
-        private final Map<String, DispatcherRequestor> mh.dispatcher.RequestorMap = new HashMap<>();
+        private final Map<String, DispatcherRequestor> dispatcherRequestorMap = new HashMap<>();
 
-        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadFunctionActor downloadFunctionActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, MetadataService metadataService, DispatcherLookupExtendedService mh.dispatcher.LookupExtendedService, CurrentExecState currentExecState, EnvService envService, StationCommandProcessor stationCommandProcessor) {
+        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadFunctionActor downloadFunctionActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, MetadataService metadataService, DispatcherLookupExtendedService dispatcherLookupExtendedService, CurrentExecState currentExecState, EnvService envService, StationCommandProcessor stationCommandProcessor) {
             this.globals = globals;
             this.taskAssetPreparer = taskAssetPreparer;
             this.taskProcessor = taskProcessor;
@@ -206,21 +206,21 @@ public class Schedulers {
             this.envService = envService;
             this.stationCommandProcessor = stationCommandProcessor;
 
-            if (mh.dispatcher.LookupExtendedService.lookupExtendedMap==null) {
-                throw new IllegalStateException("mh.dispatcher..yaml wasn't configured");
+            if (dispatcherLookupExtendedService.lookupExtendedMap==null) {
+                throw new IllegalStateException("dispatcher.yaml wasn't configured");
             }
-            this.roundRobin = new RoundRobinForDispatcher(mh.dispatcher.LookupExtendedService.lookupExtendedMap);
+            this.roundRobin = new RoundRobinForDispatcher(dispatcherLookupExtendedService.lookupExtendedMap);
             this.metadataService = metadataService;
-            this.mh.dispatcher.LookupExtendedService = mh.dispatcher.LookupExtendedService;
+            this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
             this.currentExecState = currentExecState;
 
-            for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : mh.dispatcher.LookupExtendedService.lookupExtendedMap.entrySet()) {
-                final DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher. = entry.getValue();
-                final DispatcherRequestor requestor = new DispatcherRequestor(mh.dispatcher..mh.dispatcher.Lookup.url, globals,
+            for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
+                final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = entry.getValue();
+                final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.dispatcherLookup.url, globals,
                         stationTaskService, stationService, this.metadataService, this.currentExecState,
-                        this.mh.dispatcher.LookupExtendedService, this.stationCommandProcessor);
+                        this.dispatcherLookupExtendedService, this.stationCommandProcessor);
 
-                mh.dispatcher.RequestorMap.put(mh.dispatcher..mh.dispatcher.Lookup.url, requestor);
+                dispatcherRequestorMap.put(dispatcher.dispatcherLookup.url, requestor);
             }
         }
 
@@ -239,8 +239,8 @@ public class Schedulers {
         /**
          * this scheduler is being run at the station side
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.request-mh.dispatcher.'), 3, 20, 6)*1000 }")
-        public void mh.dispatcher.Requester() {
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.request-dispatcher'), 3, 20, 6)*1000 }")
+        public void dispatcherRequester() {
             if (globals.isUnitTesting) {
                 return;
             }
@@ -251,22 +251,22 @@ public class Schedulers {
 /*
             String url = roundRobin.next();
             if (url==null) {
-                log.info("Can't find any enabled mh.dispatcher.");
+                log.info("Can't find any enabled dispatcher");
                 return;
             }
 */
-            Set<String> mh.dispatcher.s = roundRobin.getActiveLaunchpads();
-            if (mh.dispatcher.s.isEmpty()) {
-                log.info("Can't find any enabled mh.dispatcher.");
+            Set<String> dispatchers = roundRobin.getActiveDispatchers();
+            if (dispatchers.isEmpty()) {
+                log.info("Can't find any enabled dispatcher");
                 return;
             }
 
-            for (String mh.dispatcher. : mh.dispatcher.s) {
-                log.info("Run mh.dispatcher.Requestor.proceedWithRequest() for url {}", mh.dispatcher.);
+            for (String dispatcher : dispatchers) {
+                log.info("Run dispatcherRequestor.proceedWithRequest() for url {}", dispatcher);
                 try {
-                    mh.dispatcher.RequestorMap.get(mh.dispatcher.).proceedWithRequest();
+                    dispatcherRequestorMap.get(dispatcher).proceedWithRequest();
                 } catch (Throwable th) {
-                    log.error("StationSchedulers.mh.dispatcher.Requester()", th);
+                    log.error("StationSchedulers.dispatcherRequester()", th);
                 }
             }
         }

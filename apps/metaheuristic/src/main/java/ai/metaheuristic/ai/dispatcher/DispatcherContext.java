@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher.;
+package ai.metaheuristic.ai.dispatcher;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.beans.Company;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;

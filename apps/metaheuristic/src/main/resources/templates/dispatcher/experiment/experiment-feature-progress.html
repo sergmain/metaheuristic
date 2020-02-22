@@ -1,7 +1,7 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     layout:decorate="~{layout-mh.dispatcher.}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
+     layout:decorate="~{layout-dispatcher}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
      sec:authorize="isAuthenticated()"
 >
     <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.task.TaskApiData$TasksResult"*/-->
@@ -47,7 +47,7 @@
 
                     let /*{string}*/ url = $(this).attr('href');
                     printLogMain('url: ' + url);
-                    // /mh.dispatcher./experiment/experiment-feature-progress-part/82/428/,/part?page=1&size=10
+                    // /dispatcher/experiment/experiment-feature-progress-part/82/428/,/part?page=1&size=10
                     let /*{string}*/ urlPart1 = url.substring(0, url.indexOf(',/part'));
                     let /*{string}*/ urlPart = urlPart1.substring(0, urlPart1.lastIndexOf('/'));
                     let /*{string}*/ urlParams = url.substring(url.indexOf('?'));
@@ -92,7 +92,7 @@
                 xhr.setRequestHeader(header, token);
             });
 
-            $.post('/mh.dispatcher./experiment/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]]+'/,/part', table);
+            $.post('/dispatcher/experiment/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]]+'/,/part', table);
         });
 
         /**
@@ -219,7 +219,7 @@
 
         function drawPlot() {
             if (isDrawEnabled) {
-                let url = '/mh.dispatcher./experiment/experiment-feature-plot-data-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/' + paramFilterAxis + '/part';
+                let url = '/dispatcher/experiment/experiment-feature-plot-data-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/' + paramFilterAxis + '/part';
                 printLogButtonAxis('url for plot data: ' + url);
                 $.post(url, function(data ) {
                     printLogButtonAxis('json for plotting:\n' + data);
@@ -294,7 +294,7 @@
             $( '#fragment-console-table' ).empty();
             printLogButton('state: ' + buttonStateMap[id].state + ', idx: ' +buttonStateMap[id].idx);
             paramFilter = paramsForUrl();
-            let url = '/mh.dispatcher./experiment/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
+            let url = '/dispatcher/experiment/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
             printLogButton('url: '+ url);
             $.post(url, table);
             printLogButton('');
@@ -309,7 +309,7 @@
             // console.log("Start rerunTask()");
             my_confirm('Do you really want to re-run this task?', 'Re-run task?', "Re-run", function() {
                 console.log("re-run was confirmed.");
-                $.post('/mh.dispatcher./experiment/task-rerun/' + id, function(status) {
+                $.post('/dispatcher/experiment/task-rerun/' + id, function(status) {
                     // console.log("task-rerun is finished, Status: " + status);
                     if (status===true) {
                         // console.log("task-rerun is finished, status " + status);
@@ -496,17 +496,17 @@
                                     <li class="table-nav-padding">
                                         <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                                           th:href="@{/mh.dispatcher./experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                                           th:href="@{/dispatcher/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
                                     </li>
                                     <li class="table-nav-padding">
                                         <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                                           th:href="@{/mh.dispatcher./experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                                           th:href="@{/dispatcher/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                                     </li>
                                     <li class="table-nav-padding">
                                         <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                                           th:href="@{/mh.dispatcher./experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
+                                           th:href="@{/dispatcher/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
                                     </li>
                                 </ul>
                             </div>
@@ -560,7 +560,7 @@
                         <tr valign="top">
                             <td>
                                 <a class='ajax-elem-console table-nav-button pure-button' th:id="${'a-console-'+ g.index}" href="#"
-                                   th:href="@{/mh.dispatcher./experiment/experiment-feature-progress-console-part/{id}/(id=${s.task.id})}"
+                                   th:href="@{/dispatcher/experiment/experiment-feature-progress-console-part/{id}/(id=${s.task.id})}"
                                    title='Console output'>Info</a>
                             </td>
                             <td>
@@ -578,17 +578,17 @@
                                     <li class="table-nav-padding">
                                         <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                                           th:href="@{/mh.dispatcher./experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                                           th:href="@{/dispatcher/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
                                     </li>
                                     <li class="table-nav-padding">
                                         <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                                           th:href="@{/mh.dispatcher./experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                                           th:href="@{/dispatcher/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                                     </li>
                                     <li class="table-nav-padding">
                                         <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                                           th:href="@{/mh.dispatcher./experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
+                                           th:href="@{/dispatcher/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
                                     </li>
                                 </ul>
                             </div>
@@ -598,7 +598,7 @@
                 </table>
                 <p>&nbsp;</p>
 
-                <a class="pure-button pure-button-primary" href="experiment-info.html" th:href="${'/mh.dispatcher./experiment/experiment-info/' + experiment.id }">To experiment info</a>
+                <a class="pure-button pure-button-primary" href="experiment-info.html" th:href="${'/dispatcher/experiment/experiment-info/' + experiment.id }">To experiment info</a>
 
             </td>
             <td width="20">&nbsp;</td>

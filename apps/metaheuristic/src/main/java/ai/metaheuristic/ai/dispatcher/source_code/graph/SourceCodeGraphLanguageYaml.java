@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..source_code.graph;
+package ai.metaheuristic.ai.dispatcher.source_code.graph;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
-import ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;

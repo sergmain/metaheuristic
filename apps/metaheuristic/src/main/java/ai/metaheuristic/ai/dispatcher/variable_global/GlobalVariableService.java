@@ -14,15 +14,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..variable_global;
+package ai.metaheuristic.ai.dispatcher.variable_global;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
-import ai.metaheuristic.ai.mh.dispatcher..beans.GlobalVariable;
-import ai.metaheuristic.ai.mh.dispatcher..variable.SimpleVariableAndStorageUrl;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.GlobalVariableRepository;
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +54,7 @@ import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 @Service
 @Transactional
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class GlobalVariableService {
 
@@ -121,7 +121,7 @@ public class GlobalVariableService {
             GlobalVariable data = new GlobalVariable();
             data.setVariable(variable);
             data.setFilename(filename);
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.mh.dispatcher.)));
+            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);

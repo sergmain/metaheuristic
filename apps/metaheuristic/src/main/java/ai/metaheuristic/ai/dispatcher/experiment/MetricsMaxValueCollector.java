@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..experiment;
+package ai.metaheuristic.ai.dispatcher.experiment;
 
-import ai.metaheuristic.ai.mh.dispatcher..repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @Service
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
 public class MetricsMaxValueCollector {

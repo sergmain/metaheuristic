@@ -32,7 +32,7 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestFeatures extends PreparingPlan {
 
     @Override

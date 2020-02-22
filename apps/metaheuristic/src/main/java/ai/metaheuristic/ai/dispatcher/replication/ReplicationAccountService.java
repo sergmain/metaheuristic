@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..replication;
+package ai.metaheuristic.ai.dispatcher.replication;
 
-import ai.metaheuristic.ai.mh.dispatcher..account.AccountCache;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
-import ai.metaheuristic.ai.mh.dispatcher..data.ReplicationData;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.AccountRepository;
+import ai.metaheuristic.ai.dispatcher.account.AccountCache;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
+import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public class ReplicationAccountService {
 
     public final ReplicationCoreService replicationCoreService;

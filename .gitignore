@@ -28,6 +28,7 @@ r.bat
 aiai-station/**
 aiai-station-h2/**
 aiai-launchpad
+aiai-dispatcher
 *_V2.class
 *_V3.class
 config

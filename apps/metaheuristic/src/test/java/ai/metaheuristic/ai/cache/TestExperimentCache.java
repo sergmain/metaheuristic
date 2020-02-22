@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.cache;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Experiment;
+import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +30,7 @@ import static org.junit.Assert.assertNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestExperimentCache extends PreparingExperiment {
 
     @Test

@@ -1,5 +1,6 @@
 application.properties
 application-launchpad.properties
+application-dispatcher.properties
 application-*.properties
 *.txt
 snippet*

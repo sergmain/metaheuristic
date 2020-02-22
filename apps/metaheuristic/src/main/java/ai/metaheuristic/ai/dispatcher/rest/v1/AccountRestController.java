@@ -14,13 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..rest.v1;
+package ai.metaheuristic.ai.dispatcher.rest.v1;
 
-import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
-import ai.metaheuristic.ai.mh.dispatcher..account.AccountTopLevelService;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
-import ai.metaheuristic.ai.mh.dispatcher..context.UserContextService;
-import ai.metaheuristic.ai.mh.dispatcher..data.AccountData;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.account.AccountTopLevelService;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,9 +33,9 @@ import org.springframework.web.bind.annotation.*;
 
 @SuppressWarnings("Duplicates")
 @RestController
-@RequestMapping("/rest/v1/mh.dispatcher./account")
+@RequestMapping("/rest/v1/dispatcher/account")
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @CrossOrigin
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN')")

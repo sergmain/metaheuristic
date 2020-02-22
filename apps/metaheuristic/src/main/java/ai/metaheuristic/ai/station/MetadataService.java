@@ -22,9 +22,9 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.function.StationFunctionService;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metadata.MetadataUtils;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 public class MetadataService {
 
     private final Globals globals;
-    private final DispatcherLookupExtendedService mh.dispatcher.LookupExtendedService;
+    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final StationFunctionService stationFunctionService;
 
     private Metadata metadata = null;
@@ -73,9 +73,9 @@ public class MetadataService {
     @Data
     @AllArgsConstructor
     private static class SimpleCache {
-        public final DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher.;
+        public final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
         public final DispatcherLookupConfig.Asset asset;
-        public final Metadata.DispatcherInfo mh.dispatcher.Info;
+        public final Metadata.DispatcherInfo dispatcherInfo;
         public final File baseResourceDir;
     }
 
@@ -100,8 +100,8 @@ public class MetadataService {
         if (metadata==null) {
             metadata = new Metadata();
         }
-        for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : mh.dispatcher.LookupExtendedService.lookupExtendedMap.entrySet()) {
-            mh.dispatcher.UrlAsCode(entry.getKey());
+        for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
+            dispatcherUrlAsCode(entry.getKey());
         }
         // update metadata.yaml file after fixing brocked metas
         updateMetadataFile();
@@ -110,18 +110,18 @@ public class MetadataService {
         int i=0;
     }
 
-    public ChecksumState prepareChecksum(String functionCode, String mh.dispatcher.Url, TaskParamsYaml.FunctionConfig functionConfig) {
+    public ChecksumState prepareChecksum(String functionCode, String dispatcherUrl, TaskParamsYaml.FunctionConfig functionConfig) {
         ChecksumState checksumState = new ChecksumState();
         // check requirements of signature
         if (S.b(functionConfig.checksum)) {
-            setFunctionState(mh.dispatcher.Url, functionCode, Enums.FunctionState.signature_not_found);
+            setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.signature_not_found);
             checksumState.signatureIsOk = false;
             return checksumState;
         }
         checksumState.checksum = Checksum.fromJson(functionConfig.checksum);
         boolean isSignature = checksumState.checksum.checksums.entrySet().stream().anyMatch(e -> e.getKey().isSign);
         if (!isSignature) {
-            setFunctionState(mh.dispatcher.Url, functionCode, Enums.FunctionState.signature_not_found);
+            setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.signature_not_found);
             checksumState.signatureIsOk = false;
             return checksumState;
         }
@@ -132,100 +132,100 @@ public class MetadataService {
     private void markAllAsUnverified() {
         List<FunctionDownloadStatusYaml.Status > statuses = getFunctionDownloadStatusYamlInternal().statuses;
         for (FunctionDownloadStatusYaml.Status status : statuses) {
-            if (status.sourcing!= EnumsApi.FunctionSourcing.mh.dispatcher.) {
+            if (status.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
                 continue;
             }
 
-            final String mh.dispatcher.Url = status.mh.dispatcher.Url;
+            final String dispatcherUrl = status.dispatcherUrl;
             final String functionCode = status.code;
 
-            setVerifiedStatus(mh.dispatcher.Url, functionCode, false);
+            setVerifiedStatus(dispatcherUrl, functionCode, false);
         }
     }
 
-    public FunctionDownloadStatusYaml.Status syncFunctionStatus(String mh.dispatcher.Url, DispatcherLookupConfig.Asset asset, final String functionCode) {
+    public FunctionDownloadStatusYaml.Status syncFunctionStatus(String dispatcherUrl, DispatcherLookupConfig.Asset asset, final String functionCode) {
         try {
-            syncFunctionStatusInternal(mh.dispatcher.Url, asset, functionCode);
+            syncFunctionStatusInternal(dispatcherUrl, asset, functionCode);
         } catch (Throwable th) {
             log.error("Error in syncFunctionStatus()", th);
-            setFunctionState(mh.dispatcher.Url, functionCode, Enums.FunctionState.io_error);
+            setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.io_error);
         }
-        return getFunctionDownloadStatuses(mh.dispatcher.Url, functionCode);
+        return getFunctionDownloadStatuses(dispatcherUrl, functionCode);
     }
 
-    private void syncFunctionStatusInternal(String mh.dispatcher.Url, DispatcherLookupConfig.Asset asset, String functionCode) {
-        FunctionDownloadStatusYaml.Status status = getFunctionDownloadStatuses(mh.dispatcher.Url, functionCode);
+    private void syncFunctionStatusInternal(String dispatcherUrl, DispatcherLookupConfig.Asset asset, String functionCode) {
+        FunctionDownloadStatusYaml.Status status = getFunctionDownloadStatuses(dispatcherUrl, functionCode);
 
-        if (status==null || status.sourcing != EnumsApi.FunctionSourcing.mh.dispatcher. || status.verified) {
+        if (status==null || status.sourcing != EnumsApi.FunctionSourcing.dispatcher || status.verified) {
             return;
         }
-        SimpleCache simpleCache = simpleCacheMap.computeIfAbsent(mh.dispatcher.Url, o->{
-            final Metadata.DispatcherInfo mh.dispatcher.Info = mh.dispatcher.UrlAsCode(mh.dispatcher.Url);
+        SimpleCache simpleCache = simpleCacheMap.computeIfAbsent(dispatcherUrl, o->{
+            final Metadata.DispatcherInfo dispatcherInfo = dispatcherUrlAsCode(dispatcherUrl);
             return new SimpleCache(
-                    mh.dispatcher.LookupExtendedService.lookupExtendedMap.get(mh.dispatcher.Url),
+                    dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl),
                     asset,
-                    mh.dispatcher.Info,
-                    mh.dispatcher.LookupExtendedService.prepareBaseResourceDir(mh.dispatcher.Info)
+                    dispatcherInfo,
+                    dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo)
             );
         });
 
         StationFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
-                stationFunctionService.downloadFunctionConfig(mh.dispatcher.Url, simpleCache.asset, functionCode, simpleCache.mh.dispatcher.Info.stationId);
+                stationFunctionService.downloadFunctionConfig(dispatcherUrl, simpleCache.asset, functionCode, simpleCache.dispatcherInfo.stationId);
 
         if (downloadedFunctionConfigStatus.status== StationFunctionService.ConfigStatus.error) {
-            setFunctionState(mh.dispatcher.Url, functionCode, Enums.FunctionState.function_config_error);
+            setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.function_config_error);
             return;
         }
         if (downloadedFunctionConfigStatus.status== StationFunctionService.ConfigStatus.not_found) {
-            removeFunction(mh.dispatcher.Url, functionCode);
+            removeFunction(dispatcherUrl, functionCode);
             return;
         }
         TaskParamsYaml.FunctionConfig functionConfig = downloadedFunctionConfigStatus.functionConfig;
 
-        ChecksumState checksumState = prepareChecksum(functionCode, mh.dispatcher.Url, functionConfig);
+        ChecksumState checksumState = prepareChecksum(functionCode, dispatcherUrl, functionConfig);
         if (!checksumState.signatureIsOk) {
             return;
         }
 
         final AssetFile assetFile = ResourceUtils.prepareFunctionFile(simpleCache.baseResourceDir, status.code, functionConfig.file);
         if (assetFile.isError) {
-            setFunctionState(mh.dispatcher.Url, functionCode, Enums.FunctionState.asset_error);
+            setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.asset_error);
             return;
         }
         if (!assetFile.isContent) {
-            setFunctionState(mh.dispatcher.Url, functionCode, Enums.FunctionState.none);
+            setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.none);
             return;
         }
 
         try {
             CheckSumAndSignatureStatus checkSumAndSignatureStatus = getCheckSumAndSignatureStatus(
-                    functionCode, simpleCache.mh.dispatcher..mh.dispatcher.Lookup, checksumState.checksum, assetFile.file);
+                    functionCode, simpleCache.dispatcher.dispatcherLookup, checksumState.checksum, assetFile.file);
 
             if (checkSumAndSignatureStatus.checksum==CheckSumAndSignatureStatus.Status.correct && checkSumAndSignatureStatus.signature==CheckSumAndSignatureStatus.Status.correct) {
                 if (status.functionState != Enums.FunctionState.ready || !status.verified) {
-                    setFunctionState(mh.dispatcher.Url, functionCode, Enums.FunctionState.ready);
+                    setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.ready);
                 }
             }
         } catch (Throwable th) {
-            log.error(S.f("#815.030 Error verifying function %s from %s", functionCode, mh.dispatcher.Url), th);
-            setFunctionState(mh.dispatcher.Url, functionCode, Enums.FunctionState.io_error);
+            log.error(S.f("#815.030 Error verifying function %s from %s", functionCode, dispatcherUrl), th);
+            setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.io_error);
         }
     }
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-            String functionCode, DispatcherLookupConfig.DispatcherLookup mh.dispatcher., Checksum checksum, File functionTempFile) throws IOException {
+            String functionCode, DispatcherLookupConfig.DispatcherLookup dispatcher, Checksum checksum, File functionTempFile) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(CheckSumAndSignatureStatus.Status.correct, CheckSumAndSignatureStatus.Status.correct);
-        if (mh.dispatcher..acceptOnlySignedFunctions) {
+        if (dispatcher.acceptOnlySignedFunctions) {
             try (FileInputStream fis = new FileInputStream(functionTempFile)) {
-                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "Dispatcher url: "+ mh.dispatcher..url +", function: "+functionCode, fis, true, mh.dispatcher..createPublicKey());
+                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "Dispatcher url: "+ dispatcher.url +", function: "+functionCode, fis, true, dispatcher.createPublicKey());
             }
             if (status.signature != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.040 mh.dispatcher..acceptOnlySignedFunctions is {} but function {} has the broken signature", mh.dispatcher..acceptOnlySignedFunctions, functionCode);
-                setFunctionState(mh.dispatcher..url, functionCode, Enums.FunctionState.signature_wrong);
+                log.warn("#815.040 dispatcher.acceptOnlySignedFunctions is {} but function {} has the broken signature", dispatcher.acceptOnlySignedFunctions, functionCode);
+                setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.signature_wrong);
             }
             else if (status.checksum != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.050 mh.dispatcher..acceptOnlySignedFunctions is {} but function {} has the broken signature", mh.dispatcher..acceptOnlySignedFunctions, functionCode);
-                setFunctionState(mh.dispatcher..url, functionCode, Enums.FunctionState.checksum_wrong);
+                log.warn("#815.050 dispatcher.acceptOnlySignedFunctions is {} but function {} has the broken signature", dispatcher.acceptOnlySignedFunctions, functionCode);
+                setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.checksum_wrong);
             }
         }
         return status;
@@ -233,7 +233,7 @@ public class MetadataService {
 
     public String findHostByCode(String code) {
         synchronized (syncObj) {
-            for (Map.Entry<String, Metadata.DispatcherInfo> entry : metadata.mh.dispatcher..entrySet()) {
+            for (Map.Entry<String, Metadata.DispatcherInfo> entry : metadata.dispatcher.entrySet()) {
                 if (code.equals(entry.getValue().code)) {
                     return entry.getKey();
                 }
@@ -244,44 +244,44 @@ public class MetadataService {
 
     private static final Object syncObj = new Object();
 
-    public Metadata.DispatcherInfo mh.dispatcher.UrlAsCode(String mh.dispatcher.Url) {
+    public Metadata.DispatcherInfo dispatcherUrlAsCode(String dispatcherUrl) {
         synchronized (syncObj) {
-            Metadata.DispatcherInfo mh.dispatcher.Info = getLaunchpadInfo(mh.dispatcher.Url);
+            Metadata.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
             // fix for wrong metadata.yaml data
-            if (mh.dispatcher.Info.code == null) {
-                mh.dispatcher.Info.code = asCode(mh.dispatcher.Url).code;
+            if (dispatcherInfo.code == null) {
+                dispatcherInfo.code = asCode(dispatcherUrl).code;
                 updateMetadataFile();
             }
-            return mh.dispatcher.Info;
+            return dispatcherInfo;
         }
     }
 
-    public String getStationId(final String mh.dispatcher.Url) {
+    public String getStationId(final String dispatcherUrl) {
         synchronized (syncObj) {
-            return getLaunchpadInfo(mh.dispatcher.Url).stationId;
+            return getDispatcherInfo(dispatcherUrl).stationId;
         }
     }
 
-    public void setStationIdAndSessionId(final String mh.dispatcher.Url, String stationId, String sessionId) {
-        if (StringUtils.isBlank(mh.dispatcher.Url)) {
-            throw new IllegalStateException("#815.060 mh.dispatcher.Url is null");
+    public void setStationIdAndSessionId(final String dispatcherUrl, String stationId, String sessionId) {
+        if (StringUtils.isBlank(dispatcherUrl)) {
+            throw new IllegalStateException("#815.060 dispatcherUrl is null");
         }
         if (StringUtils.isBlank(stationId)) {
             throw new IllegalStateException("#815.070 StationId is null");
         }
         synchronized (syncObj) {
-            final Metadata.DispatcherInfo mh.dispatcher.Info = getLaunchpadInfo(mh.dispatcher.Url);
-            if (!Objects.equals(mh.dispatcher.Info.stationId, stationId) || !Objects.equals(mh.dispatcher.Info.sessionId, sessionId)) {
-                mh.dispatcher.Info.stationId = stationId;
-                mh.dispatcher.Info.sessionId = sessionId;
+            final Metadata.DispatcherInfo dispatcherInfo = getDispatcherInfo(dispatcherUrl);
+            if (!Objects.equals(dispatcherInfo.stationId, stationId) || !Objects.equals(dispatcherInfo.sessionId, sessionId)) {
+                dispatcherInfo.stationId = stationId;
+                dispatcherInfo.sessionId = sessionId;
                 updateMetadataFile();
             }
         }
     }
 
-    public List<FunctionDownloadStatusYaml.Status> registerNewFunctionCode(String mh.dispatcher.Url, List<DispatcherCommParamsYaml.Functions.Info> infos) {
-        if (S.b(mh.dispatcher.Url)) {
-            throw new IllegalStateException("#815.080 mh.dispatcher.Url is null");
+    public List<FunctionDownloadStatusYaml.Status> registerNewFunctionCode(String dispatcherUrl, List<DispatcherCommParamsYaml.Functions.Info> infos) {
+        if (S.b(dispatcherUrl)) {
+            throw new IllegalStateException("#815.080 dispatcherUrl is null");
         }
         FunctionDownloadStatusYaml functionDownloadStatusYaml;
         synchronized (syncObj) {
@@ -289,18 +289,18 @@ public class MetadataService {
             boolean isChanged = false;
             for (DispatcherCommParamsYaml.Functions.Info info : infos) {
                 FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream()
-                        .filter(o->o.mh.dispatcher.Url.equals(mh.dispatcher.Url) && o.code.equals(info.code))
+                        .filter(o->o.dispatcherUrl.equals(dispatcherUrl) && o.code.equals(info.code))
                         .findAny().orElse(null);
                 if (status==null || status.functionState == Enums.FunctionState.not_found) {
-                    setFunctionDownloadStatusInternal(mh.dispatcher.Url, info.code, info.sourcing, Enums.FunctionState.none);
+                    setFunctionDownloadStatusInternal(dispatcherUrl, info.code, info.sourcing, Enums.FunctionState.none);
                     isChanged = true;
                 }
             }
 
-            // set state to FunctionState.not_found if function doesn't exist on Launchpad any more
+            // set state to FunctionState.not_found if function doesn't exist at Dispatcher any more
             for (FunctionDownloadStatusYaml.Status status : functionDownloadStatusYaml.statuses) {
-                if (status.mh.dispatcher.Url.equals(mh.dispatcher.Url) && infos.stream().filter(i-> i.code.equals(status.code)).findAny().orElse(null)==null) {
-                    setFunctionDownloadStatusInternal(mh.dispatcher.Url, status.code, status.sourcing, Enums.FunctionState.not_found);
+                if (status.dispatcherUrl.equals(dispatcherUrl) && infos.stream().filter(i-> i.code.equals(status.code)).findAny().orElse(null)==null) {
+                    setFunctionDownloadStatusInternal(dispatcherUrl, status.code, status.sourcing, Enums.FunctionState.not_found);
                     isChanged = true;
                 }
             }
@@ -321,7 +321,7 @@ public class MetadataService {
         synchronized (syncObj) {
             FunctionDownloadStatusYaml functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
 
-            FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream().filter(o->o.mh.dispatcher.Url.equals(assetUrl) && o.code.equals(functionCode)).findAny().orElse(null);
+            FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream().filter(o->o.dispatcherUrl.equals(assetUrl) && o.code.equals(functionCode)).findAny().orElse(null);
             if (status == null) {
                 return false;
             }
@@ -334,16 +334,16 @@ public class MetadataService {
         }
     }
 
-    public boolean removeFunction(final String mh.dispatcher.Url, String functionCode) {
-        if (S.b(mh.dispatcher.Url)) {
-            throw new IllegalStateException("#815.110 mh.dispatcher.Url is null");
+    public boolean removeFunction(final String dispatcherUrl, String functionCode) {
+        if (S.b(dispatcherUrl)) {
+            throw new IllegalStateException("#815.110 dispatcherUrl is null");
         }
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.120 functionCode is empty");
         }
         synchronized (syncObj) {
             FunctionDownloadStatusYaml functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
-            List<FunctionDownloadStatusYaml.Status> statuses = functionDownloadStatusYaml.statuses.stream().filter(o->!(o.mh.dispatcher.Url.equals(mh.dispatcher.Url) && o.code.equals(functionCode))).collect(Collectors.toList());
+            List<FunctionDownloadStatusYaml.Status> statuses = functionDownloadStatusYaml.statuses.stream().filter(o->!(o.dispatcherUrl.equals(dispatcherUrl) && o.code.equals(functionCode))).collect(Collectors.toList());
             if (statuses.size()!= functionDownloadStatusYaml.statuses.size()) {
                 functionDownloadStatusYaml.statuses = statuses;
                 String yaml = FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(functionDownloadStatusYaml);
@@ -354,9 +354,9 @@ public class MetadataService {
         }
     }
 
-    public boolean setVerifiedStatus(final String mh.dispatcher.Url, String functionCode, boolean verified) {
-        if (S.b(mh.dispatcher.Url)) {
-            throw new IllegalStateException("#815.130 mh.dispatcher.Url is null");
+    public boolean setVerifiedStatus(final String dispatcherUrl, String functionCode, boolean verified) {
+        if (S.b(dispatcherUrl)) {
+            throw new IllegalStateException("#815.130 dispatcherUrl is null");
         }
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.140 functionCode is null");
@@ -364,7 +364,7 @@ public class MetadataService {
         synchronized (syncObj) {
             FunctionDownloadStatusYaml functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
 
-            FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream().filter(o->o.mh.dispatcher.Url.equals(mh.dispatcher.Url) && o.code.equals(functionCode)).findAny().orElse(null);
+            FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream().filter(o->o.dispatcherUrl.equals(dispatcherUrl) && o.code.equals(functionCode)).findAny().orElse(null);
             if (status == null) {
                 return false;
             }
@@ -376,42 +376,42 @@ public class MetadataService {
         }
     }
 
-    public void setFunctionDownloadStatus(final String mh.dispatcher.Url, String functionCode, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
-        if (S.b(mh.dispatcher.Url)) {
-            throw new IllegalStateException("#815.150 mh.dispatcher.Url is null");
+    public void setFunctionDownloadStatus(final String dispatcherUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
+        if (S.b(dispatcherUrl)) {
+            throw new IllegalStateException("#815.150 dispatcherUrl is null");
         }
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.160 functionCode is empty");
         }
         synchronized (syncObj) {
-            setFunctionDownloadStatusInternal(mh.dispatcher.Url, functionCode, sourcing, functionState);
+            setFunctionDownloadStatusInternal(dispatcherUrl, functionCode, sourcing, functionState);
             updateMetadataFile();
         }
     }
 
-    public FunctionDownloadStatusYaml.Status getFunctionDownloadStatuses(String mh.dispatcher.Url, String functionCode) {
+    public FunctionDownloadStatusYaml.Status getFunctionDownloadStatuses(String dispatcherUrl, String functionCode) {
         synchronized (syncObj) {
             return getFunctionDownloadStatusYamlInternal().statuses.stream()
-                    .filter(o->o.mh.dispatcher.Url.equals(mh.dispatcher.Url) && o.code.equals(functionCode))
+                    .filter(o->o.dispatcherUrl.equals(dispatcherUrl) && o.code.equals(functionCode))
                     .findAny().orElse(null);
         }
     }
 
-    public List<StationCommParamsYaml.FunctionDownloadStatus.Status> getAsFunctionDownloadStatuses(final String mh.dispatcher.Url) {
+    public List<StationCommParamsYaml.FunctionDownloadStatus.Status> getAsFunctionDownloadStatuses(final String dispatcherUrl) {
         synchronized (syncObj) {
             return getFunctionDownloadStatusYamlInternal().statuses.stream()
-                    .filter(o->o.mh.dispatcher.Url.equals(mh.dispatcher.Url))
+                    .filter(o->o.dispatcherUrl.equals(dispatcherUrl))
                     .map(o->new StationCommParamsYaml.FunctionDownloadStatus.Status(o.functionState, o.code))
                     .collect(Collectors.toList());
         }
     }
 
-    private void setFunctionDownloadStatusInternal(String mh.dispatcher.Url, String code, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
+    private void setFunctionDownloadStatusInternal(String dispatcherUrl, String code, EnumsApi.FunctionSourcing sourcing, Enums.FunctionState functionState) {
         FunctionDownloadStatusYaml functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
 
-        FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream().filter(o->o.mh.dispatcher.Url.equals(mh.dispatcher.Url) && o.code.equals(code)).findAny().orElse(null);
+        FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream().filter(o->o.dispatcherUrl.equals(dispatcherUrl) && o.code.equals(code)).findAny().orElse(null);
         if (status == null) {
-            status = new FunctionDownloadStatusYaml.Status(Enums.FunctionState.none, code, mh.dispatcher.Url, sourcing, false);
+            status = new FunctionDownloadStatusYaml.Status(Enums.FunctionState.none, code, dispatcherUrl, sourcing, false);
             functionDownloadStatusYaml.statuses.add(status);
         }
         status.functionState = functionState;
@@ -443,28 +443,28 @@ public class MetadataService {
         return functionDownloadStatusYaml;
     }
 
-    public String getSessionId(final String mh.dispatcher.Url) {
+    public String getSessionId(final String dispatcherUrl) {
         synchronized (syncObj) {
-            return getLaunchpadInfo(mh.dispatcher.Url).sessionId;
+            return getDispatcherInfo(dispatcherUrl).sessionId;
         }
     }
 
-    public void setSessionId(final String mh.dispatcher.Url, String sessionId) {
-        if (StringUtils.isBlank(mh.dispatcher.Url)) {
-            throw new IllegalStateException("#815.170 mh.dispatcher.Url is null");
+    public void setSessionId(final String dispatcherUrl, String sessionId) {
+        if (StringUtils.isBlank(dispatcherUrl)) {
+            throw new IllegalStateException("#815.170 dispatcherUrl is null");
         }
         if (StringUtils.isBlank(sessionId)) {
             throw new IllegalStateException("#815.180 sessionId is null");
         }
         synchronized (syncObj) {
-            getLaunchpadInfo(mh.dispatcher.Url).stationId = sessionId;
+            getDispatcherInfo(dispatcherUrl).stationId = sessionId;
             updateMetadataFile();
         }
     }
 
-    private Metadata.DispatcherInfo getLaunchpadInfo(String mh.dispatcher.Url) {
+    private Metadata.DispatcherInfo getDispatcherInfo(String dispatcherUrl) {
         synchronized (syncObj) {
-            return metadata.mh.dispatcher..computeIfAbsent(mh.dispatcher.Url, m -> asCode(mh.dispatcher.Url));
+            return metadata.dispatcher.computeIfAbsent(dispatcherUrl, m -> asCode(dispatcherUrl));
         }
     }
 
@@ -494,18 +494,18 @@ public class MetadataService {
         }
     }
 
-    private Metadata.DispatcherInfo asCode(String mh.dispatcher.Url) {
-        String s = mh.dispatcher.Url.toLowerCase();
-        if (mh.dispatcher.Url.startsWith(Consts.HTTP)) {
+    private Metadata.DispatcherInfo asCode(String dispatcherUrl) {
+        String s = dispatcherUrl.toLowerCase();
+        if (dispatcherUrl.startsWith(Consts.HTTP)) {
             s = s.substring(Consts.HTTP.length());
         }
-        else if (mh.dispatcher.Url.startsWith(Consts.HTTPS)) {
+        else if (dispatcherUrl.startsWith(Consts.HTTPS)) {
             s = s.substring(Consts.HTTPS.length());
         }
         s = StringUtils.replaceEach(s, new String[]{".", ":", "/"}, new String[]{"_", "-", "-"});
-        Metadata.DispatcherInfo mh.dispatcher.Info = new Metadata.DispatcherInfo();
-        mh.dispatcher.Info.code = s;
-        return mh.dispatcher.Info;
+        Metadata.DispatcherInfo dispatcherInfo = new Metadata.DispatcherInfo();
+        dispatcherInfo.code = s;
+        return dispatcherInfo;
     }
 
 }

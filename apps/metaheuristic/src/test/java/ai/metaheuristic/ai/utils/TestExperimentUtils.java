@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Function;
-import ai.metaheuristic.ai.mh.dispatcher..experiment.ExperimentUtils;
-import ai.metaheuristic.ai.mh.dispatcher..function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.experiment.ExperimentUtils;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.commons.CommonConsts;
 import org.junit.Test;
 

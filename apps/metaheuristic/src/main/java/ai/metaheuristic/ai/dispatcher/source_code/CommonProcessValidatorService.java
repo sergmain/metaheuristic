@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..source_code;
+package ai.metaheuristic.ai.dispatcher.source_code;
 
-import ai.metaheuristic.ai.mh.dispatcher..function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Service
 @RequiredArgsConstructor
 public class CommonProcessValidatorService {

@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.binary_data;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Variable;
-import ai.metaheuristic.ai.mh.dispatcher..variable.VariableService;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -47,7 +47,7 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 @Slf4j
 public class TestBinaryDataSaveAndLoad {
 

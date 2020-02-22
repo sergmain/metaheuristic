@@ -14,15 +14,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..station;
+package ai.metaheuristic.ai.dispatcher.station;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Station;
-import ai.metaheuristic.ai.mh.dispatcher..data.StationData;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.StationsRepository;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.TaskRepository;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.beans.Station;
+import ai.metaheuristic.ai.dispatcher.data.StationData;
+import ai.metaheuristic.ai.dispatcher.repositories.StationsRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @Service
 @RequiredArgsConstructor
 public class StationTopLevelService {
@@ -61,7 +61,7 @@ public class StationTopLevelService {
     private final TaskRepository taskRepository;
 
     // Attention, this value must be greater than
-    // ai.metaheuristic.ai.mh.dispatcher..server.ServerService.SESSION_UPDATE_TIMEOUT
+    // ai.metaheuristic.ai.dispatcher.server.ServerService.SESSION_UPDATE_TIMEOUT
     // at least for 20 seconds
     public static final long STATION_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
 
@@ -104,7 +104,7 @@ public class StationTopLevelService {
 
     private String stationBlacklisted(StationStatusYaml status) {
         if (status.taskParamsVersion > TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
-            return "Launchpad is too old and can't communicate to this station, need to upgrade";
+            return "Dispatcher is too old and can't communicate to this station, needs to be upgraded";
         }
         return null;
     }

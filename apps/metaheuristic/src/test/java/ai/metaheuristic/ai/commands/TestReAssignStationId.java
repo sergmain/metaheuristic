@@ -16,11 +16,11 @@
 
 package ai.metaheuristic.ai.commands;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Station;
-import ai.metaheuristic.ai.mh.dispatcher..server.ServerService;
-import ai.metaheuristic.ai.mh.dispatcher..station.StationCache;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.dispatcher.beans.Station;
+import ai.metaheuristic.ai.dispatcher.server.ServerService;
+import ai.metaheuristic.ai.dispatcher.station.StationCache;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestReAssignStationId {
 
     @Autowired
@@ -60,9 +60,9 @@ public class TestReAssignStationId {
     public void before() {
         StationCommParamsYaml stationComm = new StationCommParamsYaml();
 
-        String launchpadResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
 
-        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
+        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
         assertNotNull(d.getAssignedStationId());
@@ -98,9 +98,9 @@ public class TestReAssignStationId {
         final StationCommParamsYaml stationComm = new StationCommParamsYaml();
         stationComm.stationCommContext = new StationCommParamsYaml.StationCommContext(stationIdBefore.toString(), sessionIdBefore.substring(0, 4));
         final String stationYaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
-        String launchpadResponse = serverService.processRequest(stationYaml, "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(stationYaml, "127.0.0.1");
 
-        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
+        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
         assertNotNull(d.getReAssignedStationId());

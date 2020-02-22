@@ -1,12 +1,12 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     layout:decorate="~{layout-mh.dispatcher.}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.mh.dispatcher..enabled'))}"
+     layout:decorate="~{layout-dispatcher}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Add new source code</h1>
 
-        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/mh.dispatcher./source-code/source-code-add-commit}" accept-charset="UTF-8" id="sourceCode-form" name="f">
+        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/source-code/source-code-add-commit}" accept-charset="UTF-8" id="sourceCode-form" name="f">
             <fieldset>
 
                 <label for="sourceCodeYamlAsStr">Parameters of source code</label>
@@ -23,7 +23,7 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="source-codes.html" th:href="${'/mh.dispatcher./source-code/source-codes'}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="source-codes.html" th:href="${'/dispatcher/source-code/source-codes'}">Cancel</a>
                         </td>
                     </tr>
                 </table>
@@ -32,7 +32,7 @@
 
         <h2 class="widget-header">Upload sourceCode from file </h2>
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-              th:action="@{/mh.dispatcher./source-code/source-code-upload-from-file}"
+              th:action="@{/dispatcher/source-code/source-code-upload-from-file}"
         >
             <table>
                 <tr>

@@ -47,7 +47,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Import({SpringSecurityWebAuxTestConfig.class})
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestAccessForAllEndPoints {
 
     private MockMvc mockMvc;
@@ -71,48 +71,48 @@ public class TestAccessForAllEndPoints {
     }
 
     private static final AccessUrl[] ACCOUNT_URLS = new AccessUrl[]{
-            new AccessUrl("/launchpad/account/accounts", AccessMethod.GET),
-            new AccessUrl("/launchpad/account/accounts-part", AccessMethod.POST),
-            new AccessUrl("/launchpad/account/account-password-edit-commit", AccessMethod.POST),
-            new AccessUrl("/launchpad/account/account-password-edit/1", AccessMethod.GET),
-            new AccessUrl("/launchpad/account/account-edit-commit", AccessMethod.POST),
-            new AccessUrl("/launchpad/account/account-edit/1", AccessMethod.GET),
-            new AccessUrl("/launchpad/account/account-add-commit", AccessMethod.POST),
-            new AccessUrl("/launchpad/account/account-add", AccessMethod.GET)
+            new AccessUrl("/dispatcher/account/accounts", AccessMethod.GET),
+            new AccessUrl("/dispatcher/account/accounts-part", AccessMethod.POST),
+            new AccessUrl("/dispatcher/account/account-password-edit-commit", AccessMethod.POST),
+            new AccessUrl("/dispatcher/account/account-password-edit/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/account/account-edit-commit", AccessMethod.POST),
+            new AccessUrl("/dispatcher/account/account-edit/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/account/account-add-commit", AccessMethod.POST),
+            new AccessUrl("/dispatcher/account/account-add", AccessMethod.GET)
     };
 
     private static final AccessUrl[] ACCOUNT_REST_URLS = new AccessUrl[]{
-            new AccessUrl("/rest/v1/launchpad/account/accounts", AccessMethod.GET),
-            new AccessUrl("/rest/v1/launchpad/account/account/1", AccessMethod.GET),
-            new AccessUrl("/rest/v1/launchpad/account/account-add-commit", AccessMethod.POST),
-            new AccessUrl("/rest/v1/launchpad/account/account-edit-commit", AccessMethod.POST),
-            new AccessUrl("/rest/v1/launchpad/account/account-password-edit-commit", AccessMethod.POST),
-            new AccessUrl("/rest/v1/launchpad/account/account-account-role-commit", AccessMethod.POST)
+            new AccessUrl("/rest/v1/dispatcher/account/accounts", AccessMethod.GET),
+            new AccessUrl("/rest/v1/dispatcher/account/account/1", AccessMethod.GET),
+            new AccessUrl("/rest/v1/dispatcher/account/account-add-commit", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/account/account-edit-commit", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/account/account-password-edit-commit", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/account/account-account-role-commit", AccessMethod.POST)
     };
 
     private static final AccessUrl[] ATLAS_URLS = new AccessUrl[]{
-            new AccessUrl("/launchpad/atlas/atlas-experiments", AccessMethod.GET),
-            new AccessUrl("/launchpad/atlas/atlas-experiments-part", AccessMethod.POST),
-            new AccessUrl("/launchpad/atlas/atlas-experiment-info/1", AccessMethod.GET),
-            new AccessUrl("/launchpad/atlas/atlas-experiment-delete/1", AccessMethod.GET),
-            new AccessUrl("/launchpad/atlas/atlas-experiment-delete-commit", AccessMethod.POST),
-            new AccessUrl("/launchpad/atlas/atlas-experiment-upload-from-file", AccessMethod.POST),
-            new AccessUrl("/launchpad/atlas/atlas-experiment-export/atlas-1.yaml", AccessMethod.GET),
-            new AccessUrl("/launchpad/atlas/atlas-experiment-export-import/1", AccessMethod.GET),
-            new AccessUrl("/launchpad/atlas/atlas-experiment-feature-progress/1/1/1", AccessMethod.GET),
-            new AccessUrl("/launchpad/atlas/atlas-experiment-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
-            new AccessUrl("/launchpad/atlas/atlas-experiment-feature-progress-console-part/1/1", AccessMethod.POST),
-            new AccessUrl("/launchpad/atlas/atlas-experiment-feature-progress-part/1/1/1/1/part", AccessMethod.POST),
+            new AccessUrl("/dispatcher/atlas/atlas-experiments", AccessMethod.GET),
+            new AccessUrl("/dispatcher/atlas/atlas-experiments-part", AccessMethod.POST),
+            new AccessUrl("/dispatcher/atlas/atlas-experiment-info/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/atlas/atlas-experiment-delete/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/atlas/atlas-experiment-delete-commit", AccessMethod.POST),
+            new AccessUrl("/dispatcher/atlas/atlas-experiment-upload-from-file", AccessMethod.POST),
+            new AccessUrl("/dispatcher/atlas/atlas-experiment-export/atlas-1.yaml", AccessMethod.GET),
+            new AccessUrl("/dispatcher/atlas/atlas-experiment-export-import/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/atlas/atlas-experiment-feature-progress/1/1/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/atlas/atlas-experiment-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
+            new AccessUrl("/dispatcher/atlas/atlas-experiment-feature-progress-console-part/1/1", AccessMethod.POST),
+            new AccessUrl("/dispatcher/atlas/atlas-experiment-feature-progress-part/1/1/1/1/part", AccessMethod.POST),
     };
 
     private static final AccessUrl[] ATLAS_REST_URLS = new AccessUrl[]{
-            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiments", AccessMethod.GET),
-            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-info/1", AccessMethod.GET),
-            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-delete-commit", AccessMethod.POST),
-            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-feature-progress/1/1/1", AccessMethod.POST),
-            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
-            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-feature-progress-console-part/1/1", AccessMethod.POST),
-            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-feature-progress-part/1/1/1/1/part", AccessMethod.POST)
+            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiments", AccessMethod.GET),
+            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-info/1", AccessMethod.GET),
+            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-delete-commit", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-feature-progress/1/1/1", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-feature-progress-console-part/1/1", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-feature-progress-part/1/1/1/1/part", AccessMethod.POST)
     };
 
     private static final AccessUrl[] SERVER_REST_URLS = new AccessUrl[]{

@@ -2,7 +2,7 @@
      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
 >
     <!--/*@thymesVar id="companyUniqueId" type="java.lang.Long"*/-->
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData$SourceCodesForCompany"*/-->
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.SourceCodeData$SourceCodesForCompany"*/-->
     <div>
         <h1 class="widget-header" th:text="${'Status of execution of batch #' + batchId}"></h1>
 
@@ -14,7 +14,7 @@
             <tr>
                 <td>
                     <form class="pure-form pure-form-stacked" method="post" action="#"
-                          th:method="post" th:action="@{/mh.dispatcher./company/batch/company-batch-delete-commit/{companyUniqueId}(companyUniqueId=${companyUniqueId})}"
+                          th:method="post" th:action="@{/dispatcher/company/batch/company-batch-delete-commit/{companyUniqueId}(companyUniqueId=${companyUniqueId})}"
                           accept-charset="UTF-8"
                           id="execContext-delete-commit"
                           name="f">
@@ -26,7 +26,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <a class="pure-button pure-button-primary" href="company-batches.html" th:href="${'/mh.dispatcher./company/batch/company-batches/'+companyUniqueId}">To list of batches</a>
+                    <a class="pure-button pure-button-primary" href="company-batches.html" th:href="${'/dispatcher/company/batch/company-batches/'+companyUniqueId}">To list of batches</a>
                 </td>
             </tr>
         </table>

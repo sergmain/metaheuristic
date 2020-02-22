@@ -46,7 +46,7 @@ public class TaskAssetPreparer {
     private final DownloadFunctionActor downloadFunctionActor;
     private final CurrentExecState currentExecState;
     private final StationTaskService stationTaskService;
-    private final DispatcherLookupExtendedService mh.dispatcher.LookupExtendedService;
+    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final MetadataService metadataService;
     private final StationService stationService;
 
@@ -60,8 +60,8 @@ public class TaskAssetPreparer {
 
         // delete all orphan tasks
         stationTaskService.findAll().forEach(task -> {
-            if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(task.mh.dispatcher.Url, task.execContextId)) {
-                stationTaskService.delete(task.mh.dispatcher.Url, task.taskId);
+            if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(task.dispatcherUrl, task.execContextId)) {
+                stationTaskService.delete(task.dispatcherUrl, task.taskId);
                 log.info("Deleted orphan task #{}", task.taskId);
             }
         });
@@ -72,18 +72,18 @@ public class TaskAssetPreparer {
             log.warn("#951.010 There is more than one task: {}", tasks.stream().map(StationTask::getTaskId).collect(Collectors.toList()));
         }
         for (StationTask task : tasks) {
-            if (StringUtils.isBlank(task.mh.dispatcher.Url)) {
-                log.error("#951.020 mh.dispatcher.Url for task {} is blank", task.getTaskId());
+            if (StringUtils.isBlank(task.dispatcherUrl)) {
+                log.error("#951.020 dispatcherUrl for task {} is blank", task.getTaskId());
                 continue;
             }
             if (StringUtils.isBlank(task.getParams())) {
                 log.error("#951.030 Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            Metadata.DispatcherInfo mh.dispatcher.Info = metadataService.mh.dispatcher.UrlAsCode(task.mh.dispatcher.Url);
+            Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(task.dispatcherUrl);
 
-            if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(task.mh.dispatcher.Url, task.execContextId)) {
-                stationTaskService.delete(task.mh.dispatcher.Url, task.taskId);
+            if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(task.dispatcherUrl, task.execContextId)) {
+                stationTaskService.delete(task.dispatcherUrl, task.taskId);
                 log.info("Deleted orphan task {}", task);
                 continue;
             }
@@ -92,18 +92,18 @@ public class TaskAssetPreparer {
                 log.warn("#951.040 taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;
             }
-            final DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher. =
-                    mh.dispatcher.LookupExtendedService.lookupExtendedMap.get(task.mh.dispatcher.Url);
+            final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+                    dispatcherLookupExtendedService.lookupExtendedMap.get(task.dispatcherUrl);
 
-            // process only if mh.dispatcher. has already sent its config
-            if (mh.dispatcher..context.chunkSize==null) {
-                log.warn("#951.050 Launchpad {} doesn't provide chunkSize", task.mh.dispatcher.Url);
+            // process only if dispatcher has already sent its config
+            if (dispatcher.context.chunkSize==null) {
+                log.warn("#951.050 Dispatcher {} doesn't provide chunkSize", task.dispatcherUrl);
                 continue;
             }
 
             // Start preparing data for function
-            File taskDir = stationTaskService.prepareTaskDir(mh.dispatcher.Info, task.taskId);
-            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, mh.dispatcher.Info, taskParamYaml, mh.dispatcher., taskDir);
+            File taskDir = stationTaskService.prepareTaskDir(dispatcherInfo, task.taskId);
+            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, dispatcherInfo, taskParamYaml, dispatcher, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
@@ -111,19 +111,19 @@ public class TaskAssetPreparer {
             // start preparing functions
             final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
             final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.taskYaml.function;
-            if ( !prepareFunction(functionConfig, task.mh.dispatcher.Url, mh.dispatcher., mh.dispatcher.Info.stationId) ) {
+            if ( !prepareFunction(functionConfig, task.dispatcherUrl, dispatcher, dispatcherInfo.stationId) ) {
                 isAllReady.set(false);
             }
             if (taskParamYaml.taskYaml.preFunctions !=null) {
                 taskParamYaml.taskYaml.preFunctions.forEach(sc-> {
-                    if ( !prepareFunction(sc, task.mh.dispatcher.Url, mh.dispatcher., mh.dispatcher.Info.stationId) ) {
+                    if ( !prepareFunction(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.stationId) ) {
                         isAllReady.set(false);
                     }
                 });
             }
             if (taskParamYaml.taskYaml.postFunctions !=null) {
                 taskParamYaml.taskYaml.postFunctions.forEach(sc-> {
-                    if ( !prepareFunction(sc, task.mh.dispatcher.Url, mh.dispatcher., mh.dispatcher.Info.stationId) ) {
+                    if ( !prepareFunction(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.stationId) ) {
                         isAllReady.set(false);
                     }
                 });
@@ -131,23 +131,23 @@ public class TaskAssetPreparer {
 
             // update the status of task if everything is prepared
             if (isAllReady.get()) {
-                log.info("All assets were prepared for task #{}, mh.dispatcher.: {}", task.taskId, task.mh.dispatcher.Url);
-                stationTaskService.markAsAssetPrepared(task.mh.dispatcher.Url, task.taskId, true);
+                log.info("All assets were prepared for task #{}, dispatcher: {}", task.taskId, task.dispatcherUrl);
+                stationTaskService.markAsAssetPrepared(task.dispatcherUrl, task.taskId, true);
             }
         }
     }
 
-    private boolean prepareFunction(TaskParamsYaml.FunctionConfig functionConfig, String mh.dispatcher.Url, DispatcherLookupExtendedService.DispatcherLookupExtended mh.dispatcher., String stationId) {
-        if (functionConfig.sourcing== EnumsApi.FunctionSourcing.mh.dispatcher.) {
+    private boolean prepareFunction(TaskParamsYaml.FunctionConfig functionConfig, String dispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, String stationId) {
+        if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
             final String code = functionConfig.code;
-            final FunctionDownloadStatusYaml.Status functionDownloadStatuses = metadataService.getFunctionDownloadStatuses(mh.dispatcher.Url, code);
+            final FunctionDownloadStatusYaml.Status functionDownloadStatuses = metadataService.getFunctionDownloadStatuses(dispatcherUrl, code);
             if (functionDownloadStatuses==null) {
                 return false;
             }
             final Enums.FunctionState functionState = functionDownloadStatuses.functionState;
             if (functionState == Enums.FunctionState.none) {
-                DownloadFunctionTask functionTask = new DownloadFunctionTask(mh.dispatcher..context.chunkSize, functionConfig.getCode(), functionConfig);
-                functionTask.mh.dispatcher. = mh.dispatcher..mh.dispatcher.Lookup;
+                DownloadFunctionTask functionTask = new DownloadFunctionTask(dispatcher.context.chunkSize, functionConfig.getCode(), functionConfig);
+                functionTask.dispatcher = dispatcher.dispatcherLookup;
                 functionTask.stationId = stationId;
                 downloadFunctionActor.add(functionTask);
                 return true;

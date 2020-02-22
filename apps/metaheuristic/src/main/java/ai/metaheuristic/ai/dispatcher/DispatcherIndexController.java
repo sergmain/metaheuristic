@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher.;
+package ai.metaheuristic.ai.dispatcher;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,14 +28,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * Time: 20:39
  */
 @Controller
-@RequestMapping("/mh.dispatcher.")
-@Profile("mh.dispatcher.")
+@RequestMapping("/dispatcher")
+@Profile("dispatcher")
 @PreAuthorize("isAuthenticated()")
 public class DispatcherIndexController {
 
     @GetMapping("/index")
     public String index() {
-        return "mh.dispatcher./index";
+        return "dispatcher/index";
     }
 
 }

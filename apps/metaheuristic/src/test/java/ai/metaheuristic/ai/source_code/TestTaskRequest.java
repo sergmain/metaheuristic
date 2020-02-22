@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.mh.dispatcher..beans.TaskImpl;
-import ai.metaheuristic.ai.mh.dispatcher..server.ServerService;
-import ai.metaheuristic.ai.mh.dispatcher..task.TaskService;
-import ai.metaheuristic.ai.mh.dispatcher..exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.server.ServerService;
+import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +43,7 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestTaskRequest extends FeatureMethods {
 
     @Autowired
@@ -72,9 +72,9 @@ public class TestTaskRequest extends FeatureMethods {
 
 
             final String stationYaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
-            String launchpadResponse = serverService.processRequest(stationYaml, "127.0.0.1");
+            String dispatcherResponse = serverService.processRequest(stationYaml, "127.0.0.1");
 
-            DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
+            DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
             assertNotNull(d0);
             assertNotNull(d0.getReAssignedStationId());
@@ -97,9 +97,9 @@ public class TestTaskRequest extends FeatureMethods {
             stationComm0.requestTask = new StationCommParamsYaml.RequestTask(false);
 
             final String stationYaml0 = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm0);
-            String launchpadResponse0 = serverService.processRequest(stationYaml0, "127.0.0.1");
+            String dispatcherResponse0 = serverService.processRequest(stationYaml0, "127.0.0.1");
 
-            DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse0);
+            DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse0);
             assertNotNull(d1);
             assertNull(d1.getAssignedTask());
 
@@ -120,9 +120,9 @@ public class TestTaskRequest extends FeatureMethods {
             stationComm0.requestTask = new StationCommParamsYaml.RequestTask(false);
 
             final String stationYaml0 = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm0);
-            String launchpadResponse0 = serverService.processRequest(stationYaml0, Consts.LOCALHOST_IP);
+            String dispatcherResponse0 = serverService.processRequest(stationYaml0, Consts.LOCALHOST_IP);
 
-            DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse0);
+            DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse0);
 
             assertNotNull(d);
             assertNotNull(d.getAssignedTask());
@@ -134,9 +134,9 @@ public class TestTaskRequest extends FeatureMethods {
             stationComm1.requestTask = new StationCommParamsYaml.RequestTask(false);
 
             final String stationYaml1 = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm1);
-            String launchpadResponse1 = serverService.processRequest(stationYaml1, Consts.LOCALHOST_IP);
+            String dispatcherResponse1 = serverService.processRequest(stationYaml1, Consts.LOCALHOST_IP);
 
-            DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse1);
+            DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse1);
 
             assertNotNull(d1);
             assertNull(d1.getAssignedTask());

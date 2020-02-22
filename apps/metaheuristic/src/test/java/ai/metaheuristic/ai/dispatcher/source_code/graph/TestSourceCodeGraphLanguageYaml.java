@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..source_code.graph;
+package ai.metaheuristic.ai.dispatcher.source_code.graph;
 
 import ai.metaheuristic.api.EnumsApi;
 import org.apache.commons.io.IOUtils;
@@ -25,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData.*;
+import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.*;
 import static org.junit.Assert.*;
 
 /**

@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..repositories;
+package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Experiment;
+import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +35,7 @@ import java.util.List;
  */
 @Repository
 @Transactional
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
 
     @Query(value="select e from Experiment e where e.id=:id")

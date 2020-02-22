@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.core;
 
-import ai.metaheuristic.ai.mh.dispatcher..experiment.ExperimentUtils;
+import ai.metaheuristic.ai.dispatcher.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParamsUtils;
 import lombok.AllArgsConstructor;

@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..account;
+package ai.metaheuristic.ai.dispatcher.account;
 
-import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
-import ai.metaheuristic.ai.mh.dispatcher..beans.Account;
-import ai.metaheuristic.ai.mh.dispatcher..context.UserContextService;
-import ai.metaheuristic.ai.mh.dispatcher..data.AccountData;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +37,8 @@ import java.util.ArrayList;
 
 @SuppressWarnings("Duplicates")
 @Controller
-@RequestMapping("/mh.dispatcher./account")
-@Profile("mh.dispatcher.")
+@RequestMapping("/dispatcher/account")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN')")
 public class AccountController {
@@ -56,7 +56,7 @@ public class AccountController {
         AccountData.AccountsResult accounts = accountTopLevelService.getAccounts(pageable, context);
         ControllerUtils.addMessagesToModel(model, accounts);
         model.addAttribute("result", accounts);
-        return "mh.dispatcher./account/accounts";
+        return "dispatcher/account/accounts";
     }
 
     // for AJAX
@@ -65,12 +65,12 @@ public class AccountController {
         DispatcherContext context = userContextService.getContext(authentication);
         AccountData.AccountsResult accounts = accountTopLevelService.getAccounts(pageable, context);
         model.addAttribute("result", accounts);
-        return "mh.dispatcher./account/accounts :: table";
+        return "dispatcher/account/accounts :: table";
     }
 
     @GetMapping(value = "/account-add")
     public String add(@ModelAttribute("account") Account account) {
-        return "mh.dispatcher./account/account-add";
+        return "dispatcher/account/account-add";
     }
 
     @PostMapping("/account-add-commit")
@@ -79,9 +79,9 @@ public class AccountController {
         OperationStatusRest operationStatusRest = accountTopLevelService.addAccount(account, context);
         if (operationStatusRest.isErrorMessages()) {
             model.addAttribute("errorMessage", operationStatusRest.errorMessages);
-            return "mh.dispatcher./account/account-add";
+            return "dispatcher/account/account-add";
         }
-        return "redirect:/mh.dispatcher./account/accounts";
+        return "redirect:/dispatcher/account/accounts";
     }
 
     @GetMapping(value = "/account-edit/{id}")
@@ -90,12 +90,12 @@ public class AccountController {
         AccountData.AccountResult accountResult = accountTopLevelService.getAccount(id, context);
         if (accountResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
-            return "redirect:/mh.dispatcher./account/accounts";
+            return "redirect:/dispatcher/account/accounts";
         }
         accountResult.account.setPassword(null);
         accountResult.account.setPassword2(null);
         model.addAttribute("account", accountResult.account);
-        return "mh.dispatcher./account/account-edit";
+        return "dispatcher/account/account-edit";
     }
 
     @PostMapping("/account-edit-commit")
@@ -109,7 +109,7 @@ public class AccountController {
         if (operationStatusRest.isInfoMessages()) {
             redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
         }
-        return "redirect:/mh.dispatcher./account/accounts";
+        return "redirect:/dispatcher/account/accounts";
     }
 
     @GetMapping(value = "/account-password-edit/{id}")
@@ -119,12 +119,12 @@ public class AccountController {
         AccountData.AccountResult accountResult = accountTopLevelService.getAccount(id, context);
         if (accountResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
-            return "redirect:/mh.dispatcher./account/accounts";
+            return "redirect:/dispatcher/account/accounts";
         }
         accountResult.account.setPassword(null);
         accountResult.account.setPassword2(null);
         model.addAttribute("account", accountResult.account);
-        return "mh.dispatcher./account/account-password-edit";
+        return "dispatcher/account/account-password-edit";
     }
 
     @PostMapping("/account-password-edit-commit")
@@ -138,6 +138,6 @@ public class AccountController {
         if (operationStatusRest.isInfoMessages()) {
             redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
         }
-        return "redirect:/mh.dispatcher./account/accounts";
+        return "redirect:/dispatcher/account/accounts";
     }
 }

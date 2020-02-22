@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..replication;
+package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mh.dispatcher..data.ReplicationData;
+import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.commons.S;
@@ -50,7 +50,7 @@ import java.util.function.Function;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public class ReplicationCoreService {
 
     public final Globals globals;
@@ -67,16 +67,16 @@ public class ReplicationCoreService {
         return response;
     }
 
-    private static Executor getExecutor(String mh.dispatcher.Url, String restUsername, String restPassword) {
-        HttpHost mh.dispatcher.HttpHostWithAuth;
+    private static Executor getExecutor(String dispatcherUrl, String restUsername, String restPassword) {
+        HttpHost dispatcherHttpHostWithAuth;
         try {
-            mh.dispatcher.HttpHostWithAuth = URIUtils.extractHost(new URL(mh.dispatcher.Url).toURI());
+            dispatcherHttpHostWithAuth = URIUtils.extractHost(new URL(dispatcherUrl).toURI());
         } catch (Throwable th) {
-            throw new IllegalArgumentException("Can't build HttpHost for " + mh.dispatcher.Url, th);
+            throw new IllegalArgumentException("Can't build HttpHost for " + dispatcherUrl, th);
         }
         return Executor.newInstance()
-                .authPreemptive(mh.dispatcher.HttpHostWithAuth)
-                .auth(mh.dispatcher.HttpHostWithAuth, restUsername, restPassword);
+                .authPreemptive(dispatcherHttpHostWithAuth)
+                .auth(dispatcherHttpHostWithAuth, restUsername, restPassword);
     }
 
     public ReplicationData.ReplicationAsset getData(String uri, Class clazz, Function<URI, Request> requestFunc) {

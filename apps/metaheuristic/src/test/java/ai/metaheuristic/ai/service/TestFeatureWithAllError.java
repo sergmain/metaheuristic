@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.service;
 
 import ai.metaheuristic.ai.preparing.FeatureMethods;
-import ai.metaheuristic.ai.yaml.communication.mh.dispatcher..DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
-@ActiveProfiles("launchpad")
+@ActiveProfiles("dispatcher")
 public class TestFeatureWithAllError extends FeatureMethods {
 
     @Test

@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..repositories;
+package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.DispatcherEvent;
+import ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -31,7 +31,7 @@ import java.util.List;
  * Time: 8:20 PM
  */
 @Repository
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 public interface DispatcherEventRepository extends CrudRepository<DispatcherEvent, Long> {
 
     @Transactional(readOnly = true)

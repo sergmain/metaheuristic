@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..station;
+package ai.metaheuristic.ai.dispatcher.station;
 
-import ai.metaheuristic.ai.mh.dispatcher..beans.Station;
+import ai.metaheuristic.ai.dispatcher.beans.Station;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.ai.mh.dispatcher..data.StationData;
+import ai.metaheuristic.ai.dispatcher.data.StationData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -39,8 +39,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * Time: 20:21
  */
 @Controller
-@RequestMapping("/mh.dispatcher./station")
-@Profile("mh.dispatcher.")
+@RequestMapping("/dispatcher/station")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN')")
 public class StationsController {
@@ -52,7 +52,7 @@ public class StationsController {
         StationData.StationsResult stationsResultRest = stationTopLevelService.getStations(pageable);
         ControllerUtils.addMessagesToModel(model, stationsResultRest);
         model.addAttribute("result", stationsResultRest);
-        return "mh.dispatcher./station/stations";
+        return "dispatcher/station/stations";
     }
 
     // for AJAX
@@ -61,7 +61,7 @@ public class StationsController {
         StationData.StationsResult stationsResultRest = stationTopLevelService.getStations(pageable);
         ControllerUtils.addMessagesToModel(model, stationsResultRest);
         model.addAttribute("result", stationsResultRest);
-        return "mh.dispatcher./station/stations :: table";
+        return "dispatcher/station/stations :: table";
     }
 
     @GetMapping(value = "/station-edit/{id}")
@@ -69,11 +69,11 @@ public class StationsController {
         StationData.StationResult stationResultRest = stationTopLevelService.getStation(id);
         if (stationResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", stationResultRest.errorMessages);
-            return "redirect:/mh.dispatcher./station/stations";
+            return "redirect:/dispatcher/station/stations";
         }
         ControllerUtils.addMessagesToModel(model, stationResultRest);
         model.addAttribute("station", stationResultRest.station);
-        return "mh.dispatcher./station/station-form";
+        return "dispatcher/station/station-form";
     }
 
     @PostMapping("/station-form-commit")
@@ -82,7 +82,7 @@ public class StationsController {
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
-        return "redirect:/mh.dispatcher./station/stations";
+        return "redirect:/dispatcher/station/stations";
     }
 
     @GetMapping("/station-delete/{id}")
@@ -90,10 +90,10 @@ public class StationsController {
         StationData.StationResult stationResultRest = stationTopLevelService.getStation(id);
         if (stationResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", stationResultRest.errorMessages);
-            return "redirect:/mh.dispatcher./station/stations";
+            return "redirect:/dispatcher/station/stations";
         }
         model.addAttribute("station", stationResultRest.station);
-        return "mh.dispatcher./station/station-delete";
+        return "dispatcher/station/station-delete";
     }
 
     @PostMapping("/station-delete-commit")
@@ -102,7 +102,7 @@ public class StationsController {
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
-        return "redirect:/mh.dispatcher./station/stations";
+        return "redirect:/dispatcher/station/stations";
     }
 
 }

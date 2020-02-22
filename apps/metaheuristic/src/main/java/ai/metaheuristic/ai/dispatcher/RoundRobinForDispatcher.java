@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher.;
+package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.station.DispatcherLookupExtendedService;
-import ai.metaheuristic.ai.yaml.mh.dispatcher._lookup.DispatcherLookupConfig;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -28,21 +28,21 @@ public class RoundRobinForDispatcher {
 
     private final Map<String, AtomicBoolean> urls;
 
-    public RoundRobinForDispatcher(Map<String, DispatcherLookupExtendedService.DispatcherLookupExtended> mh.dispatcher.s) {
+    public RoundRobinForDispatcher(Map<String, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers) {
         Map<String, AtomicBoolean> map = new HashMap<>();
-        for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : mh.dispatcher.s.entrySet()) {
-            DispatcherLookupConfig.DispatcherLookup mh.dispatcher.Lookup = entry.getValue().mh.dispatcher.Lookup;
-            if (mh.dispatcher.Lookup.disabled) {
-                log.info("mh.dispatcher. {} is disabled", mh.dispatcher.Lookup.url);
+        for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet()) {
+            DispatcherLookupConfig.DispatcherLookup dispatcherLookup = entry.getValue().dispatcherLookup;
+            if (dispatcherLookup.disabled) {
+                log.info("dispatcher {} is disabled", dispatcherLookup.url);
                 continue;
             }
-            log.info("mh.dispatcher. {} was added to round-robin", mh.dispatcher.Lookup.url);
-            map.putIfAbsent(mh.dispatcher.Lookup.url, new AtomicBoolean(true));
+            log.info("dispatcher {} was added to round-robin", dispatcherLookup.url);
+            map.putIfAbsent(dispatcherLookup.url, new AtomicBoolean(true));
         }
         urls = Collections.unmodifiableMap(map);
     }
 
-    public Set<String> getActiveLaunchpads() {
+    public Set<String> getActiveDispatchers() {
         return urls.keySet();
     }
 

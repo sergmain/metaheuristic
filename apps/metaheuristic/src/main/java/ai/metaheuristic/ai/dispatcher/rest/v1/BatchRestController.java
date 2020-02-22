@@ -14,16 +14,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..rest.v1;
+package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.mh.dispatcher..DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.mh.dispatcher..batch.BatchTopLevelService;
-import ai.metaheuristic.ai.mh.dispatcher..context.UserContextService;
-import ai.metaheuristic.ai.mh.dispatcher..data.BatchData;
-import ai.metaheuristic.ai.mh.dispatcher..data.SourceCodeData;
-import ai.metaheuristic.ai.mh.dispatcher..source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.BatchData;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -51,9 +51,9 @@ import java.io.IOException;
  * Time: 1:23 AM
  */
 @RestController
-@RequestMapping("/rest/v1/mh.dispatcher./batch")
+@RequestMapping("/rest/v1/dispatcher/batch")
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @CrossOrigin
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")

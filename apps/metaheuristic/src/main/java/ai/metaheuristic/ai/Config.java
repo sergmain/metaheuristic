@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.mh.dispatcher..batch.RefToBatchRepositories;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.RefToLaunchpadRepositories;
+import ai.metaheuristic.ai.dispatcher.batch.RefToBatchRepositories;
+import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
 import ai.metaheuristic.ai.resource.ResourceCleanerInterceptor;
 import lombok.RequiredArgsConstructor;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
@@ -49,7 +49,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 @EnableCaching
 @EnableTransactionManagement
-@EnableJpaRepositories(basePackageClasses = {RefToLaunchpadRepositories.class, RefToBatchRepositories.class} )
+@EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class, RefToBatchRepositories.class} )
 @RequiredArgsConstructor
 public class Config {
 
@@ -153,13 +153,13 @@ public class Config {
 
     @Configuration
     @EnableTransactionManagement
-    @EnableJpaRepositories(basePackageClasses = { RefToLaunchpadRepositories.class })
-    public class LaunchpadDbConfig {
+    @EnableJpaRepositories(basePackageClasses = { RefToDispatcherRepositories.class })
+    public class DispatcherDbConfig {
 
         private final Environment env;
 
         @Autowired
-        public LaunchpadDbConfig(Environment env) {
+        public DispatcherDbConfig(Environment env) {
             this.env = env;
         }
 
@@ -167,7 +167,7 @@ public class Config {
         @Bean(name = "dataSource")
         @ConfigurationProperties(prefix = "spring.datasource")
         public DataSource customDataSource() {
-            if (!globals.isLaunchpadEnabled) {
+            if (!globals.dispatcherEnabled) {
                 return null;
             }
 
@@ -184,20 +184,20 @@ public class Config {
         @Primary
         @Bean(name = "entityManagerFactory")
         public LocalContainerEntityManagerFactoryBean entityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("dataSource") DataSource dataSource) {
-            if (!globals.isLaunchpadEnabled) {
+            if (!globals.dispatcherEnabled) {
                 return null;
             }
             return builder
                     .dataSource(dataSource)
-                    .packages("ai.metaheuristic.ai.mh.dispatcher..beans")
-                    .persistenceUnit("mh.dispatcher.")
+                    .packages("ai.metaheuristic.ai.dispatcher.beans")
+                    .persistenceUnit("dispatcher")
                     .build();
         }
 
         @Primary
         @Bean(name = "transactionManager")
         public PlatformTransactionManager transactionManager(@Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
-            if (!globals.isLaunchpadEnabled) {
+            if (!globals.dispatcherEnabled) {
                 return null;
             }
             return new JpaTransactionManager(entityManagerFactory);

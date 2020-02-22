@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..function;
+package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.mh.dispatcher..beans.FunctionData;
-import ai.metaheuristic.ai.mh.dispatcher..repositories.FunctionDataRepository;
+import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -48,7 +48,7 @@ import java.util.Optional;
 @Service
 @Transactional
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @RequiredArgsConstructor
 public class FunctionDataService {
     private final EntityManager em;
@@ -83,12 +83,12 @@ public class FunctionDataService {
             if (data == null) {
                 data = new FunctionData();
                 data.setFunctionCode(functionCode);
-                data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.mh.dispatcher.)));
+                data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher)));
             } else {
                 DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
-                if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.mh.dispatcher.) {
+                if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.dispatcher) {
                     // this is an exception for the case when two resources have the same names but different pool codes
-                    throw new VariableSavingException("#088.060 Sourcing must be mh.dispatcher., value in db: " + data.getParams());
+                    throw new VariableSavingException("#088.060 Sourcing must be dispatcher, value in db: " + data.getParams());
                 }
             }
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));

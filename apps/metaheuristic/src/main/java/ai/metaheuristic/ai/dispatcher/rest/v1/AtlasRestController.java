@@ -14,11 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mh.dispatcher..rest.v1;
+package ai.metaheuristic.ai.dispatcher.rest.v1;
 
-import ai.metaheuristic.ai.mh.dispatcher..atlas.AtlasService;
-import ai.metaheuristic.ai.mh.dispatcher..atlas.AtlasTopLevelService;
-import ai.metaheuristic.ai.mh.dispatcher..data.AtlasData;
+import ai.metaheuristic.ai.dispatcher.atlas.AtlasService;
+import ai.metaheuristic.ai.dispatcher.atlas.AtlasTopLevelService;
+import ai.metaheuristic.ai.dispatcher.data.AtlasData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +30,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/rest/v1/mh.dispatcher./atlas")
+@RequestMapping("/rest/v1/dispatcher/atlas")
 @Slf4j
-@Profile("mh.dispatcher.")
+@Profile("dispatcher")
 @CrossOrigin
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
