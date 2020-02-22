@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.LaunchpadEvent;
+import ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.LaunchpadEventRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.DispatcherEventRepository;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -62,10 +62,10 @@ import static ai.metaheuristic.commons.CommonConsts.EVENT_DATE_TIME_FORMATTER;
 @Service
 @RequiredArgsConstructor
 @Profile("dispatcher")
-public class LaunchpadEventService {
+public class DispatcherEventService {
 
     private final Globals globals;
-    private final LaunchpadEventRepository launchpadEventRepository;
+    private final DispatcherEventRepository dispatcherEventRepository;
     private final CompanyRepository companyRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -77,7 +77,7 @@ public class LaunchpadEventService {
         taskEventData.stationId = stationId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
-        applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, taskEventData));
+        applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, taskEventData));
     }
 
     public void publishBatchEvent(
@@ -100,7 +100,7 @@ public class LaunchpadEventService {
             batchEventData.username = dispatcherContext.getUsername();
             contextId = dispatcherContext.contextId;
         }
-        applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, companyUniqueId, contextId, batchEventData));
+        applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, companyUniqueId, contextId, batchEventData));
     }
 
     public void publishTaskEvent(EnumsApi.LaunchpadEventType event, Long stationId, Long taskId, Long execContextId) {
@@ -111,21 +111,21 @@ public class LaunchpadEventService {
         taskEventData.stationId = stationId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
-        applicationEventPublisher.publishEvent(new LaunchpadApplicationEvent(event, taskEventData));
+        applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, taskEventData));
     }
 
     @Async
     @EventListener
-    public void handleAsync(LaunchpadApplicationEvent event) {
+    public void handleAsync(DispatcherApplicationEvent event) {
         if (!globals.isEventEnabled) {
             return;
         }
-        LaunchpadEvent le = new LaunchpadEvent();
+        DispatcherEvent le = new DispatcherEvent();
         le.companyId = event.companyUniqueId;
         le.period = getPeriod( LocalDateTime.parse( event.launchpadEventYaml.createdOn, EVENT_DATE_TIME_FORMATTER) );
         le.event = event.launchpadEventYaml.event.toString();
         le.params = LaunchpadEventYamlUtils.BASE_YAML_UTILS.toString(event.launchpadEventYaml);
-        launchpadEventRepository.save(le);
+        dispatcherEventRepository.save(le);
     }
 
     private static int getPeriod(LocalDateTime createdOn) {
@@ -145,7 +145,7 @@ public class LaunchpadEventService {
         resource.toClean.add(tempDir);
         File filesDir = new File(tempDir, "files");
 
-        List<Long> ids = launchpadEventRepository.findIdByPeriod(periods);
+        List<Long> ids = dispatcherEventRepository.findIdByPeriod(periods);
         if (!ids.isEmpty()) {
             Yaml yaml = YamlUtils.init(ListOfEvents.class);
 
@@ -153,10 +153,10 @@ public class LaunchpadEventService {
                 File f = new File(filesDir, "event-file-" + i + ".yaml");
                 int fromIndex = i * PAGE_SIZE;
                 List<Long> subList = ids.subList(fromIndex, Math.min(ids.size(), fromIndex + PAGE_SIZE));
-                List<LaunchpadEvent> events = launchpadEventRepository.findByIds(subList);
+                List<DispatcherEvent> events = dispatcherEventRepository.findByIds(subList);
                 ListOfEvents listOfEvents = new ListOfEvents();
                 listOfEvents.events = new ArrayList<>();
-                for (LaunchpadEvent event : events) {
+                for (DispatcherEvent event : events) {
                     listOfEvents.events.add(event.params);
                 }
                 FileUtils.write(f, yaml.dumpAsMap(listOfEvents), StandardCharsets.UTF_8);

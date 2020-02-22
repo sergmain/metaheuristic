@@ -39,7 +39,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.dispatcher.Task;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -160,7 +160,7 @@ public class AtlasService {
                     atpy.taskId = t.getId();
                     atpy.taskParams = t.getParams();
                     // typeAsString will be initialized when AtlasTaskParamsYaml will be requested
-                    // see method ai.metaheuristic.ai.launchpad.atlas.AtlasTopLevelService.findTasks
+                    // see method ai.metaheuristic.ai.dispatcher.atlas.AtlasTopLevelService.findTasks
                     atpy.typeAsString = null;
                     atpy.functionExecResults = t.getFunctionExecResults();
                     atpy.metrics = t.getMetrics();

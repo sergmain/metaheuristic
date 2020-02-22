@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.dispatcher.event.LaunchpadEventService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +49,7 @@ import java.util.List;
 @PreAuthorize("hasAnyRole('BILLING')")
 public class EventRestController {
 
-    private final LaunchpadEventService launchpadEventService;
+    private final DispatcherEventService dispatcherEventService;
 
     @GetMapping(value="/events-for-period/{periods}/events.zip", produces = "application/zip")
     public ResponseEntity<AbstractResource> getEventsForPeriod(HttpServletRequest request, @PathVariable String[] periods) throws IOException {
@@ -68,7 +68,7 @@ public class EventRestController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = launchpadEventService.getEventsForPeriod(list);
+            ResourceWithCleanerInfo resource = dispatcherEventService.getEventsForPeriod(list);
             entity = resource.entity;
             if (resource.toClean!=null) {
                 request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);

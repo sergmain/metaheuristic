@@ -51,7 +51,7 @@ public class ArtifactCleanerAtDispatcher {
             return;
         }
 
-        // lets delete no more than 1000 record per call of ai.metaheuristic.ai.launchpad.ArtifactCleanerAtLaunchpad.deleteOrphanData()
+        // lets delete no more than 1000 record per call of ai.metaheuristic.ai.dispatcher.ArtifactCleanerAtLaunchpad.deleteOrphanData()
         for (int i = 0; i < Math.min(ids.size(), 1000); i++) {
             variableRepository.deleteById(ids.get(i));
         }

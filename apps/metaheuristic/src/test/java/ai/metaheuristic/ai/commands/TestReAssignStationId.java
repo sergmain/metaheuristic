@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.commands;
 import ai.metaheuristic.ai.dispatcher.beans.Station;
 import ai.metaheuristic.ai.dispatcher.server.ServerService;
 import ai.metaheuristic.ai.dispatcher.station.StationCache;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +62,7 @@ public class TestReAssignStationId {
 
         String launchpadResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
 
-        LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
+        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
 
         assertNotNull(d);
         assertNotNull(d.getAssignedStationId());
@@ -100,7 +100,7 @@ public class TestReAssignStationId {
         final String stationYaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
         String launchpadResponse = serverService.processRequest(stationYaml, "127.0.0.1");
 
-        LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
+        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
 
         assertNotNull(d);
         assertNotNull(d.getReAssignedStationId());

@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.sec_web;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import org.junit.Assert;
@@ -115,7 +115,7 @@ public class TestAccessRestriction {
         String launchpadYaml = result.getResponse().getContentAsString();
         System.out.println("yaml = " + launchpadYaml);
 
-        LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadYaml);
+        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadYaml);
 
 
         Assert.assertNotNull(d);

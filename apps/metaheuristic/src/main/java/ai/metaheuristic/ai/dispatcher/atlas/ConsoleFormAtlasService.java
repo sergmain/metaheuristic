@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.atlas;
 
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
-import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.commons.utils.DirUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;

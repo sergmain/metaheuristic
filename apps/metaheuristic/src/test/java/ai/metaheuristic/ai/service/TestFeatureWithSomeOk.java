@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.service;
 
 import ai.metaheuristic.ai.preparing.FeatureMethods;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -49,14 +49,14 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         getTaskAndAssignToStation_mustBeNewTask();
 
         // this station already got task, so don't provide any new
-        LaunchpadCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(
+        DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getExecContextId());
         // task is empty cos we still didn't finish those task
         assertNull(task);
 
         finishCurrentWithError(1);
 
-        LaunchpadCommParamsYaml.AssignedTask task1 = execContextService.getTaskAndAssignToStation(
+        DispatcherCommParamsYaml.AssignedTask task1 = execContextService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getExecContextId());
 
         assertNull(task1);

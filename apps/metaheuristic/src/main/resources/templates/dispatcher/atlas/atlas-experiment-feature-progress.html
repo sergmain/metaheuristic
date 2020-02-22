@@ -45,7 +45,7 @@
 
                     let /*{string}*/ url = $(this).attr('href');
                     printLogMain('url: ' + url);
-                    // /launchpad/atlas/atlas-experiment-feature-progress-part/82/428/,/part?page=1&size=10
+                    // /dispatcher/atlas/atlas-experiment-feature-progress-part/82/428/,/part?page=1&size=10
                     let /*{string}*/ urlPart1 = url.substring(0, url.indexOf(',/part'));
                     let /*{string}*/ urlPart = urlPart1.substring(0, urlPart1.lastIndexOf('/'));
                     let /*{string}*/ urlParams = url.substring(url.indexOf('?'));
@@ -90,7 +90,7 @@
                 xhr.setRequestHeader(header, token);
             });
 
-            $.post('/launchpad/atlas/atlas-experiment-feature-progress-part/' + [[${atlasId}]] + '/'+ [[${experimentId}]] + '/' + [[${feature.id}]]+'/,/part', table);
+            $.post('/dispatcher/atlas/atlas-experiment-feature-progress-part/' + [[${atlasId}]] + '/'+ [[${experimentId}]] + '/' + [[${feature.id}]]+'/,/part', table);
         });
 
         /**
@@ -217,7 +217,7 @@
 
         function drawPlot() {
             if (isDrawEnabled) {
-                let url = '/launchpad/atlas/atlas-experiment-feature-plot-data-part/' + [[${atlasId}]] + '/'+ [[${experimentId}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/' + paramFilterAxis + '/part';
+                let url = '/dispatcher/atlas/atlas-experiment-feature-plot-data-part/' + [[${atlasId}]] + '/'+ [[${experimentId}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/' + paramFilterAxis + '/part';
                 printLogButtonAxis('url for plot data: ' + url);
                 $.post(url, function(data ) {
                     printLogButtonAxis('json for plotting:\n' + data);
@@ -266,7 +266,7 @@
             $( '#fragment-console-table' ).empty();
             printLogButton('state: ' + buttonStateMap[id].state + ', idx: ' +buttonStateMap[id].idx);
             paramFilter = paramsForUrl();
-            let url = '/launchpad/atlas/atlas-experiment-feature-progress-part/' + [[${atlasId}]] + '/' + [[${experimentId}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
+            let url = '/dispatcher/atlas/atlas-experiment-feature-progress-part/' + [[${atlasId}]] + '/' + [[${experimentId}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
             printLogButton('url: '+ url);
             $.post(url, table);
             printLogButton('');

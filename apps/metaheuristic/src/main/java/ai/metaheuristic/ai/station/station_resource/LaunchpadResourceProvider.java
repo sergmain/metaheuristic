@@ -51,7 +51,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     @Override
     public List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            StationTask task, Metadata.DispatcherInfo launchpadCode,
             String resourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
 
         // process it only if the launchpad has already sent its config
@@ -67,7 +67,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     @Override
     public FunctionApiData.SystemExecResult processResultingFile(
             DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            StationTask task, Metadata.DispatcherInfo launchpadCode,
             String outputResourceId, TaskParamsYaml.FunctionConfig functionConfig) {
         File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
         if (outputResourceFile.exists()) {

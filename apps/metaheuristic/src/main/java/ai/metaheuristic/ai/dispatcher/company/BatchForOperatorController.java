@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
@@ -50,14 +50,14 @@ import java.io.IOException;
 
 @SuppressWarnings("DuplicatedCode")
 @Controller
-@RequestMapping("/launchpad/company/batch")
+@RequestMapping("/dispatcher/company/batch")
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class BatchForOperatorController {
 
     private final BatchTopLevelService batchTopLevelService;
-    private final LaunchpadContextService launchpadContextService;
+    private final UserContextService userContextService;
     private final SourceCodeService sourceCodeService;
 
     @GetMapping("/company-batches/{companyUniqueId}")
@@ -73,7 +73,7 @@ public class BatchForOperatorController {
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         model.addAttribute("companyUniqueId", companyUniqueId);
-        return "launchpad/company/batch/company-batches";
+        return "dispatcher/company/batch/company-batches";
     }
 
     @GetMapping("/company-batches-usage-info/{companyUniqueId}/{days}")
@@ -90,7 +90,7 @@ public class BatchForOperatorController {
         model.addAttribute("result", batchesResult);
         model.addAttribute("companyUniqueId", companyUniqueId);
         model.addAttribute("days", days);
-        return "launchpad/company/batch/company-batches-usage-info";
+        return "dispatcher/company/batch/company-batches-usage-info";
     }
 
     @PostMapping("/company-batches-part/{companyUniqueId}")
@@ -100,7 +100,7 @@ public class BatchForOperatorController {
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         model.addAttribute("companyUniqueId", companyUniqueId);
-        return "launchpad/company/batch/company-batches :: table";
+        return "dispatcher/company/batch/company-batches :: table";
     }
 
     @GetMapping(value = "/company-batch-add/{companyUniqueId}")
@@ -110,7 +110,7 @@ public class BatchForOperatorController {
         ControllerUtils.addMessagesToModel(model, sourceCodes);
         model.addAttribute("result", sourceCodes);
         model.addAttribute("companyUniqueId", companyUniqueId);
-        return "launchpad/company/batch/company-batch-add";
+        return "dispatcher/company/batch/company-batch-add";
     }
 
     @GetMapping("/company-batch-delete/{companyUniqueId}/{batchId}")
@@ -122,13 +122,13 @@ public class BatchForOperatorController {
         BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyUniqueId, true);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
-            return "redirect:/launchpad/company/batch/company-batches/" + companyUniqueId;
+            return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
         }
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.console);
         model.addAttribute("isOk", status.ok);
         model.addAttribute("companyUniqueId", companyUniqueId);
-        return "launchpad/company/batch/company-batch-delete";
+        return "dispatcher/company/batch/company-batch-delete";
     }
 
     @PostMapping("/company-batch-delete-commit/{companyUniqueId}")
@@ -141,7 +141,7 @@ public class BatchForOperatorController {
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
-        return "redirect:/launchpad/company/batch/company-batches/" + companyUniqueId;
+        return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
     }
 
     @PostMapping(value = "/company-batch-upload-from-file/{companyUniqueId}")
@@ -151,12 +151,12 @@ public class BatchForOperatorController {
             @PathVariable Long companyUniqueId,
             Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         // create context with putting current user to specific company
-        DispatcherContext context = launchpadContextService.getContext(authentication, companyUniqueId);
+        DispatcherContext context = userContextService.getContext(authentication, companyUniqueId);
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
         if (uploadingStatus.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.errorMessages);
         }
-        return "redirect:/launchpad/company/batch/company-batches/" + companyUniqueId;
+        return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
     }
 
     @GetMapping(value= "/company-batch-status/{companyUniqueId}/{batchId}" )
@@ -168,12 +168,12 @@ public class BatchForOperatorController {
         BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyUniqueId, true);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
-            return "redirect:/launchpad/company/batch/company-batches/" + companyUniqueId;
+            return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
         }
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.console);
         model.addAttribute("companyUniqueId", companyUniqueId);
-        return "launchpad/company/batch/company-batch-status";
+        return "dispatcher/company/batch/company-batch-status";
     }
 
     @GetMapping(value= "/company-batch-download-result/{companyUniqueId}/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)

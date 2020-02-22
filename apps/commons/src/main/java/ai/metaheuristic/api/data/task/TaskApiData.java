@@ -17,7 +17,7 @@
 package ai.metaheuristic.api.data.task;
 
 import ai.metaheuristic.api.data.BaseDataClass;
-import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.dispatcher.Task;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

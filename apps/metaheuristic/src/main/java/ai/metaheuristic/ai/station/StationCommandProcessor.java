@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +43,7 @@ public class StationCommandProcessor {
     private final CurrentExecState currentExecState;
 
     // this method is synchronized outside
-    public void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String launchpadUrl, LaunchpadCommParamsYaml launchpadYaml) {
+    public void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String launchpadUrl, DispatcherCommParamsYaml launchpadYaml) {
         scpy.resendTaskOutputResourceResult = resendTaskOutputResource(launchpadUrl, launchpadYaml);
         processExecContextStatus(launchpadUrl, launchpadYaml);
         processReportResultDelivering(launchpadUrl, launchpadYaml);
@@ -53,7 +53,7 @@ public class StationCommandProcessor {
         registerFunctions(scpy.functionDownloadStatus, launchpadUrl, launchpadYaml);
     }
 
-    private void registerFunctions(StationCommParamsYaml.FunctionDownloadStatus functionDownloadStatus, String launchpadUrl, LaunchpadCommParamsYaml launchpadYaml) {
+    private void registerFunctions(StationCommParamsYaml.FunctionDownloadStatus functionDownloadStatus, String launchpadUrl, DispatcherCommParamsYaml launchpadYaml) {
         List<FunctionDownloadStatusYaml.Status> statuses = metadataService.registerNewFunctionCode(launchpadUrl, launchpadYaml.functions.infos);
         for (FunctionDownloadStatusYaml.Status status : statuses) {
             functionDownloadStatus.statuses.add(new StationCommParamsYaml.FunctionDownloadStatus.Status(status.functionState, status.code));
@@ -61,7 +61,7 @@ public class StationCommandProcessor {
     }
 
     // processing at station side
-    private StationCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(String launchpadUrl, LaunchpadCommParamsYaml request) {
+    private StationCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(String launchpadUrl, DispatcherCommParamsYaml request) {
         if (request.resendTaskOutputResource==null || request.resendTaskOutputResource.taskIds==null || request.resendTaskOutputResource.taskIds.isEmpty()) {
             return null;
         }
@@ -73,7 +73,7 @@ public class StationCommandProcessor {
         return new StationCommParamsYaml.ResendTaskOutputResourceResult(statuses);
     }
 
-    private void processExecContextStatus(String launchpadUrl, LaunchpadCommParamsYaml request) {
+    private void processExecContextStatus(String launchpadUrl, DispatcherCommParamsYaml request) {
         if (request.execContextStatus ==null) {
             return;
         }
@@ -81,14 +81,14 @@ public class StationCommandProcessor {
     }
 
     // processing at station side
-    private void processReportResultDelivering(String launchpadUrl, LaunchpadCommParamsYaml request) {
+    private void processReportResultDelivering(String launchpadUrl, DispatcherCommParamsYaml request) {
         if (request.reportResultDelivering==null) {
             return;
         }
         stationService.markAsDelivered(launchpadUrl, request.reportResultDelivering.getIds());
     }
 
-    private void processAssignedTask(String launchpadUrl, LaunchpadCommParamsYaml request) {
+    private void processAssignedTask(String launchpadUrl, DispatcherCommParamsYaml request) {
         if (request.assignedTask==null) {
             return;
         }
@@ -96,7 +96,7 @@ public class StationCommandProcessor {
     }
 
     // processing at station side
-    private void storeStationId(String launchpadUrl, LaunchpadCommParamsYaml request) {
+    private void storeStationId(String launchpadUrl, DispatcherCommParamsYaml request) {
         if (request.assignedStationId==null) {
             return;
         }
@@ -106,7 +106,7 @@ public class StationCommandProcessor {
     }
 
     // processing at station side
-    private void reAssignStationId(String launchpadUrl, LaunchpadCommParamsYaml request) {
+    private void reAssignStationId(String launchpadUrl, DispatcherCommParamsYaml request) {
         if (request.reAssignedStationId==null) {
             return;
         }

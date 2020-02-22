@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.LaunchpadInternalEvent;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -44,8 +44,8 @@ import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.launchpad.ExecContext;
-import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -108,7 +108,7 @@ public class ExperimentService {
 
     @Async
     @EventListener
-    public void handleAsync(LaunchpadInternalEvent.ExperimentResetEvent event) {
+    public void handleAsync(DispatcherInternalEvent.ExperimentResetEvent event) {
         resetExperimentByExecContextId(event.execContextId);
     }
 
@@ -728,8 +728,8 @@ public class ExperimentService {
                 boolHolder.set(true);
             }
         };
-        final LaunchpadInternalEvent.ExecContextDeletionListener listener =
-                new LaunchpadInternalEvent.ExecContextDeletionListener(execContextId, longConsumer);
+        final DispatcherInternalEvent.ExecContextDeletionListener listener =
+                new DispatcherInternalEvent.ExecContextDeletionListener(execContextId, longConsumer);
 
         int processed = 0;
         long prevMills = System.currentTimeMillis();

@@ -189,8 +189,8 @@ public class Config {
             }
             return builder
                     .dataSource(dataSource)
-                    .packages("ai.metaheuristic.ai.launchpad.beans")
-                    .persistenceUnit("launchpad")
+                    .packages("ai.metaheuristic.ai.dispatcher.beans")
+                    .persistenceUnit("dispatcher")
                     .build();
         }
 

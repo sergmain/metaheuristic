@@ -29,12 +29,12 @@ import java.time.LocalDateTime;
  * Time: 5:33 PM
  */
 @Data
-public class LaunchpadApplicationEvent {
+public class DispatcherApplicationEvent {
 
     public final LaunchpadEventYaml launchpadEventYaml;
     public Long companyUniqueId;
 
-    public LaunchpadApplicationEvent(EnumsApi.LaunchpadEventType event, Long companyUniqueId, String contextId, LaunchpadEventYaml.BatchEventData batchEventData) {
+    public DispatcherApplicationEvent(EnumsApi.LaunchpadEventType event, Long companyUniqueId, String contextId, LaunchpadEventYaml.BatchEventData batchEventData) {
         this.companyUniqueId = companyUniqueId;
         LaunchpadEventYaml launchpadEventYaml = new LaunchpadEventYaml();
         launchpadEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
@@ -45,7 +45,7 @@ public class LaunchpadApplicationEvent {
         this.launchpadEventYaml = launchpadEventYaml;
     }
 
-    public LaunchpadApplicationEvent(EnumsApi.LaunchpadEventType event, LaunchpadEventYaml.TaskEventData taskEventData) {
+    public DispatcherApplicationEvent(EnumsApi.LaunchpadEventType event, LaunchpadEventYaml.TaskEventData taskEventData) {
         LaunchpadEventYaml launchpadEventYaml = new LaunchpadEventYaml();
         launchpadEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
         launchpadEventYaml.event = event;

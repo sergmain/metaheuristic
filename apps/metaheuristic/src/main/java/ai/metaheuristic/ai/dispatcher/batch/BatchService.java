@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Station;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
-import ai.metaheuristic.ai.dispatcher.event.LaunchpadEventService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.station.StationCache;
@@ -47,9 +47,9 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.api.launchpad.SourceCode;
-import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.ExecContext;
+import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -97,7 +97,7 @@ public class BatchService {
     private final VariableService variableService;
     private final TaskRepository taskRepository;
     private final StationCache stationCache;
-    private final LaunchpadEventService launchpadEventService;
+    private final DispatcherEventService dispatcherEventService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     private static final ConcurrentHashMap<Long, Object> batchMap = new ConcurrentHashMap<>(100, 0.75f, 10);
@@ -165,7 +165,7 @@ public class BatchService {
                 return b;
             }
             b.execState = Enums.BatchExecState.Processing.code;
-            launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
+            dispatcherEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
             return batchCache.save(b);
         }
     }
@@ -202,7 +202,7 @@ public class BatchService {
                     log.warn("#990.065 error while updating the status of batch #" + batchId, th);
                     // TODO 2019-12-15 this isn't good solution but need more info about behaviour with this error
                 }
-                launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_FINISHED, null, null, null, batchId, null, null );
+                dispatcherEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_PROCESSING_FINISHED, null, null, null, batchId, null, null );
             }
         }
     }
@@ -237,7 +237,7 @@ public class BatchService {
                 return b;
             }
             finally {
-                launchpadEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
+                dispatcherEventService.publishBatchEvent(EnumsApi.LaunchpadEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
             }
         }
     }

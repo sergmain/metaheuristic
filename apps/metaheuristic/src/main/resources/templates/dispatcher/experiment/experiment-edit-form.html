@@ -21,7 +21,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/experiment/datasets-part', table);
+            $.post('/dispatcher/experiment/datasets-part', table);
         });
 
         var trStateMap = {};

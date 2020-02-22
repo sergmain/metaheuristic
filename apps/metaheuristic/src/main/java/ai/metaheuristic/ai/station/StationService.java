@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.station.station_resource.DiskResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
 import ai.metaheuristic.ai.station.tasks.UploadResourceTask;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
@@ -105,7 +105,7 @@ public class StationService {
         }
     }
 
-    public void assignTasks(String launchpadUrl, LaunchpadCommParamsYaml.AssignedTask task) {
+    public void assignTasks(String launchpadUrl, DispatcherCommParamsYaml.AssignedTask task) {
         if (task==null) {
             return;
         }
@@ -123,7 +123,7 @@ public class StationService {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
         }
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-        File taskDir = stationTaskService.prepareTaskDir(metadataService.launchpadUrlAsCode(launchpadUrl), taskId);
+        File taskDir = stationTaskService.prepareTaskDir(metadataService.dispatcherUrlAsCode(launchpadUrl), taskId);
 
         final SourceCodeParamsYaml.Variable dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
                 .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
@@ -151,7 +151,7 @@ public class StationService {
             stationTaskService.setCompleted(task.launchpadUrl, task.taskId);
             return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
         }
-        final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
+        final Metadata.DispatcherInfo launchpadCode = metadataService.dispatcherUrlAsCode(launchpadUrl);
         final DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
 
@@ -169,7 +169,7 @@ public class StationService {
         public Map<String, List<AssetFile>> assetFiles = new HashMap<>();
     }
 
-    public StationService.ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.LaunchpadInfo launchpadCode, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
+    public StationService.ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.DispatcherInfo launchpadCode, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
         StationService.ResultOfChecking result = new StationService.ResultOfChecking();
         try {
             taskParamYaml.taskYaml.inputResourceIds.forEach((key, value) -> {

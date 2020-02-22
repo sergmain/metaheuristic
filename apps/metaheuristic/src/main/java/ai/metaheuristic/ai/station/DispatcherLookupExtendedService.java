@@ -57,7 +57,7 @@ public class DispatcherLookupExtendedService {
 
     @PostConstruct
     public void init() {
-        final File launchpadFile = new File(globals.stationDir, Consts.LAUNCHPAD_YAML_FILE_NAME);
+        final File launchpadFile = new File(globals.stationDir, Consts.DISPATCHER_YAML_FILE_NAME);
         final String cfg;
         if (!launchpadFile.exists()) {
             if (globals.defaultLaunchpadYamlFile == null) {
@@ -87,8 +87,8 @@ public class DispatcherLookupExtendedService {
 
         if (launchpadLookupConfig == null) {
             log.error("{} wasn't found or empty. path: {}{}{}",
-                    Consts.LAUNCHPAD_YAML_FILE_NAME, globals.stationDir,
-                    File.separatorChar, Consts.LAUNCHPAD_YAML_FILE_NAME);
+                    Consts.DISPATCHER_YAML_FILE_NAME, globals.stationDir,
+                    File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
             throw new IllegalStateException("Station isn't configured, launchpad.yaml is empty or doesn't exist");
         }
         final Map<String, LaunchpadLookupExtended> map = new HashMap<>();
@@ -101,7 +101,7 @@ public class DispatcherLookupExtendedService {
         lookupExtendedMap = Collections.unmodifiableMap(map);
     }
 
-    public File prepareBaseResourceDir(Metadata.LaunchpadInfo launchpadCode) {
+    public File prepareBaseResourceDir(Metadata.DispatcherInfo launchpadCode) {
         final File launchpadDir = new File(globals.stationResourcesDir, launchpadCode.code);
         if (launchpadDir.exists()) {
             return launchpadDir;

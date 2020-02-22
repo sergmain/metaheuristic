@@ -38,14 +38,14 @@ import java.util.ArrayList;
 
 @SuppressWarnings("Duplicates")
 @Controller
-@RequestMapping("/launchpad/atlas")
+@RequestMapping("/dispatcher/atlas")
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class AtlasController {
 
-    private static final String REDIRECT_LAUNCHPAD_ATLAS_ATLAS_EXPERIMENTS = "redirect:/launchpad/atlas/atlas-experiments";
+    private static final String REDIRECT_LAUNCHPAD_ATLAS_ATLAS_EXPERIMENTS = "redirect:/dispatcher/atlas/atlas-experiments";
     private final AtlasService atlasService;
     private final AtlasTopLevelService atlasTopLevelService;
 
@@ -56,7 +56,7 @@ public class AtlasController {
         AtlasData.AtlasSimpleExperiments atlasExperiments = atlasService.getAtlasExperiments(pageable);
         ControllerUtils.addMessagesToModel(model, atlasExperiments);
         model.addAttribute("result", atlasExperiments);
-        return "launchpad/atlas/atlas-experiments";
+        return "dispatcher/atlas/atlas-experiments";
     }
 
     // for AJAX
@@ -64,7 +64,7 @@ public class AtlasController {
     public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable) {
         AtlasData.AtlasSimpleExperiments atlasExperiments = atlasService.getAtlasExperiments(pageable);
         model.addAttribute("result", atlasExperiments);
-        return "launchpad/atlas/atlas-experiments :: table";
+        return "dispatcher/atlas/atlas-experiments :: table";
     }
 
     @GetMapping(value = "/atlas-experiment-info/{id}")
@@ -72,7 +72,7 @@ public class AtlasController {
         AtlasData.ExperimentInfoExtended result = atlasTopLevelService.getExperimentInfoExtended(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
-            return "redirect:/launchpad/atlas/atlas-experiments";
+            return "redirect:/dispatcher/atlas/atlas-experiments";
         }
 
         if (result.isInfoMessages()) {
@@ -82,7 +82,7 @@ public class AtlasController {
         model.addAttribute("atlas", result.atlas);
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("experimentResult", result.experimentInfo);
-        return "launchpad/atlas/atlas-experiment-info";
+        return "dispatcher/atlas/atlas-experiment-info";
     }
 
     @GetMapping("/atlas-experiment-delete/{id}")
@@ -90,7 +90,7 @@ public class AtlasController {
         AtlasData.ExperimentDataOnly result = atlasTopLevelService.getExperimentDataOnly(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
-            return "redirect:/launchpad/atlas/atlas-experiments";
+            return "redirect:/dispatcher/atlas/atlas-experiments";
         }
 
         if (result.isInfoMessages()) {
@@ -99,7 +99,7 @@ public class AtlasController {
 
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("atlasId", result.atlasId);
-        return "launchpad/atlas/atlas-experiment-delete";
+        return "dispatcher/atlas/atlas-experiment-delete";
     }
 
     @PostMapping("/atlas-experiment-delete-commit")
@@ -130,12 +130,12 @@ public class AtlasController {
     @GetMapping(value= "/atlas-experiment-export/{atlasId}")
     public String exportExperiment(Model model, @PathVariable("atlasId") Long atlasId) {
         model.addAttribute("atlasId", atlasId);
-        return "launchpad/atlas/atlas-experiment-export";
+        return "dispatcher/atlas/atlas-experiment-export";
     }
 
     @GetMapping(value= "/atlas-experiment-import")
     public String importExperiment(Model model) {
-        return "launchpad/atlas/atlas-experiment-import";
+        return "dispatcher/atlas/atlas-experiment-import";
     }
 
     @GetMapping(value = "/atlas-experiment-feature-progress/{atlasId}/{experimentId}/{featureId}")
@@ -150,7 +150,7 @@ public class AtlasController {
                 atlasTopLevelService.getExperimentFeatureExtended(atlasId, experimentId, featureId);
         if (experimentProgressResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", experimentProgressResult.errorMessages);
-            return "redirect:/launchpad/atlas/atlas-experiment-info/" + atlasId;
+            return "redirect:/dispatcher/atlas/atlas-experiment-info/" + atlasId;
         }
         model.addAttribute("metrics", experimentProgressResult.metricsResult);
         model.addAttribute("params", experimentProgressResult.hyperParamResult);
@@ -160,7 +160,7 @@ public class AtlasController {
         model.addAttribute("experimentId", experimentId);
         model.addAttribute("atlasId", atlasId);
 
-        return "launchpad/atlas/atlas-experiment-feature-progress";
+        return "dispatcher/atlas/atlas-experiment-feature-progress";
     }
 
     @PostMapping("/atlas-experiment-feature-plot-data-part/{atlasId}/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
@@ -180,7 +180,7 @@ public class AtlasController {
     ) {
         AtlasData.ConsoleResult result = atlasTopLevelService.getTasksConsolePart(atlasId, taskId);
         model.addAttribute("consoleResult", result);
-        return "launchpad/atlas/atlas-experiment-feature-progress :: fragment-console-table";
+        return "dispatcher/atlas/atlas-experiment-feature-progress :: fragment-console-table";
     }
 
     @PostMapping("/atlas-experiment-feature-progress-part/{atlasId}/{experimentId}/{featureId}/{params}/part")
@@ -196,7 +196,7 @@ public class AtlasController {
         model.addAttribute("experimentId", experimentId);
         model.addAttribute("atlasId", atlasId);
 
-        return "launchpad/atlas/atlas-experiment-feature-progress :: fragment-table";
+        return "dispatcher/atlas/atlas-experiment-feature-progress :: fragment-table";
     }
 
 

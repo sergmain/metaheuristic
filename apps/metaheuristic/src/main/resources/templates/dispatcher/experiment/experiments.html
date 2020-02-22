@@ -20,7 +20,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/experiment/experiments-part', table);
+            $.post('/dispatcher/experiment/experiments-part', table);
         });
 
     </script>

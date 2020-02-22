@@ -30,12 +30,12 @@ import java.util.List;
 public interface ResourceProvider {
     List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            StationTask task, Metadata.DispatcherInfo launchpadCode,
             String resourceId, SourceCodeParamsYaml.Variable dataStorageParams);
 
     FunctionApiData.SystemExecResult processResultingFile(
             DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            StationTask task, Metadata.DispatcherInfo launchpadCode,
             String outputResourceId,
             TaskParamsYaml.FunctionConfig functionConfig
     );

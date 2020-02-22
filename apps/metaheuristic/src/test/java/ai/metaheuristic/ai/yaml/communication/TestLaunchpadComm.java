@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.communication;
 
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -31,6 +31,6 @@ public class TestLaunchpadComm {
 
     @Test
     public void testVersion() {
-        assertEquals( new LaunchpadCommParamsYaml().version, LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+        assertEquals( new DispatcherCommParamsYaml().version, DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
     }
 }

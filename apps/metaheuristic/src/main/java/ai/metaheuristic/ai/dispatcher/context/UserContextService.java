@@ -36,7 +36,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
-public class LaunchpadContextService {
+public class UserContextService {
 
     private final CompanyCache companyCache;
 

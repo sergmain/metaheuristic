@@ -22,8 +22,8 @@ import ai.metaheuristic.ai.dispatcher.repositories.StationsRepository;
 import ai.metaheuristic.ai.dispatcher.station.StationTopLevelService;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
@@ -107,7 +107,7 @@ public class TestRegisterStation {
     public void testRestPayload_asRest() throws Exception {
 
         StationCommParamsYaml stationComm = new StationCommParamsYaml();
-        LaunchpadCommParamsYaml ed = requestServer(stationComm);
+        DispatcherCommParamsYaml ed = requestServer(stationComm);
 
         assertNotNull(ed.getAssignedStationId());
         assertNotNull(ed.getAssignedStationId().getAssignedStationId());
@@ -157,7 +157,7 @@ public class TestRegisterStation {
         int i=0;
     }
 
-    public LaunchpadCommParamsYaml requestServer(StationCommParamsYaml data) throws Exception {
+    public DispatcherCommParamsYaml requestServer(StationCommParamsYaml data) throws Exception {
         final String stationYaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(data);
 
         final String url = "/rest/v1/srv-v2/"+ UUID.randomUUID().toString();
@@ -169,7 +169,7 @@ public class TestRegisterStation {
         String content = result.getResponse().getContentAsString();
         System.out.println(content);
 
-        LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(content);
+        DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(content);
         return d;
     }
 

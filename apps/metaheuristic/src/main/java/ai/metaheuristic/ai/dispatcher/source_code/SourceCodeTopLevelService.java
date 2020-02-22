@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.event.LaunchpadInternalEvent;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
@@ -32,8 +32,8 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.api.launchpad.ExecContext;
-import ai.metaheuristic.api.launchpad.SourceCode;
+import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -368,7 +368,7 @@ public class SourceCodeTopLevelService {
         if (status != null) {
             return status;
         }
-        publisher.publishEvent( new LaunchpadInternalEvent.ExecContextDeletionEvent(this, execContextId) );
+        publisher.publishEvent( new DispatcherInternalEvent.ExecContextDeletionEvent(this, execContextId) );
         execContextService.deleteExecContext(execContextId, context.getCompanyId());
 
         return OperationStatusRest.OPERATION_STATUS_OK;

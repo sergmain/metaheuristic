@@ -20,7 +20,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/source-code/exec-contexts-part/'+ [[${result.currentSourceCodeId}]] , table);
+            $.post('/dispatcher/source-code/exec-contexts-part/'+ [[${result.currentSourceCodeId}]] , table);
         });
 
     </script>

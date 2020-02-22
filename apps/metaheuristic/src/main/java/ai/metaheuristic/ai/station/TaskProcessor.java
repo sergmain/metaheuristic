@@ -106,9 +106,9 @@ public class TaskProcessor {
                 continue;
             }
 
-            final Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(task.launchpadUrl);
-            if (launchpadInfo==null) {
-                final String es = "#100.010 launchpadInfo is null for "+task.launchpadUrl+". task #" + task.taskId;
+            final Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(task.launchpadUrl);
+            if (dispatcherInfo ==null) {
+                final String es = "#100.010 dispatcherInfo is null for "+task.launchpadUrl+". task #" + task.taskId;
                 log.warn(es);
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, es);
                 continue;
@@ -150,7 +150,7 @@ public class TaskProcessor {
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
-            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadInfo, taskParamYaml, launchpad, taskDir);
+            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, dispatcherInfo, taskParamYaml, launchpad, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
@@ -193,7 +193,7 @@ public class TaskProcessor {
             int idx = 0;
             FunctionPrepareResult result;
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.taskYaml.preFunctions) {
-                result = prepareFunction(task.launchpadUrl, launchpadInfo, preFunctionConfig);
+                result = prepareFunction(task.launchpadUrl, dispatcherInfo, preFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                     isNotReady = true;
@@ -209,7 +209,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = prepareFunction(task.launchpadUrl, launchpadInfo, taskParamYaml.taskYaml.getFunction());
+            result = prepareFunction(task.launchpadUrl, dispatcherInfo, taskParamYaml.taskYaml.getFunction());
             if (result.isError) {
                 markFunctionAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                 continue;
@@ -220,7 +220,7 @@ public class TaskProcessor {
             }
 
             for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.taskYaml.postFunctions) {
-                result = prepareFunction(task.launchpadUrl, launchpadInfo, postFunctionConfig);
+                result = prepareFunction(task.launchpadUrl, dispatcherInfo, postFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
                     isNotReady = true;
@@ -244,7 +244,7 @@ public class TaskProcessor {
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
             try {
                 currentTaskId = task.taskId;
-                execAllFunctions(task, launchpadInfo, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, results);
+                execAllFunctions(task, dispatcherInfo, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, results);
             }
             catch(ScheduleInactivePeriodException e) {
                 stationTaskService.resetTask(task.launchpadUrl, task.taskId);
@@ -268,7 +268,7 @@ public class TaskProcessor {
     }
 
     private void execAllFunctions(
-            StationTask task, Metadata.LaunchpadInfo launchpadInfo,
+            StationTask task, Metadata.DispatcherInfo dispatcherInfo,
             DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad,
             File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
             File systemDir, FunctionPrepareResult[] results) {
@@ -339,7 +339,7 @@ public class TaskProcessor {
                                     .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
                             ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                             generalExec = resourceProvider.processResultingFile(
-                                    launchpad, task, launchpadInfo,
+                                    launchpad, task, dispatcherInfo,
                                     taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
                                     mainFunctionConfig
                             );
@@ -499,7 +499,7 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(String launchpadUrl, Metadata.LaunchpadInfo launchpadCode, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(String launchpadUrl, Metadata.DispatcherInfo launchpadCode, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 

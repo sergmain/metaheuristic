@@ -20,7 +20,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/source-code/source-codes-part', table);
+            $.post('/dispatcher/source-code/source-codes-part', table);
         });
 
     </script>

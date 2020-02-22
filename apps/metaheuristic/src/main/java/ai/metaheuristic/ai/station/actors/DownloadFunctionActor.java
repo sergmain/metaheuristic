@@ -125,8 +125,8 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
             }
             Checksum checksum = checksumState.getChecksum();
 
-            final Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(launchpad.url);
-            final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(launchpadInfo);
+            final Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(launchpad.url);
+            final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo);
             final AssetFile assetFile = ResourceUtils.prepareFunctionFile(baseResourceDir, functionCode, functionConfig.file);
 
             switch (functionDownloadStatus.functionState) {
@@ -299,11 +299,11 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
 
                 log.info("Create new DownloadFunctionTask for downloading function {} from {}, chunck size: {}",
                         o.code, o.launchpadUrl, launchpad.context.chunkSize);
-                Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(o.launchpadUrl);
+                Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(o.launchpadUrl);
 
                 DownloadFunctionTask functionTask = new DownloadFunctionTask(launchpad.context.chunkSize, o.code, null);
                 functionTask.launchpad = launchpad.launchpadLookup;
-                functionTask.stationId = launchpadInfo.stationId;
+                functionTask.stationId = dispatcherInfo.stationId;
                 add(functionTask);
             }
         });

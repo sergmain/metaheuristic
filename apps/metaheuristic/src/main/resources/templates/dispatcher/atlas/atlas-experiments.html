@@ -20,7 +20,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/atlas/atlas-experiments-part', table);
+            $.post('/dispatcher/atlas/atlas-experiments-part', table);
         });
 
     </script>

@@ -24,8 +24,8 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.event.LaunchpadEventService;
-import ai.metaheuristic.ai.dispatcher.event.LaunchpadInternalEvent;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -40,7 +40,7 @@ import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
@@ -51,9 +51,9 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.launchpad.ExecContext;
-import ai.metaheuristic.api.launchpad.SourceCode;
-import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -90,7 +90,7 @@ public class ExecContextService {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
-    private final LaunchpadEventService launchpadEventService;
+    private final DispatcherEventService dispatcherEventService;
     private final ExecContextFSM execContextFSM;
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
@@ -126,7 +126,7 @@ public class ExecContextService {
 
         if (execContext.state !=execState.code) {
             execContextFSM.toState(execContext.id, execState);
-            applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.SourceCodeLockingEvent(sourceCode.getId(), sourceCode.getCompanyId(), true));
+            applicationEventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(sourceCode.getId(), sourceCode.getCompanyId(), true));
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -278,7 +278,7 @@ public class ExecContextService {
 
     // TODO 2019.08.27 is it good to synchronize the whole method?
     //  but it's working actually
-    public synchronized LaunchpadCommParamsYaml.AssignedTask getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long execContextId) {
+    public synchronized DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long execContextId) {
 
         final Station station = stationCache.findById(stationId);
         if (station == null) {
@@ -320,7 +320,7 @@ public class ExecContextService {
         }
 
         for (Long wbId : execContextIds) {
-            LaunchpadCommParamsYaml.AssignedTask result = findUnassignedTaskAndAssign(wbId, station, ss, isAcceptOnlySigned);
+            DispatcherCommParamsYaml.AssignedTask result = findUnassignedTaskAndAssign(wbId, station, ss, isAcceptOnlySigned);
             if (result!=null) {
                 return result;
             }
@@ -341,7 +341,7 @@ public class ExecContextService {
                 .collect(Collectors.toList());
     }
 
-    private LaunchpadCommParamsYaml.AssignedTask findUnassignedTaskAndAssign(Long execContextId, Station station, StationStatusYaml ss, boolean isAcceptOnlySigned) {
+    private DispatcherCommParamsYaml.AssignedTask findUnassignedTaskAndAssign(Long execContextId, Station station, StationStatusYaml ss, boolean isAcceptOnlySigned) {
 
         LongHolder longHolder = bannedSince.computeIfAbsent(station.getId(), o -> new LongHolder(0));
         if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
@@ -437,7 +437,7 @@ public class ExecContextService {
         // normal way of operation
         longHolder.value = 0;
 
-        LaunchpadCommParamsYaml.AssignedTask assignedTask = new LaunchpadCommParamsYaml.AssignedTask();
+        DispatcherCommParamsYaml.AssignedTask assignedTask = new DispatcherCommParamsYaml.AssignedTask();
         assignedTask.setTaskId(resultTask.getId());
         assignedTask.setExecContextId(execContextId);
         assignedTask.setParams(resultTaskParams);
@@ -449,7 +449,7 @@ public class ExecContextService {
 
         taskRepository.save((TaskImpl)resultTask);
         execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
-        launchpadEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), execContextId);
+        dispatcherEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), execContextId);
 
         return assignedTask;
     }
@@ -582,7 +582,7 @@ public class ExecContextService {
 
     public void deleteExecContext(Long execContextId, Long companyUniqueId) {
 //        experimentService.resetExperimentByExecContextId(execContextId);
-        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.ExperimentResetEvent(execContextId));
+        applicationEventPublisher.publishEvent(new DispatcherInternalEvent.ExperimentResetEvent(execContextId));
         variableService.deleteByExecContextId(execContextId);
         ExecContext execContext = execContextCache.findById(execContextId);
         if (execContext != null) {
@@ -592,7 +592,7 @@ public class ExecContextService {
                 if (ids.get(0).equals(execContextId)) {
                     if (execContext.getSourceCodeId() != null) {
 //                        setLockedTo(execContext.getSourceCodeId(), companyUniqueId, false);
-                        applicationEventPublisher.publishEvent(new LaunchpadInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, false));
+                        applicationEventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, false));
                     }
                 }
                 else {

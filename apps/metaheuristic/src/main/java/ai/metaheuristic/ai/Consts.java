@@ -50,7 +50,7 @@ public class Consts {
 
     public static final ByteArrayResource ZERO_BYTE_ARRAY_RESOURCE = new ByteArrayResource(new byte[0]);
 
-    // dir at launchpad where all functions will be stored
+    // dir at dispatcher where all functions will be stored
     public static final String FUNCTIONS_RESOURCE_DIR = "functions";
 
     public static final String EXPERIMENT_DIR = "experiment";
@@ -61,7 +61,7 @@ public class Consts {
 
     public static final String METADATA_YAML_FILE_NAME = "metadata.yaml";
     public static final String ENV_YAML_FILE_NAME = "env.yaml";
-    public static final String LAUNCHPAD_YAML_FILE_NAME = "launchpad.yaml";
+    public static final String DISPATCHER_YAML_FILE_NAME = "dispatcher.yaml";
 
     @Deprecated
     public static final String METRICS_FILE_NAME = "metrics.yaml";

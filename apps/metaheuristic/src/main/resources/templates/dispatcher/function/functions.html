@@ -15,7 +15,7 @@
             console.log("Start deleteFunction("+id+")");
             my_confirm('Do you really want to delete this function?', 'Delete function?', "Delete", function() {
                 console.log("Deletion of function was confirmed.");
-                $.get('/launchpad/function/function-delete/' + id, function(status) {
+                $.get('/dispatcher/function/function-delete/' + id, function(status) {
                     console.log("task-rerun is finished, Status: " + status);
                     var text;
                     if (status==="true") {
@@ -25,7 +25,7 @@
                         text = 'There is some problem with deleting of function. Status: '+status;
                     }
                     my_alert_with_action(text, 'Status', function(status) {
-                        window.location.replace("/launchpad/function/functions");
+                        window.location.replace("/dispatcher/function/functions");
                     });
                 });
             });

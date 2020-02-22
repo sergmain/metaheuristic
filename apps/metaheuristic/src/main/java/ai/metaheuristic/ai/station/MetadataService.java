@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.function.StationFunctionService;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
@@ -75,7 +75,7 @@ public class MetadataService {
     private static class SimpleCache {
         public final DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad;
         public final LaunchpadLookupConfig.Asset asset;
-        public final Metadata.LaunchpadInfo launchpadInfo;
+        public final Metadata.DispatcherInfo dispatcherInfo;
         public final File baseResourceDir;
     }
 
@@ -101,7 +101,7 @@ public class MetadataService {
             metadata = new Metadata();
         }
         for (Map.Entry<String, DispatcherLookupExtendedService.LaunchpadLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
-            launchpadUrlAsCode(entry.getKey());
+            dispatcherUrlAsCode(entry.getKey());
         }
         // update metadata.yaml file after fixing brocked metas
         updateMetadataFile();
@@ -160,17 +160,17 @@ public class MetadataService {
             return;
         }
         SimpleCache simpleCache = simpleCacheMap.computeIfAbsent(launchpadUrl, o->{
-            final Metadata.LaunchpadInfo launchpadInfo = launchpadUrlAsCode(launchpadUrl);
+            final Metadata.DispatcherInfo dispatcherInfo = dispatcherUrlAsCode(launchpadUrl);
             return new SimpleCache(
                     dispatcherLookupExtendedService.lookupExtendedMap.get(launchpadUrl),
                     asset,
-                    launchpadInfo,
-                    dispatcherLookupExtendedService.prepareBaseResourceDir(launchpadInfo)
+                    dispatcherInfo,
+                    dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo)
             );
         });
 
         StationFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
-                stationFunctionService.downloadFunctionConfig(launchpadUrl, simpleCache.asset, functionCode, simpleCache.launchpadInfo.stationId);
+                stationFunctionService.downloadFunctionConfig(launchpadUrl, simpleCache.asset, functionCode, simpleCache.dispatcherInfo.stationId);
 
         if (downloadedFunctionConfigStatus.status== StationFunctionService.ConfigStatus.error) {
             setFunctionState(launchpadUrl, functionCode, Enums.FunctionState.function_config_error);
@@ -233,7 +233,7 @@ public class MetadataService {
 
     public String findHostByCode(String code) {
         synchronized (syncObj) {
-            for (Map.Entry<String, Metadata.LaunchpadInfo> entry : metadata.launchpad.entrySet()) {
+            for (Map.Entry<String, Metadata.DispatcherInfo> entry : metadata.launchpad.entrySet()) {
                 if (code.equals(entry.getValue().code)) {
                     return entry.getKey();
                 }
@@ -244,15 +244,15 @@ public class MetadataService {
 
     private static final Object syncObj = new Object();
 
-    public Metadata.LaunchpadInfo launchpadUrlAsCode(String launchpadUrl) {
+    public Metadata.DispatcherInfo dispatcherUrlAsCode(String launchpadUrl) {
         synchronized (syncObj) {
-            Metadata.LaunchpadInfo launchpadInfo = getLaunchpadInfo(launchpadUrl);
+            Metadata.DispatcherInfo dispatcherInfo = getLaunchpadInfo(launchpadUrl);
             // fix for wrong metadata.yaml data
-            if (launchpadInfo.code == null) {
-                launchpadInfo.code = asCode(launchpadUrl).code;
+            if (dispatcherInfo.code == null) {
+                dispatcherInfo.code = asCode(launchpadUrl).code;
                 updateMetadataFile();
             }
-            return launchpadInfo;
+            return dispatcherInfo;
         }
     }
 
@@ -270,16 +270,16 @@ public class MetadataService {
             throw new IllegalStateException("#815.070 StationId is null");
         }
         synchronized (syncObj) {
-            final Metadata.LaunchpadInfo launchpadInfo = getLaunchpadInfo(launchpadUrl);
-            if (!Objects.equals(launchpadInfo.stationId, stationId) || !Objects.equals(launchpadInfo.sessionId, sessionId)) {
-                launchpadInfo.stationId = stationId;
-                launchpadInfo.sessionId = sessionId;
+            final Metadata.DispatcherInfo dispatcherInfo = getLaunchpadInfo(launchpadUrl);
+            if (!Objects.equals(dispatcherInfo.stationId, stationId) || !Objects.equals(dispatcherInfo.sessionId, sessionId)) {
+                dispatcherInfo.stationId = stationId;
+                dispatcherInfo.sessionId = sessionId;
                 updateMetadataFile();
             }
         }
     }
 
-    public List<FunctionDownloadStatusYaml.Status> registerNewFunctionCode(String launchpadUrl, List<LaunchpadCommParamsYaml.Functions.Info> infos) {
+    public List<FunctionDownloadStatusYaml.Status> registerNewFunctionCode(String launchpadUrl, List<DispatcherCommParamsYaml.Functions.Info> infos) {
         if (S.b(launchpadUrl)) {
             throw new IllegalStateException("#815.080 launchpadUrl is null");
         }
@@ -287,7 +287,7 @@ public class MetadataService {
         synchronized (syncObj) {
             functionDownloadStatusYaml = getFunctionDownloadStatusYamlInternal();
             boolean isChanged = false;
-            for (LaunchpadCommParamsYaml.Functions.Info info : infos) {
+            for (DispatcherCommParamsYaml.Functions.Info info : infos) {
                 FunctionDownloadStatusYaml.Status status = functionDownloadStatusYaml.statuses.stream()
                         .filter(o->o.launchpadUrl.equals(launchpadUrl) && o.code.equals(info.code))
                         .findAny().orElse(null);
@@ -462,7 +462,7 @@ public class MetadataService {
         }
     }
 
-    private Metadata.LaunchpadInfo getLaunchpadInfo(String launchpadUrl) {
+    private Metadata.DispatcherInfo getLaunchpadInfo(String launchpadUrl) {
         synchronized (syncObj) {
             return metadata.launchpad.computeIfAbsent(launchpadUrl, m -> asCode(launchpadUrl));
         }
@@ -494,7 +494,7 @@ public class MetadataService {
         }
     }
 
-    private Metadata.LaunchpadInfo asCode(String launchpadUrl) {
+    private Metadata.DispatcherInfo asCode(String launchpadUrl) {
         String s = launchpadUrl.toLowerCase();
         if (launchpadUrl.startsWith(Consts.HTTP)) {
             s = s.substring(Consts.HTTP.length());
@@ -503,9 +503,9 @@ public class MetadataService {
             s = s.substring(Consts.HTTPS.length());
         }
         s = StringUtils.replaceEach(s, new String[]{".", ":", "/"}, new String[]{"_", "-", "-"});
-        Metadata.LaunchpadInfo launchpadInfo = new Metadata.LaunchpadInfo();
-        launchpadInfo.code = s;
-        return launchpadInfo;
+        Metadata.DispatcherInfo dispatcherInfo = new Metadata.DispatcherInfo();
+        dispatcherInfo.code = s;
+        return dispatcherInfo;
     }
 
 }

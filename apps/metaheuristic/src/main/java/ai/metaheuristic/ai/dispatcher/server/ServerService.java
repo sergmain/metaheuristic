@@ -38,15 +38,15 @@ import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.launchpad.ExecContext;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -286,8 +286,8 @@ public class ServerService {
         }
     }
 
-    private LaunchpadCommParamsYaml.ExecContextStatus getExecContextStatuses() {
-        return new LaunchpadCommParamsYaml.ExecContextStatus(
+    private DispatcherCommParamsYaml.ExecContextStatus getExecContextStatuses() {
+        return new DispatcherCommParamsYaml.ExecContextStatus(
                 execContextRepository.findAllExecStates()
                         .stream()
                         .map(o -> ServerService.toSimpleStatus((Long)o[0], (Integer)o[1]))
@@ -296,14 +296,14 @@ public class ServerService {
 
     public String processRequest(String data, String remoteAddress) {
         StationCommParamsYaml scpy = StationCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
-        LaunchpadCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy);
+        DispatcherCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy);
         //noinspection UnnecessaryLocalVariable
-        String yaml = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.toString(lcpy);
+        String yaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.toString(lcpy);
         return yaml;
     }
 
-    public LaunchpadCommParamsYaml processRequestInternal(String remoteAddress, StationCommParamsYaml scpy) {
-        LaunchpadCommParamsYaml lcpy = new LaunchpadCommParamsYaml();
+    public DispatcherCommParamsYaml processRequestInternal(String remoteAddress, StationCommParamsYaml scpy) {
+        DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
         try {
             if (scpy.stationCommContext==null) {
                 lcpy.assignedStationId = dispatcherCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
@@ -329,19 +329,19 @@ public class ServerService {
         return lcpy;
     }
 
-    private boolean isStationContextNeedToBeChanged(LaunchpadCommParamsYaml lcpy) {
+    private boolean isStationContextNeedToBeChanged(DispatcherCommParamsYaml lcpy) {
         return lcpy!=null && (lcpy.reAssignedStationId!=null || lcpy.assignedStationId!=null);
     }
 
-    private void setLaunchpadCommContext(LaunchpadCommParamsYaml lcpy) {
-        LaunchpadCommParamsYaml.LaunchpadCommContext lcc = new LaunchpadCommParamsYaml.LaunchpadCommContext();
+    private void setLaunchpadCommContext(DispatcherCommParamsYaml lcpy) {
+        DispatcherCommParamsYaml.LaunchpadCommContext lcc = new DispatcherCommParamsYaml.LaunchpadCommContext();
         lcc.chunkSize = globals.chunkSize;
         lcc.stationCommVersion = STATION_COMM_VERSION;
         lcpy.launchpadCommContext = lcc;
     }
 
     @SuppressWarnings("UnnecessaryReturnStatement")
-    private void checkStationId(String stationId, String sessionId, String remoteAddress, LaunchpadCommParamsYaml lcpy) {
+    private void checkStationId(String stationId, String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
         if (StringUtils.isBlank(stationId)) {
             log.warn("#442.045 StringUtils.isBlank(stationId), return RequestStationId()");
             lcpy.assignedStationId = dispatcherCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
@@ -428,17 +428,17 @@ public class ServerService {
         }
     }
 
-    private LaunchpadCommParamsYaml.ReAssignStationId assignNewSessionId(Station station, StationStatusYaml ss) {
+    private DispatcherCommParamsYaml.ReAssignStationId assignNewSessionId(Station station, StationStatusYaml ss) {
         ss.sessionId = StationTopLevelService.createNewSessionId();
         ss.sessionCreatedOn = System.currentTimeMillis();
         station.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
         station.updatedOn = ss.sessionCreatedOn;
         stationCache.save(station);
         // the same stationId but new sessionId
-        return new LaunchpadCommParamsYaml.ReAssignStationId(station.getId(), ss.sessionId);
+        return new DispatcherCommParamsYaml.ReAssignStationId(station.getId(), ss.sessionId);
     }
 
-    private LaunchpadCommParamsYaml.ReAssignStationId reassignStationId(String remoteAddress, String description) {
+    private DispatcherCommParamsYaml.ReAssignStationId reassignStationId(String remoteAddress, String description) {
         Station s = new Station();
         s.setIp(remoteAddress);
         s.setDescription(description);
@@ -452,15 +452,15 @@ public class ServerService {
         s.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
         s.updatedOn = ss.sessionCreatedOn;
         stationCache.save(s);
-        return new LaunchpadCommParamsYaml.ReAssignStationId(s.getId(), sessionId);
+        return new DispatcherCommParamsYaml.ReAssignStationId(s.getId(), sessionId);
     }
 
-    private static LaunchpadCommParamsYaml.ExecContextStatus.SimpleStatus to(ExecContext execContext) {
-        return new LaunchpadCommParamsYaml.ExecContextStatus.SimpleStatus(execContext.getId(), EnumsApi.ExecContextState.toState(execContext.getState()));
+    private static DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus to(ExecContext execContext) {
+        return new DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus(execContext.getId(), EnumsApi.ExecContextState.toState(execContext.getState()));
     }
 
-    private static LaunchpadCommParamsYaml.ExecContextStatus.SimpleStatus toSimpleStatus(Long execContextId, Integer execSate) {
-        return new LaunchpadCommParamsYaml.ExecContextStatus.SimpleStatus(execContextId, EnumsApi.ExecContextState.toState(execSate));
+    private static DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus toSimpleStatus(Long execContextId, Integer execSate) {
+        return new DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus(execContextId, EnumsApi.ExecContextState.toState(execSate));
     }
 
 }

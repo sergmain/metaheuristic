@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.LaunchpadEvent;
+import ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -32,13 +32,13 @@ import java.util.List;
  */
 @Repository
 @Profile("dispatcher")
-public interface LaunchpadEventRepository extends CrudRepository<LaunchpadEvent, Long> {
+public interface DispatcherEventRepository extends CrudRepository<DispatcherEvent, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select e.id from LaunchpadEvent e where e.period in :periods")
+    @Query(value="select e.id from DispatcherEvent e where e.period in :periods")
     List<Long> findIdByPeriod(List<Integer> periods);
 
     @Transactional(readOnly = true)
-    @Query(value="select e from LaunchpadEvent e where e.id in :ids ")
-    List<LaunchpadEvent> findByIds(List<Long> ids);
+    @Query(value="select e from DispatcherEvent e where e.id in :ids ")
+    List<DispatcherEvent> findByIds(List<Long> ids);
 }

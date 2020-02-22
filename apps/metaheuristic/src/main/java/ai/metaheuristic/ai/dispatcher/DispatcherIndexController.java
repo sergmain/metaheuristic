@@ -28,14 +28,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * Time: 20:39
  */
 @Controller
-@RequestMapping("/launchpad")
+@RequestMapping("/dispatcher")
 @Profile("dispatcher")
 @PreAuthorize("isAuthenticated()")
 public class DispatcherIndexController {
 
     @GetMapping("/index")
     public String index() {
-        return "launchpad/index";
+        return "dispatcher/index";
     }
 
 }

@@ -507,7 +507,7 @@ public class StationTaskService {
             task.resourceUploaded = false;
             task.completed = false;
 
-            File launchpadDir = new File(globals.stationTaskDir, metadataService.launchpadUrlAsCode(launchpadUrl).code);
+            File launchpadDir = new File(globals.stationTaskDir, metadataService.dispatcherUrlAsCode(launchpadUrl).code);
             String path = getTaskPath(taskId);
             File taskDir = new File(launchpadDir, path);
             try {
@@ -609,7 +609,7 @@ public class StationTaskService {
     }
 
     public void delete(String launchpadUrl, final long taskId) {
-        Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
+        Metadata.DispatcherInfo launchpadCode = metadataService.dispatcherUrlAsCode(launchpadUrl);
 
         synchronized (StationSyncHolder.stationGlobalSync) {
             final String path = getTaskPath(taskId);
@@ -636,11 +636,11 @@ public class StationTaskService {
     }
 
     File prepareTaskDir(String launchpadUrl, Long taskId) {
-        Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
+        Metadata.DispatcherInfo launchpadCode = metadataService.dispatcherUrlAsCode(launchpadUrl);
         return prepareTaskDir(launchpadCode, taskId);
     }
 
-    File prepareTaskDir(Metadata.LaunchpadInfo launchpadCode, Long taskId) {
+    File prepareTaskDir(Metadata.DispatcherInfo launchpadCode, Long taskId) {
         final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.code);
         File taskDir = new File(launchpadDir, getTaskPath(taskId));
         if (taskDir.exists()) {

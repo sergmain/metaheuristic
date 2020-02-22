@@ -14,44 +14,59 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.launchpad;
+package ai.metaheuristic.api.dispatcher;
 
-/**
- * @author Serge
- * Date: 5/9/2019
- * Time: 3:33 PM
- */
 // We need an interface because of not putting an implementation (which is Entity bean) here
-public interface ExecContext {
+public interface Task {
     Long getId();
 
     Integer getVersion();
 
-    Long getSourceCodeId();
+    String getParams();
 
-    long getCreatedOn();
+    Long getStationId();
+
+    Long getAssignedOn();
 
     Long getCompletedOn();
 
-    String getParams();
+    boolean isCompleted();
 
-    boolean isValid();
+    String getFunctionExecResults();
 
-    int getState();
+    String getMetrics();
+
+    Long getExecContextId();
+
+    int getExecState();
+
+    boolean isResultReceived();
+
+    long getResultResourceScheduledOn();
 
     void setId(Long id);
 
     void setVersion(Integer version);
 
-    void setSourceCodeId(Long sourceCodeId);
+    void setParams(String params);
 
-    void setCreatedOn(long createdOn);
+    void setStationId(Long stationId);
+
+    void setAssignedOn(Long assignedOn);
 
     void setCompletedOn(Long completedOn);
 
-    void setParams(String params);
+    void setCompleted(boolean isCompleted);
 
-    void setValid(boolean valid);
+    void setFunctionExecResults(String functionExecResults);
 
-    void setState(int execState);
+    void setMetrics(String metrics);
+
+    void setExecContextId(Long execContextId);
+
+    void setExecState(int execState);
+
+    void setResultReceived(boolean resultReceived);
+
+    void setResultResourceScheduledOn(long resultResourceScheduledOn);
 }

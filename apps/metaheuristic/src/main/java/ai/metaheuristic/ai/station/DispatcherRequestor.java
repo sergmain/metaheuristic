@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import ai.metaheuristic.commons.CommonConsts;
@@ -166,8 +166,8 @@ public class DispatcherRequestor {
         withSync(() -> { scpy.reportTaskProcessingResult = reportTaskProcessingResult; return null; });
     }
 
-    private void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String launchpadUrl, LaunchpadCommParamsYaml launchpadYaml) {
-        log.debug("#775.020 LaunchpadCommParamsYaml:\n{}", launchpadYaml);
+    private void processLaunchpadCommParamsYaml(StationCommParamsYaml scpy, String launchpadUrl, DispatcherCommParamsYaml launchpadYaml) {
+        log.debug("#775.020 DispatcherCommParamsYaml:\n{}", launchpadYaml);
         withSync(() -> {
             storeLaunchpadContext(launchpadUrl, launchpadYaml);
             stationCommandProcessor.processLaunchpadCommParamsYaml(scpy, launchpadUrl, launchpadYaml);
@@ -175,8 +175,8 @@ public class DispatcherRequestor {
         });
     }
 
-    private void storeLaunchpadContext(String launchpadUrl, LaunchpadCommParamsYaml launchpadCommParamsYaml) {
-        if (launchpadCommParamsYaml==null || launchpadCommParamsYaml.launchpadCommContext==null) {
+    private void storeLaunchpadContext(String launchpadUrl, DispatcherCommParamsYaml dispatcherCommParamsYaml) {
+        if (dispatcherCommParamsYaml ==null || dispatcherCommParamsYaml.launchpadCommContext==null) {
             return;
         }
         DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad =
@@ -185,16 +185,16 @@ public class DispatcherRequestor {
         if (launchpad==null) {
             return;
         }
-        storeLaunchpadContext(launchpadCommParamsYaml, launchpad);
+        storeLaunchpadContext(dispatcherCommParamsYaml, launchpad);
     }
 
-    private void storeLaunchpadContext(LaunchpadCommParamsYaml launchpadCommParamsYaml, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad) {
-        if (launchpadCommParamsYaml.launchpadCommContext==null) {
+    private void storeLaunchpadContext(DispatcherCommParamsYaml dispatcherCommParamsYaml, DispatcherLookupExtendedService.LaunchpadLookupExtended launchpad) {
+        if (dispatcherCommParamsYaml.launchpadCommContext==null) {
             return;
         }
-        launchpad.context.chunkSize = launchpadCommParamsYaml.launchpadCommContext.chunkSize;
-        launchpad.context.maxVersionOfStation = launchpadCommParamsYaml.launchpadCommContext.stationCommVersion!=null
-            ? launchpadCommParamsYaml.launchpadCommContext.stationCommVersion
+        launchpad.context.chunkSize = dispatcherCommParamsYaml.launchpadCommContext.chunkSize;
+        launchpad.context.maxVersionOfStation = dispatcherCommParamsYaml.launchpadCommContext.stationCommVersion!=null
+            ? dispatcherCommParamsYaml.launchpadCommContext.stationCommVersion
             : 3;
     }
 
@@ -292,7 +292,7 @@ public class DispatcherRequestor {
                     log.warn("#775.050 Launchpad returned null as a result");
                     return;
                 }
-                LaunchpadCommParamsYaml launchpadYaml = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
+                DispatcherCommParamsYaml launchpadYaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
 
                 if (!launchpadYaml.success) {
                     log.error("#775.060 Something wrong at the launchpad {}. Check the launchpad's logs for more info.", launchpadUrl );

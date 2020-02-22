@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.api.EnumsApi;
@@ -45,7 +45,7 @@ public class ExperimentRestController {
 
     private final ExperimentTopLevelService experimentTopLevelService;
     private final ExecContextService execContextService;
-    private final LaunchpadContextService launchpadContextService;
+    private final UserContextService userContextService;
 
     @GetMapping("/experiments")
     public ExperimentApiData.ExperimentsResult getExperiments(@PageableDefault(size = 5) Pageable pageable) {
@@ -157,7 +157,7 @@ public class ExperimentRestController {
 
     @PostMapping("/bind-experiment-to-source-code-with-resource")
     public OperationStatusRest bindExperimentToSourceCodeWithResource(String experimentCode, String resourcePoolCode, Authentication authentication) {
-        DispatcherContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = userContextService.getContext(authentication);
         return experimentTopLevelService.bindExperimentToSourceCodeWithResource(experimentCode, resourcePoolCode, context);
     }
 

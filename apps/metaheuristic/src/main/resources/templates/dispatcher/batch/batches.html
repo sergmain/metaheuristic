@@ -32,7 +32,7 @@
                     xhr.setRequestHeader(header, token);
                 });
                 // is this the right usage?
-                $.post('/launchpad/batch/batches-part?filterBatches='+isFilterBatches, table);
+                $.post('/dispatcher/batch/batches-part?filterBatches='+isFilterBatches, table);
             };
         }
 

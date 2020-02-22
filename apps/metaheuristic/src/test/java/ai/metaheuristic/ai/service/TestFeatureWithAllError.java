@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.service;
 
 import ai.metaheuristic.ai.preparing.FeatureMethods;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,7 +46,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToStation_mustBeNewTask()");
-        LaunchpadCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToStation_mustBeNewTask();
+        DispatcherCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToStation_mustBeNewTask();
         log.info("getTaskAndAssignToStation_mustBeNewTask() was finished for {}", System.currentTimeMillis() - mills);
 
         noNewTask();
@@ -66,7 +66,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
     }
 
     public void noNewTask() {
-        LaunchpadCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(station.getId(), false, experiment.getExecContextId());
+        DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(station.getId(), false, experiment.getExecContextId());
         assertNull(task);
 
         task = execContextService.getTaskAndAssignToStation(station.getId() + 1, false, experiment.getExecContextId());

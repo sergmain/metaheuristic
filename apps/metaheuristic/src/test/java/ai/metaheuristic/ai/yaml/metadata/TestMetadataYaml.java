@@ -37,10 +37,10 @@ public class TestMetadataYaml {
             assertNotNull(m.getLaunchpad());
             assertEquals(1, m.getMetadata().size());
             assertEquals(2, m.getLaunchpad().size());
-            Set<Map.Entry<String, Metadata.LaunchpadInfo>> entry = m.getLaunchpad().entrySet();
-            Iterator<Map.Entry<String, Metadata.LaunchpadInfo>> iterator = entry.iterator();
-            Map.Entry<String, Metadata.LaunchpadInfo> map = iterator.next();
-            Map.Entry<String, Metadata.LaunchpadInfo> map1 = iterator.next();
+            Set<Map.Entry<String, Metadata.DispatcherInfo>> entry = m.getLaunchpad().entrySet();
+            Iterator<Map.Entry<String, Metadata.DispatcherInfo>> iterator = entry.iterator();
+            Map.Entry<String, Metadata.DispatcherInfo> map = iterator.next();
+            Map.Entry<String, Metadata.DispatcherInfo> map1 = iterator.next();
 
             assertEquals("http://localhost:8080", map.getKey());
             assertEquals("localhost-8080", map.getValue().code);

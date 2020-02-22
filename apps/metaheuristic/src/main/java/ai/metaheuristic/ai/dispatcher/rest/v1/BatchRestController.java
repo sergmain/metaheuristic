@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
@@ -51,7 +51,7 @@ import java.io.IOException;
  * Time: 1:23 AM
  */
 @RestController
-@RequestMapping("/rest/v1/launchpad/batch")
+@RequestMapping("/rest/v1/dispatcher/batch")
 @Slf4j
 @Profile("dispatcher")
 @CrossOrigin
@@ -60,20 +60,20 @@ import java.io.IOException;
 public class BatchRestController {
 
     private final BatchTopLevelService batchTopLevelService;
-    private final LaunchpadContextService launchpadContextService;
+    private final UserContextService userContextService;
     private final SourceCodeService sourceCodeService;
 
     @GetMapping("/batches")
     public BatchData.BatchesResult batches(
             @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
             @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
-        DispatcherContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = userContextService.getContext(authentication);
         return batchTopLevelService.getBatches(pageable, context, false, filterBatches);
     }
 
     @GetMapping("/batch-exec-statuses")
     public BatchData.ExecStatuses batchExecStatuses(Authentication authentication) {
-        DispatcherContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = userContextService.getContext(authentication);
         return batchTopLevelService.getBatchExecStatuses(context);
     }
 
@@ -81,29 +81,29 @@ public class BatchRestController {
     public BatchData.BatchesResult batchesPart(
             @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
             @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
-        DispatcherContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = userContextService.getContext(authentication);
         return batchTopLevelService.getBatches(pageable, context, false, filterBatches);
     }
 
     @GetMapping(value = "/batch-add")
     public SourceCodeData.SourceCodesForCompany batchAdd(Authentication authentication) {
-        DispatcherContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = userContextService.getContext(authentication);
         return sourceCodeService.getAvailableSourceCodesForCompany(context);
     }
 
     @GetMapping("/batch-delete/{batchId}")
     public BatchData.Status processResourceDelete(@PathVariable Long batchId, Authentication authentication) {
-        return batchTopLevelService.getProcessingResourceStatus(batchId, launchpadContextService.getContext(authentication), false);
+        return batchTopLevelService.getProcessingResourceStatus(batchId, userContextService.getContext(authentication), false);
     }
 
     @PostMapping("/batch-delete-commit")
     public OperationStatusRest processResourceDeleteCommit(Long batchId, Authentication authentication) {
-        return batchTopLevelService.processResourceDeleteCommit(batchId, launchpadContextService.getContext(authentication), true);
+        return batchTopLevelService.processResourceDeleteCommit(batchId, userContextService.getContext(authentication), true);
     }
 
     @PostMapping(value = "/batch-upload-from-file")
     public OperationStatusRest uploadFile(final MultipartFile file, Long sourceCodeId, Authentication authentication) {
-        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, launchpadContextService.getContext(authentication));
+        BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, userContextService.getContext(authentication));
         if (uploadingStatus.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, uploadingStatus.getErrorMessages());
         }
@@ -112,14 +112,14 @@ public class BatchRestController {
 
     @GetMapping(value= "/batch-status/{batchId}" )
     public BatchData.Status getProcessingResourceStatus(@PathVariable("batchId") Long batchId, Authentication authentication) {
-        return batchTopLevelService.getProcessingResourceStatus(batchId, launchpadContextService.getContext(authentication), false);
+        return batchTopLevelService.getProcessingResourceStatus(batchId, userContextService.getContext(authentication), false);
     }
 
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request, @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) throws IOException {
-        DispatcherContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = userContextService.getContext(authentication);
         final ResponseEntity<AbstractResource> entity;
         try {
             ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context, false);

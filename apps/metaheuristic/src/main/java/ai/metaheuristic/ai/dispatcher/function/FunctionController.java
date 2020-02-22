@@ -30,13 +30,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/launchpad/function")
+@RequestMapping("/dispatcher/function")
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class FunctionController {
 
-    private static final String REDIRECT_LAUNCHPAD_FUNCTIONS = "redirect:/launchpad/function/functions";
+    private static final String REDIRECT_LAUNCHPAD_FUNCTIONS = "redirect:/dispatcher/function/functions";
 
     private final FunctionTopLevelService functionTopLevelService;
 
@@ -48,7 +48,7 @@ public class FunctionController {
         FunctionData.FunctionsResult functionsResult = functionTopLevelService.getFunctions();
         ControllerUtils.addMessagesToModel(model, functionsResult);
         model.addAttribute("result", functionsResult);
-        return "launchpad/function/functions";
+        return "dispatcher/function/functions";
     }
 
     @GetMapping("/function-delete/{id}")

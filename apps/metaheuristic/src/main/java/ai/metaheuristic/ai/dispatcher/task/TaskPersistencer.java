@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.LaunchpadEventService;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
@@ -27,7 +27,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task_extended_result.TaskExtendedResultYaml;
@@ -54,7 +54,7 @@ public class TaskPersistencer {
 
     private static final int NUMBER_OF_TRY = 2;
     private final TaskRepository taskRepository;
-    private final LaunchpadEventService launchpadEventService;
+    private final DispatcherEventService dispatcherEventService;
 
     public TaskImpl setParams(Long taskId, String taskParams) {
         return TaskFunctions.getWithSync(taskId, () -> {
@@ -141,7 +141,7 @@ public class TaskPersistencer {
         try {
             EnumsApi.TaskExecState state = functionExec.allFunctionsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
             Task t = prepareAndSaveTask(result, state);
-            launchpadEventService.publishTaskEvent(
+            dispatcherEventService.publishTaskEvent(
                     state==EnumsApi.TaskExecState.OK ? EnumsApi.LaunchpadEventType.TASK_FINISHED : EnumsApi.LaunchpadEventType.TASK_ERROR,
                     null, result.taskId, t.getExecContextId());
             action.accept(t);
@@ -180,7 +180,7 @@ public class TaskPersistencer {
             task.setResultReceived(true);
 
             task = taskRepository.save(task);
-            launchpadEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ERROR,null, task.id, task.getExecContextId());
+            dispatcherEventService.publishTaskEvent(EnumsApi.LaunchpadEventType.TASK_ERROR,null, task.id, task.getExecContextId());
 
             return task;
         });

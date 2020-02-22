@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.communication.launchpad;
+package ai.metaheuristic.ai.yaml.communication.dispatcher;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
@@ -33,7 +33,7 @@ import java.util.List;
  * Time: 6:00 PM
  */
 @Data
-public class LaunchpadCommParamsYaml implements BaseParams {
+public class DispatcherCommParamsYaml implements BaseParams {
 
     public final int version=1;
 

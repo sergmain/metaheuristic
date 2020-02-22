@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.station.StationTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
@@ -59,10 +59,10 @@ public class DispatcherCommandProcessor {
     private final FunctionCache functionCache;
 
     private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
-    private List<LaunchpadCommParamsYaml.Functions.Info> functionInfosCache = new ArrayList<>();
+    private List<DispatcherCommParamsYaml.Functions.Info> functionInfosCache = new ArrayList<>();
     private long mills = System.currentTimeMillis();
 
-    public void process(StationCommParamsYaml scpy, LaunchpadCommParamsYaml lcpy) {
+    public void process(StationCommParamsYaml scpy, DispatcherCommParamsYaml lcpy) {
         lcpy.resendTaskOutputResource = checkForMissingOutputResources(scpy);
         processStationTaskStatus(scpy);
         processResendTaskOutputResourceResult(scpy);
@@ -74,26 +74,26 @@ public class DispatcherCommandProcessor {
         lcpy.functions.infos.addAll( getFunctionInfos() );
     }
 
-    private synchronized List<LaunchpadCommParamsYaml.Functions.Info> getFunctionInfos() {
+    private synchronized List<DispatcherCommParamsYaml.Functions.Info> getFunctionInfos() {
         if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
             mills = System.currentTimeMillis();
             final List<Long> allIds = functionRepository.findAllIds();
             functionInfosCache = allIds.stream()
                     .map(functionCache::findById)
-                    .map(s->new LaunchpadCommParamsYaml.Functions.Info(s.code, s.getFunctionConfig(false).sourcing))
+                    .map(s->new DispatcherCommParamsYaml.Functions.Info(s.code, s.getFunctionConfig(false).sourcing))
                     .collect(Collectors.toList());
         }
         return functionInfosCache;
     }
 
     // processing at launchpad side
-    public LaunchpadCommParamsYaml.ResendTaskOutputResource checkForMissingOutputResources(StationCommParamsYaml request) {
+    public DispatcherCommParamsYaml.ResendTaskOutputResource checkForMissingOutputResources(StationCommParamsYaml request) {
         if (request.checkForMissingOutputResources==null) {
             return null;
         }
         final long stationId = Long.parseLong(request.stationCommContext.stationId);
         List<Long> ids = taskService.resourceReceivingChecker(stationId);
-        return new LaunchpadCommParamsYaml.ResendTaskOutputResource(ids);
+        return new DispatcherCommParamsYaml.ResendTaskOutputResource(ids);
     }
 
     // processing at launchpad side
@@ -115,12 +115,12 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at launchpad side
-    public LaunchpadCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(StationCommParamsYaml request) {
+    public DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(StationCommParamsYaml request) {
         if (request.reportTaskProcessingResult==null || request.reportTaskProcessingResult.results==null) {
             return null;
         }
         //noinspection UnnecessaryLocalVariable
-        final LaunchpadCommParamsYaml.ReportResultDelivering cmd1 = new LaunchpadCommParamsYaml.ReportResultDelivering(
+        final DispatcherCommParamsYaml.ReportResultDelivering cmd1 = new DispatcherCommParamsYaml.ReportResultDelivering(
                 execContextService.storeAllConsoleResults(request.reportTaskProcessingResult.results)
         );
         return cmd1;
@@ -136,12 +136,12 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at launchpad side
-    public LaunchpadCommParamsYaml.AssignedTask processRequestTask(StationCommParamsYaml request) {
+    public DispatcherCommParamsYaml.AssignedTask processRequestTask(StationCommParamsYaml request) {
         if (request.requestTask==null) {
             return null;
         }
         checkStationId(request);
-        LaunchpadCommParamsYaml.AssignedTask assignedTask =
+        DispatcherCommParamsYaml.AssignedTask assignedTask =
                 execContextService.getTaskAndAssignToStation(Long.parseLong(request.stationCommContext.stationId), request.requestTask.isAcceptOnlySigned(), null);
 
         if (assignedTask!=null) {
@@ -158,7 +158,7 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at launchpad side
-    public LaunchpadCommParamsYaml.AssignedStationId getNewStationId(StationCommParamsYaml.RequestStationId request) {
+    public DispatcherCommParamsYaml.AssignedStationId getNewStationId(StationCommParamsYaml.RequestStationId request) {
         if (request==null) {
             return null;
         }
@@ -173,6 +173,6 @@ public class DispatcherCommandProcessor {
         stationCache.save(st);
 
         // TODO 2019.05.19 why do we send stationId as a String?
-        return new LaunchpadCommParamsYaml.AssignedStationId(Long.toString(st.getId()), sessionId);
+        return new DispatcherCommParamsYaml.AssignedStationId(Long.toString(st.getId()), sessionId);
     }
 }

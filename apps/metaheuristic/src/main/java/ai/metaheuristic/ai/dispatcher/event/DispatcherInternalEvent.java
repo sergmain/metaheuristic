@@ -29,7 +29,7 @@ import java.util.function.Consumer;
  * Date: 1/24/2020
  * Time: 1:25 AM
  */
-public class LaunchpadInternalEvent {
+public class DispatcherInternalEvent {
 
     @Data
     @AllArgsConstructor

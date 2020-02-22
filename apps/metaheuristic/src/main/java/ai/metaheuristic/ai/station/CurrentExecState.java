@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.station;
 
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -38,7 +38,7 @@ public class CurrentExecState {
         }
     }
 
-    public void register(String launchpadUrl, List<LaunchpadCommParamsYaml.ExecContextStatus.SimpleStatus> statuses) {
+    public void register(String launchpadUrl, List<DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus> statuses) {
         synchronized(execContextState) {
             isInit.computeIfAbsent(launchpadUrl, v -> new AtomicBoolean()).set(true);
             // statuses==null when there isn't any execContext

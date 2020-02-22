@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.server;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
-import ai.metaheuristic.ai.dispatcher.context.LaunchpadContextService;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.sec.GoogleAuthenticator;
 import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.commons.S;
@@ -56,7 +56,7 @@ public class TwoFactorAuthController {
     private static final String ISSUER = "Metaheuristic";
 
     private final GoogleAuthenticator googleAuthenticator;
-    private final LaunchpadContextService launchpadContextService;
+    private final UserContextService userContextService;
 
     @Data
     public static class TwoFactorAuthForm {
@@ -68,7 +68,7 @@ public class TwoFactorAuthController {
     @RequestMapping
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String createForm(Model uiModel, Authentication authentication) {
-        DispatcherContext context = launchpadContextService.getContext(authentication);
+        DispatcherContext context = userContextService.getContext(authentication);
         @NonNull Account a = context.getAccount();
         String secret = GoogleAuthenticator.generateSecretKey();
         String url = GoogleAuthenticator.getQRBarcodeURL(ISSUER+"-"+context.getUsername(), "localhost", secret, ISSUER);

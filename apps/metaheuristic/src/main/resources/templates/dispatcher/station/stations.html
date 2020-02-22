@@ -24,7 +24,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/station/stations-part', table);
+            $.post('/dispatcher/station/stations-part', table);
         });
 
         function switchStatus() {

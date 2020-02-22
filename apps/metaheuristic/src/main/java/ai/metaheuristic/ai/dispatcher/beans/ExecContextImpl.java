@@ -17,7 +17,7 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.launchpad.ExecContext;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 

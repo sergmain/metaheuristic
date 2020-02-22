@@ -23,8 +23,8 @@ import ai.metaheuristic.ai.dispatcher.server.ServerService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -74,7 +74,7 @@ public class TestTaskRequest extends FeatureMethods {
             final String stationYaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
             String launchpadResponse = serverService.processRequest(stationYaml, "127.0.0.1");
 
-            LaunchpadCommParamsYaml d0 = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
+            DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse);
 
             assertNotNull(d0);
             assertNotNull(d0.getReAssignedStationId());
@@ -89,7 +89,7 @@ public class TestTaskRequest extends FeatureMethods {
                 break;
             }
 
-            LaunchpadCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            DispatcherCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
             assertNotNull(t);
 
             final StationCommParamsYaml stationComm0 = new StationCommParamsYaml();
@@ -99,7 +99,7 @@ public class TestTaskRequest extends FeatureMethods {
             final String stationYaml0 = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm0);
             String launchpadResponse0 = serverService.processRequest(stationYaml0, "127.0.0.1");
 
-            LaunchpadCommParamsYaml d1 = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse0);
+            DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse0);
             assertNotNull(d1);
             assertNull(d1.getAssignedTask());
 
@@ -122,7 +122,7 @@ public class TestTaskRequest extends FeatureMethods {
             final String stationYaml0 = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm0);
             String launchpadResponse0 = serverService.processRequest(stationYaml0, Consts.LOCALHOST_IP);
 
-            LaunchpadCommParamsYaml d = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse0);
+            DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse0);
 
             assertNotNull(d);
             assertNotNull(d.getAssignedTask());
@@ -136,7 +136,7 @@ public class TestTaskRequest extends FeatureMethods {
             final String stationYaml1 = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm1);
             String launchpadResponse1 = serverService.processRequest(stationYaml1, Consts.LOCALHOST_IP);
 
-            LaunchpadCommParamsYaml d1 = LaunchpadCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse1);
+            DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(launchpadResponse1);
 
             assertNotNull(d1);
             assertNull(d1.getAssignedTask());

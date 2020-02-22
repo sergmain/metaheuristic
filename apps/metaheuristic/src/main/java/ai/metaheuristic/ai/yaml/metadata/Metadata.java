@@ -27,7 +27,7 @@ public class Metadata {
     @Data
     @NoArgsConstructor
     @ToString
-    public static class LaunchpadInfo {
+    public static class DispatcherInfo {
 
         // right now this field isn't used
         public String value;
@@ -37,5 +37,5 @@ public class Metadata {
     }
 
     public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
-    public LinkedHashMap<String, LaunchpadInfo> launchpad = new LinkedHashMap<>();
+    public LinkedHashMap<String, DispatcherInfo> launchpad = new LinkedHashMap<>();
 }

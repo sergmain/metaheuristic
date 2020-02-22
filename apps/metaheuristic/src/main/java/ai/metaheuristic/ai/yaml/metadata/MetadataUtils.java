@@ -50,8 +50,8 @@ public class MetadataUtils {
         if (m.metadata==null) {
             m.metadata = new LinkedHashMap<>();
         }
-        for (Map.Entry<String, Metadata.LaunchpadInfo> entry : m.launchpad.entrySet()) {
-            Metadata.LaunchpadInfo info = entry.getValue();
+        for (Map.Entry<String, Metadata.DispatcherInfo> entry : m.launchpad.entrySet()) {
+            Metadata.DispatcherInfo info = entry.getValue();
             if (info.value != null) {
                 if (info.code == null) {
                     info.code = info.value;

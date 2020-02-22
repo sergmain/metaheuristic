@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.launchpad;
+package ai.metaheuristic.api.dispatcher;
 
 /**
  * @author Serge

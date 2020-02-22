@@ -20,7 +20,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/global-variable/global-variables-part', table);
+            $.post('/dispatcher/global-variable/global-variables-part', table);
         });
 
     </script>

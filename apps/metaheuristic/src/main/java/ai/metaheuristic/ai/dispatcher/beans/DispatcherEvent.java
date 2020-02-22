@@ -29,7 +29,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_EVENT")
 @Data
-public class LaunchpadEvent implements Serializable {
+public class DispatcherEvent implements Serializable {
 
     private static final long serialVersionUID = 6281346638344725952L;
 

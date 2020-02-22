@@ -24,13 +24,13 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.yaml.communication.launchpad.LaunchpadCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.dispatcher.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -115,12 +115,12 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertNotNull(experiment.getExecContextId());
     }
 
-    protected LaunchpadCommParamsYaml.AssignedTask getTaskAndAssignToStation_mustBeNewTask() {
+    protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToStation_mustBeNewTask() {
         long mills;
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
-        LaunchpadCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(
+        DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getExecContextId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 

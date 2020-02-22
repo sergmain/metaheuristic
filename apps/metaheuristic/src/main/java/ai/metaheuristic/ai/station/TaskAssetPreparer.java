@@ -80,7 +80,7 @@ public class TaskAssetPreparer {
                 log.error("#951.030 Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            Metadata.LaunchpadInfo launchpadInfo = metadataService.launchpadUrlAsCode(task.launchpadUrl);
+            Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(task.launchpadUrl);
 
             if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.execContextId)) {
                 stationTaskService.delete(task.launchpadUrl, task.taskId);
@@ -102,8 +102,8 @@ public class TaskAssetPreparer {
             }
 
             // Start preparing data for function
-            File taskDir = stationTaskService.prepareTaskDir(launchpadInfo, task.taskId);
-            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadInfo, taskParamYaml, launchpad, taskDir);
+            File taskDir = stationTaskService.prepareTaskDir(dispatcherInfo, task.taskId);
+            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, dispatcherInfo, taskParamYaml, launchpad, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
@@ -111,19 +111,19 @@ public class TaskAssetPreparer {
             // start preparing functions
             final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
             final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.taskYaml.function;
-            if ( !prepareFunction(functionConfig, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
+            if ( !prepareFunction(functionConfig, task.launchpadUrl, launchpad, dispatcherInfo.stationId) ) {
                 isAllReady.set(false);
             }
             if (taskParamYaml.taskYaml.preFunctions !=null) {
                 taskParamYaml.taskYaml.preFunctions.forEach(sc-> {
-                    if ( !prepareFunction(sc, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
+                    if ( !prepareFunction(sc, task.launchpadUrl, launchpad, dispatcherInfo.stationId) ) {
                         isAllReady.set(false);
                     }
                 });
             }
             if (taskParamYaml.taskYaml.postFunctions !=null) {
                 taskParamYaml.taskYaml.postFunctions.forEach(sc-> {
-                    if ( !prepareFunction(sc, task.launchpadUrl, launchpad, launchpadInfo.stationId) ) {
+                    if ( !prepareFunction(sc, task.launchpadUrl, launchpad, dispatcherInfo.stationId) ) {
                         isAllReady.set(false);
                     }
                 });
