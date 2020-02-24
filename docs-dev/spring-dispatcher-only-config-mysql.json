@@ -14,5 +14,5 @@
   "mh.dispatcher.dir": "./mh-dispatcher",
   "mh.dispatcher.is-replace-snapshot": false,
   "mh.dispatcher.chunk-size": "900k",
-  "mh.station.enabled": false
+  "mh.processor.enabled": false
 }
