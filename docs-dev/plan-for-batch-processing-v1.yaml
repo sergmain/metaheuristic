@@ -1,24 +1,24 @@
-plan:
+source:
   code: plan-for-batch-processing-1:0
   variables:
-    runtime: input-data
+    startInputAs: input-data
   processes:
     - code: mh.resource-splitter
       name: mh.resource-splitter
       snippet:
-        - code: mh.resource-splitter
-          context: internal
+        code: mh.resource-splitter
+        context: internal
       input:
         - variable: input-data
       output:
         - variable: batch-item
       subProcesses:
-        exec: parallel
+        logic: and
         processes:
           - code: process-item
             name: process-item
-            snippets:
-              - code: process-item:1.0
+            snippet:
+              code: process-item:1.0
             input:
               - variable: batch-item
             output:

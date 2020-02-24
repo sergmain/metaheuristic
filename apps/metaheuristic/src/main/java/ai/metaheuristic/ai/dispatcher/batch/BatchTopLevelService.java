@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.dispatcher.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
@@ -102,7 +104,9 @@ public class BatchTopLevelService {
     private final BatchCache batchCache;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextService execContextService;
+    private final ExecContextCreatorService execContextCreatorService;
     private final IdsRepository idsRepository;
+    private final SourceCodeSelectorService sourceCodeSelectorService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -166,7 +170,7 @@ public class BatchTopLevelService {
         if (S.b(tempFilename)) {
             return new BatchData.UploadingStatus("#995.040 name of uploaded file is null or blank");
         }
-        // fix for the case when browser send full path, ie Edge
+        // fix for the case when browser sends full path, ie Edge
         final String originFilename = new File(tempFilename.toLowerCase()).getName();
 
         String ext = StrUtils.getExtension(originFilename);
@@ -178,7 +182,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeService.getSourceCode(context.getCompanyId(), sourceCodeId);
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(context.getCompanyId(), sourceCodeId);
         if (sourceCodesForCompany.isErrorMessages()) {
             return new BatchData.UploadingStatus(sourceCodesForCompany.errorMessages);
         }
@@ -200,8 +204,9 @@ public class BatchTopLevelService {
         }
 
         Batch b;
-        SourceCodeApiData.TaskProducingResultComplex producingResult;
         try {
+            // TODO 2020-02-24 lets save the file directly, without intermediate file
+/*
             // tempDir will be deleted in processing thread
             File tempDir = DirUtils.createTempDir("batch-file-upload-");
             if (tempDir==null || tempDir.isFile()) {
@@ -212,22 +217,18 @@ public class BatchTopLevelService {
             try(OutputStream os = new FileOutputStream(dataFile)) {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
+*/
 
-            String code = ResourceUtils.toResourceCode(originFilename);
-
-            ExecContextParamsYaml.ExecContextYaml execContextYaml = SourceCodeUtils.asExecContextParamsYaml(code);
-            producingResult = execContextService.createExecContext(sourceCodeId, execContextYaml, false);
-            if (producingResult.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
-                throw new BatchResourceProcessingException("#995.075 Error creating execContext: " + producingResult.sourceCodeProducingStatus);
+            SourceCodeApiData.ExecContextResult execContextResult = execContextCreatorService.createExecContext(sourceCodeId, context);
+            if (execContextResult.isErrorMessages()) {
+                throw new BatchResourceProcessingException("#995.075 Error creating execContext: " + execContextResult.getErrorMessagesAsStr());
             }
 
-            try(InputStream is = new FileInputStream(dataFile)) {
-                variableService.save(
-                        is, dataFile.length(), code,
-                        originFilename, producingResult.execContext.getId(),
-                        ""+idsRepository.save(new Ids()).id
-                );
-            }
+            variableService.save(
+                    file.getInputStream(), file.getSize(), code,
+                    originFilename, producingResult.execContext.getId(),
+                    ""+idsRepository.save(new Ids()).id
+            );
 
             b = new Batch(sourceCodeId, producingResult.execContext.getId(), Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());
             BatchParamsYaml bpy = new BatchParamsYaml();

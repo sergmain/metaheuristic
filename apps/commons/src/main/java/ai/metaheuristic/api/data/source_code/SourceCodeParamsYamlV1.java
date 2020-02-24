@@ -38,6 +38,8 @@ import java.util.Map;
 @Data
 public class SourceCodeParamsYamlV1 implements BaseParams {
 
+    public final int version=1;
+
     @Override
     public boolean checkIntegrity() {
         final boolean b = source != null && !S.b(source.uid) && source.processes != null;
@@ -135,8 +137,8 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class VariableDefinitionV1 {
-        public String global;
-        public String runtime;
+        public List<String> globals;
+        public String startInputAs;
         public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
@@ -163,7 +165,6 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         }
     }
 
-    public final int version=1;
     public SourceCodeV1 source;
 
 }

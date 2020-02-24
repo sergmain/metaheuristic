@@ -1,8 +1,10 @@
 source:
   uid: source-code-for-batch-processing-1:0
   variables:
-    globals: vocab
-    runtime: dataset
+    globals:
+      - vocab
+      - some-data
+    startInputAs: dataset
   processes:
     - code: mh.resource-splitter
       name: mh.resource-splitter
@@ -19,8 +21,8 @@ source:
         processes:
           - code: function-1
             name: function-1
-            snippets:
-              - code: fit:6.2
+            snippet:
+              code: fit:6.2
             input:
               - name: batch-item
             output:

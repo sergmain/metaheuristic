@@ -52,7 +52,7 @@ public class SourceCodeParamsYamlUtilsV1
             p.source.metas = new ArrayList<>(v1.source.metas);
         }
         if (v1.source.variables!=null) {
-            p.source.variables = new SourceCodeParamsYaml.VariableDefinition(v1.source.variables.global, v1.source.variables.runtime);
+            p.source.variables = new SourceCodeParamsYaml.VariableDefinition(v1.source.variables.globals, v1.source.variables.startInputAs);
             v1.source.variables.inline.forEach(p.source.variables.inline::put);
         }
         p.source.clean = v1.source.clean;

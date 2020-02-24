@@ -105,7 +105,7 @@ public class ExperimentProcessService {
                 List<String> newResources = collectedInputs.get(poolCode);
                 if (newResources==null) {
                     log.warn("#714.010 Can't find input resource for poolCode {}", poolCode);
-                    result.status = EnumsApi.SourceCodeProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                    result.status = EnumsApi.SourceCodeProducingStatus.INPUT_VARIABLE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
                 features.addAll(newResources);
@@ -120,7 +120,7 @@ public class ExperimentProcessService {
                 SourceCodeService.ResourcePools metaPools = new SourceCodeService.ResourcePools(initialInputResourceCodes);
                 if (metaPools.status != EnumsApi.SourceCodeProducingStatus.OK) {
                     log.warn("#714.020 (metaPools.status != EnumsApi.SourceCodeProducingStatus.OK), metaPools.status {}", metaPools.status);
-                    result.status = EnumsApi.SourceCodeProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                    result.status = EnumsApi.SourceCodeProducingStatus.INPUT_VARIABLE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
                 pools.merge(metaPools);
@@ -129,7 +129,7 @@ public class ExperimentProcessService {
             features = collectedInputs.get(meta.getValue());
             if (features==null) {
                 log.warn("#714.030 Can't find input resource for meta.value {}", meta.getValue());
-                result.status = EnumsApi.SourceCodeProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                result.status = EnumsApi.SourceCodeProducingStatus.INPUT_VARIABLE_FROM_META_DOESNT_EXIST_ERROR;
                 return result;
             }
         }

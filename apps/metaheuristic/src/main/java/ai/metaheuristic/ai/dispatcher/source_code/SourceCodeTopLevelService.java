@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -75,7 +74,7 @@ public class SourceCodeTopLevelService {
     private final ExecContextService execContextService;
     private final ApplicationEventPublisher publisher;
     private final ExecContextCache execContextCache;
-    private final GlobalVariableService globalVariableService;
+    private final SourceCodeSelectorService sourceCodeSelectorService;
 
     public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, DispatcherContext context) {
         pageable = ControllerUtils.fixPageSize(globals.sourceCodeRowsLimit, pageable);
@@ -250,9 +249,8 @@ public class SourceCodeTopLevelService {
                     "#560.260 Can't archive a sourceCode while 'replicated' mode of asset is active");
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        OperationStatusRest status = SourceCodeValidationService.checkSourceCode(sourceCode, context);
-        if (status!=null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId+", " + status.getErrorMessagesAsStr());
+        if (sourceCode==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
         }
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
         scspy.internalParams.archived = true;
@@ -351,7 +349,7 @@ public class SourceCodeTopLevelService {
         if (wb==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
         }
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeService.getSourceCode(context.getCompanyId(), wb.getSourceCodeId());
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(context.getCompanyId(), wb.getSourceCodeId());
         if (sourceCodesForCompany.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 SourceCode wasn't found, " +
                     "companyId: "+context.getCompanyId()+", sourceCodeId: " + wb.getSourceCodeId()+", execContextId: " + wb.getId()+", error msg: " + sourceCodesForCompany.getErrorMessagesAsStr() );

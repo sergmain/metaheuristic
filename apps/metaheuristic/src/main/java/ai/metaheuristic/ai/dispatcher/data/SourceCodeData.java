@@ -40,6 +40,7 @@ public class SourceCodeData {
     @EqualsAndHashCode(callSuper = false)
     public static class SourceCodesForCompany extends BaseDataClass {
         // it must be full name of class, i.e. with packages
+        // 2020-02-24 why?
         public List<ai.metaheuristic.api.dispatcher.SourceCode> items;
     }
 

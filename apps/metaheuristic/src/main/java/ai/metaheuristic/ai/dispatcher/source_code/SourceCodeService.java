@@ -65,94 +65,11 @@ public class SourceCodeService {
 
     private final ExecContextRepository execContextRepository;
     private final SourceCodeCache sourceCodeCache;
-    private final SourceCodeRepository sourceCodeRepository;
     private final SourceCodeValidationService sourceCodeValidationService;
 
     private final ExecContextService execContextService;
     private final ExecContextFSM execContextFSM;
-    private final CompanyCache companyCache;
 
-    public SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(DispatcherContext context) {
-        return getAvailableSourceCodesForCompany(context.getCompanyId());
-    }
-
-    public SourceCodeData.SourceCodesForCompany getSourceCode(Long companyId, Long sourceCodeId) {
-        SourceCodeData.SourceCodesForCompany availableSourceCodesForCompany = getAvailableSourceCodesForCompany(companyId, (o) -> o.getId().equals(sourceCodeId));
-        if (availableSourceCodesForCompany.items.size()>1) {
-            log.error("!!!!!!!!!!!!!!!! error in code -  (sourceCodeForBatchResult.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
-        }
-        return availableSourceCodesForCompany;
-    }
-
-    public SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(Long companyId) {
-        return getAvailableSourceCodesForCompany(companyId, (f) -> true);
-    }
-
-    private SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(Long companyUniqueId, final Function<SourceCode, Boolean> sourceCodeFilter) {
-        final SourceCodeData.SourceCodesForCompany sourceCodesForCompany = new SourceCodeData.SourceCodesForCompany();
-        sourceCodesForCompany.items = sourceCodeRepository.findAllAsSourceCode(companyUniqueId).stream().filter(sourceCodeFilter::apply).filter(o->{
-            if (!o.isValid()) {
-                return false;
-            }
-            try {
-                SourceCodeStoredParamsYaml scspy = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
-                return !scspy.internalParams.archived;
-            } catch (YAMLException e) {
-                final String es = "#995.010 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
-                sourceCodesForCompany.addErrorMessage(es);
-                log.error(es);
-                log.error("#995.015 Params:\n{}", o.getParams());
-                log.error("#995.020 Error: {}", e.toString());
-                return false;
-            }
-        }).collect(Collectors.toList());
-
-        Company company = companyCache.findByUniqueId(companyUniqueId);
-        if (!S.b(company.getParams())) {
-            final Set<String> groups = new HashSet<>();
-            try {
-                CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
-                if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
-                    String[] arr = StringUtils.split(cpy.ac.groups, ',');
-                    Stream.of(arr).forEach(s-> groups.add(s.strip()));
-                }
-            } catch (YAMLException e) {
-                final String es = "#995.025 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
-                sourceCodesForCompany.addErrorMessage(es);
-                log.error(es);
-                log.error("#995.027 Params:\n{}", company.getParams());
-                log.error("#995.030 Error: {}", e.toString());
-                return sourceCodesForCompany;
-            }
-
-            if (!groups.isEmpty()) {
-                List<SourceCode> commonSourceCodes = sourceCodeRepository.findAllAsSourceCode(Consts.ID_1).stream().filter(sourceCodeFilter::apply).filter(o -> {
-                    if (!o.isValid()) {
-                        return false;
-                    }
-                    try {
-                        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
-                        if (ppy.source.ac!=null) {
-                            String[] arr = StringUtils.split(ppy.source.ac.groups, ',');
-                            return Stream.of(arr).map(String::strip).anyMatch(groups::contains);
-                        }
-                        return false;
-                    } catch (YAMLException e) {
-                        final String es = "#995.033 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
-                        sourceCodesForCompany.addErrorMessage(es);
-                        log.error(es);
-                        log.error("#995.035 Params:\n{}", o.getParams());
-                        log.error("#995.037 Error: {}", e.toString());
-                        return false;
-                    }
-                }).collect(Collectors.toList());
-                sourceCodesForCompany.items.addAll(commonSourceCodes);
-            }
-        }
-        sourceCodesForCompany.items.sort((o1, o2) -> Long.compare(o2.getId(), o1.getId()));
-
-        return sourceCodesForCompany;
-    }
 
     // TODO 2019.05.19 add reporting of producing of tasks
     // TODO 2020.01.17 reporting to where? do we need to implement it?
@@ -232,7 +149,7 @@ public class SourceCodeService {
         public ResourcePools(List<SimpleVariableAndStorageUrl> initialInputResourceCodes) {
 
             if (initialInputResourceCodes==null || initialInputResourceCodes.isEmpty()) {
-                status = EnumsApi.SourceCodeProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
+                status = EnumsApi.SourceCodeProducingStatus.INPUT_VARIABLE_DOESNT_EXIST_ERROR;
                 return;
             }
 

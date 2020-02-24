@@ -86,19 +86,6 @@ public class ResourceSplitterFunction implements InternalFunction {
     private final ExecContextCache execContextCache;
     private final IdsRepository idsRepository;
 
-    public static ExecContextParamsYaml.ExecContextYaml initExecContextParamsYaml(
-            String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
-        ExecContextParamsYaml.ExecContextYaml wy = new ExecContextParamsYaml.ExecContextYaml();
-        wy.preservePoolNames = true;
-        wy.variables.computeIfAbsent(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, o-> new ArrayList<>()).add(mainPoolCode);
-        if (attachmentCodes.isEmpty()) {
-            return wy;
-        }
-        // TODO 2020-01-24 need to re-write with using aliases from sourceCode
-        wy.variables.computeIfAbsent(ResourceSplitterFunction.ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
-        return wy;
-    }
-
     public List<InternalFunctionOutput> process(
             Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             Map<String, List<String>> inputResourceIds) {

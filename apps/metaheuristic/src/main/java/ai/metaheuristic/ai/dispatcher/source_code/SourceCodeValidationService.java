@@ -17,13 +17,11 @@
 package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -41,7 +39,6 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 
@@ -59,16 +56,6 @@ public class SourceCodeValidationService {
     private final FunctionService functionService;
     private final FunctionRepository functionRepository;
     private final SourceCodeStateService sourceCodeStateService;
-
-    public static OperationStatusRest checkSourceCode(SourceCode sourceCode, DispatcherContext context) {
-        if (sourceCode ==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 sourceCode is null");
-        }
-        if (!Objects.equals(sourceCode.getCompanyId(), context.getCompanyId())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Access to sourceCode is denied, sourceCodeId: " + sourceCode.getId() );
-        }
-        return null;
-    }
 
     public EnumsApi.SourceCodeValidateStatus checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
         if (sourceCode==null) {

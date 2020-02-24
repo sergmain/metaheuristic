@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.dispatcher.beans.*;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -35,7 +34,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils;
-import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -61,9 +59,11 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import jdk.jshell.spi.ExecutionControl;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -87,8 +87,6 @@ public class ExecContextService {
     private final Globals globals;
     private final ExecContextRepository execContextRepository;
     private final SourceCodeCache sourceCodeCache;
-    private final SourceCodeValidationService sourceCodeValidationService;
-    private final SourceCodeRepository sourceCodeRepository;
 
     private final VariableService variableService;
     private final GlobalVariableService globalVariableService;
@@ -187,39 +185,6 @@ public class ExecContextService {
 
     public List<ExecContextParamsYaml.TaskVertex> findAllVertices(Long execContextId) {
         return execContextSyncService.getWithSync(execContextId, execContextGraphService::findAll);
-    }
-
-    public SourceCodeApiData.TaskProducingResultComplex createExecContext(Long sourceCodeId, ExecContextParamsYaml.ExecContextYaml execContextYaml) {
-        return createExecContext(sourceCodeId, execContextYaml, true);
-    }
-
-    public SourceCodeApiData.TaskProducingResultComplex createExecContext(Long sourceCodeId, ExecContextParamsYaml.ExecContextYaml execContextYaml, boolean checkResources) {
-        SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
-
-        ExecContextImpl ec = new ExecContextImpl();
-        ec.setSourceCodeId(sourceCodeId);
-        ec.setCreatedOn(System.currentTimeMillis());
-        ec.setState(EnumsApi.ExecContextState.NONE.code);
-        ec.setCompletedOn(null);
-        ExecContextParamsYaml params = new ExecContextParamsYaml();
-        params.execContextYaml = execContextYaml;
-        params.graph = Consts.EMPTY_GRAPH;
-        ec.updateParams(params);
-        ec.setValid(true);
-
-        if (checkResources) {
-            ExecContextParamsYaml resourceParam = ec.getExecContextParamsYaml();
-            List<SimpleVariableAndStorageUrl> inputResourceCodes = variableService.getIdInVariables(resourceParam.getAllVariables());
-            if (inputResourceCodes == null || inputResourceCodes.isEmpty()) {
-                result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
-                return result;
-            }
-        }
-
-        result.execContext = execContextCache.save(ec);
-        result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;
-
-        return result;
     }
 
     public Void changeValidStatus(Long execContextId, boolean status) {
@@ -504,15 +469,20 @@ public class ExecContextService {
 
         SourceCodeStoredParamsYaml sourceCodeStoredParams = sourceCode.getSourceCodeStoredParamsYaml();
 
+        if (true) {
+            throw new NotImplementedException("not yet. this part of code was moved, so need to re-write");
+        }
+/*
         // parse concrete sourceCode into graph-based meta-model
         SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
                 sourceCodeStoredParams.lang, sourceCodeStoredParams.source, () -> "" + idsRepository.save(new Ids()).id);
 
         // create all internal variables as uninitialized
         variableService.createUninitialized(execContextId, sourceCodeGraph);
+*/
 
         // create all not dynamic tasks
-        SourceCodeService.ProduceTaskResult produceTaskResult =taskProducingService.produceTasks(sourceCodeGraph);
+        SourceCodeService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(sourceCodeGraph);
 
         long mill = System.currentTimeMillis();
         List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(resourceParams.getAllVariables());
@@ -557,65 +527,6 @@ public class ExecContextService {
         result.numberOfTasks = produceTaskResult.numberOfTasks;
         result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.OK;
         result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;
-
-        return result;
-    }
-
-    public SourceCodeApiData.ExecContextResult createExecContext(Long sourceCodeId, String variable, DispatcherContext context) {
-        return createExecContext(variable, context, sourceCodeCache.findById(sourceCodeId));
-    }
-
-    public SourceCodeApiData.ExecContextResult createExecContext(String sourceCodeUid, String variable, DispatcherContext context) {
-        return createExecContext(variable, context, sourceCodeRepository.findByUidAndCompanyId(sourceCodeUid, context.getCompanyId()));
-    }
-
-    private SourceCodeApiData.ExecContextResult createExecContext(String variable, DispatcherContext context, SourceCodeImpl sourceCode) {
-        if (sourceCode==null) {
-            return new SourceCodeApiData.ExecContextResult("#560.006 source code wasn't found");
-        }
-        if (S.b(variable)) {
-            return new SourceCodeApiData.ExecContextResult("#560.006 name of variable is empty");
-        }
-        // validate the sourceCode
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
-        if (sourceCodeValidation.status != EnumsApi.SourceCodeValidateStatus.OK) {
-            return new SourceCodeApiData.ExecContextResult(sourceCodeValidation.errorMessages);
-        }
-
-        if (globalVariableService.getIdInVariables(List.of(variable)).isEmpty()) {
-            return new SourceCodeApiData.ExecContextResult( "#560.008 global variable " + variable +" wasn't found");
-        }
-
-        OperationStatusRest status = SourceCodeValidationService.checkSourceCode(sourceCode, context);
-        if (status != null) {
-            return new SourceCodeApiData.ExecContextResult( "#560.011 access denied: " + status.getErrorMessagesAsStr());
-        }
-        return createExecContextInternal(sourceCode, variable);
-    }
-
-    public SourceCodeApiData.ExecContextResult createExecContextInternal(@NonNull SourceCodeImpl sourceCode, String variable) {
-        ExecContextParamsYaml.ExecContextYaml wrc = SourceCodeUtils.asExecContextParamsYaml(variable);
-        SourceCodeApiData.TaskProducingResultComplex producingResult = createExecContext(sourceCode.getId(), wrc);
-        if (producingResult.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
-            return new SourceCodeApiData.ExecContextResult("#560.072 Error creating execContext: " + producingResult.sourceCodeProducingStatus);
-        }
-
-        SourceCodeApiData.TaskProducingResultComplex countTasks = produceTasks(false, sourceCode, producingResult.execContext.getId());
-        if (countTasks.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
-            changeValidStatus(producingResult.execContext.getId(), false);
-            return new SourceCodeApiData.ExecContextResult("#560.077 sourceCode producing was failed, status: " + countTasks.sourceCodeProducingStatus);
-        }
-
-        if (globals.maxTasksPerExecContext < countTasks.numberOfTasks) {
-            changeValidStatus(producingResult.execContext.getId(), false);
-            return new SourceCodeApiData.ExecContextResult("#560.081 number of tasks for this execContext exceeded the allowed maximum number. ExecContext was created but its status is 'not valid'. " +
-                    "Allowed maximum number of tasks: " + globals.maxTasksPerExecContext + ", tasks in this execContext:  " + countTasks.numberOfTasks);
-        }
-
-        SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(sourceCode);
-        result.execContext = producingResult.execContext;
-
-        changeValidStatus(producingResult.execContext.getId(), true);
 
         return result;
     }

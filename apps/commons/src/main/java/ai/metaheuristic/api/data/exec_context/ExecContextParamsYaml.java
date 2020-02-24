@@ -38,6 +38,7 @@ public class ExecContextParamsYaml implements BaseParams {
     public static class ExecContextYaml {
         // key - ???, value - list of name of variables
         public Map<String, List<String>> variables = new HashMap<>();
+        public List<String> globalVariables = new ArrayList<>();
 
         public boolean preservePoolNames;
     }

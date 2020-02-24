@@ -2,7 +2,8 @@ source:
   clean: true
   uid: experiment-branch-1.8-with-function-6.xx
   variables:
-    global: global-input
+    globals:
+      - global-input
     inline:
       mh.hyper-params:
         RNN: LSTM

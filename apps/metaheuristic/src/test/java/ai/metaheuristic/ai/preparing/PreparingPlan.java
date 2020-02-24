@@ -119,7 +119,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
         SourceCodeParamsYamlV1 planParamsYaml = new SourceCodeParamsYamlV1();
         planParamsYaml.source = new SourceCodeParamsYamlV1.SourceCodeV1();
         planParamsYaml.source.uid = "SourceCode for experiment";
-//            global: global-var
+//            globals:
+//              - global-var
 //            inline:
 //              mh.hyper-params:
 //                RNN: LSTM
@@ -128,7 +129,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
 //                time_steps: '7'
 
         planParamsYaml.source.variables = new SourceCodeParamsYamlV1.VariableDefinitionV1();
-        planParamsYaml.source.variables.global = PreparingPlan.TEST_GLOBAL_VARIABLE;
+        planParamsYaml.source.variables.globals = List.of(PreparingPlan.TEST_GLOBAL_VARIABLE);
         planParamsYaml.source.variables.inline.put(ConstsApi.MH_HYPER_PARAMS, Map.of("RNN", "LSTM", "batches", "40", "seed", "42", "time_steps", "7"));
         {
             SourceCodeParamsYamlV1.ProcessV1 p = new SourceCodeParamsYamlV1.ProcessV1();
@@ -303,7 +304,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-03.txt");
 
         execContextYaml = new ExecContextParamsYaml.ExecContextYaml();
-        execContextYaml.variables.computeIfAbsent(Consts.MH_EXEC_CONTEXT_INPUT_VARIABLE, o-> new ArrayList<>()).add(TEST_GLOBAL_VARIABLE);
+        execContextYaml.globalVariables.add(TEST_GLOBAL_VARIABLE);
     }
 
     private Function createFunction(String functionCode) {
