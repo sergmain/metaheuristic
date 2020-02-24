@@ -92,9 +92,10 @@ public class ExecContextParamsYamlV1 implements BaseParams {
         public List<Meta> metas = new ArrayList<>();
     }
 
+    public boolean clean;
     public boolean preservePoolNames;
     public List<ProcessV1> processes;
-    public List<VariableDefinitionV1> variables;
+    public VariableDefinitionV1 variables;
 
 
     // this is a graph for runtime phase

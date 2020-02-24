@@ -46,6 +46,7 @@ import java.util.Map;
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class ExperimentProcessService {
+/*
 
     private static final String FEATURE_POOL_CODE_TYPE = "feature";
 
@@ -94,8 +95,8 @@ public class ExperimentProcessService {
                 result.status = EnumsApi.SourceCodeProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
                 return result;
             }
-            ExecContextParamsYaml resourceParams = execContext.getExecContextParamsYaml();
-            List<String> list = resourceParams.execContextYaml.getVariables().get(FEATURE_POOL_CODE_TYPE);
+            ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
+            List<String> list = execContextParamsYaml.variables.get(FEATURE_POOL_CODE_TYPE);
             if (CollectionUtils.isEmpty(list)) {
                 result.status = EnumsApi.SourceCodeProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
                 return result;
@@ -154,5 +155,6 @@ public class ExperimentProcessService {
         result.numberOfTasks = intHolder.value;
         return result;
     }
+*/
 }
 

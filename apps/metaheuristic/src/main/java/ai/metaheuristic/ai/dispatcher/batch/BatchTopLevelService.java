@@ -31,7 +31,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
@@ -220,8 +219,9 @@ public class BatchTopLevelService {
                 throw new BatchResourceProcessingException("#995.075 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
 
+            String startInputAs = creationResult.execContext.getExecContextParamsYaml().variables.startInputAs;
             variableService.save(
-                    file.getInputStream(), file.getSize(), creationResult.sourceCodeGraph.variables.startInputAs,
+                    file.getInputStream(), file.getSize(), startInputAs,
                     originFilename, creationResult.execContext.getId(),
                     ""+idsRepository.save(new Ids()).id
             );

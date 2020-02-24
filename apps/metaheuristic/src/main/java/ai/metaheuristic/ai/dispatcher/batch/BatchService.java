@@ -461,9 +461,10 @@ public class BatchService {
 
     public boolean prepareStatus(BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir, Long batchId, BatchStatusProcessor bs, Long execContextId) {
         if (true) {
-            throw new NotImplementedException("Previous version was using list of exec contexts and in this method " +
-                    "data was prepared only for one task (there was one task for one execContext)." +
-                    "Not we have only one execContext with a number of tasks. So need to re-write to use taskId or something like that.");
+            throw new NotImplementedException(
+                    "Previous version was using list of exec contexts and in this method " +
+                            "data was prepared only for one task (there was one task for one execContext)." +
+                            "Now we have only one execContext with a number of tasks. So need to re-write to use taskId or something like that.");
         }
         ExecContextImpl wb = execContextCache.findById(execContextId);
         if (wb == null) {

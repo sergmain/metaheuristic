@@ -19,10 +19,8 @@ package ai.metaheuristic.api.data.exec_context;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,7 +43,7 @@ public class ExecContextParamsYaml implements BaseParams {
     public static class VariableDefinition {
         public List<String> globals;
         public String startInputAs;
-        public final Map<String, Map<String, String>> inline = new HashMap<>();
+        public Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
     @Data
@@ -71,6 +69,7 @@ public class ExecContextParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Process {
+
         public String processName;
         public String processCode;
 

@@ -21,7 +21,10 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
+
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -42,17 +45,36 @@ public class ExecContextParamsYamlUtilsV1
     }
 
     @Override
-    public ExecContextParamsYaml upgradeTo(ExecContextParamsYamlV1 yaml, Long ... vars) {
+    public ExecContextParamsYaml upgradeTo(ExecContextParamsYamlV1 v1, Long ... vars) {
         ExecContextParamsYaml t = new ExecContextParamsYaml();
 
         // right now we don't need to convert Graph because it has only one version of structure
         // so just copying of graph field is Ok
-        BeanUtils.copyProperties(yaml.execContextYaml, t.execContextYaml);
-        if (yaml.execContextYaml.variables!=null) {
-            t.execContextYaml.variables.putAll(yaml.execContextYaml.variables);
-        }
-        t.graph = yaml.graph;
+        t.clean = v1.clean;
+        t.preservePoolNames = v1.preservePoolNames;
+        t.graph = v1.graph;
+        t.processesGraph = v1.processesGraph;
+        t.processes = v1.processes.stream().map(ExecContextParamsYamlUtilsV1::toProcess).collect(Collectors.toList());
+        t.variables = v1.variables!=null ? new ExecContextParamsYaml.VariableDefinition(v1.variables.globals, v1.variables.startInputAs, v1.variables.inline) : null;
+
         return t;
+    }
+
+    private static ExecContextParamsYaml.Process toProcess(ExecContextParamsYamlV1.ProcessV1 p1) {
+        ExecContextParamsYaml.Process p = new ExecContextParamsYaml.Process();
+        BeanUtils.copyProperties(p1, p, "function", "preFunctions", "postFunctions", "input", "output", "metas");
+        p.function = toFunction(p1.function);
+        p.preFunctions = p1.preFunctions!=null ? p1.preFunctions.stream().map(ExecContextParamsYamlUtilsV1::toFunction).collect(Collectors.toList()) : null;
+        p.postFunctions = p1.postFunctions!=null ? p1.postFunctions.stream().map(ExecContextParamsYamlUtilsV1::toFunction).collect(Collectors.toList()) : null;
+        p.input.addAll(p1.input);
+        p.output.addAll(p1.output);
+        p.metas.addAll(p1.metas);
+        return null;
+    }
+
+    @NonNull
+    private static ExecContextParamsYaml.FunctionDefinition toFunction(ExecContextParamsYamlV1.FunctionDefinitionV1 f1) {
+        return new ExecContextParamsYaml.FunctionDefinition(f1.code, f1.params, f1.context);
     }
 
     @Override
@@ -77,6 +99,7 @@ public class ExecContextParamsYamlUtilsV1
 
     @Override
     public ExecContextParamsYamlV1 to(String s) {
+        //noinspection UnnecessaryLocalVariable
         final ExecContextParamsYamlV1 p = getYaml().load(s);
         return p;
     }
