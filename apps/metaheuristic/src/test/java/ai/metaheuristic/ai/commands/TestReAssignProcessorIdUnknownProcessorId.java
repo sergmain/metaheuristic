@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-public class TestReAssignStationIdUnknownStationId {
+public class TestReAssignProcessorIdUnknownProcessorId {
 
     @Autowired
     public ServerService serverService;
@@ -52,13 +52,13 @@ public class TestReAssignStationIdUnknownStationId {
     @Autowired
     public ProcessorCache processorCache;
 
-    private Long stationIdBefore;
+    private Long processorIdBefore;
     private String sessionIdBefore;
 
-    private Long stationIdAfter;
+    private Long processorIdAfter;
     private String sessionIdAfter;
 
-    private Long unknownStationId;
+    private Long unknownProcessorId;
 
     @Before
     public void before() {
@@ -67,17 +67,17 @@ public class TestReAssignStationIdUnknownStationId {
             final long id = -1L - i;
             Processor s = processorCache.findById(id);
             if (s==null) {
-                unknownStationId = id;
+                unknownProcessorId = id;
                 break;
             }
         }
-        if (unknownStationId==null) {
+        if (unknownProcessorId ==null) {
             throw new IllegalStateException("Can't find id which isn't belong to any processor");
         }
 
-        ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
+        ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
 
-        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
         DispatcherCommParamsYaml dispatcherComm = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
@@ -86,21 +86,21 @@ public class TestReAssignStationIdUnknownStationId {
         assertNotNull(dispatcherComm.getAssignedProcessorId().getAssignedProcessorId());
         assertNotNull(dispatcherComm.getAssignedProcessorId().getAssignedSessionId());
 
-        stationIdBefore = Long.valueOf(dispatcherComm.getAssignedProcessorId().getAssignedProcessorId());
+        processorIdBefore = Long.valueOf(dispatcherComm.getAssignedProcessorId().getAssignedProcessorId());
         sessionIdBefore = dispatcherComm.getAssignedProcessorId().getAssignedSessionId();
 
         assertTrue(sessionIdBefore.length()>5);
 
-        System.out.println("stationIdBefore: " + stationIdBefore);
+        System.out.println("processorIdBefore: " + processorIdBefore);
         System.out.println("sessionIdBefore: " + sessionIdBefore);
     }
 
     @After
     public void afterPreparingExperiment() {
         log.info("Start after()");
-        if (stationIdBefore!=null) {
+        if (processorIdBefore !=null) {
             try {
-                processorCache.deleteById(stationIdBefore);
+                processorCache.deleteById(processorIdBefore);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -108,15 +108,15 @@ public class TestReAssignStationIdUnknownStationId {
     }
 
     @Test
-    public void testReAssignStationIdUnknownStationId() {
+    public void testReAssignProcessorIdUnknownProcessorId() {
 
-        // in this scenario we test that processor has got a new re-assigned stationId
+        // in this scenario we test that processor has got a new re-assigned processorId
 
-        ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
-        stationComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(unknownStationId.toString(), sessionIdBefore.substring(0, 4));
+        ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(unknownProcessorId.toString(), sessionIdBefore.substring(0, 4));
 
 
-        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
@@ -125,11 +125,11 @@ public class TestReAssignStationIdUnknownStationId {
         assertNotNull(d.getReAssignedProcessorId().getReAssignedProcessorId());
         assertNotNull(d.getReAssignedProcessorId().getSessionId());
 
-        Long stationId = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
+        Long processorId = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
 
-        assertNotEquals(unknownStationId, stationId);
+        assertNotEquals(unknownProcessorId, processorId);
 
-        Processor s = processorCache.findById(stationId);
+        Processor s = processorCache.findById(processorId);
 
         assertNotNull(s);
     }

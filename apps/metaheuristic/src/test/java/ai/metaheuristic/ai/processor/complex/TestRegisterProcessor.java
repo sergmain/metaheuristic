@@ -69,13 +69,13 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Import({SpringSecurityWebAuxTestConfig.class})
 @ActiveProfiles("dispatcher")
 @Slf4j
-public class TestRegisterStation {
+public class TestRegisterProcessor {
 
     private MockMvc mockMvc;
 
-    private String stationIdAsStr = null;
-    private Long stationId = null;
-    private Set<Long> stationIds =new HashSet<>();
+    private String processorIdAsStr = null;
+    private Long processorId = null;
+    private Set<Long> processorIds =new HashSet<>();
     private String sessionId = null;
 
     @Autowired
@@ -93,7 +93,7 @@ public class TestRegisterStation {
 
     @After
     public void afterTest() {
-        for (Long id : stationIds) {
+        for (Long id : processorIds) {
             try {
                 processorRepository.deleteById(id);
             } catch (Throwable th) {
@@ -106,8 +106,8 @@ public class TestRegisterStation {
     @WithUserDetails("data_rest")
     public void testRestPayload_asRest() throws Exception {
 
-        ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
-        DispatcherCommParamsYaml ed = requestServer(stationComm);
+        ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        DispatcherCommParamsYaml ed = requestServer(processorComm);
 
         assertNotNull(ed.getAssignedProcessorId());
         assertNotNull(ed.getAssignedProcessorId().getAssignedProcessorId());
@@ -115,16 +115,16 @@ public class TestRegisterStation {
         assertNotNull(ed.getAssignedProcessorId().getAssignedSessionId());
         assertFalse(ed.getAssignedProcessorId().getAssignedSessionId().isBlank());
 
-        stationIdAsStr = ed.getAssignedProcessorId().getAssignedProcessorId();
-        stationId = Long.valueOf(stationIdAsStr);
-        stationIds.add(stationId);
+        processorIdAsStr = ed.getAssignedProcessorId().getAssignedProcessorId();
+        processorId = Long.valueOf(processorIdAsStr);
+        processorIds.add(processorId);
         sessionId = ed.getAssignedProcessorId().getAssignedSessionId();
 
-        stationComm = new ProcessorCommParamsYaml();
-        // init stationId and sessionId must be first operation. Otherwise, commands won't be inited correctly.
-        stationComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(stationIdAsStr, sessionId);
+        processorComm = new ProcessorCommParamsYaml();
+        // init processorId and sessionId must be first operation. Otherwise, commands won't be inited correctly.
+        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
 
-        stationComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus(new ArrayList<>());
+        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus(new ArrayList<>());
 
         final ProcessorCommParamsYaml.ReportProcessorStatus ss = new ProcessorCommParamsYaml.ReportProcessorStatus(
                 new EnvYaml(),
@@ -135,19 +135,19 @@ public class TestRegisterStation {
                 "[unknown]", "[unknown]", null, true,
                 1, EnumsApi.OS.unknown);
 
-        stationComm.reportProcessorStatus = ss;
+        processorComm.reportProcessorStatus = ss;
 
-        stationComm.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
-        stationComm.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
+        processorComm.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
+        processorComm.checkForMissingOutputResources = new ProcessorCommParamsYaml.CheckForMissingOutputResources();
 
-        ed = requestServer(stationComm);
+        ed = requestServer(processorComm);
         if (ed.getAssignedProcessorId()!=null) {
             // collect for deletion
-            stationIds.add(Long.valueOf(ed.getAssignedProcessorId().getAssignedProcessorId()));
+            processorIds.add(Long.valueOf(ed.getAssignedProcessorId().getAssignedProcessorId()));
         }
         assertNull(ed.getAssignedProcessorId());
 
-        Processor s = processorRepository.findById(stationId).orElse(null);
+        Processor s = processorRepository.findById(processorId).orElse(null);
         assertNotNull(s);
 
         ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
@@ -158,11 +158,11 @@ public class TestRegisterStation {
     }
 
     public DispatcherCommParamsYaml requestServer(ProcessorCommParamsYaml data) throws Exception {
-        final String stationYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(data);
+        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(data);
 
         final String url = "/rest/v1/srv-v2/"+ UUID.randomUUID().toString();
         MvcResult result = mockMvc
-                .perform(buildPostRequest(stationYaml, url))
+                .perform(buildPostRequest(processorYaml, url))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -183,10 +183,10 @@ public class TestRegisterStation {
     @Test
     @WithUserDetails("data")
     public void testRestPayload_asUser() throws Exception {
-        final String stationYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(new ProcessorCommParamsYaml());
+        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(new ProcessorCommParamsYaml());
 
         final String url = "/rest/v1/srv-v2/"+ UUID.randomUUID().toString();
-        mockMvc.perform(buildPostRequest(stationYaml, url))
+        mockMvc.perform(buildPostRequest(processorYaml, url))
                 .andExpect(status().isForbidden());
 
     }

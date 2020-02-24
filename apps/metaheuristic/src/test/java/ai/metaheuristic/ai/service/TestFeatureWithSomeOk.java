@@ -72,7 +72,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         finishCurrentWithOk(2);
 
-        getTaskAndAssignToStation_mustBeNewTask();
+        getTaskAndAssignToProcessor_mustBeNewTask();
 
 
         System.out.println();

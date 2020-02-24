@@ -28,8 +28,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("processor")
-@TestPropertySource(locations="classpath:test-station-profile.properties")
-public class TestStationProfile {
+@TestPropertySource(locations="classpath:test-processor-profile.properties")
+public class TestProcessorProfile {
 
     @Autowired
     private Globals globals;

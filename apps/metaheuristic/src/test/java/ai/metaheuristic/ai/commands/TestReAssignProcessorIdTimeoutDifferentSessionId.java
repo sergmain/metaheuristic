@@ -47,7 +47,7 @@ import static org.junit.Assert.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-public class TestReAssignStationIdTimeoutDifferentSessionId {
+public class TestReAssignProcessorIdTimeoutDifferentSessionId {
 
     @Autowired
     public ServerService serverService;
@@ -58,16 +58,16 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
     @Autowired
     public ProcessorRepository processorRepository;
 
-    private Long stationIdBefore;
+    private Long processorIdBefore;
     private String sessionIdBefore;
     private long sessionCreatedOn;
 
     @Before
     public void before() {
 
-        ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
+        ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
 
-        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
@@ -76,16 +76,16 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
         assertNotNull(d.getAssignedProcessorId().getAssignedProcessorId());
         assertNotNull(d.getAssignedProcessorId().getAssignedSessionId());
 
-        stationIdBefore = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
+        processorIdBefore = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
         sessionIdBefore = d.getAssignedProcessorId().getAssignedSessionId();
 
         assertTrue(sessionIdBefore.length()>5);
 
-        System.out.println("stationIdBefore: " + stationIdBefore);
+        System.out.println("processorIdBefore: " + processorIdBefore);
         System.out.println("sessionIdBefore: " + sessionIdBefore);
 
-        Long stationId = stationIdBefore;
-        Processor s = processorRepository.findByIdForUpdate(stationId);
+        Long processorId = processorIdBefore;
+        Processor s = processorRepository.findByIdForUpdate(processorId);
         assertNotNull(s);
 
         ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
@@ -105,9 +105,9 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
     @After
     public void afterPreparingExperiment() {
         log.info("Start after()");
-        if (stationIdBefore!=null) {
+        if (processorIdBefore !=null) {
             try {
-                processorCache.deleteById(stationIdBefore);
+                processorCache.deleteById(processorIdBefore);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -115,15 +115,15 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
     }
 
     @Test
-    public void testReAssignStationIdDifferentSessionId() {
+    public void testReAssignProcessorIdDifferentSessionId() {
 
         // in this scenario we test that a processor has got a refreshed sessionId
 
-        ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
+        ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
         final String newSessionId = sessionIdBefore + '-';
-        stationComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(stationIdBefore.toString(), newSessionId);
+        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), newSessionId);
 
-        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
@@ -133,11 +133,11 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
         assertNotNull(d.getReAssignedProcessorId().getReAssignedProcessorId());
         assertNotNull(d.getReAssignedProcessorId().getSessionId());
 
-        final Long stationId = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
-        assertEquals(stationIdBefore, stationId);
+        final Long processorId = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
+        assertEquals(processorIdBefore, processorId);
         assertNotEquals(newSessionId, d.getReAssignedProcessorId().getSessionId());
 
-        Processor s = processorCache.findById(stationId);
+        Processor s = processorCache.findById(processorId);
 
         assertNotNull(s);
         ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);

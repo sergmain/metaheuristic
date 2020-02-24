@@ -34,11 +34,11 @@ import static org.junit.Assert.assertNotNull;
  * Date: 5/23/2019
  * Time: 3:54 PM
  */
-public class TestStationStatus {
+public class TestProcessorStatus {
 
     @Test
     public void test() throws IOException {
-        try (InputStream is = TestStationStatus.class.getResourceAsStream("/yaml/station/station-status-01.yaml")) {
+        try (InputStream is = TestProcessorStatus.class.getResourceAsStream("/yaml/processor/processor-status-01.yaml")) {
             String yaml = IOUtils.toString(is, StandardCharsets.UTF_8);
             ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(yaml);
 

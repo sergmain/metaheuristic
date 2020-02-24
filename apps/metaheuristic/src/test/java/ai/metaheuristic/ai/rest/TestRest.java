@@ -190,11 +190,11 @@ public class TestRest {
     @Test
     @WithUserDetails("data_rest")
     public void testSimpleCommunicationWithServer() throws Exception {
-        final ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
-        final String stationYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
+        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
 
         MvcResult result = mockMvc.perform(post("/rest/v1/srv-v2/qwe321").contentType(Consts.APPLICATION_JSON_UTF8)
-                .content(stationYaml))
+                .content(processorYaml))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
 

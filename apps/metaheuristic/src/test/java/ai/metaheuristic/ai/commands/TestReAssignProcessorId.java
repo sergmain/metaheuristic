@@ -45,7 +45,7 @@ import static org.junit.Assert.assertTrue;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-public class TestReAssignStationId {
+public class TestReAssignProcessorId {
 
     @Autowired
     public ServerService serverService;
@@ -53,14 +53,14 @@ public class TestReAssignStationId {
     @Autowired
     public ProcessorCache processorCache;
 
-    private Long stationIdBefore;
+    private Long processorIdBefore;
     private String sessionIdBefore;
 
     @Before
     public void before() {
-        ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
+        ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
 
-        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
@@ -69,21 +69,21 @@ public class TestReAssignStationId {
         assertNotNull(d.getAssignedProcessorId().getAssignedProcessorId());
         assertNotNull(d.getAssignedProcessorId().getAssignedSessionId());
 
-        stationIdBefore = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
+        processorIdBefore = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
         sessionIdBefore = d.getAssignedProcessorId().getAssignedSessionId();
 
         assertTrue(sessionIdBefore.length()>5);
 
-        System.out.println("stationIdBefore: " + stationIdBefore);
+        System.out.println("processorIdBefore: " + processorIdBefore);
         System.out.println("sessionIdBefore: " + sessionIdBefore);
     }
 
     @After
     public void afterPreparingExperiment() {
         log.info("Start after()");
-        if (stationIdBefore!=null) {
+        if (processorIdBefore !=null) {
             try {
-                processorCache.deleteById(stationIdBefore);
+                processorCache.deleteById(processorIdBefore);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -91,14 +91,14 @@ public class TestReAssignStationId {
     }
 
     @Test
-    public void testRequestStationId() {
+    public void testRequestProcessorId() {
 
-        // in this scenario we test that processor has got a new re-assigned stationId
+        // in this scenario we test that processor has got a new re-assigned processorId
 
-        final ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
-        stationComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(stationIdBefore.toString(), sessionIdBefore.substring(0, 4));
-        final String stationYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
-        String dispatcherResponse = serverService.processRequest(stationYaml, "127.0.0.1");
+        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore.substring(0, 4));
+        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
+        String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
@@ -107,9 +107,9 @@ public class TestReAssignStationId {
         assertNotNull(d.getReAssignedProcessorId().getReAssignedProcessorId());
         assertNotNull(d.getReAssignedProcessorId().getSessionId());
 
-        Long stationId = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
+        Long processorId = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
 
-        Processor s = processorCache.findById(stationId);
+        Processor s = processorCache.findById(processorId);
 
         assertNotNull(s);
     }

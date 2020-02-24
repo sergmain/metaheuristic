@@ -47,7 +47,7 @@ import static org.junit.Assert.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-public class TestReAssignStationIdTimeoutSessionId {
+public class TestReAssignProcessorIdTimeoutSessionId {
 
     @Autowired
     public ServerService serverService;
@@ -58,16 +58,16 @@ public class TestReAssignStationIdTimeoutSessionId {
     @Autowired
     public ProcessorRepository processorRepository;
 
-    private Long stationIdBefore;
+    private Long processorIdBefore;
     private String sessionIdBefore;
     private long sessionCreatedOn;
 
     @Before
     public void before() {
 
-        final ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
-        final String stationYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
-        String dispatcherResponse = serverService.processRequest(stationYaml, "127.0.0.1");
+        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
+        String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
@@ -76,16 +76,16 @@ public class TestReAssignStationIdTimeoutSessionId {
         assertNotNull(d.getAssignedProcessorId().getAssignedProcessorId());
         assertNotNull(d.getAssignedProcessorId().getAssignedSessionId());
 
-        stationIdBefore = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
+        processorIdBefore = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
         sessionIdBefore = d.getAssignedProcessorId().getAssignedSessionId();
 
         assertTrue(sessionIdBefore.length()>5);
 
-        System.out.println("stationIdBefore: " + stationIdBefore);
+        System.out.println("processorIdBefore: " + processorIdBefore);
         System.out.println("sessionIdBefore: " + sessionIdBefore);
 
-        Long stationId = stationIdBefore;
-        Processor s = processorRepository.findByIdForUpdate(stationId);
+        Long processorId = processorIdBefore;
+        Processor s = processorRepository.findByIdForUpdate(processorId);
         assertNotNull(s);
 
         ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
@@ -105,9 +105,9 @@ public class TestReAssignStationIdTimeoutSessionId {
     @After
     public void afterPreparingExperiment() {
         log.info("Start after()");
-        if (stationIdBefore!=null) {
+        if (processorIdBefore !=null) {
             try {
-                processorCache.deleteById(stationIdBefore);
+                processorCache.deleteById(processorIdBefore);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -115,21 +115,21 @@ public class TestReAssignStationIdTimeoutSessionId {
     }
 
     @Test
-    public void testReAssignStationIdTimeoutSessionId() {
+    public void testReAssignProcessorIdTimeoutSessionId() {
 
         // in this scenario we test that a processor has got a refreshed sessionId
 
-        final ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
-        stationComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(stationIdBefore.toString(), sessionIdBefore);
+        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdBefore.toString(), sessionIdBefore);
 
-        final String stationYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
-        String dispatcherResponse = serverService.processRequest(stationYaml, "127.0.0.1");
+        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
+        String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
 
-        Processor s = processorCache.findById(stationIdBefore);
+        Processor s = processorCache.findById(processorIdBefore);
 
         assertNotNull(s);
         ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);

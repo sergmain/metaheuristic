@@ -14,23 +14,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.communication;
+package ai.metaheuristic.ai.processor;
 
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
+import ai.metaheuristic.ai.dispatcher.server.ServerService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Serge
- * Date: 11/12/2019
- * Time: 3:16 PM
+ * Date: 8/3/2019
+ * Time: 12:02 AM
  */
-public class TestStationComm {
+public class TestProcessorTimeout {
 
     @Test
-    public void testVersion() {
-        assertEquals( new ProcessorCommParamsYaml().version, ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+    public void test() {
+        assertTrue(
+                ProcessorTopLevelService.PROCESSOR_TIMEOUT - ServerService.SESSION_UPDATE_TIMEOUT
+                        >= TimeUnit.SECONDS.toMillis(20)
+        );
     }
 }

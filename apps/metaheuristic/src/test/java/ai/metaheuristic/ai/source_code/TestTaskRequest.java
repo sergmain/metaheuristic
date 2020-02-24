@@ -66,13 +66,13 @@ public class TestTaskRequest extends FeatureMethods {
         toStarted();
         String sessionId;
         {
-            final ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
-            stationComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
-            stationComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus(Collections.emptyList());
+            final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+            processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
+            processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus(Collections.emptyList());
 
 
-            final String stationYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
-            String dispatcherResponse = serverService.processRequest(stationYaml, "127.0.0.1");
+            final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
+            String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
 
             DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
@@ -92,12 +92,12 @@ public class TestTaskRequest extends FeatureMethods {
             DispatcherCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToProcessor(processor.getId(), false, workbook.getId());
             assertNotNull(t);
 
-            final ProcessorCommParamsYaml stationComm0 = new ProcessorCommParamsYaml();
-            stationComm0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-            stationComm0.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
+            final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
+            processorComm0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
+            processorComm0.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
 
-            final String stationYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm0);
-            String dispatcherResponse0 = serverService.processRequest(stationYaml0, "127.0.0.1");
+            final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
+            String dispatcherResponse0 = serverService.processRequest(processorYaml0, "127.0.0.1");
 
             DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse0);
             assertNotNull(d1);
@@ -115,12 +115,12 @@ public class TestTaskRequest extends FeatureMethods {
             workbook = execContextCache.findById(workbook.id);
         }
         {
-            final ProcessorCommParamsYaml stationComm0 = new ProcessorCommParamsYaml();
-            stationComm0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-            stationComm0.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
+            final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
+            processorComm0.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
+            processorComm0.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
 
-            final String stationYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm0);
-            String dispatcherResponse0 = serverService.processRequest(stationYaml0, Consts.LOCALHOST_IP);
+            final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
+            String dispatcherResponse0 = serverService.processRequest(processorYaml0, Consts.LOCALHOST_IP);
 
             DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse0);
 
@@ -129,12 +129,12 @@ public class TestTaskRequest extends FeatureMethods {
             assertNotNull(d.getAssignedTask());
         }
         {
-            final ProcessorCommParamsYaml stationComm1 = new ProcessorCommParamsYaml();
-            stationComm1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
-            stationComm1.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
+            final ProcessorCommParamsYaml processorComm1 = new ProcessorCommParamsYaml();
+            processorComm1.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, sessionId);
+            processorComm1.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
 
-            final String stationYaml1 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm1);
-            String dispatcherResponse1 = serverService.processRequest(stationYaml1, Consts.LOCALHOST_IP);
+            final String processorYaml1 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm1);
+            String dispatcherResponse1 = serverService.processRequest(processorYaml1, Consts.LOCALHOST_IP);
 
             DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse1);
 
