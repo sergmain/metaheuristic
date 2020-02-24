@@ -49,7 +49,7 @@ public class DispatcherCommParamsYamlUtilsV1 extends
         if( v1.dispatcherCommContext !=null ) {
             t.dispatcherCommContext = new DispatcherCommParamsYaml.DispatcherCommContext();
             t.dispatcherCommContext.chunkSize = v1.dispatcherCommContext.chunkSize;
-            t.dispatcherCommContext.stationCommVersion = v1.dispatcherCommContext.stationCommVersion;
+            t.dispatcherCommContext.processorCommVersion = v1.dispatcherCommContext.processorCommVersion;
         }
         if (v1.functions !=null) {
             t.functions = new DispatcherCommParamsYaml.Functions();
@@ -63,13 +63,13 @@ public class DispatcherCommParamsYamlUtilsV1 extends
             t.assignedTask = new DispatcherCommParamsYaml.AssignedTask();
             BeanUtils.copyProperties(v1.assignedTask, t.assignedTask);
         }
-        if (v1.assignedStationId!=null) {
-            t.assignedStationId = new DispatcherCommParamsYaml.AssignedStationId();
-            BeanUtils.copyProperties(v1.assignedStationId, t.assignedStationId);
+        if (v1.assignedProcessorId !=null) {
+            t.assignedProcessorId = new DispatcherCommParamsYaml.AssignedProcessorId();
+            BeanUtils.copyProperties(v1.assignedProcessorId, t.assignedProcessorId);
         }
-        if (v1.reAssignedStationId!=null) {
-            t.reAssignedStationId = new DispatcherCommParamsYaml.ReAssignStationId();
-            BeanUtils.copyProperties(v1.reAssignedStationId, t.reAssignedStationId);
+        if (v1.reAssignedProcessorId !=null) {
+            t.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId();
+            BeanUtils.copyProperties(v1.reAssignedProcessorId, t.reAssignedProcessorId);
         }
         if (v1.reportResultDelivering!=null) {
             t.reportResultDelivering = new DispatcherCommParamsYaml.ReportResultDelivering();
@@ -110,13 +110,13 @@ public class DispatcherCommParamsYamlUtilsV1 extends
             t.assignedTask = new DispatcherCommParamsYamlV1.AssignedTaskV1();
             BeanUtils.copyProperties(yaml.assignedTask, t.assignedTask);
         }
-        if (yaml.assignedStationId!=null) {
-            t.assignedStationId = new DispatcherCommParamsYamlV1.AssignedStationIdV1();
-            BeanUtils.copyProperties(yaml.assignedStationId, t.assignedStationId);
+        if (yaml.assignedProcessorId!=null) {
+            t.assignedProcessorId = new DispatcherCommParamsYamlV1.AssignedProcessorIdV1();
+            BeanUtils.copyProperties(yaml.assignedProcessorId, t.assignedProcessorId);
         }
-        if (yaml.reAssignedStationId!=null) {
-            t.reAssignedStationId = new DispatcherCommParamsYamlV1.ReAssignStationIdV1();
-            BeanUtils.copyProperties(yaml.reAssignedStationId, t.reAssignedStationId);
+        if (yaml.reAssignedProcessorId!=null) {
+            t.reAssignedProcessorId = new DispatcherCommParamsYamlV1.ReAssignProcessorIdV1();
+            BeanUtils.copyProperties(yaml.reAssignedProcessorId, t.reAssignedProcessorId);
         }
         if (yaml.reportResultDelivering!=null) {
             t.reportResultDelivering = new DispatcherCommParamsYamlV1.ReportResultDeliveringV1();

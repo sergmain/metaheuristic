@@ -59,17 +59,17 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Object[]> findAllAsTaskSimple(Pageable pageable);
 
     @Transactional(readOnly = true)
-    List<Task> findByStationIdAndResultReceivedIsFalse(Long stationId);
+    List<Task> findByProcessorIdAndResultReceivedIsFalse(Long processorId);
 
     @Transactional(readOnly = true)
     @Query(value="select t.id, t.assignedOn from TaskImpl t " +
-            "where t.stationId=:stationId and t.resultReceived=false")
-    List<Object[]> findAllByStationIdAndResultReceivedIsFalse(Long stationId);
+            "where t.processorId=:processorId and t.resultReceived=false")
+    List<Object[]> findAllByProcessorIdAndResultReceivedIsFalse(Long processorId);
 
     @Transactional(readOnly = true)
     @Query(value="select t.id, t.assignedOn from TaskImpl t " +
-            "where t.stationId=:stationId and t.resultReceived=false and t.isCompleted=false")
-    List<Object[]> findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(Long stationId);
+            "where t.processorId=:processorId and t.resultReceived=false and t.isCompleted=false")
+    List<Object[]> findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(Long processorId);
 
     @Transactional(readOnly = true)
     @Query(value="select t.id, t.execState from TaskImpl t where t.execContextId=:execContextId")
@@ -83,21 +83,21 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     Stream<Object[]> findByExecContextId(Long execContextId);
 
     @Transactional
-    @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.execContextId=:execContextId and t.id in :ids ")
+    @Query("SELECT t FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and t.id in :ids ")
     List<Task> findForAssigning(Long execContextId, List<Long> ids);
 
     @Transactional(readOnly = true)
-    @Query("SELECT t.id FROM TaskImpl t where t.stationId=:stationId and t.isCompleted=false")
-    List<Long> findAnyActiveForStationId(Pageable limit, Long stationId);
+    @Query("SELECT t.id FROM TaskImpl t where t.processorId=:processorId and t.isCompleted=false")
+    List<Long> findAnyActiveForProcessorId(Pageable limit, Long processorId);
 
     @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.execContextId=:execContextId and t.execState = :execState ")
     List<TaskImpl> findTasksByExecState(Long execContextId, int execState);
 
     @Transactional(readOnly = true)
-    @Query("SELECT t FROM TaskImpl t where t.stationId=:stationId and t.resultReceived=false and " +
+    @Query("SELECT t FROM TaskImpl t where t.processorId=:processorId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - result_resource_scheduled_on > 15000) ")
-    List<Task> findForMissingResultResources(Long stationId, long mills, int execState);
+    List<Task> findForMissingResultResources(Long processorId, long mills, int execState);
 
     @Transactional(readOnly = true)
     // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS

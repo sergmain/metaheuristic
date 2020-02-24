@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.communication;
 
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -31,6 +31,6 @@ public class TestStationComm {
 
     @Test
     public void testVersion() {
-        assertEquals( new StationCommParamsYaml().version, StationCommParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+        assertEquals( new ProcessorCommParamsYaml().version, ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
     }
 }

@@ -69,12 +69,12 @@ public class DispatcherEventService {
     private final CompanyRepository companyRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    public void publishExecContextLockingEvent(EnumsApi.DispatcherEventType event, Long stationId, Long taskId, Long execContextId) {
+    public void publishExecContextLockingEvent(EnumsApi.DispatcherEventType event, Long processorId, Long taskId, Long execContextId) {
         if (!globals.isEventEnabled) {
             return;
         }
         DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
-        taskEventData.stationId = stationId;
+        taskEventData.processorId = processorId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, taskEventData));
@@ -103,12 +103,12 @@ public class DispatcherEventService {
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, companyUniqueId, contextId, batchEventData));
     }
 
-    public void publishTaskEvent(EnumsApi.DispatcherEventType event, Long stationId, Long taskId, Long execContextId) {
+    public void publishTaskEvent(EnumsApi.DispatcherEventType event, Long processorId, Long taskId, Long execContextId) {
         if (!globals.isEventEnabled) {
             return;
         }
         DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
-        taskEventData.stationId = stationId;
+        taskEventData.processorId = processorId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, taskEventData));

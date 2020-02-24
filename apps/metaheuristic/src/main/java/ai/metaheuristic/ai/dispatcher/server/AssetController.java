@@ -78,7 +78,7 @@ public class AssetController {
     @PostMapping("/function-checksum/{random-part}")
     public String functionChecksumAuth(
             HttpServletResponse response,
-            @SuppressWarnings("unused") String stationId,
+            @SuppressWarnings("unused") String processorId,
             @SuppressWarnings("unused") String taskId,
             String code,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
@@ -101,7 +101,7 @@ public class AssetController {
     @PostMapping("/function-config/{random-part}")
     public String functionConfig(
             HttpServletResponse response,
-            @SuppressWarnings("unused") String stationId,
+            @SuppressWarnings("unused") String processorId,
             @SuppressWarnings("unused") String taskId,
             String code,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart

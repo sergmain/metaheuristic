@@ -19,7 +19,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.beans.Station;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
@@ -29,11 +29,11 @@ import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.station.StationCache;
-import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -72,7 +72,7 @@ public abstract class PreparingExperiment {
     protected ExperimentRepository experimentRepository;
 
     @Autowired
-    protected StationCache stationCache;
+    protected ProcessorCache processorCache;
 
     @Autowired
     protected FunctionCache functionCache;
@@ -95,8 +95,8 @@ public abstract class PreparingExperiment {
     @Autowired
     private FunctionDataService functionDataService;
 
-    public Station station = null;
-    public String stationIdAsStr;
+    public Processor processor = null;
+    public String processorIdAsStr;
 
     public ExecContext execContext = null;
     public Experiment experiment = null;
@@ -118,10 +118,10 @@ public abstract class PreparingExperiment {
                 experimentCache.delete(e);
             }
 
-            // Prepare station
-            station = new Station();
+            // Prepare processor
+            processor = new Processor();
             mills = System.currentTimeMillis();
-            log.info("Start stationsRepository.saveAndFlush()");
+            log.info("Start processorRepository.saveAndFlush()");
 
             EnvYaml envYaml = new EnvYaml();
             envYaml.getEnvs().put("python-3", "C:\\Anaconda3\\envs\\python-36\\python.exe" );
@@ -130,17 +130,17 @@ public abstract class PreparingExperiment {
             envYaml.getEnvs().put("env-function-03:1.1", "python.exe" );
             envYaml.getEnvs().put("env-function-04:1.1", "python.exe" );
             envYaml.getEnvs().put("env-function-05:1.1", "python.exe" );
-            StationStatusYaml ss = new StationStatusYaml(new ArrayList<>(), envYaml,
+            ProcessorStatusYaml ss = new ProcessorStatusYaml(new ArrayList<>(), envYaml,
                     new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                     ""+ UUID.randomUUID().toString(), System.currentTimeMillis(),
                     "[unknown]", "[unknown]", null, false,
                     TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown);
-            station.setStatus(StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss));
+            processor.setStatus(ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss));
 
-            station.setDescription("Test station. Must be deleted automatically");
-            stationCache.save(station);
-            log.info("stationsRepository.save() was finished for {}", System.currentTimeMillis() - mills);
-            stationIdAsStr =  Long.toString(station.getId());
+            processor.setDescription("Test processor. Must be deleted automatically");
+            processorCache.save(processor);
+            log.info("processorRepository.save() was finished for {}", System.currentTimeMillis() - mills);
+            processorIdAsStr =  Long.toString(processor.getId());
 
             // Prepare functions
             mills = System.currentTimeMillis();
@@ -192,7 +192,7 @@ public abstract class PreparingExperiment {
                 mills = System.currentTimeMillis();
                 log.info("Start functionRepository.save() #2");
                 functionCache.save(predictFunction);
-                log.info("stationsRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
+                log.info("processorRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #2");
@@ -266,9 +266,9 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
         }
-        if (station != null) {
+        if (processor != null) {
             try {
-                stationCache.deleteById(station.getId());
+                processorCache.deleteById(processor.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

@@ -78,7 +78,7 @@ public class EnumsApi {
     public enum DataSourcing {
         // data will be downloaded from dispatcher
         dispatcher(1),
-        // function already has been deployed locally at station
+        // function already has been deployed locally at processor
         disk(2),
         // function will be downloaded from git
         git(3),
@@ -119,8 +119,8 @@ public class EnumsApi {
     public enum FunctionSourcing {
         // function will be downloaded from dispatcher
         dispatcher(1),
-        // function already has been deployed locally at station
-        station(2),
+        // function already has been deployed locally at processor
+        processor(2),
         // function will be downloaded from git
         git(3);
 
@@ -137,7 +137,7 @@ public class EnumsApi {
                     //noinspection
                     return dispatcher;
                 case 2:
-                    return station;
+                    return processor;
                 case 3:
                     return git;
                 default:
@@ -262,7 +262,7 @@ public class EnumsApi {
         STARTED(3),         // started
         STOPPED(4),         // stopped
         FINISHED(5),        // finished
-        DOESNT_EXIST(6),    // doesn't exist. this state is needed at station side to reconcile list of tasks
+        DOESNT_EXIST(6),    // doesn't exist. this state is needed at processor side to reconcile list of tasks
         EXPORTING_TO_ATLAS(7),    // execContext is marked as needed to be exported to atlas
         EXPORTING_TO_ATLAS_WAS_STARTED(8),    // execContext is marked as needed to be exported to atlas and export was started
         EXPORTED_TO_ATLAS(9);    // execContext was exported to atlas

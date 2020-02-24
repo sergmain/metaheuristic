@@ -31,13 +31,13 @@ import java.io.File;
 @SpringBootTest
 public class TestEnvProperty {
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-dataset-task.timeout'), 1, 10, 5) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.download-dataset-task.timeout'), 1, 10, 5) }")
     private int envProperty;
 
-    @Value("#{ T(ai.metaheuristic.ai.core.TestEnvProperty).getFile(environment.getProperty('aiai.station.download-dataset-task.timeout'), \"aaa.xml\" )}")
+    @Value("#{ T(ai.metaheuristic.ai.core.TestEnvProperty).getFile(environment.getProperty('mh.processor.download-dataset-task.timeout'), \"aaa.xml\" )}")
     private File file1;
 
-    @Value("#{ T(ai.metaheuristic.ai.core.TestEnvProperty).getFile(environment.getProperty('aiai.station.download-dataset-task.timeout'), \"pom.xml\" )}")
+    @Value("#{ T(ai.metaheuristic.ai.core.TestEnvProperty).getFile(environment.getProperty('mh.processor.download-dataset-task.timeout'), \"pom.xml\" )}")
     private File file2;
 
     public static File getFile( String filename, String defFilename) {

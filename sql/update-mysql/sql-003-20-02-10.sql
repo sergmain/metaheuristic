@@ -49,7 +49,7 @@ CREATE TABLE mh_task
     ID                          INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION                     INT UNSIGNED    NOT NULL,
     PARAMS                      MEDIUMTEXT not null,
-    STATION_ID                  NUMERIC(10, 0),
+    PROCESSOR_ID                  NUMERIC(10, 0),
     ASSIGNED_ON                 bigint,
     IS_COMPLETED                tinyint(1) not null default 0,
     COMPLETED_ON                bigint,
@@ -69,5 +69,10 @@ CREATE INDEX mh_task_exec_context_id_idx
 alter table mh_experiment change WORKBOOK_ID EXEC_CONTEXT_ID decimal null;
 
 drop table mh_launchpad_address;
+
+rename table mh_station to mh_processor;
+
+alter table mh_task change STATION_ID PROCESSOR_ID decimal null;
+
 
 

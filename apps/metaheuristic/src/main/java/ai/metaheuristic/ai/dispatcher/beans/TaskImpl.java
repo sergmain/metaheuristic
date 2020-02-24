@@ -43,8 +43,8 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "PARAMS")
     public String params;
 
-    @Column(name = "STATION_ID")
-    public Long stationId;
+    @Column(name = "PROCESSOR_ID")
+    public Long processorId;
 
     @Column(name = "ASSIGNED_ON")
     public Long assignedOn;

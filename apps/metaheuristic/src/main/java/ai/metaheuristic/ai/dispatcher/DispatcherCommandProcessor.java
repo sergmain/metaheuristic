@@ -17,18 +17,18 @@
 package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.Station;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.station.StationCache;
-import ai.metaheuristic.ai.dispatcher.station.StationTopLevelService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,9 +51,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DispatcherCommandProcessor {
 
-    private final StationCache stationCache;
+    private final ProcessorCache processorCache;
     private final TaskService taskService;
-    private final StationTopLevelService stationTopLevelService;
+    private final ProcessorTopLevelService processorTopLevelService;
     private final ExecContextService execContextService;
     private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
@@ -62,15 +62,15 @@ public class DispatcherCommandProcessor {
     private List<DispatcherCommParamsYaml.Functions.Info> functionInfosCache = new ArrayList<>();
     private long mills = System.currentTimeMillis();
 
-    public void process(StationCommParamsYaml scpy, DispatcherCommParamsYaml lcpy) {
+    public void process(ProcessorCommParamsYaml scpy, DispatcherCommParamsYaml lcpy) {
         lcpy.resendTaskOutputResource = checkForMissingOutputResources(scpy);
-        processStationTaskStatus(scpy);
+        processProcessorTaskStatus(scpy);
         processResendTaskOutputResourceResult(scpy);
-        processStationTaskStatus(scpy);
+        processProcessorTaskStatus(scpy);
         lcpy.reportResultDelivering = processReportTaskProcessingResult(scpy);
-        processReportStationStatus(scpy);
+        processReportProcessorStatus(scpy);
         lcpy.assignedTask = processRequestTask(scpy);
-        lcpy.assignedStationId = getNewStationId(scpy.requestStationId);
+        lcpy.assignedProcessorId = getNewProcessorId(scpy.requestProcessorId);
         lcpy.functions.infos.addAll( getFunctionInfos() );
     }
 
@@ -87,35 +87,35 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public DispatcherCommParamsYaml.ResendTaskOutputResource checkForMissingOutputResources(StationCommParamsYaml request) {
+    public DispatcherCommParamsYaml.ResendTaskOutputResource checkForMissingOutputResources(ProcessorCommParamsYaml request) {
         if (request.checkForMissingOutputResources==null) {
             return null;
         }
-        final long stationId = Long.parseLong(request.stationCommContext.stationId);
-        List<Long> ids = taskService.resourceReceivingChecker(stationId);
+        final long processorId = Long.parseLong(request.processorCommContext.processorId);
+        List<Long> ids = taskService.resourceReceivingChecker(processorId);
         return new DispatcherCommParamsYaml.ResendTaskOutputResource(ids);
     }
 
     // processing at dispatcher side
-    public void processResendTaskOutputResourceResult(StationCommParamsYaml request) {
+    public void processResendTaskOutputResourceResult(ProcessorCommParamsYaml request) {
         if (request.resendTaskOutputResourceResult==null) {
             return;
         }
-        for (StationCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {
-            taskService.processResendTaskOutputResourceResult(request.stationCommContext.stationId, status.status, status.taskId);
+        for (ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {
+            taskService.processResendTaskOutputResourceResult(request.processorCommContext.processorId, status.status, status.taskId);
         }
     }
 
     // processing at dispatcher side
-    public void processStationTaskStatus(StationCommParamsYaml request) {
-        if (request.reportStationTaskStatus==null || request.reportStationTaskStatus.statuses==null) {
+    public void processProcessorTaskStatus(ProcessorCommParamsYaml request) {
+        if (request.reportProcessorTaskStatus ==null || request.reportProcessorTaskStatus.statuses==null) {
             return;
         }
-        stationTopLevelService.reconcileStationTasks(request.stationCommContext.stationId, request.reportStationTaskStatus.statuses);
+        processorTopLevelService.reconcileProcessorTasks(request.processorCommContext.processorId, request.reportProcessorTaskStatus.statuses);
     }
 
     // processing at dispatcher side
-    public DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(StationCommParamsYaml request) {
+    public DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(ProcessorCommParamsYaml request) {
         if (request.reportTaskProcessingResult==null || request.reportTaskProcessingResult.results==null) {
             return null;
         }
@@ -127,52 +127,52 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public void processReportStationStatus(StationCommParamsYaml request) {
-        if (request.reportStationStatus==null) {
+    public void processReportProcessorStatus(ProcessorCommParamsYaml request) {
+        if (request.reportProcessorStatus ==null) {
             return;
         }
-        checkStationId(request);
-        stationTopLevelService.storeStationStatuses(request.stationCommContext.stationId, request.reportStationStatus, request.functionDownloadStatus);
+        checkProcessorId(request);
+        processorTopLevelService.storeProcessorStatuses(request.processorCommContext.processorId, request.reportProcessorStatus, request.functionDownloadStatus);
     }
 
     // processing at dispatcher side
-    public DispatcherCommParamsYaml.AssignedTask processRequestTask(StationCommParamsYaml request) {
+    public DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml request) {
         if (request.requestTask==null) {
             return null;
         }
-        checkStationId(request);
+        checkProcessorId(request);
         DispatcherCommParamsYaml.AssignedTask assignedTask =
-                execContextService.getTaskAndAssignToStation(Long.parseLong(request.stationCommContext.stationId), request.requestTask.isAcceptOnlySigned(), null);
+                execContextService.getTaskAndAssignToProcessor(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), null);
 
         if (assignedTask!=null) {
-            log.info("Assign task #{} to station #{}", assignedTask.getTaskId(), request.stationCommContext.stationId );
+            log.info("Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
         }
         return assignedTask;
     }
 
-    public void checkStationId(StationCommParamsYaml request) {
-        if (request.stationCommContext==null  || request.stationCommContext.stationId==null) {
+    public void checkProcessorId(ProcessorCommParamsYaml request) {
+        if (request.processorCommContext ==null  || request.processorCommContext.processorId ==null) {
             // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("stationId is null");
+            throw new IllegalStateException("processorId is null");
         }
     }
 
     // processing at dispatcher side
-    public DispatcherCommParamsYaml.AssignedStationId getNewStationId(StationCommParamsYaml.RequestStationId request) {
+    public DispatcherCommParamsYaml.AssignedProcessorId getNewProcessorId(ProcessorCommParamsYaml.RequestProcessorId request) {
         if (request==null) {
             return null;
         }
-        String sessionId = StationTopLevelService.createNewSessionId();
-        final Station st = new Station();
-        StationStatusYaml ss = new StationStatusYaml(new ArrayList<>(), null,
+        String sessionId = ProcessorTopLevelService.createNewSessionId();
+        final Processor st = new Processor();
+        ProcessorStatusYaml ss = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
                 1, EnumsApi.OS.unknown);
 
-        st.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-        stationCache.save(st);
+        st.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
+        processorCache.save(st);
 
-        // TODO 2019.05.19 why do we send stationId as a String?
-        return new DispatcherCommParamsYaml.AssignedStationId(Long.toString(st.getId()), sessionId);
+        // TODO 2019.05.19 why do we send processorId as a String?
+        return new DispatcherCommParamsYaml.AssignedProcessorId(Long.toString(st.getId()), sessionId);
     }
 }

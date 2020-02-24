@@ -130,7 +130,7 @@ public class PackageSnippet implements CommandLineRunner {
         // Process
         for (FunctionConfigListYaml.FunctionConfig functionConfig : snippetConfigList.getFunctions()) {
             String sum;
-            if (functionConfig.sourcing== EnumsApi.FunctionSourcing.station ||
+            if (functionConfig.sourcing== EnumsApi.FunctionSourcing.processor ||
                     functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
                 String s = FunctionCoreUtils.getDataForChecksumWhenGitSourcing(functionConfig);
                 sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(s.getBytes()));

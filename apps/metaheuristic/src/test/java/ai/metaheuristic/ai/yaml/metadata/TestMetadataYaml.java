@@ -44,11 +44,11 @@ public class TestMetadataYaml {
 
             assertEquals("http://localhost:8080", map.getKey());
             assertEquals("localhost-8080", map.getValue().code);
-            assertEquals("15", map.getValue().stationId);
+            assertEquals("15", map.getValue().processorId);
 
             assertEquals("http://host", map1.getKey());
             assertEquals("host", map1.getValue().code);
-            assertNull(map1.getValue().stationId);
+            assertNull(map1.getValue().processorId);
         }
     }
 

@@ -19,12 +19,12 @@ package ai.metaheuristic.ai.rest;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.core.TestController;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
-import ai.metaheuristic.ai.station.DispatcherRequestor;
+import ai.metaheuristic.ai.processor.DispatcherRequestor;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -190,8 +190,8 @@ public class TestRest {
     @Test
     @WithUserDetails("data_rest")
     public void testSimpleCommunicationWithServer() throws Exception {
-        final StationCommParamsYaml stationComm = new StationCommParamsYaml();
-        final String stationYaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
+        final ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
+        final String stationYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
 
         MvcResult result = mockMvc.perform(post("/rest/v1/srv-v2/qwe321").contentType(Consts.APPLICATION_JSON_UTF8)
                 .content(stationYaml))

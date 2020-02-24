@@ -46,18 +46,18 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         workbook = execContextCache.findById(workbook.getId());
         assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getState());
 
-        getTaskAndAssignToStation_mustBeNewTask();
+        getTaskAndAssignToProcessor_mustBeNewTask();
 
-        // this station already got task, so don't provide any new
-        DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getExecContextId());
+        // this processor already got task, so don't provide any new
+        DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToProcessor(
+                processor.getId(), false, experiment.getExecContextId());
         // task is empty cos we still didn't finish those task
         assertNull(task);
 
         finishCurrentWithError(1);
 
-        DispatcherCommParamsYaml.AssignedTask task1 = execContextService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getExecContextId());
+        DispatcherCommParamsYaml.AssignedTask task1 = execContextService.getTaskAndAssignToProcessor(
+                processor.getId(), false, experiment.getExecContextId());
 
         assertNull(task1);
 

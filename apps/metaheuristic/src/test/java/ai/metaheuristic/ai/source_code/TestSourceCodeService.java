@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -119,7 +119,7 @@ public class TestSourceCodeService extends PreparingPlan {
         // ======================
 
         DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, workbook.getId());
 
         assertNull(simpleTask0);
 
@@ -129,7 +129,7 @@ public class TestSourceCodeService extends PreparingPlan {
         assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getState());
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask =
-                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, workbook.getId());
 
             assertNotNull(simpleTask);
             assertNotNull(simpleTask.getTaskId());
@@ -137,7 +137,7 @@ public class TestSourceCodeService extends PreparingPlan {
             assertNotNull(task);
 
             DispatcherCommParamsYaml.AssignedTask simpleTask2 =
-                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, workbook.getId());
             assertNull(simpleTask2);
 
             storeExecResult(simpleTask);
@@ -145,7 +145,7 @@ public class TestSourceCodeService extends PreparingPlan {
         }
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask20 =
-                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, workbook.getId());
 
             assertNotNull(simpleTask20);
             assertNotNull(simpleTask20.getTaskId());
@@ -153,7 +153,7 @@ public class TestSourceCodeService extends PreparingPlan {
             assertNotNull(task3);
 
             DispatcherCommParamsYaml.AssignedTask simpleTask21 =
-                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, workbook.getId());
             assertNull(simpleTask21);
 
             storeExecResult(simpleTask20);
@@ -161,7 +161,7 @@ public class TestSourceCodeService extends PreparingPlan {
         }
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask30 =
-                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, workbook.getId());
 
             assertNotNull(simpleTask30);
             assertNotNull(simpleTask30.getTaskId());
@@ -169,7 +169,7 @@ public class TestSourceCodeService extends PreparingPlan {
             assertNotNull(task30);
 
             DispatcherCommParamsYaml.AssignedTask simpleTask31 =
-                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, workbook.getId());
 
             assertNull(simpleTask31);
 
@@ -178,7 +178,7 @@ public class TestSourceCodeService extends PreparingPlan {
         }
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask32 =
-                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, workbook.getId());
 
             assertNotNull(simpleTask32);
             assertNotNull(simpleTask32.getTaskId());
@@ -194,7 +194,7 @@ public class TestSourceCodeService extends PreparingPlan {
                 System.out.println("j = " + j);
             }
             DispatcherCommParamsYaml.AssignedTask loopSimpleTask =
-                    execContextService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, workbook.getId());
 
             assertNotNull(loopSimpleTask);
             assertNotNull(loopSimpleTask.getTaskId());
@@ -215,7 +215,7 @@ public class TestSourceCodeService extends PreparingPlan {
     }
 
     public void storeExecResult(DispatcherCommParamsYaml.AssignedTask simpleTask) {
-        StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
+        ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
         r.setTaskId(simpleTask.getTaskId());
         r.setMl(null);
         r.setResult(getOKExecResult());

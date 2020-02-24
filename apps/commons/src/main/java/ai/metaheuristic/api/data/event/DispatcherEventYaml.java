@@ -56,7 +56,7 @@ public class DispatcherEventYaml implements BaseParams {
 
     @Data
     public static class TaskEventData {
-        public Long stationId;
+        public Long processorId;
         public Long taskId;
         public Long execContextId;
     }

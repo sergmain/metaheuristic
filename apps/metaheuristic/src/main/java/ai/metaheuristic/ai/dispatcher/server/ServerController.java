@@ -84,7 +84,7 @@ public class ServerController {
     @PostMapping("/upload/{random-part}")
     public UploadResult uploadResourceAuth(
             MultipartFile file,
-            @SuppressWarnings("unused") String stationId,
+            @SuppressWarnings("unused") String processorId,
             Long resourceId,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) {

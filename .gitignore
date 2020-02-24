@@ -25,8 +25,8 @@ nbdist/
 r.bat
 
 
-aiai-station/**
-aiai-station-h2/**
+aiai-processor/**
+aiai-processor-h2/**
 aiai-launchpad
 aiai-dispatcher
 *_V2.class

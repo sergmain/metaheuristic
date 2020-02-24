@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -114,7 +114,7 @@ public class TaskPersistencer {
             }
 
             task.setFunctionExecResults(null);
-            task.setStationId(null);
+            task.setProcessorId(null);
             task.setAssignedOn(null);
             task.setCompleted(false);
             task.setCompletedOn(null);
@@ -129,7 +129,7 @@ public class TaskPersistencer {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public Task storeExecResult(StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, Consumer<Task> action) {
+    public Task storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, Consumer<Task> action) {
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(result.getResult());
         FunctionApiData.SystemExecResult systemExecResult = functionExec.generalExec!=null ? functionExec.generalExec : functionExec.exec;
         if (!systemExecResult.isOk) {
@@ -210,7 +210,7 @@ public class TaskPersistencer {
         });
     }
 
-    private Task prepareAndSaveTask(StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
+    private Task prepareAndSaveTask(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
         return TaskFunctions.getWithSync(result.taskId, () -> {
             TaskImpl task = taskRepository.findByIdForUpdate(result.taskId);
             if (task==null) {

@@ -223,7 +223,7 @@ public class FunctionService {
                             }
                             functionConfig.info.length = file.length();
                             break;
-                        case station:
+                        case processor:
                         case git:
                             String s = FunctionCoreUtils.getDataForChecksumWhenGitSourcing(functionConfig);
                             sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(s.getBytes()));

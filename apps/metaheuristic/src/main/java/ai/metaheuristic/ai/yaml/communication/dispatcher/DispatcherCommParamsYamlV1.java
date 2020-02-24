@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Communication file which is transferred from a dispatcher to a Station
+ * Communication file which is transferred from a dispatcher to a Processor
  *
  * @author Serge
  * Date: 10/03/2019
@@ -47,8 +47,8 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     // always send info about functions
     public FunctionsV1 functions = new FunctionsV1();
     public AssignedTaskV1 assignedTask;
-    public AssignedStationIdV1 assignedStationId;
-    public ReAssignStationIdV1 reAssignedStationId;
+    public AssignedProcessorIdV1 assignedProcessorId;
+    public ReAssignProcessorIdV1 reAssignedProcessorId;
     public ReportResultDeliveringV1 reportResultDelivering;
     public ExecContextStatusV1 execContextStatus;
     public ResendTaskOutputResourceV1 resendTaskOutputResource;
@@ -79,20 +79,20 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AssignedStationIdV1 {
-        public String assignedStationId;
+    public static class AssignedProcessorIdV1 {
+        public String assignedProcessorId;
         public String assignedSessionId;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReAssignStationIdV1 {
-        public String reAssignedStationId;
+    public static class ReAssignProcessorIdV1 {
+        public String reAssignedProcessorId;
         public String sessionId;
 
-        public ReAssignStationIdV1(Long stationId, String sessionId) {
-            this(Long.toString(stationId), sessionId);
+        public ReAssignProcessorIdV1(Long processorId, String sessionId) {
+            this(Long.toString(processorId), sessionId);
         }
     }
 
@@ -131,8 +131,8 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class DispatcherCommContextV1 {
         public Long chunkSize;
-        // Station's version for communicating with dispatcher
-        public Integer stationCommVersion;
+        // Processor's version for communicating with dispatcher
+        public Integer processorCommVersion;
     }
 
     public boolean success = true;

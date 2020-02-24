@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
-import ai.metaheuristic.ai.station.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import lombok.extern.slf4j.Slf4j;
 

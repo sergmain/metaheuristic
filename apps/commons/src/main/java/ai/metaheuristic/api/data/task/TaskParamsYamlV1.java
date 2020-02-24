@@ -140,7 +140,7 @@ public class TaskParamsYamlV1 implements BaseParams {
          */
         public Long timeoutBeforeTerminate;
 
-        // fields which are initialized at station
+        // fields which are initialized at processor
         public String workingPath;
 
         // key - resource code, value - real file name of resource

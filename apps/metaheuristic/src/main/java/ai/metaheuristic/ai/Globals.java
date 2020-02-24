@@ -118,8 +118,8 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.exec-context-table-rows-limit'), 5, 50, 20) }")
     public int execContextRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.station-table-rows-limit'), 5, 100, 50) }")
-    public int stationRowsLimit;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.processor-table-rows-limit'), 5, 100, 50) }")
+    public int processorRowsLimit;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.account-table-rows-limit'), 5, 100, 20) }")
     public int accountRowsLimit;
@@ -148,34 +148,34 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.password')) }")
     public String assetPassword;
 
-    // Station's globals
+    // Processor's globals
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.logging.file' )) }")
     public File logFile;
 
-    @Value("${mh.station.enabled:#{false}}")
-    public boolean isStationEnabled = false;
+    @Value("${mh.processor.enabled:#{false}}")
+    public boolean processorEnabled = false;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.dir' )) }")
-    public File stationDir;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.processor.dir' )) }")
+    public File processorDir;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.default-dispatcher-yaml-file' )) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.processor.default-dispatcher-yaml-file' )) }")
     public File defaultDispatcherYamlFile;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.default-env-yaml-file' )) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.processor.default-env-yaml-file' )) }")
     public File defaultEnvYamlFile;
 
-    @Value("${mh.station.env-hot-deploy-supported:#{false}}")
-    public boolean stationEnvHotDeploySupported = false;
+    @Value("${mh.processor.env-hot-deploy-supported:#{false}}")
+    public boolean processorEnvHotDeploySupported = false;
 
 
     // some fields
     public File dispatcherTempDir;
     public File dispatcherResourcesDir;
 
-    public File stationResourcesDir;
-    public File stationTaskDir;
-    public File stationEnvHotDeployDir;
+    public File processorResourcesDir;
+    public File processorTaskDir;
+    public File processorEnvHotDeployDir;
 
     public PublicKey dispatcherPublicKey = null;
 
@@ -267,14 +267,14 @@ public class Globals {
             assetMode = EnumsApi.DispatcherAssetMode.local;
         }
 
-        String stationEnabledAsStr = env.getProperty("MH_IS_STATION_ENABLED");
-        if (!S.b(stationEnabledAsStr)) {
+        String processorEnabledAsStr = env.getProperty("MH_IS_PROCESSOR_ENABLED");
+        if (!S.b(processorEnabledAsStr)) {
             try {
-                isStationEnabled = Boolean.parseBoolean(stationEnabledAsStr.toLowerCase());
+                processorEnabled = Boolean.parseBoolean(processorEnabledAsStr.toLowerCase());
             } catch (Throwable th) {
-                log.error("Wrong value in env MH_IS_STATION_ENABLED, must be boolean (true/false), " +
-                        "actual: " + stationEnabledAsStr+". Will be used 'false' as value.");
-                isStationEnabled = false;
+                log.error("Wrong value in env MH_IS_PROCESSOR_ENABLED, must be boolean (true/false), " +
+                        "actual: " + processorEnabledAsStr+". Will be used 'false' as value.");
+                processorEnabled = false;
             }
         }
 
@@ -289,23 +289,23 @@ public class Globals {
             }
         }
 
-        if (stationDir==null) {
-            log.warn("Station is disabled, stationDir is null, isStationEnabled: {}", isStationEnabled);
-            isStationEnabled = false;
+        if (processorDir ==null) {
+            log.warn("Processor is disabled, processorDir is null, processorEnabled: {}", processorEnabled);
+            processorEnabled = false;
         }
-        if (isStationEnabled) {
-            stationResourcesDir = new File(stationDir, Consts.RESOURCES_DIR);
-            stationResourcesDir.mkdirs();
-            stationTaskDir = new File(stationDir, Consts.TASK_DIR);
-            stationTaskDir.mkdirs();
-            if (stationEnvHotDeploySupported) {
-                stationEnvHotDeployDir = new File(stationDir, Consts.ENV_HOT_DEPLOY_DIR);
-                stationEnvHotDeployDir.mkdirs();
+        if (processorEnabled) {
+            processorResourcesDir = new File(processorDir, Consts.RESOURCES_DIR);
+            processorResourcesDir.mkdirs();
+            processorTaskDir = new File(processorDir, Consts.TASK_DIR);
+            processorTaskDir.mkdirs();
+            if (processorEnvHotDeploySupported) {
+                processorEnvHotDeployDir = new File(processorDir, Consts.ENV_HOT_DEPLOY_DIR);
+                processorEnvHotDeployDir.mkdirs();
             }
 
             // TODO 2019.04.26 right now the change of ownership is disabled
             //  but maybe will be required in future
-//            checkOwnership(stationEnvHotDeployDir);
+//            checkOwnership(processorEnvHotDeployDir);
         }
 
         String dispatcherDirAsStr = env.getProperty("MH_DISPATCHER_DIR");
@@ -411,7 +411,7 @@ public class Globals {
     }
 
     private void checkOwnership(File file) {
-        if (!stationEnvHotDeploySupported) {
+        if (!processorEnvHotDeploySupported) {
             return;
         }
         try {
@@ -420,7 +420,7 @@ public class Globals {
             FileSystem fileSystem = path.getFileSystem();
             UserPrincipalLookupService service = fileSystem.getUserPrincipalLookupService();
 
-            log.info("Check ownership of {}", stationEnvHotDeployDir.getPath());
+            log.info("Check ownership of {}", processorEnvHotDeployDir.getPath());
             log.info("File: " + path);
             log.info("Exists: " + Files.exists(path));
             log.info("-- owner before --");
@@ -474,10 +474,10 @@ public class Globals {
         log.info("'\texperimentRowsLimit: {}", experimentRowsLimit);
         log.info("'\tsourceCodeRowsLimit: {}", sourceCodeRowsLimit);
         log.info("'\texecContextRowsLimit: {}", execContextRowsLimit);
-        log.info("'\tstationRowsLimit: {}", stationRowsLimit);
+        log.info("'\tprocessorRowsLimit: {}", processorRowsLimit);
         log.info("'\taccountRowsLimit: {}", accountRowsLimit);
-        log.info("'\tisStationEnabled: {}", isStationEnabled);
-        log.info("'\tstationDir: {}", stationDir);
+        log.info("'\tprocessorEnabled: {}", processorEnabled);
+        log.info("'\tprocessorDir: {}", processorDir);
     }
 
     // TODO 2019-07-20 should method createTempFileForDispatcher() be moved to other class/package?

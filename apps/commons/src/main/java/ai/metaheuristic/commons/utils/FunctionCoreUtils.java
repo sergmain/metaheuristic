@@ -95,7 +95,7 @@ public class FunctionCoreUtils {
                     return new FunctionApiData.FunctionConfigStatus(false, "#401.30 sourcing is 'dispatcher' but file is empty: " + functionConfig.toString());
                 }
                 break;
-            case station:
+            case processor:
                 break;
             case git:
                 if (functionConfig.git ==null) {

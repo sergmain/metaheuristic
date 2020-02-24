@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.yaml;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
@@ -40,7 +40,7 @@ public class TestStationStatus {
     public void test() throws IOException {
         try (InputStream is = TestStationStatus.class.getResourceAsStream("/yaml/station/station-status-01.yaml")) {
             String yaml = IOUtils.toString(is, StandardCharsets.UTF_8);
-            StationStatusYaml ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(yaml);
+            ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(yaml);
 
 /*
 env:

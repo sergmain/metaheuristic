@@ -28,8 +28,8 @@
             <a class="pure-menu-link" href="dispatcher/function/functions.html" th:href="@{/dispatcher/function/functions}">Functions</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/stations'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/station/stations.html" th:href="@{/dispatcher/station/stations}">Stations</a>
+            th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/processors'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="dispatcher/processor/processors.html" th:href="@{/dispatcher/processor/processors}">Processors</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN')"
                 th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/account/accounts'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">

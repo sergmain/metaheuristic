@@ -59,7 +59,7 @@ public class DispatcherEventYamlUtilsV1
         }
         if (src.taskData!=null) {
             trg.taskData = new DispatcherEventYaml.TaskEventData();
-            trg.taskData.stationId = src.taskData.stationId;
+            trg.taskData.processorId = src.taskData.processorId;
             trg.taskData.taskId = src.taskData.taskId;
             trg.taskData.execContextId = src.taskData.execContextId;
         }

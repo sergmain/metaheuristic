@@ -49,7 +49,7 @@ It'll be /mh-root in follow text.
 
 1. Change dir to /mh-root and run command:
     ```
-    java -Dspring.profiles.active=quickstart,dispatcher,station -jar metaheuristic/apps/metaheuristic/target/metaheuristic.jar --mh.station.default-dispatcher-yaml-file=metaheuristic/docs-dev/cfg/default-cfg/dispatcher.yaml --mh.station.default-env-yaml-file=metaheuristic/docs-dev/cfg/default-cfg/env.yaml 
+    java -Dspring.profiles.active=quickstart,dispatcher,processor -jar metaheuristic/apps/metaheuristic/target/metaheuristic.jar --mh.processor.default-dispatcher-yaml-file=metaheuristic/docs-dev/cfg/default-cfg/dispatcher.yaml --mh.processor.default-env-yaml-file=metaheuristic/docs-dev/cfg/default-cfg/env.yaml 
     ```
 
 1. Now you can find our experiment data at http://localhost:8080/dispatcher/atlas/atlas-experiments

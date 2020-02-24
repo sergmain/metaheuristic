@@ -27,7 +27,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@ActiveProfiles("station")
+@ActiveProfiles("processor")
 @TestPropertySource(locations="classpath:test-station-profile.properties")
 public class TestStationProfile {
 
@@ -38,7 +38,7 @@ public class TestStationProfile {
     public void simpleTest() {
         System.out.println("We don't need any test here " +
                 "because this test is about " +
-                "correctness of class wiring for 'station' profile." +
+                "correctness of class wiring for 'processor' profile." +
                 "Number of threads: " + globals.threadNumber);
     }
 }

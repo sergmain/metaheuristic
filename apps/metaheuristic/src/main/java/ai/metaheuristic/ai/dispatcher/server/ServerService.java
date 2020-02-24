@@ -19,31 +19,31 @@ package ai.metaheuristic.ai.dispatcher.server;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.beans.Station;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.StationsRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
-import ai.metaheuristic.ai.dispatcher.station.StationCache;
-import ai.metaheuristic.ai.dispatcher.station.StationTopLevelService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
-import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
@@ -86,16 +86,16 @@ public class ServerService {
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
     public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
-    // Station's version for communicating with dispatcher
-    private static final int STATION_COMM_VERSION = new StationCommParamsYaml().version;
+    // Processor's version for communicating with dispatcher
+    private static final int PROCESSOR_COMM_VERSION = new ProcessorCommParamsYaml().version;
 
     private final Globals globals;
     private final VariableService variableService;
     private final FunctionDataService functionDataService;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
-    private final StationCache stationCache;
+    private final ProcessorCache processorCache;
     private final ExecContextRepository execContextRepository;
-    private final StationsRepository stationsRepository;
+    private final ProcessorRepository processorRepository;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final IdsRepository idsRepository;
@@ -132,7 +132,7 @@ public class ServerService {
         }
     }
 
-    // return a requested resource to a station
+    // return a requested resource to a processor
     public ResourceWithCleanerInfo deliverResource(final EnumsApi.BinaryType binaryType, final String resourceId, final String chunkSize, final int chunkNum) {
         return getWithSync(binaryType, resourceId,
                 () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryType, resourceId));
@@ -151,7 +151,7 @@ public class ServerService {
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable for resourceId "+resourceId+" wasn't found" );
         }
         if (true) {
-            throw new NotImplementedException("Need to re-write a logic of storing resources from station");
+            throw new NotImplementedException("Need to re-write a logic of storing resources from processor");
         }
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(variable.getParams());
 
@@ -295,23 +295,23 @@ public class ServerService {
     }
 
     public String processRequest(String data, String remoteAddress) {
-        StationCommParamsYaml scpy = StationCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
+        ProcessorCommParamsYaml scpy = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
         DispatcherCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy);
         //noinspection UnnecessaryLocalVariable
         String yaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.toString(lcpy);
         return yaml;
     }
 
-    public DispatcherCommParamsYaml processRequestInternal(String remoteAddress, StationCommParamsYaml scpy) {
+    public DispatcherCommParamsYaml processRequestInternal(String remoteAddress, ProcessorCommParamsYaml scpy) {
         DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
         try {
-            if (scpy.stationCommContext==null) {
-                lcpy.assignedStationId = dispatcherCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
+            if (scpy.processorCommContext ==null) {
+                lcpy.assignedProcessorId = dispatcherCommandProcessor.getNewProcessorId(new ProcessorCommParamsYaml.RequestProcessorId());
                 return lcpy;
             }
-            checkStationId(scpy.stationCommContext.getStationId(), scpy.stationCommContext.getSessionId(), remoteAddress, lcpy);
-            if (isStationContextNeedToBeChanged(lcpy)) {
-                log.debug("isStationContextNeedToBeChanged is true, {}", lcpy);
+            checkProcessorId(scpy.processorCommContext.getProcessorId(), scpy.processorCommContext.getSessionId(), remoteAddress, lcpy);
+            if (isProcessorContextNeedToBeChanged(lcpy)) {
+                log.debug("isProcessorContextNeedToBeChanged is true, {}", lcpy);
                 return lcpy;
             }
 
@@ -321,7 +321,7 @@ public class ServerService {
             dispatcherCommandProcessor.process(scpy, lcpy);
             setDispatcherCommContext(lcpy);
         } catch (Throwable th) {
-            log.error("#442.040 Error while processing client's request, StationCommParamsYaml:\n{}", scpy);
+            log.error("#442.040 Error while processing client's request, ProcessorCommParamsYaml:\n{}", scpy);
             log.error("#442.041 Error", th);
             lcpy.success = false;
             lcpy.msg = th.getMessage();
@@ -329,66 +329,66 @@ public class ServerService {
         return lcpy;
     }
 
-    private boolean isStationContextNeedToBeChanged(DispatcherCommParamsYaml lcpy) {
-        return lcpy!=null && (lcpy.reAssignedStationId!=null || lcpy.assignedStationId!=null);
+    private boolean isProcessorContextNeedToBeChanged(DispatcherCommParamsYaml lcpy) {
+        return lcpy!=null && (lcpy.reAssignedProcessorId !=null || lcpy.assignedProcessorId !=null);
     }
 
     private void setDispatcherCommContext(DispatcherCommParamsYaml lcpy) {
         DispatcherCommParamsYaml.DispatcherCommContext lcc = new DispatcherCommParamsYaml.DispatcherCommContext();
         lcc.chunkSize = globals.chunkSize;
-        lcc.stationCommVersion = STATION_COMM_VERSION;
+        lcc.processorCommVersion = PROCESSOR_COMM_VERSION;
         lcpy.dispatcherCommContext = lcc;
     }
 
     @SuppressWarnings("UnnecessaryReturnStatement")
-    private void checkStationId(String stationId, String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
-        if (StringUtils.isBlank(stationId)) {
-            log.warn("#442.045 StringUtils.isBlank(stationId), return RequestStationId()");
-            lcpy.assignedStationId = dispatcherCommandProcessor.getNewStationId(new StationCommParamsYaml.RequestStationId());
+    private void checkProcessorId(String processorId, String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
+        if (StringUtils.isBlank(processorId)) {
+            log.warn("#442.045 StringUtils.isBlank(processorId), return RequestProcessorId()");
+            lcpy.assignedProcessorId = dispatcherCommandProcessor.getNewProcessorId(new ProcessorCommParamsYaml.RequestProcessorId());
             return;
         }
 
-        final Station station = stationsRepository.findByIdForUpdate(Long.parseLong(stationId));
-        if (station == null) {
-            log.warn("#442.046 station == null, return ReAssignStationId() with new stationId and new sessionId");
-            lcpy.reAssignedStationId = reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
+        final Processor processor = processorRepository.findByIdForUpdate(Long.parseLong(processorId));
+        if (processor == null) {
+            log.warn("#442.046 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+            lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
             return;
         }
-        StationStatusYaml ss;
+        ProcessorStatusYaml ss;
         try {
-            ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
+            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
         } catch (Throwable e) {
-            log.error("#442.065 Error parsing current status of station:\n{}", station.status);
+            log.error("#442.065 Error parsing current status of processor:\n{}", processor.status);
             log.error("#442.066 Error ", e);
-            // skip any command from this station
+            // skip any command from this processor
             return;
         }
         if (StringUtils.isBlank(sessionId)) {
-            log.debug("#442.070 StringUtils.isBlank(sessionId), return ReAssignStationId() with new sessionId");
-            // the same station but with different and expired sessionId
-            // so we can continue to use this stationId with new sessionId
-            lcpy.reAssignedStationId = assignNewSessionId(station, ss);
+            log.debug("#442.070 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
+            // the same processor but with different and expired sessionId
+            // so we can continue to use this processorId with new sessionId
+            lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
             return;
         }
         if (!ss.sessionId.equals(sessionId)) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
-                log.debug("#442.071 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignStationId() with new sessionId");
-                // the same station but with different and expired sessionId
-                // so we can continue to use this stationId with new sessionId
-                // we won't use station's sessionIf to be sure that sessionId has valid format
-                lcpy.reAssignedStationId = assignNewSessionId(station, ss);
+                log.debug("#442.071 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
+                // the same processor but with different and expired sessionId
+                // so we can continue to use this processorId with new sessionId
+                // we won't use processor's sessionIf to be sure that sessionId has valid format
+                lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
                 return;
             } else {
-                log.debug("#442.072 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignStationId() with new stationId and new sessionId");
-                // different stations with the same stationId
-                // there is other active station with valid sessionId
-                lcpy.reAssignedStationId = reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
+                log.debug("#442.072 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
+                // different processors with the same processorId
+                // there is other active processor with valid sessionId
+                lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
                 return;
             }
         }
         else {
             // see logs in method
-            updateSession(station, ss);
+            updateSession(processor, ss);
         }
     }
 
@@ -396,63 +396,63 @@ public class ServerService {
      * session is Ok, so we need to update session's timestamp periodically
      */
     @SuppressWarnings("UnnecessaryReturnStatement")
-    private void updateSession(Station station, StationStatusYaml ss) {
+    private void updateSession(Processor processor, ProcessorStatusYaml ss) {
         final long millis = System.currentTimeMillis();
         final long diff = millis - ss.sessionCreatedOn;
         if (diff > SESSION_UPDATE_TIMEOUT) {
             log.debug("#442.074 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
-                    "'    station.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
-                    "'    station.status:\n{},\n" +
-                    "'    return ReAssignStationId() with the same stationId and sessionId. only session's timestamp was updated.",
-                    station.version, millis, ss.sessionCreatedOn, diff, SESSION_UPDATE_TIMEOUT, station.status);
-            // the same station, with the same sessionId
+                    "'    processor.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
+                    "'    processor.status:\n{},\n" +
+                    "'    return ReAssignProcessorId() with the same processorId and sessionId. only session's timestamp was updated.",
+                    processor.version, millis, ss.sessionCreatedOn, diff, SESSION_UPDATE_TIMEOUT, processor.status);
+            // the same processor, with the same sessionId
             // so we just need to refresh sessionId timestamp
             ss.sessionCreatedOn = millis;
-            station.updatedOn = millis;
-            station.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
+            processor.updatedOn = millis;
+            processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
             try {
-                stationCache.save(station);
+                processorCache.save(processor);
             } catch (ObjectOptimisticLockingFailureException e) {
-                log.error("#442.080 Error saving station. old : {}, new: {}", stationCache.findById(station.id), station);
+                log.error("#442.080 Error saving processor. old : {}, new: {}", processorCache.findById(processor.id), processor);
                 log.error("#442.085 Error");
                 throw e;
             }
-            Station s = stationCache.findById(station.id);
-            log.debug("#442.086 old station.version: {}, in cache station.version: {}, station.status:\n{},\n", station.version, s.version, s.status);
-            // the same stationId but new sessionId
+            Processor s = processorCache.findById(processor.id);
+            log.debug("#442.086 old processor.version: {}, in cache processor.version: {}, processor.status:\n{},\n", processor.version, s.version, s.status);
+            // the same processorId but new sessionId
             return;
         }
         else {
-            // the same stationId, the same sessionId, session isn't expired
+            // the same processorId, the same sessionId, session isn't expired
             return;
         }
     }
 
-    private DispatcherCommParamsYaml.ReAssignStationId assignNewSessionId(Station station, StationStatusYaml ss) {
-        ss.sessionId = StationTopLevelService.createNewSessionId();
+    private DispatcherCommParamsYaml.ReAssignProcessorId assignNewSessionId(Processor processor, ProcessorStatusYaml ss) {
+        ss.sessionId = ProcessorTopLevelService.createNewSessionId();
         ss.sessionCreatedOn = System.currentTimeMillis();
-        station.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-        station.updatedOn = ss.sessionCreatedOn;
-        stationCache.save(station);
-        // the same stationId but new sessionId
-        return new DispatcherCommParamsYaml.ReAssignStationId(station.getId(), ss.sessionId);
+        processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
+        processor.updatedOn = ss.sessionCreatedOn;
+        processorCache.save(processor);
+        // the same processorId but new sessionId
+        return new DispatcherCommParamsYaml.ReAssignProcessorId(processor.getId(), ss.sessionId);
     }
 
-    private DispatcherCommParamsYaml.ReAssignStationId reassignStationId(String remoteAddress, String description) {
-        Station s = new Station();
+    private DispatcherCommParamsYaml.ReAssignProcessorId reassignProcessorId(String remoteAddress, String description) {
+        Processor s = new Processor();
         s.setIp(remoteAddress);
         s.setDescription(description);
 
-        String sessionId = StationTopLevelService.createNewSessionId();
-        StationStatusYaml ss = new StationStatusYaml(new ArrayList<>(), null,
+        String sessionId = ProcessorTopLevelService.createNewSessionId();
+        ProcessorStatusYaml ss = new ProcessorStatusYaml(new ArrayList<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
                 "[unknown]", "[unknown]", null, false, 1, EnumsApi.OS.unknown);
 
-        s.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
+        s.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
         s.updatedOn = ss.sessionCreatedOn;
-        stationCache.save(s);
-        return new DispatcherCommParamsYaml.ReAssignStationId(s.getId(), sessionId);
+        processorCache.save(s);
+        return new DispatcherCommParamsYaml.ReAssignProcessorId(s.getId(), sessionId);
     }
 
     private static DispatcherCommParamsYaml.ExecContextStatus.SimpleStatus to(ExecContext execContext) {

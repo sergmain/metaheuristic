@@ -80,7 +80,7 @@ CREATE INDEX mh_account_company_id_idx
 CREATE UNIQUE INDEX mh_account_username_unq_idx
     ON mh_account (USERNAME);
 
-CREATE TABLE mh_station
+CREATE TABLE mh_processor
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
@@ -162,7 +162,7 @@ CREATE TABLE mh_task
     ID                          INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION                     INT UNSIGNED    NOT NULL,
     PARAMS                      MEDIUMTEXT not null,
-    STATION_ID                  NUMERIC(10, 0),
+    PROCESSOR_ID                  NUMERIC(10, 0),
     ASSIGNED_ON                 bigint,
     IS_COMPLETED                tinyint(1) not null default 0,
     COMPLETED_ON                bigint,

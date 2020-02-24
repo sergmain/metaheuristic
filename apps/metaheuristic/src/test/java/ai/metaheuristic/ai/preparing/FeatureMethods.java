@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -115,14 +115,14 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertNotNull(experiment.getExecContextId());
     }
 
-    protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToStation_mustBeNewTask() {
+    protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor_mustBeNewTask() {
         long mills;
 
         mills = System.currentTimeMillis();
-        log.info("Start experimentService.getTaskAndAssignToStation()");
-        DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getExecContextId());
-        log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("Start experimentService.getTaskAndAssignToProcessor()");
+        DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToProcessor(
+                processor.getId(), false, experiment.getExecContextId());
+        log.info("experimentService.getTaskAndAssignToProcessor() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(task);
         return task;
@@ -130,8 +130,8 @@ public abstract class FeatureMethods extends PreparingPlan {
 
     protected void finishCurrentWithError(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
-        List<StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<Task> tasks = taskRepository.findByStationIdAndResultReceivedIsFalse(station.getId());
+        List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
+        List<Task> tasks = taskRepository.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
         if (expectedSeqs!=0) {
             assertEquals(expectedSeqs, tasks.size());
         }
@@ -140,10 +140,10 @@ public abstract class FeatureMethods extends PreparingPlan {
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec(systemExecResult, null, null, null);
             String yaml = FunctionExecUtils.toString(functionExec);
 
-            StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult sser =
-                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);
+            ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult sser =
+                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);
             // TODO 2019-11-17 left it here for info. delete when code will be merged in master
-            // new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
+            // new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(sser);
         }
 
@@ -152,8 +152,8 @@ public abstract class FeatureMethods extends PreparingPlan {
 
     protected void finishCurrentWithOk(int expectedTasks) {
         // lets report about sequences that all finished with error (errorCode!=0)
-        List<StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<Task> tasks = taskRepository.findByStationIdAndResultReceivedIsFalse(station.getId());
+        List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
+        List<Task> tasks = taskRepository.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
         if (expectedTasks!=0) {
             assertEquals(expectedTasks, tasks.size());
         }
@@ -162,8 +162,8 @@ public abstract class FeatureMethods extends PreparingPlan {
             functionExec.setExec( new FunctionApiData.SystemExecResult("output-of-a-function", true, 0, "This is sample console output. fit"));
             String yaml = FunctionExecUtils.toString(functionExec);
 
-            StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult ster =
-                    new StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);
+            ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult ster =
+                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);
             results.add(ster);
         }
 

@@ -19,27 +19,27 @@ package ai.metaheuristic.ai.dispatcher.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Station;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.station.StationCache;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -96,7 +96,7 @@ public class BatchService {
     private final ExecContextCache execContextCache;
     private final VariableService variableService;
     private final TaskRepository taskRepository;
-    private final StationCache stationCache;
+    private final ProcessorCache processorCache;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
@@ -270,7 +270,7 @@ public class BatchService {
                     STARTED(3),         // started
                     STOPPED(4),         // stopped
                     FINISHED(5),        // finished
-                    DOESNT_EXIST(6),    // doesn't exist. this state is needed at station side to reconcile list of experiments
+                    DOESNT_EXIST(6),    // doesn't exist. this state is needed at processor side to reconcile list of experiments
                     EXPORTING_TO_ATLAS(7),    // execContext is marked as needed to be exported to atlas
                     EXPORTING_TO_ATLAS_WAS_STARTED(8),    // execContext is marked as needed to be exported to atlas and export was started
                     EXPORTED_TO_ATLAS(9);    // execContext was exported to atlas
@@ -354,8 +354,8 @@ public class BatchService {
             log.error("#990.120 Error updating batch, new: {}, curr: {}", batch, batchRepository.findById(batchId).orElse(null));
             log.error("#990.121 Error updating batch", e);
             batchCache.evictById(batchId);
-            // because this error is somehow related to stationCache, let's invalidate it
-            stationCache.clearCache();
+            // because this error is somehow related to processorCache, let's invalidate it
+            processorCache.clearCache();
             throw new NeedRetryAfterCacheCleanException();
         }
     }
@@ -384,13 +384,13 @@ public class BatchService {
         return batchParams.batchStatus;
     }
 
-    private String getStatusForError(Long batchId, ExecContext ec, String mainDocument, Task task, FunctionApiData.FunctionExec functionExec, String stationIpAndHost) {
+    private String getStatusForError(Long batchId, ExecContext ec, String mainDocument, Task task, FunctionApiData.FunctionExec functionExec, String processorIpAndHost) {
 
         final String header =
                 "#990.210 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", execContextId: " + ec.getId() + ", " +
                 "taskId: " + task.getId() + "\n" +
-                "stationId: " + task.getStationId() + "\n" +
-                stationIpAndHost + "\n\n";
+                "processorId: " + task.getProcessorId() + "\n" +
+                processorIpAndHost + "\n\n";
         StringBuilder sb = new StringBuilder(header);
         if (functionExec.generalExec!=null) {
             sb.append("General execution state:\n");
@@ -523,23 +523,23 @@ public class BatchService {
                     "taskId: " + task.getId(),'\n');
             return false;
         }
-        Station s = null;
-        if (task.getStationId()!=null) {
-            s = stationCache.findById(task.getStationId());
+        Processor s = null;
+        if (task.getProcessorId()!=null) {
+            s = processorCache.findById(task.getProcessorId());
         }
-        final String stationIpAndHost = getStationIpAndHost(s);
+        final String processorIpAndHost = getProcessorIpAndHost(s);
         switch (execState) {
             case NONE:
             case IN_PROGRESS:
                 bs.getProgressStatus().add("#990.320 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                                 ", batchId:" + batchId + ", execContextId: " + wb.getId() + ", " +
-                                "taskId: " + task.getId() + ", stationId: " + task.getStationId() +
-                                ", " + stationIpAndHost
+                                "taskId: " + task.getId() + ", processorId: " + task.getProcessorId() +
+                                ", " + processorIpAndHost
                         ,'\n');
                 return true;
             case ERROR:
             case BROKEN:
-                bs.getErrorStatus().add(getStatusForError(batchId, wb, mainDocument, task, functionExec, stationIpAndHost));
+                bs.getErrorStatus().add(getStatusForError(batchId, wb, mainDocument, task, functionExec, processorIpAndHost));
                 return true;
             case OK:
                 break;
@@ -549,7 +549,7 @@ public class BatchService {
             bs.getProgressStatus().add("#990.360 " + mainDocument + ", Task hasn't completed yet, " +
                             "batchId:" + batchId + ", execContextId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + ", " +
-                            "stationId: " + task.getStationId() + ", " + stationIpAndHost
+                            "processorId: " + task.getProcessorId() + ", " + processorIpAndHost
                     ,'\n');
             return true;
         }
@@ -561,7 +561,7 @@ public class BatchService {
         }
 
         String msg = "#990.380 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", execContextId: " + execContextId +
-                ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
+                ", taskId: " + task.getId() + ", processorId: " + task.getProcessorId() + ", " + processorIpAndHost;
         bs.getOkStatus().add(msg,'\n');
         return true;
     }
@@ -605,12 +605,12 @@ public class BatchService {
                         : ".bin");
     }
 
-    private String getStationIpAndHost(Station station) {
-        if (station==null) {
+    private String getProcessorIpAndHost(Processor processor) {
+        if (processor ==null) {
             return String.format(IP_HOST, Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO);
         }
 
-        StationStatusYaml status = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
+        ProcessorStatusYaml status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
         final String ip = StringUtils.isNotBlank(status.ip) ? status.ip : Consts.UNKNOWN_INFO;
         final String host = StringUtils.isNotBlank(status.host) ? status.host : Consts.UNKNOWN_INFO;
 

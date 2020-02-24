@@ -87,7 +87,7 @@ public class Consts {
     public static final String COMPANIES_CACHE = "companies";
     public static final String ACCOUNTS_CACHE = "accounts";
     public static final String EXEC_CONTEXT_CACHE = "exec_contexts";
-    public static final String STATIONS_CACHE = "stations";
+    public static final String PROCESSORS_CACHE = "processors";
     public static final String BATCHES_CACHE = "batches";
     public static final String EXPERIMENTS_CACHE = "experiments";
     public static final String SOURCE_CODES_CACHE = "source_codes";

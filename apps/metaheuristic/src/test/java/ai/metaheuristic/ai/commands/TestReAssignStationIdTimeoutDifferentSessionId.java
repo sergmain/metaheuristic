@@ -16,16 +16,16 @@
 
 package ai.metaheuristic.ai.commands;
 
-import ai.metaheuristic.ai.dispatcher.beans.Station;
-import ai.metaheuristic.ai.dispatcher.repositories.StationsRepository;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.server.ServerService;
-import ai.metaheuristic.ai.dispatcher.station.StationCache;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -53,10 +53,10 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
     public ServerService serverService;
 
     @Autowired
-    public StationCache stationCache;
+    public ProcessorCache processorCache;
 
     @Autowired
-    public StationsRepository stationsRepository;
+    public ProcessorRepository processorRepository;
 
     private Long stationIdBefore;
     private String sessionIdBefore;
@@ -65,19 +65,19 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
     @Before
     public void before() {
 
-        StationCommParamsYaml stationComm = new StationCommParamsYaml();
+        ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
 
-        String dispatcherResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.getAssignedStationId());
-        assertNotNull(d.getAssignedStationId().getAssignedStationId());
-        assertNotNull(d.getAssignedStationId().getAssignedSessionId());
+        assertNotNull(d.getAssignedProcessorId());
+        assertNotNull(d.getAssignedProcessorId().getAssignedProcessorId());
+        assertNotNull(d.getAssignedProcessorId().getAssignedSessionId());
 
-        stationIdBefore = Long.valueOf(d.getAssignedStationId().getAssignedStationId());
-        sessionIdBefore = d.getAssignedStationId().getAssignedSessionId();
+        stationIdBefore = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
+        sessionIdBefore = d.getAssignedProcessorId().getAssignedSessionId();
 
         assertTrue(sessionIdBefore.length()>5);
 
@@ -85,20 +85,20 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
         System.out.println("sessionIdBefore: " + sessionIdBefore);
 
         Long stationId = stationIdBefore;
-        Station s = stationsRepository.findByIdForUpdate(stationId);
+        Processor s = processorRepository.findByIdForUpdate(stationId);
         assertNotNull(s);
 
-        StationStatusYaml ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
+        ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
         assertNotEquals(0L, ss.sessionCreatedOn);
         assertEquals(sessionIdBefore, ss.sessionId);
 
         ss.sessionCreatedOn -= (ServerService.SESSION_TTL + 100000);
         sessionCreatedOn = ss.sessionCreatedOn;
-        s.status = StationStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
+        s.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
 
-        Station s1 = stationCache.save(s);
+        Processor s1 = processorCache.save(s);
 
-        StationStatusYaml ss1 = StationStatusYamlUtils.BASE_YAML_UTILS.to(s1.status);
+        ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s1.status);
         assertEquals(ss.sessionCreatedOn, ss1.sessionCreatedOn);
     }
 
@@ -107,7 +107,7 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
         log.info("Start after()");
         if (stationIdBefore!=null) {
             try {
-                stationCache.deleteById(stationIdBefore);
+                processorCache.deleteById(stationIdBefore);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -117,33 +117,33 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
     @Test
     public void testReAssignStationIdDifferentSessionId() {
 
-        // in this scenario we test that a station has got a refreshed sessionId
+        // in this scenario we test that a processor has got a refreshed sessionId
 
-        StationCommParamsYaml stationComm = new StationCommParamsYaml();
+        ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
         final String newSessionId = sessionIdBefore + '-';
-        stationComm.stationCommContext = new StationCommParamsYaml.StationCommContext(stationIdBefore.toString(), newSessionId);
+        stationComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(stationIdBefore.toString(), newSessionId);
 
-        String dispatcherResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
 
         assertNotNull(d);
-        assertNotNull(d.getReAssignedStationId());
-        assertNotNull(d.getReAssignedStationId().getReAssignedStationId());
-        assertNotNull(d.getReAssignedStationId().getSessionId());
+        assertNotNull(d.getReAssignedProcessorId());
+        assertNotNull(d.getReAssignedProcessorId().getReAssignedProcessorId());
+        assertNotNull(d.getReAssignedProcessorId().getSessionId());
 
-        final Long stationId = Long.valueOf(d.getReAssignedStationId().getReAssignedStationId());
+        final Long stationId = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
         assertEquals(stationIdBefore, stationId);
-        assertNotEquals(newSessionId, d.getReAssignedStationId().getSessionId());
+        assertNotEquals(newSessionId, d.getReAssignedProcessorId().getSessionId());
 
-        Station s = stationCache.findById(stationId);
+        Processor s = processorCache.findById(stationId);
 
         assertNotNull(s);
-        StationStatusYaml ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
+        ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
         assertNotEquals(0L, ss.sessionCreatedOn);
         assertNotEquals(sessionCreatedOn, ss.sessionCreatedOn);
-        assertEquals(d.getReAssignedStationId().getSessionId(), ss.sessionId);
+        assertEquals(d.getReAssignedProcessorId().getSessionId(), ss.sessionId);
         assertTrue(ss.sessionCreatedOn > sessionCreatedOn);
     }
 }

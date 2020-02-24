@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Communication file which is transferred from a dispatcher to a Station
+ * Communication file which is transferred from a dispatcher to a Processor
  *
  * @author Serge
  * Date: 8/29/2019
@@ -47,8 +47,8 @@ public class DispatcherCommParamsYaml implements BaseParams {
     // always send info about functions
     public Functions functions = new Functions();
     public AssignedTask assignedTask;
-    public AssignedStationId assignedStationId;
-    public ReAssignStationId reAssignedStationId;
+    public AssignedProcessorId assignedProcessorId;
+    public ReAssignProcessorId reAssignedProcessorId;
     public ReportResultDelivering reportResultDelivering;
     public ExecContextStatus execContextStatus;
     public ResendTaskOutputResource resendTaskOutputResource;
@@ -79,20 +79,20 @@ public class DispatcherCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AssignedStationId {
-        public String assignedStationId;
+    public static class AssignedProcessorId {
+        public String assignedProcessorId;
         public String assignedSessionId;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ReAssignStationId {
-        public String reAssignedStationId;
+    public static class ReAssignProcessorId {
+        public String reAssignedProcessorId;
         public String sessionId;
 
-        public ReAssignStationId(Long stationId, String sessionId) {
-            this(Long.toString(stationId), sessionId);
+        public ReAssignProcessorId(Long processorId, String sessionId) {
+            this(Long.toString(processorId), sessionId);
         }
     }
 
@@ -131,8 +131,8 @@ public class DispatcherCommParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class DispatcherCommContext {
         public Long chunkSize;
-        // Station's version for communicating with Dispatcher
-        public Integer stationCommVersion;
+        // Processor's version for communicating with Dispatcher
+        public Integer processorCommVersion;
     }
 
     public boolean success = true;

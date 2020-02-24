@@ -82,7 +82,7 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
         STARTED(3),         // started
         STOPPED(4),         // stopped
         FINISHED(5),        // finished
-        DOESNT_EXIST(6),    // doesn't exist. this state is needed at station side to reconcile list of experiments
+        DOESNT_EXIST(6),    // doesn't exist. this state is needed at processor side to reconcile list of experiments
         EXPORTING_TO_ATLAS(7),    // execContext is marked as needed to be exported to atlas
         EXPORTING_TO_ATLAS_WAS_STARTED(8),    // execContext is marked as needed to be exported to atlas and export was started
         EXPORTED_TO_ATLAS(9);    // execContext was exported to atlas

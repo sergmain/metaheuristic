@@ -45,9 +45,9 @@ public class TestFeatureWithAllError extends FeatureMethods {
         toStarted();
 
         mills = System.currentTimeMillis();
-        log.info("Start getTaskAndAssignToStation_mustBeNewTask()");
-        DispatcherCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToStation_mustBeNewTask();
-        log.info("getTaskAndAssignToStation_mustBeNewTask() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("Start getTaskAndAssignToProcessor_mustBeNewTask()");
+        DispatcherCommParamsYaml.AssignedTask simpleTask = getTaskAndAssignToProcessor_mustBeNewTask();
+        log.info("getTaskAndAssignToProcessor_mustBeNewTask() was finished for {}", System.currentTimeMillis() - mills);
 
         noNewTask();
 
@@ -66,10 +66,10 @@ public class TestFeatureWithAllError extends FeatureMethods {
     }
 
     public void noNewTask() {
-        DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToStation(station.getId(), false, experiment.getExecContextId());
+        DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToProcessor(processor.getId(), false, experiment.getExecContextId());
         assertNull(task);
 
-        task = execContextService.getTaskAndAssignToStation(station.getId() + 1, false, experiment.getExecContextId());
+        task = execContextService.getTaskAndAssignToProcessor(processor.getId() + 1, false, experiment.getExecContextId());
         assertNull(task);
     }
 

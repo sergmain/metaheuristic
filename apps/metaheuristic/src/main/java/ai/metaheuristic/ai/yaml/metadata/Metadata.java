@@ -32,7 +32,7 @@ public class Metadata {
         // right now this field isn't used
         public String value;
         public String code;
-        public String stationId;
+        public String processorId;
         public String sessionId;
     }
 

@@ -33,7 +33,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
-import ai.metaheuristic.ai.dispatcher.station.StationCache;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
@@ -41,10 +41,10 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYaml;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusYamlUtils;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -86,7 +86,7 @@ public class ExecContextService {
     private final VariableService variableService;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final StationCache stationCache;
+    private final ProcessorCache processorCache;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
@@ -278,17 +278,17 @@ public class ExecContextService {
 
     // TODO 2019.08.27 is it good to synchronize the whole method?
     //  but it's working actually
-    public synchronized DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long execContextId) {
+    public synchronized DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(long processorId, boolean isAcceptOnlySigned, Long execContextId) {
 
-        final Station station = stationCache.findById(stationId);
-        if (station == null) {
-            log.error("#705.140 Station wasn't found for id: {}", stationId);
+        final Processor processor = processorCache.findById(processorId);
+        if (processor == null) {
+            log.error("#705.140 Processor wasn't found for id: {}", processorId);
             return null;
         }
-        List<Long> anyTaskId = taskRepository.findAnyActiveForStationId(Consts.PAGE_REQUEST_1_REC, stationId);
+        List<Long> anyTaskId = taskRepository.findAnyActiveForProcessorId(Consts.PAGE_REQUEST_1_REC, processorId);
         if (!anyTaskId.isEmpty()) {
-            // this station already has active task
-            log.info("#705.160 can't assign any new task to the station #{} because this station has an active task #{}", stationId, anyTaskId);
+            // this processor already has active task
+            log.info("#705.160 can't assign any new task to the processor #{} because this processor has an active task #{}", processorId, anyTaskId);
             return null;
         }
 
@@ -310,17 +310,17 @@ public class ExecContextService {
             execContextIds = List.of(execContext.id);
         }
 
-        StationStatusYaml ss;
+        ProcessorStatusYaml ss;
         try {
-            ss = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
+            ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
         } catch (Throwable e) {
-            log.error("#705.150 Error parsing current status of station:\n{}", station.status);
+            log.error("#705.150 Error parsing current status of processor:\n{}", processor.status);
             log.error("#705.151 Error ", e);
             return null;
         }
 
         for (Long wbId : execContextIds) {
-            DispatcherCommParamsYaml.AssignedTask result = findUnassignedTaskAndAssign(wbId, station, ss, isAcceptOnlySigned);
+            DispatcherCommParamsYaml.AssignedTask result = findUnassignedTaskAndAssign(wbId, processor, ss, isAcceptOnlySigned);
             if (result!=null) {
                 return result;
             }
@@ -341,9 +341,9 @@ public class ExecContextService {
                 .collect(Collectors.toList());
     }
 
-    private DispatcherCommParamsYaml.AssignedTask findUnassignedTaskAndAssign(Long execContextId, Station station, StationStatusYaml ss, boolean isAcceptOnlySigned) {
+    private DispatcherCommParamsYaml.AssignedTask findUnassignedTaskAndAssign(Long execContextId, Processor processor, ProcessorStatusYaml ss, boolean isAcceptOnlySigned) {
 
-        LongHolder longHolder = bannedSince.computeIfAbsent(station.getId(), o -> new LongHolder(0));
+        LongHolder longHolder = bannedSince.computeIfAbsent(processor.getId(), o -> new LongHolder(0));
         if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
             return null;
         }
@@ -352,13 +352,13 @@ public class ExecContextService {
             return null;
         }
         final List<ExecContextParamsYaml.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext);
-        final StationStatusYaml stationStatus = StationStatusYamlUtils.BASE_YAML_UTILS.to(station.status);
+        final ProcessorStatusYaml processorStatus = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
 
         int page = 0;
         Task resultTask = null;
         String resultTaskParams = null;
         List<Task> tasks;
-        while ((tasks = getAllByStationIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
+        while ((tasks = getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
             for (Task task : tasks) {
                 final TaskParamsYaml taskParamYaml;
                 try {
@@ -374,19 +374,19 @@ public class ExecContextService {
                 }
 
                 if (taskParamYaml.taskYaml.function.sourcing== EnumsApi.FunctionSourcing.git &&
-                        stationStatus.gitStatusInfo.status!= Enums.GitStatus.installed) {
-                    log.warn("#705.210 Can't assign task #{} to station #{} because this station doesn't correctly installed git, git status info: {}",
-                            station.getId(), task.getId(), stationStatus.gitStatusInfo
+                        processorStatus.gitStatusInfo.status!= Enums.GitStatus.installed) {
+                    log.warn("#705.210 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
+                            processor.getId(), task.getId(), processorStatus.gitStatusInfo
                     );
                     longHolder.value = System.currentTimeMillis();
                     continue;
                 }
 
                 if (taskParamYaml.taskYaml.function.env!=null) {
-                    String interpreter = stationStatus.env.getEnvs().get(taskParamYaml.taskYaml.function.env);
+                    String interpreter = processorStatus.env.getEnvs().get(taskParamYaml.taskYaml.function.env);
                     if (interpreter == null) {
-                        log.warn("#705.213 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for function's env {}",
-                                station.getId(), task.getId(), taskParamYaml.taskYaml.function.env
+                        log.warn("#705.213 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
+                                processor.getId(), task.getId(), taskParamYaml.taskYaml.function.env
                         );
                         longHolder.value = System.currentTimeMillis();
                         continue;
@@ -394,10 +394,10 @@ public class ExecContextService {
                 }
 
                 final List<EnumsApi.OS> supportedOS = getSupportedOS(taskParamYaml);
-                if (stationStatus.os!=null && !supportedOS.isEmpty() && !supportedOS.contains(stationStatus.os)) {
-                    log.info("#705.217 Can't assign task #{} to station #{}, " +
-                                    "because this station doesn't support required OS version. station: {}, function: {}",
-                            station.getId(), task.getId(), stationStatus.os, supportedOS
+                if (processorStatus.os!=null && !supportedOS.isEmpty() && !supportedOS.contains(processorStatus.os)) {
+                    log.info("#705.217 Can't assign task #{} to processor #{}, " +
+                                    "because this processor doesn't support required OS version. processor: {}, function: {}",
+                            processor.getId(), task.getId(), processorStatus.os, supportedOS
                     );
                     longHolder.value = System.currentTimeMillis();
                     continue;
@@ -414,8 +414,8 @@ public class ExecContextService {
                     TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(resultTask.getParams());
                     resultTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, ss.taskParamsVersion);
                 } catch (DowngradeNotSupportedException e) {
-                    log.warn("Task #{} can't be assigned to station #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                            resultTask.getId(), station.id, ss.taskParamsVersion);
+                    log.warn("Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                            resultTask.getId(), processor.id, ss.taskParamsVersion);
                     resultTask = null;
                 }
                 if (resultTask!=null) {
@@ -443,13 +443,13 @@ public class ExecContextService {
         assignedTask.setParams(resultTaskParams);
 
         resultTask.setAssignedOn(System.currentTimeMillis());
-        resultTask.setStationId(station.getId());
+        resultTask.setProcessorId(processor.getId());
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         resultTask.setResultResourceScheduledOn(0);
 
         taskRepository.save((TaskImpl)resultTask);
         execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
-        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, station.getId(), resultTask.getId(), execContextId);
+        dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.getId(), resultTask.getId(), execContextId);
 
         return assignedTask;
     }
@@ -461,7 +461,7 @@ public class ExecContextService {
         return List.of();
     }
 
-    private List<Task> getAllByStationIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextParamsYaml.TaskVertex> vertices, int page) {
+    private List<Task> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextParamsYaml.TaskVertex> vertices, int page) {
         final List<Long> idsForSearch = getIdsForSearch(vertices, page, 20);
         if (idsForSearch.isEmpty()) {
             return List.of();
@@ -469,10 +469,10 @@ public class ExecContextService {
         return taskRepository.findForAssigning(execContextId, idsForSearch);
     }
 
-    public List<Long> storeAllConsoleResults(List<StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results) {
+    public List<Long> storeAllConsoleResults(List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results) {
 
         List<Long> ids = new ArrayList<>();
-        for (StationCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result : results) {
+        for (ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result : results) {
             ids.add(result.taskId);
             taskPersistencer.storeExecResult(result, t -> {
                 if (t!=null) {

@@ -308,7 +308,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         sc.type = functionCode + "-type";
         sc.file = null;
         sc.setEnv("env-"+functionCode);
-        sc.sourcing = EnumsApi.FunctionSourcing.station;
+        sc.sourcing = EnumsApi.FunctionSourcing.processor;
 
         sc.info.setSigned(false);
         sc.info.setLength(1000);

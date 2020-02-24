@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -103,12 +103,12 @@ public class TestAccessRestriction {
     @Test
     @WithUserDetails("data_rest")
     public void testSimpleCommunicationWithServer() throws Exception {
-        StationCommParamsYaml stationComm = new StationCommParamsYaml();
+        ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
 
-        final String stationYaml = StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm);
+        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
 
         MvcResult result = mockMvc.perform(post("/rest/v1/srv-v2/qwe321").contentType(Consts.APPLICATION_JSON_UTF8)
-                .content(stationYaml))
+                .content(processorYaml))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
 

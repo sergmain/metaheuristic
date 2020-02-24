@@ -181,7 +181,7 @@ public class TestAccessForAllEndPoints {
         assertTrue(url.endsWith(".bin"));
 
         mockMvc.perform(
-                get(url + "?stationId=15&id=42&chunkSize=10000000&chunkNum=0")
+                get(url + "?processorId=15&id=42&chunkSize=10000000&chunkNum=0")
                         .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
         )
                 .andExpect(status().isGone());
@@ -195,7 +195,7 @@ public class TestAccessForAllEndPoints {
         assertTrue(url.endsWith(".bin"));
 
         mockMvc.perform(
-                get(url + "?stationId=15&id=42&chunkSize=10000000&chunkNum=0")
+                get(url + "?processorId=15&id=42&chunkSize=10000000&chunkNum=0")
                         .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
         )
                 .andExpect(status().isForbidden());

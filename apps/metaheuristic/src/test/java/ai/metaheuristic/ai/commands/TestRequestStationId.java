@@ -16,13 +16,13 @@
 
 package ai.metaheuristic.ai.commands;
 
-import ai.metaheuristic.ai.dispatcher.beans.Station;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.server.ServerService;
-import ai.metaheuristic.ai.dispatcher.station.StationCache;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYaml;
-import ai.metaheuristic.ai.yaml.communication.station.StationCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -50,24 +50,24 @@ public class TestRequestStationId {
     public ServerService serverService;
 
     @Autowired
-    public StationCache stationCache;
+    public ProcessorCache processorCache;
 
     private Long stationId;
 
     @Before
     public void before() {
-        StationCommParamsYaml stationComm = new StationCommParamsYaml();
+        ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
 
-        String dispatcherResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
         assertNotNull(d);
-        assertNotNull(d.getAssignedStationId());
-        assertNotNull(d.getAssignedStationId().getAssignedStationId());
-        assertNotNull(d.getAssignedStationId().getAssignedSessionId());
+        assertNotNull(d.getAssignedProcessorId());
+        assertNotNull(d.getAssignedProcessorId().getAssignedProcessorId());
+        assertNotNull(d.getAssignedProcessorId().getAssignedSessionId());
 
-        stationId = Long.valueOf(d.getAssignedStationId().getAssignedStationId());
+        stationId = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
 
         System.out.println("stationId: " + stationId);
     }
@@ -77,7 +77,7 @@ public class TestRequestStationId {
         log.info("Start after()");
         if (stationId!=null) {
             try {
-                stationCache.deleteById(stationId);
+                processorCache.deleteById(stationId);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -86,51 +86,51 @@ public class TestRequestStationId {
 
     @Test
     public void testRequestStationId() {
-        StationCommParamsYaml stationComm = new StationCommParamsYaml();
+        ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
 
-        String dispatcherResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
 
 
         assertNotNull(d);
-        assertNotNull(d.getAssignedStationId());
-        assertNotNull(d.getAssignedStationId().getAssignedStationId());
-        assertNotNull(d.getAssignedStationId().getAssignedSessionId());
+        assertNotNull(d.getAssignedProcessorId());
+        assertNotNull(d.getAssignedProcessorId().getAssignedProcessorId());
+        assertNotNull(d.getAssignedProcessorId().getAssignedSessionId());
 
-        System.out.println("stationId: " + d.getAssignedStationId().getAssignedStationId());
-        System.out.println("sessionId: " + d.getAssignedStationId().getAssignedSessionId());
+        System.out.println("stationId: " + d.getAssignedProcessorId().getAssignedProcessorId());
+        System.out.println("sessionId: " + d.getAssignedProcessorId().getAssignedSessionId());
 
-        stationId = Long.valueOf(d.getAssignedStationId().getAssignedStationId());
+        stationId = Long.valueOf(d.getAssignedProcessorId().getAssignedProcessorId());
 
-        Station s = stationCache.findById(stationId);
+        Processor s = processorCache.findById(stationId);
 
         assertNotNull(s);
     }
 
     @Test
     public void testEmptySessionId() {
-        StationCommParamsYaml stationComm = new StationCommParamsYaml();
-        stationComm.stationCommContext = new StationCommParamsYaml.StationCommContext(stationId.toString(), null);
+        ProcessorCommParamsYaml stationComm = new ProcessorCommParamsYaml();
+        stationComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(stationId.toString(), null);
 
-        String dispatcherResponse = serverService.processRequest(StationCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
+        String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(stationComm), "127.0.0.1");
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
         assertNotNull(d);
-        assertNotNull(d.getReAssignedStationId());
-        assertNotNull(d.getReAssignedStationId().getReAssignedStationId());
-        assertNotNull(d.getReAssignedStationId().getSessionId());
+        assertNotNull(d.getReAssignedProcessorId());
+        assertNotNull(d.getReAssignedProcessorId().getReAssignedProcessorId());
+        assertNotNull(d.getReAssignedProcessorId().getSessionId());
         // actually, only sessionId was changed, stationId must be the same
 
-        Long stationIdForEmptySession = Long.valueOf(d.getReAssignedStationId().getReAssignedStationId());
+        Long stationIdForEmptySession = Long.valueOf(d.getReAssignedProcessorId().getReAssignedProcessorId());
 
         assertEquals(stationId, stationIdForEmptySession);
 
 
-        System.out.println("stationId: " + d.getReAssignedStationId().getReAssignedStationId());
-        System.out.println("sessionId: " + d.getReAssignedStationId().getSessionId());
+        System.out.println("stationId: " + d.getReAssignedProcessorId().getReAssignedProcessorId());
+        System.out.println("sessionId: " + d.getReAssignedProcessorId().getSessionId());
 
-        Station s = stationCache.findById(stationIdForEmptySession);
+        Processor s = processorCache.findById(stationIdForEmptySession);
 
         assertNotNull(s);
     }

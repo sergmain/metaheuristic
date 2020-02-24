@@ -35,7 +35,7 @@ public class DiskInfo {
     public String mask;
 
     /**
-     * A code for directory. This code must be configured at station side in file env.yaml
+     * A code for directory. This code must be configured at processor side in file env.yaml
      */
     public String code;
 

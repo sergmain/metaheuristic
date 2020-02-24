@@ -22,11 +22,11 @@ import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
-import ai.metaheuristic.ai.station.*;
-import ai.metaheuristic.ai.station.actors.DownloadResourceActor;
-import ai.metaheuristic.ai.station.actors.DownloadFunctionActor;
-import ai.metaheuristic.ai.station.actors.UploadResourceActor;
-import ai.metaheuristic.ai.station.env.EnvService;
+import ai.metaheuristic.ai.processor.*;
+import ai.metaheuristic.ai.processor.actors.DownloadResourceActor;
+import ai.metaheuristic.ai.processor.actors.DownloadFunctionActor;
+import ai.metaheuristic.ai.processor.actors.UploadResourceActor;
+import ai.metaheuristic.ai.processor.env.EnvService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -171,13 +171,13 @@ public class Schedulers {
         }
     }
 
-    // Station schedulers
+    // Processor schedulers
     @SuppressWarnings("FieldCanBeLocal")
     @Service
     @EnableScheduling
     @Slf4j
-    @Profile("station")
-    public static class StationSchedulers {
+    @Profile("processor")
+    public static class ProcessorSchedulers {
 
         private final Globals globals;
         private final TaskAssetPreparer taskAssetPreparer;
@@ -185,17 +185,17 @@ public class Schedulers {
         private final DownloadFunctionActor downloadFunctionActor;
         private final DownloadResourceActor downloadResourceActor;
         private final UploadResourceActor uploadResourceActor;
-        private final ArtifactCleanerAtStation artifactCleaner;
+        private final ArtifactCleanerAtProcessor artifactCleaner;
         private final MetadataService metadataService;
         private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
         private final CurrentExecState currentExecState;
         private final EnvService envService;
-        private final StationCommandProcessor stationCommandProcessor;
+        private final ProcessorCommandProcessor processorCommandProcessor;
 
         private final RoundRobinForDispatcher roundRobin;
         private final Map<String, DispatcherRequestor> dispatcherRequestorMap = new HashMap<>();
 
-        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadFunctionActor downloadFunctionActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, MetadataService metadataService, DispatcherLookupExtendedService dispatcherLookupExtendedService, CurrentExecState currentExecState, EnvService envService, StationCommandProcessor stationCommandProcessor) {
+        public ProcessorSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadFunctionActor downloadFunctionActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtProcessor artifactCleaner, ProcessorService processorService, ProcessorTaskService processorTaskService, MetadataService metadataService, DispatcherLookupExtendedService dispatcherLookupExtendedService, CurrentExecState currentExecState, EnvService envService, ProcessorCommandProcessor processorCommandProcessor) {
             this.globals = globals;
             this.taskAssetPreparer = taskAssetPreparer;
             this.taskProcessor = taskProcessor;
@@ -204,7 +204,7 @@ public class Schedulers {
             this.uploadResourceActor = uploadResourceActor;
             this.artifactCleaner = artifactCleaner;
             this.envService = envService;
-            this.stationCommandProcessor = stationCommandProcessor;
+            this.processorCommandProcessor = processorCommandProcessor;
 
             if (dispatcherLookupExtendedService.lookupExtendedMap==null) {
                 throw new IllegalStateException("dispatcher.yaml wasn't configured");
@@ -217,8 +217,8 @@ public class Schedulers {
             for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
                 final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = entry.getValue();
                 final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.dispatcherLookup.url, globals,
-                        stationTaskService, stationService, this.metadataService, this.currentExecState,
-                        this.dispatcherLookupExtendedService, this.stationCommandProcessor);
+                        processorTaskService, processorService, this.metadataService, this.currentExecState,
+                        this.dispatcherLookupExtendedService, this.processorCommandProcessor);
 
                 dispatcherRequestorMap.put(dispatcher.dispatcherLookup.url, requestor);
             }
@@ -229,7 +229,7 @@ public class Schedulers {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isStationEnabled) {
+            if (!globals.processorEnabled) {
                 return;
             }
             log.info("Run envHotDeployService.monitorHotDeployDir()");
@@ -237,14 +237,14 @@ public class Schedulers {
         }
 
         /**
-         * this scheduler is being run at the station side
+         * this scheduler is being run at the processor side
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.request-dispatcher'), 3, 20, 6)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.request-dispatcher'), 3, 20, 6)*1000 }")
         public void dispatcherRequester() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isStationEnabled) {
+            if (!globals.processorEnabled) {
                 return;
             }
 
@@ -266,7 +266,7 @@ public class Schedulers {
                 try {
                     dispatcherRequestorMap.get(dispatcher).proceedWithRequest();
                 } catch (Throwable th) {
-                    log.error("StationSchedulers.dispatcherRequester()", th);
+                    log.error("ProcessorSchedulers.dispatcherRequester()", th);
                 }
             }
         }
@@ -274,84 +274,84 @@ public class Schedulers {
         /**
          * Prepare assets for tasks
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.task-assigner'), 3, 20, 5)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.task-assigner'), 3, 20, 5)*1000 }")
         public void taskAssigner() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isStationEnabled) {
+            if (!globals.processorEnabled) {
                 return;
             }
             log.info("Run taskAssigner.fixedDelay()");
             taskAssetPreparer.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.task-processor'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.task-processor'), 3, 20, 10)*1000 }")
         public void taskProcessor() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isStationEnabled) {
+            if (!globals.processorEnabled) {
                 return;
             }
             log.info("Run taskProcessor.fixedDelay()");
             taskProcessor.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.download-function'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.download-function'), 3, 20, 10)*1000 }")
         public void downloadFunctionActor() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isStationEnabled) {
+            if (!globals.processorEnabled) {
                 return;
             }
             log.info("Run downloadFunctionActor.downloadFunctions()");
             downloadFunctionActor.downloadFunctions();
         }
 
-        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.prepare-function-for-downloading'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.prepare-function-for-downloading'), 3, 20, 10)*1000 }")
         public void prepareFunctionForDownloading() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isStationEnabled) {
+            if (!globals.processorEnabled) {
                 return;
             }
             log.info("Run downloadFunctionActor.prepareFunctionForDownloading()");
             downloadFunctionActor.prepareFunctionForDownloading();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.download-resource'), 3, 20, 3)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.download-resource'), 3, 20, 3)*1000 }")
         public void downloadResourceActor() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isStationEnabled) {
+            if (!globals.processorEnabled) {
                 return;
             }
             log.info("Run downloadResourceActor.fixedDelay()");
             downloadResourceActor.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.upload-result-resource'), 3, 20, 3)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.upload-result-resource'), 3, 20, 3)*1000 }")
         public void uploadResourceActor() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isStationEnabled) {
+            if (!globals.processorEnabled) {
                 return;
             }
             log.info("Run uploadResourceActor.fixedDelay()");
             uploadResourceActor.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.station.timeout.artifact-cleaner'), 10, 60, 30)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.timeout.artifact-cleaner'), 10, 60, 30)*1000 }")
         public void artifactCleaner() {
             if (globals.isUnitTesting) {
                 return;
             }
-            if (!globals.isStationEnabled) {
+            if (!globals.processorEnabled) {
                 return;
             }
             log.info("Run artifactCleaner.fixedDelay()");

@@ -206,49 +206,49 @@ public class Config {
 
     @Configuration
     @EnableTransactionManagement
-    @EnableJpaRepositories(entityManagerFactoryRef = "stationEntityManagerFactory", transactionManagerRef = "stationTransactionManager",
-            basePackages = { "ai.metaheuristic.ai.station.repositories" })
-    public class StationDbConfig {
+    @EnableJpaRepositories(entityManagerFactoryRef = "processorEntityManagerFactory", transactionManagerRef = "processorTransactionManager",
+            basePackages = { "ai.metaheuristic.ai.processor.repositories" })
+    public class ProcessorDbConfig {
 
         private final Environment env;
 
-        public StationDbConfig(Environment env) {
+        public ProcessorDbConfig(Environment env) {
             this.env = env;
         }
 
-        @Bean(name = "stationDataSource")
-        @ConfigurationProperties(prefix = "station.datasource")
+        @Bean(name = "processorDataSource")
+        @ConfigurationProperties(prefix = "processor.datasource")
         public DataSource dataSource() {
-            if (!globals.isStationEnabled) {
+            if (!globals.processorEnabled) {
                 return null;
             }
             DriverManagerDataSource dataSource = new DriverManagerDataSource();
             //noinspection ConstantConditions
-            dataSource.setDriverClassName(env.getProperty("station.datasource.driver-class-name"));
-            dataSource.setUrl(env.getProperty("station.datasource.url"));
-            dataSource.setUsername(env.getProperty("station.datasource.username"));
-            dataSource.setPassword(env.getProperty("station.datasource.password"));
+            dataSource.setDriverClassName(env.getProperty("processor.datasource.driver-class-name"));
+            dataSource.setUrl(env.getProperty("processor.datasource.url"));
+            dataSource.setUsername(env.getProperty("processor.datasource.username"));
+            dataSource.setPassword(env.getProperty("processor.datasource.password"));
             return dataSource;
         }
 
-        @Bean(name = "stationEntityManagerFactory")
-        public LocalContainerEntityManagerFactoryBean stationEntityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("stationDataSource") DataSource dataSource) {
-            if (!globals.isStationEnabled) {
+        @Bean(name = "processorEntityManagerFactory")
+        public LocalContainerEntityManagerFactoryBean processorEntityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("processorDataSource") DataSource dataSource) {
+            if (!globals.processorEnabled) {
                 return null;
             }
             return builder
                     .dataSource(dataSource)
-                    .packages("ai.metaheuristic.ai.station.beans")
-                    .persistenceUnit("station")
+                    .packages("ai.metaheuristic.ai.processor.beans")
+                    .persistenceUnit("processor")
                     .build();
         }
 
-        @Bean(name = "stationTransactionManager")
-        public PlatformTransactionManager stationTransactionManager(@Qualifier("stationEntityManagerFactory") EntityManagerFactory stationEntityManagerFactory) {
-            if (!globals.isStationEnabled) {
+        @Bean(name = "processorTransactionManager")
+        public PlatformTransactionManager processorTransactionManager(@Qualifier("processorEntityManagerFactory") EntityManagerFactory processorEntityManagerFactory) {
+            if (!globals.processorEnabled) {
                 return null;
             }
-            return new JpaTransactionManager(stationEntityManagerFactory);
+            return new JpaTransactionManager(processorEntityManagerFactory);
         }
     }
 
