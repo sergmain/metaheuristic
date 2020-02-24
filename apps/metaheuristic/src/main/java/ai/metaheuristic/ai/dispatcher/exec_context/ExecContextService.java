@@ -21,8 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.dispatcher.beans.*;
@@ -33,7 +32,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -50,20 +48,16 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.api.dispatcher.Task;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import jdk.jshell.spi.ExecutionControl;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -108,11 +102,11 @@ public class ExecContextService {
         if (execContext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.003 Can't find execContext with id #"+execContextId);
         }
-        List<ExecContextParamsYaml.TaskVertex> vertices = execContextGraphTopLevelService.findAllBroken(execContext);
+        List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllBroken(execContext);
         if (vertices==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.005 Can't find execContext with id #"+execContextId);
         }
-        for (ExecContextParamsYaml.TaskVertex vertex : vertices) {
+        for (ExecContextData.TaskVertex vertex : vertices) {
             resetTask(vertex.taskId);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -183,7 +177,7 @@ public class ExecContextService {
         return execContextSyncService.getWithSync(execContextId, execContextGraphService::getCountUnfinishedTasks);
     }
 
-    public List<ExecContextParamsYaml.TaskVertex> findAllVertices(Long execContextId) {
+    public List<ExecContextData.TaskVertex> findAllVertices(Long execContextId) {
         return execContextSyncService.getWithSync(execContextId, execContextGraphService::findAll);
     }
 
@@ -303,7 +297,7 @@ public class ExecContextService {
 
     private final Map<Long, LongHolder> bannedSince = new HashMap<>();
 
-    public static List<Long> getIdsForSearch(List<ExecContextParamsYaml.TaskVertex> vertices, int page, int pageSize) {
+    public static List<Long> getIdsForSearch(List<ExecContextData.TaskVertex> vertices, int page, int pageSize) {
         final int fromIndex = page * pageSize;
         if (vertices.size()== fromIndex) {
             return List.of();
@@ -324,7 +318,7 @@ public class ExecContextService {
         if (execContext==null) {
             return null;
         }
-        final List<ExecContextParamsYaml.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext);
+        final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext);
         final ProcessorStatusYaml processorStatus = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
 
         int page = 0;
@@ -434,7 +428,7 @@ public class ExecContextService {
         return List.of();
     }
 
-    private List<Task> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextParamsYaml.TaskVertex> vertices, int page) {
+    private List<Task> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex> vertices, int page) {
         final List<Long> idsForSearch = getIdsForSearch(vertices, page, 20);
         if (idsForSearch.isEmpty()) {
             return List.of();
@@ -456,36 +450,16 @@ public class ExecContextService {
         return ids;
     }
 
-    public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, SourceCodeImpl sourceCode, Long execContextId) {
+    public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, @NonNull ExecContextImpl execContext) {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext == null) {
-            log.error("#701.175 Can't find execContext #{}", execContextId);
-            return new SourceCodeApiData.TaskProducingResultComplex(EnumsApi.SourceCodeValidateStatus.EXEC_CONTEXT_NOT_FOUND_ERROR);
-        }
-
-        ExecContextParamsYaml resourceParams = execContext.getExecContextParamsYaml();
-
-        SourceCodeStoredParamsYaml sourceCodeStoredParams = sourceCode.getSourceCodeStoredParamsYaml();
-
-        if (true) {
-            throw new NotImplementedException("not yet. this part of code was moved, so need to re-write");
-        }
-/*
-        // parse concrete sourceCode into graph-based meta-model
-        SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
-                sourceCodeStoredParams.lang, sourceCodeStoredParams.source, () -> "" + idsRepository.save(new Ids()).id);
-
-        // create all internal variables as uninitialized
-        variableService.createUninitialized(execContextId, sourceCodeGraph);
-*/
+        ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
         // create all not dynamic tasks
-        SourceCodeService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(sourceCodeGraph);
+        SourceCodeService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(execContextParamsYaml);
 
         long mill = System.currentTimeMillis();
-        List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(resourceParams.getAllVariables());
+        List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(execContextParamsYaml.getAllVariables());
         log.debug("#701.180 Resources was acquired for {} ms", System.currentTimeMillis() - mill);
 
         SourceCodeService.ResourcePools pools = new SourceCodeService.ResourcePools(initialInputResourceCodes);
@@ -494,11 +468,11 @@ public class ExecContextService {
         }
 
         // todo 2020-02-15 what do we do here?
-        if (resourceParams.execContextYaml.preservePoolNames) {
+        if (execContextParamsYaml.execContextYaml.preservePoolNames) {
             final Map<String, List<String>> collectedInputs = new HashMap<>();
             try {
                 pools.collectedInputs.forEach( (key, value) -> {
-                    String newKey = resourceParams.execContextYaml.variables.entrySet().stream()
+                    String newKey = execContextParamsYaml.execContextYaml.variables.entrySet().stream()
                             .filter(entry -> entry.getValue().contains(key))
                             .findFirst()
                             .map(Map.Entry::getKey)
@@ -520,10 +494,10 @@ public class ExecContextService {
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist) {
-            execContextFSM.toProduced(execContextId);
+            execContextFSM.toProduced(execContext.id);
         }
 
-        result.execContext = execContextCache.findById(execContextId);
+        result.execContext = execContextCache.findById(execContext.id);
         result.numberOfTasks = produceTaskResult.numberOfTasks;
         result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.OK;
         result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;

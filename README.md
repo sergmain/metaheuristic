@@ -73,7 +73,7 @@ Also PyYAML 5.1 package must [be installed](https://pyyaml.org/wiki/PyYAMLDocume
     curl-add-resource-stub
     curl-add-experiment
     curl-add-plan
-    curl-bind-experiment-to-plan-with-resource
+    curl-bind-experiment-to-plan
     curl-create-execContext
     curl-produce-experiment-tasks
     ```

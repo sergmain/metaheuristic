@@ -19,10 +19,10 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -345,16 +345,4 @@ public class ExperimentController {
         }
         return "redirect:/dispatcher/experiment/experiment-info/"+experimentId;
     }
-
-    @PostMapping("/bind-experiment-to-source-code-with-resource")
-    public String bindExperimentToSourceCodeWithResource(Long experimentId, String experimentCode, String resourcePoolCode,
-                                                         final RedirectAttributes redirectAttributes, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        OperationStatusRest status = experimentTopLevelService.bindExperimentToSourceCodeWithResource(experimentCode, resourcePoolCode, context);
-        if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
-        }
-        return "redirect:/dispatcher/experiment/experiment-info/"+experimentId;
-    }
-
 }

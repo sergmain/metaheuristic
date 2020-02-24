@@ -42,9 +42,9 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         produceTasks();
         log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
-        execContextFSM.toStarted(workbook);
-        workbook = execContextCache.findById(workbook.getId());
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getState());
+        execContextFSM.toStarted(execContextForFeature);
+        execContextForFeature = execContextCache.findById(execContextForFeature.getId());
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForFeature.getState());
 
         getTaskAndAssignToProcessor_mustBeNewTask();
 

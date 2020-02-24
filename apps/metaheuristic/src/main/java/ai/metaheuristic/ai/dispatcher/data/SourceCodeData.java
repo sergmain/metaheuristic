@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,7 +28,9 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -45,34 +48,12 @@ public class SourceCodeData {
     }
 
     @Data
-    @EqualsAndHashCode(of = "taskId")
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SimpleTaskVertex {
-        public Long taskId;
-        public String execContextId;
-        public String internalContextId;
-
-        public String processName;
-        public String processCode;
-        public SourceCodeParamsYaml.FunctionDefForSourceCode function;
-        public List<SourceCodeParamsYaml.FunctionDefForSourceCode> preFunctions;
-        public List<SourceCodeParamsYaml.FunctionDefForSourceCode> postFunctions;
-
-        /**
-         * Timeout before terminating a process with function
-         * value in seconds
-         * null or 0 mean the infinite execution
-         */
-        public Long timeoutBeforeTerminate;
-        public final List<String> input = new ArrayList<>();
-        public final List<String> output = new ArrayList<>();
-        public List<Meta> metas = new ArrayList<>();
-    }
-
-    @Data
     public static class SourceCodeGraph {
-        public boolean clean;
-        public final DirectedAcyclicGraph<SimpleTaskVertex, DefaultEdge> graph = new DirectedAcyclicGraph<>(DefaultEdge.class);
+        public boolean clean = false;
+        public boolean preservePoolNames = false;
+        public final List<ExecContextParamsYaml.Process> processes = new ArrayList<>();
+
+        public final ExecContextParamsYaml.VariableDefinition variables = new ExecContextParamsYaml.VariableDefinition();
+        public final DirectedAcyclicGraph<String, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
     }
 }

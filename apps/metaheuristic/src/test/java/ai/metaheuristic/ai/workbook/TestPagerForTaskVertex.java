@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.workbook;
 
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.junit.Test;
 
 import java.util.List;
@@ -34,17 +34,17 @@ public class TestPagerForTaskVertex {
 
     @Test
     public void test() {
-        List<ExecContextParamsYaml.TaskVertex> vertices = List.of(
-                new ExecContextParamsYaml.TaskVertex(1L, NONE),
-                new ExecContextParamsYaml.TaskVertex(2L, NONE),
-                new ExecContextParamsYaml.TaskVertex(3L, NONE),
-                new ExecContextParamsYaml.TaskVertex(4L, NONE),
-                new ExecContextParamsYaml.TaskVertex(5L, NONE),
-                new ExecContextParamsYaml.TaskVertex(6L, NONE),
-                new ExecContextParamsYaml.TaskVertex(7L, NONE),
-                new ExecContextParamsYaml.TaskVertex(8L, NONE),
-                new ExecContextParamsYaml.TaskVertex(9L, NONE),
-                new ExecContextParamsYaml.TaskVertex(10L, NONE)
+        List<ExecContextData.TaskVertex> vertices = List.of(
+                new ExecContextData.TaskVertex(1L, NONE),
+                new ExecContextData.TaskVertex(2L, NONE),
+                new ExecContextData.TaskVertex(3L, NONE),
+                new ExecContextData.TaskVertex(4L, NONE),
+                new ExecContextData.TaskVertex(5L, NONE),
+                new ExecContextData.TaskVertex(6L, NONE),
+                new ExecContextData.TaskVertex(7L, NONE),
+                new ExecContextData.TaskVertex(8L, NONE),
+                new ExecContextData.TaskVertex(9L, NONE),
+                new ExecContextData.TaskVertex(10L, NONE)
         );
 
         List<Long> ids = ExecContextService.getIdsForSearch(vertices, 0, 3);

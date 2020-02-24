@@ -14,13 +14,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.source_code;
+package ai.metaheuristic.ai.dispatcher.data;
 
-import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.EnumsApi;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
+/**
+ * @author Serge
+ * Date: 2/24/2020
+ * Time: 1:48 AM
+ */
+public class ExecContextData {
 
-public class SourceCodeUtils {
-
+    @Data
+    @EqualsAndHashCode(of = "taskId")
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TaskVertex {
+        public Long taskId;
+        public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
+    }
 }

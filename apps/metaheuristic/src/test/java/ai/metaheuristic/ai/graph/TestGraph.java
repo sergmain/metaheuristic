@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml.TaskVertex;
+import static ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
 import static org.junit.Assert.*;
 
 /**
@@ -62,56 +62,56 @@ public class TestGraph extends PreparingPlan {
     public void test() {
 
         SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(sourceCode.getId(), execContextYaml);
-        workbook = (ExecContextImpl)result.execContext;
+        execContextForFeature = (ExecContextImpl)result.execContext;
 
-        assertNotNull(workbook);
+        assertNotNull(execContextForFeature);
 
-        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(workbook.id, List.of(), List.of(1L));
-        workbook = execContextCache.findById(workbook.id);
+        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForFeature.id, List.of(), List.of(1L));
+        execContextForFeature = execContextCache.findById(execContextForFeature.id);
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-        long count = execContextService.getCountUnfinishedTasks(workbook);
+        long count = execContextService.getCountUnfinishedTasks(execContextForFeature);
         assertEquals(1, count);
 
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph(workbook.id,List.of(1L), List.of(2L, 3L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForFeature.id,List.of(1L), List.of(2L, 3L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        workbook = execContextCache.findById(workbook.id);
+        execContextForFeature = execContextCache.findById(execContextForFeature.id);
 
-        count = execContextService.getCountUnfinishedTasks(workbook);
+        count = execContextService.getCountUnfinishedTasks(execContextForFeature);
         assertEquals(3, count);
 
-        List<TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(workbook);
+        List<TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForFeature);
 
         assertEquals(2, leafs.size());
         assertTrue(leafs.contains(new TaskVertex(2L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new TaskVertex(3L, EnumsApi.TaskExecState.NONE)));
 
-        setExecState(workbook, 1L, EnumsApi.TaskExecState.BROKEN);
-        setExecState(workbook, 2L, EnumsApi.TaskExecState.NONE);
-        setExecState(workbook, 3L, EnumsApi.TaskExecState.NONE);
+        setExecState(execContextForFeature, 1L, EnumsApi.TaskExecState.BROKEN);
+        setExecState(execContextForFeature, 2L, EnumsApi.TaskExecState.NONE);
+        setExecState(execContextForFeature, 3L, EnumsApi.TaskExecState.NONE);
 
         ExecContextOperationStatusWithTaskList status =
-                execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook.id,1L);
+                execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(execContextForFeature.id,1L);
         assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
-        workbook = execContextCache.findById(workbook.id);
+        execContextForFeature = execContextCache.findById(execContextForFeature.id);
 
         // there is only 'BROKEN' exec state
-        Set<EnumsApi.TaskExecState> states = execContextGraphTopLevelService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
+        Set<EnumsApi.TaskExecState> states = execContextGraphTopLevelService.findAll(execContextForFeature).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(1, states.size());
         assertTrue(states.contains(EnumsApi.TaskExecState.BROKEN));
 
-        count = execContextService.getCountUnfinishedTasks(workbook);
+        count = execContextService.getCountUnfinishedTasks(execContextForFeature);
         assertEquals(0, count);
 
 
-        setExecState(workbook, 1L, EnumsApi.TaskExecState.NONE);
-        execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(workbook.id,1L);
-        workbook = execContextCache.findById(workbook.id);
+        setExecState(execContextForFeature, 1L, EnumsApi.TaskExecState.NONE);
+        execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(execContextForFeature.id,1L);
+        execContextForFeature = execContextCache.findById(execContextForFeature.id);
 
         // there is only 'NONE' exec state
-        states = execContextGraphTopLevelService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
+        states = execContextGraphTopLevelService.findAll(execContextForFeature).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(1, states.size());
         assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
     }

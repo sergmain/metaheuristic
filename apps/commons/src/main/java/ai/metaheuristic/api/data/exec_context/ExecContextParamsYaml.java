@@ -18,16 +18,21 @@ package ai.metaheuristic.api.data.exec_context;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import ai.metaheuristic.api.data.Meta;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Data
 public class ExecContextParamsYaml implements BaseParams {
+
+    public final int version = 1;
 
     @Override
     public boolean checkIntegrity() {
@@ -35,32 +40,67 @@ public class ExecContextParamsYaml implements BaseParams {
     }
 
     @Data
-    public static class ExecContextYaml {
-        // key - ???, value - list of name of variables
-        public Map<String, List<String>> variables = new HashMap<>();
-        public List<String> globalVariables = new ArrayList<>();
-
-        public boolean preservePoolNames;
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class VariableDefinition {
+        public List<String> globals;
+        public String startInputAs;
+        public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
     @Data
-    @EqualsAndHashCode(of = "taskId")
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class TaskVertex {
-        public Long taskId;
-        public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
+    public static class FunctionDefinition {
+        public String code;
+        public String params;
+        public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
+
+        public FunctionDefinition(String code) {
+            this.code = code;
+        }
+
+        public FunctionDefinition(String code, EnumsApi.FunctionExecContext context) {
+            this.code = code;
+            this.context = context;
+        }
     }
 
-    public final int version = 1;
-    public ExecContextYaml execContextYaml = new ExecContextYaml();
+    @Data
+    @EqualsAndHashCode(of = {"processCode", "execContextId"})
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Process {
+        public String processName;
+        public String processCode;
+
+        public String execContextId;
+        public String internalContextId;
+
+        public FunctionDefinition function;
+        public List<FunctionDefinition> preFunctions;
+        public List<FunctionDefinition> postFunctions;
+
+        /**
+         * Timeout before terminating a process with function
+         * value in seconds
+         * null or 0 mean the infinite execution
+         */
+        public Long timeoutBeforeTerminate;
+        public final List<String> input = new ArrayList<>();
+        public final List<String> output = new ArrayList<>();
+        public List<Meta> metas = new ArrayList<>();
+    }
+
+    public boolean clean;
+    public boolean preservePoolNames;
+    public List<Process> processes;
+    public VariableDefinition variables;
+
     // this is a graph for runtime phase
     public String graph;
 
-    @JsonIgnore
-    public Set<String> getAllVariables() {
-        Set<String> variables = new HashSet<>();
-        execContextYaml.variables.values().forEach(variables::addAll);
-        return variables;
-    }
+    // this graph is for creating tasks dynamically
+    public String processesGraph;
+
 }

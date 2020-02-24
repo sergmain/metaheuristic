@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
@@ -58,7 +59,7 @@ public class TaskProducingService {
     private final InternalFunctionProcessor internalFunctionProcessor;
     private final IdsRepository idsRepository;
 
-    public SourceCodeService.ProduceTaskResult produceTasks(SourceCodeData.SourceCodeGraph sourceCodeGraph) {
+    public SourceCodeService.ProduceTaskResult produceTasks(ExecContextParamsYaml execContextParamsYaml) {
         if (true) {
             throw new NotImplementedException("not yet");
         }

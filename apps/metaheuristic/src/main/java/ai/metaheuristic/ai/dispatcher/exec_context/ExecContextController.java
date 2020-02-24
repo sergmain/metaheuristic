@@ -51,6 +51,7 @@ public class ExecContextController {
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextService execContextService;
     private final UserContextService userContextService;
+    private final ExecContextCreatorService execContextCreatorService;
 
     // ============= Exec contexts =============
 
@@ -87,11 +88,14 @@ public class ExecContextController {
         return "dispatcher/source-code/exec-context-add";
     }
 
+    /**
+     * right now reference to global variable isn't supported. all global variables must be specified in SourceCode.
+     */
     @PostMapping("/exec-context-code-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextAddCommit(Long sourceCodeId, String variable, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.ExecContextResult execContextResultRest = execContextService.createExecContext(sourceCodeId, variable, context);
+        ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorService.createExecContext(sourceCodeId, context);
         if (execContextResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", execContextResultRest.errorMessages);
         }

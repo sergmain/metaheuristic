@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
@@ -483,7 +484,7 @@ public class BatchService {
         }
         final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getSourceCodeId());
 
-        List<ExecContextParamsYaml.TaskVertex> taskVertices;
+        List<ExecContextData.TaskVertex> taskVertices;
         try {
             taskVertices = execContextGraphTopLevelService.findLeafs(wb);
         } catch (ObjectOptimisticLockingFailureException e) {

@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
@@ -39,6 +40,7 @@ import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtilsV1;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV1;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -52,7 +54,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -101,13 +102,16 @@ public abstract class PreparingPlan extends PreparingExperiment {
     @Autowired
     public ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
+    @Autowired
+    public ExecContextCreatorService execContextCreatorService;
+
     public SourceCodeImpl sourceCode = null;
     public Function s1 = null;
     public Function s2 = null;
     public Function s3 = null;
     public Function s4 = null;
     public Function s5 = null;
-    public ExecContextImpl workbook = null;
+    public ExecContextImpl execContextForFeature = null;
 
     public ExecContextParamsYaml.ExecContextYaml execContextYaml;
 
@@ -355,14 +359,14 @@ public abstract class PreparingPlan extends PreparingExperiment {
         deleteFunction(s3);
         deleteFunction(s4);
         deleteFunction(s5);
-        if (workbook!=null) {
+        if (execContextForFeature !=null) {
             try {
-                execContextRepository.deleteById(workbook.getId());
+                execContextRepository.deleteById(execContextForFeature.getId());
             } catch (Throwable th) {
                 log.error("Error while workbookRepository.deleteById()", th);
             }
             try {
-                taskRepository.deleteByExecContextId(workbook.getId());
+                taskRepository.deleteByExecContextId(execContextForFeature.getId());
             } catch (ObjectOptimisticLockingFailureException th) {
                 //
             } catch (Throwable th) {
@@ -383,31 +387,31 @@ public abstract class PreparingPlan extends PreparingExperiment {
         EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        TaskProducingResultComplex result = execContextService.createExecContext(sourceCode.getId(), execContextYaml);
-        workbook = (ExecContextImpl)result.execContext;
+        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
+        execContextForFeature = (ExecContextImpl)result.execContext;
 
-        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
-        assertNotNull(workbook);
-        assertEquals(EnumsApi.ExecContextState.NONE.code, workbook.getState());
+        assertFalse(result.isErrorMessages());
+        assertNotNull(execContextForFeature);
+        assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
 
 
-        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(workbook.id);
+        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, producingStatus);
-        workbook = execContextCache.findById(this.workbook.id);
-        assertNotNull(workbook);
-        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, workbook.getState());
+        execContextForFeature = execContextCache.findById(this.execContextForFeature.id);
+        assertNotNull(execContextForFeature);
+        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
 
-        result = sourceCodeService.produceAllTasks(true, sourceCode, this.workbook);
+        SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForFeature);
         experiment = experimentCache.findById(experiment.id);
-        this.workbook = (ExecContextImpl)result.execContext;
-        assertEquals(result.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(workbook.id).size());
-        assertEquals(result.numberOfTasks, execContextService.getCountUnfinishedTasks(workbook));
+        this.execContextForFeature = (ExecContextImpl)result.execContext;
+        assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForFeature.id).size());
+        assertEquals(result1.numberOfTasks, execContextService.getCountUnfinishedTasks(execContextForFeature));
 
 
-        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
-        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, this.workbook.getState());
+        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result1.sourceCodeProducingStatus);
+        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, this.execContextForFeature.getState());
 
-        return result;
+        return result1;
     }
 
     private void deleteFunction(Function s) {

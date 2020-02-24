@@ -21,23 +21,24 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -51,92 +52,115 @@ import java.util.concurrent.atomic.AtomicLong;
 @RequiredArgsConstructor
 public class ExecContextCreatorService {
 
-    private final VariableService variableService;
-    private final GlobalVariableService globalVariableService;
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class ExecContextCreationResult extends BaseDataClass {
+        public ExecContextImpl execContext;
+        public SourceCodeImpl sourceCode;
+
+        public ExecContextCreationResult(List<String> errorMessages) {
+            this.errorMessages = errorMessages;
+        }
+        public ExecContextCreationResult(String errorMessage) {
+            this.addErrorMessage(errorMessage);
+        }
+
+        public ExecContextCreationResult(SourceCodeImpl sourceCode) {
+            this.sourceCode = sourceCode;
+        }
+
+        public ExecContextCreationResult(SourceCodeImpl sourceCode, ExecContextImpl execContext) {
+            this.sourceCode = sourceCode;
+            this.execContext = execContext;
+        }
+    }
+
     private final ExecContextCache execContextCache;
-    private final SourceCodeCache sourceCodeCache;
-    private final SourceCodeRepository sourceCodeRepository;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
 
-    public SourceCodeApiData.ExecContextResult createExecContext(Long sourceCodeId, DispatcherContext context) {
+    public ExecContextCreationResult createExecContext(Long sourceCodeId, DispatcherContext context) {
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, context.getCompanyId());
         if (sourceCodesForCompany.isErrorMessages()) {
-            return new SourceCodeApiData.ExecContextResult("#560.072 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
+            return new ExecContextCreationResult("#560.072 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
                     "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.getCompanyId());
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
-            return new SourceCodeApiData.ExecContextResult("#560.072 Error creating execContext: " +
+            return new ExecContextCreationResult("#560.072 Error creating execContext: " +
                     "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.getCompanyId());
         }
         return createExecContext(sourceCode);
     }
 
-    public SourceCodeApiData.ExecContextResult createExecContext(String sourceCodeUid, DispatcherContext context) {
+    public ExecContextCreationResult createExecContext(String sourceCodeUid, DispatcherContext context) {
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(context.getCompanyId(), sourceCodeUid);
         if (sourceCodesForCompany.isErrorMessages()) {
-            return new SourceCodeApiData.ExecContextResult("#560.072 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
+            return new ExecContextCreationResult("#560.072 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
                     "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.getCompanyId());
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
-            return new SourceCodeApiData.ExecContextResult("#560.072 Error creating execContext: " +
+            return new ExecContextCreationResult("#560.072 Error creating execContext: " +
                     "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.getCompanyId());
         }
         return createExecContext(sourceCode);
     }
 
-    private SourceCodeApiData.ExecContextResult createExecContext(SourceCodeImpl sourceCode) {
+    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode) {
         if (sourceCode==null) {
-            return new SourceCodeApiData.ExecContextResult("#560.006 source code wasn't found");
+            return new ExecContextCreationResult("#560.006 source code wasn't found");
         }
         // validate the sourceCode
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
         if (sourceCodeValidation.status != EnumsApi.SourceCodeValidateStatus.OK) {
-            return new SourceCodeApiData.ExecContextResult(sourceCodeValidation.errorMessages);
+            return new ExecContextCreationResult(sourceCodeValidation.errorMessages);
         }
 
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
         AtomicLong contextId = new AtomicLong();
-        if (true) {
-            throw new NotImplementedException("Not yet");
-        }
-        SourceCodeData.SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, scspy.source, () -> "" + contextId.incrementAndGet());
-
-        ExecContextParamsYaml.ExecContextYaml execContextYaml = new ExecContextParamsYaml.ExecContextYaml();
+        ExecContextCreationResult ecr = new ExecContextCreationResult();
+        SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
+                EnumsApi.SourceCodeLang.yaml, scspy.source, () -> "" + contextId.incrementAndGet());
 
         // TODO 2020-02-24 add this line
         // changeValidStatus(producingResult.execContext.getId(), true);
 
-        SourceCodeApiData.TaskProducingResultComplex execContext = createExecContext(sourceCode, execContextYaml);
-        if (execContext.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
-            return new SourceCodeApiData.ExecContextResult(sourceCodeValidation.errorMessages);
-        }
-        SourceCodeApiData.ExecContextResult ecr = new SourceCodeApiData.ExecContextResult();
-        ecr.execContext = execContext.execContext;
+        //noinspection UnnecessaryLocalVariable
+        ExecContextImpl execContext = createExecContext(sourceCode, sourceCodeGraph);
+        ecr.execContext = execContext;
         return ecr;
     }
 
-
-    private SourceCodeApiData.TaskProducingResultComplex createExecContext(SourceCodeImpl sourceCode, ExecContextParamsYaml.ExecContextYaml execContextYaml) {
-        SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
+    private ExecContextImpl createExecContext(SourceCodeImpl sourceCode, SourceCodeData.SourceCodeGraph sourceCodeGraph) {
 
         ExecContextImpl ec = new ExecContextImpl();
         ec.setSourceCodeId(sourceCode.id);
         ec.setCreatedOn(System.currentTimeMillis());
         ec.setState(EnumsApi.ExecContextState.NONE.code);
         ec.setCompletedOn(null);
-        ExecContextParamsYaml params = new ExecContextParamsYaml();
-        params.execContextYaml = execContextYaml;
-        params.graph = Consts.EMPTY_GRAPH;
-        ec.updateParams(params);
+        ec.updateParams(to(sourceCodeGraph));
         ec.setValid(true);
 
-        result.execContext = execContextCache.save(ec);
-        result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;
-
-        return result;
+        //noinspection UnnecessaryLocalVariable
+        ExecContextImpl execContext = execContextCache.save(ec);
+        return execContext;
     }
 
+    private ExecContextParamsYaml to(SourceCodeData.SourceCodeGraph sourceCodeGraph) {
+        ExecContextParamsYaml params = new ExecContextParamsYaml();
+        params.clean = sourceCodeGraph.clean;
+        params.preservePoolNames = sourceCodeGraph.preservePoolNames;
+        params.processes = sourceCodeGraph.processes;
+        params.variables = sourceCodeGraph.variables;
+
+        if (true) {
+            throw new NotImplementedException("add here Export of sourceCodeGraph.processGraph to String;");
+        }
+        params.processesGraph = "";
+        params.graph = Consts.EMPTY_GRAPH;
+
+        return params;
+    }
 }

@@ -68,22 +68,22 @@ public class TestCountOfTasks extends PreparingPlan {
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
         SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(sourceCode.getId(), execContextYaml);
-        workbook = (ExecContextImpl)result.execContext;
+        execContextForFeature = (ExecContextImpl)result.execContext;
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
-        assertNotNull(workbook);
-        assertEquals(EnumsApi.ExecContextState.NONE.code, workbook.getState());
+        assertNotNull(execContextForFeature);
+        assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
 
 
-        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(workbook.id);
-        workbook = execContextCache.findById(this.workbook.id);
-        assertNotNull(workbook);
-        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, workbook.getState());
+        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
+        execContextForFeature = execContextCache.findById(this.execContextForFeature.id);
+        assertNotNull(execContextForFeature);
+        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
 
         List<Object[]> tasks01 = taskCollector.getTasks(result.execContext);
         assertTrue(tasks01.isEmpty());
 
         long mills = System.currentTimeMillis();
-        result = sourceCodeService.produceAllTasks(false, sourceCode, workbook);
+        result = sourceCodeService.produceAllTasks(false, sourceCode, execContextForFeature);
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
@@ -93,12 +93,12 @@ public class TestCountOfTasks extends PreparingPlan {
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
-        result = sourceCodeService.produceAllTasks(true, sourceCode, workbook);
+        result = sourceCodeService.produceAllTasks(true, sourceCode, execContextForFeature);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        workbook = (ExecContextImpl)result.execContext;
+        execContextForFeature = (ExecContextImpl)result.execContext;
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
-        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, workbook.getState());
+        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, execContextForFeature.getState());
 
         experiment = experimentCache.findById(experiment.getId());
 
@@ -110,8 +110,8 @@ public class TestCountOfTasks extends PreparingPlan {
         assertFalse(tasks.isEmpty());
         assertEquals(numberOfTasks, tasks.size());
 
-        result = sourceCodeService.produceAllTasks(false, sourceCode, workbook);
-        List<Object[]> tasks03 = taskCollector.getTasks(workbook);
+        result = sourceCodeService.produceAllTasks(false, sourceCode, execContextForFeature);
+        List<Object[]> tasks03 = taskCollector.getTasks(execContextForFeature);
         assertFalse(tasks03.isEmpty());
         assertEquals(numberOfTasks, tasks.size());
 

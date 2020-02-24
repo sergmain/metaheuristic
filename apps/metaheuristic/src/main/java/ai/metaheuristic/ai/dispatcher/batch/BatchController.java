@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
@@ -61,6 +62,7 @@ public class BatchController {
     private final BatchTopLevelService batchTopLevelService;
     private final UserContextService userContextService;
     private final SourceCodeService sourceCodeService;
+    private final SourceCodeSelectorService sourceCodeSelectorService;
 
     @GetMapping("/index")
     public String index() {
@@ -97,7 +99,7 @@ public class BatchController {
     @GetMapping(value = "/batch-add")
     public String batchAdd(Model model, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeService.getAvailableSourceCodesForCompany(context);
+        SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeSelectorService.getAvailableSourceCodesForCompany(context);
         ControllerUtils.addMessagesToModel(model, sourceCodes);
         model.addAttribute("result", sourceCodes);
         return "dispatcher/batch/batch-add";

@@ -17,12 +17,12 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,41 +59,41 @@ public class TestGraphEdges extends PreparingPlan {
     public void test() {
 
         SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(sourceCode.getId(), execContextYaml);
-        workbook = (ExecContextImpl)result.execContext;
+        execContextForFeature = (ExecContextImpl)result.execContext;
 
-        assertNotNull(workbook);
+        assertNotNull(execContextForFeature);
 
-        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(workbook.id, List.of(), List.of(1L));
-        workbook = execContextCache.findById(workbook.id);
+        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForFeature.id, List.of(), List.of(1L));
+        execContextForFeature = execContextCache.findById(execContextForFeature.id);
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-        long count = execContextService.getCountUnfinishedTasks(workbook);
+        long count = execContextService.getCountUnfinishedTasks(execContextForFeature);
         assertEquals(1, count);
 
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph(workbook.id,List.of(1L), List.of(21L, 22L, 23L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForFeature.id,List.of(1L), List.of(21L, 22L, 23L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        workbook = execContextCache.findById(workbook.id);
+        execContextForFeature = execContextCache.findById(execContextForFeature.id);
 
-        List<ExecContextParamsYaml.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(workbook);
+        List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForFeature);
 
         assertEquals(3, leafs.size());
-        assertTrue(leafs.contains(new ExecContextParamsYaml.TaskVertex(21L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new ExecContextParamsYaml.TaskVertex(22L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new ExecContextParamsYaml.TaskVertex(23L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex(21L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex(22L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex(23L, EnumsApi.TaskExecState.NONE)));
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph( workbook.id,List.of(21L), List.of(311L, 312L, 313L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph( execContextForFeature.id,List.of(21L), List.of(311L, 312L, 313L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        workbook = execContextCache.findById(workbook.id);
+        execContextForFeature = execContextCache.findById(execContextForFeature.id);
 
-        Set<ExecContextParamsYaml.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(workbook, 1L);
+        Set<ExecContextData.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(execContextForFeature, 1L);
         assertEquals(6, descendands.size());
 
-        descendands = execContextGraphTopLevelService.findDescendants(workbook, 21L);
+        descendands = execContextGraphTopLevelService.findDescendants(execContextForFeature, 21L);
         assertEquals(3, descendands.size());
 
-        leafs = execContextGraphTopLevelService.findLeafs(workbook);
+        leafs = execContextGraphTopLevelService.findLeafs(execContextForFeature);
         assertEquals(5, leafs.size());
     }
 }

@@ -19,25 +19,23 @@ package ai.metaheuristic.ai.dispatcher.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
-import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.Ids;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils;
-import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
+import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -47,7 +45,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -58,7 +55,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -71,7 +67,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -96,7 +93,6 @@ public class BatchTopLevelService {
     private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[/\\\\A-Za-z0-9._-]*$";
     private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
 
-    private final SourceCodeService sourceCodeService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final VariableService variableService;
     private final BatchRepository batchRepository;
@@ -165,7 +161,7 @@ public class BatchTopLevelService {
         return result;
     }
 
-    public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext context) {
+    public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
             return new BatchData.UploadingStatus("#995.040 name of uploaded file is null or blank");
@@ -182,7 +178,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(context.getCompanyId(), sourceCodeId);
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(dispatcherContext.getCompanyId(), sourceCodeId);
         if (sourceCodesForCompany.isErrorMessages()) {
             return new BatchData.UploadingStatus(sourceCodesForCompany.errorMessages);
         }
@@ -193,7 +189,7 @@ public class BatchTopLevelService {
         if (!sourceCode.getId().equals(sourceCodeId)) {
             return new BatchData.UploadingStatus("#995.038 Fatal error in configuration of sourceCode, report to developers immediately");
         }
-        dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, context.getCompanyId(), originFilename, file.getSize(), null, null, context );
+        dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, dispatcherContext.getCompanyId(), originFilename, file.getSize(), null, null, dispatcherContext );
 
         // TODO 2019-07-06 Do we need to validate the sourceCode here in case that there is another check?
         //  2019-10-28 it's working so left it as is until an issue with this will be found
@@ -219,24 +215,28 @@ public class BatchTopLevelService {
             }
 */
 
-            SourceCodeApiData.ExecContextResult execContextResult = execContextCreatorService.createExecContext(sourceCodeId, context);
-            if (execContextResult.isErrorMessages()) {
-                throw new BatchResourceProcessingException("#995.075 Error creating execContext: " + execContextResult.getErrorMessagesAsStr());
+            ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorService.createExecContext(sourceCodeId, dispatcherContext);
+            if (creationResult.isErrorMessages()) {
+                throw new BatchResourceProcessingException("#995.075 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
 
             variableService.save(
-                    file.getInputStream(), file.getSize(), code,
-                    originFilename, producingResult.execContext.getId(),
+                    file.getInputStream(), file.getSize(), creationResult.sourceCodeGraph.variables.startInputAs,
+                    originFilename, creationResult.execContext.getId(),
                     ""+idsRepository.save(new Ids()).id
             );
 
-            b = new Batch(sourceCodeId, producingResult.execContext.getId(), Enums.BatchExecState.Stored, context.getAccountId(), context.getCompanyId());
+            b = new Batch(sourceCodeId, creationResult.execContext.getId(), Enums.BatchExecState.Stored,
+                    dispatcherContext.getAccountId(), dispatcherContext.getCompanyId());
+
             BatchParamsYaml bpy = new BatchParamsYaml();
-            bpy.username = context.account.username;
+            bpy.username = dispatcherContext.account.username;
             b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
             b = batchCache.save(b);
 
-            dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_CREATED, context.getCompanyId(), sourceCode.uid, null, b.id, producingResult.execContext.getId(), context );
+            dispatcherEventService.publishBatchEvent(
+                    EnumsApi.DispatcherEventType.BATCH_CREATED, dispatcherContext.getCompanyId(),
+                    sourceCode.uid, null, b.id, creationResult.execContext.getId(), dispatcherContext );
 
             final Batch batch = batchService.changeStateToPreparing(b.id);
             // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed
@@ -248,14 +248,15 @@ public class BatchTopLevelService {
 
             //noinspection unused
             int i=0;
+
+            //noinspection UnnecessaryLocalVariable
+            BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, creationResult.execContext.getId());
+            return uploadingStatus;
         }
         catch (Throwable th) {
             log.error("Error", th);
             return new BatchData.UploadingStatus("#995.120 can't load file, error: " + th.getMessage()+", class: " + th.getClass());
         }
-        //noinspection UnnecessaryLocalVariable
-        BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, producingResult.execContext.getId());
-        return uploadingStatus;
     }
 
     public OperationStatusRest processResourceDeleteCommit(Long batchId, DispatcherContext context, boolean isVirtualDeletion) {

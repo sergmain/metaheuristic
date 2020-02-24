@@ -155,12 +155,6 @@ public class ExperimentRestController {
         return experimentTopLevelService.uploadExperiment(file);
     }
 
-    @PostMapping("/bind-experiment-to-source-code-with-resource")
-    public OperationStatusRest bindExperimentToSourceCodeWithResource(String experimentCode, String resourcePoolCode, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        return experimentTopLevelService.bindExperimentToSourceCodeWithResource(experimentCode, resourcePoolCode, context);
-    }
-
     @PostMapping("/produce-tasks")
     public OperationStatusRest produceTasks(String experimentCode) {
         return experimentTopLevelService.produceTasks(experimentCode);

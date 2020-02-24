@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SimpleTaskVertex;
 import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph;
 
 /**
@@ -35,28 +34,28 @@ import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph
 public class SourceCodeGraphUtils {
 
     public static void addNewTasksToGraph(
-            SourceCodeGraph sourceCodeGraph, SimpleTaskVertex vertex, List<Long> parentTaskIds) {
+            SourceCodeGraph sourceCodeGraph, String vertex, List<String> parentProcesses) {
 
-        List<SimpleTaskVertex> parentVertices = sourceCodeGraph.graph.vertexSet()
+        List<String> parentVertices = sourceCodeGraph.processGraph.vertexSet()
                 .stream()
-                .filter(o -> parentTaskIds.contains(o.taskId))
+                .filter(parentProcesses::contains)
                 .collect(Collectors.toList());
 
-        sourceCodeGraph.graph.addVertex(vertex);
-        parentVertices.forEach(parentV -> sourceCodeGraph.graph.addEdge(parentV, vertex) );
+        sourceCodeGraph.processGraph.addVertex(vertex);
+        parentVertices.forEach(parentV -> sourceCodeGraph.processGraph.addEdge(parentV, vertex) );
     }
 
-    public static Set<SimpleTaskVertex> findDescendants(SourceCodeGraph sourceCodeGraph, Long taskId) {
-        SimpleTaskVertex vertex = sourceCodeGraph.graph.vertexSet()
+    public static Set<String> findDescendants(SourceCodeGraph sourceCodeGraph, String process) {
+        String vertex = sourceCodeGraph.processGraph.vertexSet()
                 .stream()
-                .filter(o -> taskId.equals(o.taskId))
+                .filter(process::equals)
                 .findFirst().orElse(null);
         if (vertex==null) {
             return Set.of();
         }
 
-        Iterator<SimpleTaskVertex> iterator = new BreadthFirstIterator<>(sourceCodeGraph.graph, vertex);
-        Set<SimpleTaskVertex> descendants = new HashSet<>();
+        Iterator<String> iterator = new BreadthFirstIterator<>(sourceCodeGraph.processGraph, vertex);
+        Set<String> descendants = new HashSet<>();
 
         // Do not add start vertex to result.
         if (iterator.hasNext()) {
@@ -67,36 +66,36 @@ public class SourceCodeGraphUtils {
         return descendants;
     }
 
-    public static List<SimpleTaskVertex> findLeafs(SourceCodeGraph sourceCodeGraph) {
+    public static List<String> findLeafs(SourceCodeGraph sourceCodeGraph) {
         //noinspection UnnecessaryLocalVariable
-        List<SimpleTaskVertex> vertices = sourceCodeGraph.graph.vertexSet()
+        List<String> vertices = sourceCodeGraph.processGraph.vertexSet()
                 .stream()
-                .filter(o -> sourceCodeGraph.graph.outDegreeOf(o)==0)
+                .filter(o -> sourceCodeGraph.processGraph.outDegreeOf(o)==0)
                 .collect(Collectors.toList());
         return vertices;
     }
 
-    public static SimpleTaskVertex findVertex(SourceCodeGraph sourceCodeGraph, Long taskId) {
+    public static String findVertex(SourceCodeGraph sourceCodeGraph, String process) {
         //noinspection UnnecessaryLocalVariable
-        SimpleTaskVertex vertex = sourceCodeGraph.graph.vertexSet()
+        String vertex = sourceCodeGraph.processGraph.vertexSet()
                 .stream()
-                .filter(o -> o.taskId.equals(taskId))
+                .filter(process::equals)
                 .findFirst()
                 .orElse(null);
 
         return vertex;
     }
 
-    public static List<SimpleTaskVertex> findTargets(SourceCodeGraph sourceCodeGraph, Long taskId) {
-        SimpleTaskVertex v = findVertex(sourceCodeGraph, taskId);
+    public static List<String> findTargets(SourceCodeGraph sourceCodeGraph, String process) {
+        String v = findVertex(sourceCodeGraph, process);
         if (v==null) {
             return List.of();
         }
 
         //noinspection UnnecessaryLocalVariable
-        List<SimpleTaskVertex> vertices = sourceCodeGraph.graph.outgoingEdgesOf(v)
+        List<String> vertices = sourceCodeGraph.processGraph.outgoingEdgesOf(v)
                 .stream()
-                .map(sourceCodeGraph.graph::getEdgeTarget)
+                .map(sourceCodeGraph.processGraph::getEdgeTarget)
                 .collect(Collectors.toList());
         return vertices;
     }

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.company;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
@@ -59,6 +60,7 @@ public class BatchForOperatorController {
     private final BatchTopLevelService batchTopLevelService;
     private final UserContextService userContextService;
     private final SourceCodeService sourceCodeService;
+    private final SourceCodeSelectorService sourceCodeSelectorService;
 
     @GetMapping("/company-batches/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
@@ -106,7 +108,7 @@ public class BatchForOperatorController {
     @GetMapping(value = "/company-batch-add/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public String batchAdd(Model model, @PathVariable Long companyUniqueId) {
-        SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeService.getAvailableSourceCodesForCompany(companyUniqueId);
+        SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeSelectorService.getAvailableSourceCodesForCompany(companyUniqueId);
         ControllerUtils.addMessagesToModel(model, sourceCodes);
         model.addAttribute("result", sourceCodes);
         model.addAttribute("companyUniqueId", companyUniqueId);

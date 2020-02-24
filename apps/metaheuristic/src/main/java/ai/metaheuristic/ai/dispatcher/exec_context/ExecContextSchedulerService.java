@@ -19,12 +19,12 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.atlas.AtlasService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -121,7 +121,7 @@ public class ExecContextSchedulerService {
         ConcurrentHashMap<Long, Integer> taskStates = new ConcurrentHashMap<>();
         AtomicBoolean isNullState = new AtomicBoolean(false);
 
-        List<ExecContextParamsYaml.TaskVertex> vertices = execContextService.findAllVertices(execContextId);
+        List<ExecContextData.TaskVertex> vertices = execContextService.findAllVertices(execContextId);
         vertices.stream().parallel().forEach(tv -> {
             Integer state = states.get(tv.taskId);
             if (state==null) {

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
@@ -62,6 +63,7 @@ public class BatchRestController {
     private final BatchTopLevelService batchTopLevelService;
     private final UserContextService userContextService;
     private final SourceCodeService sourceCodeService;
+    private final SourceCodeSelectorService sourceCodeSelectorService;
 
     @GetMapping("/batches")
     public BatchData.BatchesResult batches(
@@ -88,7 +90,7 @@ public class BatchRestController {
     @GetMapping(value = "/batch-add")
     public SourceCodeData.SourceCodesForCompany batchAdd(Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.getAvailableSourceCodesForCompany(context);
+        return sourceCodeSelectorService.getAvailableSourceCodesForCompany(context);
     }
 
     @GetMapping("/batch-delete/{batchId}")

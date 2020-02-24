@@ -83,13 +83,13 @@ public class TestTaskRequest extends FeatureMethods {
 
             sessionId = d0.getReAssignedProcessorId().sessionId;
         }
-        List<Object[]> counts = taskRepository.getCountPerOrder(workbook.getId());
+        List<Object[]> counts = taskRepository.getCountPerOrder(execContextForFeature.getId());
         for (Object[] count : counts) {
             if (((Number)count[0]).intValue() > 1) {
                 break;
             }
 
-            DispatcherCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToProcessor(processor.getId(), false, workbook.getId());
+            DispatcherCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
             assertNotNull(t);
 
             final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
@@ -111,8 +111,8 @@ public class TestTaskRequest extends FeatureMethods {
             assertNotNull(task);
             assertTrue(task.isCompleted);
 
-            execContextSchedulerService.updateExecContextStatus(workbook.id,true);
-            workbook = execContextCache.findById(workbook.id);
+            execContextSchedulerService.updateExecContextStatus(execContextForFeature.id,true);
+            execContextForFeature = execContextCache.findById(execContextForFeature.id);
         }
         {
             final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();

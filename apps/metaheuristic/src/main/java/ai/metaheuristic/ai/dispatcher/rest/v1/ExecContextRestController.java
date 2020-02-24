@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
@@ -52,6 +53,7 @@ public class ExecContextRestController {
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextService execContextService;
+    private final ExecContextCreatorService execContextCreatorService;
     private final UserContextService userContextService;
 
     @Data
@@ -70,7 +72,9 @@ public class ExecContextRestController {
     }
 
     /**
-     * create ExecContext by uid
+     * !! right now reference to global variable isn't supported. all global variables must be specified in SourceCode.
+     *
+     * create ExecContext by uid of sourceCode
      * useful for creating ExecContext from command-line with cURL
      *
      * @param uid Uid of sourceCode
@@ -80,19 +84,24 @@ public class ExecContextRestController {
      */
     @PostMapping("/uid-exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SimpleExecContextAddingResult execContextAddCommit(String uid, String variable, Authentication authentication) {
+    public SimpleExecContextAddingResult execContextAddCommit(String uid, @SuppressWarnings("unused") String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.ExecContextResult execContextResult = execContextService.createExecContext(uid, variable, context);
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorService.createExecContext(uid, context);
         return new SimpleExecContextAddingResult(execContextResult.execContext.getId());
     }
 
+    /**
+     * right now reference to global variable isn't supported. all global variables must be specified in SourceCode.
+     */
     @PostMapping("/exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, String variable, Authentication authentication) {
+    public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, @SuppressWarnings("unused") String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorService.createExecContext(sourceCodeId, context);
+
         //noinspection UnnecessaryLocalVariable
-        SourceCodeApiData.ExecContextResult execContextResult = execContextService.createExecContext(sourceCodeId, variable, context);
-        return execContextResult;
+        SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(execContextResult.sourceCode, execContextResult.execContext);
+        return result;
     }
 
     @GetMapping(value = "/exec-context/{sourceCodeId}/{execContextId}")

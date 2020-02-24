@@ -17,10 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -48,23 +48,23 @@ public class ExecContextGraphTopLevelService {
     // section 'execContext graph methods'
 
     // read-only operations with graph
-    public List<ExecContextParamsYaml.TaskVertex> findAll(ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex> findAll(ExecContextImpl execContext) {
         return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findAll(execContext));
     }
 
-    public List<ExecContextParamsYaml.TaskVertex> findLeafs(ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
         return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findLeafs(execContext));
     }
 
-    public Set<ExecContextParamsYaml.TaskVertex> findDescendants(ExecContextImpl execContext, Long taskId) {
+    public Set<ExecContextData.TaskVertex> findDescendants(ExecContextImpl execContext, Long taskId) {
         return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findDescendants(execContext, taskId));
     }
 
-    public List<ExecContextParamsYaml.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
         return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findAllForAssigning(execContext));
     }
 
-    public List<ExecContextParamsYaml.TaskVertex> findAllBroken(ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex> findAllBroken(ExecContextImpl execContext) {
         return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findAllBroken(execContext));
     }
 

@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -66,6 +66,9 @@ public abstract class FeatureMethods extends PreparingPlan {
     @Autowired
     public ExecContextFSM execContextFSM;
 
+    @Autowired
+    public ExecContextCreatorService execContextCreatorService;
+
     public boolean isCorrectInit = true;
 
     @Override
@@ -74,26 +77,26 @@ public abstract class FeatureMethods extends PreparingPlan {
     }
 
     public void toStarted() {
-        execContextFSM.toStarted(workbook);
-        workbook = execContextCache.findById(workbook.getId());
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, workbook.getState());
+        execContextFSM.toStarted(execContextForFeature);
+        execContextForFeature = execContextCache.findById(execContextForFeature.getId());
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForFeature.getState());
     }
 
     protected void produceTasks() {
         EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(sourceCode.getId(), execContextYaml);
-        workbook = (ExecContextImpl)result.execContext;
-        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
-        assertNotNull(workbook);
-        assertEquals(EnumsApi.ExecContextState.NONE.code, workbook.getState());
+        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
+        execContextForFeature = result.execContext;
+        assertFalse(result.isErrorMessages());
+        assertNotNull(execContextForFeature);
+        assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
 
 
-        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(workbook.id);
-        workbook = execContextCache.findById(workbook.id);
+        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
+        execContextForFeature = execContextCache.findById(execContextForFeature.id);
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, producingStatus);
-        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, workbook.getState());
+        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
 
         List<Object[]> tasks01 = taskCollector.getTasks(result.execContext);
         assertTrue(tasks01.isEmpty());
@@ -104,12 +107,12 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
-        result = sourceCodeService.produceAllTasks(true, sourceCode, workbook);
+        SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, execContextForFeature);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        workbook = (ExecContextImpl)result.execContext;
-        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
-        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, workbook.getState());
+        execContextForFeature = result.execContext;
+        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result1.sourceCodeProducingStatus);
+        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, execContextForFeature.getState());
 
         experiment = experimentCache.findById(experiment.getId());
         assertNotNull(experiment.getExecContextId());

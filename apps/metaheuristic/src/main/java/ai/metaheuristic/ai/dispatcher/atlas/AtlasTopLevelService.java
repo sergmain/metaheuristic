@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Atlas;
 import ai.metaheuristic.ai.dispatcher.beans.AtlasTask;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.AtlasData;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.AtlasRepository;
@@ -40,7 +41,6 @@ import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -369,7 +369,7 @@ public class AtlasTopLevelService {
         execContext.setParams(ypywc.atlasParams.execContext.execContextParams);
         execContext.id = ypywc.atlasParams.execContext.execContextId;
         execContext.state = ypywc.atlasParams.execContext.execState;
-        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         AtlasData.ExperimentInfo experimentInfoResult = new AtlasData.ExperimentInfo();
         experimentInfoResult.features = ypywc.getExperimentParamsYaml().processing.features
@@ -719,7 +719,7 @@ public class AtlasTopLevelService {
         execContext.setParams( ypywc.atlasParams.execContext.execContextParams);
         execContext.id = ypywc.atlasParams.execContext.execContextId;
         execContext.state = ypywc.atlasParams.execContext.execState;
-        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
@@ -771,7 +771,7 @@ public class AtlasTopLevelService {
         execContext.setParams(ypywc.atlasParams.execContext.execContextParams);
         execContext.id = ypywc.atlasParams.execContext.execContextId;
         execContext.state = ypywc.atlasParams.execContext.execState;
-        List<ExecContextParamsYaml.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
         result.tasks = findTasks(atlasId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
