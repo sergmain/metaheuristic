@@ -737,7 +737,7 @@ public class ExperimentTopLevelService {
                     "#285.510 can't find a sourceCode with experiment code: " + experimentCode);
         }
 */
-        SourceCodeApiData.ExecContextResult execContextResultRest = sourceCodeTopLevelService.addExecContext(p.id, resourcePoolCode, context);
+        SourceCodeApiData.ExecContextResult execContextResultRest = execContextService.createExecContext(p.id, resourcePoolCode, context);
         if (execContextResultRest.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, execContextResultRest.errorMessages, execContextResultRest.infoMessages);
         }

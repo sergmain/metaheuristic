@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
@@ -94,6 +95,7 @@ public class BatchTopLevelService {
     private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
 
     private final SourceCodeService sourceCodeService;
+    private final SourceCodeValidationService sourceCodeValidationService;
     private final VariableService variableService;
     private final BatchRepository batchRepository;
     private final BatchService batchService;
@@ -192,7 +194,7 @@ public class BatchTopLevelService {
         // TODO 2019-07-06 Do we need to validate the sourceCode here in case that there is another check?
         //  2019-10-28 it's working so left it as is until an issue with this will be found
         // validate the sourceCode
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
         if (sourceCodeValidation.status != EnumsApi.SourceCodeValidateStatus.OK ) {
             return new BatchData.UploadingStatus("#995.060 validation of sourceCode was failed, status: " + sourceCodeValidation.status);
         }

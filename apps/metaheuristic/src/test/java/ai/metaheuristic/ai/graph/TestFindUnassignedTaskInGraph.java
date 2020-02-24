@@ -60,7 +60,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
     @Test
     public void test() {
 
-        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(plan.getId(), execContextYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(sourceCode.getId(), execContextYaml);
         workbook = (ExecContextImpl)result.execContext;
 
         assertNotNull(workbook);

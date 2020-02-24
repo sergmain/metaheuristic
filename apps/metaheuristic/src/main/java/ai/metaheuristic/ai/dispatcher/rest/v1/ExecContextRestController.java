@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -50,6 +51,7 @@ public class ExecContextRestController {
 
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final ExecContextTopLevelService execContextTopLevelService;
+    private final ExecContextService execContextService;
     private final UserContextService userContextService;
 
     @Data
@@ -80,7 +82,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SimpleExecContextAddingResult execContextAddCommit(String uid, String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addExecContext(uid, variable, context);
+        SourceCodeApiData.ExecContextResult execContextResult = execContextService.createExecContext(uid, variable, context);
         return new SimpleExecContextAddingResult(execContextResult.execContext.getId());
     }
 
@@ -89,7 +91,7 @@ public class ExecContextRestController {
     public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         //noinspection UnnecessaryLocalVariable
-        SourceCodeApiData.ExecContextResult execContextResult = sourceCodeTopLevelService.addExecContext(sourceCodeId, variable, context);
+        SourceCodeApiData.ExecContextResult execContextResult = execContextService.createExecContext(sourceCodeId, variable, context);
         return execContextResult;
     }
 

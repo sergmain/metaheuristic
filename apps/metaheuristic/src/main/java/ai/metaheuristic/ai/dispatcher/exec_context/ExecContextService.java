@@ -21,6 +21,9 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
@@ -54,6 +57,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -83,7 +87,11 @@ public class ExecContextService {
     private final Globals globals;
     private final ExecContextRepository execContextRepository;
     private final SourceCodeCache sourceCodeCache;
+    private final SourceCodeValidationService sourceCodeValidationService;
+    private final SourceCodeRepository sourceCodeRepository;
+
     private final VariableService variableService;
+    private final GlobalVariableService globalVariableService;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final ProcessorCache processorCache;
@@ -551,6 +559,38 @@ public class ExecContextService {
         result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;
 
         return result;
+    }
+
+    public SourceCodeApiData.ExecContextResult createExecContext(Long sourceCodeId, String variable, DispatcherContext context) {
+        return createExecContext(variable, context, sourceCodeCache.findById(sourceCodeId));
+    }
+
+    public SourceCodeApiData.ExecContextResult createExecContext(String sourceCodeUid, String variable, DispatcherContext context) {
+        return createExecContext(variable, context, sourceCodeRepository.findByUidAndCompanyId(sourceCodeUid, context.getCompanyId()));
+    }
+
+    private SourceCodeApiData.ExecContextResult createExecContext(String variable, DispatcherContext context, SourceCodeImpl sourceCode) {
+        if (sourceCode==null) {
+            return new SourceCodeApiData.ExecContextResult("#560.006 source code wasn't found");
+        }
+        if (S.b(variable)) {
+            return new SourceCodeApiData.ExecContextResult("#560.006 name of variable is empty");
+        }
+        // validate the sourceCode
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
+        if (sourceCodeValidation.status != EnumsApi.SourceCodeValidateStatus.OK) {
+            return new SourceCodeApiData.ExecContextResult(sourceCodeValidation.errorMessages);
+        }
+
+        if (globalVariableService.getIdInVariables(List.of(variable)).isEmpty()) {
+            return new SourceCodeApiData.ExecContextResult( "#560.008 global variable " + variable +" wasn't found");
+        }
+
+        OperationStatusRest status = SourceCodeValidationService.checkSourceCode(sourceCode, context);
+        if (status != null) {
+            return new SourceCodeApiData.ExecContextResult( "#560.011 access denied: " + status.getErrorMessagesAsStr());
+        }
+        return createExecContextInternal(sourceCode, variable);
     }
 
     public SourceCodeApiData.ExecContextResult createExecContextInternal(@NonNull SourceCodeImpl sourceCode, String variable) {

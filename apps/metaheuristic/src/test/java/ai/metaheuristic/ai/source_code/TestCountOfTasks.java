@@ -64,10 +64,10 @@ public class TestCountOfTasks extends PreparingPlan {
 
         assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
-        EnumsApi.SourceCodeValidateStatus status = sourceCodeService.validate(plan);
+        EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(plan.getId(), execContextYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(sourceCode.getId(), execContextYaml);
         workbook = (ExecContextImpl)result.execContext;
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertNotNull(workbook);
@@ -83,7 +83,7 @@ public class TestCountOfTasks extends PreparingPlan {
         assertTrue(tasks01.isEmpty());
 
         long mills = System.currentTimeMillis();
-        result = sourceCodeService.produceAllTasks(false, plan, workbook);
+        result = sourceCodeService.produceAllTasks(false, sourceCode, workbook);
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
@@ -93,7 +93,7 @@ public class TestCountOfTasks extends PreparingPlan {
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
-        result = sourceCodeService.produceAllTasks(true, plan, workbook);
+        result = sourceCodeService.produceAllTasks(true, sourceCode, workbook);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
         workbook = (ExecContextImpl)result.execContext;
@@ -110,7 +110,7 @@ public class TestCountOfTasks extends PreparingPlan {
         assertFalse(tasks.isEmpty());
         assertEquals(numberOfTasks, tasks.size());
 
-        result = sourceCodeService.produceAllTasks(false, plan, workbook);
+        result = sourceCodeService.produceAllTasks(false, sourceCode, workbook);
         List<Object[]> tasks03 = taskCollector.getTasks(workbook);
         assertFalse(tasks03.isEmpty());
         assertEquals(numberOfTasks, tasks.size());

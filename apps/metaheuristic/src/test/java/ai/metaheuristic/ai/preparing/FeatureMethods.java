@@ -80,10 +80,10 @@ public abstract class FeatureMethods extends PreparingPlan {
     }
 
     protected void produceTasks() {
-        EnumsApi.SourceCodeValidateStatus status = sourceCodeService.validate(plan);
+        EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(plan.getId(), execContextYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(sourceCode.getId(), execContextYaml);
         workbook = (ExecContextImpl)result.execContext;
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
         assertNotNull(workbook);
@@ -104,7 +104,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
-        result = sourceCodeService.produceAllTasks(true, plan, workbook);
+        result = sourceCodeService.produceAllTasks(true, sourceCode, workbook);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
         workbook = (ExecContextImpl)result.execContext;

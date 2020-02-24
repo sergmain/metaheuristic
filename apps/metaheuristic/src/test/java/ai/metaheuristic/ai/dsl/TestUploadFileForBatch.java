@@ -127,17 +127,17 @@ public class TestUploadFileForBatch extends PreparingPlan {
         final DispatcherContext context = new DispatcherContext(a, company);
 
 
-        SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeTopLevelService.validateSourceCode(plan.id, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeTopLevelService.validateSourceCode(sourceCode.id, context);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, sourceCodeResult.status);
-        plan = sourceCodeCache.findById(plan.id);
-        assertTrue(plan.isValid());
+        sourceCode = sourceCodeCache.findById(sourceCode.id);
+        assertTrue(sourceCode.isValid());
 
         String planYamlAsString = getPlanYamlAsString();
         System.out.println("actual sourceCode yaml:\n" + planYamlAsString);
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsString);
         MockMultipartFile mockFile = new MockMultipartFile("random-name.txt", "file-for-batch-processing.xml", StandardCharsets.UTF_8.toString(), "content of file".getBytes());
 
-        uploadingStatus = batchTopLevelService.batchUploadFromFile(mockFile, plan.getId(), context);
+        uploadingStatus = batchTopLevelService.batchUploadFromFile(mockFile, sourceCode.getId(), context);
         assertFalse(uploadingStatus.getErrorMessagesAsStr(), uploadingStatus.isErrorMessages());
         assertNotNull(uploadingStatus.batchId);
         assertNotNull(uploadingStatus.execContextId);

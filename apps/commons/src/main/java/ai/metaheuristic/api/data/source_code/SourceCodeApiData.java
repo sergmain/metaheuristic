@@ -126,6 +126,9 @@ public class SourceCodeApiData {
         public ExecContext execContext;
         public SourceCode sourceCode;
 
+        public ExecContextResult(List<String> errorMessages) {
+            this.errorMessages = errorMessages;
+        }
         public ExecContextResult(String errorMessage) {
             this.addErrorMessage(errorMessage);
         }

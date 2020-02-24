@@ -34,7 +34,6 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.SourceCode;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -56,7 +55,6 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -73,40 +71,11 @@ public class SourceCodeTopLevelService {
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeService sourceCodeService;
     private final SourceCodeRepository sourceCodeRepository;
+    private final SourceCodeValidationService sourceCodeValidationService;
     private final ExecContextService execContextService;
     private final ApplicationEventPublisher publisher;
     private final ExecContextCache execContextCache;
     private final GlobalVariableService globalVariableService;
-
-    public SourceCodeApiData.ExecContextResult addExecContext(Long sourceCodeId, String variable, DispatcherContext context) {
-        return getExecContextResult(variable, context, sourceCodeCache.findById(sourceCodeId));
-    }
-
-    public SourceCodeApiData.ExecContextResult addExecContext(String sourceCodeUid, String variable, DispatcherContext context) {
-        return getExecContextResult(variable, context, sourceCodeRepository.findByUidAndCompanyId(sourceCodeUid, context.getCompanyId()));
-    }
-
-    private SourceCodeApiData.ExecContextResult getExecContextResult(String variable, DispatcherContext context, SourceCodeImpl sourceCode) {
-        if (S.b(variable)) {
-            return new SourceCodeApiData.ExecContextResult("#560.006 name of variable is empty");
-        }
-        if (globalVariableService.getIdInVariables(List.of(variable)).isEmpty()) {
-            return new SourceCodeApiData.ExecContextResult( "#560.008 global variable " + variable +" wasn't found");
-        }
-        // validate the sourceCode
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
-        if (sourceCodeValidation.status != EnumsApi.SourceCodeValidateStatus.OK) {
-            SourceCodeApiData.ExecContextResult r = new SourceCodeApiData.ExecContextResult();
-            r.errorMessages = sourceCodeValidation.errorMessages;
-            return r;
-        }
-
-        OperationStatusRest status = checkSourceCode(sourceCode, context);
-        if (status != null) {
-            return new SourceCodeApiData.ExecContextResult( "#560.011 access denied: " + status.getErrorMessagesAsStr());
-        }
-        return execContextService.createExecContextInternal(sourceCode, variable);
-    }
 
     public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, DispatcherContext context) {
         pageable = ControllerUtils.fixPageSize(globals.sourceCodeRowsLimit, pageable);
@@ -165,7 +134,7 @@ public class SourceCodeTopLevelService {
 
         SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
         SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source);
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
         result.errorMessages = sourceCodeValidation.errorMessages;
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.status = sourceCodeValidation.status;
@@ -210,7 +179,7 @@ public class SourceCodeTopLevelService {
         sourceCode.uid = ppy.source.uid;
         sourceCode = sourceCodeCache.save(sourceCode);
 
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
 
         SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, sourceCode.getSourceCodeStoredParamsYaml());
         result.infoMessages = sourceCodeValidation.infoMessages;
@@ -253,7 +222,7 @@ public class SourceCodeTopLevelService {
 
         sourceCode = sourceCodeCache.save(sourceCode);
 
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeService.validateInternal(sourceCode);
+        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
 
         SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, scspy );
         result.infoMessages = sourceCodeValidation.infoMessages;
@@ -281,7 +250,7 @@ public class SourceCodeTopLevelService {
                     "#560.260 Can't archive a sourceCode while 'replicated' mode of asset is active");
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        OperationStatusRest status = checkSourceCode(sourceCode, context);
+        OperationStatusRest status = SourceCodeValidationService.checkSourceCode(sourceCode, context);
         if (status!=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#560.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId+", " + status.getErrorMessagesAsStr());
         }
@@ -390,13 +359,4 @@ public class SourceCodeTopLevelService {
         return null;
     }
 
-    private OperationStatusRest checkSourceCode(SourceCode sourceCode, DispatcherContext context) {
-        if (sourceCode ==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 sourceCode is null");
-        }
-        if (!Objects.equals(sourceCode.getCompanyId(), context.getCompanyId())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 Access to sourceCode is denied, sourceCodeId: " + sourceCode.getId() );
-        }
-        return null;
-    }
 }

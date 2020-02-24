@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
@@ -71,6 +72,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public SourceCodeRepository sourceCodeRepository;
 
     @Autowired
+    public SourceCodeValidationService sourceCodeValidationService;
+
+    @Autowired
     public ExecContextRepository execContextRepository;
 
     @Autowired
@@ -97,7 +101,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     @Autowired
     public ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
-    public SourceCodeImpl plan = null;
+    public SourceCodeImpl sourceCode = null;
     public Function s1 = null;
     public Function s2 = null;
     public Function s3 = null;
@@ -271,20 +275,20 @@ public abstract class PreparingPlan extends PreparingExperiment {
         s4 = createFunction("function-04:1.1");
         s5 = createFunction("function-05:1.1");
 
-        plan = new SourceCodeImpl();
-        plan.setUid("test-sourceCode-code");
+        sourceCode = new SourceCodeImpl();
+        sourceCode.setUid("test-sourceCode-code");
 
         String params = getPlanYamlAsString();
-        plan.setParams(params);
-        plan.setCreatedOn(System.currentTimeMillis());
-        plan.companyId = company.uniqueId;
+        sourceCode.setParams(params);
+        sourceCode.setCreatedOn(System.currentTimeMillis());
+        sourceCode.companyId = company.uniqueId;
 
 
-        SourceCode tempSourceCode = sourceCodeRepository.findByUidAndCompanyId(plan.getUid(), company.uniqueId);
+        SourceCode tempSourceCode = sourceCodeRepository.findByUidAndCompanyId(sourceCode.getUid(), company.uniqueId);
         if (tempSourceCode !=null) {
             sourceCodeCache.deleteById(tempSourceCode.getId());
         }
-        sourceCodeCache.save(plan);
+        sourceCodeCache.save(sourceCode);
 
         byte[] bytes = "A resource for input pool".getBytes();
 
@@ -331,9 +335,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
     @After
     public void afterPreparingPlan() {
-        if (plan!=null && plan.getId()!=null) {
+        if (sourceCode !=null && sourceCode.getId()!=null) {
             try {
-                sourceCodeCache.deleteById(plan.getId());
+                sourceCodeCache.deleteById(sourceCode.getId());
             } catch (Throwable th) {
                 log.error("Error while planCache.deleteById()", th);
             }
@@ -375,10 +379,10 @@ public abstract class PreparingPlan extends PreparingExperiment {
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
         assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
-        EnumsApi.SourceCodeValidateStatus status = sourceCodeService.validate(plan);
+        EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        TaskProducingResultComplex result = execContextService.createExecContext(plan.getId(), execContextYaml);
+        TaskProducingResultComplex result = execContextService.createExecContext(sourceCode.getId(), execContextYaml);
         workbook = (ExecContextImpl)result.execContext;
 
         assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
@@ -392,7 +396,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         assertNotNull(workbook);
         assertEquals(EnumsApi.ExecContextState.PRODUCING.code, workbook.getState());
 
-        result = sourceCodeService.produceAllTasks(true, plan, this.workbook);
+        result = sourceCodeService.produceAllTasks(true, sourceCode, this.workbook);
         experiment = experimentCache.findById(experiment.id);
         this.workbook = (ExecContextImpl)result.execContext;
         assertEquals(result.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(workbook.id).size());

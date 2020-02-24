@@ -49,6 +49,7 @@ public class ExecContextController {
 
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final ExecContextTopLevelService execContextTopLevelService;
+    private final ExecContextService execContextService;
     private final UserContextService userContextService;
 
     // ============= Exec contexts =============
@@ -86,11 +87,11 @@ public class ExecContextController {
         return "dispatcher/source-code/exec-context-add";
     }
 
-    @PostMapping("/source-code-add-commit")
+    @PostMapping("/exec-context-code-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextAddCommit(Long sourceCodeId, String variable, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.ExecContextResult execContextResultRest = sourceCodeTopLevelService.addExecContext(sourceCodeId, variable, context);
+        SourceCodeApiData.ExecContextResult execContextResultRest = execContextService.createExecContext(sourceCodeId, variable, context);
         if (execContextResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", execContextResultRest.errorMessages);
         }

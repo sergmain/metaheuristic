@@ -62,7 +62,7 @@ public class TestExperimentToJson extends PreparingPlan {
         assertNotNull(experiment.getId());
         assertNotNull(experiment.getExecContextId());
 
-        AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(plan, workbook, experiment);
+        AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(sourceCode, workbook, experiment);
         assertEquals(Enums.StoringStatus.OK, r.status);
 
         String yaml = atlasParamsYamlUtils.BASE_YAML_UTILS.toString(r.atlasParamsYamlWithCache.atlasParams);
