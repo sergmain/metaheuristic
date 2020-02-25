@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -34,13 +34,13 @@ public class TestResourcePools {
 
     @Test
     public void testResourcePools() {
-        SourceCodeService.ResourcePools p = new SourceCodeService.ResourcePools();
+        TaskData.ResourcePools p = new TaskData.ResourcePools();
         new ArrayList<>();
         p.collectedInputs.put("aaa", new ArrayList<>(List.of("a1", "a2", "a3")));
         p.inputStorageUrls = new HashMap<>();
         p.inputStorageUrls.put("aaa", new SourceCodeParamsYaml.Variable("aaa"));
 
-        SourceCodeService.ResourcePools p1 = new SourceCodeService.ResourcePools();
+        TaskData.ResourcePools p1 = new TaskData.ResourcePools();
         p1.collectedInputs.put("aaa", new ArrayList<>(List.of("a4")));
         p1.collectedInputs.put("bbb", new ArrayList<>(List.of("b1", "b2", "b3")));
         p1.inputStorageUrls = new HashMap<>();

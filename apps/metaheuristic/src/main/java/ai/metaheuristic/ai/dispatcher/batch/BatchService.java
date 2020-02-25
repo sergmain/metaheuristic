@@ -94,14 +94,13 @@ public class BatchService {
     private final SourceCodeCache sourceCodeCache;
     private final BatchCache batchCache;
     private final BatchRepository batchRepository;
+    private final BatchSyncService batchSyncService;
     private final ExecContextCache execContextCache;
     private final VariableService variableService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-
-    private static final ConcurrentHashMap<Long, Object> batchMap = new ConcurrentHashMap<>(100, 0.75f, 10);
 
     /**
      * Don't forget to call this method before storing in db
@@ -128,10 +127,7 @@ public class BatchService {
     }
 
     public Batch changeStateToPreparing(Long batchId) {
-        final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            Batch b = batchCache.findById(batchId);
+        return batchSyncService.getWithSync(batchId, (b)-> {
             if (b == null) {
                 log.warn("#990.010 batch wasn't found {}", batchId);
                 return null;
@@ -146,14 +142,11 @@ public class BatchService {
             }
             b.execState = Enums.BatchExecState.Preparing.code;
             return batchCache.save(b);
-        }
+        });
     }
 
     public Batch changeStateToProcessing(Long batchId) {
-        final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            Batch b = batchCache.findById(batchId);
+        return batchSyncService.getWithSync(batchId, (b)-> {
             if (b == null) {
                 log.warn("#990.030 batch wasn't found {}", batchId);
                 return null;
@@ -168,18 +161,12 @@ public class BatchService {
             b.execState = Enums.BatchExecState.Processing.code;
             dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED, null, null, null, batchId, null, null );
             return batchCache.save(b);
-        }
+        });
     }
 
     private void changeStateToFinished(Long batchId) {
-        if (batchId==null) {
-            return;
-        }
-        final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
+        batchSyncService.getWithSyncVoid(batchId, (b) -> {
             try {
-                Batch b = batchRepository.findByIdForUpdate(batchId);
                 if (b == null) {
                     log.warn("#990.050 batch wasn't found {}", batchId);
                     return;
@@ -205,16 +192,13 @@ public class BatchService {
                 }
                 dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_FINISHED, null, null, null, batchId, null, null );
             }
-        }
+        });
     }
 
     @SuppressWarnings("unused")
     public Batch changeStateToError(Long batchId, String error) {
-        final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
+        return batchSyncService.getWithSync(batchId, (b) -> {
             try {
-                Batch b = batchCache.findById(batchId);
                 if (b == null) {
                     log.warn("#990.070 batch not found in db, batchId: #{}", batchId);
                     return null;
@@ -240,7 +224,7 @@ public class BatchService {
             finally {
                 dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
             }
-        }
+        });
     }
 
     private static String getMainDocumentPoolCode(ExecContextImpl execContext) {
@@ -283,11 +267,7 @@ public class BatchService {
                 }
             }
             if (isFinished) {
-                final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
-                //noinspection SynchronizationOnLocalVariableOrMethodParameter
-                synchronized (obj) {
-                    changeStateToFinished(batchId);
-                }
+                batchSyncService.getWithSyncVoid(batchId, (b) -> changeStateToFinished(batchId));
             }
         }
     }
@@ -321,10 +301,8 @@ public class BatchService {
     }
 
     // TODO 2019-10-13 change synchronization to use BatchSyncService
-    public BatchParamsYaml.BatchStatus updateStatus(Batch b) {
-        final Object obj = batchMap.computeIfAbsent(b.id, o -> new Object());
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
+    public BatchParamsYaml.BatchStatus updateStatus(Batch batch) {
+        return batchSyncService.getWithSync(batch.id, (b)-> {
             try {
                 return updateStatusInternal(b);
             }
@@ -338,7 +316,7 @@ public class BatchService {
                 final BatchStatusProcessor statusProcessor = new BatchStatusProcessor().addGeneralStatus("#990.100 Can't update batch status, Try later");
                 return new BatchParamsYaml.BatchStatus(initBatchStatus(statusProcessor).status);
             }
-        }
+        });
     }
 
     @SuppressWarnings("SameParameterValue")

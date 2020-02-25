@@ -28,7 +28,7 @@ import java.util.List;
  * Date: 11/7/2019
  * Time: 2:05 PM
  */
-public class CompanyData {
+public class CompanyApiData {
 
     @Data
     public static class CompanyList {

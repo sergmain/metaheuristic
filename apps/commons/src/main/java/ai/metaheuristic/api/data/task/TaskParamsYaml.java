@@ -19,7 +19,7 @@ package ai.metaheuristic.api.data.task;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
@@ -62,18 +62,31 @@ public class TaskParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class MachineLearning {
-        // does this function support metrics
-        public boolean metrics = false;
-        // does this function support fitting detection
-        public boolean fitting = false;
+    public static class Resource {
+        public String id;
+        public EnumsApi.VariableContext context;
+        public String realName;
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class TaskMachineLearning {
-        public Map<String, String> hyperParams;
+    public static class Variable {
+        public String name;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public GitInfo git;
+        public DiskInfo disk;
+        public List<Resource> resources;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MachineLearning {
+        // does this function support metrics
+        public boolean metrics = false;
+        // does this function support fitting detection
+        public boolean fitting = false;
     }
 
     @Data
@@ -127,12 +140,12 @@ public class TaskParamsYaml implements BaseParams {
         public FunctionConfig function;
         public List<FunctionConfig> preFunctions;
         public List<FunctionConfig> postFunctions;
-        public Map<String, List<String>> inputResourceIds = new HashMap<>();
-        public Map<String, String> outputResourceIds = new HashMap<>();
-        public Map<String, SourceCodeParamsYaml.Variable> resourceStorageUrls = new HashMap<>();
-        public TaskMachineLearning taskMl;
+
         public boolean clean = false;
         public EnumsApi.FunctionExecContext context;
+
+        public Map<String, Map<String, String>> inline;
+        public List<Variable> variables;
 
         /**
          * Timeout before terminate a process with function
@@ -143,9 +156,6 @@ public class TaskParamsYaml implements BaseParams {
 
         // fields which are initialized at processor
         public String workingPath;
-
-        // key - resource code, value - real file name of resource
-        public Map<String, String> realNames;
     }
 
     public TaskYaml taskYaml = new TaskYaml();

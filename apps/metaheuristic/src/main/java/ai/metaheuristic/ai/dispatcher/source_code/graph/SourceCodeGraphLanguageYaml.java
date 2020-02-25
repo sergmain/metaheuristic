@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.source_code.graph;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -64,7 +65,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             }
             checkProcessCode(processCodes, p);
 
-            SourceCodeGraphUtils.addNewTasksToGraph(scg, p.code, parentProcesses);
+            ExecContextProcessGraphService.addNewTasksToGraph(scg, p.code, parentProcesses);
             if (Consts.MH_FINISH_FUNCTION.equals(p.function.code)) {
                 finishPresent = true;
             }
@@ -95,7 +96,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                         throw new IllegalStateException("(subInternalContextId==null)");
                     }
                     String subV = subP.code;
-                    SourceCodeGraphUtils.addNewTasksToGraph(scg, subV, prevProcesses);
+                    ExecContextProcessGraphService.addNewTasksToGraph(scg, subV, prevProcesses);
                     if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
                         prevProcesses.clear();
                         prevProcesses.add(subV);
@@ -113,7 +114,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         }
         if (!finishPresent) {
             String finishVertex = Consts.MH_FINISH_FUNCTION;
-            SourceCodeGraphUtils.addNewTasksToGraph(scg, finishVertex, parentProcesses);
+            ExecContextProcessGraphService.addNewTasksToGraph(scg, finishVertex, parentProcesses);
         }
         return scg;
     }

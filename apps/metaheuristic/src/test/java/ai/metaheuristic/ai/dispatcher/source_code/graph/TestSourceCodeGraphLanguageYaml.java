@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.source_code.graph;
 
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.api.EnumsApi;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
@@ -44,14 +45,14 @@ public class TestSourceCodeGraphLanguageYaml {
         assertNotNull(graph);
         assertTrue(graph.clean);
         assertEquals(6, graph.processGraph.vertexSet().size());
-        assertEquals(5, SourceCodeGraphUtils.findDescendants(graph, 1L).size());
-        assertEquals(1, SourceCodeGraphUtils.findLeafs(graph).size());
+        assertEquals(5, ExecContextProcessGraphService.findDescendants(graph, 1L).size());
+        assertEquals(1, ExecContextProcessGraphService.findLeafs(graph).size());
 
-        SimpleProcessVertex v = SourceCodeGraphUtils.findVertex(graph, 1L);
+        SimpleProcessVertex v = ExecContextProcessGraphService.findVertex(graph, 1L);
         assertNotNull(v);
         assertEquals("assembly-raw-file", v.processCode);
 
-        List<SimpleProcessVertex> vs1 = SourceCodeGraphUtils.findTargets(graph, 1L);
+        List<SimpleProcessVertex> vs1 = ExecContextProcessGraphService.findTargets(graph, 1L);
 
         assertEquals(1, vs1.size());
 
@@ -60,7 +61,7 @@ public class TestSourceCodeGraphLanguageYaml {
         assertEquals(Long.valueOf(2L), v1.taskId);
         assertEquals("dataset-processing", v1.processCode);
 
-        List<SimpleProcessVertex> vs2 = SourceCodeGraphUtils.findTargets(graph, 2L);
+        List<SimpleProcessVertex> vs2 = ExecContextProcessGraphService.findTargets(graph, 2L);
 
         assertEquals(3, vs2.size());
 
@@ -68,9 +69,9 @@ public class TestSourceCodeGraphLanguageYaml {
         SimpleProcessVertex v22 = vs2.stream().filter(o->o.processCode.equals("feature-processing_matrix")).findFirst().orElseThrow();
         SimpleProcessVertex v23 = vs2.stream().filter(o->o.processCode.equals("mh.permute-variables-and-hyper-params")).findFirst().orElseThrow();
 
-        assertEquals(1, SourceCodeGraphUtils.findTargets(graph, v21.taskId).size());
-        assertEquals(1, SourceCodeGraphUtils.findTargets(graph, v22.taskId).size());
-        assertEquals(1, SourceCodeGraphUtils.findTargets(graph, v23.taskId).size());
+        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v21.taskId).size());
+        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v22.taskId).size());
+        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v23.taskId).size());
 
     }
 }

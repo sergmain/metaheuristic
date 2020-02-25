@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.DispatcherEventRepository;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.CompanyData;
+import ai.metaheuristic.api.data.CompanyApiData;
 import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -162,9 +162,9 @@ public class DispatcherEventService {
                 FileUtils.write(f, yaml.dumpAsMap(listOfEvents), StandardCharsets.UTF_8);
             }
         }
-        CompanyData.CompanyList companyList = new CompanyData.CompanyList();
+        CompanyApiData.CompanyList companyList = new CompanyApiData.CompanyList();
         companyRepository.findAll()
-                .forEach(c-> companyList.companies.add(new CompanyData.CompanyShortData(c.uniqueId, c.name)));
+                .forEach(c-> companyList.companies.add(new CompanyApiData.CompanyShortData(c.uniqueId, c.name)));
 
         File companyYamlFile = new File(filesDir, "companies.yaml");
         Yaml companyYaml = YamlUtils.init(ListOfEvents.class);

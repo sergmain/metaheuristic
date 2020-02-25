@@ -22,8 +22,8 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
-import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
@@ -31,11 +31,9 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
@@ -89,6 +87,7 @@ public class ExecContextService {
     private final ProcessorCache processorCache;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
+    private final ExecContextProcessGraphService execContextProcessGraphService;
     private final ExecContextSyncService execContextSyncService;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextFSM execContextFSM;
@@ -456,41 +455,7 @@ public class ExecContextService {
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
         // create all not dynamic tasks
-        SourceCodeService.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(execContextParamsYaml);
-
-        long mill = System.currentTimeMillis();
-        List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(execContextParamsYaml.getAllVariables());
-        log.debug("#701.180 Resources was acquired for {} ms", System.currentTimeMillis() - mill);
-
-        SourceCodeService.ResourcePools pools = new SourceCodeService.ResourcePools(initialInputResourceCodes);
-        if (pools.status!= EnumsApi.SourceCodeProducingStatus.OK) {
-            return new SourceCodeApiData.TaskProducingResultComplex(pools.status);
-        }
-
-        // todo 2020-02-15 what do we do here?
-        if (execContextParamsYaml.execContextYaml.preservePoolNames) {
-            final Map<String, List<String>> collectedInputs = new HashMap<>();
-            try {
-                pools.collectedInputs.forEach( (key, value) -> {
-                    String newKey = execContextParamsYaml.execContextYaml.variables.entrySet().stream()
-                            .filter(entry -> entry.getValue().contains(key))
-                            .findFirst()
-                            .map(Map.Entry::getKey)
-                            .orElseThrow(()-> {
-                                log.error("#701.190 Can't find key for pool code {}", key );
-                                throw new BreakFromForEachException();
-                            });
-                    collectedInputs.put(newKey, value);
-                });
-            } catch (BreakFromForEachException e) {
-                return new SourceCodeApiData.TaskProducingResultComplex(EnumsApi.SourceCodeProducingStatus.ERROR);
-            }
-
-            pools.collectedInputs.clear();
-            pools.collectedInputs.putAll(collectedInputs);
-        }
-
-        Monitoring.log("##025", Enums.Monitor.MEMORY);
+        TaskData.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(execContextParamsYaml);
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist) {

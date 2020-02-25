@@ -26,6 +26,8 @@ public class EnumsApi {
 
     public enum SourceCodeSubProcessLogic { and, or, sequential}
 
+    public enum VariableContext { global, local }
+
     public enum FunctionExecContext { external, internal }
 
     /**

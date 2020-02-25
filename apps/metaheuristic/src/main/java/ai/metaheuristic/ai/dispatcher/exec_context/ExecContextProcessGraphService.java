@@ -14,14 +14,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.source_code.graph;
+package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
+import org.jgrapht.io.*;
 import org.jgrapht.traverse.BreadthFirstIterator;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph;
@@ -31,7 +42,54 @@ import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph
  * Date: 2/17/2020
  * Time: 1:15 AM
  */
-public class SourceCodeGraphUtils {
+@Service
+@Profile("dispatcher")
+@Slf4j
+@RequiredArgsConstructor
+public class ExecContextProcessGraphService {
+
+    private final ExecContextCache execContextCache;
+
+    private void changeGraph(ExecContextImpl execContext, Consumer<DirectedAcyclicGraph<String, DefaultEdge>> callable) throws ImportException {
+        ExecContextParamsYaml wpy = execContext.getExecContextParamsYaml();
+        DirectedAcyclicGraph<String, DefaultEdge> processGraph = importProcessGraph(wpy);
+
+        try {
+            callable.accept(processGraph);
+        } finally {
+            ComponentNameProvider<String> vertexIdProvider = v -> v;
+            ComponentAttributeProvider<String> vertexAttributeProvider = v -> new HashMap<>();
+
+            DOTExporter<String, DefaultEdge> exporter = new DOTExporter<>(vertexIdProvider, null, null, vertexAttributeProvider, null);
+
+            Writer writer = new StringWriter();
+            exporter.exportGraph(processGraph, writer);
+            wpy.processesGraph = writer.toString();
+            execContext.updateParams(wpy);
+            execContextCache.save(execContext);
+        }
+    }
+
+    @SneakyThrows
+    public DirectedAcyclicGraph<String, DefaultEdge> importProcessGraph(ExecContextParamsYaml wpy) {
+        GraphImporter<String, DefaultEdge> importer = buildImporter();
+
+        DirectedAcyclicGraph<String, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
+        importer.importGraph(processGraph, new StringReader(wpy.processesGraph));
+        return processGraph;
+    }
+
+    private static String toVertex(String id, Map<String, Attribute> attributes) {
+        return id;
+    }
+
+    private static final EdgeProvider<String, DefaultEdge> ep = (f, t, l, attrs) -> new DefaultEdge();
+
+    private static GraphImporter<String, DefaultEdge> buildImporter() {
+        //noinspection UnnecessaryLocalVariable
+        DOTImporter<String, DefaultEdge> importer = new DOTImporter<>(ExecContextProcessGraphService::toVertex, ep);
+        return importer;
+    }
 
     public static void addNewTasksToGraph(
             SourceCodeGraph sourceCodeGraph, String vertex, List<String> parentProcesses) {

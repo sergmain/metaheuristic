@@ -25,7 +25,9 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author Serge
@@ -43,7 +45,7 @@ public class BatchSyncService {
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
     @SuppressWarnings("Duplicates")
-    <T> T getWithSync(Long batchId, DispatcherContext execContext, Function<Batch, T> function) {
+    void getWithSyncVoid(Long batchId, Consumer<Batch> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();
@@ -55,7 +57,40 @@ public class BatchSyncService {
         synchronized (obj) {
             obj.incrementAndGet();
             try {
-                Batch batch = batchRepository.findByIdForUpdate(batchId, execContext.account.companyId);
+//                Batch batch = batchRepository.findByIdForUpdate(batchId, execContext.account.companyId);
+                Batch batch = batchRepository.findByIdForUpdate(batchId);
+                if (batch!=null) {
+                    function.accept(batch);
+                }
+            } finally {
+                try {
+                    writeLock.lock();
+                    if (obj.get() == 1) {
+                        syncMap.remove(batchId);
+                    }
+                    obj.decrementAndGet();
+                } finally {
+                    writeLock.unlock();
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("Duplicates")
+    <T> T getWithSync(Long batchId, Function<Batch, T> function) {
+        final AtomicInteger obj;
+        try {
+            writeLock.lock();
+            obj = syncMap.computeIfAbsent(batchId, o -> new AtomicInteger());
+        } finally {
+            writeLock.unlock();
+        }
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            obj.incrementAndGet();
+            try {
+//                Batch batch = batchRepository.findByIdForUpdate(batchId, execContext.account.companyId);
+                Batch batch = batchRepository.findByIdForUpdate(batchId);
                 return batch == null ? null : function.apply(batch);
             } finally {
                 try {
@@ -72,7 +107,7 @@ public class BatchSyncService {
     }
 
     @SuppressWarnings("Duplicates")
-    <T> T getWithSyncReadOnly(Batch batch, DispatcherContext execContext, Function<DispatcherContext, T> function) {
+    <T> T getWithSyncReadOnly(Batch batch, Supplier<T> function) {
         if (batch==null) {
             return null;
         }
@@ -87,7 +122,7 @@ public class BatchSyncService {
         synchronized (obj) {
             obj.incrementAndGet();
             try {
-                return function.apply(execContext);
+                return function.get();
             } finally {
                 try {
                     writeLock.lock();

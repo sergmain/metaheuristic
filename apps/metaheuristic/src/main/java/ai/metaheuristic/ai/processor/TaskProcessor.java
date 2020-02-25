@@ -39,12 +39,17 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtilsV1;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlV1;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -370,10 +375,11 @@ public class TaskProcessor {
                 .map(o-> FunctionCoreUtils.getTaskParamsVersion(o.function.metas))
                 .collect(Collectors.toSet());
 
-        taskParamYaml.taskYaml.workingPath = taskDir.getAbsolutePath();
+        TaskFileParamsYaml taskFileParamYaml = toTaskFileParamsYaml(taskParamYaml);
+        taskFileParamYaml.task.workingPath = taskDir.getAbsolutePath();
         for (Integer version : versions) {
 
-            final String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(taskParamYaml, version);
+            final String params = TaskFileParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(taskFileParamYaml, version);
 
             // persist params.yaml file
             File paramFile = new File(artifactDir, String.format(Consts.PARAMS_YAML_MASK, version));
@@ -390,6 +396,31 @@ public class TaskProcessor {
             }
         }
         return true;
+    }
+
+    private TaskFileParamsYaml toTaskFileParamsYaml(TaskParamsYaml v1) {
+        TaskFileParamsYaml t = new TaskFileParamsYaml();
+        t.task = new TaskFileParamsYaml.Task();
+        t.task.execContextId = v1.taskYaml.execContextId;
+        t.task.clean = v1.taskYaml.clean;
+        t.task.timeoutBeforeTerminate = v1.taskYaml.timeoutBeforeTerminate;
+        t.task.workingPath = v1.taskYaml.workingPath;
+
+        t.task.inline = v1.taskYaml.inline;
+        t.task.variables = v1.taskYaml.variables!=null ? v1.taskYaml.variables.stream().map(TaskProcessor::upVariable).collect(Collectors.toList()) : null;
+
+        t.checkIntegrity();
+        return t;
+    }
+
+    private static TaskFileParamsYaml.Variable upVariable(TaskParamsYaml.Variable v1) {
+        TaskFileParamsYaml.Variable v = new TaskFileParamsYaml.Variable();
+        v.disk = v1.disk;
+        v.git = v1.git;
+        v.name = v1.name;
+        v.sourcing = v1.sourcing;
+        v.resources = v1.resources!=null ? v1.resources.stream().map(r->new TaskFileParamsYaml.Resource(r.id, r.context, r.realName)).collect(Collectors.toList()) : null;
+        return v;
     }
 
     private int totalCountOfFunctions(TaskParamsYaml.TaskYaml taskYaml) {

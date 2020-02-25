@@ -16,21 +16,26 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.beans.Ids;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionOutput;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
@@ -38,6 +43,8 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -58,24 +65,57 @@ public class TaskProducingService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionProcessor internalFunctionProcessor;
     private final IdsRepository idsRepository;
+    private final ExecContextProcessGraphService execContextProcessGraphService;
 
-    public SourceCodeService.ProduceTaskResult produceTasks(ExecContextParamsYaml execContextParamsYaml) {
-        if (true) {
-            throw new NotImplementedException("not yet");
+    public TaskData.ProduceTaskResult produceTasks(ExecContextParamsYaml execContextParamsYaml) {
+        DirectedAcyclicGraph<String, DefaultEdge> processGraph = execContextProcessGraphService.importProcessGraph(execContextParamsYaml);
+
+        long mill = System.currentTimeMillis();
+        List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(execContextParamsYaml.getAllVariables());
+        log.debug("#701.180 Resources was acquired for {} ms", System.currentTimeMillis() - mill);
+
+        TaskData.ResourcePools pools = new TaskData.ResourcePools(initialInputResourceCodes);
+        if (pools.status!= EnumsApi.SourceCodeProducingStatus.OK) {
+            return new TaskData.ProduceTaskResult(pools.status);
         }
-        // ..... produceTasksForProcess() ......
+
+        // todo 2020-02-15 what do we do here?
+        if (execContextParamsYaml.execContextYaml.preservePoolNames) {
+            final Map<String, List<String>> collectedInputs = new HashMap<>();
+            try {
+                pools.collectedInputs.forEach( (key, value) -> {
+                    String newKey = execContextParamsYaml.execContextYaml.variables.entrySet().stream()
+                            .filter(entry -> entry.getValue().contains(key))
+                            .findFirst()
+                            .map(Map.Entry::getKey)
+                            .orElseThrow(()-> {
+                                log.error("#701.190 Can't find key for pool code {}", key );
+                                throw new BreakFromForEachException();
+                            });
+                    collectedInputs.put(newKey, value);
+                });
+            } catch (BreakFromForEachException e) {
+                return new TaskData.ProduceTaskResult(EnumsApi.SourceCodeProducingStatus.ERROR);
+            }
+
+            pools.collectedInputs.clear();
+            pools.collectedInputs.putAll(collectedInputs);
+        }
+
+        Monitoring.log("##025", Enums.Monitor.MEMORY);
+
         return null;
     }
 
 
     @SuppressWarnings("Duplicates")
-    public SourceCodeService.ProduceTaskResult produceTasksForProcess(
+    public TaskData.ProduceTaskResult produceTasksForProcess(
             boolean isPersist, Long sourceCodeId, String internalContextId, SourceCodeParamsYaml sourceCodeParams, Long execContextId,
-            SourceCodeParamsYaml.Process process, SourceCodeService.ResourcePools pools, List<Long> parentTaskIds) {
+            SourceCodeParamsYaml.Process process, TaskData.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls = new HashMap<>(pools.inputStorageUrls);
 
-        SourceCodeService.ProduceTaskResult result = new SourceCodeService.ProduceTaskResult();
+        TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
         result.outputResourceCodes = new ArrayList<>();
 
@@ -105,7 +145,7 @@ public class TaskProducingService {
                 for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
                     // Right we don't support subProcesses in subProcesses. Need to collect more info about such cases
                     if (subProcess.subProcesses!=null && CollectionUtils.isNotEmpty(subProcess.subProcesses.processes)) {
-                        return new SourceCodeService.ProduceTaskResult(EnumsApi.SourceCodeProducingStatus.TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR);
+                        return new TaskData.ProduceTaskResult(EnumsApi.SourceCodeProducingStatus.TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR);
                     }
 
                     String ctxId = internalContextId + ','+ idsRepository.save(new Ids()).id;

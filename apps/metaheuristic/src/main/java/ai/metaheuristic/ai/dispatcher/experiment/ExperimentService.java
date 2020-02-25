@@ -23,8 +23,8 @@ import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
@@ -676,7 +676,7 @@ public class ExperimentService {
     }
 
     @SuppressWarnings("Duplicates")
-    SourceCodeService.ProduceTaskResult result = new SourceCodeService.ProduceTaskResult();
+    TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
     @Data
     @AllArgsConstructor
