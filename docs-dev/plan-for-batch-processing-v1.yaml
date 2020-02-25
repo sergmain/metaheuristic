@@ -23,5 +23,13 @@ source:
               - variable: batch-item
             output:
               - variable: processed-file
-
+    - code: mh.aggregate
+      name: mh.aggregate
+      snippet:
+        code: mh.aggregate
+        context: internal
+      input:
+        - variable: processed-file
+      output:
+        - variable: batch-result
 version: 1

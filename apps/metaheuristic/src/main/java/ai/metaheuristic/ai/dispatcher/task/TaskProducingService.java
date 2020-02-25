@@ -71,15 +71,17 @@ public class TaskProducingService {
         DirectedAcyclicGraph<String, DefaultEdge> processGraph = execContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
         long mill = System.currentTimeMillis();
-        List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(execContextParamsYaml.getAllVariables());
+//        List<SimpleVariableAndStorageUrl> initialInputResourceCodes = variableService.getIdInVariables(
+//                execContextParamsYaml.getAllVariables());
         log.debug("#701.180 Resources was acquired for {} ms", System.currentTimeMillis() - mill);
 
-        TaskData.ResourcePools pools = new TaskData.ResourcePools(initialInputResourceCodes);
-        if (pools.status!= EnumsApi.SourceCodeProducingStatus.OK) {
-            return new TaskData.ProduceTaskResult(pools.status);
-        }
+//        TaskData.ResourcePools pools = new TaskData.ResourcePools(initialInputResourceCodes);
+//        if (pools.status!= EnumsApi.SourceCodeProducingStatus.OK) {
+//            return new TaskData.ProduceTaskResult(pools.status);
+//        }
 
         // todo 2020-02-15 what do we do here?
+        // todo 2020-02-25 need to recall what this 'preservePoolNames' about
         if (execContextParamsYaml.execContextYaml.preservePoolNames) {
             final Map<String, List<String>> collectedInputs = new HashMap<>();
             try {

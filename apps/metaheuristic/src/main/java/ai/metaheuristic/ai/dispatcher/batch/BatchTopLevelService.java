@@ -376,6 +376,7 @@ public class BatchTopLevelService {
         return resource;
     }
 
+    // todo 2020-02-25 this method has to be re-written completely
     private boolean prepareZip(BatchService.PrepareZipData prepareZipData, File zipDir ) {
         if (true) {
             throw new NotImplementedException("Previous version was using list of exec contexts and in this method " +
@@ -408,8 +409,10 @@ public class BatchTopLevelService {
         // all documents are sorted in zip folder
         prepareZipData.bs.renameTo.put("zip/" + tempFile.getName(), "zip/" + prepareZipData.mainDocument);
 
+
+        // TODO 2020-01-30 need to re-write
+/*
         try {
-            // TODO 2020-01-30 need to re-write
             variableService.storeToFile(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), tempFile);
         } catch (BinaryDataNotFoundException e) {
             String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " +
@@ -419,6 +422,7 @@ public class BatchTopLevelService {
             prepareZipData.bs.getGeneralStatus().add(msg,'\n');
             return false;
         }
+*/
         return true;
     }
 

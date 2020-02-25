@@ -476,8 +476,8 @@ public class ExperimentService {
             }
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            int idxX = mapX.get(taskParamYaml.taskYaml.taskMl.hyperParams.get(paramCleared.get(0)));
-            int idxY = mapY.get(taskParamYaml.taskYaml.taskMl.hyperParams.get(paramCleared.get(1)));
+            int idxX = mapX.get(taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(0)));
+            int idxY = mapY.get(taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
         }
 
@@ -502,9 +502,9 @@ public class ExperimentService {
         List<Task> selected = new ArrayList<>();
         for (Task task : list) {
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            boolean[] isOk = new boolean[taskParamYaml.taskYaml.taskMl.hyperParams.size()];
+            boolean[] isOk = new boolean[taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).size()];
             int idx = 0;
-            for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.taskMl.hyperParams.entrySet()) {
+            for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).entrySet()) {
                 try {
                     if (!paramFilterKeys.contains(entry.getKey())) {
                         isOk[idx] = true;
@@ -777,10 +777,10 @@ public class ExperimentService {
                         yaml.taskYaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
 
                         if (!hyperParams.params.isEmpty()) {
-                            if (yaml.taskYaml.taskMl==null) {
-                                yaml.taskYaml.taskMl = new TaskParamsYaml.TaskMachineLearning();
+                            if (yaml.taskYaml.inline==null) {
+                                yaml.taskYaml.inline = new HashMap<>();
                             }
-                            yaml.taskYaml.taskMl.setHyperParams(hyperParams.toSortedMap());
+                            yaml.taskYaml.inline.computeIfAbsent(ConstsApi.MH_HYPER_PARAMS, m -> new HashMap<>()).putAll(hyperParams.toSortedMap());
                         }
                         // TODO need to implement an unit-test for a SourceCode without metas in experiment
                         //  and check that features are correctly defined
@@ -858,7 +858,7 @@ public class ExperimentService {
                             Meta m = MetaUtils.getMeta(function.getFunctionConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
                             if (MetaUtils.isTrue(m) && !S.b(epy.experimentYaml.checkFittingFunction)) {
                                 Function cos = getFunction(localCache, epy.experimentYaml.checkFittingFunction);
-                                if (function == null) {
+                                if (cos == null) {
                                     log.warn("#179.140 Function wasn't found for code: {}", functionCode);
                                     continue;
                                 }
