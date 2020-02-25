@@ -17,7 +17,7 @@ package ai.metaheuristic.apps.simple_snippet;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
@@ -65,15 +65,21 @@ public class SimpleApp implements CommandLineRunner {
         String config = FileUtils.readFileToString(yamlFile, "utf-8");
         System.out.println("Yaml config file:\n"+config);
 
-        TaskParamsYaml params = TaskParamsYamlUtils.BASE_YAML_UTILS.to(config);
+        TaskParamsYaml params = TaskFileParamsYamlUtils.BASE_YAML_UTILS.to(config);
 
-        List<String> inputFiles = params.taskYaml.inputResourceIds.values()
+        List<String> inputFiles = params.taskYaml.input
                 .stream()
-                .flatMap(Collection::stream)
+                .map(o->o.name)
                 .collect(Collectors.toList());
         System.out.println("input files: " + inputFiles);
 
-        String outputFilename = params.taskYaml.outputResourceIds.values().iterator().next();
+        String outputFilename = params.taskYaml.output
+                .stream()
+                .filter(o->o.name.equals("result"))
+                .map(o->o.name)
+                .findFirst()
+                .orElseThrow();
+
         System.out.println("output filename: " + outputFilename);
 
         File outputFile = Path.of(params.taskYaml.workingPath, ConstsApi.ARTIFACTS_DIR, outputFilename).toFile();

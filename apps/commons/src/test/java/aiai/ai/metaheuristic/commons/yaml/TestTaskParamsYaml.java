@@ -16,10 +16,10 @@
 
 package aiai.ai.metaheuristic.commons.yaml;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV1;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.Test;
 
@@ -40,14 +40,18 @@ public class TestTaskParamsYaml {
         TaskParamsYamlV1 v2 = new TaskParamsYamlV1();
         final TaskParamsYamlV1.TaskYamlV1 ty = new TaskParamsYamlV1.TaskYamlV1();
         v2.taskYaml = ty;
-        ty.inputResourceIds = Map.of("code-1", List.of("value-1-1", "value-1-2"));
-        ty.outputResourceIds = Map.of("output-code-1", "1");
-        ty.resourceStorageUrls = Map.of(
-                "value-1-1", new DataStorageParams(EnumsApi.DataSourcing.dispatcher),
-                "value-1-2", new DataStorageParams(EnumsApi.DataSourcing.disk)
-        );
+        ty.input.add( new TaskParamsYamlV1.InputVariableV1(
+                "code-1", EnumsApi.DataSourcing.dispatcher, null, null,
+                List.of(new TaskParamsYamlV1.ResourceV1("value-1-1", EnumsApi.VariableContext.local, null),
+                        new TaskParamsYamlV1.ResourceV1("value-1-2", EnumsApi.VariableContext.local, null))
+        ));
+
+        ty.output.add( new TaskParamsYamlV1.OutputVariableV1(
+                "output-code-1", EnumsApi.DataSourcing.dispatcher, null, null,
+                new TaskParamsYamlV1.ResourceV1("1", EnumsApi.VariableContext.local, null)
+        ));
         ty.clean = true;
-        ty.taskMl = new TaskParamsYamlV1.TaskMachineLearningV1(Map.of("hyper-param-key-01", "hyper-param-value-01"));
+        ty.inline = Map.of( ConstsApi.MH_HYPER_PARAMS, Map.of("hyper-param-key-01", "hyper-param-value-01"));
         ty.workingPath = "working-path";
         ty.timeoutBeforeTerminate = 42L;
 
@@ -76,30 +80,26 @@ public class TestTaskParamsYaml {
         assertNotNull(tpy.taskYaml.preFunctions);
         assertNotNull(tpy.taskYaml.function);
         assertNotNull(tpy.taskYaml.postFunctions);
-        assertNotNull(tpy.taskYaml.taskMl);
-        assertNotNull(tpy.taskYaml.taskMl.hyperParams);
+        assertNotNull(tpy.taskYaml.inline);
+        assertNotNull(tpy.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS));
         assertNotNull(tpy.taskYaml.workingPath);
 
         assertTrue(tpy.taskYaml.clean);
         assertEquals("working-path", tpy.taskYaml.workingPath);
         assertEquals(Long.valueOf(42L), tpy.taskYaml.timeoutBeforeTerminate);
-        assertNotNull(tpy.taskYaml.inputResourceIds);
-        assertNotNull(tpy.taskYaml.outputResourceIds);
-        assertNotNull(tpy.taskYaml.resourceStorageUrls);
+        assertNotNull(tpy.taskYaml.input);
+        assertNotNull(tpy.taskYaml.output);
 
 
-        assertNotNull(tpy.taskYaml.inputResourceIds.get("code-1"));
-        assertTrue(tpy.taskYaml.inputResourceIds.get("code-1").contains("value-1-1"));
-        assertTrue(tpy.taskYaml.inputResourceIds.get("code-1").contains("value-1-2"));
-        ty.outputResourceIds = Map.of("output-code-1", "1");
-        ty.resourceStorageUrls = Map.of(
-                "value-1-1", new DataStorageParams(EnumsApi.DataSourcing.dispatcher),
-                "value-1-2", new DataStorageParams(EnumsApi.DataSourcing.disk)
-        );
+        TaskParamsYaml.InputVariable inputVariable = tpy.taskYaml.input.stream().filter(o -> o.name.equals("code-1")).findFirst().orElseThrow();
+        assertNotNull(inputVariable);
+        assertNotNull(inputVariable.resources.stream().filter(o->o.id.equals("value-1-1")).findFirst().orElseThrow());
+        assertNotNull(inputVariable.resources.stream().filter(o->o.id.equals("value-1-2")).findFirst().orElseThrow());
 
-        assertEquals(1, tpy.taskYaml.taskMl.hyperParams.size());
-        assertTrue(tpy.taskYaml.taskMl.hyperParams.containsKey("hyper-param-key-01"));
-        assertEquals("hyper-param-value-01", tpy.taskYaml.taskMl.hyperParams.get("hyper-param-key-01"));
+        Map<String, String> hyperParams = tpy.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS);
+        assertEquals(1, hyperParams.size());
+        assertTrue(hyperParams.containsKey("hyper-param-key-01"));
+        assertEquals("hyper-param-value-01", hyperParams.get("hyper-param-key-01"));
 
         // test functions
 

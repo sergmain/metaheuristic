@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.atlas.AtlasTaskParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -540,8 +541,8 @@ public class AtlasTopLevelService {
             }
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.taskParams);
-            int idxX = mapX.get(taskParamYaml.taskYaml.taskMl.hyperParams.get(paramCleared.get(0)));
-            int idxY = mapY.get(taskParamYaml.taskYaml.taskMl.hyperParams.get(paramCleared.get(1)));
+            int idxX = mapX.get(taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(0)));
+            int idxY = mapY.get(taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
         }
 
@@ -564,9 +565,9 @@ public class AtlasTopLevelService {
         List<AtlasTaskParamsYaml> selected = new ArrayList<>();
         for (AtlasTaskParamsYaml task : tasks) {
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.taskParams);
-            boolean[] isOk = new boolean[taskParamYaml.taskYaml.taskMl.hyperParams.size()];
+            boolean[] isOk = new boolean[taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).size()];
             int idx = 0;
-            for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.taskMl.hyperParams.entrySet()) {
+            for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).entrySet()) {
                 try {
                     if (!paramFilterKeys.contains(entry.getKey())) {
                         isOk[idx] = true;

@@ -227,12 +227,8 @@ public class TaskPersistencer {
             else {
                 task.setResultResourceScheduledOn(System.currentTimeMillis());
                 TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-                if (true) {
-                    throw new NotImplementedException("output resourceIds are a list");
-                }
-                final SourceCodeParamsYaml.Variable variable = yaml.taskYaml.resourceStorageUrls.get(yaml.taskYaml.outputResourceIds.values().iterator().next());
-
-                if (variable.sourcing == EnumsApi.DataSourcing.disk) {
+                // if there isn't any output variable which has to be uploaded to dispatcher then complete this task
+                if (yaml.taskYaml.output.stream().noneMatch(o->o.sourcing== EnumsApi.DataSourcing.dispatcher)) {
                     task.setCompleted(true);
                     task.setCompletedOn(System.currentTimeMillis());
                 }
