@@ -22,6 +22,7 @@ import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -71,12 +72,23 @@ public class TaskParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Variable {
+    public static class InputVariable {
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
         public List<Resource> resources;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class OutputVariable {
+        public String name;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public GitInfo git;
+        public DiskInfo disk;
+        public Resource resources;
     }
 
     @Data
@@ -145,7 +157,8 @@ public class TaskParamsYaml implements BaseParams {
         public EnumsApi.FunctionExecContext context;
 
         public Map<String, Map<String, String>> inline;
-        public List<Variable> variables;
+        public List<InputVariable> input;
+        public final List<OutputVariable> output = new ArrayList<>();
 
         /**
          * Timeout before terminate a process with function

@@ -55,12 +55,23 @@ public class TaskFileParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Variable {
+    public static class InputVariable {
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
         public List<Resource> resources;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class OutputVariable {
+        public String name;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public GitInfo git;
+        public DiskInfo disk;
+        public Resource resources;
     }
 
     @Data
@@ -77,7 +88,8 @@ public class TaskFileParamsYaml implements BaseParams {
 
         public Map<String, Map<String, String>> inline;
 
-        public List<Variable> variables;
+        public List<InputVariable> input;
+        public List<OutputVariable> output;
 
         // fields which are initialized at processor
         public String workingPath;

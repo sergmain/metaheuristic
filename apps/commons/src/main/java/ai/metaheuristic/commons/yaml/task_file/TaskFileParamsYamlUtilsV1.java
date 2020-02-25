@@ -46,21 +46,32 @@ public class TaskFileParamsYamlUtilsV1
         v1.checkIntegrity();
         TaskFileParamsYaml t = new TaskFileParamsYaml();
         t.task = new TaskFileParamsYaml.Task();
-        BeanUtils.copyProperties(v1.task, t.task, "inline", "variables");
+        BeanUtils.copyProperties(v1.task, t.task, "inline", "input", "output");
         t.task.inline = v1.task.inline;
-        t.task.variables = v1.task.variables!=null ? v1.task.variables.stream().map(TaskFileParamsYamlUtilsV1::upVariable).collect(Collectors.toList()) : null;
+        t.task.input = v1.task.input!=null ? v1.task.input.stream().map(TaskFileParamsYamlUtilsV1::upInputVariable).collect(Collectors.toList()) : null;
+        t.task.output = v1.task.output!=null ? v1.task.output.stream().map(TaskFileParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toList()) : null;
 
         t.checkIntegrity();
         return t;
     }
 
-    private static TaskFileParamsYaml.Variable upVariable(TaskFileParamsYamlV1.VariableV1 v1) {
-        TaskFileParamsYaml.Variable v = new TaskFileParamsYaml.Variable();
+    private static TaskFileParamsYaml.InputVariable upInputVariable(TaskFileParamsYamlV1.InputVariableV1 v1) {
+        TaskFileParamsYaml.InputVariable v = new TaskFileParamsYaml.InputVariable();
         v.disk = v1.disk;
         v.git = v1.git;
         v.name = v1.name;
         v.sourcing = v1.sourcing;
         v.resources = v1.resources!=null ? v1.resources.stream().map(r->new TaskFileParamsYaml.Resource(r.id, r.context, r.realName)).collect(Collectors.toList()) : null;
+        return v;
+    }
+
+    private static TaskFileParamsYaml.OutputVariable upOutputVariable(TaskFileParamsYamlV1.OutputVariableV1 v1) {
+        TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
+        v.disk = v1.disk;
+        v.git = v1.git;
+        v.name = v1.name;
+        v.sourcing = v1.sourcing;
+        v.resources = v1.resources!=null ? new TaskFileParamsYaml.Resource(v1.resources.id, v1.resources.context, v1.resources.realName) : null;
         return v;
     }
 

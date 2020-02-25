@@ -66,12 +66,23 @@ public class TaskParamsYamlV1 implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class VariableV1 {
+    public static class InputVariableV1 {
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
         public List<ResourceV1> resources;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class OutputVariableV1 {
+        public String name;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public GitInfo git;
+        public DiskInfo disk;
+        public ResourceV1 resources;
     }
 
     @Data
@@ -140,7 +151,8 @@ public class TaskParamsYamlV1 implements BaseParams {
         public EnumsApi.FunctionExecContext context;
 
         public Map<String, Map<String, String>> inline;
-        public List<VariableV1> variables;
+        public List<InputVariableV1> input;
+        public final List<OutputVariableV1> output = new ArrayList<>();
 
         /**
          * Timeout before terminate a process with function

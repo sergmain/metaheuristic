@@ -18,13 +18,12 @@ package ai.metaheuristic.commons.yaml.task_file;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,12 +55,23 @@ public class TaskFileParamsYamlV1 implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class VariableV1 {
+    public static class InputVariableV1 {
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
         public List<ResourceV1> resources;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class OutputVariableV1 {
+        public String name;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public GitInfo git;
+        public DiskInfo disk;
+        public ResourceV1 resources;
     }
 
     @Data
@@ -78,7 +88,8 @@ public class TaskFileParamsYamlV1 implements BaseParams {
 
         public Map<String, Map<String, String>> inline;
 
-        public List<VariableV1> variables;
+        public List<InputVariableV1> input;
+        public List<OutputVariableV1> output;
 
         // fields which are initialized at processor
         public String workingPath;

@@ -20,36 +20,32 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessService;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.processor.env.EnvService;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.processor_resource.ResourceProvider;
 import ai.metaheuristic.ai.processor.processor_resource.ResourceProviderFactory;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriod;
+import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.resource.AssetFile;
+import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriod;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtilsV1;
-import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlV1;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -165,10 +161,8 @@ public class TaskProcessor {
                 processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
                 continue;
             }
-            SourceCodeParamsYaml.Variable dsp = taskParamYaml.taskYaml.getResourceStorageUrls()
-                    .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
-            if (dsp==null) {
-                processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.050 Broken task. Can't find params for outputResourceCode");
+            if (taskParamYaml.taskYaml.output.isEmpty()) {
+                processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.050 Broken task. output variable must be specified");
                 continue;
             }
             if (taskParamYaml.taskYaml.function ==null) {
@@ -340,14 +334,14 @@ public class TaskProcessor {
                             processorTaskService.storePredictedData(task.dispatcherUrl, task, mainFunctionConfig, artifactDir);
                             processorTaskService.storeFittingCheck(task.dispatcherUrl, task, mainFunctionConfig, artifactDir);
 
-                            final SourceCodeParamsYaml.Variable params = taskParamYaml.taskYaml.resourceStorageUrls
-                                    .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
-                            ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
-                            generalExec = resourceProvider.processResultingFile(
-                                    dispatcher, task, dispatcherInfo,
-                                    taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
-                                    mainFunctionConfig
-                            );
+                            for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.taskYaml.output) {
+                                ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
+                                generalExec = resourceProvider.processResultingFile(
+                                        dispatcher, task, dispatcherInfo,
+                                        outputVariable.resources.id,
+                                        mainFunctionConfig
+                                );
+                            }
                         }
                         catch (Throwable th) {
                             generalExec = new FunctionApiData.SystemExecResult(
@@ -407,19 +401,30 @@ public class TaskProcessor {
         t.task.workingPath = v1.taskYaml.workingPath;
 
         t.task.inline = v1.taskYaml.inline;
-        t.task.variables = v1.taskYaml.variables!=null ? v1.taskYaml.variables.stream().map(TaskProcessor::upVariable).collect(Collectors.toList()) : null;
+        t.task.input = v1.taskYaml.input!=null ? v1.taskYaml.input.stream().map(TaskProcessor::upInputVariable).collect(Collectors.toList()) : null;
+        t.task.output.addAll(v1.taskYaml.output.stream().map(TaskProcessor::upOutputVariable).collect(Collectors.toList()));
 
         t.checkIntegrity();
         return t;
     }
 
-    private static TaskFileParamsYaml.Variable upVariable(TaskParamsYaml.Variable v1) {
-        TaskFileParamsYaml.Variable v = new TaskFileParamsYaml.Variable();
+    private static TaskFileParamsYaml.InputVariable  upInputVariable(TaskParamsYaml.InputVariable v1) {
+        TaskFileParamsYaml.InputVariable  v = new TaskFileParamsYaml.InputVariable ();
         v.disk = v1.disk;
         v.git = v1.git;
         v.name = v1.name;
         v.sourcing = v1.sourcing;
         v.resources = v1.resources!=null ? v1.resources.stream().map(r->new TaskFileParamsYaml.Resource(r.id, r.context, r.realName)).collect(Collectors.toList()) : null;
+        return v;
+    }
+
+    private static TaskFileParamsYaml.OutputVariable upOutputVariable(TaskParamsYaml.OutputVariable v1) {
+        TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
+        v.disk = v1.disk;
+        v.git = v1.git;
+        v.name = v1.name;
+        v.sourcing = v1.sourcing;
+        v.resources = new TaskFileParamsYaml.Resource(v1.resources.id, v1.resources.context, v1.resources.realName);
         return v;
     }
 

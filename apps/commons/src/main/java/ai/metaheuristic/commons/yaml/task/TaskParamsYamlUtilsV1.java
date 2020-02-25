@@ -56,13 +56,33 @@ public class TaskParamsYamlUtilsV1
         if (v1.taskYaml.postFunctions !=null) {
             t.taskYaml.postFunctions = v1.taskYaml.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
         }
-        if (v1.taskYaml.taskMl!=null) {
-            t.taskYaml.taskMl = new TaskParamsYaml.TaskMachineLearning(v1.taskYaml.taskMl.hyperParams);
-        }
+        t.taskYaml.inline = v1.taskYaml.inline;
+        t.taskYaml.input = v1.taskYaml.input!=null ? v1.taskYaml.input.stream().map(TaskParamsYamlUtilsV1::upInputVariable).collect(Collectors.toList()) : null;
+        t.taskYaml.output.addAll(v1.taskYaml.output.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toList()));
 
         t.checkIntegrity();
 
         return t;
+    }
+
+    private static TaskParamsYaml.InputVariable upInputVariable(TaskParamsYamlV1.InputVariableV1 v1) {
+        TaskParamsYaml.InputVariable v = new TaskParamsYaml.InputVariable();
+        v.disk = v1.disk;
+        v.git = v1.git;
+        v.name = v1.name;
+        v.sourcing = v1.sourcing;
+        v.resources = v1.resources!=null ? v1.resources.stream().map(r->new TaskParamsYaml.Resource(r.id, r.context, r.realName)).collect(Collectors.toList()) : null;
+        return v;
+    }
+
+    private static TaskParamsYaml.OutputVariable upOutputVariable(TaskParamsYamlV1.OutputVariableV1 v1) {
+        TaskParamsYaml.OutputVariable v = new TaskParamsYaml.OutputVariable();
+        v.disk = v1.disk;
+        v.git = v1.git;
+        v.name = v1.name;
+        v.sourcing = v1.sourcing;
+        v.resources = v1.resources!=null ? new TaskParamsYaml.Resource(v1.resources.id, v1.resources.context, v1.resources.realName) : null;
+        return v;
     }
 
     @Override
