@@ -64,10 +64,6 @@ public class Consts {
     public static final String DISPATCHER_YAML_FILE_NAME = "dispatcher.yaml";
 
     @Deprecated
-    public static final String METRICS_FILE_NAME = "metrics.yaml";
-    public static final String MH_METRICS_FILE_NAME = "mh-metrics.yaml";
-    public static final String MH_PREDICTION_DATA_FILE_NAME = "mh-prediction-data.yaml";
-    public static final String MH_FITTING_FILE_NAME = "mh-fitting.yaml";
     public static final String MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "mh-system-console.log";
 
     public static final String PARAMS_YAML_MASK = "params-v%d.yaml";

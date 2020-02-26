@@ -67,7 +67,7 @@ public class ProcessorCommandProcessor {
         }
         List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
         for (Long taskId : request.resendTaskOutputResource.taskIds) {
-            Enums.ResendTaskOutputResourceStatus status = processorService.resendTaskOutputResource(dispatcherUrl, taskId);
+            Enums.ResendTaskOutputResourceStatus status = processorService.resendTaskOutputResources(dispatcherUrl, taskId);
             statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(taskId, status));
         }
         return new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses);

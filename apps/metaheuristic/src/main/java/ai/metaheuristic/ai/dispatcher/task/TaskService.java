@@ -49,7 +49,7 @@ public class TaskService {
     public void processResendTaskOutputResourceResult(String processorId, Enums.ResendTaskOutputResourceStatus status, long taskId) {
         switch(status) {
             case SEND_SCHEDULED:
-                log.info("#317.010 Processor #{} scheduled the output resource of task #{} for sending. This is normal operation of sourceCode", processorId, taskId);
+                log.info("#317.010 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, taskId);
                 break;
             case RESOURCE_NOT_FOUND:
             case TASK_IS_BROKEN:

@@ -193,6 +193,10 @@ public class DispatcherSchedule {
         return saturday.isActive(time) || sunday.isActive(time);
     }
 
+    public boolean isCurrentTimeActive() {
+        return !isCurrentTimeInactive();
+    }
+
     public boolean isCurrentTimeInactive() {
         final LocalDateTime now = LocalDateTime.now();
 

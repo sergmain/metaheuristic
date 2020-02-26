@@ -81,7 +81,7 @@ public class TaskProducingService {
 //        }
 
         // todo 2020-02-15 what do we do here?
-        // todo 2020-02-25 need to recall what this 'preservePoolNames' about
+        // todo 2020-02-25 need to recall what this 'preservePoolNames' is about
         if (execContextParamsYaml.execContextYaml.preservePoolNames) {
             final Map<String, List<String>> collectedInputs = new HashMap<>();
             try {

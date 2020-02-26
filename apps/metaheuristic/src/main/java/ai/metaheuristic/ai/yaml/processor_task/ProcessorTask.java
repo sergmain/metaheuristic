@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.yaml.processor_task;
 
 import ai.metaheuristic.api.data.Meta;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.ToString;
 
@@ -25,6 +26,28 @@ import java.util.List;
 @Data
 @ToString
 public class ProcessorTask {
+
+    @Data
+    public static class OutputStatus {
+        // resourceId of Resource. Resource is a part of Variable
+        public String resourceId;
+
+        // was resource(output resource as the result of execution of function) uploaded to dispatcher?
+        public boolean uploaded;
+    }
+
+    @Data
+    public static class OutputStatuses {
+        public final List<OutputStatus> outputStatuses = new ArrayList<>();
+
+        @JsonIgnore
+        public boolean allUploaded() {
+            return outputStatuses.stream().allMatch(o->o.uploaded);
+        }
+    }
+
+    public final OutputStatuses outputStatuses = new OutputStatuses();
+
     public long taskId;
 
     public Long execContextId;
@@ -32,10 +55,8 @@ public class ProcessorTask {
     // params of this task
     public String params;
 
-    // metrics of this task
-    public String metrics;
-
     // function exec result
+    // it contains data of FunctionApiData.FunctionExec in yaml format
     public String functionExecResult;
 
     // need to clean a dir of task after processing this task?
@@ -46,7 +67,7 @@ public class ProcessorTask {
     // when task was created
     public long createdOn;
 
-    // were all assets (data resources and function) prepared?
+    // were all assets (resources of variables and function) prepared?
     public boolean assetsPrepared;
 
     // when task was launched
@@ -63,9 +84,6 @@ public class ProcessorTask {
 
     // were status and console result received by dispatcher?
     public boolean delivered;
-
-    // was resource(output resource as the result of execution of function) uploaded to dispatcher?
-    public boolean resourceUploaded;
 
     // processing of this task was completed (it doesn't matter with which outcome)
     public boolean completed;

@@ -27,6 +27,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -88,7 +89,7 @@ public class TaskAssetPreparer {
                 continue;
             }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            if (taskParamYaml.taskYaml.inputResourceIds.isEmpty()) {
+            if (CollectionUtils.isEmpty(taskParamYaml.taskYaml.input)) {
                 log.warn("#951.040 taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;
             }

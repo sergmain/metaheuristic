@@ -138,19 +138,9 @@ public class ProcessorCommParamsYaml implements BaseParams {
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
-        public static class MachineLearningTaskResult {
-            public String metrics;
-            public String predicted;
-            public EnumsApi.Fitting fitting;
-        }
-
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
         public static class SimpleTaskExecResult {
             public long taskId;
             public String result;
-            public MachineLearningTaskResult ml;
         }
 
         public List<SimpleTaskExecResult> results = new ArrayList<>();

@@ -110,7 +110,7 @@ public class DiskResourceProvider implements ResourceProvider {
         File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
         if (outputResourceFile.exists()) {
             log.info("The result data was already written to file {}, no need to upload to dispatcher", outputResourceFile.getPath());
-            processorTaskService.setResourceUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId);
+            processorTaskService.setResourceUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId, outputResourceId);
         } else {
             String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);

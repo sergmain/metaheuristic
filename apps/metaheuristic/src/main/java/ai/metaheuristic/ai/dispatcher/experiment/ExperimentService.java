@@ -675,9 +675,6 @@ public class ExperimentService {
         e = experimentCache.save(e);
     }
 
-    @SuppressWarnings("Duplicates")
-    TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
-
     @Data
     @AllArgsConstructor
     private static class ExperimentFunctionItem {
@@ -685,6 +682,8 @@ public class ExperimentService {
         public String functionCode;
     }
 
+    // producing of tasks for experiment has been standardized so we don't need special method only for experiment
+/*
     public EnumsApi.SourceCodeProducingStatus produceTasks(
             boolean isPersist, SourceCodeParamsYaml sourceCodeParams, Long execContextId, SourceCodeParamsYaml.Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
@@ -922,6 +921,7 @@ public class ExperimentService {
         }
         return EnumsApi.SourceCodeProducingStatus.OK;
     }
+*/
 
     public Function getFunction(Map<String, Function> localCache, String functionCode) {
         Function function = localCache.get(functionCode);

@@ -227,6 +227,7 @@ public class BatchService {
         });
     }
 
+/*
     private static String getMainDocumentPoolCode(ExecContextImpl execContext) {
         ExecContextParamsYaml resourceParams = execContext.getExecContextParamsYaml();
         List<String> codes = resourceParams.execContextYaml.variables.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH);
@@ -238,6 +239,7 @@ public class BatchService {
         }
         return codes.get(0);
     }
+*/
 
     public void updateBatchStatuses() {
         List<BatchAndExecContextStates> statuses = batchRepository.findAllUnfinished();
@@ -451,8 +453,10 @@ public class BatchService {
             log.warn(msg);
             return false;
         }
-        String mainDocumentPoolCode = getMainDocumentPoolCode(wb);
 
+        // lets find the actual name of target file
+//        String mainDocumentPoolCode = getMainDocumentPoolCode(wb);
+        String mainDocumentPoolCode = "";
         final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode, execContextId);
         if (fullMainDocument == null) {
             String msg = "#990.270 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +

@@ -236,17 +236,17 @@ public class DispatcherRequestor {
                     Monitoring.log("##011", Enums.Monitor.MEMORY);
                     final boolean b = processorTaskService.isNeedNewTask(dispatcherUrl, processorId);
                     Monitoring.log("##012", Enums.Monitor.MEMORY);
-                    if (b && !dispatcher.schedule.isCurrentTimeInactive()) {
+                    if (b && dispatcher.schedule.isCurrentTimeActive()) {
                         setRequestTask(scpy, new ProcessorCommParamsYaml.RequestTask(dispatcher.dispatcherLookup.acceptOnlySignedFunctions));
                     }
                     else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
-                            // let's check resources for non-completed and not-sending yet tasks
+                            // let's check resources for not completed and not sended yet tasks
                             List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = processorTaskService.findAllByCompletedIsFalse(dispatcherUrl).stream()
-                                    .filter(t -> t.delivered && t.finishedOn!=null && !t.resourceUploaded)
+                                    .filter(t -> t.delivered && t.finishedOn!=null && !t.outputStatuses.allUploaded())
                                     .map(t->
                                             new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(
-                                                    t.taskId, processorService.resendTaskOutputResource(dispatcherUrl, t.taskId)
+                                                    t.taskId, processorService.resendTaskOutputResources(dispatcherUrl, t.taskId)
                                             )
                                     ).collect(Collectors.toList());
 

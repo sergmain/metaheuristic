@@ -330,17 +330,10 @@ public class TaskProcessor {
                     }
                     if (isOk && systemExecResult.isOk()) {
                         try {
-                            processorTaskService.storeMetrics(task.dispatcherUrl, task, mainFunctionConfig, artifactDir);
-                            processorTaskService.storePredictedData(task.dispatcherUrl, task, mainFunctionConfig, artifactDir);
-                            processorTaskService.storeFittingCheck(task.dispatcherUrl, task, mainFunctionConfig, artifactDir);
-
                             for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.taskYaml.output) {
                                 ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
                                 generalExec = resourceProvider.processResultingFile(
-                                        dispatcher, task, dispatcherInfo,
-                                        outputVariable.resources.id,
-                                        mainFunctionConfig
-                                );
+                                        dispatcher, task, dispatcherInfo, outputVariable.resources.id, mainFunctionConfig);
                             }
                         }
                         catch (Throwable th) {

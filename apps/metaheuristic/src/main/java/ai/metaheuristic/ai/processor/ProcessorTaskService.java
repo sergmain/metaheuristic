@@ -20,24 +20,16 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.utils.DigitUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
+import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTaskUtils;
 import ai.metaheuristic.api.ConstsApi;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
-import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
@@ -204,13 +196,13 @@ public class ProcessorTaskService {
             // then we don't have to set isCompleted any more
             // because we've already marked this task as completed
             if (!task.isCompleted()) {
-                task.setCompleted(task.isResourceUploaded());
+                task.setCompleted(task.outputStatuses.allUploaded());
             }
             save(task);
         }
     }
 
-    public void setResourceUploadedAndCompleted(String dispatcherUrl, Long taskId) {
+    public void setResourceUploadedAndCompleted(String dispatcherUrl, Long taskId, String outputResourceId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("setResourceUploadedAndCompleted({}, {})", dispatcherUrl, taskId);
             ProcessorTask task = findById(dispatcherUrl, taskId);
@@ -265,14 +257,18 @@ public class ProcessorTaskService {
             if (task.isDelivered() && task.isReported() ) {
                 continue;
             }
+
+            // metrics will be sent as a normal variable
+/*
             ProcessorCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult ml = null;
             Meta predictedData = MetaUtils.getMeta(task.metas, Consts.META_PREDICTED_DATA);
             if (task.getMetrics()!=null || predictedData!=null) {
                 ml = new ProcessorCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult(
                         task.getMetrics(), predictedData.getValue(), EnumsApi.Fitting.of(MetaUtils.getValue(task.metas, Consts.META_FITTED)));
             }
+*/
             final ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
-                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getFunctionExecResult(), ml);
+                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getFunctionExecResult());
             processingResult.results.add(result);
             setReportedOn(dispatcherUrl, task.taskId);
         }
@@ -347,87 +343,6 @@ public class ProcessorTaskService {
         }
     }
 
-    public void storePredictedData(String dispatcherUrl, ProcessorTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) throws IOException {
-        Meta m = MetaUtils.getMeta(functionConfig.metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
-        if (MetaUtils.isTrue(m)) {
-            log.info("storePredictedData(dispatcherUrl: {}, taskId: {}, function code: {})", dispatcherUrl, task.taskId, functionConfig.getCode());
-            String data = getPredictedData(artifactDir);
-            if (data!=null) {
-                task.getMetas().add( new Meta(Consts.META_PREDICTED_DATA, data, null) );
-                save(task);
-            }
-        }
-    }
-
-    public void storeFittingCheck(String dispatcherUrl, ProcessorTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) throws IOException {
-        if (functionConfig.type.equals(CommonConsts.CHECK_FITTING_TYPE)) {
-           log.info("storeFittingCheck(dispatcherUrl: {}, taskId: {}, function code: {})", dispatcherUrl, task.taskId, functionConfig.getCode());
-            FittingYaml fittingYaml = getFittingCheck(artifactDir);
-            if (fittingYaml != null) {
-                task.getMetas().add(new Meta(Consts.META_FITTED, fittingYaml.fitting.toString(), null));
-                save(task);
-            }
-            else {
-                log.error("#713.137 file with testing of fitting wasn't found, task #{}, artifact dir: {}", task.taskId, artifactDir.getAbsolutePath());
-            }
-        }
-    }
-
-    public void storeMetrics(String dispatcherUrl, ProcessorTask task, TaskParamsYaml.FunctionConfig functionConfig, File artifactDir) {
-        // store metrics after predict only
-        if (functionConfig.ml!=null && functionConfig.ml.metrics) {
-            log.info("storeMetrics(dispatcherUrl: {}, taskId: {}, function code: {})", dispatcherUrl, task.taskId, functionConfig.getCode());
-            Metrics metrics = new Metrics();
-            File metricsFile = getMetricsFile(artifactDir);
-            if (metricsFile!=null) {
-                try {
-                    String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
-                    metrics.setStatus(EnumsApi.MetricsStatus.Ok);
-                    metrics.setMetrics(execMetrics);
-                }
-                catch (IOException e) {
-                    log.error("#713.140 Error reading metrics file {}", metricsFile.getAbsolutePath());
-                    metrics.setStatus(EnumsApi.MetricsStatus.Error);
-                    metrics.setError(e.toString());
-                }
-            } else {
-                metrics.setStatus(EnumsApi.MetricsStatus.NotFound);
-            }
-            task.setMetrics(MetricsUtils.toString(metrics));
-            save(task);
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    private File getMetricsFile(File artifactDir) {
-        File metricsFile = new File(artifactDir, Consts.MH_METRICS_FILE_NAME);
-        if (metricsFile.exists()) {
-            return metricsFile;
-        }
-        // let's try a file with legacy name
-        metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
-        return metricsFile.exists() ? metricsFile : null;
-    }
-
-
-    private String getPredictedData(File artifactDir) throws IOException {
-        File file = new File(artifactDir, Consts.MH_PREDICTION_DATA_FILE_NAME);
-        if (file.exists() && file.isFile()) {
-            String data = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-            return data;
-        }
-        return null;
-    }
-
-    private FittingYaml getFittingCheck(File artifactDir) throws IOException {
-        File file = new File(artifactDir, Consts.MH_FITTING_FILE_NAME);
-        if (file.exists() && file.isFile()) {
-            String yaml = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-            return FittingYamlUtils.BASE_YAML_UTILS.to(yaml);
-        }
-        return null;
-    }
-
     public List<ProcessorTask> findAllByCompletedIsFalse(String dispatcherUrl) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             List<ProcessorTask> list = new ArrayList<>();
@@ -492,7 +407,6 @@ public class ProcessorTaskService {
             task.taskId = taskId;
             task.execContextId = execContextId;
             task.params = params;
-            task.metrics = null;
             task.functionExecResult = null;
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
             task.clean = taskParamYaml.taskYaml.clean;
@@ -504,7 +418,7 @@ public class ProcessorTaskService {
             task.reportedOn = null;
             task.reported = false;
             task.delivered = false;
-            task.resourceUploaded = false;
+            task.outputStatuses.clear();
             task.completed = false;
 
             File dispatcherDir = new File(globals.processorTaskDir, metadataService.dispatcherUrlAsCode(dispatcherUrl).code);

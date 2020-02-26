@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -114,7 +115,7 @@ public class ProcessorService {
         }
     }
 
-    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(String dispatcherUrl, long taskId) {
+    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(String dispatcherUrl, long taskId) {
         if (dispatcherUrl==null) {
             throw new IllegalStateException("#749.020 dispatcherUrl is null");
         }
@@ -125,18 +126,23 @@ public class ProcessorService {
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
         File taskDir = processorTaskService.prepareTaskDir(metadataService.dispatcherUrlAsCode(dispatcherUrl), taskId);
 
-        final SourceCodeParamsYaml.Variable dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
-                .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
+        for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.taskYaml.output) {
+            Enums.ResendTaskOutputResourceStatus status = scheduleSendingOutputVariable(taskDir, outputVariable);
+            if ()
+        }
+        return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
+    }
+
+    private Enums.ResendTaskOutputResourceStatus scheduleSendingOutputVariable(File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
         ResourceProvider resourceProvider;
         try {
-            resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
+            resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
         } catch (ResourceProviderException e) {
-            log.error("#749.030 storageUrl wasn't found for outputResourceCode {}",
-                    taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
+            log.error("#749.030 storageUrl wasn't found for outputResource {}", outputVariable.name);
             return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
         }
         if (resourceProvider instanceof DiskResourceProvider) {
-            return Enums.ResendTaskOutputResourceStatus.OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE;
+            return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
         }
 
         final AssetFile assetFile = ResourceUtils.prepareOutputAssetFile(
@@ -159,8 +165,10 @@ public class ProcessorService {
         uploadResourceTask.dispatcher = dispatcher.dispatcherLookup;
         uploadResourceTask.processorId = dispatcherCode.processorId;
         uploadResourceActor.add(uploadResourceTask);
+
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
+
 
     @Data
     public static class ResultOfChecking {
