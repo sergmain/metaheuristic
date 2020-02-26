@@ -23,11 +23,15 @@ import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.UploadResourceTask;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
@@ -88,9 +92,29 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.dispatcher.url, task.taskId);
                 continue;
             }
-            if (processorTask.resourceUploaded) {
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(processorTask.getParams());
+
+            final UploadResourceTask finalTask = task;
+            TaskParamsYaml.OutputVariable v = taskParamYaml.taskYaml.output.stream().filter(o->o.resource.id.equals(finalTask.resourceId)).findAny().orElse(null);
+            if (v==null) {
+                log.error("#311.022 outputVariable with resourceId {} wasn't found.", finalTask.resourceId);
+                processorTaskService.delete(task.dispatcher.url, task.taskId);
+                continue;
+            }
+            ProcessorTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.resourceId.equals(finalTask.resourceId)).findAny().orElse(null);
+            if (outputStatus==null) {
+                log.error("#311.024 outputStatus for resourceId {} wasn't found.", finalTask.resourceId);
+                processorTaskService.delete(task.dispatcher.url, task.taskId);
+                continue;
+            }
+            if (outputStatus.uploaded) {
                 log.info("#311.030 resource was already uploaded, {}, #{}", task.dispatcher.url, task.taskId);
                 continue;
+            }
+            if (v.sourcing!= EnumsApi.DataSourcing.dispatcher) {
+                if (true) {
+                    throw new NotImplementedException("Implement");
+                }
             }
             log.info("Start uploading result data to server, resultDataFile: {}", task.file);
             if (!task.file.exists()) {
@@ -142,7 +166,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 switch(status) {
                     case OK:
                         log.info("Resource was successfully uploaded to server, {}, {} ", task.dispatcher.url, task.taskId);
-                        processorTaskService.setResourceUploadedAndCompleted(task.dispatcher.url, task.taskId);
+                        processorTaskService.setResourceUploadedAndCompleted(task.dispatcher.url, task.taskId, finalTask.resourceId);
                         break;
                     case FILENAME_IS_BLANK:
                     case TASK_WAS_RESET:

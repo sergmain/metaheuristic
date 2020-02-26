@@ -26,7 +26,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_TASK")
 @Data
-@ToString(exclude = {"params", "metrics"} )
+@ToString(exclude = {"params", "extendedResult"} )
 public class TaskImpl implements Serializable, Task {
     private static final long serialVersionUID = 268796211406267810L;
 
@@ -58,9 +58,6 @@ public class TaskImpl implements Serializable, Task {
     @JsonIgnore
     @Column(name = "FUNCTION_EXEC_RESULTS")
     public String functionExecResults;
-
-    @Column(name = "METRICS")
-    public String metrics;
 
     @Column(name = "EXTENDED_RESULT")
     public String extendedResult;

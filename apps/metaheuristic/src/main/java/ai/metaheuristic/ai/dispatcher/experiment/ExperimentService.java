@@ -23,34 +23,26 @@ import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
-import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
-import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
 import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
@@ -60,6 +52,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -77,12 +70,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.EnumsApi.SourceCodeProducingStatus.TOO_MANY_TASKS_PER_SOURCE_CODE_ERROR;
 import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
 
 @SuppressWarnings("DuplicatedCode")
@@ -460,10 +450,14 @@ public class ExperimentService {
         String metricKey = null;
         for (Task task : selected) {
 
-            if (S.b((task.getMetrics()))) {
+            if (true) {
+                throw new NotImplementedException("Implement storing of metrics");
+            }
+            String metrics = null; // (task.getMetrics())
+            if (S.b(metrics)) {
                 continue;
             }
-            TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to(task.getMetrics());
+            TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to(metrics);
             MetricValues metricValues = MetricsUtils.getValues( tmly.metrics );
             if (metricValues==null) {
                 continue;
@@ -577,10 +571,14 @@ public class ExperimentService {
 
         List<Task> tasks = findByIsCompletedIsTrueAndFeatureId(experiment.getExperimentParamsYaml(), experimentFeature.id);
         for (Task seq : tasks) {
-            if (S.b((seq.getMetrics()))) {
+            if (true) {
+                throw new NotImplementedException("Implement storing of metrics");
+            }
+            String metrics = null; // (task.getMetrics())
+            if (S.b(metrics)) {
                 continue;
             }
-            TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to(seq.getMetrics());
+            TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to(metrics);
             MetricValues metricValues = MetricsUtils.getValues( tmly.metrics );
             if (metricValues==null) {
                 continue;

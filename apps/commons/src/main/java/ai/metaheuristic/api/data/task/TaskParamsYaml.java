@@ -88,7 +88,7 @@ public class TaskParamsYaml implements BaseParams {
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
-        public Resource resources;
+        public Resource resource;
     }
 
     @Data

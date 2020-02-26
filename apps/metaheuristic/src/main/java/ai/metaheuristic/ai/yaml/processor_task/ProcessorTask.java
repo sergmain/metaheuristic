@@ -37,7 +37,7 @@ public class ProcessorTask {
     }
 
     @Data
-    public static class OutputStatuses {
+    public static class Output {
         public final List<OutputStatus> outputStatuses = new ArrayList<>();
 
         @JsonIgnore
@@ -46,7 +46,7 @@ public class ProcessorTask {
         }
     }
 
-    public final OutputStatuses outputStatuses = new OutputStatuses();
+    public final Output output = new Output();
 
     public long taskId;
 

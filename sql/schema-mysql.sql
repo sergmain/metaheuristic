@@ -167,7 +167,6 @@ CREATE TABLE mh_task
     IS_COMPLETED                tinyint(1) not null default 0,
     COMPLETED_ON                bigint,
     FUNCTION_EXEC_RESULTS       MEDIUMTEXT,
-    METRICS                     MEDIUMTEXT,
     EXEC_CONTEXT_ID             NUMERIC(10, 0)   NOT NULL,
     EXEC_STATE                  tinyint(1) not null default 0,
     IS_RESULT_RECEIVED          tinyint(1) not null default 0,

@@ -28,4 +28,5 @@ import java.io.File;
 public class UploadResourceTask extends ProcessorRestTask {
     public long taskId;
     public File file;
+    public String resourceId;
 }

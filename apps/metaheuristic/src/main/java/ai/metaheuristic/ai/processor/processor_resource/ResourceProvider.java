@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 
 import java.io.File;
@@ -31,7 +30,7 @@ public interface ResourceProvider {
     List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String resourceId, SourceCodeParamsYaml.Variable dataStorageParams);
+            String resourceId, TaskParamsYaml.InputVariable variable);
 
     FunctionApiData.SystemExecResult processResultingFile(
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
@@ -44,5 +43,5 @@ public interface ResourceProvider {
             File taskDir,
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task,
-            String outputResourceId, SourceCodeParamsYaml.Variable dataStorageParams);
+            String outputResourceId, TaskParamsYaml.OutputVariable variable);
 }

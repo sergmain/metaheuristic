@@ -156,8 +156,7 @@ public class TaskProcessor {
                 continue;
             }
             boolean isAllLoaded = resultOfChecking.isAllLoaded;
-            File outputResourceFile = processorService.getOutputResourceFile(task, taskParamYaml, dispatcher, taskDir);
-            if (outputResourceFile==null) {
+            if (!processorService.checkOutputResourceFile(task, taskParamYaml, dispatcher, taskDir)) {
                 processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
                 continue;
             }
@@ -333,7 +332,7 @@ public class TaskProcessor {
                             for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.taskYaml.output) {
                                 ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
                                 generalExec = resourceProvider.processResultingFile(
-                                        dispatcher, task, dispatcherInfo, outputVariable.resources.id, mainFunctionConfig);
+                                        dispatcher, task, dispatcherInfo, outputVariable.resource.id, mainFunctionConfig);
                             }
                         }
                         catch (Throwable th) {
@@ -417,7 +416,7 @@ public class TaskProcessor {
         v.git = v1.git;
         v.name = v1.name;
         v.sourcing = v1.sourcing;
-        v.resources = new TaskFileParamsYaml.Resource(v1.resources.id, v1.resources.context, v1.resources.realName);
+        v.resources = new TaskFileParamsYaml.Resource(v1.resource.id, v1.resource.context, v1.resource.realName);
         return v;
     }
 

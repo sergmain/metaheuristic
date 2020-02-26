@@ -90,8 +90,7 @@ public class ProcessorCommParamsYamlUtilsV1
                     v1.reportTaskProcessingResult.results!=null
                             ? v1.reportTaskProcessingResult.results
                             .stream()
-                            .map(o->new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(o.taskId, o.result,
-                                    o.ml==null ? null : new ProcessorCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult(o.ml.metrics, o.ml.predicted, o.ml.fitting)))
+                            .map(o->new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(o.taskId, o.result))
                             .collect(Collectors.toList())
                             : new ArrayList<>();
         }

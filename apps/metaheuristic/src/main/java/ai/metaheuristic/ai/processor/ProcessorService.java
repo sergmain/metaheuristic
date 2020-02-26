@@ -19,27 +19,25 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.exceptions.ResourceProviderException;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.processor.actors.UploadResourceActor;
 import ai.metaheuristic.ai.processor.env.EnvService;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.processor.processor_resource.DiskResourceProvider;
 import ai.metaheuristic.ai.processor.processor_resource.ResourceProvider;
 import ai.metaheuristic.ai.processor.processor_resource.ResourceProviderFactory;
+import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.tasks.UploadResourceTask;
+import ai.metaheuristic.ai.resource.AssetFile;
+import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -47,10 +45,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Slf4j
@@ -127,41 +122,47 @@ public class ProcessorService {
         File taskDir = processorTaskService.prepareTaskDir(metadataService.dispatcherUrlAsCode(dispatcherUrl), taskId);
 
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.taskYaml.output) {
-            Enums.ResendTaskOutputResourceStatus status = scheduleSendingOutputVariable(taskDir, outputVariable);
-            if ()
+            Enums.ResendTaskOutputResourceStatus status;
+            switch (outputVariable.sourcing) {
+                case dispatcher:
+                    status = scheduleSendingToDispatcher(task.dispatcherUrl, taskId, taskDir, outputVariable);
+                    break;
+                case disk:
+                case git:
+                case inline:
+                default:
+                    if (true) {
+                        throw new NotImplementedException("need to set uploaded in params for this resourceId");
+                    }
+                    status = Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
+                    break;
+            }
+            if (status!=Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED) {
+                return status;
+            }
         }
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
 
-    private Enums.ResendTaskOutputResourceStatus scheduleSendingOutputVariable(File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
-        ResourceProvider resourceProvider;
-        try {
-            resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
-        } catch (ResourceProviderException e) {
-            log.error("#749.030 storageUrl wasn't found for outputResource {}", outputVariable.name);
-            return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
-        }
-        if (resourceProvider instanceof DiskResourceProvider) {
-            return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
-        }
-
-        final AssetFile assetFile = ResourceUtils.prepareOutputAssetFile(
-                taskDir, taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(),
-                taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
+    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(String dispatcherUrl, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
+        final AssetFile assetFile = ResourceUtils.prepareOutputAssetFile(taskDir, outputVariable.resource.id);
 
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
             log.warn("#749.040 Resource wasn't found. Considering that this task is broken, {}", assetFile);
-            processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId,
+            processorTaskService.markAsFinishedWithError(dispatcherUrl, taskId,
                     "#749.050 Resource wasn't found. Considering that this task is broken");
-            processorTaskService.setCompleted(task.dispatcherUrl, task.taskId);
+            if (true) {
+                throw new NotImplementedException("need to set uploaded in params, not completed for task");
+            }
+            processorTaskService.setCompleted(dispatcherUrl, taskId);
             return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
         }
         final Metadata.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
-        UploadResourceTask uploadResourceTask = new UploadResourceTask(taskId, assetFile.file);
+        UploadResourceTask uploadResourceTask = new UploadResourceTask(taskId, assetFile.file, outputVariable.resource.id);
         uploadResourceTask.dispatcher = dispatcher.dispatcherLookup;
         uploadResourceTask.processorId = dispatcherCode.processorId;
         uploadResourceActor.add(uploadResourceTask);
@@ -174,23 +175,15 @@ public class ProcessorService {
     public static class ResultOfChecking {
         public boolean isAllLoaded = true;
         public boolean isError = false;
-        public Map<String, List<AssetFile>> assetFiles = new HashMap<>();
     }
 
     public ProcessorService.ResultOfChecking checkForPreparingOfAssets(ProcessorTask task, Metadata.DispatcherInfo dispatcherCode, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         try {
-            taskParamYaml.taskYaml.inputResourceIds.forEach((key, value) -> {
-                for (String resourceCode : value) {
-                    final SourceCodeParamsYaml.Variable params = taskParamYaml.taskYaml.resourceStorageUrls.get(resourceCode);
-                    if (params==null) {
-                        final String es = "#749.060 resource code: " + resourceCode + ", inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml);
-                        log.error(es);
-                        throw new BreakFromForEachException(es);
-                    }
-                    ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
-                    List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, dispatcher, task, dispatcherCode, resourceCode, params);
-                    result.assetFiles.computeIfAbsent(key, o -> new ArrayList<>()).addAll(assetFiles);
+            taskParamYaml.taskYaml.input.forEach(input -> {
+                for (TaskParamsYaml.Resource resource : input.resources) {
+                    ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(input.sourcing);
+                    List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, dispatcher, task, dispatcherCode, resource.id, input);
                     for (AssetFile assetFile : assetFiles) {
                         // is this resource prepared?
                         if (assetFile.isError || !assetFile.isContent) {
@@ -226,21 +219,20 @@ public class ProcessorService {
         return result;
     }
 
-    public File getOutputResourceFile(ProcessorTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
-        try {
-            final SourceCodeParamsYaml.Variable dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls
-                    .get(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next());
+    public boolean checkOutputResourceFile(ProcessorTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+        for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.taskYaml.output) {
+            try {
+                ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
 
-            ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
-            //noinspection UnnecessaryLocalVariable
-            File outputResourceFile = resourceProvider.getOutputResourceFile(
-                    taskDir, dispatcher, task, taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), dataStorageParams);
-            return outputResourceFile;
-        } catch (ResourceProviderException e) {
-            final String msg = "#749.080 Error: " + e.toString();
-            log.error(msg, e);
-            processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, msg);
-            return null;
+                //noinspection unused
+                File outputResourceFile = resourceProvider.getOutputResourceFile(taskDir, dispatcher, task, outputVariable.resource.id, outputVariable);
+            } catch (ResourceProviderException e) {
+                final String msg = "#749.080 Error: " + e.toString();
+                log.error(msg, e);
+                processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, msg);
+                return false;
+            }
         }
+        return true;
     }
 }

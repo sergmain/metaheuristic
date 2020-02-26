@@ -16,18 +16,17 @@
 
 package ai.metaheuristic.ai.processor.processor_resource;
 
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.actors.DownloadResourceActor;
 import ai.metaheuristic.ai.processor.actors.UploadResourceActor;
 import ai.metaheuristic.ai.processor.tasks.DownloadResourceTask;
 import ai.metaheuristic.ai.processor.tasks.UploadResourceTask;
+import ai.metaheuristic.ai.resource.AssetFile;
+import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +51,7 @@ public class DispatcherResourceProvider implements ResourceProvider {
     public List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String resourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
+            String resourceId, TaskParamsYaml.InputVariable variable) {
 
         // process it only if the dispatcher has already sent its config
         if (dispatcher.context.chunkSize != null) {
@@ -72,7 +71,7 @@ public class DispatcherResourceProvider implements ResourceProvider {
         File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
         if (outputResourceFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputResourceFile.getPath());
-            UploadResourceTask uploadResourceTask = new UploadResourceTask(task.taskId, outputResourceFile);
+            UploadResourceTask uploadResourceTask = new UploadResourceTask(task.taskId, outputResourceFile, outputResourceId);
             uploadResourceTask.dispatcher = dispatcher.dispatcherLookup;
             uploadResourceTask.processorId = dispatcherCode.processorId;
             uploadResourceActor.add(uploadResourceTask);
@@ -87,7 +86,7 @@ public class DispatcherResourceProvider implements ResourceProvider {
     @Override
     public File getOutputResourceFile(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, String outputResourceCode, SourceCodeParamsYaml.Variable dataStorageParams) {
+            ProcessorTask task, String outputResourceCode, TaskParamsYaml.OutputVariable variable) {
 
         //noinspection UnnecessaryLocalVariable
         File resultDataFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputResourceCode);

@@ -29,12 +29,6 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.task_extended_result.TaskExtendedResultYaml;
-import ai.metaheuristic.commons.yaml.task_extended_result.TaskExtendedResultYamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -116,7 +110,6 @@ public class TaskPersistencer {
             task.setAssignedOn(null);
             task.setCompleted(false);
             task.setCompletedOn(null);
-            task.setMetrics(null);
             task.setExecState(EnumsApi.TaskExecState.NONE.value);
             task.setResultReceived(false);
             task.setResultResourceScheduledOn(0);
@@ -232,21 +225,7 @@ public class TaskPersistencer {
                 }
             }
             task.setFunctionExecResults(result.getResult());
-            if (result.ml!=null) {
-                Metrics m = MetricsUtils.to(result.ml.metrics);
-                TaskMachineLearningYaml.Metrics metrics = new TaskMachineLearningYaml.Metrics(m.status, m.error, m.metrics);
-                TaskMachineLearningYaml tmly = new TaskMachineLearningYaml(metrics, result.ml.fitting);
-                String s = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.toString(tmly);
-                task.setMetrics(s);
-
-                TaskExtendedResultYaml tery = new TaskExtendedResultYaml(result.ml.predicted);
-                String extendedResult = TaskExtendedResultYamlUtils.BASE_YAML_UTILS.toString(tery);
-                task.setExtendedResult(extendedResult);
-            }
-            else {
-                task.setMetrics(null);
-                task.setExtendedResult(null);
-            }
+            task.setExtendedResult(null);
             task = taskRepository.save(task);
 
             return task;

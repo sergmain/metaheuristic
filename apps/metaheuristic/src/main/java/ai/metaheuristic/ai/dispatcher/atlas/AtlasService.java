@@ -20,15 +20,15 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.AtlasData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.repositories.AtlasRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.AtlasTaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
@@ -45,6 +45,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -163,7 +164,10 @@ public class AtlasService {
                     // see method ai.metaheuristic.ai.dispatcher.atlas.AtlasTopLevelService.findTasks
                     atpy.typeAsString = null;
                     atpy.functionExecResults = t.getFunctionExecResults();
-                    atpy.metrics = t.getMetrics();
+                    if (true) {
+                        throw new NotImplementedException("Implement storing of metrics");
+                    }
+//                    atpy.metrics = t.getMetrics();
 
                     at.params = AtlasTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
                     atlasTaskRepository.save(at);

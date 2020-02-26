@@ -196,7 +196,7 @@ public class ProcessorTaskService {
             // then we don't have to set isCompleted any more
             // because we've already marked this task as completed
             if (!task.isCompleted()) {
-                task.setCompleted(task.outputStatuses.allUploaded());
+                task.setCompleted(task.output.allUploaded());
             }
             save(task);
         }
@@ -210,7 +210,7 @@ public class ProcessorTaskService {
                 log.error("#713.090 ProcessorTask wasn't found for Id {}", taskId);
                 return;
             }
-            task.setResourceUploaded(true);
+            task.output.outputStatuses.stream().filter(o -> o.resourceId.equals(outputResourceId)).findAny().ifPresent(status -> status.uploaded = true);
             task.setCompleted( task.isDelivered() );
             save(task);
         }
@@ -418,7 +418,7 @@ public class ProcessorTaskService {
             task.reportedOn = null;
             task.reported = false;
             task.delivered = false;
-            task.outputStatuses.clear();
+            task.output.outputStatuses.clear();
             task.completed = false;
 
             File dispatcherDir = new File(globals.processorTaskDir, metadataService.dispatcherUrlAsCode(dispatcherUrl).code);

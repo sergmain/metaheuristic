@@ -81,7 +81,7 @@ public class TaskParamsYamlUtilsV1
         v.git = v1.git;
         v.name = v1.name;
         v.sourcing = v1.sourcing;
-        v.resources = v1.resources!=null ? new TaskParamsYaml.Resource(v1.resources.id, v1.resources.context, v1.resources.realName) : null;
+        v.resource = v1.resources!=null ? new TaskParamsYaml.Resource(v1.resources.id, v1.resources.context, v1.resources.realName) : null;
         return v;
     }
 

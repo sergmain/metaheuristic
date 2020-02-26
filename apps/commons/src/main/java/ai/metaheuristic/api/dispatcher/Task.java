@@ -34,8 +34,6 @@ public interface Task {
 
     String getFunctionExecResults();
 
-    String getMetrics();
-
     Long getExecContextId();
 
     int getExecState();
@@ -59,8 +57,6 @@ public interface Task {
     void setCompleted(boolean isCompleted);
 
     void setFunctionExecResults(String functionExecResults);
-
-    void setMetrics(String metrics);
 
     void setExecContextId(Long execContextId);
 

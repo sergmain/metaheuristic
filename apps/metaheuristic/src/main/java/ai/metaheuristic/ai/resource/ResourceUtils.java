@@ -37,8 +37,8 @@ public class ResourceUtils {
         return prepareAssetFile(rootDir, resourceId, resourceFilename, EnumsApi.BinaryType.data.toString());
     }
 
-    public static AssetFile prepareOutputAssetFile(File rootDir, String id, String resourceFilename) {
-        return prepareAssetFile(rootDir, id, resourceFilename, ConstsApi.ARTIFACTS_DIR);
+    public static AssetFile prepareOutputAssetFile(File rootDir, String id) {
+        return prepareAssetFile(rootDir, id, null, ConstsApi.ARTIFACTS_DIR);
     }
 
     private static AssetFile prepareAssetFile(File rootDir, String resourceId, String resourceFilename, String assetDirname ) {

@@ -243,7 +243,7 @@ public class DispatcherRequestor {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
                             // let's check resources for not completed and not sended yet tasks
                             List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = processorTaskService.findAllByCompletedIsFalse(dispatcherUrl).stream()
-                                    .filter(t -> t.delivered && t.finishedOn!=null && !t.outputStatuses.allUploaded())
+                                    .filter(t -> t.delivered && t.finishedOn!=null && !t.output.allUploaded())
                                     .map(t->
                                             new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(
                                                     t.taskId, processorService.resendTaskOutputResources(dispatcherUrl, t.taskId)

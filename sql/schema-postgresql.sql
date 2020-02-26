@@ -152,7 +152,6 @@ CREATE TABLE MH_TASK
   IS_COMPLETED  BOOLEAN default false not null,
   COMPLETED_ON  bigint,
   FUNCTION_EXEC_RESULTS  TEXT,
-  METRICS      TEXT,
   EXEC_CONTEXT_ID          NUMERIC(10, 0)   NOT NULL,
   EXEC_STATE   smallint not null default 0,
   IS_RESULT_RECEIVED  BOOLEAN not null default false,

@@ -17,11 +17,11 @@
 package ai.metaheuristic.ai.processor.processor_resource;
 
 import ai.metaheuristic.ai.exceptions.ResourceProviderException;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.resource.AssetFile;
+import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.yaml.env.DiskStorage;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
@@ -29,7 +29,6 @@ import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -58,12 +57,12 @@ public class DiskResourceProvider implements ResourceProvider {
     public List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String resourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
+            String resourceId, TaskParamsYaml.InputVariable variable) {
 
-        if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.disk) {
-            throw new ResourceProviderException("#015.018 Wrong type of sourcing of data storage" + dataStorageParams.sourcing);
+        if (variable.sourcing!= EnumsApi.DataSourcing.disk) {
+            throw new ResourceProviderException("#015.018 Wrong type of sourcing of data storage" + variable.sourcing);
         }
-        DiskInfo diskInfo = dataStorageParams.disk;
+        DiskInfo diskInfo = variable.disk;
 
         EnvYaml env = envService.getEnvYaml();
         DiskStorage diskStorage = env.findDiskStorageByCode(diskInfo.code);
@@ -122,12 +121,12 @@ public class DiskResourceProvider implements ResourceProvider {
     @Override
     public File getOutputResourceFile(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, String outputResourceId, SourceCodeParamsYaml.Variable dataStorageParams) {
+            ProcessorTask task, String outputResourceId, TaskParamsYaml.OutputVariable variable) {
 
         EnvYaml env = envService.getEnvYaml();
-        DiskStorage diskStorage = env.findDiskStorageByCode(dataStorageParams.disk.code);
+        DiskStorage diskStorage = env.findDiskStorageByCode(variable.disk.code);
         if (diskStorage==null) {
-            throw new ResourceProviderException("#015.037 The disk storage wasn't found for code: " + dataStorageParams.disk.code);
+            throw new ResourceProviderException("#015.037 The disk storage wasn't found for code: " + variable.disk.code);
         }
         File path = new File(diskStorage.path);
         if (!path.exists()) {
