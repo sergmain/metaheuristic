@@ -48,8 +48,8 @@ public class TaskFileParamsYamlUtilsV1
         t.task = new TaskFileParamsYaml.Task();
         BeanUtils.copyProperties(v1.task, t.task, "inline", "input", "output");
         t.task.inline = v1.task.inline;
-        t.task.input = v1.task.input!=null ? v1.task.input.stream().map(TaskFileParamsYamlUtilsV1::upInputVariable).collect(Collectors.toList()) : null;
-        t.task.output = v1.task.output!=null ? v1.task.output.stream().map(TaskFileParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toList()) : null;
+        v1.task.inputs.stream().map(TaskFileParamsYamlUtilsV1::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
+        v1.task.outputs.stream().map(TaskFileParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
 
         t.checkIntegrity();
         return t;
@@ -58,7 +58,6 @@ public class TaskFileParamsYamlUtilsV1
     private static TaskFileParamsYaml.InputVariable upInputVariable(TaskFileParamsYamlV1.InputVariableV1 v1) {
         TaskFileParamsYaml.InputVariable v = new TaskFileParamsYaml.InputVariable();
         v.name = v1.name;
-        v.context = v1.context;
         v.disk = v1.disk;
         v.git = v1.git;
         v.sourcing = v1.sourcing;
@@ -69,7 +68,6 @@ public class TaskFileParamsYamlUtilsV1
     private static TaskFileParamsYaml.OutputVariable upOutputVariable(TaskFileParamsYamlV1.OutputVariableV1 v1) {
         TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
         v.name = v1.name;
-        v.context = v1.context;
         v.disk = v1.disk;
         v.git = v1.git;
         v.sourcing = v1.sourcing;

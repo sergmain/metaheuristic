@@ -31,6 +31,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * class TaskParamsYaml is for storing parameters of task internally at Processor side
+ *
+ * class TaskFileParamsYaml is being used for storing a parameters of task for function in a file, ie params-v1.yaml
+ *
  * @author Serge
  * Date: 6/17/2019
  * Time: 9:10 PM

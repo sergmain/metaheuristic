@@ -58,7 +58,7 @@ import static org.junit.Assert.*;
 public class TestUploadFileForBatch extends PreparingPlan {
 
     @Override
-    public String getPlanYamlAsString() {
+    public String getSourceCodeYamlAsString() {
         SourceCodeParamsYamlV1 planParamsYaml = new SourceCodeParamsYamlV1();
 
         planParamsYaml.source = new SourceCodeParamsYamlV1.SourceCodeV1();
@@ -132,7 +132,7 @@ public class TestUploadFileForBatch extends PreparingPlan {
         sourceCode = sourceCodeCache.findById(sourceCode.id);
         assertTrue(sourceCode.isValid());
 
-        String planYamlAsString = getPlanYamlAsString();
+        String planYamlAsString = getSourceCodeYamlAsString();
         System.out.println("actual sourceCode yaml:\n" + planYamlAsString);
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsString);
         MockMultipartFile mockFile = new MockMultipartFile("random-name.txt", "file-for-batch-processing.xml", StandardCharsets.UTF_8.toString(), "content of file".getBytes());

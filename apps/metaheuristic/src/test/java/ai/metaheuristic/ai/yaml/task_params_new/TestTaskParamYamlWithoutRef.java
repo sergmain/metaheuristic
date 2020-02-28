@@ -15,27 +15,55 @@
  */
 package ai.metaheuristic.ai.yaml.task_params_new;
 
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
+import static org.junit.Assert.assertFalse;
 
 public class TestTaskParamYamlWithoutRef {
 
     @Test
-    public void testTaskParamYaml() throws IOException {
-        String yaml = IOUtils.resourceToString("/yaml/task_params_new/params-complex.yaml", StandardCharsets.UTF_8);
+    public void testTaskFileParamYaml() throws IOException {
+        String yaml = IOUtils.resourceToString("/yaml/task_file_params/params-v1.yaml", StandardCharsets.UTF_8);
 
-        TaskParamsYaml taskParam = TaskParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        TaskFileParamsYaml taskParam = TaskFileParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
-        String s = TaskParamYamlNewUtils.toString(taskParam);
+        String s = TaskFileParamsYamlUtils.BASE_YAML_UTILS.toString(taskParam);
 
         System.out.println("s = \n" + s);
-        // TODO right now it doesn't work, refs are always here
-//        assertFalse(s.contains("&id001"));
+        assertFalse(s.contains("&id001"));
 
     }
+
+    @Test
+    public void createTaskFileParamYaml() {
+        TaskFileParamsYaml params = new TaskFileParamsYaml();
+        params.task = new TaskFileParamsYaml.Task();
+        TaskFileParamsYaml.Task t = params.task;
+        t.clean = true;
+        t.execContextId = 42L;
+        t.inline = Map.of(ConstsApi.MH_HYPER_PARAMS, Map.of("k1", "vInput1", "k2", "v2"));
+        TaskFileParamsYaml.InputVariable vInput1 = new TaskFileParamsYaml.InputVariable("vInput1", EnumsApi.DataSourcing.dispatcher);
+        vInput1.resources.add(new TaskFileParamsYaml.Resource("rInput1"));
+        vInput1.resources.add(new TaskFileParamsYaml.Resource("rInput2"));
+        t.inputs.add(vInput1);
+
+        TaskFileParamsYaml.OutputVariable vOutput1 =
+                new TaskFileParamsYaml.OutputVariable("vOutput1", EnumsApi.DataSourcing.dispatcher, new TaskFileParamsYaml.Resource("r1"));
+
+        t.outputs.add(vOutput1);
+
+        String yaml = TaskFileParamsYamlUtils.BASE_YAML_UTILS.toString(params);
+
+        System.out.println(yaml);
+    }
+
 }

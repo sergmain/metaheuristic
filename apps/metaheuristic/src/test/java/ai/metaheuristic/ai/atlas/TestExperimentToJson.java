@@ -48,8 +48,8 @@ public class TestExperimentToJson extends PreparingPlan {
     private AtlasParamsYamlUtils atlasParamsYamlUtils;
 
     @Override
-    public String getPlanYamlAsString() {
-        return getPlanParamsYamlAsString_Simple();
+    public String getSourceCodeYamlAsString() {
+        return getSourceParamsYamlAsString_Simple();
     }
 
     @Test

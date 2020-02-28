@@ -37,6 +37,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtilsV1;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtilsV1;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
@@ -44,6 +46,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV1;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYamlV1;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
@@ -54,6 +57,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -117,9 +121,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
     public Company company;
 
-    public abstract String getPlanYamlAsString();
+    public abstract String getSourceCodeYamlAsString();
 
-    public static String getPlanV1() {
+    public static String getSourceCodeV1() {
         SourceCodeParamsYamlV1 planParamsYaml = new SourceCodeParamsYamlV1();
         planParamsYaml.source = new SourceCodeParamsYamlV1.SourceCodeV1();
         planParamsYaml.source.uid = "SourceCode for experiment";
@@ -249,13 +253,13 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
             p.subProcesses.processes = List.of(p1, p2);
         }
-        final SourceCodeParamsYamlUtilsV1 forVersion = (SourceCodeParamsYamlUtilsV1) SourceCodeParamsYamlUtils.BASE_YAML_UTILS.getForVersion(8);
+        final SourceCodeParamsYamlUtilsV1 forVersion = (SourceCodeParamsYamlUtilsV1) SourceCodeParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1);
         String yaml = forVersion.toString(planParamsYaml);
         return yaml;
     }
 
-    public String getPlanParamsYamlAsString_Simple() {
-        return getPlanV1();
+    public String getSourceParamsYamlAsString_Simple() {
+        return getSourceCodeV1();
     }
 
     public static final String TEST_GLOBAL_VARIABLE = "test-variable";
@@ -283,7 +287,13 @@ public abstract class PreparingPlan extends PreparingExperiment {
         sourceCode = new SourceCodeImpl();
         sourceCode.setUid("test-sourceCode-code");
 
-        String params = getPlanYamlAsString();
+        SourceCodeStoredParamsYamlV1 sourceCodeStored = new SourceCodeStoredParamsYamlV1();
+        sourceCodeStored.source = getSourceCodeYamlAsString();
+        sourceCodeStored.lang = EnumsApi.SourceCodeLang.yaml;
+
+        final SourceCodeStoredParamsYamlUtilsV1 forVersion = (SourceCodeStoredParamsYamlUtilsV1) SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1);
+        String params = forVersion.toString(sourceCodeStored);
+
         sourceCode.setParams(params);
         sourceCode.setCreatedOn(System.currentTimeMillis());
         sourceCode.companyId = company.uniqueId;
@@ -308,6 +318,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
         globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-03.txt");
 
         execContextYaml = new ExecContextParamsYaml();
+        execContextYaml.variables = new ExecContextParamsYaml.VariableDeclaration();
+        execContextYaml.variables.globals = new ArrayList<>();
         execContextYaml.variables.globals.add(TEST_GLOBAL_VARIABLE);
     }
 
@@ -381,7 +393,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     }
 
     public TaskProducingResultComplex produceTasksForTest() {
-        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getSourceCodeYamlAsString());
         assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
         EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);

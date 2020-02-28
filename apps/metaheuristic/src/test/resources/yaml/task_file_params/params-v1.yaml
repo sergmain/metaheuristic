@@ -1,0 +1,29 @@
+task:
+  clean: false
+  execContextId: 1
+  inline:
+    mh.hyper-params:
+      RNN: LSTM
+      aaa: '13'
+      batches: '20'
+      seed: '42'
+  inputs:
+    - name: feature
+      sourcing: dispatcher
+      resources:
+        - id: 649-941-3-function-03-1_1-feature-processing
+        - id: 649-941-3-function-04-1_1-feature-processing
+        - id: 649-941-3-function-05-1_1-feature-processing
+    - name: assembled-raw
+      sourcing: dispatcher
+      resources:
+        - id: 649-941-1-function-01-1_1-assembly-raw-file
+    - name: dataset
+      sourcing: dispatcher
+      resources:
+        - id: 649-941-2-function-02-1_1-dataset-processing
+  outputs:
+    - name: model
+      sourcing: dispatcher
+      resources:
+        id: task-51648-ml_model.bin

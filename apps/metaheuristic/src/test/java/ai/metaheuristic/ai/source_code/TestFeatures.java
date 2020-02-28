@@ -36,8 +36,8 @@ import static org.junit.Assert.assertNotNull;
 public class TestFeatures extends PreparingPlan {
 
     @Override
-    public String getPlanYamlAsString() {
-        return getPlanParamsYamlAsString_Simple();
+    public String getSourceCodeYamlAsString() {
+        return getSourceParamsYamlAsString_Simple();
     }
 
     @Test

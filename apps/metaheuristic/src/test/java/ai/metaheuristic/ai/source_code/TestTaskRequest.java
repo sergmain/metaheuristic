@@ -56,8 +56,8 @@ public class TestTaskRequest extends FeatureMethods {
     public ExecContextSchedulerService execContextSchedulerService;
 
     @Override
-    public String getPlanYamlAsString() {
-        return getPlanParamsYamlAsString_Simple();
+    public String getSourceCodeYamlAsString() {
+        return getSourceParamsYamlAsString_Simple();
     }
 
     @Test

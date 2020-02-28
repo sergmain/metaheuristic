@@ -40,11 +40,11 @@ public class TestTaskParamsYaml {
         TaskParamsYamlV1 v1 = new TaskParamsYamlV1();
         final TaskParamsYamlV1.TaskYamlV1 ty = new TaskParamsYamlV1.TaskYamlV1();
         v1.task = ty;
-        ty.inputs.add( new TaskParamsYamlV1.InputVariableV1(
-                "code-1", EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher, null, null,
-                List.of(new TaskParamsYamlV1.ResourceV1("value-1-1", null),
-                        new TaskParamsYamlV1.ResourceV1("value-1-2", null))
-        ));
+        TaskParamsYamlV1.InputVariableV1 input = new TaskParamsYamlV1.InputVariableV1("code-1", EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher, null, null);
+        input.resources.add(new TaskParamsYamlV1.ResourceV1("value-1-1", null));
+        input.resources.add(new TaskParamsYamlV1.ResourceV1("value-1-2", null));
+
+        ty.inputs.add(input);
 
         ty.outputs.add( new TaskParamsYamlV1.OutputVariableV1(
                 "output-code-1", EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher, null, null,

@@ -73,9 +73,6 @@ public class Globals {
 
     // Globals of Dispatcher
 
-    @Value("${mh.dispatcher.is-security-enabled:#{true}}")
-    public boolean isSecurityEnabled;
-
     @Value("${mh.dispatcher.is-ssl-required:#{true}}")
     public boolean isSslRequired = true;
 
@@ -190,9 +187,6 @@ public class Globals {
 
     @PostConstruct
     public void init() {
-        if (!isSecurityEnabled) {
-            throw new GlobalConfigurationException("mh.dispatcher.is-security-enabled==false isn't supported any more\nNeed to change to true and set up master's login/password");
-        }
         String publicKeyAsStr = env.getProperty("MH_PUBLIC_KEY");
         if (publicKeyAsStr!=null && !publicKeyAsStr.isBlank()) {
             dispatcherPublicKeyStr = publicKeyAsStr;
@@ -462,7 +456,6 @@ public class Globals {
         log.info("'\tallowedOrigins: {}", allowedOriginsStr);
         log.info("'\tbranding: {}", branding);
         log.info("'\tisUnitTesting: {}", isUnitTesting);
-        log.info("'\tisSecurityEnabled: {}", isSecurityEnabled);
         log.info("'\tisSslRequired: {}", isSslRequired);
         log.info("'\tdispatcherEnabled: {}", dispatcherEnabled);
         log.info("'\tdispatcherDir: {}", dispatcherDir!=null ? dispatcherDir.getAbsolutePath() : null);

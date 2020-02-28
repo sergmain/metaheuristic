@@ -389,12 +389,11 @@ public class TaskProcessor {
         t.task = new TaskFileParamsYaml.Task();
         t.task.execContextId = v1.task.execContextId;
         t.task.clean = v1.task.clean;
-        t.task.timeoutBeforeTerminate = v1.task.timeoutBeforeTerminate;
         t.task.workingPath = v1.task.workingPath;
 
         t.task.inline = v1.task.inline;
-        t.task.input = v1.task.inputs !=null ? v1.task.inputs.stream().map(TaskProcessor::upInputVariable).collect(Collectors.toList()) : null;
-        t.task.output.addAll(v1.task.outputs.stream().map(TaskProcessor::upOutputVariable).collect(Collectors.toList()));
+        v1.task.inputs.stream().map(TaskProcessor::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
+        v1.task.outputs.stream().map(TaskProcessor::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
 
         t.checkIntegrity();
         return t;
@@ -403,7 +402,6 @@ public class TaskProcessor {
     private static TaskFileParamsYaml.InputVariable  upInputVariable(TaskParamsYaml.InputVariable v1) {
         TaskFileParamsYaml.InputVariable  v = new TaskFileParamsYaml.InputVariable();
         v.name = v1.name;
-        v.context = v1.context;
         v.disk = v1.disk;
         v.git = v1.git;
         v.sourcing = v1.sourcing;
@@ -414,7 +412,6 @@ public class TaskProcessor {
     private static TaskFileParamsYaml.OutputVariable upOutputVariable(TaskParamsYaml.OutputVariable v1) {
         TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
         v.name = v1.name;
-        v.context = v1.context;
         v.disk = v1.disk;
         v.git = v1.git;
         v.sourcing = v1.sourcing;

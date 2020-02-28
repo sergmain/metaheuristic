@@ -25,7 +25,7 @@ public class TaskFileParamsYamlUtils {
     private static final TaskFileParamsYamlUtilsV1 YAML_UTILS_V_1 = new TaskFileParamsYamlUtilsV1();
     private static final TaskFileParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    public static final BaseYamlUtils<TaskParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<TaskFileParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1
             ),

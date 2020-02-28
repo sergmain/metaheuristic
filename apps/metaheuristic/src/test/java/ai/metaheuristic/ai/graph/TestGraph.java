@@ -54,8 +54,8 @@ public class TestGraph extends PreparingPlan {
     public ExecContextCache execContextCache;
 
     @Override
-    public String getPlanYamlAsString() {
-        return getPlanParamsYamlAsString_Simple();
+    public String getSourceCodeYamlAsString() {
+        return getSourceParamsYamlAsString_Simple();
     }
 
     @Test

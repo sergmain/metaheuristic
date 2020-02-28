@@ -47,8 +47,8 @@ import static org.junit.Assert.*;
 public class TestCountOfTasks extends PreparingPlan {
 
     @Override
-    public String getPlanYamlAsString() {
-        return getPlanParamsYamlAsString_Simple();
+    public String getSourceCodeYamlAsString() {
+        return getSourceParamsYamlAsString_Simple();
     }
 
     @Autowired
@@ -61,7 +61,7 @@ public class TestCountOfTasks extends PreparingPlan {
     @Test
     public void testCountNumberOfTasks() {
         log.info("Start TestCountOfTasks.testCountNumberOfTasks()");
-        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getSourceCodeYamlAsString());
 
         assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 

@@ -1,6 +1,5 @@
 dispatchers:
   - signatureRequired: false
-    securityEnabled: true
     url: http://localhost:8080
     lookupType: direct
     authType: basic

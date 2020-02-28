@@ -50,6 +50,10 @@ public class TaskFileParamsYamlV1 implements BaseParams {
         public String id;
         // real file name of resource, is present
         public String realName;
+
+        public ResourceV1(String id) {
+            this.id = id;
+        }
     }
 
     @Data
@@ -57,11 +61,15 @@ public class TaskFileParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class InputVariableV1 {
         public String name;
-        public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
         public final List<ResourceV1> resources = new ArrayList<>();
+
+        public InputVariableV1(String name, EnumsApi.DataSourcing sourcing) {
+            this.name = name;
+            this.sourcing = sourcing;
+        }
     }
 
     @Data
@@ -69,7 +77,6 @@ public class TaskFileParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class OutputVariableV1 {
         public String name;
-        public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
@@ -80,18 +87,10 @@ public class TaskFileParamsYamlV1 implements BaseParams {
     public static class TaskYamlV1 {
         public Long execContextId;
         public boolean clean = false;
-        /**
-         * Timeout before terminate a process with function
-         * value in seconds
-         * null or 0 mean the infinite execution
-         */
-        public Long timeoutBeforeTerminate;
-
-
         public Map<String, Map<String, String>> inline;
 
-        public List<InputVariableV1> input;
-        public List<OutputVariableV1> output;
+        public final List<InputVariableV1> inputs = new ArrayList<>();
+        public final List<OutputVariableV1> outputs = new ArrayList<>();
 
         // fields which are initialized at processor
         public String workingPath;

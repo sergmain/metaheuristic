@@ -30,6 +30,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * This class is being used for storing a parameters of task for function in a file, ie params-v1.yaml
+ *
+ * Class TaskParamsYaml is for storing parameters of task internally at Processor side
+ *
  * @author Serge
  * Date: 6/17/2019
  * Time: 9:10 PM
@@ -51,6 +55,10 @@ public class TaskFileParamsYaml implements BaseParams {
     public static class Resource {
         public String id;
         public String realName;
+
+        public Resource(String id) {
+            this.id = id;
+        }
     }
 
     @Data
@@ -58,11 +66,15 @@ public class TaskFileParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class InputVariable {
         public String name;
-        public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
         public final List<Resource> resources = new ArrayList<>();
+
+        public InputVariable(String name, EnumsApi.DataSourcing sourcing) {
+            this.name = name;
+            this.sourcing = sourcing;
+        }
     }
 
     @Data
@@ -70,29 +82,27 @@ public class TaskFileParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class OutputVariable {
         public String name;
-        public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
         public Resource resources;
+
+        public OutputVariable(String name, EnumsApi.DataSourcing sourcing, Resource resources) {
+            this.name = name;
+            this.sourcing = sourcing;
+            this.resources = resources;
+        }
     }
 
     @Data
     public static class Task {
         public Long execContextId;
         public boolean clean = false;
-        /**
-         * Timeout before terminate a process with function
-         * value in seconds
-         * null or 0 mean the infinite execution
-         */
-        public Long timeoutBeforeTerminate;
-
 
         public Map<String, Map<String, String>> inline;
 
-        public List<InputVariable> input;
-        public List<OutputVariable> output;
+        public final List<InputVariable> inputs = new ArrayList<>();
+        public final List<OutputVariable> outputs = new ArrayList<>();
 
         // fields which are initialized at processor
         public String workingPath;

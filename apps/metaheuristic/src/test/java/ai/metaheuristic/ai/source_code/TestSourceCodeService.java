@@ -71,8 +71,8 @@ public class TestSourceCodeService extends PreparingPlan {
     public ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     @Override
-    public String getPlanYamlAsString() {
-        return getPlanParamsYamlAsString_Simple();
+    public String getSourceCodeYamlAsString() {
+        return getSourceParamsYamlAsString_Simple();
     }
 
     @After
@@ -89,7 +89,7 @@ public class TestSourceCodeService extends PreparingPlan {
 
     @Test
     public void testCreateTasks() {
-        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getPlanYamlAsString());
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getSourceCodeYamlAsString());
 
         SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();
         List<Object[]> tasks = taskCollector.getTasks(execContextForFeature);
