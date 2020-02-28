@@ -17,20 +17,14 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Serge
@@ -50,10 +44,9 @@ public class SourceCodeData {
     @Data
     public static class SourceCodeGraph {
         public boolean clean = false;
-        public boolean preservePoolNames = false;
         public final List<ExecContextParamsYaml.Process> processes = new ArrayList<>();
 
-        public final ExecContextParamsYaml.VariableDefinition variables = new ExecContextParamsYaml.VariableDefinition();
+        public final ExecContextParamsYaml.VariableDeclaration variables = new ExecContextParamsYaml.VariableDeclaration();
         public final DirectedAcyclicGraph<String, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
     }
 }

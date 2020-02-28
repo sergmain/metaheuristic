@@ -19,6 +19,8 @@ package ai.metaheuristic.api.data.exec_context;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.sourcing.DiskInfo;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -42,10 +44,29 @@ public class ExecContextParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableDefinitionV1 {
+    public static class VariableDeclarationV1 {
         public List<String> globals;
         public String startInputAs;
         public final Map<String, Map<String, String>> inline = new HashMap<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class VariableV1 {
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public GitInfo git;
+        public DiskInfo disk;
+        public String name;
+
+        public VariableV1(String name) {
+            this.name = name;
+        }
+
+        public VariableV1(EnumsApi.DataSourcing sourcing, String name) {
+            this.sourcing = sourcing;
+            this.name = name;
+        }
     }
 
     @Data
@@ -87,15 +108,14 @@ public class ExecContextParamsYamlV1 implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-        public final List<String> input = new ArrayList<>();
-        public final List<String> output = new ArrayList<>();
+        public final List<VariableV1> input = new ArrayList<>();
+        public final List<VariableV1> output = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
     }
 
     public boolean clean;
-    public boolean preservePoolNames;
     public List<ProcessV1> processes;
-    public VariableDefinitionV1 variables;
+    public VariableDeclarationV1 variables;
 
 
     // this is a graph for runtime phase

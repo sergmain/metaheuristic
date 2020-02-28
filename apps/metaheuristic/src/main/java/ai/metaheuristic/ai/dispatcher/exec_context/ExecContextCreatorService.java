@@ -151,7 +151,6 @@ public class ExecContextCreatorService {
     private ExecContextParamsYaml to(SourceCodeData.SourceCodeGraph sourceCodeGraph) {
         ExecContextParamsYaml params = new ExecContextParamsYaml();
         params.clean = sourceCodeGraph.clean;
-        params.preservePoolNames = sourceCodeGraph.preservePoolNames;
         params.processes = sourceCodeGraph.processes;
         params.variables = sourceCodeGraph.variables;
 

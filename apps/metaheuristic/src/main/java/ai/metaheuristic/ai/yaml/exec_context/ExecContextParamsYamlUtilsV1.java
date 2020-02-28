@@ -51,11 +51,10 @@ public class ExecContextParamsYamlUtilsV1
         // right now we don't need to convert Graph because it has only one version of structure
         // so just copying of graph field is Ok
         t.clean = v1.clean;
-        t.preservePoolNames = v1.preservePoolNames;
         t.graph = v1.graph;
         t.processesGraph = v1.processesGraph;
         t.processes = v1.processes.stream().map(ExecContextParamsYamlUtilsV1::toProcess).collect(Collectors.toList());
-        t.variables = v1.variables!=null ? new ExecContextParamsYaml.VariableDefinition(v1.variables.globals, v1.variables.startInputAs, v1.variables.inline) : null;
+        t.variables = v1.variables!=null ? new ExecContextParamsYaml.VariableDeclaration(v1.variables.globals, v1.variables.startInputAs, v1.variables.inline) : null;
 
         return t;
     }
@@ -66,10 +65,14 @@ public class ExecContextParamsYamlUtilsV1
         p.function = toFunction(p1.function);
         p.preFunctions = p1.preFunctions!=null ? p1.preFunctions.stream().map(ExecContextParamsYamlUtilsV1::toFunction).collect(Collectors.toList()) : null;
         p.postFunctions = p1.postFunctions!=null ? p1.postFunctions.stream().map(ExecContextParamsYamlUtilsV1::toFunction).collect(Collectors.toList()) : null;
-        p.input.addAll(p1.input);
-        p.output.addAll(p1.output);
+        p1.input.stream().map(ExecContextParamsYamlUtilsV1::toVariable).collect(Collectors.toCollection(()->p.input));
+        p1.output.stream().map(ExecContextParamsYamlUtilsV1::toVariable).collect(Collectors.toCollection(()->p.output));
         p.metas.addAll(p1.metas);
         return null;
+    }
+
+    private static ExecContextParamsYaml.Variable toVariable(ExecContextParamsYamlV1.VariableV1 v1) {
+        return new ExecContextParamsYaml.Variable(v1.sourcing, v1.git, v1.disk, v1.name);
     }
 
     @NonNull

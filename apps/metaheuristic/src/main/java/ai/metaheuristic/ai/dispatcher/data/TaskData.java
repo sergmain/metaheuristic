@@ -41,15 +41,15 @@ public class TaskData {
     @AllArgsConstructor
     public static class ProduceTaskResult {
         public EnumsApi.TaskProducingStatus status;
-        public List<String> outputResourceCodes;
         public int numberOfTasks=0;
-        public List<Long> taskIds = new ArrayList<>();
+        public Long taskId;
 
         public ProduceTaskResult(EnumsApi.TaskProducingStatus status) {
             this.status = status;
         }
     }
 
+/*
     @Data
     @NoArgsConstructor
     public static class ResourcePools {
@@ -99,4 +99,5 @@ public class TaskData {
             mappingCodeToOriginalFilename.putAll((metaPools.mappingCodeToOriginalFilename));
         }
     }
+*/
 }

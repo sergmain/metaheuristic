@@ -21,20 +21,23 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
-import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -455,7 +458,7 @@ public class ExecContextService {
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
         // create all not dynamic tasks
-        TaskData.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(execContextParamsYaml);
+        TaskData.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(isPersist, execContext.sourceCodeId, execContextParamsYaml);
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist) {

@@ -19,7 +19,8 @@ package ai.metaheuristic.api.data.exec_context;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.sourcing.DiskInfo;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -40,10 +41,29 @@ public class ExecContextParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableDefinition {
+    public static class VariableDeclaration {
         public List<String> globals;
         public String startInputAs;
         public Map<String, Map<String, String>> inline = new HashMap<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Variable {
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public GitInfo git;
+        public DiskInfo disk;
+        public String name;
+
+        public Variable(String name) {
+            this.name = name;
+        }
+
+        public Variable(EnumsApi.DataSourcing sourcing, String name) {
+            this.sourcing = sourcing;
+            this.name = name;
+        }
     }
 
     @Data
@@ -86,15 +106,14 @@ public class ExecContextParamsYaml implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-        public final List<String> input = new ArrayList<>();
-        public final List<String> output = new ArrayList<>();
+        public final List<Variable> input = new ArrayList<>();
+        public final List<Variable> output = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
     }
 
     public boolean clean;
-    public boolean preservePoolNames;
     public List<Process> processes;
-    public VariableDefinition variables;
+    public VariableDeclaration variables;
 
     // this is a graph for runtime phase
     public String graph;
