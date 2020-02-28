@@ -107,8 +107,8 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public String name;
         public String code;
         public FunctionDefForSourceCodeV1 function;
-        public List<FunctionDefForSourceCodeV1> preFuntions;
-        public List<FunctionDefForSourceCodeV1> postFuntions;
+        public List<FunctionDefForSourceCodeV1> preFunctions;
+        public List<FunctionDefForSourceCodeV1> postFunctions;
 
         /**
          * Timeout before terminating a process with function
@@ -116,8 +116,8 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-        public final List<VariableV1> input = new ArrayList<>();
-        public final List<VariableV1> output = new ArrayList<>();
+        public final List<VariableV1> inputs = new ArrayList<>();
+        public final List<VariableV1> outputs = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
         public SubProcessesV1 subProcesses;
 

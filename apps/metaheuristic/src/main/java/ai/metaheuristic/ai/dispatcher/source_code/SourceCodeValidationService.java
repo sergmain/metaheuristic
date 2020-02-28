@@ -79,10 +79,10 @@ public class SourceCodeValidationService {
         for (int i = 0; i < processes.size(); i++) {
             SourceCodeParamsYaml.Process process = processes.get(i);
             if (i + 1 < processes.size()) {
-                if (process.output.isEmpty()) {
+                if (process.outputs.isEmpty()) {
                     return EnumsApi.SourceCodeValidateStatus.PROCESS_PARAMS_EMPTY_ERROR;
                 }
-                for (SourceCodeParamsYaml.Variable params : process.output) {
+                for (SourceCodeParamsYaml.Variable params : process.outputs) {
                     if (S.b(params.name)) {
                         return EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR;
                     }

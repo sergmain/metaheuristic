@@ -23,14 +23,17 @@ import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.lang.NonNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -64,6 +67,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 throw new SourceCodeGraphException("(finishPresent)");
             }
             checkProcessCode(processCodes, p);
+            scg.processes.add( toProcessForExecCode(sourceCodeParams, p) );
 
             ExecContextProcessGraphService.addNewTasksToGraph(scg, p.code, parentProcesses);
             if (Consts.MH_FINISH_FUNCTION.equals(p.function.code)) {
@@ -117,6 +121,27 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             ExecContextProcessGraphService.addNewTasksToGraph(scg, finishVertex, parentProcesses);
         }
         return scg;
+    }
+
+    @NonNull
+    private static ExecContextParamsYaml.Process toProcessForExecCode(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Process o) {
+        ExecContextParamsYaml.Process pr = new ExecContextParamsYaml.Process();
+        pr.processName = o.name;
+        pr.processCode = o.code;
+        pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
+        o.inputs.stream().map(v->getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(()->pr.inputs));
+        o.outputs.stream().map(v->getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(()->pr.outputs));
+        pr.function = o.function !=null ? new ExecContextParamsYaml.FunctionDefinition(o.function.code, o.function.params, o.function.context) : null;
+        pr.preFunctions = o.preFunctions !=null ? o.preFunctions.stream().map(d->new ExecContextParamsYaml.FunctionDefinition(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
+        pr.postFunctions = o.postFunctions !=null ? o.postFunctions.stream().map(d->new ExecContextParamsYaml.FunctionDefinition(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
+        pr.metas = o.metas;
+        return pr;
+    }
+
+    @NonNull
+    private static ExecContextParamsYaml.Variable getVariable(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Variable v) {
+        EnumsApi.VariableContext context = sourceCodeParams.source.variables.globals.stream().anyMatch(g->g.equals(v.name)) ? EnumsApi.VariableContext.global :  EnumsApi.VariableContext.local;
+        return new ExecContextParamsYaml.Variable(v.name, context, v.sourcing, v.git, v.disk);
     }
 
     private void checkProcessCode(Set<String> processCodes, SourceCodeParamsYaml.Process p) {

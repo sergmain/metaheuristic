@@ -50,7 +50,7 @@ public class TestSourceCodeParamsYamlCloning {
 
         p.timeoutBeforeTerminate = 120L;
 
-        p.output.add( new SourceCodeParamsYaml.Variable("output-code"));
+        p.outputs.add( new SourceCodeParamsYaml.Variable("output-code"));
         p.metas.add(new Meta("key", "value", "ext"));
 
         SourceCodeParamsYaml.Process p1 = p.clone();
@@ -72,9 +72,9 @@ public class TestSourceCodeParamsYamlCloning {
         assertNotNull(p1.timeoutBeforeTerminate);
         assertEquals(120L, (long)p1.timeoutBeforeTerminate);
 
-        assertNotNull(p1.output);
-        assertEquals(1, p1.output.size());
-        SourceCodeParamsYaml.Variable params = p1.output.get(0);
+        assertNotNull(p1.outputs);
+        assertEquals(1, p1.outputs.size());
+        SourceCodeParamsYaml.Variable params = p1.outputs.get(0);
 
         assertEquals(EnumsApi.DataSourcing.dispatcher, params.sourcing);
         assertEquals("output-code", params.name);

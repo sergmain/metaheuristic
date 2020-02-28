@@ -51,10 +51,11 @@ public class ExecContextParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Variable {
+        public String name;
+        public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
-        public String name;
 
         public Variable(String name) {
             this.name = name;

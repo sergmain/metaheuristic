@@ -43,7 +43,7 @@ public class TestProcessMeta {
             SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
             p.name = "experiment";
             p.code = "test-experiment-code-01";
-            p.output.add(new SourceCodeParamsYaml.Variable("model"));
+            p.outputs.add(new SourceCodeParamsYaml.Variable("model"));
 
             p.metas.addAll(
                     Arrays.asList(

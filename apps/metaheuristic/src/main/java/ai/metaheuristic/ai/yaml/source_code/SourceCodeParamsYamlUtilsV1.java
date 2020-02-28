@@ -72,11 +72,11 @@ public class SourceCodeParamsYamlUtilsV1
         pr.name = o.name;
         pr.code = o.code;
         pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
-        o.input.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.input::add);
-        o.output.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.output::add);
+        o.inputs.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.inputs::add);
+        o.outputs.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.outputs::add);
         pr.function = o.function !=null ? new SourceCodeParamsYaml.FunctionDefForSourceCode(o.function.code, o.function.params, o.function.context) : null;
-        pr.preFunctions = o.preFuntions !=null ? o.preFuntions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
-        pr.postFunctions = o.postFuntions !=null ? o.postFuntions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
+        pr.preFunctions = o.preFunctions !=null ? o.preFunctions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
+        pr.postFunctions = o.postFunctions !=null ? o.postFunctions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
         pr.metas = o.metas;
 
         pr.subProcesses = o.subProcesses!=null

@@ -68,7 +68,6 @@ public class TaskParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class Resource {
         public String id;
-        public EnumsApi.VariableContext context;
         public String realName;
     }
 
@@ -77,6 +76,7 @@ public class TaskParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class InputVariable {
         public String name;
+        public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
