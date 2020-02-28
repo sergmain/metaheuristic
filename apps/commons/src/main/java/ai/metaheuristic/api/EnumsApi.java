@@ -213,7 +213,7 @@ public class EnumsApi {
         INTERNAL_FUNCTION_NOT_FOUND_ERROR
     }
 
-    public enum SourceCodeProducingStatus {
+    public enum TaskProducingStatus {
         OK,
         NOT_PRODUCING_YET_ERROR,
         EXPERIMENT_NOT_FOUND_BY_CODE_ERROR,
@@ -224,6 +224,7 @@ public class EnumsApi {
         META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR,
         EXEC_CONTEXT_NOT_FOUND_ERROR,
         SOURCE_CODE_NOT_FOUND_ERROR,
+        PROCESS_NOT_FOUND_ERROR,
         WRONG_FORMAT_OF_FUNCTION_CODE,
         ERROR,
         TOO_MANY_TASKS_PER_SOURCE_CODE_ERROR,
@@ -338,8 +339,6 @@ public class EnumsApi {
             }
         }
     }
-
-    public enum TaskProducingStatus { OK, VERIFY_ERROR, PRODUCING_ERROR }
 
     public enum Type {
         MD5(false), SHA256(false), SHA256WithSignature(true);

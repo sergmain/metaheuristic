@@ -28,14 +28,12 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcess
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
@@ -48,10 +46,7 @@ import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -80,6 +75,14 @@ public class TaskProducingService {
 //            return new TaskData.ProduceTaskResult(pools.status);
 //        }
 
+        for (String processCode : processGraph) {
+            ExecContextParamsYaml.Process p = execContextParamsYaml.processes.stream().filter(o -> o.processCode.equals(processCode)).findAny().orElse(null);
+            if (p == null) {
+                return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR);
+            }
+
+        }
+
         // todo 2020-02-15 what do we do here?
         // todo 2020-02-25 need to recall what this 'preservePoolNames' is about
         if (execContextParamsYaml.execContextYaml.preservePoolNames) {
@@ -97,7 +100,7 @@ public class TaskProducingService {
                     collectedInputs.put(newKey, value);
                 });
             } catch (BreakFromForEachException e) {
-                return new TaskData.ProduceTaskResult(EnumsApi.SourceCodeProducingStatus.ERROR);
+                return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.ERROR);
             }
 
             pools.collectedInputs.clear();
@@ -127,7 +130,7 @@ public class TaskProducingService {
             Map<String, SourceCodeParamsYaml.Variable> outputResourceIds = new HashMap<>();
             for (SourceCodeParamsYaml.Variable variable : process.output) {
                 Variable v = variableService.createUninitialized(variable.name, execContextId, internalContextId);
-                // resourceId is an Id of one part of Variable. Variable can contains unlimited number of resources
+                // resourceId is an Id of one part of Variable. Variable can contain unlimited number of resources
                 String resourceId = v.id.toString();
                 outputResourceIds.put(resourceId, variable);
                 result.outputResourceCodes.add(resourceId);
@@ -147,7 +150,7 @@ public class TaskProducingService {
                 for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
                     // Right we don't support subProcesses in subProcesses. Need to collect more info about such cases
                     if (subProcess.subProcesses!=null && CollectionUtils.isNotEmpty(subProcess.subProcesses.processes)) {
-                        return new TaskData.ProduceTaskResult(EnumsApi.SourceCodeProducingStatus.TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR);
+                        return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR);
                     }
 
                     String ctxId = internalContextId + ','+ idsRepository.save(new Ids()).id;
@@ -190,7 +193,7 @@ public class TaskProducingService {
         }
         // end processing the main process
 
-        result.status = EnumsApi.SourceCodeProducingStatus.OK;
+        result.status = EnumsApi.TaskProducingStatus.OK;
         return result;
     }
 

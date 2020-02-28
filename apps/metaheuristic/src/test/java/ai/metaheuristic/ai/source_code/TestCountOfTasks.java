@@ -69,12 +69,12 @@ public class TestCountOfTasks extends PreparingPlan {
 
         SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(sourceCode.getId(), execContextYaml);
         execContextForFeature = (ExecContextImpl)result.execContext;
-        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
+        assertEquals(EnumsApi.TaskProducingStatus.OK, result.taskProducingStatus);
         assertNotNull(execContextForFeature);
         assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
 
 
-        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
+        EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
         execContextForFeature = execContextCache.findById(this.execContextForFeature.id);
         assertNotNull(execContextForFeature);
         assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
@@ -86,7 +86,7 @@ public class TestCountOfTasks extends PreparingPlan {
         result = sourceCodeService.produceAllTasks(false, sourceCode, execContextForFeature);
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
+        assertEquals(EnumsApi.TaskProducingStatus.OK, result.taskProducingStatus);
         int numberOfTasks = result.numberOfTasks;
 
         List<Object[]> tasks02 = taskCollector.getTasks(result.execContext);
@@ -97,7 +97,7 @@ public class TestCountOfTasks extends PreparingPlan {
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
         execContextForFeature = (ExecContextImpl)result.execContext;
-        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result.sourceCodeProducingStatus);
+        assertEquals(EnumsApi.TaskProducingStatus.OK, result.taskProducingStatus);
         assertEquals(EnumsApi.ExecContextState.PRODUCED.code, execContextForFeature.getState());
 
         experiment = experimentCache.findById(experiment.getId());

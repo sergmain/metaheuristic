@@ -93,9 +93,9 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
 
 
-        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
+        EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
         execContextForFeature = execContextCache.findById(execContextForFeature.id);
-        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, producingStatus);
+        assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
         assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
 
         List<Object[]> tasks01 = taskCollector.getTasks(result.execContext);
@@ -111,7 +111,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
         execContextForFeature = result.execContext;
-        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result1.sourceCodeProducingStatus);
+        assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
         assertEquals(EnumsApi.ExecContextState.PRODUCED.code, execContextForFeature.getState());
 
         experiment = experimentCache.findById(experiment.getId());

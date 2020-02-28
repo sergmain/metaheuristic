@@ -40,12 +40,12 @@ public class TaskData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProduceTaskResult {
-        public EnumsApi.SourceCodeProducingStatus status;
+        public EnumsApi.TaskProducingStatus status;
         public List<String> outputResourceCodes;
         public int numberOfTasks=0;
         public List<Long> taskIds = new ArrayList<>();
 
-        public ProduceTaskResult(EnumsApi.SourceCodeProducingStatus status) {
+        public ProduceTaskResult(EnumsApi.TaskProducingStatus status) {
             this.status = status;
         }
     }
@@ -56,12 +56,12 @@ public class TaskData {
         public final Map<String, List<String>> collectedInputs = new HashMap<>();
         public Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls=null;
         public final Map<String, String> mappingCodeToOriginalFilename = new HashMap<>();
-        public EnumsApi.SourceCodeProducingStatus status = EnumsApi.SourceCodeProducingStatus.OK;
+        public EnumsApi.TaskProducingStatus status = EnumsApi.TaskProducingStatus.OK;
 
         public ResourcePools(List<SimpleVariableAndStorageUrl> initialInputResourceCodes) {
 
             if (initialInputResourceCodes==null || initialInputResourceCodes.isEmpty()) {
-                status = EnumsApi.SourceCodeProducingStatus.INPUT_VARIABLE_DOESNT_EXIST_ERROR;
+                status = EnumsApi.TaskProducingStatus.INPUT_VARIABLE_DOESNT_EXIST_ERROR;
                 return;
             }
 

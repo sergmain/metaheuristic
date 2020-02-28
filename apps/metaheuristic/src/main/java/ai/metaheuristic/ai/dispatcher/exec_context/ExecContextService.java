@@ -188,14 +188,14 @@ public class ExecContextService {
         });
     }
 
-    public EnumsApi.SourceCodeProducingStatus toProducing(Long execContextId) {
+    public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
         return execContextSyncService.getWithSync(execContextId, execContext -> {
             if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
-                return EnumsApi.SourceCodeProducingStatus.OK;
+                return EnumsApi.TaskProducingStatus.OK;
             }
             execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
             execContextCache.save(execContext);
-            return EnumsApi.SourceCodeProducingStatus.OK;
+            return EnumsApi.TaskProducingStatus.OK;
         });
     }
 
@@ -465,7 +465,7 @@ public class ExecContextService {
         result.execContext = execContextCache.findById(execContext.id);
         result.numberOfTasks = produceTaskResult.numberOfTasks;
         result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.OK;
-        result.sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.OK;
+        result.taskProducingStatus = EnumsApi.TaskProducingStatus.OK;
 
         return result;
     }

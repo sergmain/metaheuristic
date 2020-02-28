@@ -43,23 +43,13 @@ public class SourceCodeApiData {
     @NoArgsConstructor
     public static class TaskProducingResultComplex {
         public EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.NOT_VALIDATED_YET_ERROR;
-        public EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus = EnumsApi.SourceCodeProducingStatus.NOT_PRODUCING_YET_ERROR;
+        public EnumsApi.TaskProducingStatus taskProducingStatus = EnumsApi.TaskProducingStatus.NOT_PRODUCING_YET_ERROR;
         public List<Task> tasks = new ArrayList<>();
         public ExecContext execContext;
         public int numberOfTasks;
 
-        public EnumsApi.TaskProducingStatus getStatus() {
-            if (sourceCodeValidateStatus != EnumsApi.SourceCodeValidateStatus.OK) {
-                return EnumsApi.TaskProducingStatus.VERIFY_ERROR;
-            }
-            if (sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
-                return EnumsApi.TaskProducingStatus.PRODUCING_ERROR;
-            }
-            return EnumsApi.TaskProducingStatus.OK;
-        }
-
-        public TaskProducingResultComplex(EnumsApi.SourceCodeProducingStatus sourceCodeProducingStatus) {
-            this.sourceCodeProducingStatus = sourceCodeProducingStatus;
+        public TaskProducingResultComplex(EnumsApi.TaskProducingStatus taskProducingStatus) {
+            this.taskProducingStatus = taskProducingStatus;
         }
 
         public TaskProducingResultComplex(EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus) {

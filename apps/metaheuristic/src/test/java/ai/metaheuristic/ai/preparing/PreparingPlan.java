@@ -395,8 +395,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
         assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
 
 
-        EnumsApi.SourceCodeProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
-        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, producingStatus);
+        EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
+        assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
         execContextForFeature = execContextCache.findById(this.execContextForFeature.id);
         assertNotNull(execContextForFeature);
         assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
@@ -408,7 +408,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         assertEquals(result1.numberOfTasks, execContextService.getCountUnfinishedTasks(execContextForFeature));
 
 
-        assertEquals(EnumsApi.SourceCodeProducingStatus.OK, result1.sourceCodeProducingStatus);
+        assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
         assertEquals(EnumsApi.ExecContextState.PRODUCED.code, this.execContextForFeature.getState());
 
         return result1;
