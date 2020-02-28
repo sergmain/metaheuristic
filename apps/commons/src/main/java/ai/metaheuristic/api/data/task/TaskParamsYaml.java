@@ -80,7 +80,7 @@ public class TaskParamsYaml implements BaseParams {
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
-        public List<Resource> resources;
+        public final List<Resource> resources = new ArrayList<>();
     }
 
     @Data
@@ -88,6 +88,7 @@ public class TaskParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class OutputVariable {
         public String name;
+        public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;

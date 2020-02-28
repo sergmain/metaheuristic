@@ -113,7 +113,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public Function s5 = null;
     public ExecContextImpl execContextForFeature = null;
 
-    public ExecContextParamsYaml.ExecContextYaml execContextYaml;
+    public ExecContextParamsYaml execContextYaml;
 
     public Company company;
 
@@ -307,8 +307,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
         globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-02.txt");
         globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-03.txt");
 
-        execContextYaml = new ExecContextParamsYaml.ExecContextYaml();
-        execContextYaml.globalVariables.add(TEST_GLOBAL_VARIABLE);
+        execContextYaml = new ExecContextParamsYaml();
+        execContextYaml.variables.globals.add(TEST_GLOBAL_VARIABLE);
     }
 
     private Function createFunction(String functionCode) {

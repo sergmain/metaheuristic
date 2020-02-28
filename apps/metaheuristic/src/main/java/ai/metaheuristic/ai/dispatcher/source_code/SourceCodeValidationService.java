@@ -17,21 +17,28 @@
 package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.FunctionCoreUtils;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
+import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -191,15 +198,50 @@ public class SourceCodeValidationService {
         return OK;
     }
 
-
+    // todo 2020-02-27 current version isn't good
+    //  because there is duplication of code with ai.metaheuristic.ai.dispatcher.function.FunctionService.isFunctionVersionOk
     private boolean checkRequiredVersion(int sourceCodeParamsVersion, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
         int taskParamsYamlVersion = SourceCodeParamsYamlUtils.getRequiredVertionOfTaskParamsYaml(sourceCodeParamsVersion);
-        boolean ok = functionService.isFunctionVersionOk(taskParamsYamlVersion, snDef);
+        boolean ok = isFunctionVersionOk(taskParamsYamlVersion, snDef);
         if (!ok) {
             log.error("#175.030 Version of function {} is too low, required version: {}", snDef.code, taskParamsYamlVersion);
             return false;
         }
         return true;
+    }
+
+    private boolean isFunctionVersionOk(int requiredVersion, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
+        TaskParamsYaml.FunctionConfig sc = getFunctionConfig(snDef);
+        return sc != null && (sc.skipParams || requiredVersion <= FunctionCoreUtils.getTaskParamsVersion(sc.metas));
+    }
+
+    private TaskParamsYaml.FunctionConfig getFunctionConfig(SourceCodeParamsYaml.FunctionDefForSourceCode functionDef) {
+        TaskParamsYaml.FunctionConfig functionConfig = null;
+        if(StringUtils.isNotBlank(functionDef.code)) {
+            Function function = functionService.findByCode(functionDef.code);
+            if (function != null) {
+                functionConfig = TaskParamsUtils.toFunctionConfig(function.getFunctionConfig(true));
+                boolean paramsAsFile = MetaUtils.isTrue(functionConfig.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
+                if (paramsAsFile) {
+                    throw new NotImplementedException("mh.function-params-as-file==true isn't supported right now");
+                }
+                if (!functionConfig.skipParams) {
+                    // TODO 2019-10-09 need to handle a case when field 'params'
+                    //  contains actual code (mh.function-params-as-file==true)
+                    if (functionConfig.params!=null && functionDef.params!=null) {
+                        functionConfig.params = functionConfig.params + ' ' + functionDef.params;
+                    }
+                    else if (functionConfig.params == null) {
+                        if (functionDef.params != null) {
+                            functionConfig.params = functionDef.params;
+                        }
+                    }
+                }
+            } else {
+                log.warn("#295.010 Can't find function for code {}", functionDef.code);
+            }
+        }
+        return functionConfig;
     }
 
 }

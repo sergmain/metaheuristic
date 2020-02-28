@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.task;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
@@ -25,8 +26,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -76,18 +75,19 @@ public class TestTaskParamYaml {
 */
     }
 
+    private TaskParamsYaml.InputVariable newVariable(String name, String resName) {
+        TaskParamsYaml.InputVariable v1 = new TaskParamsYaml.InputVariable(name, EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher, null, null);
+        v1.resources.add(new TaskParamsYaml.Resource(resName, null));
+        return v1;
+    }
+
     @Test
     public void testSequenceYaml() {
         TaskParamsYaml tpy = new TaskParamsYaml();
-
-        tpy.task.inputResourceIds.put("type1", Collections.singletonList("1"));
-        tpy.task.inputResourceIds.put("type2", Collections.singletonList("2"));
-        tpy.task.inputResourceIds.put("type3", Collections.singletonList("3"));
-        Map<String, String> map = new HashMap<>();
-        map.put("key1", "#1");
-        map.put("key2", "#1");
-        tpy.task.taskMl = new TaskParamsYaml.TaskMachineLearning();
-        tpy.task.taskMl.setHyperParams(map);
+        tpy.task.inputs.add(newVariable("type1", "1"));
+        tpy.task.inputs.add(newVariable("type2", "2"));
+        tpy.task.inputs.add(newVariable("type3", "3"));
+        tpy.task.inline = Map.of(ConstsApi.MH_HYPER_PARAMS, Map.of("key1", "#1", "key2", "#1"));
         tpy.task.setFunction(TaskParamsUtils.toFunctionConfig(new FunctionConfigYaml(
                 "123:1.0",
                 CommonConsts.FIT_TYPE,

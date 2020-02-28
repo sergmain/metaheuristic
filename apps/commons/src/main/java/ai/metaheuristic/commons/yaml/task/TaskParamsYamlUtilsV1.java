@@ -57,8 +57,8 @@ public class TaskParamsYamlUtilsV1
             t.task.postFunctions = v1.taskYaml.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
         }
         t.task.inline = v1.taskYaml.inline;
-        t.task.inputs = v1.taskYaml.input!=null ? v1.taskYaml.input.stream().map(TaskParamsYamlUtilsV1::upInputVariable).collect(Collectors.toList()) : null;
-        t.task.outputs.addAll(v1.taskYaml.output.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toList()));
+        v1.taskYaml.inputs.stream().map(TaskParamsYamlUtilsV1::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
+        v1.taskYaml.outputs.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
 
         t.checkIntegrity();
 
@@ -67,11 +67,12 @@ public class TaskParamsYamlUtilsV1
 
     private static TaskParamsYaml.InputVariable upInputVariable(TaskParamsYamlV1.InputVariableV1 v1) {
         TaskParamsYaml.InputVariable v = new TaskParamsYaml.InputVariable();
+        v.name = v1.name;
+        v.context = v1.context;
         v.disk = v1.disk;
         v.git = v1.git;
-        v.name = v1.name;
         v.sourcing = v1.sourcing;
-        v.resources = v1.resources!=null ? v1.resources.stream().map(r->new TaskParamsYaml.Resource(r.id, r.context, r.realName)).collect(Collectors.toList()) : null;
+        v1.resources.stream().map(r->new TaskParamsYaml.Resource(r.id, r.realName)).collect(Collectors.toCollection(()->v.resources));
         return v;
     }
 
@@ -81,7 +82,7 @@ public class TaskParamsYamlUtilsV1
         v.git = v1.git;
         v.name = v1.name;
         v.sourcing = v1.sourcing;
-        v.resource = v1.resources!=null ? new TaskParamsYaml.Resource(v1.resources.id, v1.resources.context, v1.resources.realName) : null;
+        v.resource = v1.resources!=null ? new TaskParamsYaml.Resource(v1.resources.id, v1.resources.realName) : null;
         return v;
     }
 

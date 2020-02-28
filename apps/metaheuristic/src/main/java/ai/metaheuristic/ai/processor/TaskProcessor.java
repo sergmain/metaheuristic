@@ -401,22 +401,24 @@ public class TaskProcessor {
     }
 
     private static TaskFileParamsYaml.InputVariable  upInputVariable(TaskParamsYaml.InputVariable v1) {
-        TaskFileParamsYaml.InputVariable  v = new TaskFileParamsYaml.InputVariable ();
+        TaskFileParamsYaml.InputVariable  v = new TaskFileParamsYaml.InputVariable();
+        v.name = v1.name;
+        v.context = v1.context;
         v.disk = v1.disk;
         v.git = v1.git;
-        v.name = v1.name;
         v.sourcing = v1.sourcing;
-        v.resources = v1.resources!=null ? v1.resources.stream().map(r->new TaskFileParamsYaml.Resource(r.id, r.context, r.realName)).collect(Collectors.toList()) : null;
+        v1.resources.stream().map(r->new TaskFileParamsYaml.Resource(r.id, r.realName)).collect(Collectors.toCollection(()->v.resources));
         return v;
     }
 
     private static TaskFileParamsYaml.OutputVariable upOutputVariable(TaskParamsYaml.OutputVariable v1) {
         TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
+        v.name = v1.name;
+        v.context = v1.context;
         v.disk = v1.disk;
         v.git = v1.git;
-        v.name = v1.name;
         v.sourcing = v1.sourcing;
-        v.resources = new TaskFileParamsYaml.Resource(v1.resource.id, v1.resource.context, v1.resource.realName);
+        v.resources = new TaskFileParamsYaml.Resource(v1.resource.id, v1.resource.realName);
         return v;
     }
 

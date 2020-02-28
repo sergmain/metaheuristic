@@ -40,15 +40,15 @@ public class TestTaskParamsYaml {
         TaskParamsYamlV1 v2 = new TaskParamsYamlV1();
         final TaskParamsYamlV1.TaskYamlV1 ty = new TaskParamsYamlV1.TaskYamlV1();
         v2.taskYaml = ty;
-        ty.input.add( new TaskParamsYamlV1.InputVariableV1(
-                "code-1", EnumsApi.DataSourcing.dispatcher, null, null,
-                List.of(new TaskParamsYamlV1.ResourceV1("value-1-1", EnumsApi.VariableContext.local, null),
-                        new TaskParamsYamlV1.ResourceV1("value-1-2", EnumsApi.VariableContext.local, null))
+        ty.inputs.add( new TaskParamsYamlV1.InputVariableV1(
+                "code-1", EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher, null, null,
+                List.of(new TaskParamsYamlV1.ResourceV1("value-1-1", null),
+                        new TaskParamsYamlV1.ResourceV1("value-1-2", null))
         ));
 
-        ty.output.add( new TaskParamsYamlV1.OutputVariableV1(
-                "output-code-1", EnumsApi.DataSourcing.dispatcher, null, null,
-                new TaskParamsYamlV1.ResourceV1("1", EnumsApi.VariableContext.local, null)
+        ty.outputs.add( new TaskParamsYamlV1.OutputVariableV1(
+                "output-code-1", EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher, null, null,
+                new TaskParamsYamlV1.ResourceV1("1", null)
         ));
         ty.clean = true;
         ty.inline = Map.of( ConstsApi.MH_HYPER_PARAMS, Map.of("hyper-param-key-01", "hyper-param-value-01"));

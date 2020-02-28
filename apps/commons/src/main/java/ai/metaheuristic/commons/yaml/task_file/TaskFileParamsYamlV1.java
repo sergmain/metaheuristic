@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -47,7 +48,6 @@ public class TaskFileParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class ResourceV1 {
         public String id;
-        public EnumsApi.VariableContext context;
         // real file name of resource, is present
         public String realName;
     }
@@ -57,10 +57,11 @@ public class TaskFileParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class InputVariableV1 {
         public String name;
+        public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
-        public List<ResourceV1> resources;
+        public final List<ResourceV1> resources = new ArrayList<>();
     }
 
     @Data
@@ -68,6 +69,7 @@ public class TaskFileParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class OutputVariableV1 {
         public String name;
+        public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;

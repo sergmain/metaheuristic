@@ -57,21 +57,23 @@ public class TaskFileParamsYamlUtilsV1
 
     private static TaskFileParamsYaml.InputVariable upInputVariable(TaskFileParamsYamlV1.InputVariableV1 v1) {
         TaskFileParamsYaml.InputVariable v = new TaskFileParamsYaml.InputVariable();
+        v.name = v1.name;
+        v.context = v1.context;
         v.disk = v1.disk;
         v.git = v1.git;
-        v.name = v1.name;
         v.sourcing = v1.sourcing;
-        v.resources = v1.resources!=null ? v1.resources.stream().map(r->new TaskFileParamsYaml.Resource(r.id, r.context, r.realName)).collect(Collectors.toList()) : null;
+        v1.resources.stream().map(r->new TaskFileParamsYaml.Resource(r.id, r.realName)).collect(Collectors.toCollection(()->v.resources));
         return v;
     }
 
     private static TaskFileParamsYaml.OutputVariable upOutputVariable(TaskFileParamsYamlV1.OutputVariableV1 v1) {
         TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
+        v.name = v1.name;
+        v.context = v1.context;
         v.disk = v1.disk;
         v.git = v1.git;
-        v.name = v1.name;
         v.sourcing = v1.sourcing;
-        v.resources = v1.resources!=null ? new TaskFileParamsYaml.Resource(v1.resources.id, v1.resources.context, v1.resources.realName) : null;
+        v.resources = v1.resources!=null ? new TaskFileParamsYaml.Resource(v1.resources.id, v1.resources.realName) : null;
         return v;
     }
 

@@ -144,9 +144,7 @@ public abstract class FeatureMethods extends PreparingPlan {
             String yaml = FunctionExecUtils.toString(functionExec);
 
             ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult sser =
-                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);
-            // TODO 2019-11-17 left it here for info. delete when code will be merged in master
-            // new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
+                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml);
             results.add(sser);
         }
 
@@ -166,7 +164,7 @@ public abstract class FeatureMethods extends PreparingPlan {
             String yaml = FunctionExecUtils.toString(functionExec);
 
             ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult ster =
-                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml, null);
+                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getId(), yaml);
             results.add(ster);
         }
 

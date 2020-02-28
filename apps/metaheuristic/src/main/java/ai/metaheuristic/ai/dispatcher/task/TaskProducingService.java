@@ -16,32 +16,31 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -57,7 +56,7 @@ public class TaskProducingService {
     private final IdsRepository idsRepository;
     private final ExecContextProcessGraphService execContextProcessGraphService;
 
-    public TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, ExecContextParamsYaml execContextParamsYaml) {
+    public TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
         DirectedAcyclicGraph<String, DefaultEdge> processGraph = execContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
         List<Long> parentTaskIds = new ArrayList<>();
@@ -66,19 +65,18 @@ public class TaskProducingService {
             if (p == null) {
                 return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR);
             }
-            createTaskInternal(isPersist, sourceCodeId, p, parentTaskIds, execContextParamsYaml);
+            TaskData.ProduceTaskResult result = produceTaskForProcess(isPersist, sourceCodeId, p, execContextParamsYaml, execContextId, parentTaskIds);
+            if (result.status!= EnumsApi.TaskProducingStatus.OK) {
+                return result;
+            }
         }
-
-
-        Monitoring.log("##025", Enums.Monitor.MEMORY);
-
-        return null;
+        return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.OK);
     }
 
 
     private TaskData.ProduceTaskResult produceTaskForProcess(
             boolean isPersist, Long sourceCodeId, ExecContextParamsYaml.Process process,
-            String internalContextId, ExecContextParamsYaml execContextParamsYaml, Long execContextId,
+            ExecContextParamsYaml execContextParamsYaml, Long execContextId,
             List<Long> parentTaskIds) {
 
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
@@ -106,27 +104,21 @@ public class TaskProducingService {
         TaskParamsYaml taskParams = new TaskParamsYaml();
         taskParams.task.execContextId = execContextId;
 
+        for (ExecContextParamsYaml.Variable input : process.inputs) {
+            if (true) {
+                throw new NotImplementedException("not yet");
+            }
+            taskParams.task.outputs.add(null);
+        }
         for (ExecContextParamsYaml.Variable variable : process.outputs) {
             Variable v = variableService.createUninitialized(variable.name, execContextId, process.internalContextId);
             // resourceId is an Id of one part of Variable. Variable can contain unlimited number of resources
             String resourceId = v.id.toString();
             taskParams.task.outputs.add(
-                    new TaskParamsYaml.OutputVariable(variable.name, variable.sourcing, variable.git, variable.disk,
-                            new TaskParamsYaml.Resource(resourceId, EnumsApi.VariableContext.local, null)
+                    new TaskParamsYaml.OutputVariable(variable.name, EnumsApi.VariableContext.local, variable.sourcing, variable.git, variable.disk,
+                            new TaskParamsYaml.Resource(resourceId, null)
                     ));
         }
-
-        for (ExecContextParamsYaml.Variable variable : process.inputs) {
-            List<TaskParamsYaml.Resource> resources = process.inputs.
-            taskParams.task.inputs.add(new TaskParamsYaml.InputVariable(variable.name, variable.sourcing, variable.git, variable.disk));
-
-        }
-        Map<String, SourceCodeParamsYaml.Variable> map = new HashMap<>();
-        for (Map.Entry<String, SourceCodeParamsYaml.Variable> entry : inputStorageUrls.entrySet()) {
-            final SourceCodeParamsYaml.Variable v = entry.getValue();
-            map.put(entry.getKey(), new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name));
-        }
-        taskParams.task.resourceStorageUrls = map;
 
         taskParams.task.function = functionService.getFunctionConfig(snDef);
         if (taskParams.task.function ==null) {
@@ -135,24 +127,24 @@ public class TaskProducingService {
         }
         taskParams.task.preFunctions = new ArrayList<>();
         if (process.getPreFunctions()!=null) {
-            for (SourceCodeParamsYaml.FunctionDefForSourceCode preFunction : process.getPreFunctions()) {
+            for (ExecContextParamsYaml.FunctionDefinition preFunction : process.getPreFunctions()) {
                 taskParams.task.preFunctions.add(functionService.getFunctionConfig(preFunction));
             }
         }
         taskParams.task.postFunctions = new ArrayList<>();
         if (process.getPostFunctions()!=null) {
-            for (SourceCodeParamsYaml.FunctionDefForSourceCode postFunction : process.getPostFunctions()) {
+            for (ExecContextParamsYaml.FunctionDefinition postFunction : process.getPostFunctions()) {
                 taskParams.task.postFunctions.add(functionService.getFunctionConfig(postFunction));
             }
         }
         taskParams.task.clean = execContextParamsYaml.clean;
         taskParams.task.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
-        String taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParams);
+        String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParams);
 
         TaskImpl task = new TaskImpl();
         task.setExecContextId(execContextId);
-        task.setParams(taskParams);
+        task.setParams(params);
         taskRepository.save(task);
 
         return task;

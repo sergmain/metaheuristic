@@ -16,15 +16,15 @@
 package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.SimpleSelectOption;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -70,11 +70,6 @@ public class FunctionService {
         return functionCache.findById(id);
     }
 
-    public boolean isFunctionVersionOk(int requiredVersion, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
-        TaskParamsYaml.FunctionConfig sc = getFunctionConfig(snDef);
-        return sc != null && (sc.skipParams || requiredVersion <= FunctionCoreUtils.getTaskParamsVersion(sc.metas));
-    }
-
     public static void sortExperimentFunctions(List<Function> functions) {
         functions.sort(FunctionService::experimentFunctionComparator);
     }
@@ -107,7 +102,7 @@ public class FunctionService {
         return list;
     }
 
-    public TaskParamsYaml.FunctionConfig getFunctionConfig(SourceCodeParamsYaml.FunctionDefForSourceCode functionDef) {
+    public TaskParamsYaml.FunctionConfig getFunctionConfig(ExecContextParamsYaml.FunctionDefinition functionDef) {
         TaskParamsYaml.FunctionConfig functionConfig = null;
         if(StringUtils.isNotBlank(functionDef.code)) {
             Function function = findByCode(functionDef.code);

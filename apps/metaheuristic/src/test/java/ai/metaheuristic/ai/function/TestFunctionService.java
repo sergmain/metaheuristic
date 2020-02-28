@@ -18,11 +18,11 @@ package ai.metaheuristic.ai.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
-import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
+import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
@@ -75,7 +75,7 @@ public class TestFunctionService {
 
     @Test
     public void test() {
-        SourceCodeParamsYaml.FunctionDefForSourceCode sd = new SourceCodeParamsYaml.FunctionDefForSourceCode();
+        ExecContextParamsYaml.FunctionDefinition sd = new ExecContextParamsYaml.FunctionDefinition();
         sd.code = TEST_FUNCTION;
         sd.params = null;
         TaskParamsYaml.FunctionConfig sc = functionService.getFunctionConfig(sd);

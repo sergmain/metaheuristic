@@ -20,10 +20,12 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +50,6 @@ public class TaskFileParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class Resource {
         public String id;
-        public EnumsApi.VariableContext context;
         public String realName;
     }
 
@@ -57,10 +58,11 @@ public class TaskFileParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class InputVariable {
         public String name;
+        public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
-        public List<Resource> resources;
+        public final List<Resource> resources = new ArrayList<>();
     }
 
     @Data
@@ -68,6 +70,7 @@ public class TaskFileParamsYaml implements BaseParams {
     @NoArgsConstructor
     public static class OutputVariable {
         public String name;
+        public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;

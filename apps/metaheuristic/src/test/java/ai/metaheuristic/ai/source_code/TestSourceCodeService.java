@@ -217,7 +217,6 @@ public class TestSourceCodeService extends PreparingPlan {
     public void storeExecResult(DispatcherCommParamsYaml.AssignedTask simpleTask) {
         ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
         r.setTaskId(simpleTask.getTaskId());
-        r.setMl(null);
         r.setResult(getOKExecResult());
 
         taskPersistencer.storeExecResult(r, t -> {

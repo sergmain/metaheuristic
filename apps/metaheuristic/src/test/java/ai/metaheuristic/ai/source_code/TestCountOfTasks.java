@@ -17,9 +17,10 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -67,9 +68,9 @@ public class TestCountOfTasks extends PreparingPlan {
         EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        SourceCodeApiData.TaskProducingResultComplex result = execContextService.createExecContext(sourceCode.getId(), execContextYaml);
-        execContextForFeature = (ExecContextImpl)result.execContext;
-        assertEquals(EnumsApi.TaskProducingStatus.OK, result.taskProducingStatus);
+        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
+        execContextForFeature = result.execContext;
+        assertFalse(result.isErrorMessages());
         assertNotNull(execContextForFeature);
         assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
 
@@ -83,34 +84,34 @@ public class TestCountOfTasks extends PreparingPlan {
         assertTrue(tasks01.isEmpty());
 
         long mills = System.currentTimeMillis();
-        result = sourceCodeService.produceAllTasks(false, sourceCode, execContextForFeature);
+        SourceCodeApiData.TaskProducingResultComplex taskResult = sourceCodeService.produceAllTasks(false, sourceCode, execContextForFeature);
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        assertEquals(EnumsApi.TaskProducingStatus.OK, result.taskProducingStatus);
-        int numberOfTasks = result.numberOfTasks;
+        assertEquals(EnumsApi.TaskProducingStatus.OK, taskResult.taskProducingStatus);
+        int numberOfTasks = taskResult.numberOfTasks;
 
-        List<Object[]> tasks02 = taskCollector.getTasks(result.execContext);
+        List<Object[]> tasks02 = taskCollector.getTasks(taskResult.execContext);
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
-        result = sourceCodeService.produceAllTasks(true, sourceCode, execContextForFeature);
+        taskResult = sourceCodeService.produceAllTasks(true, sourceCode, execContextForFeature);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        execContextForFeature = (ExecContextImpl)result.execContext;
-        assertEquals(EnumsApi.TaskProducingStatus.OK, result.taskProducingStatus);
+        execContextForFeature = (ExecContextImpl)taskResult.execContext;
+        assertEquals(EnumsApi.TaskProducingStatus.OK, taskResult.taskProducingStatus);
         assertEquals(EnumsApi.ExecContextState.PRODUCED.code, execContextForFeature.getState());
 
         experiment = experimentCache.findById(experiment.getId());
 
-        List<Object[]> tasks = taskCollector.getTasks(result.execContext);
+        List<Object[]> tasks = taskCollector.getTasks(taskResult.execContext);
 
-        assertNotNull(result);
-        assertNotNull(result.execContext);
+        assertNotNull(taskResult);
+        assertNotNull(taskResult.execContext);
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
         assertEquals(numberOfTasks, tasks.size());
 
-        result = sourceCodeService.produceAllTasks(false, sourceCode, execContextForFeature);
+        taskResult = sourceCodeService.produceAllTasks(false, sourceCode, execContextForFeature);
         List<Object[]> tasks03 = taskCollector.getTasks(execContextForFeature);
         assertFalse(tasks03.isEmpty());
         assertEquals(numberOfTasks, tasks.size());

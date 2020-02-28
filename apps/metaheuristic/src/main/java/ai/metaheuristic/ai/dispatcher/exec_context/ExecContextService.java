@@ -458,7 +458,7 @@ public class ExecContextService {
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
         // create all not dynamic tasks
-        TaskData.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(isPersist, execContext.sourceCodeId, execContextParamsYaml);
+        TaskData.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(isPersist, execContext.sourceCodeId, execContext.id, execContextParamsYaml);
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist) {

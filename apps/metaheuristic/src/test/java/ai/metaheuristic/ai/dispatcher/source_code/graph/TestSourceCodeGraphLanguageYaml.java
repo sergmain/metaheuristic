@@ -45,33 +45,31 @@ public class TestSourceCodeGraphLanguageYaml {
         assertNotNull(graph);
         assertTrue(graph.clean);
         assertEquals(6, graph.processGraph.vertexSet().size());
-        assertEquals(5, ExecContextProcessGraphService.findDescendants(graph, 1L).size());
+        assertEquals(5, ExecContextProcessGraphService.findDescendants(graph, "assembly-raw-file").size());
         assertEquals(1, ExecContextProcessGraphService.findLeafs(graph).size());
 
-        SimpleProcessVertex v = ExecContextProcessGraphService.findVertex(graph, 1L);
+        String v = ExecContextProcessGraphService.findVertex(graph, "assembly-raw-file");
         assertNotNull(v);
-        assertEquals("assembly-raw-file", v.processCode);
 
-        List<SimpleProcessVertex> vs1 = ExecContextProcessGraphService.findTargets(graph, 1L);
+        List<String> vs1 = ExecContextProcessGraphService.findTargets(graph, "assembly-raw-file");
 
         assertEquals(1, vs1.size());
 
-        SimpleProcessVertex v1 = vs1.get(0);
+        String v1 = vs1.get(0);
         assertNotNull(v1);
-        assertEquals(Long.valueOf(2L), v1.taskId);
-        assertEquals("dataset-processing", v1.processCode);
+        assertEquals("dataset-processing", v1);
 
-        List<SimpleProcessVertex> vs2 = ExecContextProcessGraphService.findTargets(graph, 2L);
+        List<String> vs2 = ExecContextProcessGraphService.findTargets(graph, "dataset-processing");
 
         assertEquals(3, vs2.size());
 
-        SimpleProcessVertex v21 = vs2.stream().filter(o->o.processCode.equals("feature-processing_cluster")).findFirst().orElseThrow();
-        SimpleProcessVertex v22 = vs2.stream().filter(o->o.processCode.equals("feature-processing_matrix")).findFirst().orElseThrow();
-        SimpleProcessVertex v23 = vs2.stream().filter(o->o.processCode.equals("mh.permute-variables-and-hyper-params")).findFirst().orElseThrow();
+        String v21 = vs2.stream().filter(o->o.equals("feature-processing_cluster")).findFirst().orElseThrow();
+        String v22 = vs2.stream().filter(o->o.equals("feature-processing_matrix")).findFirst().orElseThrow();
+        String v23 = vs2.stream().filter(o->o.equals("mh.permute-variables-and-hyper-params")).findFirst().orElseThrow();
 
-        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v21.taskId).size());
-        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v22.taskId).size());
-        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v23.taskId).size());
+        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v21).size());
+        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v22).size());
+        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v23).size());
 
     }
 }
