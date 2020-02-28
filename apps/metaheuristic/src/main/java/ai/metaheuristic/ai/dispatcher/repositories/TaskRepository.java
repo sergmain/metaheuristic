@@ -40,10 +40,6 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     TaskImpl findByIdForUpdate(Long id);
 
     @Transactional(readOnly = true)
-    @Query(value="select t.id, t.metrics from TaskImpl t where t.id in :ids ")
-    List<Object[]> findMetricsByIds(List<Long> ids);
-
-    @Transactional(readOnly = true)
     Page<TaskImpl> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)

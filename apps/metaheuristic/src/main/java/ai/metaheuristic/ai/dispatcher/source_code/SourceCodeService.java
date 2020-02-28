@@ -16,46 +16,21 @@
 
 package ai.metaheuristic.ai.dispatcher.source_code;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.dispatcher.ExecContext;
-import ai.metaheuristic.api.dispatcher.SourceCode;
-import ai.metaheuristic.commons.S;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -76,7 +51,7 @@ public class SourceCodeService {
     public synchronized void createAllTasks() {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
-        List<ExecContextImpl> execContexts = execContextRepository.findByExecState(EnumsApi.ExecContextState.PRODUCING.code);
+        List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.PRODUCING.code);
         Monitoring.log("##020", Enums.Monitor.MEMORY);
         if (!execContexts.isEmpty()) {
             log.info("#701.020 Start producing tasks");

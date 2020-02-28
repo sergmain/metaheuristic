@@ -57,7 +57,7 @@ public class ExecContextSchedulerService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     public void updateExecContextStatuses(boolean needReconciliation) {
-        List<ExecContextImpl> execContexts = execContextRepository.findByExecState(EnumsApi.ExecContextState.STARTED.code);
+        List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.STARTED.code);
         for (ExecContextImpl execContext : execContexts) {
             updateExecContextStatus(execContext.id, needReconciliation);
         }

@@ -41,9 +41,6 @@ public class TaskParamsUtils {
             trg.info = new TaskParamsYaml.FunctionInfo(src.info.signed, src.info.length);
         }
         trg.metas = src.metas;
-        if (src.ml!=null) {
-            trg.ml = new TaskParamsYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
-        }
         trg.params = src.params;
         trg.skipParams = src.skipParams;
         trg.sourcing = src.sourcing;

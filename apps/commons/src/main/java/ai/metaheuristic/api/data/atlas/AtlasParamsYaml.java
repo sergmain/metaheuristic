@@ -29,6 +29,8 @@ import java.util.List;
 @NoArgsConstructor
 public class AtlasParamsYaml implements BaseParams {
 
+    public final int version = 1;
+
     @Override
     public boolean checkIntegrity() {
         if (sourceCode ==null || execContext ==null || experiment==null || taskIds==null) {
@@ -66,7 +68,6 @@ public class AtlasParamsYaml implements BaseParams {
     }
 
     public long createdOn;
-    public final int version = 1;
     public SourceCodeWithParams sourceCode;
     public ExecContextWithParams execContext;
     public ExperimentWithParams experiment;

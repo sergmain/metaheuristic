@@ -96,16 +96,6 @@ public class TaskParamsYaml implements BaseParams {
     }
 
     @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class MachineLearning {
-        // does this function support metrics
-        public boolean metrics = false;
-        // does this function support fitting detection
-        public boolean fitting = false;
-    }
-
-    @Data
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
@@ -147,7 +137,6 @@ public class TaskParamsYaml implements BaseParams {
         public GitInfo git;
         public boolean skipParams = false;
         public List<Meta> metas = new ArrayList<>();
-        public MachineLearning ml;
     }
 
     @Data

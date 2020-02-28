@@ -30,6 +30,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AtlasTaskParamsYaml implements BaseParams {
 
+    public final int version = 1;
+
     @Override
     public boolean checkIntegrity() {
         if (taskId==null) {
@@ -49,6 +51,4 @@ public class AtlasTaskParamsYaml implements BaseParams {
 
     public String metrics;
     public String functionExecResults;
-
-    public final int version = 1;
 }

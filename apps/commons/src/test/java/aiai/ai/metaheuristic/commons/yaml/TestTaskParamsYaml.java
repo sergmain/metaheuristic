@@ -37,9 +37,9 @@ public class TestTaskParamsYaml {
 
     @Test
     public void test() {
-        TaskParamsYamlV1 v2 = new TaskParamsYamlV1();
+        TaskParamsYamlV1 v1 = new TaskParamsYamlV1();
         final TaskParamsYamlV1.TaskYamlV1 ty = new TaskParamsYamlV1.TaskYamlV1();
-        v2.taskYaml = ty;
+        v1.task = ty;
         ty.inputs.add( new TaskParamsYamlV1.InputVariableV1(
                 "code-1", EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher, null, null,
                 List.of(new TaskParamsYamlV1.ResourceV1("value-1-1", null),
@@ -70,12 +70,16 @@ public class TestTaskParamsYaml {
         postFunction.code = "post-function-code";
         postFunction.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         ty.postFunctions = List.of(postFunction);
+        ty.execContextId = 1L;
+        ty.context = EnumsApi.FunctionExecContext.external;
+        ty.processCode = "test-process-01";
 
-        String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(v2);
+
+        String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(v1);
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(s);
 
         assertNotNull(tpy);
-        assertEquals(5, tpy.version);
+        assertEquals(1, tpy.version);
         assertNotNull(tpy.task);
         assertNotNull(tpy.task.preFunctions);
         assertNotNull(tpy.task.function);

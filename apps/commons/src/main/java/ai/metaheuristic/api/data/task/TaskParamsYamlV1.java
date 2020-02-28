@@ -21,6 +21,8 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -40,6 +42,12 @@ public class TaskParamsYamlV1 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
+        if (task.context==null) {
+            throw new CheckIntegrityFailedException("function exec context is null");
+        }
+        if (S.b(task.processCode)) {
+            throw new CheckIntegrityFailedException("processCode is blank");
+        }
         return true;
     }
 
@@ -87,16 +95,6 @@ public class TaskParamsYamlV1 implements BaseParams {
     }
 
     @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class MachineLearningV1 {
-        // does this function support metrics
-        public boolean metrics = false;
-        // does this function support fitting detection
-        public boolean fitting = false;
-    }
-
-    @Data
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
@@ -138,12 +136,12 @@ public class TaskParamsYamlV1 implements BaseParams {
         public GitInfo git;
         public boolean skipParams = false;
         public List<Meta> metas = new ArrayList<>();
-        public MachineLearningV1 ml;
     }
 
     @Data
     public static class TaskYamlV1 {
         public Long execContextId;
+        public String processCode;
         public FunctionConfigV1 function;
         public List<FunctionConfigV1> preFunctions;
         public List<FunctionConfigV1> postFunctions;
@@ -166,6 +164,6 @@ public class TaskParamsYamlV1 implements BaseParams {
         public String workingPath;
     }
 
-    public TaskYamlV1 taskYaml = new TaskYamlV1();
+    public TaskYamlV1 task = new TaskYamlV1();
 
 }

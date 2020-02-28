@@ -49,7 +49,7 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     List<Long> findByStateOrderByCreatedOnAsc(int execState);
 
     @Transactional
-    List<ExecContextImpl> findByExecState(int execState);
+    List<ExecContextImpl> findByState(int execState);
 
     @Transactional(readOnly = true)
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
@@ -57,7 +57,7 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
 
     @Transactional(readOnly = true)
     @Query(value="select e.id from ExecContextImpl e where e.sourceCodeId=:sourceCodeId")
-    List<Long> findIdsBysourceCodeId(Long sourceCodeId);
+    List<Long> findIdsBySourceCodeId(Long sourceCodeId);
 
     @Transactional(readOnly = true)
     Slice<ExecContext> findBySourceCodeIdOrderByCreatedOnDesc(Pageable pageable, Long sourceCodeId);

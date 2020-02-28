@@ -480,7 +480,7 @@ public class ExecContextService {
         ExecContext execContext = execContextCache.findById(execContextId);
         if (execContext != null) {
             // unlock sourceCode if this is the last execContext in the sourceCode
-            List<Long> ids = execContextRepository.findIdsBysourceCodeId(execContext.getSourceCodeId());
+            List<Long> ids = execContextRepository.findIdsBySourceCodeId(execContext.getSourceCodeId());
             if (ids.size()==1) {
                 if (ids.get(0).equals(execContextId)) {
                     if (execContext.getSourceCodeId() != null) {

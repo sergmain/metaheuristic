@@ -67,14 +67,14 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
     void deleteByVariable(String variable);
 
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleVariable(" +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable(" +
             "b.id, b.version, b.variable, b.uploadTs, b.filename, b.params ) " +
             "from GlobalVariable b " +
             "order by b.uploadTs desc ")
     Slice<SimpleGlobalVariable> getAllAsSimpleGlobalVariable(Pageable pageable);
 
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleVariable(" +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable(" +
             "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
             "from Variable b " +
             "where b.id=:id")

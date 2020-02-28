@@ -207,11 +207,6 @@ public class VariableService {
     }
 
     @Transactional(readOnly = true)
-    public Slice<SimpleGlobalVariable> getAllAsSimpleResources(Pageable pageable) {
-        return variableRepository.getAllAsSimpleResources(pageable);
-    }
-
-    @Transactional(readOnly = true)
     public List<String> getFilenameByVariableAndExecContextId(String variable, Long execContextId) {
         return variableRepository.findFilenameByVariableAndExecContextId(variable, execContextId);
     }

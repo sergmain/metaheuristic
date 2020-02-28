@@ -17,21 +17,14 @@
 package ai.metaheuristic.ai.dispatcher.experiment;
 
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 @Service
 @Profile("dispatcher")
@@ -47,19 +40,24 @@ public class MetricsMaxValueCollector {
             return 0.0;
         }
 
+        double max = 0.0;
+        for (Long taskId : ids) {
+            max = Math.max(max, getMetrics(taskId));
+        }
+        return max;
+
+/*
         List<Object[]> list = taskRepository.findMetricsByIds(ids);
         //noinspection UnnecessaryLocalVariable
         double value = list.stream()
                 .map(o -> {
-/*
-metrics: |
-  metrics: "values:\r\n  sum: 33\r\n  sum_6: 63\r\n  sum_7: 75\r\n  sum_8: 90\r\n  sum_9:\
-    \ 101\r\n"
-  status: Ok
-fitted: 'UNDERFITTED'
-version: 1
+//    metrics: |
+//      metrics: "values:\r\n  sum: 33\r\n  sum_6: 63\r\n  sum_7: 75\r\n  sum_8: 90\r\n  sum_9:\
+//        \ 101\r\n"
+//      status: Ok
+//    fitted: 'UNDERFITTED'
+//    version: 1
 
-*/
 
                     if (S.b((String)o[1])) {
                         return null;
@@ -80,5 +78,13 @@ version: 1
                     return metricValues.values.get(metricKey).doubleValue();
                 }).filter(Objects::nonNull).max(Double::compareTo).orElse(0.0);
         return value;
+*/
+    }
+
+    private double getMetrics(Long taskId) {
+        if (true) {
+            throw new NotImplementedException("not yet");
+        }
+        return 0;
     }
 }

@@ -24,12 +24,10 @@ nbdist/
 .nb-gradle/
 r.bat
 
-
+aiai-dispatcher
 aiai-processor/**
 aiai-processor-h2/**
 aiai-launchpad
-aiai-dispatcher
-/aiai-dispatcher/
 *_V2.class
 *_V3.class
 config

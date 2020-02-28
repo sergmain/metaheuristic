@@ -48,17 +48,17 @@ public class TaskParamsYamlUtilsV1
         v1.checkIntegrity();
         TaskParamsYaml t = new TaskParamsYaml();
         t.task = new TaskParamsYaml.TaskYaml();
-        BeanUtils.copyProperties(v1.taskYaml, t.task, "function", "preFunctions", "postFunctions");
-        t.task.function = toUp(v1.taskYaml.function);
-        if (v1.taskYaml.preFunctions !=null) {
-            t.task.preFunctions = v1.taskYaml.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
+        BeanUtils.copyProperties(v1.task, t.task, "function", "preFunctions", "postFunctions");
+        t.task.function = toUp(v1.task.function);
+        if (v1.task.preFunctions !=null) {
+            t.task.preFunctions = v1.task.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
         }
-        if (v1.taskYaml.postFunctions !=null) {
-            t.task.postFunctions = v1.taskYaml.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
+        if (v1.task.postFunctions !=null) {
+            t.task.postFunctions = v1.task.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
         }
-        t.task.inline = v1.taskYaml.inline;
-        v1.taskYaml.inputs.stream().map(TaskParamsYamlUtilsV1::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
-        v1.taskYaml.outputs.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
+        t.task.inline = v1.task.inline;
+        v1.task.inputs.stream().map(TaskParamsYamlUtilsV1::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
+        v1.task.outputs.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
 
         t.checkIntegrity();
 
@@ -106,9 +106,6 @@ public class TaskParamsYamlUtilsV1
             trg.info = new TaskParamsYaml.FunctionInfo(src.info.signed, src.info.length);
         }
         trg.metas = src.metas;
-        if (src.ml!=null) {
-            trg.ml = new TaskParamsYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
-        }
         trg.params = src.params;
         trg.skipParams = src.skipParams;
         trg.sourcing = src.sourcing;
