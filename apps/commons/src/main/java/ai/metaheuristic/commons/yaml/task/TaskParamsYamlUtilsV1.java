@@ -47,18 +47,18 @@ public class TaskParamsYamlUtilsV1
     public TaskParamsYaml upgradeTo(TaskParamsYamlV1 v1, Long ... vars) {
         v1.checkIntegrity();
         TaskParamsYaml t = new TaskParamsYaml();
-        t.taskYaml = new TaskParamsYaml.TaskYaml();
-        BeanUtils.copyProperties(v1.taskYaml, t.taskYaml, "function", "preFunctions", "postFunctions");
-        t.taskYaml.function = toUp(v1.taskYaml.function);
+        t.task = new TaskParamsYaml.TaskYaml();
+        BeanUtils.copyProperties(v1.taskYaml, t.task, "function", "preFunctions", "postFunctions");
+        t.task.function = toUp(v1.taskYaml.function);
         if (v1.taskYaml.preFunctions !=null) {
-            t.taskYaml.preFunctions = v1.taskYaml.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
+            t.task.preFunctions = v1.taskYaml.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
         }
         if (v1.taskYaml.postFunctions !=null) {
-            t.taskYaml.postFunctions = v1.taskYaml.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
+            t.task.postFunctions = v1.taskYaml.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
         }
-        t.taskYaml.inline = v1.taskYaml.inline;
-        t.taskYaml.input = v1.taskYaml.input!=null ? v1.taskYaml.input.stream().map(TaskParamsYamlUtilsV1::upInputVariable).collect(Collectors.toList()) : null;
-        t.taskYaml.output.addAll(v1.taskYaml.output.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toList()));
+        t.task.inline = v1.taskYaml.inline;
+        t.task.inputs = v1.taskYaml.input!=null ? v1.taskYaml.input.stream().map(TaskParamsYamlUtilsV1::upInputVariable).collect(Collectors.toList()) : null;
+        t.task.outputs.addAll(v1.taskYaml.output.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toList()));
 
         t.checkIntegrity();
 

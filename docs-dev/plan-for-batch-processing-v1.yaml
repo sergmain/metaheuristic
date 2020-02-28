@@ -8,9 +8,9 @@ source:
       snippet:
         code: mh.resource-splitter
         context: internal
-      input:
+      inputs:
         - variable: input-data
-      output:
+      outputs:
         - variable: batch-item
       subProcesses:
         logic: and
@@ -19,17 +19,17 @@ source:
             name: process-item
             snippet:
               code: process-item:1.0
-            input:
+            inputs:
               - variable: batch-item
-            output:
+            outputs:
               - variable: processed-file
     - code: mh.aggregate
       name: mh.aggregate
       snippet:
         code: mh.aggregate
         context: internal
-      input:
+      inputs:
         - variable: processed-file
-      output:
+      outputs:
         - variable: batch-result
 version: 1

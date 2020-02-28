@@ -16,18 +16,18 @@ source:
       snippet:
         code: assembly.dataset:1.3
         params: 'assemble'
-      input:
+      inputs:
         - name: global-input
-      output:
+      outputs:
         - name: assembled-raw
     - code: dataset-processing
       name: dataset processing
       snippet:
         code: assembly.dataset:1.3
         params: 'produce'
-      input:
+      inputs:
         - name: assembled-raw
-      output:
+      outputs:
         - name: dataset-processing
       subProcesses:
         logic: and
@@ -37,18 +37,18 @@ source:
             snippet:
               code: feature.standard:1.5
               params: CLUSTER
-            input:
+            inputs:
               - name: dataset-processing
-            output:
+            outputs:
               - name: feature-processing_cluster
           - code: feature-processing_matrix
             name: feature processing
             snippet:
               code: feature.standard:1.5
               params: MATRIX
-            input:
+            inputs:
               - name: dataset-processing
-            output:
+            outputs:
               - name: feature-processing_matrix
     - code: mh.permute-variables-and-hyper-params
       name: permute variables and hyper params
@@ -58,7 +58,7 @@ source:
       snippet:
         code: mh.permute-variables-and-hyper-params
         context: internal
-      output:
+      outputs:
         - name: feature-per-task
       subProcesses:
         logic: sequential
@@ -67,28 +67,28 @@ source:
             name: fit-data
             snippet:
               code: fit:6.2
-            input:
+            inputs:
               - name: dataset-processing
               - name: feature-per-task
-            output:
+            outputs:
               - name: model
           - code: predict-result
             name: predict-result
             snippet:
               code: predict:6.2
-            input:
+            inputs:
               - name: dataset-processing
               - name: feature-per-task
               - name: model
-            output:
+            outputs:
               - name: metrics
               - name: predicted
           - code: check-fitting
             name: check-fitting
             snippet:
               code: check-fitting:6.2
-            input:
+            inputs:
               - name: predicted
-            output:
+            outputs:
               - name: overfitting
 version: 1

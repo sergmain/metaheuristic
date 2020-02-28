@@ -95,7 +95,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(processorTask.getParams());
 
             final UploadResourceTask finalTask = task;
-            TaskParamsYaml.OutputVariable v = taskParamYaml.taskYaml.output.stream().filter(o->o.resource.id.equals(finalTask.resourceId)).findAny().orElse(null);
+            TaskParamsYaml.OutputVariable v = taskParamYaml.task.outputs.stream().filter(o->o.resource.id.equals(finalTask.resourceId)).findAny().orElse(null);
             if (v==null) {
                 log.error("#311.022 outputVariable with resourceId {} wasn't found.", finalTask.resourceId);
                 processorTaskService.delete(task.dispatcher.url, task.taskId);

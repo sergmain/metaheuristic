@@ -121,7 +121,7 @@ public class ProcessorService {
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
         File taskDir = processorTaskService.prepareTaskDir(metadataService.dispatcherUrlAsCode(dispatcherUrl), taskId);
 
-        for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.taskYaml.output) {
+        for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             Enums.ResendTaskOutputResourceStatus status;
             switch (outputVariable.sourcing) {
                 case dispatcher:
@@ -180,7 +180,7 @@ public class ProcessorService {
     public ProcessorService.ResultOfChecking checkForPreparingOfAssets(ProcessorTask task, Metadata.DispatcherInfo dispatcherCode, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         try {
-            taskParamYaml.taskYaml.input.forEach(input -> {
+            taskParamYaml.task.inputs.forEach(input -> {
                 for (TaskParamsYaml.Resource resource : input.resources) {
                     ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(input.sourcing);
                     List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, dispatcher, task, dispatcherCode, resource.id, input);
@@ -220,7 +220,7 @@ public class ProcessorService {
     }
 
     public boolean checkOutputResourceFile(ProcessorTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
-        for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.taskYaml.output) {
+        for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             try {
                 ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
 

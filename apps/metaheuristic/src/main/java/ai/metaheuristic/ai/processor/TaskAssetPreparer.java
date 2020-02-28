@@ -89,7 +89,7 @@ public class TaskAssetPreparer {
                 continue;
             }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            if (CollectionUtils.isEmpty(taskParamYaml.taskYaml.input)) {
+            if (CollectionUtils.isEmpty(taskParamYaml.task.inputs)) {
                 log.warn("#951.040 taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;
             }
@@ -111,19 +111,19 @@ public class TaskAssetPreparer {
 
             // start preparing functions
             final AtomicBoolean isAllReady = new AtomicBoolean(resultOfChecking.isAllLoaded);
-            final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.taskYaml.function;
+            final TaskParamsYaml.FunctionConfig functionConfig = taskParamYaml.task.function;
             if ( !prepareFunction(functionConfig, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId) ) {
                 isAllReady.set(false);
             }
-            if (taskParamYaml.taskYaml.preFunctions !=null) {
-                taskParamYaml.taskYaml.preFunctions.forEach(sc-> {
+            if (taskParamYaml.task.preFunctions !=null) {
+                taskParamYaml.task.preFunctions.forEach(sc-> {
                     if ( !prepareFunction(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId) ) {
                         isAllReady.set(false);
                     }
                 });
             }
-            if (taskParamYaml.taskYaml.postFunctions !=null) {
-                taskParamYaml.taskYaml.postFunctions.forEach(sc-> {
+            if (taskParamYaml.task.postFunctions !=null) {
+                taskParamYaml.task.postFunctions.forEach(sc-> {
                     if ( !prepareFunction(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId) ) {
                         isAllReady.set(false);
                     }

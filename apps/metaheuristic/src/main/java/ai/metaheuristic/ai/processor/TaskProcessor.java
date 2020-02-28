@@ -160,11 +160,11 @@ public class TaskProcessor {
                 processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
                 continue;
             }
-            if (taskParamYaml.taskYaml.output.isEmpty()) {
+            if (taskParamYaml.task.outputs.isEmpty()) {
                 processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.050 Broken task. output variable must be specified");
                 continue;
             }
-            if (taskParamYaml.taskYaml.function ==null) {
+            if (taskParamYaml.task.function ==null) {
                 processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.080 Broken task. Function isn't defined");
                 continue;
             }
@@ -187,10 +187,10 @@ public class TaskProcessor {
             }
 
             boolean isNotReady = false;
-            final FunctionPrepareResult[] results = new FunctionPrepareResult[ totalCountOfFunctions(taskParamYaml.taskYaml) ];
+            final FunctionPrepareResult[] results = new FunctionPrepareResult[ totalCountOfFunctions(taskParamYaml.task) ];
             int idx = 0;
             FunctionPrepareResult result;
-            for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.taskYaml.preFunctions) {
+            for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
                 result = prepareFunction(task.dispatcherUrl, dispatcherInfo, preFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
@@ -207,7 +207,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = prepareFunction(task.dispatcherUrl, dispatcherInfo, taskParamYaml.taskYaml.getFunction());
+            result = prepareFunction(task.dispatcherUrl, dispatcherInfo, taskParamYaml.task.getFunction());
             if (result.isError) {
                 markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
                 continue;
@@ -217,7 +217,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.taskYaml.postFunctions) {
+            for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
                 result = prepareFunction(task.dispatcherUrl, dispatcherInfo, postFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(task.dispatcherUrl, task.taskId, result);
@@ -276,7 +276,7 @@ public class TaskProcessor {
         int idx = 0;
         DispatcherSchedule schedule = dispatcher.schedule!=null && dispatcher.schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
                 ? dispatcher.schedule : null;
-        for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.taskYaml.preFunctions) {
+        for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
             FunctionPrepareResult result = results[idx++];
             FunctionApiData.SystemExecResult execResult;
             if (result==null) {
@@ -299,8 +299,8 @@ public class TaskProcessor {
             FunctionPrepareResult result = results[idx++];
             if (result==null) {
                 systemExecResult = new FunctionApiData.SystemExecResult(
-                        taskParamYaml.taskYaml.getFunction().code, false, -999,
-                        "#100.120 Illegal State, result of preparing of function "+taskParamYaml.taskYaml.getFunction()+" is null");
+                        taskParamYaml.task.getFunction().code, false, -999,
+                        "#100.120 Illegal State, result of preparing of function "+taskParamYaml.task.getFunction()+" is null");
                 isOk = false;
             }
             if (isOk) {
@@ -310,7 +310,7 @@ public class TaskProcessor {
                     isOk = false;
                 }
                 if (isOk) {
-                    for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.taskYaml.postFunctions) {
+                    for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
                         result = results[idx++];
                         FunctionApiData.SystemExecResult execResult;
                         if (result==null) {
@@ -329,7 +329,7 @@ public class TaskProcessor {
                     }
                     if (isOk && systemExecResult.isOk()) {
                         try {
-                            for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.taskYaml.output) {
+                            for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
                                 ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
                                 generalExec = resourceProvider.processResultingFile(
                                         dispatcher, task, dispatcherInfo, outputVariable.resource.id, mainFunctionConfig);
@@ -387,14 +387,14 @@ public class TaskProcessor {
     private TaskFileParamsYaml toTaskFileParamsYaml(TaskParamsYaml v1) {
         TaskFileParamsYaml t = new TaskFileParamsYaml();
         t.task = new TaskFileParamsYaml.Task();
-        t.task.execContextId = v1.taskYaml.execContextId;
-        t.task.clean = v1.taskYaml.clean;
-        t.task.timeoutBeforeTerminate = v1.taskYaml.timeoutBeforeTerminate;
-        t.task.workingPath = v1.taskYaml.workingPath;
+        t.task.execContextId = v1.task.execContextId;
+        t.task.clean = v1.task.clean;
+        t.task.timeoutBeforeTerminate = v1.task.timeoutBeforeTerminate;
+        t.task.workingPath = v1.task.workingPath;
 
-        t.task.inline = v1.taskYaml.inline;
-        t.task.input = v1.taskYaml.input!=null ? v1.taskYaml.input.stream().map(TaskProcessor::upInputVariable).collect(Collectors.toList()) : null;
-        t.task.output.addAll(v1.taskYaml.output.stream().map(TaskProcessor::upOutputVariable).collect(Collectors.toList()));
+        t.task.inline = v1.task.inline;
+        t.task.input = v1.task.inputs !=null ? v1.task.inputs.stream().map(TaskProcessor::upInputVariable).collect(Collectors.toList()) : null;
+        t.task.output.addAll(v1.task.outputs.stream().map(TaskProcessor::upOutputVariable).collect(Collectors.toList()));
 
         t.checkIntegrity();
         return t;
@@ -501,7 +501,7 @@ public class TaskProcessor {
 
             // Exec function
             systemExecResult = systemProcessService.execCommand(
-                    cmd, taskDir, consoleLogFile, taskParamYaml.taskYaml.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule);
+                    cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule);
 
         }
         catch (ScheduleInactivePeriodException e) {

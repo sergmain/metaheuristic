@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -67,13 +66,13 @@ public class SimpleApp implements CommandLineRunner {
 
         TaskParamsYaml params = TaskFileParamsYamlUtils.BASE_YAML_UTILS.to(config);
 
-        List<String> inputFiles = params.taskYaml.input
+        List<String> inputFiles = params.task.inputs
                 .stream()
                 .map(o->o.name)
                 .collect(Collectors.toList());
         System.out.println("input files: " + inputFiles);
 
-        String outputFilename = params.taskYaml.output
+        String outputFilename = params.task.outputs
                 .stream()
                 .filter(o->o.name.equals("result"))
                 .map(o->o.name)
@@ -82,7 +81,7 @@ public class SimpleApp implements CommandLineRunner {
 
         System.out.println("output filename: " + outputFilename);
 
-        File outputFile = Path.of(params.taskYaml.workingPath, ConstsApi.ARTIFACTS_DIR, outputFilename).toFile();
+        File outputFile = Path.of(params.task.workingPath, ConstsApi.ARTIFACTS_DIR, outputFilename).toFile();
         FileUtils.write(outputFile, inputFiles.isEmpty() ? "No files were provided" : inputFiles.toString(), StandardCharsets.UTF_8);
     }
 

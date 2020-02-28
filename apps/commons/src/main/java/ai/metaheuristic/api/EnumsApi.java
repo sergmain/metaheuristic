@@ -216,6 +216,7 @@ public class EnumsApi {
     public enum TaskProducingStatus {
         OK,
         NOT_PRODUCING_YET_ERROR,
+        TASK_PRODUCING_ERROR,
         EXPERIMENT_NOT_FOUND_BY_CODE_ERROR,
         PRODUCING_OF_EXPERIMENT_ERROR,
         INPUT_VARIABLE_DOESNT_EXIST_ERROR,

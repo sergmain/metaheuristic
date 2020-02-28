@@ -21,8 +21,8 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
-import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -43,8 +43,11 @@ public class TaskParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        if (taskYaml.context==null) {
+        if (task.context==null) {
             throw new CheckIntegrityFailedException("function exec context is null");
+        }
+        if (S.b(task.processCode)) {
+            throw new CheckIntegrityFailedException("processCode is blank");
         }
         return true;
     }
@@ -149,6 +152,7 @@ public class TaskParamsYaml implements BaseParams {
     @Data
     public static class TaskYaml {
         public Long execContextId;
+        public String processCode;
         public FunctionConfig function;
         public List<FunctionConfig> preFunctions;
         public List<FunctionConfig> postFunctions;
@@ -157,8 +161,8 @@ public class TaskParamsYaml implements BaseParams {
         public EnumsApi.FunctionExecContext context;
 
         public Map<String, Map<String, String>> inline;
-        public List<InputVariable> input;
-        public final List<OutputVariable> output = new ArrayList<>();
+        public final List<InputVariable> inputs = new ArrayList<>();
+        public final List<OutputVariable> outputs = new ArrayList<>();
 
         /**
          * Timeout before terminate a process with function
@@ -171,6 +175,6 @@ public class TaskParamsYaml implements BaseParams {
         public String workingPath;
     }
 
-    public TaskYaml taskYaml = new TaskYaml();
+    public TaskYaml task = new TaskYaml();
 
 }

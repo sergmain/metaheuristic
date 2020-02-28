@@ -470,8 +470,8 @@ public class ExperimentService {
             }
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            int idxX = mapX.get(taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(0)));
-            int idxY = mapY.get(taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(1)));
+            int idxX = mapX.get(taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(0)));
+            int idxY = mapY.get(taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
         }
 
@@ -496,9 +496,9 @@ public class ExperimentService {
         List<Task> selected = new ArrayList<>();
         for (Task task : list) {
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            boolean[] isOk = new boolean[taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).size()];
+            boolean[] isOk = new boolean[taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).size()];
             int idx = 0;
-            for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS).entrySet()) {
+            for (Map.Entry<String, String> entry : taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).entrySet()) {
                 try {
                     if (!paramFilterKeys.contains(entry.getKey())) {
                         isOk[idx] = true;

@@ -409,7 +409,7 @@ public class ProcessorTaskService {
             task.params = params;
             task.functionExecResult = null;
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
-            task.clean = taskParamYaml.taskYaml.clean;
+            task.clean = taskParamYaml.task.clean;
             task.dispatcherUrl = dispatcherUrl;
             task.createdOn = System.currentTimeMillis();
             task.assetsPrepared = false;

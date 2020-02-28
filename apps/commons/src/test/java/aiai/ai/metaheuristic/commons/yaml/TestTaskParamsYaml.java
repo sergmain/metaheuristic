@@ -76,43 +76,43 @@ public class TestTaskParamsYaml {
 
         assertNotNull(tpy);
         assertEquals(5, tpy.version);
-        assertNotNull(tpy.taskYaml);
-        assertNotNull(tpy.taskYaml.preFunctions);
-        assertNotNull(tpy.taskYaml.function);
-        assertNotNull(tpy.taskYaml.postFunctions);
-        assertNotNull(tpy.taskYaml.inline);
-        assertNotNull(tpy.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS));
-        assertNotNull(tpy.taskYaml.workingPath);
+        assertNotNull(tpy.task);
+        assertNotNull(tpy.task.preFunctions);
+        assertNotNull(tpy.task.function);
+        assertNotNull(tpy.task.postFunctions);
+        assertNotNull(tpy.task.inline);
+        assertNotNull(tpy.task.inline.get(ConstsApi.MH_HYPER_PARAMS));
+        assertNotNull(tpy.task.workingPath);
 
-        assertTrue(tpy.taskYaml.clean);
-        assertEquals("working-path", tpy.taskYaml.workingPath);
-        assertEquals(Long.valueOf(42L), tpy.taskYaml.timeoutBeforeTerminate);
-        assertNotNull(tpy.taskYaml.input);
-        assertNotNull(tpy.taskYaml.output);
+        assertTrue(tpy.task.clean);
+        assertEquals("working-path", tpy.task.workingPath);
+        assertEquals(Long.valueOf(42L), tpy.task.timeoutBeforeTerminate);
+        assertNotNull(tpy.task.inputs);
+        assertNotNull(tpy.task.outputs);
 
 
-        TaskParamsYaml.InputVariable inputVariable = tpy.taskYaml.input.stream().filter(o -> o.name.equals("code-1")).findFirst().orElseThrow();
+        TaskParamsYaml.InputVariable inputVariable = tpy.task.inputs.stream().filter(o -> o.name.equals("code-1")).findFirst().orElseThrow();
         assertNotNull(inputVariable);
         assertNotNull(inputVariable.resources.stream().filter(o->o.id.equals("value-1-1")).findFirst().orElseThrow());
         assertNotNull(inputVariable.resources.stream().filter(o->o.id.equals("value-1-2")).findFirst().orElseThrow());
 
-        Map<String, String> hyperParams = tpy.taskYaml.inline.get(ConstsApi.MH_HYPER_PARAMS);
+        Map<String, String> hyperParams = tpy.task.inline.get(ConstsApi.MH_HYPER_PARAMS);
         assertEquals(1, hyperParams.size());
         assertTrue(hyperParams.containsKey("hyper-param-key-01"));
         assertEquals("hyper-param-value-01", hyperParams.get("hyper-param-key-01"));
 
         // test functions
 
-        assertEquals(1, tpy.taskYaml.preFunctions.size());
-        assertEquals("pre-function-code", tpy.taskYaml.preFunctions.get(0).code);
-        assertEquals(EnumsApi.FunctionSourcing.processor, tpy.taskYaml.preFunctions.get(0).sourcing);
+        assertEquals(1, tpy.task.preFunctions.size());
+        assertEquals("pre-function-code", tpy.task.preFunctions.get(0).code);
+        assertEquals(EnumsApi.FunctionSourcing.processor, tpy.task.preFunctions.get(0).sourcing);
 
-        assertEquals("function-code", tpy.taskYaml.function.code);
-        assertEquals(EnumsApi.FunctionSourcing.git, tpy.taskYaml.function.sourcing);
+        assertEquals("function-code", tpy.task.function.code);
+        assertEquals(EnumsApi.FunctionSourcing.git, tpy.task.function.sourcing);
 
-        assertEquals(1, tpy.taskYaml.postFunctions.size());
-        assertEquals("post-function-code", tpy.taskYaml.postFunctions.get(0).code);
-        assertEquals(EnumsApi.FunctionSourcing.dispatcher, tpy.taskYaml.postFunctions.get(0).sourcing);
+        assertEquals(1, tpy.task.postFunctions.size());
+        assertEquals("post-function-code", tpy.task.postFunctions.get(0).code);
+        assertEquals(EnumsApi.FunctionSourcing.dispatcher, tpy.task.postFunctions.get(0).sourcing);
 
     }
 }

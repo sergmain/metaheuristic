@@ -164,7 +164,7 @@ public class TaskPersistencer {
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
                 FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
                 functionExec.exec = new FunctionApiData.SystemExecResult(
-                        tpy.taskYaml.function.code, false, -999, "#307.080 Task is broken, error is unknown, cant' process it"
+                        tpy.task.function.code, false, -999, "#307.080 Task is broken, error is unknown, cant' process it"
                 );
                 task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
             }
@@ -219,7 +219,7 @@ public class TaskPersistencer {
                 task.setResultResourceScheduledOn(System.currentTimeMillis());
                 TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                 // if there isn't any output variable which has to be uploaded to dispatcher then complete this task
-                if (yaml.taskYaml.output.stream().noneMatch(o->o.sourcing== EnumsApi.DataSourcing.dispatcher)) {
+                if (yaml.task.outputs.stream().noneMatch(o->o.sourcing== EnumsApi.DataSourcing.dispatcher)) {
                     task.setCompleted(true);
                     task.setCompletedOn(System.currentTimeMillis());
                 }

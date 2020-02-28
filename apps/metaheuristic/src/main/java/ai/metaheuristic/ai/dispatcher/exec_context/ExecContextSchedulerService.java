@@ -155,8 +155,8 @@ public class ExecContextSchedulerService {
                         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
                         // did this task hang up at processor?
-                        if (task.assignedOn!=null && tpy.taskYaml.timeoutBeforeTerminate != null && tpy.taskYaml.timeoutBeforeTerminate!=0L) {
-                            final long multiplyBy2 = tpy.taskYaml.timeoutBeforeTerminate * 2 * 1000;
+                        if (task.assignedOn!=null && tpy.task.timeoutBeforeTerminate != null && tpy.task.timeoutBeforeTerminate!=0L) {
+                            final long multiplyBy2 = tpy.task.timeoutBeforeTerminate * 2 * 1000;
                             final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
                             long timeout = Math.min(multiplyBy2, oneHourToMills);
                             if ((System.currentTimeMillis() - task.assignedOn) > timeout) {

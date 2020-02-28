@@ -342,7 +342,7 @@ public class ExecContextService {
                     throw new RuntimeException("#705.200 Error", e);
                 }
 
-                if (taskParamYaml.taskYaml.function.sourcing== EnumsApi.FunctionSourcing.git &&
+                if (taskParamYaml.task.function.sourcing== EnumsApi.FunctionSourcing.git &&
                         processorStatus.gitStatusInfo.status!= Enums.GitStatus.installed) {
                     log.warn("#705.210 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
                             processor.getId(), task.getId(), processorStatus.gitStatusInfo
@@ -351,11 +351,11 @@ public class ExecContextService {
                     continue;
                 }
 
-                if (taskParamYaml.taskYaml.function.env!=null) {
-                    String interpreter = processorStatus.env.getEnvs().get(taskParamYaml.taskYaml.function.env);
+                if (taskParamYaml.task.function.env!=null) {
+                    String interpreter = processorStatus.env.getEnvs().get(taskParamYaml.task.function.env);
                     if (interpreter == null) {
                         log.warn("#705.213 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
-                                processor.getId(), task.getId(), taskParamYaml.taskYaml.function.env
+                                processor.getId(), task.getId(), taskParamYaml.task.function.env
                         );
                         longHolder.value = System.currentTimeMillis();
                         continue;
@@ -373,8 +373,8 @@ public class ExecContextService {
                 }
 
                 if (isAcceptOnlySigned) {
-                    if (!taskParamYaml.taskYaml.function.info.isSigned()) {
-                        log.warn("#705.220 Function with code {} wasn't signed", taskParamYaml.taskYaml.function.getCode());
+                    if (!taskParamYaml.task.function.info.isSigned()) {
+                        log.warn("#705.220 Function with code {} wasn't signed", taskParamYaml.task.function.getCode());
                         continue;
                     }
                 }
@@ -424,8 +424,8 @@ public class ExecContextService {
     }
 
     private List<EnumsApi.OS> getSupportedOS(TaskParamsYaml taskParamYaml) {
-        if (taskParamYaml.taskYaml.function !=null) {
-            return FunctionCoreUtils.getSupportedOS(taskParamYaml.taskYaml.function.metas);
+        if (taskParamYaml.task.function !=null) {
+            return FunctionCoreUtils.getSupportedOS(taskParamYaml.task.function.metas);
         }
         return List.of();
     }

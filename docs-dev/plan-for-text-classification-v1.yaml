@@ -11,10 +11,10 @@ source:
       snippet:
         code: mh.resource-splitter
         context: internal
-      input:
+      inputs:
         - name: vocab
         - name: dataset
-      output:
+      outputs:
         - name: batch-item
       subProcesses:
         exec: parallel
@@ -23,9 +23,9 @@ source:
             name: function-1
             snippet:
               code: fit:6.2
-            input:
+            inputs:
               - name: batch-item
-            output:
+            outputs:
               - name: processed-file
 
 version: 1

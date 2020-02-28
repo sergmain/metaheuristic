@@ -80,15 +80,15 @@ public class TestTaskParamYaml {
     public void testSequenceYaml() {
         TaskParamsYaml tpy = new TaskParamsYaml();
 
-        tpy.taskYaml.inputResourceIds.put("type1", Collections.singletonList("1"));
-        tpy.taskYaml.inputResourceIds.put("type2", Collections.singletonList("2"));
-        tpy.taskYaml.inputResourceIds.put("type3", Collections.singletonList("3"));
+        tpy.task.inputResourceIds.put("type1", Collections.singletonList("1"));
+        tpy.task.inputResourceIds.put("type2", Collections.singletonList("2"));
+        tpy.task.inputResourceIds.put("type3", Collections.singletonList("3"));
         Map<String, String> map = new HashMap<>();
         map.put("key1", "#1");
         map.put("key2", "#1");
-        tpy.taskYaml.taskMl = new TaskParamsYaml.TaskMachineLearning();
-        tpy.taskYaml.taskMl.setHyperParams(map);
-        tpy.taskYaml.setFunction(TaskParamsUtils.toFunctionConfig(new FunctionConfigYaml(
+        tpy.task.taskMl = new TaskParamsYaml.TaskMachineLearning();
+        tpy.task.taskMl.setHyperParams(map);
+        tpy.task.setFunction(TaskParamsUtils.toFunctionConfig(new FunctionConfigYaml(
                 "123:1.0",
                 CommonConsts.FIT_TYPE,
                 "file.txt",
