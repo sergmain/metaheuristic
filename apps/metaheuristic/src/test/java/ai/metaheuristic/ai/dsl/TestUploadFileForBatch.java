@@ -63,9 +63,10 @@ public class TestUploadFileForBatch extends PreparingPlan {
 
         planParamsYaml.source = new SourceCodeParamsYamlV1.SourceCodeV1();
         planParamsYaml.source.uid = "SourceCode for testing uploading batch file";
+        planParamsYaml.source.variables.startInputAs = "batch-data";
         {
             SourceCodeParamsYamlV1.ProcessV1 p = new SourceCodeParamsYamlV1.ProcessV1();
-            p.name = "Plocess mh.variable-splitter";
+            p.name = "Process mh.variable-splitter";
             p.code = "process-mh.variable-splitter";
 
             p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(Consts.MH_VARIABLE_SPLITTER_FUNCTION, EnumsApi.FunctionExecContext.internal);

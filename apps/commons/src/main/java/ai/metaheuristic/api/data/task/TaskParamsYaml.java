@@ -53,6 +53,9 @@ public class TaskParamsYaml implements BaseParams {
         if (S.b(task.processCode)) {
             throw new CheckIntegrityFailedException("processCode is blank");
         }
+        if (task.execContextId==null) {
+            throw new CheckIntegrityFailedException("execContextId is null");
+        }
         return true;
     }
 
