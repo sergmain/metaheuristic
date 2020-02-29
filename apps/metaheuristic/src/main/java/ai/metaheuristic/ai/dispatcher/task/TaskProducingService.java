@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -63,9 +64,18 @@ public class TaskProducingService {
         List<Long> parentTaskIds = new ArrayList<>();
         for (ExecContextData.ProcessVertex processVertex : processGraph) {
             String processCode = processVertex.process;
-            ExecContextParamsYaml.Process p = execContextParamsYaml.processes.stream().filter(o -> o.processCode.equals(processCode)).findAny().orElse(null);
+            ExecContextParamsYaml.Process p;
+
+            p = execContextParamsYaml.processes.stream().filter(o -> o.processCode.equals(processCode)).findAny().orElse(null);
             if (p == null) {
-                return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR);
+                // mh.finish can be not defined in sourceCode
+                if (processCode.equals(Consts.MH_FINISH_FUNCTION)) {
+                    p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, ""+execContextId, "1",
+                            Consts.MH_FINISH_FUNCTION_INSTANCE);
+                }
+                else {
+                    return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR);
+                }
             }
             TaskData.ProduceTaskResult result = produceTaskForProcess(isPersist, sourceCodeId, p, execContextParamsYaml, execContextId, parentTaskIds);
             if (result.status!= EnumsApi.TaskProducingStatus.OK) {

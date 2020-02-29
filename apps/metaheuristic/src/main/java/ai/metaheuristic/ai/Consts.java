@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai;
 
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -114,6 +116,8 @@ public class Consts {
     public static final String MH_FINISH_FUNCTION = "mh.finish";
     public static final List<String> MH_INTERNAL_FUNCTIONS =
             List.of(MH_VARIABLE_SPLITTER_FUNCTION, MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION, MH_FINISH_FUNCTION, MH_AGGREGATE_FUNCTION);
+
+    public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
     public static final String EMPTY_GRAPH = "strict digraph G { }";
 }

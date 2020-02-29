@@ -45,5 +45,9 @@ public class ExecContextData {
     public static class ProcessVertex {
         public Long id;
         public String process;
+
+        public ProcessVertex(Long id) {
+            this.id = id;
+        }
     }
 }

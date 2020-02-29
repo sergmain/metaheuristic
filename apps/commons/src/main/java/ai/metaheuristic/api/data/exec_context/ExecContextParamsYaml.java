@@ -110,6 +110,14 @@ public class ExecContextParamsYaml implements BaseParams {
         public final List<Variable> inputs = new ArrayList<>();
         public final List<Variable> outputs = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
+
+        public Process(String processName, String processCode, String execContextId, String internalContextId, FunctionDefinition function) {
+            this.processName = processName;
+            this.processCode = processCode;
+            this.execContextId = execContextId;
+            this.internalContextId = internalContextId;
+            this.function = function;
+        }
     }
 
     public boolean clean;

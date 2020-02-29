@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +26,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
-import org.jgrapht.io.*;
+import org.jgrapht.nio.Attribute;
+import org.jgrapht.nio.DefaultAttribute;
+import org.jgrapht.nio.GraphImporter;
+import org.jgrapht.nio.dot.DOTExporter;
+import org.jgrapht.nio.dot.DOTImporter;
 import org.jgrapht.traverse.BreadthFirstIterator;
+import org.jgrapht.util.SupplierUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -37,9 +41,9 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph;
@@ -73,8 +77,8 @@ public class ExecContextProcessGraphService {
     }
 
     public static String asString(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph) {
-        ComponentNameProvider<ExecContextData.ProcessVertex> vertexIdProvider = v -> v.id.toString();
-        ComponentAttributeProvider<ExecContextData.ProcessVertex> vertexAttributeProvider = v -> {
+        Function<ExecContextData.ProcessVertex, String> vertexIdProvider = v -> v.id.toString();
+        Function<ExecContextData.ProcessVertex, Map<String, Attribute>> vertexAttributeProvider = v -> {
             Map<String, Attribute> m = new HashMap<>();
             if (!S.b(v.process)) {
                 m.put(PROCESS_NAME_ATTR, DefaultAttribute.createAttribute(v.process));
@@ -82,7 +86,8 @@ public class ExecContextProcessGraphService {
             return m;
         };
 
-        DOTExporter<ExecContextData.ProcessVertex, DefaultEdge> exporter = new DOTExporter<>(vertexIdProvider, null, null, vertexAttributeProvider, null);
+        DOTExporter<ExecContextData.ProcessVertex, DefaultEdge> exporter = new DOTExporter<>(vertexIdProvider);
+        exporter.setVertexAttributeProvider(vertexAttributeProvider);
 
         Writer writer = new StringWriter();
         exporter.exportGraph(processGraph, writer);
@@ -91,6 +96,7 @@ public class ExecContextProcessGraphService {
         return result;
     }
 
+/*
     @SneakyThrows
     public DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> importProcessGraph(ExecContextParamsYaml wpy) {
         GraphImporter<ExecContextData.ProcessVertex, DefaultEdge> importer = buildImporter();
@@ -99,20 +105,23 @@ public class ExecContextProcessGraphService {
 
         return processGraph;
     }
+*/
 
-/*
     @SneakyThrows
-    public DirectedAcyclicGraph<String, DefaultEdge> importProcessGraph(ExecContextParamsYaml wpy) {
-        DirectedAcyclicGraph<String, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(
-                SupplierUtil.createStringSupplier(), SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
+    public DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> importProcessGraph(ExecContextParamsYaml wpy) {
+        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(
+                ExecContextData.ProcessVertex::new, SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
+        AtomicLong id = new AtomicLong();
+        processGraph.setVertexSupplier(()->new ExecContextData.ProcessVertex(id.incrementAndGet()));
 
         // https://stackoverflow.com/questions/60461351/import-graph-with-1-4-0
-        DOTImporter<String, DefaultEdge> importer = new DOTImporter<>();
+        DOTImporter<ExecContextData.ProcessVertex, DefaultEdge> importer = new DOTImporter<>();
+        importer.addVertexAttributeConsumer(((vertex, attribute) -> vertex.getFirst().process = attribute.getValue()));
+
         importer.importGraph(processGraph, new StringReader(wpy.processesGraph));
         return processGraph;
     }
 
-*/
     private static ExecContextData.ProcessVertex toVertex(String id, Map<String, Attribute> attributes) {
         ExecContextData.ProcessVertex v = new ExecContextData.ProcessVertex();
         v.id = Long.valueOf(id);
@@ -128,7 +137,7 @@ public class ExecContextProcessGraphService {
         return v;
     }
 
-    private static final EdgeProvider<ExecContextData.ProcessVertex, DefaultEdge> ep = (f, t, l, attrs) -> new DefaultEdge();
+//    private static final EdgeProvider<ExecContextData.ProcessVertex, DefaultEdge> ep = (f, t, l, attrs) -> new DefaultEdge();
 
     @NonNull
     public static String fixVertex(String vertex) {
@@ -140,11 +149,8 @@ public class ExecContextProcessGraphService {
 
     private static GraphImporter<ExecContextData.ProcessVertex, DefaultEdge> buildImporter() {
         //noinspection UnnecessaryLocalVariable
-        DOTImporter<ExecContextData.ProcessVertex, DefaultEdge> importer = new DOTImporter<>(ExecContextProcessGraphService::toVertex, ep);
+        DOTImporter<ExecContextData.ProcessVertex, DefaultEdge> importer = new DOTImporter<>();
         return importer;
-
-//        DOTImporter<String, DefaultEdge> importer = new DOTImporter<>();
-//        return importer;
     }
 
     public static void addNewTasksToGraph(

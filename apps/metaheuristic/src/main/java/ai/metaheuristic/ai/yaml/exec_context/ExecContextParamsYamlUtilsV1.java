@@ -61,14 +61,14 @@ public class ExecContextParamsYamlUtilsV1
 
     private static ExecContextParamsYaml.Process toProcess(ExecContextParamsYamlV1.ProcessV1 p1) {
         ExecContextParamsYaml.Process p = new ExecContextParamsYaml.Process();
-        BeanUtils.copyProperties(p1, p, "function", "preFunctions", "postFunctions", "input", "output", "metas");
+        BeanUtils.copyProperties(p1, p, "function", "preFunctions", "postFunctions", "inputs", "outputs", "metas");
         p.function = toFunction(p1.function);
         p.preFunctions = p1.preFunctions!=null ? p1.preFunctions.stream().map(ExecContextParamsYamlUtilsV1::toFunction).collect(Collectors.toList()) : null;
         p.postFunctions = p1.postFunctions!=null ? p1.postFunctions.stream().map(ExecContextParamsYamlUtilsV1::toFunction).collect(Collectors.toList()) : null;
         p1.inputs.stream().map(ExecContextParamsYamlUtilsV1::toVariable).collect(Collectors.toCollection(()->p.inputs));
         p1.outputs.stream().map(ExecContextParamsYamlUtilsV1::toVariable).collect(Collectors.toCollection(()->p.outputs));
         p.metas.addAll(p1.metas);
-        return null;
+        return p;
     }
 
     private static ExecContextParamsYaml.Variable toVariable(ExecContextParamsYamlV1.VariableV1 v1) {
