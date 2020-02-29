@@ -49,9 +49,6 @@ public class FunctionCoreUtils {
         if (snSrc.metas != null) {
             snTrg.metas = new ArrayList<>(snSrc.metas);
         }
-        if (snSrc.ml!=null) {
-            snTrg.ml = new FunctionConfigYaml.MachineLearning(true, false);
-        }
         return  snTrg;
 
     }
@@ -68,9 +65,6 @@ public class FunctionCoreUtils {
         }
         if (snSrc.metas != null) {
             snTrg.metas = new ArrayList<>(snSrc.metas);
-        }
-        if (snSrc.ml!=null) {
-            snTrg.ml = new FunctionConfigYaml.MachineLearning(true, false);
         }
         return  snTrg;
 

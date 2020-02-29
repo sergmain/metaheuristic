@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.ai.source_code;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,7 @@ public class TestProcessMeta {
             p.name = "experiment";
             p.code = "test-experiment-code-01";
             p.outputs.add(new SourceCodeParamsYaml.Variable("model"));
+            p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode(Consts.MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
             p.metas.addAll(
                     Arrays.asList(

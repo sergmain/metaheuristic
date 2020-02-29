@@ -132,7 +132,6 @@ public class TestYamlParser {
         assertEquals("fit-model.py", sc.file);
         assertEquals("python-3", sc.env);
         assertEquals("abc1", sc.params);
-        assertNull(sc.ml);
 
         sc = config.functions.get(1);
         assertEquals("aiai.predict.default.function:1.0-SNAPSHOT", sc.code);
@@ -140,8 +139,6 @@ public class TestYamlParser {
         assertEquals("predict-model.py", sc.file);
         assertEquals("python-3", sc.env);
         assertEquals("abc2", sc.params);
-        assertNotNull(sc.ml);
-        assertTrue(sc.ml.metrics);
 
         sc = config.functions.get(2);
         assertEquals("aiai.predict-model-for-test-only.function:1.0-SNAPSHOT", sc.code);
@@ -149,6 +146,5 @@ public class TestYamlParser {
         assertEquals("predict-model-for-test-only.py", sc.file);
         assertEquals("python-3", sc.env);
         assertEquals("abc3", sc.params);
-        assertNull(sc.ml);
     }
 }

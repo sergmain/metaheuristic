@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 public class FunctionConfigListYamlUtilsV1
-        extends AbstractParamsYamlUtils<FunctionConfigListYamlV1, FunctionConfigListYamlV2, FunctionConfigListYamlUtilsV2, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<FunctionConfigListYamlV1, FunctionConfigListYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -45,28 +45,24 @@ public class FunctionConfigListYamlUtilsV1
     }
 
     @Override
-    public FunctionConfigListYamlV2 upgradeTo(FunctionConfigListYamlV1 src, Long ... vars) {
+    public FunctionConfigListYaml upgradeTo(FunctionConfigListYamlV1 src, Long ... vars) {
         src.checkIntegrity();
-        FunctionConfigListYamlV2 trg = new FunctionConfigListYamlV2();
+        FunctionConfigListYaml trg = new FunctionConfigListYaml();
         trg.functions = src.functions.stream().map(snSrc-> {
-            FunctionConfigListYamlV2.FunctionConfigV2 snTrg = new FunctionConfigListYamlV2.FunctionConfigV2();
+            FunctionConfigListYaml.FunctionConfig snTrg = new FunctionConfigListYaml.FunctionConfig();
             BeanUtils.copyProperties(snSrc, snTrg);
 
-            if (snSrc.checksumMap != null) {
+            if (snSrc.checksumMap!=null) {
                 snTrg.checksumMap = new HashMap<>(snSrc.checksumMap);
             }
-            if (snSrc.info != null) {
-                snTrg.info = new FunctionConfigListYamlV2.FunctionInfoV2(snSrc.info.signed, snSrc.info.length);
+            if (snSrc.info!=null) {
+                snTrg.info = new FunctionConfigListYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
             }
-            if (snSrc.metas != null) {
+            if (snSrc.metas!=null) {
                 snTrg.metas = new ArrayList<>(snSrc.metas);
-            }
-            if (snSrc.metrics) {
-                snTrg.ml = new FunctionConfigListYamlV2.MachineLearningV2(true, false);
             }
             return  snTrg;
         }).collect(Collectors.toList());
-
         trg.checkIntegrity();
         return trg;
     }
@@ -77,8 +73,8 @@ public class FunctionConfigListYamlUtilsV1
     }
 
     @Override
-    public FunctionConfigListYamlUtilsV2 nextUtil() {
-        return (FunctionConfigListYamlUtilsV2) FunctionConfigListYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override

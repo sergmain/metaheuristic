@@ -29,7 +29,7 @@ import java.util.Map;
 @Data
 public class FunctionConfigListYaml implements BaseParams {
 
-    public final int version=2;
+    public final int version=1;
 
     public List<FunctionConfig> functions;
 
@@ -47,14 +47,6 @@ public class FunctionConfigListYaml implements BaseParams {
          * function's binary length
          */
         public long length;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class MachineLearning {
-        public boolean metrics = false;
-        public boolean fitting = false;
     }
 
     @Data
@@ -99,8 +91,6 @@ public class FunctionConfigListYaml implements BaseParams {
         public GitInfo git;
         public boolean skipParams = false;
         public List<Meta> metas = new ArrayList<>();
-        public MachineLearning ml;
-
     }
 
 }

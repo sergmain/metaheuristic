@@ -1,15 +1,13 @@
-nippets:
+functions:
     - code: aiai.fit.default.function:1.0-SNAPSHOT
       type: fit
       file: fit-model.py
       env: python-3
-      metrics: false
       params: abc1
     - code: aiai.predict.default.function:1.0-SNAPSHOT
       type: predict
       file: predict-model.py
       env: python-3
-      metrics: true
       params: abc2
     - code: aiai.predict-model-for-test-only.function:1.0-SNAPSHOT
       type: predict
