@@ -65,8 +65,8 @@ public class ExecContextParamsYamlUtilsV1
         p.function = toFunction(p1.function);
         p.preFunctions = p1.preFunctions!=null ? p1.preFunctions.stream().map(ExecContextParamsYamlUtilsV1::toFunction).collect(Collectors.toList()) : null;
         p.postFunctions = p1.postFunctions!=null ? p1.postFunctions.stream().map(ExecContextParamsYamlUtilsV1::toFunction).collect(Collectors.toList()) : null;
-        p1.input.stream().map(ExecContextParamsYamlUtilsV1::toVariable).collect(Collectors.toCollection(()->p.inputs));
-        p1.output.stream().map(ExecContextParamsYamlUtilsV1::toVariable).collect(Collectors.toCollection(()->p.outputs));
+        p1.inputs.stream().map(ExecContextParamsYamlUtilsV1::toVariable).collect(Collectors.toCollection(()->p.inputs));
+        p1.outputs.stream().map(ExecContextParamsYamlUtilsV1::toVariable).collect(Collectors.toCollection(()->p.outputs));
         p.metas.addAll(p1.metas);
         return null;
     }

@@ -16,17 +16,20 @@
 
 package ai.metaheuristic.ai.dispatcher.source_code.graph;
 
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.api.EnumsApi;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.*;
+import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph;
+import static ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService.*;
 import static org.junit.Assert.*;
 
 /**
@@ -45,31 +48,36 @@ public class TestSourceCodeGraphLanguageYaml {
         assertNotNull(graph);
         assertTrue(graph.clean);
         assertEquals(6, graph.processGraph.vertexSet().size());
-        assertEquals(5, ExecContextProcessGraphService.findDescendants(graph, "assembly-raw-file").size());
-        assertEquals(1, ExecContextProcessGraphService.findLeafs(graph).size());
 
-        String v = ExecContextProcessGraphService.findVertex(graph, "assembly-raw-file");
+        Map<String, Long> ids = new HashMap<>();
+        AtomicLong currId = new AtomicLong();
+
+        ExecContextData.ProcessVertex vertexAssembly = SourceCodeGraphLanguageYaml.getVertex(ids, currId, "assembly-raw-file");
+        assertEquals(5, findDescendants(graph, vertexAssembly).size());
+        assertEquals(1, findLeafs(graph).size());
+
+        ExecContextData.ProcessVertex v = findVertex(graph, vertexAssembly.process);
         assertNotNull(v);
 
-        List<String> vs1 = ExecContextProcessGraphService.findTargets(graph, "assembly-raw-file");
+        List<ExecContextData.ProcessVertex> vs1 = findTargets(graph, vertexAssembly.process);
 
         assertEquals(1, vs1.size());
 
-        String v1 = vs1.get(0);
+        ExecContextData.ProcessVertex v1 = vs1.get(0);
         assertNotNull(v1);
-        assertEquals("dataset-processing", v1);
+        String processDataset = "dataset-processing";
+        assertEquals(processDataset, v1.process);
 
-        List<String> vs2 = ExecContextProcessGraphService.findTargets(graph, "dataset-processing");
+        List<ExecContextData.ProcessVertex> vs2 = findTargets(graph, processDataset);
 
         assertEquals(3, vs2.size());
 
-        String v21 = vs2.stream().filter(o->o.equals("feature-processing_cluster")).findFirst().orElseThrow();
-        String v22 = vs2.stream().filter(o->o.equals("feature-processing_matrix")).findFirst().orElseThrow();
-        String v23 = vs2.stream().filter(o->o.equals("mh.permute-variables-and-hyper-params")).findFirst().orElseThrow();
+        ExecContextData.ProcessVertex v21 = vs2.stream().filter(o->o.process.equals("feature-processing_cluster")).findFirst().orElseThrow();
+        ExecContextData.ProcessVertex v22 = vs2.stream().filter(o->o.process.equals("feature-processing_matrix")).findFirst().orElseThrow();
+        ExecContextData.ProcessVertex v23 = vs2.stream().filter(o->o.process.equals("mh.permute-variables-and-hyper-params")).findFirst().orElseThrow();
 
-        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v21).size());
-        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v22).size());
-        assertEquals(1, ExecContextProcessGraphService.findTargets(graph, v23).size());
-
+        assertEquals(1, findTargets(graph, v21.process).size());
+        assertEquals(1, findTargets(graph, v22.process).size());
+        assertEquals(1, findTargets(graph, v23.process).size());
     }
 }

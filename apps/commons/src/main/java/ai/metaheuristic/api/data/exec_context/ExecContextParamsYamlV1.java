@@ -109,8 +109,8 @@ public class ExecContextParamsYamlV1 implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-        public final List<VariableV1> input = new ArrayList<>();
-        public final List<VariableV1> output = new ArrayList<>();
+        public final List<VariableV1> inputs = new ArrayList<>();
+        public final List<VariableV1> outputs = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
     }
 

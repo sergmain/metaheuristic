@@ -37,4 +37,13 @@ public class ExecContextData {
         public Long taskId;
         public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
     }
+
+    @Data
+    @EqualsAndHashCode(of = "id")
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProcessVertex {
+        public Long id;
+        public String process;
+    }
 }

@@ -47,6 +47,6 @@ public class SourceCodeData {
         public final List<ExecContextParamsYaml.Process> processes = new ArrayList<>();
 
         public final ExecContextParamsYaml.VariableDeclaration variables = new ExecContextParamsYaml.VariableDeclaration();
-        public final DirectedAcyclicGraph<String, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
+        public final DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
     }
 }

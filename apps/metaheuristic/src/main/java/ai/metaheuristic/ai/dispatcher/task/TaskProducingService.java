@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
@@ -57,10 +58,11 @@ public class TaskProducingService {
     private final ExecContextProcessGraphService execContextProcessGraphService;
 
     public TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
-        DirectedAcyclicGraph<String, DefaultEdge> processGraph = execContextProcessGraphService.importProcessGraph(execContextParamsYaml);
+        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = execContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
         List<Long> parentTaskIds = new ArrayList<>();
-        for (String processCode : processGraph) {
+        for (ExecContextData.ProcessVertex processVertex : processGraph) {
+            String processCode = processVertex.process;
             ExecContextParamsYaml.Process p = execContextParamsYaml.processes.stream().filter(o -> o.processCode.equals(processCode)).findAny().orElse(null);
             if (p == null) {
                 return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR);
