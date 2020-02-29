@@ -34,7 +34,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -95,7 +94,7 @@ public class ExecContextCreatorService {
     }
 
     public ExecContextCreationResult createExecContext(String sourceCodeUid, DispatcherContext context) {
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(context.getCompanyId(), sourceCodeUid);
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, context.getCompanyId());
         if (sourceCodesForCompany.isErrorMessages()) {
             return new ExecContextCreationResult("#560.072 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
                     "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.getCompanyId());
@@ -153,12 +152,8 @@ public class ExecContextCreatorService {
         params.clean = sourceCodeGraph.clean;
         params.processes = sourceCodeGraph.processes;
         params.variables = sourceCodeGraph.variables;
-
-        if (true) {
-            throw new NotImplementedException("add here Export of sourceCodeGraph.processGraph to String;");
-        }
-        params.processesGraph = "";
         params.graph = Consts.EMPTY_GRAPH;
+        params.processesGraph = ExecContextProcessGraphService.asString(sourceCodeGraph.processGraph);
 
         return params;
     }

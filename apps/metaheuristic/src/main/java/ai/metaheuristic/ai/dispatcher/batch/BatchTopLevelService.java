@@ -177,7 +177,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(dispatcherContext.getCompanyId(), sourceCodeId);
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, dispatcherContext.getCompanyId());
         if (sourceCodesForCompany.isErrorMessages()) {
             return new BatchData.UploadingStatus(sourceCodesForCompany.errorMessages);
         }

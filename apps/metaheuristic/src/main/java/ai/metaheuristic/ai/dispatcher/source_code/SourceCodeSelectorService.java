@@ -62,11 +62,11 @@ public class SourceCodeSelectorService {
         return getAvailableSourceCodesForCompany(context.getCompanyId());
     }
 
-    public SourceCodeData.SourceCodesForCompany getSourceCodeById(Long companyId, Long sourceCodeId) {
+    public SourceCodeData.SourceCodesForCompany getSourceCodeById(Long sourceCodeId, Long companyId) {
         return getSourceCodeInternal(companyId, (o) -> o.getId().equals(sourceCodeId));
     }
 
-    public SourceCodeData.SourceCodesForCompany getSourceCodeByUid(Long companyId, String sourceCodeUid) {
+    public SourceCodeData.SourceCodesForCompany getSourceCodeByUid(String sourceCodeUid, Long companyId) {
         return getSourceCodeInternal(companyId, (o) -> o.getUid().equals(sourceCodeUid));
     }
 

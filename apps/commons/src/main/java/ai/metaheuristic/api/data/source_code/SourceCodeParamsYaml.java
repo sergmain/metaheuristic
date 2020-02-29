@@ -153,7 +153,7 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Data
     @ToString
     public static class SourceCodeYaml {
-        public VariableDefinition variables;
+        public VariableDefinition variables = new VariableDefinition();
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
@@ -173,5 +173,5 @@ public class SourceCodeParamsYaml implements BaseParams {
         }
     }
 
-    public SourceCodeYaml source;
+    public SourceCodeYaml source = new SourceCodeYaml();
 }

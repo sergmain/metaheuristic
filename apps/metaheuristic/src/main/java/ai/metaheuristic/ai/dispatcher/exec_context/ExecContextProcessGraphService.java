@@ -57,17 +57,21 @@ public class ExecContextProcessGraphService {
         try {
             callable.accept(processGraph);
         } finally {
-            ComponentNameProvider<String> vertexIdProvider = v -> v;
-            ComponentAttributeProvider<String> vertexAttributeProvider = v -> new HashMap<>();
-
-            DOTExporter<String, DefaultEdge> exporter = new DOTExporter<>(vertexIdProvider, null, null, vertexAttributeProvider, null);
-
-            Writer writer = new StringWriter();
-            exporter.exportGraph(processGraph, writer);
-            wpy.processesGraph = writer.toString();
+            wpy.processesGraph = asString(processGraph);
             execContext.updateParams(wpy);
             execContextCache.save(execContext);
         }
+    }
+
+    public static String asString(DirectedAcyclicGraph<String, DefaultEdge> processGraph) {
+        ComponentNameProvider<String> vertexIdProvider = v -> v;
+        ComponentAttributeProvider<String> vertexAttributeProvider = v -> new HashMap<>();
+
+        DOTExporter<String, DefaultEdge> exporter = new DOTExporter<>(vertexIdProvider, null, null, vertexAttributeProvider, null);
+
+        Writer writer = new StringWriter();
+        exporter.exportGraph(processGraph, writer);
+        return writer.toString();
     }
 
     @SneakyThrows
