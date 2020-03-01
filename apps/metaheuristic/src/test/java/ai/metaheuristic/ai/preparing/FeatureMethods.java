@@ -112,7 +112,7 @@ public abstract class FeatureMethods extends PreparingPlan {
 
         execContextForFeature = result.execContext;
         assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
-        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, execContextForFeature.getState());
+        assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(execContextForFeature.getState()));
 
         experiment = experimentCache.findById(experiment.getId());
         assertNotNull(experiment.getExecContextId());
