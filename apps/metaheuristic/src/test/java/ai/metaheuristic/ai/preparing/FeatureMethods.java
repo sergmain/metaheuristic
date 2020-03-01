@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
@@ -83,39 +84,40 @@ public abstract class FeatureMethods extends PreparingPlan {
     }
 
     protected void produceTasks() {
-        EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
-        assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
+        {
+            EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
-        execContextForFeature = result.execContext;
-        assertFalse(result.isErrorMessages());
-        assertNotNull(execContextForFeature);
-        assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
+            ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
+            execContextForFeature = result.execContext;
+            assertFalse(result.isErrorMessages());
+            assertNotNull(execContextForFeature);
+            assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
 
 
-        EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
-        execContextForFeature = execContextCache.findById(execContextForFeature.id);
-        assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
-        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
+            EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
+            execContextForFeature = execContextCache.findById(execContextForFeature.id);
+            assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
+            assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
 
-        List<Object[]> tasks01 = taskCollector.getTasks(result.execContext);
-        assertTrue(tasks01.isEmpty());
+            List<Object[]> tasks01 = taskCollector.getTasks(result.execContext);
+            assertTrue(tasks01.isEmpty());
 
-        long mills;
+            List<Object[]> tasks02 = taskCollector.getTasks(result.execContext);
+            assertTrue(tasks02.isEmpty());
+        }
+        {
+            long mills = System.currentTimeMillis();
+            SourceCodeApiData.TaskProducingResultComplex taskProducingResultComplex = sourceCodeService.produceAllTasks(true, sourceCode, execContextForFeature);
+            log.info("All tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
 
-        List<Object[]> tasks02 = taskCollector.getTasks(result.execContext);
-        assertTrue(tasks02.isEmpty());
+            execContextForFeature = (ExecContextImpl) taskProducingResultComplex.execContext;
+            assertEquals(EnumsApi.TaskProducingStatus.OK, taskProducingResultComplex.taskProducingStatus);
+            assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(execContextForFeature.getState()));
 
-        mills = System.currentTimeMillis();
-        SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, execContextForFeature);
-        log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
-
-        execContextForFeature = result.execContext;
-        assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
-        assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(execContextForFeature.getState()));
-
-        experiment = experimentCache.findById(experiment.getId());
-        assertNotNull(experiment.getExecContextId());
+            experiment = experimentCache.findById(experiment.getId());
+            assertNotNull(experiment.getExecContextId());
+        }
     }
 
     protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor_mustBeNewTask() {
