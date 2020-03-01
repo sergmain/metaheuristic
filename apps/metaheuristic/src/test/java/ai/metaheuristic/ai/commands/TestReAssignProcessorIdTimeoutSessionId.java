@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
-import ai.metaheuristic.ai.dispatcher.server.ServerService;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -50,7 +50,7 @@ import static org.junit.Assert.*;
 public class TestReAssignProcessorIdTimeoutSessionId {
 
     @Autowired
-    public ServerService serverService;
+    public SouthbridgeService serverService;
 
     @Autowired
     public ProcessorCache processorCache;
@@ -92,7 +92,7 @@ public class TestReAssignProcessorIdTimeoutSessionId {
         assertNotEquals(0L, ss.sessionCreatedOn);
         assertEquals(sessionIdBefore, ss.sessionId);
 
-        ss.sessionCreatedOn -= (ServerService.SESSION_TTL + 100000);
+        ss.sessionCreatedOn -= (SouthbridgeService.SESSION_TTL + 100000);
         sessionCreatedOn = ss.sessionCreatedOn;
         s.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
 

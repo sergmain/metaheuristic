@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
-import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,6 +27,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -42,7 +42,7 @@ public class TestProduceFeaturePermutations extends PreparingExperiment {
 
     @Test
     public void testFeaturePermutation() {
-        experimentService.produceFeaturePermutations(true, experiment, List.of("aaa", "bbb", "ccc"), new IntHolder());
+        experimentService.produceFeaturePermutations(true, experiment, List.of("aaa", "bbb", "ccc"), new AtomicInteger());
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         assertNotNull(epy.processing.features);

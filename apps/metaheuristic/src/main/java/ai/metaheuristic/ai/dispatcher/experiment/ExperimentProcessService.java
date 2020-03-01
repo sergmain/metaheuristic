@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.utils.CollectionUtils;
-import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -136,7 +135,7 @@ public class ExperimentProcessService {
         }
 
         long mills = System.currentTimeMillis();
-        IntHolder intHolder = new IntHolder();
+        AtomicInteger intHolder = new AtomicInteger();
         experimentService.produceFeaturePermutations(isPersist, e, features, intHolder);
         log.info("produceFeaturePermutations() was done for " + (System.currentTimeMillis() - mills) + " ms.");
 

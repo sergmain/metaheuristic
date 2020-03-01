@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.utils.holders.IntHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -26,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 @Service
@@ -40,11 +40,11 @@ public class ParamsSetter {
     }
 
     @Transactional
-    public Set<String> getParamsInTransaction(boolean isPersist, Long execContextId, Experiment experiment, IntHolder size) {
+    public Set<String> getParamsInTransaction(boolean isPersist, Long execContextId, Experiment experiment, AtomicInteger size) {
         Set<String> taskParams;
         taskParams = new LinkedHashSet<>();
 
-        size.value = 0;
+        size.set(0);
         try (Stream<Object[]> stream = taskRepository.findByExecContextId(execContextId) ) {
             stream
                     .forEach(o -> {
@@ -57,7 +57,7 @@ public class ParamsSetter {
 
                         }
                         taskParams.add((String) o[1]);
-                        size.value += ((String) o[1]).length();
+                        size.addAndGet(((String) o[1]).length());
                     });
         }
         return taskParams;

@@ -39,7 +39,6 @@ import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -59,6 +58,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -70,6 +70,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
@@ -245,9 +246,35 @@ public class ExecContextService {
         return result;
     }
 
-    // TODO 2019.08.27 is it good to synchronize the whole method?
-    //  but it's working actually
-    public synchronized DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+    public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+        DispatcherCommParamsYaml.AssignedTask task = execContextSyncService.getWithSync(execContextId, execContext -> getTaskAndAssignToProcessorInternal(processorId, isAcceptOnlySigned, execContextId));
+        prepareVariables(task);
+        return task;
+    }
+
+    private void prepareVariables(DispatcherCommParamsYaml.AssignedTask task) {
+
+        if (true) {
+            throw new NotImplementedException("not yet #255");
+        }
+/*
+        // we dont need to create inputs because all inputs are outputs of previous process,
+        // except globals and startInputAs
+        for (ExecContextParamsYaml.Variable variable : process.outputs) {
+            Variable v = variableService.createUninitialized(variable.name, execContextId, process.internalContextId);
+            // resourceId is an Id of one part of Variable. Variable can contain unlimited number of resources
+            String resourceId = v.id.toString();
+            taskParams.task.outputs.add(
+                    new TaskParamsYaml.OutputVariable(variable.name, EnumsApi.VariableContext.local, variable.sourcing, variable.git, variable.disk,
+                            new TaskParamsYaml.Resource(resourceId, null)
+                    ));
+        }
+*/
+
+
+    }
+
+    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessorInternal(Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
@@ -262,11 +289,8 @@ public class ExecContextService {
         }
 
         List<Long> execContextIds;
-        // find task in specific execContext ( i.e. execContextId==null)?
-        if (execContextId==null) {
-            execContextIds = execContextRepository.findByStateOrderByCreatedOnAsc(EnumsApi.ExecContextState.STARTED.code);
-        }
-        else {
+        // find task in specific execContext ( i.e. execContextId!=null)?
+        if (execContextId != null) {
             ExecContextImpl execContext = execContextCache.findById(execContextId);
             if (execContext==null) {
                 log.warn("#705.170 ExecContext wasn't found for id: {}", execContextId);
@@ -278,6 +302,9 @@ public class ExecContextService {
             }
             execContextIds = List.of(execContext.id);
         }
+        else {
+            execContextIds = execContextRepository.findByStateOrderByCreatedOnAsc(EnumsApi.ExecContextState.STARTED.code);
+        }
 
         ProcessorStatusYaml ss;
         try {
@@ -288,8 +315,8 @@ public class ExecContextService {
             return null;
         }
 
-        for (Long wbId : execContextIds) {
-            DispatcherCommParamsYaml.AssignedTask result = findUnassignedTaskAndAssign(wbId, processor, ss, isAcceptOnlySigned);
+        for (Long id : execContextIds) {
+            DispatcherCommParamsYaml.AssignedTask result = findUnassignedTaskAndAssign(id, processor, ss, isAcceptOnlySigned);
             if (result!=null) {
                 return result;
             }
@@ -297,7 +324,7 @@ public class ExecContextService {
         return null;
     }
 
-    private final Map<Long, LongHolder> bannedSince = new HashMap<>();
+    private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
     public static List<Long> getIdsForSearch(List<ExecContextData.TaskVertex> vertices, int page, int pageSize) {
         final int fromIndex = page * pageSize;
@@ -312,11 +339,11 @@ public class ExecContextService {
 
     private DispatcherCommParamsYaml.AssignedTask findUnassignedTaskAndAssign(Long execContextId, Processor processor, ProcessorStatusYaml ss, boolean isAcceptOnlySigned) {
 
-        LongHolder longHolder = bannedSince.computeIfAbsent(processor.getId(), o -> new LongHolder(0));
-        if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
+        AtomicLong longHolder = bannedSince.computeIfAbsent(processor.getId(), o -> new AtomicLong(0));
+        if (longHolder.get()!=0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
             return null;
         }
-        ExecContextImpl execContext = execContextRepository.findByIdForUpdate(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return null;
         }
@@ -338,16 +365,17 @@ public class ExecContextService {
                     taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
                     continue;
                 }
+/*
                 catch (Exception e) {
                     throw new RuntimeException("#705.200 Error", e);
                 }
+*/
 
-                if (taskParamYaml.task.function.sourcing== EnumsApi.FunctionSourcing.git &&
-                        processorStatus.gitStatusInfo.status!= Enums.GitStatus.installed) {
+                if (gitUnavailable(taskParamYaml.task, processorStatus.gitStatusInfo.status!= Enums.GitStatus.installed) ) {
                     log.warn("#705.210 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
                             processor.getId(), task.getId(), processorStatus.gitStatusInfo
                     );
-                    longHolder.value = System.currentTimeMillis();
+                    longHolder.set(System.currentTimeMillis());
                     continue;
                 }
 
@@ -357,7 +385,7 @@ public class ExecContextService {
                         log.warn("#705.213 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
                                 processor.getId(), task.getId(), taskParamYaml.task.function.env
                         );
-                        longHolder.value = System.currentTimeMillis();
+                        longHolder.set(System.currentTimeMillis());
                         continue;
                     }
                 }
@@ -368,7 +396,7 @@ public class ExecContextService {
                                     "because this processor doesn't support required OS version. processor: {}, function: {}",
                             processor.getId(), task.getId(), processorStatus.os, supportedOS
                     );
-                    longHolder.value = System.currentTimeMillis();
+                    longHolder.set(System.currentTimeMillis());
                     continue;
                 }
 
@@ -380,11 +408,12 @@ public class ExecContextService {
                 }
                 resultTask = task;
                 try {
-                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(resultTask.getParams());
+                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                     resultTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, ss.taskParamsVersion);
                 } catch (DowngradeNotSupportedException e) {
                     log.warn("Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
                             resultTask.getId(), processor.id, ss.taskParamsVersion);
+                    longHolder.set(System.currentTimeMillis());
                     resultTask = null;
                 }
                 if (resultTask!=null) {
@@ -404,7 +433,7 @@ public class ExecContextService {
         }
 
         // normal way of operation
-        longHolder.value = 0;
+        longHolder.set(0);
 
         DispatcherCommParamsYaml.AssignedTask assignedTask = new DispatcherCommParamsYaml.AssignedTask();
         assignedTask.setTaskId(resultTask.getId());
@@ -421,6 +450,27 @@ public class ExecContextService {
         dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.getId(), resultTask.getId(), execContextId);
 
         return assignedTask;
+    }
+
+    private static boolean gitUnavailable(TaskParamsYaml.TaskYaml task, boolean gitNotInstalled) {
+        if (task.function.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
+            return true;
+        }
+        if (task.preFunctions != null) {
+            for (TaskParamsYaml.FunctionConfig preFunction : task.preFunctions) {
+                if (preFunction.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
+                    return true;
+                }
+            }
+        }
+        if (task.postFunctions != null) {
+            for (TaskParamsYaml.FunctionConfig postFunction : task.postFunctions) {
+                if (postFunction.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private List<EnumsApi.OS> getSupportedOS(TaskParamsYaml taskParamYaml) {

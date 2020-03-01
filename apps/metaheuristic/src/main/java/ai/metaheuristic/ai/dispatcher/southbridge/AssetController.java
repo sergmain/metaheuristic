@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.server;
+package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
@@ -51,7 +51,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class AssetController {
 
-    private final ServerService serverService;
+    private final SouthbridgeService serverService;
     private final FunctionService functionService;
 
     @GetMapping(value="/function/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)

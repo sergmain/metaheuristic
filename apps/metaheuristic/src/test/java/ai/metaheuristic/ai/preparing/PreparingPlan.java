@@ -400,7 +400,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
-        execContextForFeature = (ExecContextImpl)result.execContext;
+        execContextForFeature = result.execContext;
 
         assertFalse(result.isErrorMessages());
         assertNotNull(execContextForFeature);
@@ -415,7 +415,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
         SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForFeature);
         experiment = experimentCache.findById(experiment.id);
-        this.execContextForFeature = (ExecContextImpl)result.execContext;
+        this.execContextForFeature = result.execContext;
         assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForFeature.id).size());
         assertEquals(result1.numberOfTasks, execContextService.getCountUnfinishedTasks(execContextForFeature));
 

@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
-import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -70,6 +69,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -685,7 +685,7 @@ public class ExperimentService {
     public EnumsApi.SourceCodeProducingStatus produceTasks(
             boolean isPersist, SourceCodeParamsYaml sourceCodeParams, Long execContextId, SourceCodeParamsYaml.Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
-            Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
+            Map<String, SourceCodeParamsYaml.Variable> inputStorageUrls, AtomicInteger numberOfTasks, List<Long> parentTaskIds) {
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         if (StringUtils.isBlank(epy.experimentYaml.fitFunction)|| StringUtils.isBlank(epy.experimentYaml.predictFunction)) {
@@ -713,7 +713,7 @@ public class ExperimentService {
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
         final Map<String, Function> localCache = new HashMap<>();
-        final IntHolder size = new IntHolder();
+        final AtomicInteger size = new AtomicInteger();
         final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, execContextId, experiment, size);
 
         numberOfTasks.value = 0;
@@ -936,7 +936,7 @@ public class ExperimentService {
         return "task-"+task.getId()+"-"+ Consts.ML_MODEL_BIN;
     }
 
-    public void produceFeaturePermutations(boolean isPersist, final Experiment experiment, List<String> inputResourceCodes, IntHolder total) {
+    public void produceFeaturePermutations(boolean isPersist, final Experiment experiment, List<String> inputResourceCodes, AtomicInteger total) {
         produceFeaturePermutations(experiment, inputResourceCodes, total);
         if (isPersist) {
             experimentCache.save(experiment);
@@ -944,7 +944,7 @@ public class ExperimentService {
 
     }
 
-    public static void produceFeaturePermutations(final Experiment experiment, List<String> inputVariables, IntHolder total) {
+    public static void produceFeaturePermutations(final Experiment experiment, List<String> inputVariables, AtomicInteger total) {
 //        @Query("SELECT f.checksumIdCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
 //        List<String> getChecksumIdCodesByExperimentId(long experimentId);
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
@@ -977,7 +977,7 @@ public class ExperimentService {
                         feature.setChecksumIdCodes(checksumIdCodes);
                         epy.processing.features.add(feature);
 
-                        total.value++;
+                        total.incrementAndGet();
                         return true;
                     }
             );

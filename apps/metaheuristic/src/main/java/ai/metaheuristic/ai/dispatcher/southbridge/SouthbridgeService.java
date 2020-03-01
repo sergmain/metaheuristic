@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.server;
+package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
@@ -80,7 +80,7 @@ import java.util.stream.Collectors;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class ServerService {
+public class SouthbridgeService {
 
     private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadResourceStatus.OK, null);
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
@@ -290,7 +290,7 @@ public class ServerService {
         return new DispatcherCommParamsYaml.ExecContextStatus(
                 execContextRepository.findAllExecStates()
                         .stream()
-                        .map(o -> ServerService.toSimpleStatus((Long)o[0], (Integer)o[1]))
+                        .map(o -> SouthbridgeService.toSimpleStatus((Long)o[0], (Integer)o[1]))
                         .collect(Collectors.toList()));
     }
 

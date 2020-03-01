@@ -14,10 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.server;
+package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
@@ -45,10 +44,9 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/rest/v1")
 @PreAuthorize("hasAnyRole('SERVER_REST_ACCESS')")
 @RequiredArgsConstructor
-public class ServerController {
+public class SouthbridgeController {
 
-    private final Globals globals;
-    private final ServerService serverService;
+    private final SouthbridgeService serverService;
 
     @PostMapping("/srv-v2/{random-part}")
     public String processRequestAuth(

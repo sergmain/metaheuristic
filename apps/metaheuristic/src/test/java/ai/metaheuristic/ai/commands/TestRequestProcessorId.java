@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.server.ServerService;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -47,7 +47,7 @@ import static org.junit.Assert.*;
 public class TestRequestProcessorId {
 
     @Autowired
-    public ServerService serverService;
+    public SouthbridgeService serverService;
 
     @Autowired
     public ProcessorCache processorCache;

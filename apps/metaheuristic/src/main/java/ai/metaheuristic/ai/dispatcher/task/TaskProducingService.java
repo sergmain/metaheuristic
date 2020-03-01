@@ -116,22 +116,6 @@ public class TaskProducingService {
         TaskParamsYaml taskParams = new TaskParamsYaml();
         taskParams.task.execContextId = execContextId;
 
-        for (ExecContextParamsYaml.Variable input : process.inputs) {
-            if (true) {
-                throw new NotImplementedException("not yet");
-            }
-            taskParams.task.outputs.add(null);
-        }
-        for (ExecContextParamsYaml.Variable variable : process.outputs) {
-            Variable v = variableService.createUninitialized(variable.name, execContextId, process.internalContextId);
-            // resourceId is an Id of one part of Variable. Variable can contain unlimited number of resources
-            String resourceId = v.id.toString();
-            taskParams.task.outputs.add(
-                    new TaskParamsYaml.OutputVariable(variable.name, EnumsApi.VariableContext.local, variable.sourcing, variable.git, variable.disk,
-                            new TaskParamsYaml.Resource(resourceId, null)
-                    ));
-        }
-
         taskParams.task.function = functionService.getFunctionConfig(snDef);
         if (taskParams.task.function ==null) {
             log.error("#171.07 Function wasn't found for code: {}", snDef.code);

@@ -78,7 +78,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(value="select t.id, t.params from TaskImpl t where t.execContextId=:execContextId")
     Stream<Object[]> findByExecContextId(Long execContextId);
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and t.id in :ids ")
     List<Task> findForAssigning(Long execContextId, List<Long> ids);
 
@@ -92,7 +92,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
     @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.processorId=:processorId and t.resultReceived=false and " +
-            " t.execState =:execState and (:mills - result_resource_scheduled_on > 15000) ")
+            " t.execState =:execState and (:mills - t.resultResourceScheduledOn > 15000) ")
     List<Task> findForMissingResultResources(Long processorId, long mills, int execState);
 
     @Transactional(readOnly = true)

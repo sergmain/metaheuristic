@@ -14,15 +14,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.utils.holders;
+package ai.metaheuristic.ai.dispatcher.southbridge;
 
+import ai.metaheuristic.ai.Enums;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class LongHolder {
-    public long value;
+@NoArgsConstructor
+@ToString
+public class UploadResult {
+    public Enums.UploadResourceStatus status;
+    public String error;
 }
