@@ -33,6 +33,7 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -83,6 +84,17 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForFeature.getState());
     }
 
+    @After
+    public void afterFeatureMethods() {
+        if (execContextForFeature!=null) {
+            try {
+                execContextCache.deleteById(execContextForFeature.id);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     protected void produceTasks() {
         {
             EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
@@ -114,9 +126,6 @@ public abstract class FeatureMethods extends PreparingPlan {
             execContextForFeature = (ExecContextImpl) taskProducingResultComplex.execContext;
             assertEquals(EnumsApi.TaskProducingStatus.OK, taskProducingResultComplex.taskProducingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(execContextForFeature.getState()));
-
-            experiment = experimentCache.findById(experiment.getId());
-            assertNotNull(experiment.getExecContextId());
         }
     }
 

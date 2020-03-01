@@ -104,19 +104,6 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query("SELECT t FROM TaskImpl t where t.id in :ids order by t.id asc ")
     List<TaskImpl> findTasksByIds(List<Long> ids);
 
-
-    @SuppressWarnings("SqlRedundantOrderingDirection")
-    @Transactional(readOnly = true)
-    @Query(nativeQuery = true, value = "select z.* "+
-            "from ( "+
-            "           SELECT count(*) count, t.TASK_ORDER "+
-            "           FROM MH_TASK t  "+
-            "           where t.EXEC_CONTEXT_ID =:execContextId "+
-            "           group by t.TASK_ORDER "+
-            "     ) z "+
-            "order by z.TASK_ORDER asc")
-    List<Object[]> getCountPerOrder(Long execContextId);
-
     @Query(value="select new ai.metaheuristic.ai.dispatcher.beans.TaskProgress(" +
             "t.execContextId, count(*), t.execState, t.isCompleted, t.resultReceived ) " +
             "from TaskImpl t where t.execContextId=:execContextId " +

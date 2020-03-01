@@ -115,6 +115,8 @@ public class TaskProducingService {
 
         TaskParamsYaml taskParams = new TaskParamsYaml();
         taskParams.task.execContextId = execContextId;
+        taskParams.task.processCode = process.processCode;
+        taskParams.task.context = process.function.context;
 
         taskParams.task.function = functionService.getFunctionConfig(snDef);
         if (taskParams.task.function ==null) {

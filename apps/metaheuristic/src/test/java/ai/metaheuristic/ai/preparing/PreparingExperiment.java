@@ -20,27 +20,26 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
+import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -98,7 +97,6 @@ public abstract class PreparingExperiment {
     public Processor processor = null;
     public String processorIdAsStr;
 
-    public ExecContext execContext = null;
     public Experiment experiment = null;
     public boolean isCorrectInit = true;
 
@@ -255,13 +253,6 @@ public abstract class PreparingExperiment {
         if (experiment != null && experiment.getId() != null) {
             try {
                 experimentRepository.deleteById(experiment.getId());
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        }
-        if (execContext !=null) {
-            try {
-                taskRepository.deleteByExecContextId(execContext.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

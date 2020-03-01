@@ -83,11 +83,8 @@ public class TestTaskRequest extends FeatureMethods {
 
             sessionId = d0.getReAssignedProcessorId().sessionId;
         }
-        List<Object[]> counts = taskRepository.getCountPerOrder(execContextForFeature.getId());
-        for (Object[] count : counts) {
-            if (((Number)count[0]).intValue() > 1) {
-                break;
-            }
+
+        for (int i = 0; i < 2; i++) {
 
             DispatcherCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
             assertNotNull(t);
