@@ -374,7 +374,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
         if (execContextForFeature !=null) {
             try {
                 execContextRepository.deleteById(execContextForFeature.getId());
-            } catch (Throwable th) {
+            }
+            catch (Throwable th) {
                 log.error("Error while workbookRepository.deleteById()", th);
             }
             try {
@@ -393,37 +394,41 @@ public abstract class PreparingPlan extends PreparingExperiment {
     }
 
     public TaskProducingResultComplex produceTasksForTest() {
-        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getSourceCodeYamlAsString());
-        assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
+        {
+            SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getSourceCodeYamlAsString());
+            assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
-        EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
-        assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
+            EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
 
-        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
-        execContextForFeature = result.execContext;
+            ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
+            execContextForFeature = result.execContext;
 
-        assertFalse(result.isErrorMessages());
-        assertNotNull(execContextForFeature);
-        assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
-
-
-        EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
-        assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
-        execContextForFeature = execContextCache.findById(this.execContextForFeature.id);
-        assertNotNull(execContextForFeature);
-        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
-
-        SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForFeature);
-        experiment = experimentCache.findById(experiment.id);
-        this.execContextForFeature = result.execContext;
-        assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForFeature.id).size());
-        assertEquals(result1.numberOfTasks, execContextService.getCountUnfinishedTasks(execContextForFeature));
+            assertFalse(result.isErrorMessages());
+            assertNotNull(execContextForFeature);
+            assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
 
 
-        assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
-        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, this.execContextForFeature.getState());
+            EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
+            assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
+            execContextForFeature = execContextCache.findById(this.execContextForFeature.id);
+            assertNotNull(execContextForFeature);
+            assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
+        }
+        {
+            SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForFeature);
+            experiment = experimentCache.findById(experiment.id);
+            this.execContextForFeature = (ExecContextImpl) result1.execContext;
+            assertEquals(2, taskRepository.findAllTaskIdsByExecContextId(execContextForFeature.id).size());
+            assertEquals(2, execContextService.getCountUnfinishedTasks(execContextForFeature));
+//        assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForFeature.id).size());
+//        assertEquals(result1.numberOfTasks, execContextService.getCountUnfinishedTasks(execContextForFeature));
 
-        return result1;
+
+            assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
+            assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(this.execContextForFeature.getState()));
+            return result1;
+        }
     }
 
     private void deleteFunction(Function s) {

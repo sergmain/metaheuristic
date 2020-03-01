@@ -84,17 +84,6 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForFeature.getState());
     }
 
-    @After
-    public void afterFeatureMethods() {
-        if (execContextForFeature!=null) {
-            try {
-                execContextCache.deleteById(execContextForFeature.id);
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     protected void produceTasks() {
         {
             EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
@@ -135,7 +124,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToProcessor()");
         DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToProcessor(
-                processor.getId(), false, experiment.getExecContextId());
+                processor.getId(), false, execContextForFeature.id);
         log.info("experimentService.getTaskAndAssignToProcessor() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(task);

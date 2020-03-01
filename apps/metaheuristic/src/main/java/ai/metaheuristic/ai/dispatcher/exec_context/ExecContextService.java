@@ -62,6 +62,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -274,6 +275,7 @@ public class ExecContextService {
 
     }
 
+    @Nullable
     private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessorInternal(Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
 
         final Processor processor = processorCache.findById(processorId);

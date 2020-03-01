@@ -77,6 +77,10 @@ public class TaskProducingService {
                     return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR);
                 }
             }
+            if (Consts.MH_INTERNAL_FUNCTIONS.contains(p.function.code) && p.function.context!=EnumsApi.FunctionExecContext.internal) {
+                return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR);
+            }
+
             TaskData.ProduceTaskResult result = produceTaskForProcess(isPersist, sourceCodeId, p, execContextParamsYaml, execContextId, parentTaskIds);
             if (result.status!= EnumsApi.TaskProducingStatus.OK) {
                 return result;

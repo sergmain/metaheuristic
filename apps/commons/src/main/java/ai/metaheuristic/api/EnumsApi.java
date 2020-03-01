@@ -229,7 +229,8 @@ public class EnumsApi {
         WRONG_FORMAT_OF_FUNCTION_CODE,
         ERROR,
         TOO_MANY_TASKS_PER_SOURCE_CODE_ERROR,
-        TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR
+        TOO_MANY_LEVELS_OF_SUBPROCESSES_ERROR,
+        INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR
     }
 
     public enum BinaryType {data, function}
