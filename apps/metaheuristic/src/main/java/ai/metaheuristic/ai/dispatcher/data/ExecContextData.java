@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.dispatcher.Task;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,6 +29,19 @@ import lombok.NoArgsConstructor;
  * Time: 1:48 AM
  */
 public class ExecContextData {
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AssignedTaskComplex {
+        // this field is the same as task.params but it could be downgraded to version which is supported by Processor
+        public String params;
+
+        public Long execContextId;
+
+        public Task task;
+    }
+
 
     @Data
     @EqualsAndHashCode(of = "taskId")

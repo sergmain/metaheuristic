@@ -33,7 +33,7 @@ public class DispatcherInternalEvent {
 
     @Data
     @AllArgsConstructor
-    public static class ExperimentResetEvent {
+    public static class DeleteExecContextEvent {
         public Long execContextId;
     }
 

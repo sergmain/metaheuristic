@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
@@ -35,7 +34,6 @@ import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
@@ -64,9 +62,7 @@ public class TaskProducingService {
         List<Long> parentTaskIds = new ArrayList<>();
         for (ExecContextData.ProcessVertex processVertex : processGraph) {
             String processCode = processVertex.process;
-            ExecContextParamsYaml.Process p;
-
-            p = execContextParamsYaml.processes.stream().filter(o -> o.processCode.equals(processCode)).findAny().orElse(null);
+            ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(processCode);
             if (p == null) {
                 // mh.finish can be not defined in sourceCode
                 if (processCode.equals(Consts.MH_FINISH_FUNCTION)) {

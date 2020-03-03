@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -80,6 +81,7 @@ public class DispatcherCommandProcessor {
             final List<Long> allIds = functionRepository.findAllIds();
             functionInfosCache = allIds.stream()
                     .map(functionCache::findById)
+                    .filter(Objects::nonNull)
                     .map(s->new DispatcherCommParamsYaml.Functions.Info(s.code, s.getFunctionConfig(false).sourcing))
                     .collect(Collectors.toList());
         }

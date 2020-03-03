@@ -98,7 +98,7 @@ public class ExperimentService {
 
     @Async
     @EventListener
-    public void handleAsync(DispatcherInternalEvent.ExperimentResetEvent event) {
+    public void handleAsync(DispatcherInternalEvent.DeleteExecContextEvent event) {
         resetExperimentByExecContextId(event.execContextId);
     }
 

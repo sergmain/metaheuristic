@@ -100,6 +100,7 @@ public class TaskParamsYaml implements BaseParams {
         public GitInfo git;
         public DiskInfo disk;
         public Resource resource;
+        public boolean isInited;
     }
 
     @Data

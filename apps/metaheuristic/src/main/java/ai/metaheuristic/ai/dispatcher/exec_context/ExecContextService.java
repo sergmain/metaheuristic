@@ -21,10 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
@@ -58,7 +55,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -248,35 +244,50 @@ public class ExecContextService {
     }
 
     public DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
-        DispatcherCommParamsYaml.AssignedTask task = execContextSyncService.getWithSync(execContextId, execContext -> getTaskAndAssignToProcessorInternal(processorId, isAcceptOnlySigned, execContextId));
-        prepareVariables(task);
-        return task;
+        ExecContextData.AssignedTaskComplex assignedTaskComplex = execContextSyncService.getWithSync(execContextId,
+                execContext -> getTaskAndAssignToProcessorInternal(processorId, isAcceptOnlySigned, execContextId));
+        prepareVariables(assignedTaskComplex);
+        return new DispatcherCommParamsYaml.AssignedTask(assignedTaskComplex.params, assignedTaskComplex.execContextId, assignedTaskComplex.task.getId());
     }
 
-    private void prepareVariables(DispatcherCommParamsYaml.AssignedTask task) {
+    private void prepareVariables(ExecContextData.AssignedTaskComplex assignedTaskComplex) {
 
-        if (true) {
-            throw new NotImplementedException("not yet #255");
+        TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(assignedTaskComplex.task.getParams());
+
+        ExecContextImpl execContext = execContextCache.findById(assignedTaskComplex.execContextId);
+        ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
+        ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
+        if (p.function.context== EnumsApi.FunctionExecContext.internal) {
+            // resources for internal Function will be prepared by Function it self.
+            return;
         }
-/*
+
         // we dont need to create inputs because all inputs are outputs of previous process,
         // except globals and startInputAs
-        for (ExecContextParamsYaml.Variable variable : process.outputs) {
-            Variable v = variableService.createUninitialized(variable.name, execContextId, process.internalContextId);
+        for (TaskParamsYaml.OutputVariable variable : taskParams.task.outputs) {
+            if (variable.isInited) {
+                continue;
+            }
+
+
+            Variable v = variableService.createUninitialized(variable.name, assignedTaskComplex.execContextId, p.internalContextId);
+
             // resourceId is an Id of one part of Variable. Variable can contain unlimited number of resources
             String resourceId = v.id.toString();
             taskParams.task.outputs.add(
-                    new TaskParamsYaml.OutputVariable(variable.name, EnumsApi.VariableContext.local, variable.sourcing, variable.git, variable.disk,
+                    new TaskParamsYaml.OutputVariable(
+                            variable.name, EnumsApi.VariableContext.local, variable.sourcing, variable.git, variable.disk,
                             new TaskParamsYaml.Resource(resourceId, null)
                     ));
         }
-*/
 
 
     }
 
+
+
     @Nullable
-    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessorInternal(Long processorId, boolean isAcceptOnlySigned, Long execContextId) {
+    private ExecContextData.AssignedTaskComplex getTaskAndAssignToProcessorInternal(@NonNull Long processorId, boolean isAcceptOnlySigned, @Nullable Long specificExecContextId) {
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
@@ -291,11 +302,11 @@ public class ExecContextService {
         }
 
         List<Long> execContextIds;
-        // find task in specific execContext ( i.e. execContextId!=null)?
-        if (execContextId != null) {
-            ExecContextImpl execContext = execContextCache.findById(execContextId);
+        // find task in specific execContext ( i.e. specificExecContextId!=null)?
+        if (specificExecContextId != null) {
+            ExecContextImpl execContext = execContextCache.findById(specificExecContextId);
             if (execContext==null) {
-                log.warn("#705.170 ExecContext wasn't found for id: {}", execContextId);
+                log.warn("#705.170 ExecContext wasn't found for id: {}", specificExecContextId);
                 return null;
             }
             if (execContext.getState()!= EnumsApi.ExecContextState.STARTED.code) {
@@ -317,8 +328,8 @@ public class ExecContextService {
             return null;
         }
 
-        for (Long id : execContextIds) {
-            DispatcherCommParamsYaml.AssignedTask result = findUnassignedTaskAndAssign(id, processor, ss, isAcceptOnlySigned);
+        for (Long execContextId : execContextIds) {
+            ExecContextData.AssignedTaskComplex result = findUnassignedTaskAndAssign(execContextId, processor, ss, isAcceptOnlySigned);
             if (result!=null) {
                 return result;
             }
@@ -339,7 +350,7 @@ public class ExecContextService {
                 .collect(Collectors.toList());
     }
 
-    private DispatcherCommParamsYaml.AssignedTask findUnassignedTaskAndAssign(Long execContextId, Processor processor, ProcessorStatusYaml ss, boolean isAcceptOnlySigned) {
+    private ExecContextData.AssignedTaskComplex findUnassignedTaskAndAssign(Long execContextId, Processor processor, ProcessorStatusYaml ss, boolean isAcceptOnlySigned) {
 
         AtomicLong longHolder = bannedSince.computeIfAbsent(processor.getId(), o -> new AtomicLong(0));
         if (longHolder.get()!=0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
@@ -437,10 +448,10 @@ public class ExecContextService {
         // normal way of operation
         longHolder.set(0);
 
-        DispatcherCommParamsYaml.AssignedTask assignedTask = new DispatcherCommParamsYaml.AssignedTask();
-        assignedTask.setTaskId(resultTask.getId());
-        assignedTask.setExecContextId(execContextId);
-        assignedTask.setParams(resultTaskParams);
+        ExecContextData.AssignedTaskComplex assignedTaskComplex = new ExecContextData.AssignedTaskComplex();
+        assignedTaskComplex.setTask(resultTask);
+        assignedTaskComplex.setExecContextId(execContextId);
+        assignedTaskComplex.setParams(resultTaskParams);
 
         resultTask.setAssignedOn(System.currentTimeMillis());
         resultTask.setProcessorId(processor.getId());
@@ -451,7 +462,7 @@ public class ExecContextService {
         execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
         dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.getId(), resultTask.getId(), execContextId);
 
-        return assignedTask;
+        return assignedTaskComplex;
     }
 
     private static boolean gitUnavailable(TaskParamsYaml.TaskYaml task, boolean gitNotInstalled) {
@@ -527,7 +538,7 @@ public class ExecContextService {
 
     public void deleteExecContext(Long execContextId, Long companyUniqueId) {
 //        experimentService.resetExperimentByExecContextId(execContextId);
-        applicationEventPublisher.publishEvent(new DispatcherInternalEvent.ExperimentResetEvent(execContextId));
+        applicationEventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExecContextEvent(execContextId));
         variableService.deleteByExecContextId(execContextId);
         ExecContext execContext = execContextCache.findById(execContextId);
         if (execContext != null) {

@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -129,5 +130,10 @@ public class ExecContextParamsYaml implements BaseParams {
 
     // this graph is for creating tasks dynamically
     public String processesGraph;
+
+    @JsonIgnore
+    public Process findProcess(String processCode) {
+        return processes.stream().filter(o -> o.processCode.equals(processCode)).findAny().orElse(null);
+    }
 
 }
