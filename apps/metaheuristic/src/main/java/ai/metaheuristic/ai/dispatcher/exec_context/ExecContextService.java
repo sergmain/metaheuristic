@@ -268,8 +268,6 @@ public class ExecContextService {
             if (variable.isInited) {
                 continue;
             }
-
-
             Variable v = variableService.createUninitialized(variable.name, assignedTaskComplex.execContextId, p.internalContextId);
 
             // resourceId is an Id of one part of Variable. Variable can contain unlimited number of resources
