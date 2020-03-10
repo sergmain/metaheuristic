@@ -31,7 +31,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DataStorageParamsV2 {
+public class DataStorageParamsV1 {
 
     public EnumsApi.DataSourcing sourcing;
 
@@ -41,7 +41,7 @@ public class DataStorageParamsV2 {
 
     public String variable;
 
-    public DataStorageParamsV2(EnumsApi.DataSourcing sourcing, String variable) {
+    public DataStorageParamsV1(EnumsApi.DataSourcing sourcing, String variable) {
         this.sourcing = sourcing;
         this.variable = variable;
     }

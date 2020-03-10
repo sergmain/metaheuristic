@@ -17,6 +17,7 @@
 package ai.metaheuristic.commons.yaml.ml.fitting;
 
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
@@ -74,12 +75,12 @@ public class FittingYamlUtilsV1
 
     @NonNull
     @Override
-    public FittingYamlV1 to(String s) {
-        if (S.b(s)) {
-            return null;
+    public FittingYamlV1 to(String yaml) {
+        if (S.b(yaml)) {
+            throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
         //noinspection UnnecessaryLocalVariable
-        final FittingYamlV1 p = getYaml().load(s);
+        final FittingYamlV1 p = getYaml().load(yaml);
         return p;
     }
 

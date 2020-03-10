@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.*;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -94,12 +95,12 @@ public class FunctionConfigYaml implements Cloneable, BaseParams {
     public String params;
     public String env;
     public EnumsApi.FunctionSourcing sourcing;
-    public Map<EnumsApi.Type, String> checksumMap;
-    public FunctionInfo info = new FunctionInfo();
+    public final Map<EnumsApi.Type, String> checksumMap = new HashMap<>();
+    public final FunctionInfo info = new FunctionInfo();
     public String checksum;
-    public GitInfo git;
+    public @Nullable GitInfo git;
     public boolean skipParams = false;
-    public List<Meta> metas = new ArrayList<>();
+    public final List<Meta> metas = new ArrayList<>();
     public MachineLearning ml;
 
 }

@@ -53,12 +53,8 @@ public class TaskParamsYamlUtilsV1
         t.task = new TaskParamsYaml.TaskYaml();
         BeanUtils.copyProperties(v1.task, t.task, "function", "preFunctions", "postFunctions");
         t.task.function = toUp(v1.task.function);
-        if (v1.task.preFunctions !=null) {
-            t.task.preFunctions = v1.task.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
-        }
-        if (v1.task.postFunctions !=null) {
-            t.task.postFunctions = v1.task.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toList());;
-        }
+        v1.task.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toCollection(()->t.task.preFunctions));;
+        v1.task.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toCollection(()->t.task.postFunctions));;
         t.task.inline = v1.task.inline;
         v1.task.inputs.stream().map(TaskParamsYamlUtilsV1::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
         v1.task.outputs.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
@@ -85,7 +81,7 @@ public class TaskParamsYamlUtilsV1
         v.git = v1.git;
         v.name = v1.name;
         v.sourcing = v1.sourcing;
-        v.resource = v1.resources!=null ? new TaskParamsYaml.Resource(v1.context, v1.resources.id, v1.resources.realName) : null;
+        v.resource = new TaskParamsYaml.Resource(v1.context, v1.resources.id, v1.resources.realName);
         return v;
     }
 
@@ -96,9 +92,6 @@ public class TaskParamsYamlUtilsV1
     }
 
     private static TaskParamsYaml.FunctionConfig toUp(TaskParamsYamlV1.FunctionConfigV1 src) {
-        if (src==null) {
-            return null;
-        }
         TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig();
         trg.checksum = src.checksum;
         trg.checksumMap = src.checksumMap;
@@ -109,7 +102,7 @@ public class TaskParamsYamlUtilsV1
         if (src.info!=null) {
             trg.info = new TaskParamsYaml.FunctionInfo(src.info.signed, src.info.length);
         }
-        trg.metas = src.metas;
+        trg.metas.addAll(src.metas);
         trg.params = src.params;
         trg.skipParams = src.skipParams;
         trg.sourcing = src.sourcing;

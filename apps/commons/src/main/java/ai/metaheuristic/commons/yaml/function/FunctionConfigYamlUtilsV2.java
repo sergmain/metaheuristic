@@ -17,6 +17,7 @@
 package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -91,12 +92,12 @@ public class FunctionConfigYamlUtilsV2
 
     @NonNull
     @Override
-    public FunctionConfigYamlV2 to(String s) {
-        if (S.b(s)) {
-            return null;
+    public FunctionConfigYamlV2 to(String yaml) {
+        if (S.b(yaml)) {
+            throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
         //noinspection UnnecessaryLocalVariable
-        final FunctionConfigYamlV2 p = getYaml().load(s);
+        final FunctionConfigYamlV2 p = getYaml().load(yaml);
         return p;
     }
 

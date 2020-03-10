@@ -56,7 +56,7 @@ public class MetricsUtils {
 
     public static MetricValues getValues(Metrics metrics) {
         if (metrics==null || metrics.getStatus()!= EnumsApi.MetricsStatus.Ok) {
-            return null;
+            return new MetricValues();
         }
         //noinspection UnnecessaryLocalVariable
         MetricValues metricValues = getMetricValues(metrics.metrics);
@@ -69,7 +69,7 @@ public class MetricsUtils {
 
     public static MetricValues getValues(TaskMachineLearningYaml.Metrics metrics) {
         if (metrics==null || metrics.metrics==null || metrics.getStatus()!= EnumsApi.MetricsStatus.Ok) {
-            return null;
+            return new MetricValues();
         }
         return getValueYaml().load(metrics.metrics);
     }

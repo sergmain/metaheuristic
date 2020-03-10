@@ -34,7 +34,7 @@ abstract public class AbstractParamsYamlUtils<CurrT extends BaseParams, NextT ex
 
     public abstract @NonNull PrevT downgradeTo(@NonNull CurrForDownT yaml);
 
-    public abstract NextU nextUtil();
+    public abstract @Nullable NextU nextUtil();
 
     public abstract PrevU prevUtil();
 

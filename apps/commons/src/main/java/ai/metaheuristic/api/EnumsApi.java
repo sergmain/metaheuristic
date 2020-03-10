@@ -43,7 +43,7 @@ public class EnumsApi {
 
         public static Fitting of(String s) {
             if (S.b(s)) {
-                return null;
+                throw new IllegalStateException("Unknown Fitting enum: " + s);
             }
             return valueOf(s);
         }

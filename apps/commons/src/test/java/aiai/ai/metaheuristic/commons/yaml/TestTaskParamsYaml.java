@@ -23,7 +23,6 @@ import ai.metaheuristic.api.data.task.TaskParamsYamlV1;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.Test;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -59,7 +58,7 @@ public class TestTaskParamsYaml {
         final TaskParamsYamlV1.FunctionConfigV1 preFunction = new TaskParamsYamlV1.FunctionConfigV1();
         preFunction.code = "pre-function-code";
         preFunction.sourcing = EnumsApi.FunctionSourcing.processor;
-        ty.preFunctions = List.of(preFunction);
+        ty.preFunctions.add(preFunction);
 
         final TaskParamsYamlV1.FunctionConfigV1 function = new TaskParamsYamlV1.FunctionConfigV1();
         function.code = "function-code";
@@ -69,7 +68,7 @@ public class TestTaskParamsYaml {
         final TaskParamsYamlV1.FunctionConfigV1 postFunction = new TaskParamsYamlV1.FunctionConfigV1();
         postFunction.code = "post-function-code";
         postFunction.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        ty.postFunctions = List.of(postFunction);
+        ty.postFunctions.add(postFunction);
         ty.execContextId = 1L;
         ty.context = EnumsApi.FunctionExecContext.external;
         ty.processCode = "test-process-01";

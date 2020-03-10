@@ -219,9 +219,6 @@ public class ZipUtils {
                         resultName = name;
                     }
                     File destinationFile = createTargetFile(zipDestinationFolder, resultName);
-                    if (destinationFile==null) {
-                        throw new RuntimeException("Creation of target file was failed, target dir: " + zipDestinationFolder+", entity: " + resultName);
-                    }
                     if (!destinationFile.getParentFile().exists()) {
                         destinationFile.getParentFile().mkdirs();
                     }

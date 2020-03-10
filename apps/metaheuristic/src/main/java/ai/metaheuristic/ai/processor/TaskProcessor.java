@@ -48,6 +48,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -75,8 +76,6 @@ public class TaskProcessor {
     private final ResourceProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
-    private Long currentTaskId;
-
     @Data
     public static class FunctionPrepareResult {
         public TaskParamsYaml.FunctionConfig function;
@@ -97,10 +96,6 @@ public class TaskProcessor {
         // find all tasks which weren't completed and  weren't finished and resources aren't prepared yet
         List<ProcessorTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(true);
         for (ProcessorTask task : tasks) {
-
-            if (task.launchedOn!=null && task.finishedOn!=null && currentTaskId==null) {
-                log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched and then finished", task.taskId);
-            }
             if (StringUtils.isBlank(task.dispatcherUrl)) {
                 final String es = "#100.005 task.dispatcherUrl is blank for task #" + task.taskId;
                 log.warn(es);
@@ -244,7 +239,6 @@ public class TaskProcessor {
             // at this point all required resources have to be prepared
             task = processorTaskService.setLaunchOn(task.dispatcherUrl, task.taskId);
             try {
-                currentTaskId = task.taskId;
                 execAllFunctions(task, dispatcherInfo, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
             }
             catch(ScheduleInactivePeriodException e) {
@@ -252,9 +246,6 @@ public class TaskProcessor {
                 processorTaskService.delete(task.dispatcherUrl, task.taskId);
                 log.info("An execution of task #{} was terminated because of the beginning of inactivity period. " +
                         "This task will be processed later", task.taskId);
-            }
-            finally {
-                currentTaskId = null;
             }
         }
     }
@@ -424,8 +415,8 @@ public class TaskProcessor {
 
     private int totalCountOfFunctions(TaskParamsYaml.TaskYaml taskYaml) {
         int count = 0;
-        count += (taskYaml.preFunctions !=null) ? taskYaml.preFunctions.size() : 0;
-        count += (taskYaml.postFunctions !=null) ? taskYaml.postFunctions.size() : 0;
+        count += taskYaml.preFunctions.size();
+        count += taskYaml.postFunctions.size();
         count++;
         return count;
     }
@@ -434,7 +425,7 @@ public class TaskProcessor {
     // TODO 2019.05.02 implement unit-test for this method
     public FunctionApiData.SystemExecResult execFunction(
             ProcessorTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, FunctionPrepareResult functionPrepareResult,
-            DispatcherSchedule schedule) {
+            @Nullable DispatcherSchedule schedule) {
 
         File paramFile = new File(
                 taskDir,
@@ -470,10 +461,8 @@ public class TaskProcessor {
                     cmd.add(functionPrepareResult.functionAssetFile.file.getAbsolutePath());
                     break;
                 case processor:
-                    if (functionPrepareResult.function.file!=null) {
-                        //noinspection UseBulkOperation
-                        Arrays.stream(StringUtils.split(functionPrepareResult.function.file)).forEachOrdered(cmd::add);
-                    }
+                    //noinspection UseBulkOperation
+                    Arrays.stream(StringUtils.split(functionPrepareResult.function.file)).forEachOrdered(cmd::add);
                     break;
                 default:
                     throw new IllegalStateException("#100.170 Unknown sourcing: "+ functionPrepareResult.function.sourcing );

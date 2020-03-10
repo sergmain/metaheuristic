@@ -24,7 +24,9 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -121,6 +123,8 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public List<Meta> metas = new ArrayList<>();
         public SubProcessesV1 subProcesses;
 
+        @JsonIgnore
+        @Nullable
         public Meta getMeta(String key) {
             return MetaUtils.getMeta(metas, key);
         }
@@ -152,6 +156,8 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public List<Meta> metas;
         public AccessControlV1 ac;
 
+        @JsonIgnore
+        @Nullable
         public Meta getMeta(String key) {
             if (metas == null) {
                 return null;

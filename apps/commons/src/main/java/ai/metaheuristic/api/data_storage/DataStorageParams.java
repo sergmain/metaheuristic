@@ -22,6 +22,7 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 /**
  * @author Serge
@@ -33,17 +34,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DataStorageParams {
 
+    public String variable;
     public EnumsApi.DataSourcing sourcing;
+    public @Nullable GitInfo git;
+    public @Nullable DiskInfo disk;
 
-    public GitInfo git;
-
-    public DiskInfo disk;
-
-    // TODO this field is the code of resource actually.
-    //  Have to be renamed to resourceCode
-    public String storageType;
-
-    public DataStorageParams(EnumsApi.DataSourcing sourcing) {
+    public DataStorageParams(EnumsApi.DataSourcing sourcing, String variable) {
         this.sourcing = sourcing;
+        this.variable = variable;
     }
 }

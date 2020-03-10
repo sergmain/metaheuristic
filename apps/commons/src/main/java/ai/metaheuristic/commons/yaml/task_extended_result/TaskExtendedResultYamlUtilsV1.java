@@ -17,6 +17,7 @@
 package ai.metaheuristic.commons.yaml.task_extended_result;
 
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
@@ -74,12 +75,12 @@ public class TaskExtendedResultYamlUtilsV1
 
     @NonNull
     @Override
-    public TaskExtendedResultYamlV1 to(String s) {
-        if (S.b(s)) {
-            return null;
+    public TaskExtendedResultYamlV1 to(String yaml) {
+        if (S.b(yaml)) {
+            throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
         //noinspection UnnecessaryLocalVariable
-        final TaskExtendedResultYamlV1 p = getYaml().load(s);
+        final TaskExtendedResultYamlV1 p = getYaml().load(yaml);
         return p;
     }
 

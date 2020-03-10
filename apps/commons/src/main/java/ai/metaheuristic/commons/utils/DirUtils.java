@@ -46,7 +46,7 @@ public class DirUtils {
         }
     }
 
-    public static File createDir(File baseDir, String subDir) {
+    public static @Nullable File createDir(File baseDir, String subDir) {
         File currDir = new File(baseDir, subDir);
         if (!currDir.exists()) {
             boolean isOk = currDir.mkdirs();

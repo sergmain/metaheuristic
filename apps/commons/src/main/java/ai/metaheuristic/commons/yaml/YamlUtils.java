@@ -16,7 +16,10 @@
 
 package ai.metaheuristic.commons.yaml;
 
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
@@ -43,13 +46,15 @@ public class YamlUtils {
         return initWithTags(clazz, new Class[]{clazz}, null);
     }
 
-    public static Yaml initWithTags(Class<?> clazz, Class<?>[] clazzMap, TypeDescription customTypeDescription) {
+    public static Yaml initWithTags(Class<?> clazz, Class<?>[] clazzMap, @Nullable TypeDescription customTypeDescription) {
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
         Representer representer = new Representer() {
+
             @Override
+            @Nullable
             protected NodeTuple representJavaBeanProperty(Object javaBean, Property property, Object propertyValue, Tag customTag) {
                 // if value of property is null, ignore it.
                 if (propertyValue == null) {
@@ -81,8 +86,8 @@ public class YamlUtils {
     }
 
     public static Object to(String s, Yaml yaml) {
-        if (s==null) {
-            return null;
+        if (S.b(s)) {
+            throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
         return yaml.load(s);
     }

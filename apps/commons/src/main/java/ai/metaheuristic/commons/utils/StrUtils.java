@@ -15,9 +15,9 @@
  */
 package ai.metaheuristic.commons.utils;
 
-import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.lang.NonNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,16 +42,13 @@ public class StrUtils {
 
     public static String getExtension(String filename) {
         if (filename==null) {
-            return null;
+            return "";
         }
         int idx = filename.lastIndexOf('.');
         return idx!=-1 ? filename.substring(idx) : "";
     }
 
-    public static String getName(String filename) {
-        if (filename==null) {
-            return null;
-        }
+    public static String getName(@NonNull String filename) {
         int idx = filename.lastIndexOf('.');
         return idx!=-1 ? filename.substring(0, idx) : filename;
     }

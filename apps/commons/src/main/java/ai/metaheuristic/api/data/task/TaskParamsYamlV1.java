@@ -24,6 +24,8 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -120,12 +122,12 @@ public class TaskParamsYamlV1 implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class OutputVariableV1 {
-        public String name;
-        public EnumsApi.VariableContext context;
-        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
-        public GitInfo git;
-        public DiskInfo disk;
-        public ResourceV1 resources;
+        public @NonNull String name;
+        public @NonNull EnumsApi.VariableContext context;
+        public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public @Nullable GitInfo git;
+        public @Nullable DiskInfo disk;
+        public @NonNull ResourceV1 resources;
     }
 
     @Data
@@ -173,15 +175,16 @@ public class TaskParamsYamlV1 implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
     public static class TaskYamlV1 {
         public Long execContextId;
         public String processCode;
-        public FunctionConfigV1 function;
-        public List<FunctionConfigV1> preFunctions;
-        public List<FunctionConfigV1> postFunctions;
+        @NonNull public FunctionConfigV1 function;
+        @NonNull public final List<FunctionConfigV1> preFunctions = new ArrayList<>();
+        @NonNull public final List<FunctionConfigV1> postFunctions = new ArrayList<>();
 
         public boolean clean = false;
-        public EnumsApi.FunctionExecContext context;
+        @NonNull public EnumsApi.FunctionExecContext context;
 
         public Map<String, Map<String, String>> inline;
         public final List<InputVariableV1> inputs = new ArrayList<>();

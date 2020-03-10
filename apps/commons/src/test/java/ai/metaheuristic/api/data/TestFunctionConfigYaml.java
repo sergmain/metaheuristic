@@ -102,12 +102,13 @@ public class TestFunctionConfigYaml {
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         sc.ml = new FunctionConfigYaml.MachineLearning(true, false);
-        sc.checksumMap = new HashMap<>(Map.of(EnumsApi.Type.SHA256, "qwe321"));
-        sc.info = new FunctionConfigYaml.FunctionInfo(true, 42);
+        sc.checksumMap.put(EnumsApi.Type.SHA256, "qwe321");
+        sc.info.signed= true;
+        sc.info.length = 42;
         sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;
-        sc.metas = new ArrayList<>(List.of( new Meta("key1", "value1", "ext1" )));
+        sc.metas.add((new Meta("key1", "value1", "ext1" )));
 
         FunctionConfigYaml sc1 = sc.clone();
 
@@ -132,6 +133,7 @@ public class TestFunctionConfigYaml {
         assertEquals(sc.info.length, 42);
         assertTrue(sc.info.signed);
         assertEquals(sc.checksum, "sc.checksum");
+        assertNotNull(sc.git);
         assertEquals(sc.git.repo, "repo");
         assertEquals(sc.git.branch, "branch");
         assertEquals(sc.git.commit, "commit");
@@ -151,12 +153,8 @@ public class TestFunctionConfigYaml {
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         sc.ml = new FunctionConfigYaml.MachineLearning(true, false);
-        sc.checksumMap = null;
-        sc.info = null;
         sc.checksum = "sc.checksum";
-        sc.git = null;
         sc.skipParams = true;
-        sc.metas = null;
 
         FunctionConfigYaml sc1 = sc.clone();
 
@@ -168,11 +166,10 @@ public class TestFunctionConfigYaml {
         assertEquals(sc1.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc1.ml);
         assertTrue(sc1.ml.metrics);
-        assertNull(sc1.checksumMap);
-        assertNull(sc1.info);
+        assertTrue(sc1.checksumMap.isEmpty());
         assertEquals(sc1.checksum, "sc.checksum");
         assertNull(sc1.git);
         assertTrue(sc1.skipParams);
-        assertNull(sc1.metas);
+        assertTrue(sc1.metas.isEmpty());
     }
 }

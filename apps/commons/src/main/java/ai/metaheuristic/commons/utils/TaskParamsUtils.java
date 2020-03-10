@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import org.springframework.lang.Nullable;
 
 /**
  * @author Serge
@@ -26,7 +27,7 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
  */
 public class TaskParamsUtils {
 
-    public static TaskParamsYaml.FunctionConfig toFunctionConfig(FunctionConfigYaml src) {
+    public static @Nullable TaskParamsYaml.FunctionConfig toFunctionConfig(FunctionConfigYaml src) {
         if (src==null) {
             return null;
         }
@@ -40,7 +41,7 @@ public class TaskParamsUtils {
         if (src.info!=null) {
             trg.info = new TaskParamsYaml.FunctionInfo(src.info.signed, src.info.length);
         }
-        trg.metas = src.metas;
+        trg.metas.addAll(src.metas);
         trg.params = src.params;
         trg.skipParams = src.skipParams;
         trg.sourcing = src.sourcing;

@@ -131,7 +131,7 @@ public class ExperimentParamsYaml implements BaseParams {
     }
 
     @JsonIgnore
-    public ExperimentParamsYaml.ExperimentFeature getFeature(Long featureId) {
+    public @Nullable ExperimentParamsYaml.ExperimentFeature getFeature(Long featureId) {
         //noinspection UnnecessaryLocalVariable
         ExperimentParamsYaml.ExperimentFeature feature = processing.features
                 .stream().filter(o -> o.id.equals(featureId)).findFirst().orElse(null);
