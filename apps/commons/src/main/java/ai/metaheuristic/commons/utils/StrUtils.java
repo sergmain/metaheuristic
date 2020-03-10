@@ -15,9 +15,11 @@
  */
 package ai.metaheuristic.commons.utils;
 
+import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,9 +42,10 @@ public class StrUtils {
         return StringUtils.replaceEach(code, new String[]{":", ".", " "}, new String[]{"-", "_", "_"});
     }
 
+    @Nullable
     public static String getExtension(String filename) {
-        if (filename==null) {
-            return "";
+        if (S.b(filename)) {
+            return null;
         }
         int idx = filename.lastIndexOf('.');
         return idx!=-1 ? filename.substring(idx) : "";

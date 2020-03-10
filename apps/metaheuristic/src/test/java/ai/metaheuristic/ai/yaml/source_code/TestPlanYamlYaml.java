@@ -17,10 +17,12 @@
 package ai.metaheuristic.ai.yaml.source_code;
 
 import ai.metaheuristic.ai.preparing.PreparingPlan;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.junit.Assert.*;
 
@@ -47,15 +49,20 @@ public class TestPlanYamlYaml {
     @Test
     public void testYaml_2() {
         SourceCodeParamsYaml.SourceCodeYaml sourceCodeYaml = new SourceCodeParamsYaml.SourceCodeYaml();
+        sourceCodeYaml.uid = UUID.randomUUID().toString();
 
         SourceCodeParamsYaml.Process p1 = new SourceCodeParamsYaml.Process();
         p1.name="experiment";
+        p1.function = new SourceCodeParamsYaml.FunctionDefForSourceCode();
+        p1.function.code = "func-code";
+        p1.function.context = EnumsApi.FunctionExecContext.external;
 
         sourceCodeYaml.processes = Collections.singletonList(p1);
 
         SourceCodeParamsYaml sourceCodeParamsYaml = new SourceCodeParamsYaml();
         sourceCodeParamsYaml.source = sourceCodeYaml;
 
+        // (source != null && !S.b(source.uid) && source.processes != null)
         String s = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sourceCodeParamsYaml);
 
         System.out.println(s);

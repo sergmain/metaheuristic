@@ -17,15 +17,17 @@ package ai.metaheuristic.ai.yaml;
 
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import org.junit.Assert;
 import org.junit.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TestFunctionExec {
 
     @Test
     public void testEmptyString() {
-        Assert.assertNull(FunctionExecUtils.to(""));
-        Assert.assertNull(FunctionExecUtils.to((String) null));
+        assertThrows(BlankYamlParamsException.class, ()->FunctionExecUtils.to(""));
     }
 
     @Test

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.utils;
 
 import org.apache.http.client.fluent.Request;
 import org.springframework.http.HttpHeaders;
+import org.springframework.lang.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +43,7 @@ public class RestUtils {
         return getHeader(null, length);
     }
 
-    public static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
+    public static HttpHeaders getHeader(@Nullable HttpHeaders httpHeaders, long length) {
         HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
         header.setContentLength(length);
         header.setCacheControl("max-age=0");

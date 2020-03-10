@@ -25,7 +25,7 @@ public class TestStrUtils {
 
     @Test
     public void testGetExtension() {
-        assertNull(StrUtils.getExtension(null));
+        assertNull(StrUtils.getExtension(""));
         assertEquals("", StrUtils.getExtension(""));
         assertEquals("", StrUtils.getExtension("abc"));
         assertEquals(".txt", StrUtils.getExtension("abc.txt"));

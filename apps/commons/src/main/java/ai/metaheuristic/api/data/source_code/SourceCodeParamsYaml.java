@@ -47,7 +47,7 @@ public class SourceCodeParamsYaml implements BaseParams {
     public boolean checkIntegrity() {
         final boolean b = source != null && !S.b(source.uid) && source.processes != null;
         if (!b) {
-            throw new CheckIntegrityFailedException("(b = sourceCode != null && !S.b(sourceCode.code) && sourceCode.processes != null) ");
+            throw new CheckIntegrityFailedException("!(source != null && !S.b(source.uid) && source.processes != null) ");
         }
         for (Process process : source.processes) {
             if (process.function ==null) {

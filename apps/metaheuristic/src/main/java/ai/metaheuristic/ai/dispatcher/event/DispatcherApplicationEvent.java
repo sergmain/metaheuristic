@@ -20,6 +20,7 @@ import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.Data;
+import org.springframework.lang.Nullable;
 
 import java.time.LocalDateTime;
 
@@ -34,12 +35,11 @@ public class DispatcherApplicationEvent {
     public final DispatcherEventYaml dispatcherEventYaml;
     public Long companyUniqueId;
 
-    public DispatcherApplicationEvent(EnumsApi.DispatcherEventType event, Long companyUniqueId, String contextId, DispatcherEventYaml.BatchEventData batchEventData) {
+    public DispatcherApplicationEvent(EnumsApi.DispatcherEventType event, Long companyUniqueId, @Nullable String contextId, DispatcherEventYaml.BatchEventData batchEventData) {
         this.companyUniqueId = companyUniqueId;
         DispatcherEventYaml dispatcherEventYaml = new DispatcherEventYaml();
         dispatcherEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());
         dispatcherEventYaml.event = event;
-        dispatcherEventYaml.contextId = contextId;
         dispatcherEventYaml.contextId = contextId;
         dispatcherEventYaml.batchData = batchEventData;
         this.dispatcherEventYaml = dispatcherEventYaml;

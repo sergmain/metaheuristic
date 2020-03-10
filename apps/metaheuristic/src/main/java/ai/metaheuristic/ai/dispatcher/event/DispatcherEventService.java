@@ -40,6 +40,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
@@ -82,7 +83,7 @@ public class DispatcherEventService {
 
     public void publishBatchEvent(
             EnumsApi.DispatcherEventType event, Long companyUniqueId, String filename,
-            Long size, Long batchId, Long execContextId, DispatcherContext dispatcherContext) {
+            Long size, @Nullable Long batchId, @Nullable Long execContextId, DispatcherContext dispatcherContext) {
         if (!globals.isEventEnabled) {
             return;
         }
