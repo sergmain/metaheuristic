@@ -20,6 +20,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -39,13 +40,15 @@ public class FunctionConfigListYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(FunctionConfigListYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public FunctionConfigListYaml upgradeTo(FunctionConfigListYamlV1 src, Long ... vars) {
+    public FunctionConfigListYaml upgradeTo(@NonNull FunctionConfigListYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         FunctionConfigListYaml trg = new FunctionConfigListYaml();
         trg.functions = src.functions.stream().map(snSrc-> {
@@ -67,8 +70,9 @@ public class FunctionConfigListYamlUtilsV1
         return trg;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -87,6 +91,7 @@ public class FunctionConfigListYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public FunctionConfigListYamlV1 to(String s) {
         if (S.b(s)) {

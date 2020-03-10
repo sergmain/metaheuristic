@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.yaml.task_extended_result;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -34,13 +35,15 @@ public class TaskExtendedResultYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskExtendedResultYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public TaskExtendedResultYaml upgradeTo(TaskExtendedResultYamlV1 src, Long ... vars) {
+    public TaskExtendedResultYaml upgradeTo(@NonNull TaskExtendedResultYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         TaskExtendedResultYaml trg = new TaskExtendedResultYaml();
         trg.predicted = src.predicted;
@@ -48,8 +51,9 @@ public class TaskExtendedResultYamlUtilsV1
         return trg;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -68,6 +72,7 @@ public class TaskExtendedResultYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public TaskExtendedResultYamlV1 to(String s) {
         if (S.b(s)) {

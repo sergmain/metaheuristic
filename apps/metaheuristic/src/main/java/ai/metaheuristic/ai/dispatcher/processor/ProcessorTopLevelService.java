@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
@@ -102,7 +104,7 @@ public class ProcessorTopLevelService {
         return result;
     }
 
-    private String processorBlacklisted(ProcessorStatusYaml status) {
+    private @Nullable String processorBlacklisted(ProcessorStatusYaml status) {
         if (status.taskParamsVersion > TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
             return "Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
         }
@@ -110,8 +112,12 @@ public class ProcessorTopLevelService {
     }
 
     public ProcessorData.ProcessorResult getProcessor(Long id) {
+        Processor processor = processorCache.findById(id);
+        if (processor==null) {
+            return new ProcessorData.ProcessorResult("Processor wasn't found for id #"+ id);
+        }
         //noinspection UnnecessaryLocalVariable
-        ProcessorData.ProcessorResult r = new ProcessorData.ProcessorResult(processorCache.findById(id));
+        ProcessorData.ProcessorResult r = new ProcessorData.ProcessorResult(processor);
         return r;
     }
 
@@ -137,7 +143,10 @@ public class ProcessorTopLevelService {
 
     private static final ConcurrentHashMap<Long, Object> syncMap = new ConcurrentHashMap<>(50, 0.75f, 10);
 
-    public void storeProcessorStatuses(String processorIdAsStr, ProcessorCommParamsYaml.ReportProcessorStatus status, ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus) {
+    public void storeProcessorStatuses(@Nullable String processorIdAsStr, ProcessorCommParamsYaml.ReportProcessorStatus status, ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus) {
+        if (S.b(processorIdAsStr)) {
+            return;
+        }
         final Long processorId = Long.valueOf(processorIdAsStr);
         final Object obj = syncMap.computeIfAbsent(processorId, o -> new Object());
         log.debug("Before entering in sync block, storeProcessorStatus()");
@@ -233,7 +242,10 @@ public class ProcessorTopLevelService {
 
     // TODO Need to re-write this method
     // TODO 2020-01-18 why need to re-write?
-    public void reconcileProcessorTasks(String processorIdAsStr, List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
+    public void reconcileProcessorTasks(@Nullable String processorIdAsStr, List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
+        if (S.b(processorIdAsStr)) {
+            return;
+        }
         final long processorId = Long.parseLong(processorIdAsStr);
         List<Object[]> tasks = taskRepository.findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(processorId);
         for (Object[] obj : tasks) {
@@ -242,8 +254,9 @@ public class ProcessorTopLevelService {
 
             boolean isFound = false;
             for (ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus status : statuses) {
-                if (status.taskId ==taskId) {
+                if (status.taskId == taskId) {
                     isFound = true;
+                    break;
                 }
             }
 

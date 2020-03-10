@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.yaml.ml.fitting;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -34,13 +35,15 @@ public class FittingYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(FittingYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public FittingYaml upgradeTo(FittingYamlV1 src, Long ... vars) {
+    public FittingYaml upgradeTo(@NonNull FittingYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         FittingYaml trg = new FittingYaml();
         trg.fitting = src.fitting;
@@ -48,8 +51,9 @@ public class FittingYamlUtilsV1
         return trg;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -68,6 +72,7 @@ public class FittingYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public FittingYamlV1 to(String s) {
         if (S.b(s)) {

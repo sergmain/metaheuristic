@@ -20,8 +20,11 @@ import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.ToString;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -35,11 +38,13 @@ import java.io.Serializable;
 @Table(name = "MH_EXPERIMENT")
 @Data
 @ToString(exclude = {"params"})
+@NoArgsConstructor
 public class Experiment implements Serializable, Cloneable {
     private static final long serialVersionUID = -3509391644278818781L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
     public Long id;
 
     @Version
@@ -61,12 +66,14 @@ public class Experiment implements Serializable, Cloneable {
         }
     }
 
+    @NonNull
     public String getParams() {
         return params;
     }
 
     @Transient
     @JsonIgnore
+    @Nullable
     private ExperimentParamsYaml epy = null;
 
     @SneakyThrows
@@ -75,14 +82,12 @@ public class Experiment implements Serializable, Cloneable {
     }
 
     @JsonIgnore
-    public ExperimentParamsYaml getExperimentParamsYaml() {
-
+    public @NonNull ExperimentParamsYaml getExperimentParamsYaml() {
         if (epy==null) {
             synchronized (this) {
                 if (epy==null) {
-                    //noinspection UnnecessaryLocalVariable
                     ExperimentParamsYaml temp = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    epy = temp;
+                    epy = temp==null ? new ExperimentParamsYaml() : temp;
                 }
             }
         }

@@ -18,6 +18,8 @@ package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.data.Meta;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ import java.util.List;
 @Slf4j
 public class MetaUtils {
 
-    public static boolean isTrue(Meta m) {
+    public static boolean isTrue(@Nullable Meta m) {
         return m!=null && "true".equals(m.getValue());
     }
 
@@ -41,16 +43,16 @@ public class MetaUtils {
         return isTrue(getMeta(metas, keys));
     }
 
-    public static String getValue(List<Meta> metas, String... keys) {
+    public static @Nullable String getValue(List<Meta> metas, String... keys) {
         Meta m = getMeta(metas, keys);
         return m!=null ? m.getValue() : null;
     }
 
-    public static Meta getMeta(List<Meta> metas, String... keys) {
+    public static @Nullable Meta getMeta(@Nullable List<Meta> metas, @NonNull String... keys) {
         if (metas==null) {
             return null;
         }
-        if (keys==null || keys.length==0) {
+        if (keys.length==0) {
             return null;
         }
         for (Meta meta : metas) {

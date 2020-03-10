@@ -82,7 +82,7 @@ public class ReplicationFunctionService {
                         .socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
-            return new ReplicationData.FunctionAsset(((ReplicationData.AssetAcquiringError) data).errorMessages);
+            return new ReplicationData.FunctionAsset(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());
         }
         ReplicationData.FunctionAsset response = (ReplicationData.FunctionAsset) data;
         return response;

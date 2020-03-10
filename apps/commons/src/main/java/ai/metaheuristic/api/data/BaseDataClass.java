@@ -17,15 +17,18 @@
 package ai.metaheuristic.api.data;
 
 import lombok.Data;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 @Data
 public class BaseDataClass {
-    public List<String> errorMessages;
-    public List<String> infoMessages;
+    public @Nullable List<String> errorMessages;
+    public @Nullable List<String> infoMessages;
 
     public void addErrorMessage(String errorMessage) {
         if (this.errorMessages==null) {
@@ -34,7 +37,7 @@ public class BaseDataClass {
         this.errorMessages.add(errorMessage);
     }
 
-    public void addErrorMessages(List<String> errorMessages) {
+    public void addErrorMessages(@NonNull List<String> errorMessages) {
         if (this.errorMessages==null) {
             this.errorMessages = new ArrayList<>();
         }
@@ -48,14 +51,22 @@ public class BaseDataClass {
         this.infoMessages.add(infoMessage);
     }
 
-    public String getErrorMessagesAsStr() {
+    public @NonNull String getErrorMessagesAsStr() {
         if (!isNotEmpty(errorMessages)) {
             return "";
         }
         if (errorMessages.size()==1) {
-            return errorMessages.get(0);
+            return Objects.requireNonNull(errorMessages.get(0));
         }
-        return errorMessages.toString();
+        return Objects.requireNonNull(errorMessages.toString());
+    }
+
+    public @NonNull List<String> getErrorMessagesAsList() {
+        return isNotEmpty(errorMessages) ? errorMessages : List.of();
+    }
+
+    public @NonNull List<String> getInfoMessagesAsList() {
+        return isNotEmpty(infoMessages) ? infoMessages : List.of();
     }
 
     public boolean isErrorMessages() {
@@ -66,7 +77,7 @@ public class BaseDataClass {
         return isNotEmpty(infoMessages);
     }
 
-    private static boolean isNotEmpty(Collection<?> collection) {
+    private static boolean isNotEmpty(@Nullable Collection<?> collection) {
         return collection!=null && !collection.isEmpty();
     }
 }

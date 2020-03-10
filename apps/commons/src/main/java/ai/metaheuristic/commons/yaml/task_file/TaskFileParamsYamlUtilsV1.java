@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.yaml.task_file;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -36,13 +37,15 @@ public class TaskFileParamsYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskFileParamsYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public TaskFileParamsYaml upgradeTo(TaskFileParamsYamlV1 v1, Long ... vars) {
+    public TaskFileParamsYaml upgradeTo(@NonNull TaskFileParamsYamlV1 v1, Long ... vars) {
         v1.checkIntegrity();
         TaskFileParamsYaml t = new TaskFileParamsYaml();
         t.task = new TaskFileParamsYaml.Task();
@@ -75,8 +78,9 @@ public class TaskFileParamsYamlUtilsV1
         return v;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -95,6 +99,7 @@ public class TaskFileParamsYamlUtilsV1
         return getYaml().dump(params);
     }
 
+    @NonNull
     @Override
     public TaskFileParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable

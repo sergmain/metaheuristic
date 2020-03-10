@@ -20,6 +20,9 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -27,11 +30,13 @@ import java.io.Serializable;
 @Entity
 @Table(name = "mh_exec_context")
 @Data
+@NoArgsConstructor
 public class ExecContextImpl implements Serializable, ExecContext {
     private static final long serialVersionUID = -8687758209537096490L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
     public Long id;
 
     @Version
@@ -47,6 +52,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
     public Long completedOn;
 
     @Column(name = "PARAMS")
+    @NonNull
     private String params;
 
     public void setParams(String params) {
@@ -56,6 +62,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
         }
     }
 
+    @NonNull
     public String getParams() {
         return params;
     }
@@ -68,16 +75,16 @@ public class ExecContextImpl implements Serializable, ExecContext {
 
     @Transient
     @JsonIgnore
+    @Nullable
     private ExecContextParamsYaml wpy = null;
 
     @JsonIgnore
-    public ExecContextParamsYaml getExecContextParamsYaml() {
+    public @NonNull ExecContextParamsYaml getExecContextParamsYaml() {
         if (wpy ==null) {
             synchronized (this) {
                 if (wpy ==null) {
-                    //noinspection UnnecessaryLocalVariable
                     ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    wpy = temp;
+                    wpy = temp==null ? new ExecContextParamsYaml() : temp;
                 }
             }
         }
@@ -85,7 +92,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
     }
 
     @JsonIgnore
-    public void updateParams(ExecContextParamsYaml wpy) {
+    public void updateParams(@NonNull ExecContextParamsYaml wpy) {
         params = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(wpy);
     }
 }

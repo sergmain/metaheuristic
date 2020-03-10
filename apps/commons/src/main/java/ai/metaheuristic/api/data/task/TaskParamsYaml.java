@@ -24,11 +24,14 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * class TaskParamsYaml is for storing parameters of task internally at Processor side
@@ -47,14 +50,31 @@ public class TaskParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        if (task.context==null) {
-            throw new CheckIntegrityFailedException("function exec context is null");
-        }
         if (S.b(task.processCode)) {
             throw new CheckIntegrityFailedException("processCode is blank");
         }
-        if (task.execContextId==null) {
-            throw new CheckIntegrityFailedException("execContextId is null");
+/*
+        if (task.function==null) {
+
+        }
+*/
+        for (TaskParamsYaml.InputVariable input : task.inputs) {
+            if (input.resources.isEmpty()) {
+                throw new CheckIntegrityFailedException("(input.resources.isEmpty())");
+            }
+            if (input.context== EnumsApi.VariableContext.local) {
+                if (input.resources.size()>1) {
+                    throw new CheckIntegrityFailedException("(input.context== EnumsApi.VariableContext.local)  and (input.resources.size()>1)");
+                }
+                if (input.resources.get(0).context!= EnumsApi.VariableContext.local) {
+                    throw new CheckIntegrityFailedException("(input.resources.get(0).context!= EnumsApi.VariableContext.local)");
+                }
+            }
+            if (input.context== EnumsApi.VariableContext.global) {
+                if (input.resources.get(0).context!= EnumsApi.VariableContext.global) {
+                    throw new CheckIntegrityFailedException("(input.resources.get(0).context!= EnumsApi.VariableContext.global)");
+                }
+            }
         }
         return true;
     }
@@ -70,36 +90,44 @@ public class TaskParamsYaml implements BaseParams {
         public long length;
     }
 
+    /**
+     * Resource is related one-to-one to a record in table MH_VARIABLE or in table MH_VARIABLE_GLOBAL
+     * for MH_VARIABLE  context will be VariableContext.local
+     * for MH_VARIABLE_GLOBAL  context will be VariableContext.global
+     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Resource {
-        public String id;
-        public String realName;
+        public @NonNull EnumsApi.VariableContext context;
+        public @NonNull String id;
+        public @Nullable String realName;
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class InputVariable {
-        public String name;
-        public EnumsApi.VariableContext context;
-        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
-        public GitInfo git;
-        public DiskInfo disk;
-        public final List<Resource> resources = new ArrayList<>();
+        public @NonNull String name;
+        public @NonNull EnumsApi.VariableContext context;
+        public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public @Nullable GitInfo git;
+        public @Nullable DiskInfo disk;
+
+        // Only for case when context==VariableContext.global, the list can contain more than one element
+        public @NonNull final List<Resource> resources = new ArrayList<>();
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class OutputVariable {
-        public String name;
-        public EnumsApi.VariableContext context;
-        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
-        public GitInfo git;
-        public DiskInfo disk;
-        public Resource resource;
+        public @NonNull String name;
+        public @NonNull EnumsApi.VariableContext context;
+        public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public @Nullable GitInfo git;
+        public @Nullable DiskInfo disk;
+        public @NonNull Resource resource;
         public boolean isInited;
     }
 
@@ -116,51 +144,49 @@ public class TaskParamsYaml implements BaseParams {
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
-            if (this.metas != null) {
-                clone.metas = new ArrayList<>();
-                for (Meta meta : this.metas) {
-                    clone.metas.add(new Meta(meta.key, meta.value, meta.ext));
-                }
-            }
+            this.metas.stream().map(meta->new Meta(meta.key, meta.value, meta.ext)).collect(Collectors.toCollection(()->clone.metas));
             return clone;
         }
 
         /**
          * code of function, i.e. simple-app:1.0
          */
-        public String code;
-        public String type;
-        public String file;
+        public @NonNull String code;
+        public @NonNull String type;
+
+        // todo 2020-03-10 must it be NonNull or Nullable?
+        public @NonNull String file;
         /**
          * params for command line for invoking function
          * <p>
          * this isn't a holder for yaml-based config
          */
-        public String params;
-        public String env;
-        public EnumsApi.FunctionSourcing sourcing;
-        public Map<EnumsApi.Type, String> checksumMap;
-        public FunctionInfo info = new FunctionInfo();
-        public String checksum;
-        public GitInfo git;
+        public @NonNull String params;
+        public @NonNull String env;
+        public @NonNull EnumsApi.FunctionSourcing sourcing;
+        public @Nullable Map<EnumsApi.Type, String> checksumMap;
+        public @NonNull FunctionInfo info = new FunctionInfo();
+        public @Nullable String checksum;
+        public @Nullable GitInfo git;
         public boolean skipParams = false;
-        public List<Meta> metas = new ArrayList<>();
+        public final List<Meta> metas = new ArrayList<>();
     }
 
     @Data
+    @NoArgsConstructor
     public static class TaskYaml {
-        public Long execContextId;
-        public String processCode;
-        public FunctionConfig function;
-        public List<FunctionConfig> preFunctions;
-        public List<FunctionConfig> postFunctions;
+        public @NonNull Long execContextId;
+        public @NonNull String processCode;
+        public @NonNull FunctionConfig function;
+        public @NonNull final List<FunctionConfig> preFunctions = new ArrayList<>();
+        public @NonNull final List<FunctionConfig> postFunctions = new ArrayList<>();
 
         public boolean clean = false;
-        public EnumsApi.FunctionExecContext context;
+        public @NonNull EnumsApi.FunctionExecContext context;
 
-        public Map<String, Map<String, String>> inline;
-        public final List<InputVariable> inputs = new ArrayList<>();
-        public final List<OutputVariable> outputs = new ArrayList<>();
+        public @Nullable Map<String, Map<String, String>> inline;
+        public @NonNull final List<InputVariable> inputs = new ArrayList<>();
+        public @NonNull final List<OutputVariable> outputs = new ArrayList<>();
 
         /**
          * Timeout before terminate a process with function
@@ -173,6 +199,6 @@ public class TaskParamsYaml implements BaseParams {
         public String workingPath;
     }
 
-    public TaskYaml task = new TaskYaml();
+    public @NonNull TaskYaml task = new TaskYaml();
 
 }

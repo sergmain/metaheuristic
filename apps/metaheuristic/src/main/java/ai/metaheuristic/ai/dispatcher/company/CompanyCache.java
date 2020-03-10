@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -37,6 +38,7 @@ public class CompanyCache {
         return companyRepository.save(account);
     }
 
+    @Nullable
     @Cacheable(cacheNames = {Consts.COMPANIES_CACHE}, unless="#result==null")
     public Company findByUniqueId(Long uniqueId) {
         return companyRepository.findByUniqueId(uniqueId);

@@ -16,7 +16,9 @@
 package ai.metaheuristic.ai.dispatcher.beans;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -30,11 +32,13 @@ import java.io.Serializable;
 @Table(name = "mh_processor")
 @Data
 @ToString(exclude = "status")
+@NoArgsConstructor
 public class Processor implements Serializable {
     private static final long serialVersionUID = -6094247705164836600L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
     public Long id;
 
     @Version

@@ -26,6 +26,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,6 +68,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
 
     List<Variable> findAllByName(String variableName);
 
+    @Nullable
     @Query(value="select b.filename from Variable b where b.name=:var")
     String findFilenameByVar(String var);
 
@@ -77,10 +79,12 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Transactional(readOnly = true)
     Optional<Variable> findById(@NonNull Long id);
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select b.data from Variable b where b.id=:id")
     Blob getDataAsStreamByCode(Long id);
 
+    @Nullable
     @Transactional
     @Query(value="select b from Variable b where b.id=:id")
     Variable findByIdForUpdate(Long id);

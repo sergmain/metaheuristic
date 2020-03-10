@@ -19,9 +19,9 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -36,7 +36,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Objects;
 
 import static org.junit.Assert.*;
 
@@ -109,7 +109,7 @@ public class TestTaskRequest extends FeatureMethods {
             assertTrue(task.isCompleted);
 
             execContextSchedulerService.updateExecContextStatus(execContextForFeature.id,true);
-            execContextForFeature = execContextCache.findById(execContextForFeature.id);
+            execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
         }
         {
             final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();

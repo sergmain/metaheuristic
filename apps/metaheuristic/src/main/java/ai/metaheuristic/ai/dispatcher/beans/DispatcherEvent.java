@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.beans;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -29,12 +31,14 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_EVENT")
 @Data
+@NoArgsConstructor
 public class DispatcherEvent implements Serializable {
 
     private static final long serialVersionUID = 6281346638344725952L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
     public Long id;
 
     @Version

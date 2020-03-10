@@ -16,13 +16,19 @@
 
 package ai.metaheuristic.api.data.exec_context;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,17 +58,17 @@ public class ExecContextParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Variable {
-        public String name;
+        public @NonNull String name;
         public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
 
-        public Variable(String name) {
+        public Variable(@NonNull String name) {
             this.name = name;
         }
 
-        public Variable(EnumsApi.DataSourcing sourcing, String name) {
+        public Variable(@NonNull EnumsApi.DataSourcing sourcing, @NonNull String name) {
             this.sourcing = sourcing;
             this.name = name;
         }
@@ -72,15 +78,15 @@ public class ExecContextParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class FunctionDefinition {
-        public String code;
+        public @NonNull String code;
         public String params;
-        public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
+        public @NonNull EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
 
-        public FunctionDefinition(String code) {
+        public FunctionDefinition(@NonNull String code) {
             this.code = code;
         }
 
-        public FunctionDefinition(String code, EnumsApi.FunctionExecContext context) {
+        public FunctionDefinition(@NonNull String code, @NonNull EnumsApi.FunctionExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -92,15 +98,15 @@ public class ExecContextParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class Process {
 
-        public String processName;
-        public String processCode;
+        public @NonNull String processName;
+        public @NonNull String processCode;
 
-        public String execContextId;
-        public String internalContextId;
+        public @NonNull String execContextId;
+        public @NonNull String internalContextId;
 
-        public FunctionDefinition function;
-        public List<FunctionDefinition> preFunctions;
-        public List<FunctionDefinition> postFunctions;
+        public @NonNull FunctionDefinition function;
+        public @Nullable List<FunctionDefinition> preFunctions;
+        public @Nullable List<FunctionDefinition> postFunctions;
 
         /**
          * Timeout before terminating a process with function
@@ -108,11 +114,11 @@ public class ExecContextParamsYaml implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-        public final List<Variable> inputs = new ArrayList<>();
-        public final List<Variable> outputs = new ArrayList<>();
-        public List<Meta> metas = new ArrayList<>();
+        public @NonNull final List<Variable> inputs = new ArrayList<>();
+        public @NonNull final List<Variable> outputs = new ArrayList<>();
+        public @Nullable List<Meta> metas = new ArrayList<>();
 
-        public Process(String processName, String processCode, String execContextId, String internalContextId, FunctionDefinition function) {
+        public Process(@NonNull String processName, @NonNull String processCode, @NonNull String execContextId, @NonNull String internalContextId, @NonNull FunctionDefinition function) {
             this.processName = processName;
             this.processCode = processCode;
             this.execContextId = execContextId;
@@ -122,17 +128,17 @@ public class ExecContextParamsYaml implements BaseParams {
     }
 
     public boolean clean;
-    public List<Process> processes;
-    public VariableDeclaration variables;
+    public @NonNull final List<Process> processes = new ArrayList<>();
+    public @Nullable VariableDeclaration variables;
 
     // this is a graph for runtime phase
-    public String graph;
+    public @NonNull String graph = ConstsApi.EMPTY_GRAPH;
 
     // this graph is for creating tasks dynamically
-    public String processesGraph;
+    public @NonNull String processesGraph = ConstsApi.EMPTY_GRAPH;
 
     @JsonIgnore
-    public Process findProcess(String processCode) {
+    public @Nullable Process findProcess(String processCode) {
         return processes.stream().filter(o -> o.processCode.equals(processCode)).findAny().orElse(null);
     }
 

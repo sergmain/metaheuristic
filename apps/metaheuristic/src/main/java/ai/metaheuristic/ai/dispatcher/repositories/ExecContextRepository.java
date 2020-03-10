@@ -18,11 +18,13 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.api.dispatcher.ExecContext;
+import lombok.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,8 +35,9 @@ import java.util.List;
 @Profile("dispatcher")
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
 
+    @Nullable
     @Query(value="select e from ExecContextImpl e where e.id=:id")
-    ExecContextImpl findByIdForUpdate(Long id);
+    ExecContextImpl findByIdForUpdate(@NonNull Long id);
 
     @Transactional(readOnly = true)
     @Query(value="select w.id, w.state from ExecContextImpl w ")

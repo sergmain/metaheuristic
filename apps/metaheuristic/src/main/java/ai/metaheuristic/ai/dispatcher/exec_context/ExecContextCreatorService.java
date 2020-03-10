@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -24,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -35,6 +35,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -114,7 +115,7 @@ public class ExecContextCreatorService {
         // validate the sourceCode
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
         if (sourceCodeValidation.status != EnumsApi.SourceCodeValidateStatus.OK) {
-            return new ExecContextCreationResult(sourceCodeValidation.errorMessages);
+            return new ExecContextCreationResult(sourceCodeValidation.getErrorMessagesAsList());
         }
 
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
@@ -132,7 +133,7 @@ public class ExecContextCreatorService {
         return ecr;
     }
 
-    private ExecContextImpl createExecContext(SourceCodeImpl sourceCode, SourceCodeData.SourceCodeGraph sourceCodeGraph) {
+    private @NonNull ExecContextImpl createExecContext(SourceCodeImpl sourceCode, SourceCodeData.SourceCodeGraph sourceCodeGraph) {
 
         ExecContextImpl ec = new ExecContextImpl();
         ec.setSourceCodeId(sourceCode.id);
@@ -150,9 +151,9 @@ public class ExecContextCreatorService {
     private ExecContextParamsYaml to(SourceCodeData.SourceCodeGraph sourceCodeGraph) {
         ExecContextParamsYaml params = new ExecContextParamsYaml();
         params.clean = sourceCodeGraph.clean;
-        params.processes = sourceCodeGraph.processes;
+        params.processes.addAll(sourceCodeGraph.processes);
         params.variables = sourceCodeGraph.variables;
-        params.graph = Consts.EMPTY_GRAPH;
+        params.graph = ConstsApi.EMPTY_GRAPH;
         params.processesGraph = ExecContextProcessGraphService.asString(sourceCodeGraph.processGraph);
 
         return params;

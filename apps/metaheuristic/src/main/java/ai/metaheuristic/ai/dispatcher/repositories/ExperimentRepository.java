@@ -23,6 +23,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,7 @@ import java.util.List;
 @Profile("dispatcher")
 public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
 
+    @Nullable
     @Query(value="select e from Experiment e where e.id=:id")
     Experiment findByIdForUpdate(Long id);
 
@@ -52,22 +55,27 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
     @Query(value="select e.id from Experiment e order by e.id desc")
     Slice<Long> findAllByOrderByIdDesc(Pageable pageable);
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select e.id from Experiment e where e.execContextId=:execContextId")
     Long findIdByExecContextId(long execContextId);
 
+    @Nullable
     @Transactional
     @Query(value="select e from Experiment e where e.execContextId=:execContextId")
     Experiment findByExecContextIdForUpdate(Long execContextId);
 
+    @NonNull
     @Override
     @Transactional(readOnly = true)
     List<Experiment> findAll();
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select e.id from Experiment e where e.code=:code")
     Long findIdByCode(String code);
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select e from Experiment e where e.code=:code")
     Experiment findByCode(String code);

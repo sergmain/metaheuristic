@@ -53,6 +53,27 @@ public class TaskParamsYamlV1 implements BaseParams {
         if (S.b(task.processCode)) {
             throw new CheckIntegrityFailedException("processCode is blank");
         }
+        if (task.execContextId==null) {
+            throw new CheckIntegrityFailedException("execContextId is null");
+        }
+        for (InputVariableV1 input : task.inputs) {
+            if (input.resources.isEmpty()) {
+                throw new CheckIntegrityFailedException("(input.resources.isEmpty())");
+            }
+            if (input.context== EnumsApi.VariableContext.local) {
+                if (input.resources.size()>1) {
+                    throw new CheckIntegrityFailedException("(input.context== EnumsApi.VariableContext.local)  and (input.resources.size()>1)");
+                }
+                if (input.resources.get(0).context!= EnumsApi.VariableContext.local) {
+                    throw new CheckIntegrityFailedException("(input.resources.get(0).context!= EnumsApi.VariableContext.local)");
+                }
+            }
+            if (input.context== EnumsApi.VariableContext.global) {
+                if (input.resources.get(0).context!= EnumsApi.VariableContext.global) {
+                    throw new CheckIntegrityFailedException("(input.resources.get(0).context!= EnumsApi.VariableContext.global)");
+                }
+            }
+        }
         return true;
     }
 
@@ -67,10 +88,16 @@ public class TaskParamsYamlV1 implements BaseParams {
         public long length;
     }
 
+    /**
+     * Resource is related one-to-one to a record in table MH_VARIABLE or in table MH_VARIABLE_GLOBAL
+     * for MH_VARIABLE  context will be VariableContext.local
+     * for MH_VARIABLE_GLOBAL  context will be VariableContext.global
+     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class ResourceV1 {
+        public EnumsApi.VariableContext context;
         public String id;
         public String realName;
     }
@@ -84,6 +111,8 @@ public class TaskParamsYamlV1 implements BaseParams {
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
+
+        // Only for case when context==VariableContext.global, the list can contain more than one element
         public final List<ResourceV1> resources = new ArrayList<>();
     }
 

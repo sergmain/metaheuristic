@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.yaml.batch;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -33,13 +34,15 @@ public class BatchParamsYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(BatchParamsYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public BatchParamsYaml upgradeTo(BatchParamsYamlV1 v2, Long ... vars) {
+    public BatchParamsYaml upgradeTo(@NonNull BatchParamsYamlV1 v2, Long ... vars) {
         v2.checkIntegrity();
         BatchParamsYaml t = new BatchParamsYaml();
         if( v2.batchStatus!=null ) {
@@ -53,8 +56,9 @@ public class BatchParamsYamlUtilsV1
         return t;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         // not supported
         return null;
     }
@@ -75,6 +79,7 @@ public class BatchParamsYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public BatchParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable

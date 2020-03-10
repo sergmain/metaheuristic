@@ -298,7 +298,7 @@ public class AtlasTopLevelService {
         experiment.isFeatureProduced = epy.processing.isFeatureProduced;
         experiment.createdOn = epy.createdOn;
         experiment.numberOfTask = epy.processing.numberOfTask;
-        experiment.hyperParams = epy.experimentYaml.hyperParams;
+        experiment.hyperParams.addAll(epy.experimentYaml.hyperParams);
 
         AtlasData.ExperimentDataOnly result = new AtlasData.ExperimentDataOnly();
         if (experiment.getExecContextId() == null) {
@@ -348,7 +348,7 @@ public class AtlasTopLevelService {
         experiment.isFeatureProduced = epy.processing.isFeatureProduced;
         experiment.createdOn = epy.createdOn;
         experiment.numberOfTask = epy.processing.numberOfTask;
-        experiment.hyperParams = epy.experimentYaml.hyperParams;
+        experiment.hyperParams.addAll(epy.experimentYaml.hyperParams);
 
 
 
@@ -541,8 +541,12 @@ public class AtlasTopLevelService {
             }
 
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.taskParams);
-            int idxX = mapX.get(taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(0)));
-            int idxY = mapY.get(taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(1)));
+            int idxX = 0;
+            int idxY = 0;
+            if (taskParamYaml.task.inline!=null) {
+                idxX = mapX.get(taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(0)));
+                idxY = mapY.get(taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(1)));
+            }
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
         }
 
@@ -565,6 +569,9 @@ public class AtlasTopLevelService {
         List<AtlasTaskParamsYaml> selected = new ArrayList<>();
         for (AtlasTaskParamsYaml task : tasks) {
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.taskParams);
+            if (taskParamYaml.task.inline==null) {
+                continue;
+            }
             boolean[] isOk = new boolean[taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).size()];
             int idx = 0;
             for (Map.Entry<String, String> entry : taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).entrySet()) {
@@ -637,9 +644,6 @@ public class AtlasTopLevelService {
         }
 
         AtlasData.ExperimentFeatureExtendedResult result = prepareExperimentFeatures(atlasId, ypywc, experimentFeature);
-        if (result==null) {
-            return new AtlasData.ExperimentFeatureExtendedResult("#422.290 can't prepare experiment data");
-        }
         return result;
     }
 
@@ -775,7 +779,7 @@ public class AtlasTopLevelService {
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
-        result.tasks = findTasks(atlasId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
+        result.tasks = feature==null ?  Page.empty() : findTasks(atlasId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
         result.experimentFeature = ExperimentService.asExperimentFeatureData(feature, taskVertices, ypywc.getExperimentParamsYaml().processing.taskFeatures);
         result.consoleResult = new AtlasData.ConsoleResult();
         return result;

@@ -25,6 +25,7 @@ import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -105,7 +106,7 @@ public class FunctionCoreUtils {
     }
 
 
-    public static List<EnumsApi.OS> getSupportedOS(List<Meta> metas) {
+    public static List<EnumsApi.OS> getSupportedOS(@Nullable List<Meta> metas) {
         final Meta meta = MetaUtils.getMeta(metas, ConstsApi.META_MH_FUNCTION_SUPPORTED_OS);
         if (meta != null && meta.value!=null && !meta.value.isBlank()) {
             try {

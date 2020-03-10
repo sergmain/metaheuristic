@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +46,7 @@ public interface AtlasTaskRepository extends CrudRepository<AtlasTask, Long> {
     @Query("SELECT at.id FROM AtlasTask at where at.atlasId=:atlasId ")
     Set<Long> findIdsByAtlasId(Long atlasId);
 
+    @Nullable
     @Transactional(readOnly = true)
     AtlasTask findByAtlasIdAndTaskId(Long atlasId, Long taskId);
 

@@ -24,6 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
@@ -39,28 +41,22 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExecContextCache {
 
-    private final ExecContextRepository execContextRepository;
+    private final @NonNull ExecContextRepository execContextRepository;
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
     public void clearCache() {
     }
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
-    public ExecContextImpl save(ExecContextImpl execContext) {
-        if (execContext==null) {
-            return null;
-        }
+    public @NonNull ExecContextImpl save(@NonNull ExecContextImpl execContext) {
         log.debug("#461.010 save execContext, id: #{}, execContext: {}", execContext.id, execContext);
         return execContextRepository.save(execContext);
     }
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")
-    public void delete(ExecContextImpl execContext) {
-        if (execContext ==null || execContext.id==null) {
-            return;
-        }
+    public void delete(@NonNull ExecContextImpl execContext) {
         try {
-            execContextRepository.delete(execContext);
+            execContextRepository.deleteById(execContext.id);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#461.030 Error deleting of execContext by object, {}", e.toString());
         }
@@ -96,7 +92,7 @@ public class ExecContextCache {
     }
 
     @Cacheable(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, unless="#result==null")
-    public ExecContextImpl findById(Long id) {
+    public @Nullable ExecContextImpl findById(@NonNull Long id) {
         return execContextRepository.findById(id).orElse(null);
     }
 }

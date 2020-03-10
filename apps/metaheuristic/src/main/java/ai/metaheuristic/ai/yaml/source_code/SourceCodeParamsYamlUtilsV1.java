@@ -38,13 +38,15 @@ public class SourceCodeParamsYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(SourceCodeParamsYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public SourceCodeParamsYaml upgradeTo(SourceCodeParamsYamlV1 v1, Long ... vars) {
+    public SourceCodeParamsYaml upgradeTo(@NonNull SourceCodeParamsYamlV1 v1, Long ... vars) {
         v1.checkIntegrity();
         SourceCodeParamsYaml p = new SourceCodeParamsYaml();
         p.source = new SourceCodeParamsYaml.SourceCodeYaml();
@@ -87,8 +89,9 @@ public class SourceCodeParamsYamlUtilsV1
         return pr;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         // not supported
         throw new DowngradeNotSupportedException();
     }
@@ -109,6 +112,7 @@ public class SourceCodeParamsYamlUtilsV1
         return getYaml().dump(sourceCodeParamsYaml);
     }
 
+    @NonNull
     @Override
     public SourceCodeParamsYamlV1 to(String s) {
         final SourceCodeParamsYamlV1 p = getYaml().load(s);

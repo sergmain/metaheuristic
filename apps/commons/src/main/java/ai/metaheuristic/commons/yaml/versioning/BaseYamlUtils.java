@@ -16,46 +16,52 @@
 
 package ai.metaheuristic.commons.yaml.versioning;
 
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.YamlVersion;
-import lombok.NonNull;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Serge
  * Date: 6/17/2019
  * Time: 9:58 PM
  */
-public class BaseYamlUtils<T> {
+public class BaseYamlUtils<T extends BaseParams> {
 
-    private final ParamsYamlUtilsFactory FACTORY = new ParamsYamlUtilsFactory();
+    private @NonNull final ParamsYamlUtilsFactory FACTORY;
 
-    public BaseYamlUtils(Map<Integer, AbstractParamsYamlUtils> map, AbstractParamsYamlUtils defYamlUtils) {
-        FACTORY.map = map;
+    public BaseYamlUtils(@NonNull Map<Integer, AbstractParamsYamlUtils> map, @NonNull AbstractParamsYamlUtils defYamlUtils) {
         map.forEach((k,v)-> {
             if (k!=v.getVersion()) {
-                throw new IllegalStateException("Version is different, class: " + v.getClass().toString());
+                throw new IllegalStateException(S.f("Version is different, class: %s", v.getClass()));
             }
         });
-        FACTORY.defYamlUtils = defYamlUtils;
+        FACTORY = new ParamsYamlUtilsFactory(map, defYamlUtils);;
     }
 
-    public AbstractParamsYamlUtils getForVersion(int version) {
+    public @Nullable AbstractParamsYamlUtils getForVersion(int version) {
         return FACTORY.getForVersion(version);
     }
 
-    public AbstractParamsYamlUtils getDefault() {
+    public @NonNull AbstractParamsYamlUtils getDefault() {
         return FACTORY.getDefault();
     }
 
-    public String toString(BaseParams baseParams) {
-        return getDefault().getYaml().dumpAsMap(baseParams);
+    public @NonNull String toString(@NonNull BaseParams baseParams) {
+        return Objects.requireNonNull(getDefault().getYaml().dumpAsMap(baseParams));
     }
 
-    public String toStringAsVersion(BaseParams baseParamsYaml, int version) {
+    public @NonNull String toStringAsVersion(@NonNull BaseParams baseParamsYaml, int version) {
+        AbstractParamsYamlUtils utils = getForVersion(version);
+        if (utils==null) {
+            throw new IllegalStateException("Unsupported version: " + version);
+        }
         if (getDefault().getVersion()==version) {
             return toString(baseParamsYaml);
         }
@@ -74,14 +80,18 @@ public class BaseYamlUtils<T> {
             //noinspection unchecked
             T p = (T)currBaseParamsYaml;
 
-            return getForVersion(version).getYaml().dumpAsMap(p);
+            return Objects.requireNonNull(utils.getYaml().dumpAsMap(p));
         }
     }
 
     public T to(@NonNull String s, Long ... vars) {
         try {
-            YamlVersion v = YamlForVersioning.getYamlForVersion().load(s);
+            YamlVersion v = Objects.requireNonNull(YamlForVersioning.getYamlForVersion().load(s));
             AbstractParamsYamlUtils yamlUtils = getForVersion(v.getActualVersion());
+            if (yamlUtils==null) {
+                throw new IllegalStateException("Unsupported version: " + v.getActualVersion());
+            }
+
             BaseParams currBaseParamsYaml = yamlUtils.to(s);
             do {
                 //noinspection unchecked
@@ -90,6 +100,8 @@ public class BaseYamlUtils<T> {
 
             //noinspection unchecked,UnnecessaryLocalVariable
             T p = (T)currBaseParamsYaml;
+
+            p.checkIntegrity();
 
             return p;
         } catch (YAMLException e) {

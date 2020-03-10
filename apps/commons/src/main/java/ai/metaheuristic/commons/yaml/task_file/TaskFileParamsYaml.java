@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,8 +68,8 @@ public class TaskFileParamsYaml implements BaseParams {
     public static class InputVariable {
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
-        public GitInfo git;
-        public DiskInfo disk;
+        public @Nullable GitInfo git;
+        public @Nullable DiskInfo disk;
         public final List<Resource> resources = new ArrayList<>();
 
         public InputVariable(String name, EnumsApi.DataSourcing sourcing) {
@@ -83,8 +84,8 @@ public class TaskFileParamsYaml implements BaseParams {
     public static class OutputVariable {
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
-        public GitInfo git;
-        public DiskInfo disk;
+        public @Nullable GitInfo git;
+        public @Nullable DiskInfo disk;
         public Resource resources;
 
         public OutputVariable(String name, EnumsApi.DataSourcing sourcing, Resource resources) {
@@ -99,7 +100,7 @@ public class TaskFileParamsYaml implements BaseParams {
         public Long execContextId;
         public boolean clean = false;
 
-        public Map<String, Map<String, String>> inline;
+        public @Nullable Map<String, Map<String, String>> inline;
 
         public final List<InputVariable> inputs = new ArrayList<>();
         public final List<OutputVariable> outputs = new ArrayList<>();

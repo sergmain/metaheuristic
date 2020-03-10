@@ -101,7 +101,7 @@ public class AccountService {
             return new AccountData.AccountResult("#237.050 account wasn't found, accountId: " + id);
         }
         Account acc = (Account) account.clone();
-        acc.setPassword(null);
+        acc.maskPassword=true;
         return new AccountData.AccountResult(acc);
     }
 

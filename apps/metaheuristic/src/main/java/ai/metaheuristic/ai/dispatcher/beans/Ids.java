@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.beans;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -38,6 +40,7 @@ import java.io.Serializable;
         allocationSize = 1,
         initialValue = 1
 )
+@NoArgsConstructor
 public class Ids implements Serializable {
     private static final long serialVersionUID = 8697932300220763332L;
 
@@ -45,6 +48,7 @@ public class Ids implements Serializable {
 
     @Id
     @GeneratedValue(strategy= GenerationType.TABLE, generator = "mh_ids")
+    @NonNull
     public Long id;
 
     public Integer stub;

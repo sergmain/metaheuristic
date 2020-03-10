@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.yaml.company;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -34,13 +35,15 @@ public class CompanyParamsYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(CompanyParamsYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public CompanyParamsYamlV2 upgradeTo(CompanyParamsYamlV1 src, Long ... vars) {
+    public CompanyParamsYamlV2 upgradeTo(@NonNull CompanyParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         CompanyParamsYamlV2 trg = new CompanyParamsYamlV2();
         if (src.ac!=null) {
@@ -50,8 +53,9 @@ public class CompanyParamsYamlUtilsV1
         return trg;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -70,6 +74,7 @@ public class CompanyParamsYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public CompanyParamsYamlV1 to(String s) {
         if (S.b(s)) {

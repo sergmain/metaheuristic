@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,11 +64,11 @@ public class ExperimentParamsYaml implements BaseParams {
         public String code;
 
         public int seed = 42;
-        public List<HyperParam> hyperParams = new ArrayList<>();
+        public @NonNull final List<HyperParam> hyperParams = new ArrayList<>();
 
-        public String fitFunction;
-        public String predictFunction;
-        public String checkFittingFunction;
+        public @Nullable String fitFunction;
+        public @Nullable String predictFunction;
+        public @Nullable String checkFittingFunction;
     }
 
     @Data

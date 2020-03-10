@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNull;
 
 /**
  * @author Serge
@@ -48,8 +49,8 @@ public class ExecContextData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TaskVertex {
-        public Long taskId;
-        public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
+        public @NonNull Long taskId;
+        public @NonNull EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
     }
 
     @Data

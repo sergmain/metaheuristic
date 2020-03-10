@@ -81,7 +81,7 @@ public class ExecContextController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(sourceCodeId, context);
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         result.sourceCode = sourceCodeResultRest.sourceCode;
@@ -97,7 +97,7 @@ public class ExecContextController {
         DispatcherContext context = userContextService.getContext(authentication);
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorService.createExecContext(sourceCodeId, context);
         if (execContextResultRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", execContextResultRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", execContextResultRest.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/source-code/exec-contexts/" + sourceCodeId;
     }
@@ -109,7 +109,7 @@ public class ExecContextController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.ExecContextResult result = execContextTopLevelService.getExecContextExtendedForDeletion(execContextId, context);
         if (result.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", result.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         model.addAttribute("result", result);
@@ -123,7 +123,7 @@ public class ExecContextController {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteExecContextById(execContextId, context);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         return "redirect:/dispatcher/source-code/exec-contexts/"+ sourceCodeId;
@@ -136,7 +136,7 @@ public class ExecContextController {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeExecContextState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         return "redirect:/dispatcher/source-code/exec-contexts/" + sourceCodeId;

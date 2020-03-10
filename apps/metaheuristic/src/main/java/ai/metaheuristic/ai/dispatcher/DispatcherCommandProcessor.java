@@ -30,9 +30,11 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -89,8 +91,8 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public DispatcherCommParamsYaml.ResendTaskOutputResource checkForMissingOutputResources(ProcessorCommParamsYaml request) {
-        if (request.checkForMissingOutputResources==null) {
+    public @Nullable DispatcherCommParamsYaml.ResendTaskOutputResource checkForMissingOutputResources(ProcessorCommParamsYaml request) {
+        if (request.checkForMissingOutputResources==null || request.processorCommContext==null || request.processorCommContext.processorId==null) {
             return null;
         }
         final long processorId = Long.parseLong(request.processorCommContext.processorId);
@@ -103,6 +105,10 @@ public class DispatcherCommandProcessor {
         if (request.resendTaskOutputResourceResult==null) {
             return;
         }
+        if (request.processorCommContext==null) {
+            log.warn("#997.010 (request.processorCommContext==null)");
+            return;
+        }
         for (ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {
             taskService.processResendTaskOutputResourceResult(request.processorCommContext.processorId, status.status, status.taskId);
         }
@@ -113,11 +119,15 @@ public class DispatcherCommandProcessor {
         if (request.reportProcessorTaskStatus ==null || request.reportProcessorTaskStatus.statuses==null) {
             return;
         }
+        if (request.processorCommContext==null) {
+            log.warn("#997.020 (request.processorCommContext==null)");
+            return;
+        }
         processorTopLevelService.reconcileProcessorTasks(request.processorCommContext.processorId, request.reportProcessorTaskStatus.statuses);
     }
 
     // processing at dispatcher side
-    public DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(ProcessorCommParamsYaml request) {
+    public @Nullable DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(ProcessorCommParamsYaml request) {
         if (request.reportTaskProcessingResult==null || request.reportTaskProcessingResult.results==null) {
             return null;
         }
@@ -133,13 +143,17 @@ public class DispatcherCommandProcessor {
         if (request.reportProcessorStatus ==null) {
             return;
         }
+        if (request.processorCommContext==null) {
+            log.warn("#997.030 (request.processorCommContext==null)");
+            return;
+        }
         checkProcessorId(request);
         processorTopLevelService.storeProcessorStatuses(request.processorCommContext.processorId, request.reportProcessorStatus, request.functionDownloadStatus);
     }
 
     // processing at dispatcher side
-    public DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml request) {
-        if (request.requestTask==null) {
+    public @Nullable DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml request) {
+        if (request.requestTask==null || request.processorCommContext==null || S.b(request.processorCommContext.processorId)) {
             return null;
         }
         checkProcessorId(request);
@@ -160,7 +174,7 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public DispatcherCommParamsYaml.AssignedProcessorId getNewProcessorId(ProcessorCommParamsYaml.RequestProcessorId request) {
+    public @Nullable DispatcherCommParamsYaml.AssignedProcessorId getNewProcessorId(@Nullable ProcessorCommParamsYaml.RequestProcessorId request) {
         if (request==null) {
             return null;
         }

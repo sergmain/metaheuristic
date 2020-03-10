@@ -115,6 +115,7 @@ public class ExperimentTopLevelService {
         List<ExperimentApiData.ExperimentResult> experimentResults =
                 experimentIds.stream()
                         .map(experimentCache::findById)
+                        .filter(Objects::nonNull)
                         .map(ExperimentTopLevelService::asExperimentResultShort)
                         .collect(Collectors.toList());
 
@@ -122,13 +123,15 @@ public class ExperimentTopLevelService {
         return result;
     }
 
-    public ExperimentApiData.ExperimentResult getExperimentWithoutProcessing(long experimentId) {
+    public ExperimentApiData.ExperimentResult getExperimentWithoutProcessing(Long experimentId) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
             return new ExperimentApiData.ExperimentResult("#285.010 experiment wasn't found, experimentId: " + experimentId );
         }
         ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
-        epy.processing = null; //new ExperimentParamsYaml.ExperimentProcessing();
+
+        // hide the current processing info
+        epy.processing = new ExperimentParamsYaml.ExperimentProcessing();
         String params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
 
         return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment), params);
@@ -157,8 +160,13 @@ public class ExperimentTopLevelService {
 
     public ExperimentApiData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentId, Long featureId, String[] params, Pageable pageable) {
         Experiment experiment= experimentCache.findById(experimentId);
+        if (experiment==null) {
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("Experiment #"+experimentId+" wasn't found" );
+        }
         ExecContextImpl execContext = execContextCache.findById(experiment.execContextId);
-
+        if (execContext==null) {
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("ExecContext #"+experiment.execContextId+" wasn't found" );
+        }
         ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
 
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
@@ -337,7 +345,7 @@ public class ExperimentTopLevelService {
 
     public OperationStatusRest editExperimentCommit(ExperimentApiData.SimpleExperiment simpleExperiment) {
         OperationStatusRest op = validate(simpleExperiment);
-        if (op!=null) {
+        if (op.status!= EnumsApi.OperationStatus.OK) {
             return op;
         }
 
@@ -365,7 +373,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.140 Description of experiment is blank.");
         }
-        return null;
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK);
     }
 
     public OperationStatusRest metadataAddCommit(Long experimentId, String key, String value) {
@@ -635,7 +643,7 @@ public class ExperimentTopLevelService {
         File tempDir=null;
         try {
             tempDir = DirUtils.createTempDir("mh-experiment-upload-");
-            if (tempDir==null || tempDir.isFile()) {
+            if (tempDir==null) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#285.340 can't create temporary directory in " + location);
             }
@@ -649,7 +657,7 @@ public class ExperimentTopLevelService {
             OperationStatusRest result = addExperiment(yaml);
 
             if (result.isErrorMessages()) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages, result.infoMessages);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList(), result.getInfoMessagesAsList());
             }
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
@@ -659,7 +667,9 @@ public class ExperimentTopLevelService {
                     "#285.360 can't load source codes, Error: " + e.toString());
         }
         finally {
-            DirUtils.deleteAsync(tempDir);
+            if (tempDir != null) {
+                DirUtils.deleteAsync(tempDir);
+            }
         }
     }
 
@@ -707,7 +717,7 @@ public class ExperimentTopLevelService {
                     "#285.420 This experiment isn't bound to ExecContext");
         }
         execContextFSM.toExportingToAtlas(experiment.execContextId);
-        return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Exporting of experiment was successfully started", null);
+        return  new OperationStatusRest(EnumsApi.OperationStatus.OK, "Exporting of experiment was successfully started", "");
     }
 
     public OperationStatusRest produceTasks(String experimentCode) {
@@ -722,8 +732,11 @@ public class ExperimentTopLevelService {
         if (experiment==null || experiment.execContextId ==null) {
             return EnumsApi.ExecContextState.UNKNOWN;
         }
-        ExecContext wb = execContextCache.findById(experiment.execContextId);
-        return EnumsApi.ExecContextState.toState(wb.getState());
+        ExecContext ec = execContextCache.findById(experiment.execContextId);
+        if (ec==null) {
+            return EnumsApi.ExecContextState.UNKNOWN;
+        }
+        return EnumsApi.ExecContextState.toState(ec.getState());
     }
 
     public OperationStatusRest startProcessingOfTasks(String experimentCode) {
@@ -743,7 +756,7 @@ public class ExperimentTopLevelService {
             return status;
         }
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,
-                "State of experiment '"+experimentCode+"' was successfully changed to " + execState, null);
+                "State of experiment '"+experimentCode+"' was successfully changed to " + execState, "");
     }
 
 }

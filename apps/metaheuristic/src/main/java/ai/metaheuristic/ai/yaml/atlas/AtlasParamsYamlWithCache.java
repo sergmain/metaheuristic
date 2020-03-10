@@ -26,6 +26,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -42,10 +43,12 @@ public class AtlasParamsYamlWithCache {
     private ExperimentParamsYaml experimentParamsYaml = null;
     private ExecContextParamsYaml execContextParamsYaml = null;
 
+    @Nullable
     public ExperimentParamsYaml.ExperimentFeature getFeature(Long featureId) {
         return getExperimentParamsYaml().processing.features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
     }
 
+    @Nullable
     public ExperimentParamsYaml.ExperimentTaskFeature getExperimentTaskFeature(Long taskId) {
         return getExperimentParamsYaml().processing.taskFeatures
                 .stream()

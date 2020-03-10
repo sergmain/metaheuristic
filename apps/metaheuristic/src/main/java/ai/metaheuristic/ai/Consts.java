@@ -119,5 +119,4 @@ public class Consts {
 
     public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
-    public static final String EMPTY_GRAPH = "strict digraph G { }";
 }

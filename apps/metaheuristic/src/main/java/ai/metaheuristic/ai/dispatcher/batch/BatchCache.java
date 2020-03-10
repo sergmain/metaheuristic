@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
@@ -37,14 +39,12 @@ public class BatchCache {
     }
 
     @CacheEvict(value = {Consts.BATCHES_CACHE}, key = "#result.id")
-    public Batch save(Batch batch) {
-        if (batch==null) {
-            return null;
-        }
+    public Batch save(@NonNull Batch batch) {
         log.info("#459.010 save batch, id: #{}, batch: {}", batch.id, batch);
         return batchRepository.saveAndFlush(batch);
     }
 
+    @Nullable
     @Cacheable(cacheNames = {Consts.BATCHES_CACHE}, unless="#result==null")
     public Batch findById(Long id) {
         return batchRepository.findById(id).orElse(null);

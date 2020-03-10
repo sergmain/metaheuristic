@@ -20,6 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -35,13 +36,15 @@ public class TaskMachineLearningYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskMachineLearningYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public TaskMachineLearningYamlV2 upgradeTo(TaskMachineLearningYamlV1 src, Long ... vars) {
+    public TaskMachineLearningYamlV2 upgradeTo(@NonNull TaskMachineLearningYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         TaskMachineLearningYamlV2 trg = new TaskMachineLearningYamlV2();
 //        MetricValues m = MetricsUtils.getMetricValues(src.metrics);
@@ -52,8 +55,9 @@ public class TaskMachineLearningYamlUtilsV1
         return trg;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -72,6 +76,7 @@ public class TaskMachineLearningYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public TaskMachineLearningYamlV1 to(String s) {
         if (S.b(s)) {

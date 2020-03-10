@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.yaml.versioning;
 
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import lombok.Data;
+import org.springframework.lang.NonNull;
 
 import java.util.Map;
 
@@ -30,15 +31,15 @@ import java.util.Map;
 @Data
 public class ParamsYamlUtilsFactory {
 
-    public Map<Integer, AbstractParamsYamlUtils> map;
-    public AbstractParamsYamlUtils defYamlUtils;
+    public @NonNull Map<Integer, AbstractParamsYamlUtils> map;
+    public @NonNull AbstractParamsYamlUtils defYamlUtils;
 
-    public void init(Map<Integer, AbstractParamsYamlUtils> map, AbstractParamsYamlUtils defYamlUtils) {
+    public void ParamsYamlUtilsFactory(@NonNull Map<Integer, AbstractParamsYamlUtils> map, @NonNull AbstractParamsYamlUtils defYamlUtils) {
         this.map = map;
         this.defYamlUtils = defYamlUtils;
     }
 
-    public AbstractParamsYamlUtils getForVersion(int version) {
+    public @NonNull AbstractParamsYamlUtils getForVersion(int version) {
         AbstractParamsYamlUtils yamlUtils = map.get(version);
         if (yamlUtils==null) {
             throw new WrongVersionOfYamlFileException("Not supported version: " + version);
@@ -47,7 +48,7 @@ public class ParamsYamlUtilsFactory {
     }
 
 
-    public AbstractParamsYamlUtils getDefault() {
+    public @NonNull AbstractParamsYamlUtils getDefault() {
         return defYamlUtils;
     }
 }

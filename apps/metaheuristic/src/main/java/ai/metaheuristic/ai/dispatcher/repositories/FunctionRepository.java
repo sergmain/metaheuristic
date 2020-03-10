@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,9 +30,11 @@ import java.util.List;
 @Profile("dispatcher")
 public interface FunctionRepository extends JpaRepository<Function, Long> {
 
+    @Nullable
     @Transactional(readOnly = true)
     Function findByCode(String code);
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select b.id from Function b where b.code=:code")
     Long findIdByCode(String code);
@@ -40,6 +43,7 @@ public interface FunctionRepository extends JpaRepository<Function, Long> {
     @Query(value="select b.id from Function b where b.code in :codes")
     List<Long> findIdsByCodes(List<String> codes);
 
+    @Nullable
     @Transactional
     @Query(value="select b from Function b where b.code=:code")
     Function findByCodeForUpdate(String code);

@@ -18,7 +18,9 @@ package ai.metaheuristic.ai.dispatcher.beans;
 import ai.metaheuristic.api.dispatcher.Task;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -27,11 +29,13 @@ import java.io.Serializable;
 @Table(name = "MH_TASK")
 @Data
 @ToString(exclude = {"params", "extendedResult"} )
+@NoArgsConstructor
 public class TaskImpl implements Serializable, Task {
     private static final long serialVersionUID = 268796211406267810L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
     public Long id;
 
     @Version

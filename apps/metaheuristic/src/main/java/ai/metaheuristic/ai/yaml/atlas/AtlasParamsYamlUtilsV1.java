@@ -22,6 +22,7 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
@@ -41,13 +42,15 @@ public class AtlasParamsYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(AtlasParamsYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public AtlasParamsYaml upgradeTo(AtlasParamsYamlV1 src, Long ... vars) {
+    public AtlasParamsYaml upgradeTo(@NonNull AtlasParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         AtlasParamsYaml trg = new AtlasParamsYaml();
         trg.createdOn = src.createdOn;
@@ -60,8 +63,9 @@ public class AtlasParamsYamlUtilsV1
         return trg;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -80,6 +84,7 @@ public class AtlasParamsYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public AtlasParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable

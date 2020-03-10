@@ -114,7 +114,7 @@ public class AtlasService {
 
         StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(sourceCode, execContext, experiment);
         if (stored.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.errorMessages);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.getErrorMessagesAsList());
         }
         if (!execContextId.equals(stored.atlasParamsYamlWithCache.atlasParams.execContext.execContextId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment can't be stored, execContextId is different");

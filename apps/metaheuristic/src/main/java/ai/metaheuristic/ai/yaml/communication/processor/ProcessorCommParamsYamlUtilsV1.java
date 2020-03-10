@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.yaml.communication.processor;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -37,13 +38,15 @@ public class ProcessorCommParamsYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ProcessorCommParamsYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public ProcessorCommParamsYaml upgradeTo(ProcessorCommParamsYamlV1 v1, Long ... vars) {
+    public ProcessorCommParamsYaml upgradeTo(@NonNull ProcessorCommParamsYamlV1 v1, Long ... vars) {
         ProcessorCommParamsYaml t = new ProcessorCommParamsYaml();
 
         if (v1.processorCommContext !=null) {
@@ -112,8 +115,9 @@ public class ProcessorCommParamsYamlUtilsV1
         return t;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void v1) {
+    public Void downgradeTo(@NonNull Void v1) {
         return null;
 /*
         ProcessorCommParamsYamlV3 t = new ProcessorCommParamsYamlV3();
@@ -188,6 +192,7 @@ public class ProcessorCommParamsYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public ProcessorCommParamsYamlV1 to(String s) {
         final ProcessorCommParamsYamlV1 p = getYaml().load(s);

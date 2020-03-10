@@ -20,6 +20,7 @@ import ai.metaheuristic.api.data.experiment.ExperimentParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -37,13 +38,15 @@ public class ExperimentParamsYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ExperimentParamsYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public ExperimentParamsYamlV1 upgradeTo(ExperimentParamsYamlV1 src, Long ... vars) {
+    public ExperimentParamsYamlV1 upgradeTo(@NonNull ExperimentParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         ExperimentParamsYamlV1 trg = new ExperimentParamsYamlV1();
         trg.createdOn = src.createdOn;
@@ -82,8 +85,9 @@ public class ExperimentParamsYamlUtilsV1
         return trg;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -102,6 +106,7 @@ public class ExperimentParamsYamlUtilsV1
         return null;
     }
 
+    @NonNull
     @Override
     public ExperimentParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable

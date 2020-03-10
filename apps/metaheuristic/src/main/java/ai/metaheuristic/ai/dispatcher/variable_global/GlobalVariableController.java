@@ -74,7 +74,7 @@ public class GlobalVariableController {
 
         OperationStatusRest operationStatusRest = globalVariableTopLevelService.createGlobalVariableFromFile(file, variable);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/global-variable/global-variables";
     }
@@ -87,7 +87,7 @@ public class GlobalVariableController {
 
         OperationStatusRest operationStatusRest = globalVariableTopLevelService.createGlobalVariableWithExternalStorage(variable, params);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/global-variable/global-variables";
     }
@@ -96,7 +96,7 @@ public class GlobalVariableController {
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         GlobalVariableData.GlobalVariableResult globalVariableResultRest = globalVariableTopLevelService.getGlobalVariableById(id);
         if (globalVariableResultRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", globalVariableResultRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", globalVariableResultRest.getErrorMessagesAsList());
             return "redirect:/dispatcher/global-variables";
         }
         model.addAttribute("globalVariable", globalVariableResultRest.data);
@@ -107,7 +107,7 @@ public class GlobalVariableController {
     public String deleteGlobalVariable(Long id, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = globalVariableTopLevelService.deleteGlobalVariable(id);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/global-variable/global-variables";
     }

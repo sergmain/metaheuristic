@@ -61,7 +61,7 @@ public class ReplicationCoreService {
                 (uri) -> Request.Get(uri).connectTimeout(5000).socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
-            return new ReplicationData.AssetStateResponse(((ReplicationData.AssetAcquiringError) data).errorMessages);
+            return new ReplicationData.AssetStateResponse(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());
         }
         ReplicationData.AssetStateResponse response = (ReplicationData.AssetStateResponse) data;
         return response;

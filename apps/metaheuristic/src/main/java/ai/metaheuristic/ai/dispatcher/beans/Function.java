@@ -19,6 +19,8 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -26,11 +28,13 @@ import java.io.Serializable;
 @Entity
 @Table(name = "mh_function")
 @Data
+@NoArgsConstructor
 public class Function implements Serializable {
     private static final long serialVersionUID = 4066977399166436522L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
     public Long id;
 
     @Version

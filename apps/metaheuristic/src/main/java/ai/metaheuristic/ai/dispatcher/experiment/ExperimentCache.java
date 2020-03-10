@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
@@ -49,16 +51,14 @@ public class ExperimentCache {
         }
     }
 
+    @Nullable
     @Cacheable(cacheNames = {Consts.EXPERIMENTS_CACHE}, unless="#result==null")
-    public Experiment findById(long id) {
+    public Experiment findById(Long id) {
         return experimentRepository.findById(id).orElse(null);
     }
 
     @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#experiment.id")
-    public void delete(Experiment experiment) {
-        if (experiment==null || experiment.id==null) {
-            return;
-        }
+    public void delete(@NonNull Experiment experiment) {
         try {
             experimentRepository.delete(experiment);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -72,10 +72,7 @@ public class ExperimentCache {
     }
 
     @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#id")
-    public void deleteById(Long id) {
-        if (id==null) {
-            return;
-        }
+    public void deleteById(@NonNull Long id) {
         try {
             experimentRepository.deleteById(id);
         } catch (ObjectOptimisticLockingFailureException e) {

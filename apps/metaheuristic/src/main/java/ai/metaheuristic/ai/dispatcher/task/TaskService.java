@@ -26,6 +26,7 @@ import ai.metaheuristic.api.dispatcher.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -46,7 +47,7 @@ public class TaskService {
         return tasks.stream().map(Task::getId).collect(Collectors.toList());
     }
 
-    public void processResendTaskOutputResourceResult(String processorId, Enums.ResendTaskOutputResourceStatus status, long taskId) {
+    public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId) {
         switch(status) {
             case SEND_SCHEDULED:
                 log.info("#317.010 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, taskId);

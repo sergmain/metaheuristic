@@ -33,6 +33,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,12 +63,12 @@ public class TestGraph extends PreparingPlan {
     public void test() {
 
         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
-        execContextForFeature = (ExecContextImpl)result.execContext;
+        execContextForFeature = result.execContext;
 
         assertNotNull(execContextForFeature);
 
         OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForFeature.id, List.of(), List.of(1L));
-        execContextForFeature = execContextCache.findById(execContextForFeature.id);
+        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
@@ -77,7 +78,7 @@ public class TestGraph extends PreparingPlan {
 
         osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForFeature.id,List.of(1L), List.of(2L, 3L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        execContextForFeature = execContextCache.findById(execContextForFeature.id);
+        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
 
         count = execContextService.getCountUnfinishedTasks(execContextForFeature);
         assertEquals(3, count);
@@ -95,7 +96,7 @@ public class TestGraph extends PreparingPlan {
         ExecContextOperationStatusWithTaskList status =
                 execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(execContextForFeature.id,1L);
         assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
-        execContextForFeature = execContextCache.findById(execContextForFeature.id);
+        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
 
         // there is only 'BROKEN' exec state
         Set<EnumsApi.TaskExecState> states = execContextGraphTopLevelService.findAll(execContextForFeature).stream().map(o -> o.execState).collect(Collectors.toSet());
@@ -108,7 +109,7 @@ public class TestGraph extends PreparingPlan {
 
         setExecState(execContextForFeature, 1L, EnumsApi.TaskExecState.NONE);
         execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(execContextForFeature.id,1L);
-        execContextForFeature = execContextCache.findById(execContextForFeature.id);
+        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
 
         // there is only 'NONE' exec state
         states = execContextGraphTopLevelService.findAll(execContextForFeature).stream().map(o -> o.execState).collect(Collectors.toSet());

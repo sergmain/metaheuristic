@@ -17,6 +17,7 @@
 package ai.metaheuristic.api.data.atlas;
 
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,7 +35,7 @@ public class AtlasParamsYaml implements BaseParams {
     @Override
     public boolean checkIntegrity() {
         if (sourceCode ==null || execContext ==null || experiment==null || taskIds==null) {
-            throw new IllegalArgumentException("(sourceCode==null || execContext==null || experiment==null || taskIds==null)");
+            throw new CheckIntegrityFailedException("(sourceCode==null || execContext==null || experiment==null || taskIds==null)");
         }
         return true;
     }

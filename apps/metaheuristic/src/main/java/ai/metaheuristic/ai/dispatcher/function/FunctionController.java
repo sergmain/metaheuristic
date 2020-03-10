@@ -66,7 +66,7 @@ public class FunctionController {
     public String uploadFunction(final MultipartFile file, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = functionTopLevelService.uploadFunction(file);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         return REDIRECT_DISPATCHER_FUNCTIONS;
     }

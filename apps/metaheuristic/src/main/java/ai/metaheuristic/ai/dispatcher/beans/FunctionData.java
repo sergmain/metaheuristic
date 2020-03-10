@@ -18,7 +18,9 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -30,11 +32,13 @@ import java.sql.Timestamp;
 @Data
 @EqualsAndHashCode(of = {"functionCode"})
 @ToString(exclude={"data", "bytes"})
+@NoArgsConstructor
 public class FunctionData implements Serializable {
     private static final long serialVersionUID = 7768428475142175426L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
     public Long id;
 
     @Version

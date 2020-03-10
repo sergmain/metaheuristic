@@ -48,4 +48,5 @@ public class ConstsApi {
 
     public static final String META_MH_FUNCTION_SUPPORTED_OS = "mh.function-supported-os";
 
+    public static final String EMPTY_GRAPH = "strict digraph G { }";
 }

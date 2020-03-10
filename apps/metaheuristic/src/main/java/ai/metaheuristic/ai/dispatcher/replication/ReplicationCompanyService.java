@@ -135,7 +135,7 @@ public class ReplicationCompanyService {
                         .socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
-            return new ReplicationData.CompanyAsset(((ReplicationData.AssetAcquiringError) data).errorMessages);
+            return new ReplicationData.CompanyAsset(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());
         }
         ReplicationData.CompanyAsset response = (ReplicationData.CompanyAsset) data;
         return response;

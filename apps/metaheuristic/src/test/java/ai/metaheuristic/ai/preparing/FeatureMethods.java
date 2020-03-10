@@ -33,11 +33,11 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.Assert.*;
 
@@ -80,7 +80,7 @@ public abstract class FeatureMethods extends PreparingPlan {
 
     public void toStarted() {
         execContextFSM.toStarted(execContextForFeature);
-        execContextForFeature = execContextCache.findById(execContextForFeature.getId());
+        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.getId()));
         assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForFeature.getState());
     }
 
@@ -97,7 +97,7 @@ public abstract class FeatureMethods extends PreparingPlan {
 
 
             EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
-            execContextForFeature = execContextCache.findById(execContextForFeature.id);
+            execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
 

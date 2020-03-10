@@ -19,6 +19,7 @@ package ai.metaheuristic.api.data.atlas;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 /**
  * @author Serge
@@ -47,7 +48,7 @@ public class AtlasTaskParamsYaml implements BaseParams {
     public Long completedOn;
     public boolean completed;
     public Long assignedOn;
-    public String typeAsString;
+    public @Nullable String typeAsString;
 
     public String metrics;
     public String functionExecResults;

@@ -91,7 +91,7 @@ public class SourceCodeController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         model.addAttribute("source-code", sourceCodeResultRest.sourceCode);
@@ -105,14 +105,14 @@ public class SourceCodeController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.validateSourceCode(id, context);
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
 
         model.addAttribute("sourceCode", sourceCodeResultRest.sourceCode);
         model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
         model.addAttribute("infoMessages", sourceCodeResultRest.infoMessages);
-        model.addAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+        model.addAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
         return "dispatcher/source-code/source-code-edit";
     }
 
@@ -122,7 +122,7 @@ public class SourceCodeController {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.uploadSourceCode(file, context);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         return REDIRECT_DISPATCHER_SOURCE_CODES;
     }
@@ -133,7 +133,7 @@ public class SourceCodeController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.addSourceCode(sourceCodeYamlAsStr, context);
         if (sourceCodeResultRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
         }
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
@@ -147,7 +147,7 @@ public class SourceCodeController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.updateSourceCode(sourceCodeId, sourceCodeYamlAsStr, context);
         if (sourceCodeResultRest.isErrorMessages()) {
-            model.addAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            model.addAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.sourceCode.getId();
         }
 
@@ -167,7 +167,7 @@ public class SourceCodeController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         model.addAttribute("sourceCode", sourceCodeResultRest.sourceCode);
@@ -192,7 +192,7 @@ public class SourceCodeController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
         if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         model.addAttribute("sourceCode", sourceCodeResultRest.sourceCode);

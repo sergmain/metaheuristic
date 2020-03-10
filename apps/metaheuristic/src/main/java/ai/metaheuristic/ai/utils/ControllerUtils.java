@@ -41,7 +41,7 @@ public class ControllerUtils {
                 errorMessages = new ArrayList();
                 model.addAttribute(Consts.MODEL_ATTR_ERROR_MESSAGE, errorMessages);
             }
-            errorMessages.addAll(baseData.errorMessages);
+            errorMessages.addAll(baseData.getErrorMessagesAsList());
         }
         if (CollectionUtils.isNotEmpty(baseData.infoMessages)) {
             List infoMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_INFO_MESSAGES));

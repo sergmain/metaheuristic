@@ -77,7 +77,7 @@ public class TestTaskParamYaml {
 
     private TaskParamsYaml.InputVariable newVariable(String name, String resName) {
         TaskParamsYaml.InputVariable v1 = new TaskParamsYaml.InputVariable(name, EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher, null, null);
-        v1.resources.add(new TaskParamsYaml.Resource(resName, null));
+        v1.resources.add(new TaskParamsYaml.Resource(EnumsApi.VariableContext.local, resName, null));
         return v1;
     }
 

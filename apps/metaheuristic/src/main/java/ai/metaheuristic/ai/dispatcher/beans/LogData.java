@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -27,6 +29,7 @@ import java.sql.Timestamp;
 @Table(name = "MH_LOG_DATA")
 @Data
 @EqualsAndHashCode(of = {"id", "version"})
+@NoArgsConstructor
 public class LogData implements Serializable {
     private static final long serialVersionUID = -6065599957629315147L;
 
@@ -45,6 +48,7 @@ public class LogData implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
     public Long id;
 
     @Version

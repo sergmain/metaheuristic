@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
+import org.springframework.lang.NonNull;
 
 public class ProcessorData {
 
@@ -50,13 +51,13 @@ public class ProcessorData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ProcessorResult extends BaseDataClass {
-        public Processor processor;
+        public @NonNull Processor processor;
 
         public ProcessorResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ProcessorResult(Processor processor) {
+        public ProcessorResult(@NonNull Processor processor) {
             this.processor = processor;
         }
     }

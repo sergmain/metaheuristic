@@ -71,7 +71,7 @@ public class AtlasController {
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage) {
         AtlasData.ExperimentInfoExtended result = atlasTopLevelService.getExperimentInfoExtended(id);
         if (result.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", result.getErrorMessagesAsList());
             return "redirect:/dispatcher/atlas/atlas-experiments";
         }
 
@@ -89,7 +89,7 @@ public class AtlasController {
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         AtlasData.ExperimentDataOnly result = atlasTopLevelService.getExperimentDataOnly(id);
         if (result.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", result.getErrorMessagesAsList());
             return "redirect:/dispatcher/atlas/atlas-experiments";
         }
 
@@ -106,7 +106,7 @@ public class AtlasController {
     public String deleteCommit(Long atlasId, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = atlasTopLevelService.atlasDeleteCommit(atlasId);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return REDIRECT_DISPATCHER_ATLAS_ATLAS_EXPERIMENTS;
     }
@@ -122,7 +122,7 @@ public class AtlasController {
     public String uploadAtlas(final MultipartFile file, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = atlasTopLevelService.uploadExperiment(file);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         return REDIRECT_DISPATCHER_ATLAS_ATLAS_EXPERIMENTS;
     }
@@ -149,7 +149,7 @@ public class AtlasController {
         AtlasData.ExperimentFeatureExtendedResult experimentProgressResult =
                 atlasTopLevelService.getExperimentFeatureExtended(atlasId, experimentId, featureId);
         if (experimentProgressResult.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", experimentProgressResult.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", experimentProgressResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/atlas/atlas-experiment-info/" + atlasId;
         }
         model.addAttribute("metrics", experimentProgressResult.metricsResult);

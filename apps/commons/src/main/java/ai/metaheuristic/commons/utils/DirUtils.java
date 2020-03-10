@@ -17,6 +17,8 @@ package ai.metaheuristic.commons.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,21 +58,20 @@ public class DirUtils {
         return currDir;
     }
 
-    public static File createTempDir(String prefix) {
+    public static @Nullable File createTempDir(String prefix) {
         String tempDir = System.getProperty("java.io.tmpdir");
 
         Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         String prefixDate = format.format(date);
-        File newTempDir = null;
         for (int i = 0; i < 5; i++) {
-            newTempDir = new File(tempDir, prefix + prefixDate + "-" + System.nanoTime());
+            File newTempDir = new File(tempDir, prefix + prefixDate + "-" + System.nanoTime());
             if (newTempDir.exists()) {
                 continue;
             }
             newTempDir.mkdirs();
-            break;
+            return newTempDir;
         }
-        return newTempDir;
+        return null;
     }
 }

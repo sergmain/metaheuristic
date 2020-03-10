@@ -16,18 +16,22 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -40,11 +44,13 @@ import java.util.StringTokenizer;
 @Table(name = "MH_ACCOUNT")
 @Data
 @EqualsAndHashCode(of = {"username", "password"})
+@NoArgsConstructor
 public class Account implements UserDetails, Serializable, Cloneable {
     private static final long serialVersionUID = 708692073045562337L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
     public Long id;
 
     @Version
@@ -55,9 +61,11 @@ public class Account implements UserDetails, Serializable, Cloneable {
     public Long companyId;
 
     @Column(name = "USERNAME")
+    @NonNull
     public String username;
 
     @Column(name = "PASSWORD")
+    @NonNull
     public String password;
 
     @Column(name="IS_ACC_NOT_EXPIRED")
@@ -87,6 +95,7 @@ public class Account implements UserDetails, Serializable, Cloneable {
     @Column(name="UPDATED_ON")
     public long updatedOn;
 
+    @Nullable
     public String roles;
 
     @Column(name="SECRET_KEY")
@@ -102,22 +111,61 @@ public class Account implements UserDetails, Serializable, Cloneable {
         return a;
     }
 
+    @NonNull
     @Transient
     @JsonIgnore
     private String password2;
 
+    public boolean maskPassword = false;
+
+    @NonNull
+    public String getPassword() {
+        return maskPassword ? "" : password;
+    }
+
+    @NonNull
+    public String getPassword2() {
+        return maskPassword ? "" : password2;
+    }
+
     //TODO add checks on max length
     @Transient
     @JsonIgnore
+    @Nullable
     private String phoneAsStr;
 
-    @Transient
-    @JsonIgnore
-    private List<String> rolesAsList = null;
+    @Data
+    private static class InitedRoles {
+        public  boolean inited;
+        public final List<String> roles = new ArrayList<>();
+
+        public void reset() {
+            inited = false;
+            roles.clear();
+        }
+        public boolean contains(@NonNull String role) {
+            if (!inited) {
+                throw new IllegalStateException("(!inited)");
+            }
+            return roles.contains(role);
+        }
+
+        public void removeRole(String role) {
+            roles.remove(role);
+        }
+
+        public @NonNull String asString() {
+            return String.join(", ", roles);
+        }
+    }
 
     @Transient
     @JsonIgnore
-    private List<SerializableGrantedAuthority> grantedAuthorities = new ArrayList<>();
+    public final InitedRoles initedRoles = new InitedRoles();
+
+    @Transient
+    @JsonIgnore
+    private final List<SerializableGrantedAuthority> grantedAuthorities = new ArrayList<>();
 
     @Data
     @NoArgsConstructor
@@ -134,43 +182,46 @@ public class Account implements UserDetails, Serializable, Cloneable {
 
     @Transient
     @JsonIgnore
-    public boolean hasRole(String role) {
+    public boolean hasRole(@NonNull String role) {
         initRoles();
-        return rolesAsList.contains(role);
+        return initedRoles.contains(role);
     }
 
     @Transient
     @JsonIgnore
-    public List<String> getRolesAsList() {
+    public @NonNull List<String> getRolesAsList() {
         initRoles();
-        return rolesAsList;
+        return Collections.unmodifiableList(initedRoles.roles);
     }
 
     @Transient
     @JsonIgnore
-    public void storeNewRole(String role) {
+    public void removeRole(@NonNull String role) {
         synchronized (this) {
-            this.phoneAsStr = role;
-            rolesAsList = null;
+            initedRoles.removeRole(role);
+            this.roles = initedRoles.asString();
+            initedRoles.reset();
+
             grantedAuthorities.clear();
             initRoles();
         }
     }
 
     private void initRoles() {
-        if (rolesAsList==null) {
-            synchronized (this) {
-                if (rolesAsList==null) {
-                    List<String> list = new ArrayList<>();
-                    if (roles!=null) {
-                        StringTokenizer st = new StringTokenizer(roles, ",");
-                        while (st.hasMoreTokens()) {
-                            String role = st.nextToken().trim();
-                            list.add(role);
-                            grantedAuthorities.add(new SerializableGrantedAuthority(role));
-                        }
+        if (initedRoles.inited) {
+            return;
+        }
+        synchronized (this) {
+            if (roles!=null) {
+                StringTokenizer st = new StringTokenizer(roles, ",");
+                while (st.hasMoreTokens()) {
+                    String token = st.nextToken();
+                    if (S.b(token)) {
+                        continue;
                     }
-                    rolesAsList = list;
+                    String role = token.trim();
+                    initedRoles.roles.add(role);
+                    grantedAuthorities.add(new SerializableGrantedAuthority(role));
                 }
             }
         }

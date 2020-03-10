@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -38,7 +39,7 @@ public class AccountCache {
     }
 
     @Cacheable(cacheNames = Consts.ACCOUNTS_CACHE, unless="#result==null")
-    public Account findByUsername(String username) {
+    public @Nullable Account findByUsername(String username) {
         return accountRepository.findByUsername(username);
     }
 }

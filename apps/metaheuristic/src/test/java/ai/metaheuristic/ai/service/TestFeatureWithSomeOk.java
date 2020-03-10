@@ -25,6 +25,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Objects;
+
 import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
@@ -43,7 +45,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
         execContextFSM.toStarted(execContextForFeature);
-        execContextForFeature = execContextCache.findById(execContextForFeature.getId());
+        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.getId()));
         assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForFeature.getState());
 
         getTaskAndAssignToProcessor_mustBeNewTask();

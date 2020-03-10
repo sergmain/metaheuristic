@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,7 @@ public interface AtlasRepository extends CrudRepository<Atlas, Long> {
             "b.id, b.name, b.description, b.createdOn ) from Atlas b order by b.id desc")
     Slice<AtlasSimple> findAllAsSimple(Pageable pageable);
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select a.id from Atlas a where a.id=:atlasId")
     Long findIdById(Long atlasId);

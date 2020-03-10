@@ -61,6 +61,7 @@ import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
@@ -341,7 +342,7 @@ public class SouthbridgeService {
     }
 
     @SuppressWarnings("UnnecessaryReturnStatement")
-    private void checkProcessorId(String processorId, String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
+    private void checkProcessorId(@Nullable String processorId, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
         if (StringUtils.isBlank(processorId)) {
             log.warn("#442.045 StringUtils.isBlank(processorId), return RequestProcessorId()");
             lcpy.assignedProcessorId = dispatcherCommandProcessor.getNewProcessorId(new ProcessorCommParamsYaml.RequestProcessorId());
@@ -403,7 +404,7 @@ public class SouthbridgeService {
             log.debug("#442.074 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
                     "'    processor.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
                     "'    processor.status:\n{},\n" +
-                    "'    return ReAssignProcessorId() with the same processorId and sessionId. only session's timestamp was updated.",
+                    "'    return ReAssignProcessorId() with the same processorId and sessionId. only session'p timestamp was updated.",
                     processor.version, millis, ss.sessionCreatedOn, diff, SESSION_UPDATE_TIMEOUT, processor.status);
             // the same processor, with the same sessionId
             // so we just need to refresh sessionId timestamp
@@ -417,8 +418,13 @@ public class SouthbridgeService {
                 log.error("#442.085 Error");
                 throw e;
             }
-            Processor s = processorCache.findById(processor.id);
-            log.debug("#442.086 old processor.version: {}, in cache processor.version: {}, processor.status:\n{},\n", processor.version, s.version, s.status);
+
+            // for debugging behaviour of cache only
+            Processor p = processorCache.findById(processor.id);
+            if (p!=null) {
+                log.debug("#442.086 old processor.version: {}, in cache processor.version: {}, processor.status:\n{},\n", processor.version, p.version, p.status);
+            }
+
             // the same processorId but new sessionId
             return;
         }

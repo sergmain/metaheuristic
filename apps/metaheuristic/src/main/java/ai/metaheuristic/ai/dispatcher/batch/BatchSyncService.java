@@ -16,10 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.batch;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -77,7 +78,39 @@ public class BatchSyncService {
     }
 
     @SuppressWarnings("Duplicates")
+    @NonNull
     <T> T getWithSync(Long batchId, Function<Batch, T> function) {
+        final AtomicInteger obj;
+        try {
+            writeLock.lock();
+            obj = syncMap.computeIfAbsent(batchId, o -> new AtomicInteger());
+        } finally {
+            writeLock.unlock();
+        }
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            obj.incrementAndGet();
+            try {
+//                Batch batch = batchRepository.findByIdForUpdate(batchId, execContext.account.companyId);
+                Batch batch = batchRepository.findByIdForUpdate(batchId);
+                return function.apply(batch);
+            } finally {
+                try {
+                    writeLock.lock();
+                    if (obj.get() == 1) {
+                        syncMap.remove(batchId);
+                    }
+                    obj.decrementAndGet();
+                } finally {
+                    writeLock.unlock();
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("Duplicates")
+    @Nullable
+    <T> T getWithSyncNullable(Long batchId, Function<Batch, T> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();
@@ -107,10 +140,8 @@ public class BatchSyncService {
     }
 
     @SuppressWarnings("Duplicates")
-    <T> T getWithSyncReadOnly(Batch batch, Supplier<T> function) {
-        if (batch==null) {
-            return null;
-        }
+    @NonNull
+    <T> T getWithSyncReadOnly(@NonNull Batch batch, Supplier<T> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();

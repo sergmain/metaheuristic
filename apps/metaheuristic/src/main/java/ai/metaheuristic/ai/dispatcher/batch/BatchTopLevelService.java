@@ -179,7 +179,7 @@ public class BatchTopLevelService {
 
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, dispatcherContext.getCompanyId());
         if (sourceCodesForCompany.isErrorMessages()) {
-            return new BatchData.UploadingStatus(sourceCodesForCompany.errorMessages);
+            return new BatchData.UploadingStatus(sourceCodesForCompany.getErrorMessagesAsList());
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {

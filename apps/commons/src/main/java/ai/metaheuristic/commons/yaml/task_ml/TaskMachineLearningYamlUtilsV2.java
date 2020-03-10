@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.yaml.task_ml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -34,13 +35,15 @@ public class TaskMachineLearningYamlUtilsV2
         return 2;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskMachineLearningYamlV2.class);
     }
 
+    @NonNull
     @Override
-    public TaskMachineLearningYaml upgradeTo(TaskMachineLearningYamlV2 src, Long ... vars) {
+    public TaskMachineLearningYaml upgradeTo(@NonNull TaskMachineLearningYamlV2 src, Long ... vars) {
         src.checkIntegrity();
         TaskMachineLearningYaml trg = new TaskMachineLearningYaml();
         trg.metrics = new TaskMachineLearningYaml.Metrics(src.metrics.status, src.metrics.error, src.metrics.metrics);
@@ -49,8 +52,9 @@ public class TaskMachineLearningYamlUtilsV2
         return trg;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -69,6 +73,7 @@ public class TaskMachineLearningYamlUtilsV2
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public TaskMachineLearningYamlV2 to(String s) {
         if (S.b(s)) {

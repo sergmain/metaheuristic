@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -36,13 +37,15 @@ public class AtlasTaskParamsYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(AtlasTaskParamsYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public AtlasTaskParamsYaml upgradeTo(AtlasTaskParamsYamlV1 src, Long ... vars) {
+    public AtlasTaskParamsYaml upgradeTo(@NonNull AtlasTaskParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         AtlasTaskParamsYaml trg = new AtlasTaskParamsYaml();
         BeanUtils.copyProperties(src, trg);
@@ -50,8 +53,9 @@ public class AtlasTaskParamsYamlUtilsV1
         return trg;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -70,6 +74,7 @@ public class AtlasTaskParamsYamlUtilsV1
         return getYaml().dump(paramsYaml);
     }
 
+    @NonNull
     @Override
     public AtlasTaskParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable

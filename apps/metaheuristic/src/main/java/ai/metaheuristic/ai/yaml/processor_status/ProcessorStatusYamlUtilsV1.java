@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -36,13 +37,15 @@ public class ProcessorStatusYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ProcessorStatusYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public ProcessorStatusYaml upgradeTo(ProcessorStatusYamlV1 src, Long ... vars) {
+    public ProcessorStatusYaml upgradeTo(@NonNull ProcessorStatusYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         ProcessorStatusYaml trg = new ProcessorStatusYaml();
         trg.downloadStatuses = src.downloadStatuses.stream()
@@ -75,8 +78,9 @@ public class ProcessorStatusYamlUtilsV1
         return trg;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -95,6 +99,7 @@ public class ProcessorStatusYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public ProcessorStatusYamlV1 to(String s) {
         if (S.b(s)) {

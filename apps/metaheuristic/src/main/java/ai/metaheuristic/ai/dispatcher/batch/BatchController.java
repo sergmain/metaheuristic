@@ -124,7 +124,7 @@ public class BatchController {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, context, true);
         if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
         }
         return REDIRECT_BATCH_BATCHES;
     }
@@ -134,7 +134,7 @@ public class BatchController {
         DispatcherContext context = userContextService.getContext(authentication);
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
         if (uploadingStatus.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.getErrorMessagesAsList());
         }
         return REDIRECT_BATCH_BATCHES;
     }

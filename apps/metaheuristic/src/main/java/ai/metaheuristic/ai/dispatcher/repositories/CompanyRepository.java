@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,9 +38,11 @@ import java.util.List;
 @Profile("dispatcher")
 public interface CompanyRepository extends CrudRepository<Company, Long> {
 
+    @Nullable
     @Query(value="select a from Company a where a.uniqueId=:uniqueId")
     Company findByUniqueIdForUpdate(Long uniqueId);
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select a from Company a where a.uniqueId=:uniqueId")
     Company findByUniqueId(Long uniqueId);

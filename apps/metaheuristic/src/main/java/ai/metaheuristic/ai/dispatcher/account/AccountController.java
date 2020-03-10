@@ -78,7 +78,7 @@ public class AccountController {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = accountTopLevelService.addAccount(account, context);
         if (operationStatusRest.isErrorMessages()) {
-            model.addAttribute("errorMessage", operationStatusRest.errorMessages);
+            model.addAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
             return "dispatcher/account/account-add";
         }
         return "redirect:/dispatcher/account/accounts";
@@ -89,11 +89,9 @@ public class AccountController {
         DispatcherContext context = userContextService.getContext(authentication);
         AccountData.AccountResult accountResult = accountTopLevelService.getAccount(id, context);
         if (accountResult.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", accountResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/account/accounts";
         }
-        accountResult.account.setPassword(null);
-        accountResult.account.setPassword2(null);
         model.addAttribute("account", accountResult.account);
         return "dispatcher/account/account-edit";
     }
@@ -104,7 +102,7 @@ public class AccountController {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = accountTopLevelService.editFormCommit(id, publicName, enabled, context);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         if (operationStatusRest.isInfoMessages()) {
             redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
@@ -118,11 +116,9 @@ public class AccountController {
         DispatcherContext context = userContextService.getContext(authentication);
         AccountData.AccountResult accountResult = accountTopLevelService.getAccount(id, context);
         if (accountResult.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", accountResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/account/accounts";
         }
-        accountResult.account.setPassword(null);
-        accountResult.account.setPassword2(null);
         model.addAttribute("account", accountResult.account);
         return "dispatcher/account/account-password-edit";
     }
@@ -133,7 +129,7 @@ public class AccountController {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = accountTopLevelService.passwordEditFormCommit(id, password, password2, context);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         if (operationStatusRest.isInfoMessages()) {
             redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);

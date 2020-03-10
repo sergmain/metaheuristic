@@ -147,7 +147,7 @@ public class ReplicationAccountService {
                         .socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
-            return new ReplicationData.AccountAsset(((ReplicationData.AssetAcquiringError) data).errorMessages);
+            return new ReplicationData.AccountAsset(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());
         }
         //noinspection UnnecessaryLocalVariable
         ReplicationData.AccountAsset response = (ReplicationData.AccountAsset) data;

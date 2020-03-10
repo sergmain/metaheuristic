@@ -16,7 +16,11 @@
 
 package ai.metaheuristic.commons;
 
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * @author Serge
@@ -25,15 +29,15 @@ import java.util.Locale;
  */
 public final class S {
 
-    public static String f(String format, Object... args) {
-        return String.format(format, args);
+    public static @NonNull String f(@NonNull String format, @Nullable Object... args) {
+        return Objects.requireNonNull(String.format(format, args));
     }
 
-    public static String f(Locale l, String format, Object... args) {
+    public static @NonNull String f(@NonNull Locale l, @NonNull String format, Object... args) {
         return String.format(l, format, args);
     }
 
-    public static boolean b(String s) {
+    public static boolean b(@Nullable String s) {
         return s==null || s.isBlank();
     }
 }

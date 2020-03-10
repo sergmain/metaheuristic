@@ -141,7 +141,7 @@ public class BatchForOperatorController {
             final RedirectAttributes redirectAttributes) {
         OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, companyUniqueId, false);
         if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
     }
@@ -156,7 +156,7 @@ public class BatchForOperatorController {
         DispatcherContext context = userContextService.getContext(authentication, companyUniqueId);
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
         if (uploadingStatus.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
     }

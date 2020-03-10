@@ -17,9 +17,11 @@ package ai.metaheuristic.ai.resource;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 
@@ -33,7 +35,7 @@ public class ResourceUtils {
      * @param resourceFilename String
      * @return AssetFile
      */
-    public static AssetFile prepareDataFile(File rootDir, String resourceId, String resourceFilename) {
+    public static AssetFile prepareDataFile(File rootDir, String resourceId, @Nullable String resourceFilename) {
         return prepareAssetFile(rootDir, resourceId, resourceFilename, EnumsApi.BinaryType.data.toString());
     }
 
@@ -41,12 +43,12 @@ public class ResourceUtils {
         return prepareAssetFile(rootDir, id, null, ConstsApi.ARTIFACTS_DIR);
     }
 
-    private static AssetFile prepareAssetFile(File rootDir, String resourceId, String resourceFilename, String assetDirname ) {
+    private static AssetFile prepareAssetFile(File rootDir, String resourceId, @Nullable String resourceFilename, String assetDirname ) {
         final File assetDir = new File(rootDir, assetDirname);
         return prepareAssetFile(assetDir, resourceId, resourceFilename);
     }
 
-    public static AssetFile prepareAssetFile(File assetDir, String resourceId, String resourceFilename) {
+    public static AssetFile prepareAssetFile(File assetDir, String resourceId, @Nullable String resourceFilename) {
         final AssetFile assetFile = new AssetFile();
         if (!assetDir.exists() && !assetDir.mkdirs()) {
             assetFile.isError = true;
@@ -75,7 +77,7 @@ public class ResourceUtils {
         return assetFile;
     }
 
-    public static AssetFile prepareFunctionFile(File baseDir, String functionCode, String resourceFilename) {
+    public static AssetFile prepareFunctionFile(File baseDir, String functionCode, @Nullable String resourceFilename) {
 
         final AssetFile assetFile = new AssetFile();
         final File trgDir = new File(baseDir, EnumsApi.BinaryType.function.toString());
@@ -91,9 +93,7 @@ public class ResourceUtils {
             log.error("#025.35 Can't create resource dir: {}", resDir.getAbsolutePath());
             return assetFile;
         }
-        assetFile.file = StringUtils.isNotBlank(resourceFilename)
-                ? new File(resDir, resourceFilename)
-                : new File(resDir, resId);
+        assetFile.file = !S.b(resourceFilename) ? new File(resDir, resourceFilename) : new File(resDir, resId);
 
         assetFile.isExist = assetFile.file.exists();
 

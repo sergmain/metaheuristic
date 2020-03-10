@@ -68,7 +68,7 @@ public class ProcessorController {
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         ProcessorData.ProcessorResult processorResultRest = processorTopLevelService.getProcessor(id);
         if (processorResultRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", processorResultRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", processorResultRest.getErrorMessagesAsList());
             return "redirect:/dispatcher/processor/processors";
         }
         ControllerUtils.addMessagesToModel(model, processorResultRest);
@@ -80,7 +80,7 @@ public class ProcessorController {
     public String saveProcessor(Processor processor, final RedirectAttributes redirectAttributes) {
         ProcessorData.ProcessorResult r = processorTopLevelService.saveProcessor(processor);
         if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/processor/processors";
     }
@@ -89,7 +89,7 @@ public class ProcessorController {
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         ProcessorData.ProcessorResult processorResultRest = processorTopLevelService.getProcessor(id);
         if (processorResultRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", processorResultRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", processorResultRest.getErrorMessagesAsList());
             return "redirect:/dispatcher/processor/processors";
         }
         model.addAttribute("processor", processorResultRest.processor);
@@ -100,7 +100,7 @@ public class ProcessorController {
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
         OperationStatusRest r = processorTopLevelService.deleteProcessorById(id);
         if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/processor/processors";
     }

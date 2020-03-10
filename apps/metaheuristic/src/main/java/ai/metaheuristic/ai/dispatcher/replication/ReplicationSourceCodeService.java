@@ -135,7 +135,7 @@ public class ReplicationSourceCodeService {
                         .socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
-            return new ReplicationData.SourceCodeAsset(((ReplicationData.AssetAcquiringError) data).errorMessages);
+            return new ReplicationData.SourceCodeAsset(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());
         }
         ReplicationData.SourceCodeAsset response = (ReplicationData.SourceCodeAsset) data;
         return response;

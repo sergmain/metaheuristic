@@ -24,6 +24,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,15 +42,16 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class ExecContextGraphTopLevelService {
 
-    private final ExecContextGraphService execContextGraphService;
-    private final ExecContextSyncService execContextSyncService;
-    private final TaskPersistencer taskPersistencer;
+    private final @NonNull ExecContextGraphService execContextGraphService;
+    private final @NonNull ExecContextSyncService execContextSyncService;
+    private final @NonNull TaskPersistencer taskPersistencer;
 
     // section 'execContext graph methods'
 
     // read-only operations with graph
-    public List<ExecContextData.TaskVertex> findAll(ExecContextImpl execContext) {
-        return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findAll(execContext));
+    public @NonNull List<ExecContextData.TaskVertex> findAll(@NonNull ExecContextImpl execContext) {
+        List<ExecContextData.TaskVertex> vertexList = execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findAll(execContext));
+        return vertexList;
     }
 
     public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
@@ -88,8 +90,9 @@ public class ExecContextGraphTopLevelService {
     }
 
     public OperationStatusRest addNewTasksToGraph(Long execContextId, List<Long> parentTaskIds, List<Long> taskIds) {
+        //noinspection UnnecessaryLocalVariable
         final OperationStatusRest withSync = execContextSyncService.getWithSync(execContextId, (execContext) -> execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds));
-        return withSync != null ? withSync : OperationStatusRest.OPERATION_STATUS_OK;
+        return withSync;
     }
 
     public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(Long execContextId, Long taskId) {

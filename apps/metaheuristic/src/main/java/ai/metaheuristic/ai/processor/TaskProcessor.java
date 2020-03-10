@@ -35,6 +35,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -149,7 +150,13 @@ public class TaskProcessor {
             log.info("Start processing task {}", task);
             File taskDir = processorTaskService.prepareTaskDir(task.dispatcherUrl, task.taskId);
 
-            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            final TaskParamsYaml taskParamYaml;
+            try {
+                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            } catch (CheckIntegrityFailedException e) {
+                processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.037 Broken task. Check of integrity was failed.");
+                continue;
+            }
 
             ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingOfAssets(task, dispatcherInfo, taskParamYaml, dispatcher, taskDir);
             if (resultOfChecking.isError) {
@@ -162,10 +169,6 @@ public class TaskProcessor {
             }
             if (taskParamYaml.task.outputs.isEmpty()) {
                 processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.050 Broken task. output variable must be specified");
-                continue;
-            }
-            if (taskParamYaml.task.function ==null) {
-                processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, "#100.080 Broken task. Function isn't defined");
                 continue;
             }
 
@@ -423,7 +426,7 @@ public class TaskProcessor {
         int count = 0;
         count += (taskYaml.preFunctions !=null) ? taskYaml.preFunctions.size() : 0;
         count += (taskYaml.postFunctions !=null) ? taskYaml.postFunctions.size() : 0;
-        count += (taskYaml.function !=null) ? 1 : 0;
+        count++;
         return count;
     }
 
@@ -443,8 +446,9 @@ public class TaskProcessor {
         if (StringUtils.isNotBlank(functionPrepareResult.function.env)) {
             interpreter = new Interpreter(envService.getEnvYaml().getEnvs().get(functionPrepareResult.function.env));
             if (interpreter.list == null) {
-                log.warn("#100.150 Can't process the task, the interpreter wasn't found for env: {}", functionPrepareResult.function.env);
-                return null;
+                String es = "#100.150 Can't process the task, the interpreter wasn't found for env: " + functionPrepareResult.function.env;
+                log.warn(es);
+                return new FunctionApiData.SystemExecResult(functionPrepareResult.function.code, false, -991, es);
             }
             cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
         }

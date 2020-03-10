@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.beans;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -29,11 +31,13 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_ATLAS_TASK")
 @Data
+@NoArgsConstructor
 public class AtlasTask implements Serializable {
     private static final long serialVersionUID = -1225513309547284431L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
     public Long id;
 
     @Version

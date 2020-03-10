@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,10 +35,12 @@ import java.sql.Blob;
 @Profile("dispatcher")
 public interface FunctionDataRepository extends CrudRepository<FunctionData, Long> {
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select b.data from FunctionData b where b.functionCode=:functionCode")
     Blob getDataAsStreamByCode(String functionCode);
 
+    @Nullable
     @Transactional
     @Query(value="select b from FunctionData b where b.functionCode=:functionCode")
     FunctionData findByCodeForUpdate(String functionCode);

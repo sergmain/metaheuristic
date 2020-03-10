@@ -39,13 +39,15 @@ public class ExecContextParamsYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ExecContextParamsYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public ExecContextParamsYaml upgradeTo(ExecContextParamsYamlV1 v1, Long ... vars) {
+    public ExecContextParamsYaml upgradeTo(@NonNull ExecContextParamsYamlV1 v1, Long ... vars) {
         ExecContextParamsYaml t = new ExecContextParamsYaml();
 
         // right now we don't need to convert Graph because it has only one version of structure
@@ -53,7 +55,7 @@ public class ExecContextParamsYamlUtilsV1
         t.clean = v1.clean;
         t.graph = v1.graph;
         t.processesGraph = v1.processesGraph;
-        t.processes = v1.processes.stream().map(ExecContextParamsYamlUtilsV1::toProcess).collect(Collectors.toList());
+        v1.processes.stream().map(ExecContextParamsYamlUtilsV1::toProcess).collect(Collectors.toCollection(()->t.processes));
         t.variables = v1.variables!=null ? new ExecContextParamsYaml.VariableDeclaration(v1.variables.globals, v1.variables.startInputAs, v1.variables.inline) : null;
 
         return t;
@@ -80,8 +82,9 @@ public class ExecContextParamsYamlUtilsV1
         return new ExecContextParamsYaml.FunctionDefinition(f1.code, f1.params, f1.context);
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -100,6 +103,7 @@ public class ExecContextParamsYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public ExecContextParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable

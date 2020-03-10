@@ -86,7 +86,7 @@ public class CompanyController {
     public String addFormCommit(Model model, Company company) {
         OperationStatusRest operationStatusRest = companyTopLevelService.addCompany(company);
         if (operationStatusRest.isErrorMessages()) {
-            model.addAttribute("errorMessage", operationStatusRest.errorMessages);
+            model.addAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
             company.id = null;
             company.version = null;
             model.addAttribute("company", company);
@@ -100,7 +100,7 @@ public class CompanyController {
     public String editCompany(@PathVariable Long companyUniqueId, Model model, final RedirectAttributes redirectAttributes){
         CompanyData.CompanyResult companyResult = companyTopLevelService.getCompany(companyUniqueId);
         if (companyResult.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", companyResult.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", companyResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/company/companies";
         }
         model.addAttribute("company", companyResult.company);
@@ -113,7 +113,7 @@ public class CompanyController {
     public String editFormCommit(Long companyUniqueId, String name, String groups, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = companyTopLevelService.editFormCommit(companyUniqueId, name, groups);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         if (operationStatusRest.isInfoMessages()) {
             redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
@@ -161,7 +161,7 @@ public class CompanyController {
         account.companyId = companyUniqueId;
         OperationStatusRest operationStatusRest = companyAccountTopLevelService.addAccount(account, companyUniqueId);
         if (operationStatusRest.isErrorMessages()) {
-            model.addAttribute("errorMessage", operationStatusRest.errorMessages);
+            model.addAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
             model.addAttribute("companyUniqueId", companyUniqueId);
             return "dispatcher/company/company-account-add";
         }
@@ -173,7 +173,7 @@ public class CompanyController {
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @PathVariable Long companyUniqueId){
         AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(id, companyUniqueId);
         if (accountResult.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", accountResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/company/company-accounts/" + companyUniqueId;
         }
         accountResult.account.setPassword(null);
@@ -189,7 +189,7 @@ public class CompanyController {
                                  final RedirectAttributes redirectAttributes, @PathVariable Long companyUniqueId) {
         OperationStatusRest operationStatusRest = companyAccountTopLevelService.editFormCommit(id, publicName, enabled, companyUniqueId);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         if (operationStatusRest.isInfoMessages()) {
             redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
@@ -203,7 +203,7 @@ public class CompanyController {
                                final RedirectAttributes redirectAttributes, @PathVariable Long companyUniqueId){
         AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(id, companyUniqueId);
         if (accountResult.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", accountResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/company/company-accounts/" + companyUniqueId;
         }
         accountResult.account.setPassword(null);
@@ -219,7 +219,7 @@ public class CompanyController {
                                          final RedirectAttributes redirectAttributes, @PathVariable Long companyUniqueId) {
         OperationStatusRest operationStatusRest = companyAccountTopLevelService.passwordEditFormCommit(id, password, password2, companyUniqueId);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         if (operationStatusRest.isInfoMessages()) {
             redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
@@ -232,7 +232,7 @@ public class CompanyController {
     public String editRoles(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @PathVariable Long companyUniqueId) {
         AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(id, companyUniqueId);
         if (accountResult.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", accountResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/company/company-accounts/"+companyUniqueId;
         }
         accountResult.account.setPassword(null);
@@ -250,13 +250,13 @@ public class CompanyController {
                                       final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
         AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(accountId, companyId);
         if (accountResult.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", accountResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/company/company-accounts/"+companyId;
         }
 
         OperationStatusRest operationStatusRest = companyAccountTopLevelService.storeRolesForUserById(accountId, roleId, checkbox, companyId);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         if (operationStatusRest.isInfoMessages()) {
             redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);

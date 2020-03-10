@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -38,13 +39,15 @@ public class TaskParamsYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskParamsYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public TaskParamsYaml upgradeTo(TaskParamsYamlV1 v1, Long ... vars) {
+    public TaskParamsYaml upgradeTo(@NonNull TaskParamsYamlV1 v1, Long ... vars) {
         v1.checkIntegrity();
         TaskParamsYaml t = new TaskParamsYaml();
         t.task = new TaskParamsYaml.TaskYaml();
@@ -72,7 +75,7 @@ public class TaskParamsYamlUtilsV1
         v.disk = v1.disk;
         v.git = v1.git;
         v.sourcing = v1.sourcing;
-        v1.resources.stream().map(r->new TaskParamsYaml.Resource(r.id, r.realName)).collect(Collectors.toCollection(()->v.resources));
+        v1.resources.stream().map(r->new TaskParamsYaml.Resource(r.context, r.id, r.realName)).collect(Collectors.toCollection(()->v.resources));
         return v;
     }
 
@@ -82,12 +85,13 @@ public class TaskParamsYamlUtilsV1
         v.git = v1.git;
         v.name = v1.name;
         v.sourcing = v1.sourcing;
-        v.resource = v1.resources!=null ? new TaskParamsYaml.Resource(v1.resources.id, v1.resources.realName) : null;
+        v.resource = v1.resources!=null ? new TaskParamsYaml.Resource(v1.context, v1.resources.id, v1.resources.realName) : null;
         return v;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -125,9 +129,11 @@ public class TaskParamsYamlUtilsV1
 
     @Override
     public String toString(TaskParamsYamlV1 params) {
+        params.checkIntegrity();
         return getYaml().dump(params);
     }
 
+    @NonNull
     @Override
     public TaskParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable

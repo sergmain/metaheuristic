@@ -20,6 +20,8 @@ import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -28,11 +30,13 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_SOURCE_CODE")
 @Data
+@NoArgsConstructor
 public class SourceCodeImpl implements Serializable, SourceCode {
     private static final long serialVersionUID = 6764501814772365639L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
     public Long id;
 
     @Version

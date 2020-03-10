@@ -26,6 +26,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,10 +52,12 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
     @Query(value="select b.filename from GlobalVariable b where b.variable=:var")
     List<String> findFilenamesByVar(String var);
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select b.data from GlobalVariable b where b.id=:id")
     Blob getDataAsStreamById(Long id);
 
+    @Nullable
     @Transactional
     @Query(value="select b from GlobalVariable b where b.id=:id")
     GlobalVariable findByIdForUpdate(Long id);
@@ -73,6 +76,7 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
             "order by b.uploadTs desc ")
     Slice<SimpleGlobalVariable> getAllAsSimpleGlobalVariable(Pageable pageable);
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable(" +
             "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +

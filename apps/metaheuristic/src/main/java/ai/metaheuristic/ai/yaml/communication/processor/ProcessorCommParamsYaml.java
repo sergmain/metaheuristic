@@ -24,6 +24,8 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,11 +50,11 @@ public class ProcessorCommParamsYaml implements BaseParams {
 
     // always report info about functions
     public FunctionDownloadStatus functionDownloadStatus = new FunctionDownloadStatus();
-    public ProcessorCommContext processorCommContext;
-    public RequestProcessorId requestProcessorId;
-    public ReportProcessorStatus reportProcessorStatus;
+    public @Nullable ProcessorCommContext processorCommContext;
+    public @Nullable RequestProcessorId requestProcessorId;
+    public @Nullable ReportProcessorStatus reportProcessorStatus;
     public ReportProcessorTaskStatus reportProcessorTaskStatus;
-    public RequestTask requestTask;
+    public @Nullable RequestTask requestTask;
     public ReportTaskProcessingResult reportTaskProcessingResult;
     public CheckForMissingOutputResources checkForMissingOutputResources;
     public ResendTaskOutputResourceResult resendTaskOutputResourceResult;
@@ -74,8 +76,8 @@ public class ProcessorCommParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProcessorCommContext {
-        public String processorId;
-        public String sessionId;
+        @Nullable public String processorId;
+        @Nullable String sessionId;
     }
 
     @Data

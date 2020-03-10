@@ -23,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
@@ -48,19 +50,13 @@ public class ProcessorCache {
     }
 
     @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#result.id")
-    public Processor save(Processor processor) {
-        if (processor ==null) {
-            return null;
-        }
+    public Processor save(@NonNull Processor processor) {
         log.debug("#457.010 save processor, id: #{}, processor: {}", processor.id, processor);
         return processorRepository.save(processor);
     }
 
     @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#processor.id")
-    public void delete(Processor processor) {
-        if (processor ==null || processor.id==null) {
-            return;
-        }
+    public void delete(@NonNull Processor processor) {
         try {
             processorRepository.delete(processor);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -97,6 +93,7 @@ public class ProcessorCache {
         }
     }
 
+    @Nullable
     @Cacheable(cacheNames = {Consts.PROCESSORS_CACHE}, unless="#result==null")
     public Processor findById(Long id) {
         return processorRepository.findById(id).orElse(null);

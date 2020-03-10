@@ -103,13 +103,17 @@ public class ExperimentController {
         ExperimentApiData.ExperimentFeatureExtendedResult experimentProgressResult =
                 experimentTopLevelService.getFeatureProgressPart(experimentId, featureId, params, pageable);
 
+        if (experimentProgressResult.isErrorMessages()) {
+            log.warn("{}", experimentProgressResult.getErrorMessagesAsStr());
+        }
+        else {
 //        model.addAttribute("metrics", experimentProgressResult.metricsResult);
 //        model.addAttribute("params", experimentProgressResult.hyperParamResult);
-        model.addAttribute("result", experimentProgressResult.tasksResult);
-        model.addAttribute("experiment", experimentProgressResult.experiment);
-        model.addAttribute("feature", experimentProgressResult.experimentFeature);
-        model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
-
+            model.addAttribute("result", experimentProgressResult.tasksResult);
+            model.addAttribute("experiment", experimentProgressResult.experiment);
+            model.addAttribute("feature", experimentProgressResult.experimentFeature);
+            model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
+        }
         return "dispatcher/experiment/experiment-feature-progress :: fragment-table";
     }
 
@@ -118,7 +122,7 @@ public class ExperimentController {
         ExperimentApiData.ExperimentFeatureExtendedResult experimentProgressResult =
             experimentTopLevelService.getExperimentFeatureExtended(experimentId, featureId);
         if (experimentProgressResult.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", experimentProgressResult.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", experimentProgressResult.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
         model.addAttribute("metrics", experimentProgressResult.metricsResult);
@@ -141,7 +145,7 @@ public class ExperimentController {
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
         ExperimentApiData.ExperimentInfoExtendedResult result = experimentTopLevelService.getExperimentInfo(id);
         if (result.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", result.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
 
@@ -160,7 +164,7 @@ public class ExperimentController {
     public String edit(@PathVariable Long id, Model model, @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes) {
         ExperimentApiData.ExperimentsEditResult r = experimentTopLevelService.editExperiment(id);
         if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
 
@@ -176,7 +180,7 @@ public class ExperimentController {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeExecContextState(state, id, context);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         return "redirect:/dispatcher/experiment/experiment-info/" + experimentId;
@@ -186,7 +190,7 @@ public class ExperimentController {
     public String uploadExperiment(final MultipartFile file, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = experimentTopLevelService.uploadExperiment(file);
         if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
@@ -195,7 +199,7 @@ public class ExperimentController {
     public String addFormCommit(ExperimentApiData.ExperimentData experiment, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.addExperimentCommit(experiment);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
             return "dispatcher/experiment/experiment-add-form";
         }
         return REDIRECT_DISPATCHER_EXPERIMENTS;
@@ -205,7 +209,7 @@ public class ExperimentController {
     public String editFormCommit(ExperimentApiData.SimpleExperiment simpleExperiment, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.editExperimentCommit(simpleExperiment);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/experiment/experiment-edit/" + simpleExperiment.getId();
     }
@@ -214,7 +218,7 @@ public class ExperimentController {
     public String metadataAddCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.metadataAddCommit(id, key, value);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/experiment/experiment-edit/"+id;
     }
@@ -223,7 +227,7 @@ public class ExperimentController {
     public String metadataEditCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.metadataEditCommit(id, key, value);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/experiment/experiment-edit/"+id;
     }
@@ -232,7 +236,7 @@ public class ExperimentController {
     public String functionAddCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.functionAddCommit(id, code);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
         return "redirect:/dispatcher/experiment/experiment-edit/"+id;
@@ -242,7 +246,7 @@ public class ExperimentController {
     public String metadataDeleteCommit(@PathVariable Long experimentId, @PathVariable String key, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.metadataDeleteCommit(experimentId, key);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/experiment/experiment-edit/" + experimentId;
     }
@@ -251,7 +255,7 @@ public class ExperimentController {
     public String metadataDefaultAddCommit(@PathVariable Long experimentId, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.metadataDefaultAddCommit(experimentId);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/experiment/experiment-edit/" + experimentId;
     }
@@ -260,7 +264,7 @@ public class ExperimentController {
     public String functionDeleteCommit(@PathVariable Long experimentId, @PathVariable String functionCode, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.functionDeleteCommit(experimentId, functionCode);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/experiment/experiment-edit/" + experimentId;
     }
@@ -269,7 +273,7 @@ public class ExperimentController {
     public String functionDeleteByTypeCommit(@PathVariable Long experimentId, @PathVariable String functionType, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.functionDeleteByTypeCommit(experimentId, functionType);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/experiment/experiment-edit/" + experimentId;
     }
@@ -278,7 +282,7 @@ public class ExperimentController {
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         ExperimentApiData.ExperimentResult result = experimentTopLevelService.getExperimentWithoutProcessing(id);
         if (result.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", result.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
 
@@ -301,14 +305,14 @@ public class ExperimentController {
             if (wb != null) {
                 OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteExecContextById(experiment.execContextId, context);
                 if (operationStatusRest.isErrorMessages()) {
-                    redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+                    redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
                     return REDIRECT_DISPATCHER_EXPERIMENTS;
                 }
             }
         }
         OperationStatusRest status = experimentTopLevelService.experimentDeleteCommit(id);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
@@ -317,7 +321,7 @@ public class ExperimentController {
     public String experimentCloneCommit(Long id, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.experimentCloneCommit(id);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
@@ -326,7 +330,7 @@ public class ExperimentController {
     public String toAtlas(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.toAtlas(id);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/experiment/experiment-info/"+id;
     }
@@ -341,7 +345,7 @@ public class ExperimentController {
             @PathVariable Long execContextId, @PathVariable Long experimentId, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = execContextService.resetBrokenTasks(execContextId);
         if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return "redirect:/dispatcher/experiment/experiment-info/"+experimentId;
     }

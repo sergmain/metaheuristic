@@ -43,6 +43,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.Assert.*;
 
@@ -124,7 +125,7 @@ public class TestSourceCodeService extends PreparingPlan {
         assertNull(simpleTask0);
 
         execContextFSM.toStarted(execContextForFeature);
-        execContextForFeature = execContextCache.findById(execContextForFeature.getId());
+        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.getId()));
 
         assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForFeature.getState());
         {
@@ -202,7 +203,7 @@ public class TestSourceCodeService extends PreparingPlan {
             assertNotNull(loopTask);
             storeExecResult(loopSimpleTask);
             execContextSchedulerService.updateExecContextStatus( execContextForFeature.id, true);
-            execContextForFeature = execContextCache.findById(execContextForFeature.id);
+            execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
 
             final long count = execContextService.getCountUnfinishedTasks(execContextForFeature);
             assertNotEquals(count, prevValue);

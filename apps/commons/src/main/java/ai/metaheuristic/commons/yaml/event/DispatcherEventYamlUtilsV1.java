@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.api.data.event.DispatcherEventYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -36,13 +37,15 @@ public class DispatcherEventYamlUtilsV1
         return 1;
     }
 
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(DispatcherEventYamlV1.class);
     }
 
+    @NonNull
     @Override
-    public DispatcherEventYaml upgradeTo(DispatcherEventYamlV1 src, Long ... vars) {
+    public DispatcherEventYaml upgradeTo(@NonNull DispatcherEventYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         DispatcherEventYaml trg = new DispatcherEventYaml();
         trg.createdOn = src.createdOn;
@@ -67,8 +70,9 @@ public class DispatcherEventYamlUtilsV1
         return trg;
     }
 
+    @NonNull
     @Override
-    public Void downgradeTo(Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -87,6 +91,7 @@ public class DispatcherEventYamlUtilsV1
         return getYaml().dump(yaml);
     }
 
+    @NonNull
     @Override
     public DispatcherEventYamlV1 to(String s) {
         if (S.b(s)) {

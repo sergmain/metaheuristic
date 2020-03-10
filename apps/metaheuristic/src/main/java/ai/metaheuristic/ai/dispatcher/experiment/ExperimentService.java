@@ -62,6 +62,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -131,8 +132,8 @@ public class ExperimentService {
         ed.name = params.experimentYaml.name;
         ed.seed = params.experimentYaml.seed;
         ed.description = params.experimentYaml.description;
-        ed.hyperParams = params.experimentYaml.hyperParams==null ? new ArrayList<>() : params.experimentYaml.hyperParams;
-        ed.hyperParamsAsMap = getHyperParamsAsMap(ed.hyperParams);
+        ed.hyperParams.addAll(params.experimentYaml.hyperParams);
+        ed.hyperParamsAsMap.putAll(getHyperParamsAsMap(ed.hyperParams));
         ed.createdOn = params.createdOn;
         ed.numberOfTask = params.processing.numberOfTask;
 
@@ -150,8 +151,6 @@ public class ExperimentService {
         ed.name = params.experimentYaml.name;
         ed.seed = params.experimentYaml.seed;
         ed.description = params.experimentYaml.description;
-        ed.hyperParams = null;
-        ed.hyperParamsAsMap = null;
         ed.createdOn = params.createdOn;
         ed.numberOfTask = params.processing.numberOfTask;
 
@@ -159,10 +158,18 @@ public class ExperimentService {
     }
 
     public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(
-            ExperimentFeature experimentFeature,
+            @Nullable ExperimentFeature experimentFeature,
             List<ExecContextData.TaskVertex> taskVertices,
             List<ExperimentTaskFeature> taskFeatures) {
+
         final ExperimentApiData.ExperimentFeatureData featureData = new ExperimentApiData.ExperimentFeatureData();
+
+        if (experimentFeature==null) {
+            featureData.execStatus = Enums.FeatureExecStatus.finished_with_errors.code;
+            featureData.execStatusAsString = Enums.FeatureExecStatus.finished_with_errors.info;
+            return featureData;
+        }
+
         BeanUtils.copyProperties(experimentFeature, featureData);
 
         List<ExperimentTaskFeature> etfs = taskFeatures.stream().filter(tf->tf.featureId.equals(featureData.id)).collect(Collectors.toList());
@@ -271,10 +278,15 @@ public class ExperimentService {
 
     public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
         Experiment experiment= experimentCache.findById(experimentId);
+        if (experiment==null) {
+            return new ExperimentApiData.PlotData();
+        }
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
-        ExperimentFeature feature =
-                epy.processing.features.stream().filter(o->o.id.equals(featureId)).findFirst().orElse(null);
+        ExperimentFeature feature = epy.processing.features.stream().filter(o->o.id.equals(featureId)).findFirst().orElse(null);
+        if (feature==null) {
+            return new ExperimentApiData.PlotData();
+        }
 
         ExperimentApiData.PlotData data = findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
         // TODO 2019-07-23 right now 2D lines plot isn't working. need to investigate
@@ -496,6 +508,10 @@ public class ExperimentService {
         List<Task> selected = new ArrayList<>();
         for (Task task : list) {
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            if (taskParamYaml.task.inline==null) {
+                log.warn("#xxx.xxx (taskParamYaml.task.inline==null)");
+                continue;
+            }
             boolean[] isOk = new boolean[taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).size()];
             int idx = 0;
             for (Map.Entry<String, String> entry : taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).entrySet()) {
@@ -543,6 +559,9 @@ public class ExperimentService {
             return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.050 execContextId is null");
         }
         ExecContextImpl execContext = execContextCache.findById(experiment.execContextId);
+        if (execContext == null) {
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.053 execContext wasn't found, execContextId: " + experiment.execContextId);
+        }
 
         ExperimentParamsYaml.ExperimentFeature experimentFeature = experiment.getExperimentParamsYaml().getFeature(featureId);
         if (experimentFeature == null) {
@@ -921,7 +940,7 @@ public class ExperimentService {
     }
 */
 
-    public Function getFunction(Map<String, Function> localCache, String functionCode) {
+    public @Nullable Function getFunction(Map<String, Function> localCache, String functionCode) {
         Function function = localCache.get(functionCode);
         if (function == null) {
             function = functionService.findByCode(functionCode);

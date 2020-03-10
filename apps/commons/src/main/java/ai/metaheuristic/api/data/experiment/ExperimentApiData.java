@@ -26,12 +26,11 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Serge
@@ -56,8 +55,8 @@ public class ExperimentApiData {
         public boolean isFeatureProduced;
         public long createdOn;
         public int numberOfTask;
-        public List<ExperimentParamsYaml.HyperParam> hyperParams;
-        public Map<String, Map<String, Integer>> hyperParamsAsMap;
+        public final List<ExperimentParamsYaml.HyperParam> hyperParams = new ArrayList<>();
+        public final Map<String, Map<String, Integer>> hyperParamsAsMap = new HashMap<>();
     }
 
     @Data
@@ -165,14 +164,14 @@ public class ExperimentApiData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ExperimentResult extends BaseDataClass {
-        public ExperimentData experiment;
-        public String params;
+        public @NonNull ExperimentData experiment;
+        public @Nullable String params;
 
         public ExperimentResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ExperimentResult(ExperimentData experiment, String params) {
+        public ExperimentResult(@NonNull ExperimentData experiment, @Nullable String params) {
             this.experiment = experiment;
             this.params = params;
         }

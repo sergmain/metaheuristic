@@ -21,6 +21,7 @@ import ai.metaheuristic.api.dispatcher.SourceCode;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ import java.util.List;
 @Profile("dispatcher")
 public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Long> {
 
+    @Nullable
     @Query(value="select p from SourceCodeImpl p where p.id=:id and p.companyId=:companyUniqueId")
     SourceCodeImpl findByIdForUpdate(Long id, Long companyUniqueId);
 
@@ -46,6 +48,7 @@ public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Lon
     @Query(value="select p.id from SourceCodeImpl p where p.companyId=:companyUniqueId order by p.id desc ")
     List<Long> findAllIdsByOrderByIdDesc(Long companyUniqueId);
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select p from SourceCodeImpl p where p.uid=:uid and p.companyId=:companyUniqueId")
     SourceCodeImpl findByUidAndCompanyId(String uid, Long companyUniqueId);
@@ -60,6 +63,7 @@ public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Lon
     @Query(value="select p.uid from SourceCodeImpl p")
     List<String> findAllSourceCodeUids();
 
+    @Nullable
     @Transactional(readOnly = true)
     SourceCodeImpl findByUid(String uid);
 }
