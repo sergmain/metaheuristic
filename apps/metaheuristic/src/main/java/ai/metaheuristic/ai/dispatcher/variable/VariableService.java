@@ -37,6 +37,7 @@ import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,14 +67,14 @@ public class VariableService {
     private final Globals globals;
 
     @Transactional(readOnly = true)
-    public Variable getBinaryData(Long id) {
+    public @Nullable Variable getBinaryData(Long id) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("this method intended to be only for test cases");
         }
         return getBinaryData(id, true);
     }
 
-    private Variable getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
+    private @Nullable Variable getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
         try {
             Variable data = variableRepository.findById(id).orElse(null);
             if (data==null) {
@@ -138,7 +139,7 @@ public class VariableService {
             data.setName(variable);
             data.setFilename(filename);
             data.setExecContextId(execContextId);
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher)));
+            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setContextId(internalContextId);
 
@@ -170,7 +171,7 @@ public class VariableService {
             data.setExecContextId(execContextId);
             // TODO right now only DataSourcing.dispatcher is supporting as internal variable.
             //  the code has to be added for another type of sourcing
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher)));
+            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setContextId(contextId);
             variableRepository.save(data);

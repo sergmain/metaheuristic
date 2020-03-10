@@ -25,7 +25,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -96,14 +95,11 @@ public class TestTaskParamYaml {
                 CommonConsts.FIT_TYPE,
                 "file.txt",
                 "112233",
-                "python.exe",
+                "python",
                 EnumsApi.FunctionSourcing.dispatcher,
-                null,
-                new FunctionConfigYaml.FunctionInfo(),
                 null,
                 null,
                 false,
-                new ArrayList<>(),
                 new FunctionConfigYaml.MachineLearning(true, false)
         )));
 

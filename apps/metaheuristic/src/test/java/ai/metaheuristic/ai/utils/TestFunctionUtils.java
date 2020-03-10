@@ -21,10 +21,7 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import org.junit.Test;
 
-import java.util.ArrayList;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 /**
  * @author Serge
@@ -37,14 +34,15 @@ public class TestFunctionUtils {
     @Test
     public void testMetas() {
         final FunctionConfigYaml function = new FunctionConfigYaml();
-        function.metas = new ArrayList<>();
         function.metas.add(new Meta("key1", "value1", null));
 
         Meta m;
         m = MetaUtils.getMeta(function.metas, "key1");
+        assertNotNull(m);
         assertEquals("value1", m.getValue());
 
         m = MetaUtils.getMeta(function.metas, "key2", "key1");
+        assertNotNull(m);
         assertEquals("value1", m.getValue());
 
         m = MetaUtils.getMeta(function.metas, "key2", "key3");
@@ -53,7 +51,7 @@ public class TestFunctionUtils {
         m = MetaUtils.getMeta(function.metas);
         assertNull(m);
 
-        function.metas = null;
+        function.metas.clear();
 
         m = MetaUtils.getMeta(function.metas);
         assertNull(m);

@@ -83,7 +83,7 @@ public class FunctionDataService {
             if (data == null) {
                 data = new FunctionData();
                 data.setFunctionCode(functionCode);
-                data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher)));
+                data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, functionCode)));
             } else {
                 DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
                 if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.dispatcher) {

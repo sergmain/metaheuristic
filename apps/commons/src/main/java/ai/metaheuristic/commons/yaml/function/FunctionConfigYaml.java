@@ -50,15 +50,8 @@ public class FunctionConfigYaml implements Cloneable, BaseParams {
     @SneakyThrows
     public FunctionConfigYaml clone() {
         final FunctionConfigYaml clone = (FunctionConfigYaml) super.clone();
-        if (this.checksumMap != null) {
-            clone.checksumMap = new HashMap<>(this.checksumMap);
-        }
-        if (this.metas != null) {
-            clone.metas = new ArrayList<>();
-            for (Meta meta : this.metas) {
-                clone.metas.add(new Meta(meta.key, meta.value, meta.ext));
-            }
-        }
+        clone.checksumMap.putAll(this.checksumMap);
+        clone.metas.addAll(this.metas);
         return clone;
     }
 

@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -109,6 +110,7 @@ public class TaskProducingService {
         return result;
     }
 
+    @Nullable
     private TaskImpl createTaskInternal(
             ExecContextParamsYaml execContextParamsYaml, Long execContextId, ExecContextParamsYaml.Process process,
             ExecContextParamsYaml.FunctionDefinition snDef) {
@@ -123,13 +125,11 @@ public class TaskProducingService {
             log.error("#171.07 Function wasn't found for code: {}", snDef.code);
             return null;
         }
-        taskParams.task.preFunctions = new ArrayList<>();
         if (process.getPreFunctions()!=null) {
             for (ExecContextParamsYaml.FunctionDefinition preFunction : process.getPreFunctions()) {
                 taskParams.task.preFunctions.add(functionService.getFunctionConfig(preFunction));
             }
         }
-        taskParams.task.postFunctions = new ArrayList<>();
         if (process.getPostFunctions()!=null) {
             for (ExecContextParamsYaml.FunctionDefinition postFunction : process.getPostFunctions()) {
                 taskParams.task.postFunctions.add(functionService.getFunctionConfig(postFunction));

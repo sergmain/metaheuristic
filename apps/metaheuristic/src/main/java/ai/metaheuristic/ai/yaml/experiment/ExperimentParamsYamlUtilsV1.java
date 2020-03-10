@@ -103,7 +103,7 @@ public class ExperimentParamsYamlUtilsV1
 
     @Override
     public String toString(ExperimentParamsYamlV1 yaml) {
-        return null;
+        return getYaml().dump(yaml);
     }
 
     @NonNull

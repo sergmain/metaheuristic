@@ -35,6 +35,7 @@ import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,6 +63,7 @@ public class GlobalVariableService {
     private final GlobalVariableRepository globalVariableRepository;
     private final Globals globals;
 
+    @Nullable
     @Transactional(readOnly = true)
     public GlobalVariable getBinaryData(Long id) {
         if (!globals.isUnitTesting) {
@@ -70,6 +72,7 @@ public class GlobalVariableService {
         return getBinaryData(id, true);
     }
 
+    @Nullable
     private GlobalVariable getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
         try {
             GlobalVariable data = globalVariableRepository.findById(id).orElse(null);
@@ -121,7 +124,7 @@ public class GlobalVariableService {
             GlobalVariable data = new GlobalVariable();
             data.setVariable(variable);
             data.setFilename(filename);
-            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher)));
+            data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
@@ -199,6 +202,7 @@ public class GlobalVariableService {
         return globalVariableRepository.getAllAsSimpleGlobalVariable(pageable);
     }
 
+    @Nullable
     @Transactional(readOnly = true)
     public SimpleGlobalVariable getByIdAsSimpleGlobalVariable(Long id) {
         return globalVariableRepository.getByIdAsSimpleGlobalVariable(id);

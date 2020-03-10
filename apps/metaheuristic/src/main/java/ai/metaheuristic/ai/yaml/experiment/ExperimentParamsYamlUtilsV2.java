@@ -52,10 +52,10 @@ public class ExperimentParamsYamlUtilsV2
         ExperimentParamsYaml trg = new ExperimentParamsYaml();
         trg.createdOn = src.createdOn;
         BeanUtils.copyProperties(src.experimentYaml, trg.experimentYaml, "hyperParams");
-        trg.experimentYaml.hyperParams = src.experimentYaml.hyperParams
+        src.experimentYaml.hyperParams
                 .stream()
                 .map(o->new ExperimentParamsYaml.HyperParam(o.key, o.values, o.variants))
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(()->trg.experimentYaml.hyperParams));
 
 //        BeanUtils.copyProperties(src.processing, trg.processing, "taskFeatures", "features");
         trg.processing.isAllTaskProduced = src.processing.isAllTaskProduced;
@@ -104,7 +104,7 @@ public class ExperimentParamsYamlUtilsV2
 
     @Override
     public String toString(ExperimentParamsYamlV1 yaml) {
-        return null;
+        return getYaml().dump(yaml);
     }
 
     @NonNull

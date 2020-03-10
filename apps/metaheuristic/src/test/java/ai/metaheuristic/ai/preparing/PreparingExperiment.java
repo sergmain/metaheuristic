@@ -142,13 +142,13 @@ public abstract class PreparingExperiment {
 
             // Prepare functions
             mills = System.currentTimeMillis();
-            log.info("Start findByCode.save()");
-            fitFunction = functionRepository.findByCodeForUpdate(TEST_FIT_FUNCTION);
-            log.info("findByCode() was finished for {}", System.currentTimeMillis() - mills);
-
             byte[] bytes = "some program code".getBytes();
-            if (fitFunction == null) {
-                fitFunction = new Function();
+
+            log.info("Start findByCode.save()");
+            Function function = functionRepository.findByCodeForUpdate(TEST_FIT_FUNCTION);
+            log.info("findByCode() was finished for {}", System.currentTimeMillis() - mills);
+            if (function == null) {
+                function = new Function();
                 FunctionConfigYaml sc = new FunctionConfigYaml();
                 sc.code = TEST_FIT_FUNCTION;
                 sc.env = "python-3";
@@ -157,22 +157,23 @@ public abstract class PreparingExperiment {
                 sc.checksum = "sha2";
                 sc.info.length = bytes.length;
 
-                fitFunction.setCode(TEST_FIT_FUNCTION);
-                fitFunction.setType(CommonConsts.FIT_TYPE);
-                fitFunction.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
+                function.setCode(TEST_FIT_FUNCTION);
+                function.setType(CommonConsts.FIT_TYPE);
+                function.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
 
                 mills = System.currentTimeMillis();
                 log.info("Start functionRepository.save() #1");
-                functionCache.save(fitFunction);
+                functionCache.save(function);
                 log.info("functionRepository.save() #1 was finished for {}", System.currentTimeMillis() - mills);
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #1");
-                functionDataService.save(new ByteArrayInputStream(bytes), bytes.length, fitFunction.getCode());
+                functionDataService.save(new ByteArrayInputStream(bytes), bytes.length, function.getCode());
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
+            fitFunction = function;
 
-            predictFunction = functionRepository.findByCodeForUpdate(TEST_PREDICT_FUNCTION);
+            Function predictFunction = functionRepository.findByCodeForUpdate(TEST_PREDICT_FUNCTION);
             if (predictFunction == null) {
                 predictFunction = new Function();
                 FunctionConfigYaml sc = new FunctionConfigYaml();
@@ -197,6 +198,7 @@ public abstract class PreparingExperiment {
                 functionDataService.save(new ByteArrayInputStream(bytes), bytes.length, predictFunction.getCode());
                 log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
             }
+            this.predictFunction = predictFunction;
 
 
             mills = System.currentTimeMillis();
@@ -225,11 +227,11 @@ public abstract class PreparingExperiment {
             ehp3.setKey("aaa");
             ehp3.setValues("[7, 13]");
 
-            epy.experimentYaml.setHyperParams(List.of(ehp1, ehp2, ehp3));
+            epy.experimentYaml.hyperParams.addAll(List.of(ehp1, ehp2, ehp3));
 
             // set functions for experiment
             epy.experimentYaml.fitFunction = fitFunction.getCode();
-            epy.experimentYaml.predictFunction = predictFunction.getCode();
+            epy.experimentYaml.predictFunction = this.predictFunction.getCode();
 
             experiment.updateParams(epy);
 
@@ -250,7 +252,7 @@ public abstract class PreparingExperiment {
     public void afterPreparingExperiment() {
         long mills = System.currentTimeMillis();
         log.info("Start after()");
-        if (experiment != null && experiment.getId() != null) {
+        if (experiment != null) {
             try {
                 experimentRepository.deleteById(experiment.getId());
             } catch (Throwable throwable) {

@@ -24,9 +24,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 /**
  * @author Serge
  * Date: 6/17/2019
@@ -53,15 +50,10 @@ public class FunctionConfigYamlUtilsV2
         FunctionConfigYaml trg = new FunctionConfigYaml();
         BeanUtils.copyProperties(src, trg);
 
-        if (src.checksumMap!=null) {
-            trg.checksumMap = new HashMap<>(src.checksumMap);
-        }
-        if (src.info!=null) {
-            trg.info = new FunctionConfigYaml.FunctionInfo(src.info.signed, src.info.length);
-        }
-        if (src.metas!=null) {
-            trg.metas = new ArrayList<>(src.metas);
-        }
+        trg.checksumMap.putAll(src.checksumMap);
+        trg.info.signed = src.info.signed;
+        trg.info.length = src.info.length;
+        trg.metas.addAll(src.metas);
         if (src.ml!=null) {
             trg.ml = new FunctionConfigYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
         }

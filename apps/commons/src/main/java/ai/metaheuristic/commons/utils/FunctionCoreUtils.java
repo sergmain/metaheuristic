@@ -28,7 +28,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -41,15 +40,10 @@ public class FunctionCoreUtils {
         FunctionConfigYaml snTrg = new FunctionConfigYaml();
         BeanUtils.copyProperties(snSrc, snTrg);
 
-        if (snSrc.checksumMap != null) {
-            snTrg.checksumMap = new HashMap<>(snSrc.checksumMap);
-        }
-        if (snSrc.info != null) {
-            snTrg.info = new FunctionConfigYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
-        }
-        if (snSrc.metas != null) {
-            snTrg.metas = new ArrayList<>(snSrc.metas);
-        }
+        snTrg.checksumMap.putAll(snSrc.checksumMap);
+        snTrg.info.signed = snSrc.info.signed;
+        snTrg.info.length = snSrc.info.length;
+        snTrg.metas.addAll(snSrc.metas);
         return  snTrg;
 
     }
@@ -58,17 +52,11 @@ public class FunctionCoreUtils {
         FunctionConfigYaml snTrg = new FunctionConfigYaml();
         BeanUtils.copyProperties(snSrc, snTrg);
 
-        if (snSrc.checksumMap != null) {
-            snTrg.checksumMap = new HashMap<>(snSrc.checksumMap);
-        }
-        if (snSrc.info != null) {
-            snTrg.info = new FunctionConfigYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
-        }
-        if (snSrc.metas != null) {
-            snTrg.metas = new ArrayList<>(snSrc.metas);
-        }
+        snTrg.checksumMap.putAll(snSrc.checksumMap);
+        snTrg.info.signed = snSrc.info.signed;
+        snTrg.info.length = snSrc.info.length;
+        snTrg.metas.addAll(snSrc.metas);
         return  snTrg;
-
     }
 
     public static FunctionApiData.FunctionConfigStatus validate(FunctionConfigListYaml.FunctionConfig functionConfig) {

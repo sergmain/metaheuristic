@@ -34,13 +34,15 @@ import org.springframework.lang.Nullable;
 @AllArgsConstructor
 public class DataStorageParams {
 
-    public String variable;
+    // it's a name of asset. Asset can be Variable or Function
+    public String name;
+
     public EnumsApi.DataSourcing sourcing;
     public @Nullable GitInfo git;
     public @Nullable DiskInfo disk;
 
-    public DataStorageParams(EnumsApi.DataSourcing sourcing, String variable) {
+    public DataStorageParams(EnumsApi.DataSourcing sourcing, String name) {
         this.sourcing = sourcing;
-        this.variable = variable;
+        this.name = name;
     }
 }
