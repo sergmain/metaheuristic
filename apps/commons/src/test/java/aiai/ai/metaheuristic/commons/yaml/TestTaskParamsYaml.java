@@ -39,10 +39,15 @@ public class TestTaskParamsYaml {
         TaskParamsYamlV1 v1 = new TaskParamsYamlV1();
         final TaskParamsYamlV1.TaskYamlV1 ty = new TaskParamsYamlV1.TaskYamlV1();
         v1.task = ty;
+/*
+        // I left it here only for helping with GlobalVariable later
         TaskParamsYamlV1.InputVariableV1 input = new TaskParamsYamlV1.InputVariableV1("code-1", EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher, null, null);
         input.resources.add(new TaskParamsYamlV1.ResourceV1(EnumsApi.VariableContext.local, "value-1-1", null));
         input.resources.add(new TaskParamsYamlV1.ResourceV1(EnumsApi.VariableContext.local, "value-1-2", null));
+*/
 
+        TaskParamsYamlV1.InputVariableV1 input = new TaskParamsYamlV1.InputVariableV1("code-1", EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher, null, null);
+        input.resources.add(new TaskParamsYamlV1.ResourceV1(EnumsApi.VariableContext.local, "value-1-1", null));
         ty.inputs.add(input);
 
         ty.outputs.add( new TaskParamsYamlV1.OutputVariableV1(
@@ -73,7 +78,6 @@ public class TestTaskParamsYaml {
         ty.context = EnumsApi.FunctionExecContext.external;
         ty.processCode = "test-process-01";
 
-
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(v1);
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(s);
 
@@ -97,7 +101,6 @@ public class TestTaskParamsYaml {
         TaskParamsYaml.InputVariable inputVariable = tpy.task.inputs.stream().filter(o -> o.name.equals("code-1")).findFirst().orElseThrow();
         assertNotNull(inputVariable);
         assertNotNull(inputVariable.resources.stream().filter(o->o.id.equals("value-1-1")).findFirst().orElseThrow());
-        assertNotNull(inputVariable.resources.stream().filter(o->o.id.equals("value-1-2")).findFirst().orElseThrow());
 
         Map<String, String> hyperParams = tpy.task.inline.get(ConstsApi.MH_HYPER_PARAMS);
         assertEquals(1, hyperParams.size());

@@ -45,7 +45,6 @@ public class SourceCodeApiData {
         public EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.NOT_VALIDATED_YET_ERROR;
         public EnumsApi.TaskProducingStatus taskProducingStatus = EnumsApi.TaskProducingStatus.NOT_PRODUCING_YET_ERROR;
         public List<Task> tasks = new ArrayList<>();
-        public ExecContext execContext;
         public int numberOfTasks;
 
         public TaskProducingResultComplex(EnumsApi.TaskProducingStatus taskProducingStatus) {

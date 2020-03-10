@@ -41,7 +41,7 @@ public class ExecContextFSM {
     private final SourceCodeCache sourceCodeCache;
 
     public void toState(Long execContextId, EnumsApi.ExecContextState state) {
-        execContextSyncService.getWithSync(execContextId, execContext -> {
+        execContextSyncService.getWithSyncNullable(execContextId, execContext -> {
             if (execContext.state !=state.code) {
                 execContext.setState(state.code);
                 execContextCache.save(execContext);
@@ -51,7 +51,7 @@ public class ExecContextFSM {
     }
 
     private void toStateWithCompletion(Long execContextId, EnumsApi.ExecContextState state) {
-        execContextSyncService.getWithSync(execContextId, execContext -> {
+        execContextSyncService.getWithSyncNullable(execContextId, execContext -> {
             if (execContext.state !=state.code || execContext.completedOn==null) {
                 execContext.setCompletedOn(System.currentTimeMillis());
                 execContext.setState(state.code);

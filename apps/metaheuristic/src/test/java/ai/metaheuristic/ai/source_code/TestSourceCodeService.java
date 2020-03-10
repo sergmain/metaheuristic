@@ -96,7 +96,7 @@ public class TestSourceCodeService extends PreparingPlan {
         List<Object[]> tasks = taskCollector.getTasks(execContextForFeature);
 
         assertNotNull(result);
-        assertNotNull(result.execContext);
+        assertNotNull(execContextForFeature);
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
 

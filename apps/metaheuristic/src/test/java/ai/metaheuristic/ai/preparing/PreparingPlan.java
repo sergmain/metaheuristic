@@ -60,6 +60,7 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static ai.metaheuristic.api.data.source_code.SourceCodeApiData.TaskProducingResultComplex;
 import static org.junit.Assert.*;
@@ -254,7 +255,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.subProcesses.processes = List.of(p1, p2);
         }
         final SourceCodeParamsYamlUtilsV1 forVersion = (SourceCodeParamsYamlUtilsV1) SourceCodeParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1);
-        String yaml = forVersion.toString(planParamsYaml);
+        String yaml = Objects.requireNonNull(forVersion).toString(planParamsYaml);
         return yaml;
     }
 
@@ -292,6 +293,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         sourceCodeStored.lang = EnumsApi.SourceCodeLang.yaml;
 
         final SourceCodeStoredParamsYamlUtilsV1 forVersion = (SourceCodeStoredParamsYamlUtilsV1) SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1);
+        assertNotNull(forVersion);
         String params = forVersion.toString(sourceCodeStored);
 
         sourceCode.setParams(params);
@@ -327,7 +329,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         FunctionConfigYaml sc = new FunctionConfigYaml();
         sc.code = functionCode;
         sc.type = functionCode + "-type";
-        sc.file = null;
+        sc.file = "some-file";
         sc.setEnv("env-"+functionCode);
         sc.sourcing = EnumsApi.FunctionSourcing.processor;
 
@@ -352,14 +354,14 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
     @After
     public void afterPreparingPlan() {
-        if (sourceCode !=null && sourceCode.getId()!=null) {
+        if (sourceCode !=null) {
             try {
                 sourceCodeCache.deleteById(sourceCode.getId());
             } catch (Throwable th) {
                 log.error("Error while planCache.deleteById()", th);
             }
         }
-        if (company!=null && company.id!=null) {
+        if (company!=null) {
             try {
                 companyRepository.deleteById(company.id);
             } catch (Throwable th) {
@@ -411,14 +413,15 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
             EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
-            execContextForFeature = execContextCache.findById(this.execContextForFeature.id);
+            execContextForFeature = Objects.requireNonNull(execContextCache.findById(this.execContextForFeature.id));
             assertNotNull(execContextForFeature);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
         }
         {
             SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForFeature);
-            experiment = experimentCache.findById(experiment.id);
-            this.execContextForFeature = (ExecContextImpl) result1.execContext;
+            experiment = Objects.requireNonNull(experimentCache.findById(experiment.id));
+
+            this.execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
             assertEquals(2, taskRepository.findAllTaskIdsByExecContextId(execContextForFeature.id).size());
             assertEquals(2, execContextService.getCountUnfinishedTasks(execContextForFeature));
 //        assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForFeature.id).size());

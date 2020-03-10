@@ -93,7 +93,7 @@ public class ExecContextParamsYaml implements BaseParams {
     }
 
     @Data
-    @EqualsAndHashCode(of = {"processCode", "execContextId"})
+    @EqualsAndHashCode(of = {"processCode"})
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Process {
@@ -101,8 +101,7 @@ public class ExecContextParamsYaml implements BaseParams {
         public @NonNull String processName;
         public @NonNull String processCode;
 
-        public @NonNull String execContextId;
-        public @NonNull String internalContextId;
+        public @Nullable String internalContextId;
 
         public @NonNull FunctionDefinition function;
         public @Nullable List<FunctionDefinition> preFunctions;
@@ -118,10 +117,9 @@ public class ExecContextParamsYaml implements BaseParams {
         public @NonNull final List<Variable> outputs = new ArrayList<>();
         public @Nullable List<Meta> metas = new ArrayList<>();
 
-        public Process(@NonNull String processName, @NonNull String processCode, @NonNull String execContextId, @NonNull String internalContextId, @NonNull FunctionDefinition function) {
+        public Process(@NonNull String processName, @NonNull String processCode, @NonNull String internalContextId, @NonNull FunctionDefinition function) {
             this.processName = processName;
             this.processCode = processCode;
-            this.execContextId = execContextId;
             this.internalContextId = internalContextId;
             this.function = function;
         }

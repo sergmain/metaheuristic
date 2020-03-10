@@ -128,8 +128,9 @@ public class TestFunctionConfigYaml {
         assertEquals(sc.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc.ml);
         assertTrue(sc.ml.metrics);
-        assertEquals(1, sc.checksumMap.size());
+        assertEquals(2, sc.checksumMap.size());
         assertNotNull(sc.checksumMap.get(EnumsApi.Type.SHA256));
+        assertNotNull(sc.checksumMap.get(EnumsApi.Type.SHA256WithSignature));
         assertEquals(sc.info.length, 42);
         assertTrue(sc.info.signed);
         assertEquals(sc.checksum, "sc.checksum");
@@ -138,7 +139,7 @@ public class TestFunctionConfigYaml {
         assertEquals(sc.git.branch, "branch");
         assertEquals(sc.git.commit, "commit");
         assertTrue(sc.skipParams);
-        assertEquals(1, sc.metas.size());
+        assertEquals(3, sc.metas.size());
         assertEquals("key1", sc.metas.get(0).getKey());
         assertEquals("value1", sc.metas.get(0).getValue());
     }

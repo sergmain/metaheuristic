@@ -112,7 +112,7 @@ public abstract class FeatureMethods extends PreparingPlan {
             SourceCodeApiData.TaskProducingResultComplex taskProducingResultComplex = sourceCodeService.produceAllTasks(true, sourceCode, execContextForFeature);
             log.info("All tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
 
-            execContextForFeature = (ExecContextImpl) taskProducingResultComplex.execContext;
+            execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
             assertEquals(EnumsApi.TaskProducingStatus.OK, taskProducingResultComplex.taskProducingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(execContextForFeature.getState()));
         }

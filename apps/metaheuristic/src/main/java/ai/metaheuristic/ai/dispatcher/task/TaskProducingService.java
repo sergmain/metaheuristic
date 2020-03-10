@@ -67,7 +67,7 @@ public class TaskProducingService {
             if (p == null) {
                 // mh.finish can be not defined in sourceCode
                 if (processCode.equals(Consts.MH_FINISH_FUNCTION)) {
-                    p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, ""+execContextId, "1",
+                    p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, "1",
                             Consts.MH_FINISH_FUNCTION_INSTANCE);
                 }
                 else {

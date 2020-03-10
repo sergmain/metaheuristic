@@ -54,6 +54,7 @@ public class BaseYamlUtils<T extends BaseParams> {
     }
 
     public @NonNull String toString(@NonNull BaseParams baseParams) {
+        baseParams.checkIntegrity();
         return Objects.requireNonNull(getDefault().getYaml().dumpAsMap(baseParams));
     }
 

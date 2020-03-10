@@ -89,14 +89,13 @@ public class ExecContextParamsYamlV1 implements BaseParams {
     }
 
     @Data
-    @EqualsAndHashCode(of = {"processCode", "execContextId"})
+    @EqualsAndHashCode(of = {"processCode"})
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProcessV1 {
         public String processName;
         public String processCode;
 
-        public String execContextId;
         public String internalContextId;
 
         public FunctionDefinitionV1 function;

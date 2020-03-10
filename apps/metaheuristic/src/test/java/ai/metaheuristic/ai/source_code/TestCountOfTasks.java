@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
@@ -27,6 +26,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Test;
@@ -37,6 +37,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.Assert.*;
 
@@ -76,7 +77,7 @@ public class TestCountOfTasks extends PreparingPlan {
 
 
         EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
-        execContextForFeature = execContextCache.findById(this.execContextForFeature.id);
+        execContextForFeature = Objects.requireNonNull(execContextCache.findById(this.execContextForFeature.id));
         assertNotNull(execContextForFeature);
         assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
 
@@ -90,23 +91,23 @@ public class TestCountOfTasks extends PreparingPlan {
         assertEquals(EnumsApi.TaskProducingStatus.OK, taskResult.taskProducingStatus);
         int numberOfTasks = taskResult.numberOfTasks;
 
-        List<Object[]> tasks02 = taskCollector.getTasks(taskResult.execContext);
+        ExecContext execContext = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+        List<Object[]> tasks02 = taskCollector.getTasks(execContext);
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
         taskResult = sourceCodeService.produceAllTasks(true, sourceCode, execContextForFeature);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        execContextForFeature = (ExecContextImpl)taskResult.execContext;
+        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
         assertEquals(EnumsApi.TaskProducingStatus.OK, taskResult.taskProducingStatus);
         assertEquals(EnumsApi.ExecContextState.PRODUCED.code, execContextForFeature.getState());
 
-        experiment = experimentCache.findById(experiment.getId());
+        experiment = Objects.requireNonNull(experimentCache.findById(experiment.getId()));
 
-        List<Object[]> tasks = taskCollector.getTasks(taskResult.execContext);
+        List<Object[]> tasks = taskCollector.getTasks(execContextForFeature);
 
         assertNotNull(taskResult);
-        assertNotNull(taskResult.execContext);
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
         // todo 2020-03-01 right now counting of tasks is disabled

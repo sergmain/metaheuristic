@@ -528,7 +528,6 @@ public class ExecContextService {
         if (isPersist) {
             execContextFSM.toProduced(execContext.id);
         }
-        result.execContext = execContext;
         result.numberOfTasks = produceTaskResult.numberOfTasks;
         result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.OK;
         result.taskProducingStatus = EnumsApi.TaskProducingStatus.OK;
