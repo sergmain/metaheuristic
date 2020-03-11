@@ -104,7 +104,7 @@ public class DispatcherEventService {
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, companyUniqueId, contextId, batchEventData));
     }
 
-    public void publishTaskEvent(EnumsApi.DispatcherEventType event, Long processorId, Long taskId, Long execContextId) {
+    public void publishTaskEvent(EnumsApi.DispatcherEventType event, @Nullable Long processorId, Long taskId, Long execContextId) {
         if (!globals.isEventEnabled) {
             return;
         }

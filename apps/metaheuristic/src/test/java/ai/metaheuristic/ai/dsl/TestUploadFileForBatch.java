@@ -43,6 +43,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 import static org.junit.Assert.*;
 
@@ -130,7 +131,8 @@ public class TestUploadFileForBatch extends PreparingPlan {
 
         SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeTopLevelService.validateSourceCode(sourceCode.id, context);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, sourceCodeResult.status);
-        sourceCode = sourceCodeCache.findById(sourceCode.id);
+        sourceCode = Objects.requireNonNull(sourceCodeCache.findById(sourceCode.id));
+        assertNotNull(sourceCode);
         assertTrue(sourceCode.isValid());
 
         String planYamlAsString = getSourceCodeYamlAsString();

@@ -255,7 +255,7 @@ public class ExecContextService {
         DispatcherCommParamsYaml.AssignedTask result = execContextSyncService.getWithSync(assignedTaskComplex.execContextId,
                 execContext -> {
                     prepareVariables(assignedTaskComplex);
-                    return new DispatcherCommParamsYaml.AssignedTask(assignedTaskComplex.params, assignedTaskComplex.execContextId, assignedTaskComplex.task.getId());
+                    return new DispatcherCommParamsYaml.AssignedTask(assignedTaskComplex.params, assignedTaskComplex.task.getId(), assignedTaskComplex.execContextId);
         });
         return result;
     }
@@ -477,18 +477,14 @@ public class ExecContextService {
         if (task.function.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
             return true;
         }
-        if (task.preFunctions != null) {
-            for (TaskParamsYaml.FunctionConfig preFunction : task.preFunctions) {
-                if (preFunction.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
-                    return true;
-                }
+        for (TaskParamsYaml.FunctionConfig preFunction : task.preFunctions) {
+            if (preFunction.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
+                return true;
             }
         }
-        if (task.postFunctions != null) {
-            for (TaskParamsYaml.FunctionConfig postFunction : task.postFunctions) {
-                if (postFunction.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
-                    return true;
-                }
+        for (TaskParamsYaml.FunctionConfig postFunction : task.postFunctions) {
+            if (postFunction.sourcing == EnumsApi.FunctionSourcing.git && gitNotInstalled) {
+                return true;
             }
         }
         return false;

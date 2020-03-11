@@ -29,7 +29,7 @@ import java.io.Serializable;
  * Time: 15:56
  */
 @Entity
-@Table(name = "mh_processor")
+@Table(name = "MH_PROCESSOR")
 @Data
 @ToString(exclude = "status")
 @NoArgsConstructor

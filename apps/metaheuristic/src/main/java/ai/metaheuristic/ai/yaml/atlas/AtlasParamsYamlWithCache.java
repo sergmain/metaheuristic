@@ -20,10 +20,12 @@ import ai.metaheuristic.ai.dispatcher.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
@@ -74,9 +76,10 @@ public class AtlasParamsYamlWithCache {
         if (sourceCodeParamsYaml ==null) {
             synchronized (this) {
                 if (sourceCodeParamsYaml ==null) {
+                    SourceCodeStoredParamsYaml scspy = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.sourceCode.sourceCodeParams);
                     //noinspection UnnecessaryLocalVariable
-                    SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.sourceCode.sourceCodeParams);
-                    sourceCodeParamsYaml = ppy;
+                    SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+                    sourceCodeParamsYaml = scpy;
                 }
             }
         }

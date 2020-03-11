@@ -39,7 +39,6 @@ public class SourceCodeImpl implements Serializable, SourceCode {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NonNull
     public Long id;
 
     @Version

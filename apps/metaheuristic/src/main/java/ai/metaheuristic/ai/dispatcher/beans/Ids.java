@@ -48,7 +48,6 @@ public class Ids implements Serializable {
 
     @Id
     @GeneratedValue(strategy= GenerationType.TABLE, generator = "mh_ids")
-    @NonNull
     public Long id;
 
     public Integer stub;

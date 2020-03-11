@@ -35,9 +35,12 @@ public class TaskParamsUtils {
         trg.env = src.env;
         trg.file = src.file;
         trg.git = src.git;
-        trg.info.signed = src.info.signed;
-        trg.info.length = src.info.length;
-        trg.metas.addAll(src.metas);
+        if (src.info!=null) {
+            trg.info = new TaskParamsYaml.FunctionInfo(src.info.signed, src.info.length);
+        }
+        if (src.metas!=null) {
+            trg.metas.addAll(src.metas);
+        }
         trg.params = src.params;
         trg.skipParams = src.skipParams;
         trg.sourcing = src.sourcing;

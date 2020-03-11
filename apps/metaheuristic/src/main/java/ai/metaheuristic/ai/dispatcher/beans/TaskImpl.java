@@ -35,7 +35,6 @@ public class TaskImpl implements Serializable, Task {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NonNull
     public Long id;
 
     @Version

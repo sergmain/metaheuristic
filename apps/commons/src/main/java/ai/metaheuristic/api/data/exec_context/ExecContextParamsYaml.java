@@ -79,7 +79,7 @@ public class ExecContextParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class FunctionDefinition {
         public @NonNull String code;
-        public String params;
+        public @Nullable String params;
         public @NonNull EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
 
         public FunctionDefinition(@NonNull String code) {
@@ -101,7 +101,7 @@ public class ExecContextParamsYaml implements BaseParams {
         public @NonNull String processName;
         public @NonNull String processCode;
 
-        public @Nullable String internalContextId;
+        public String internalContextId;
 
         public @NonNull FunctionDefinition function;
         public @Nullable List<FunctionDefinition> preFunctions;

@@ -90,18 +90,21 @@ public class TestFunctionService {
     @Before
     public void beforePreparingExperiment() {
         assertTrue(globals.isUnitTesting);
+        function = initFunction();
+    }
 
+    public Function initFunction() {
         long mills;
         byte[] bytes = "some program code".getBytes();
-        function = functionRepository.findByCodeForUpdate(TEST_FUNCTION);
-        if (function == null) {
+        Function f = functionRepository.findByCodeForUpdate(TEST_FUNCTION);
+        if (f == null) {
             Function s = new Function();
             FunctionConfigYaml sc = new FunctionConfigYaml();
             sc.code = TEST_FUNCTION;
             sc.type = "test";
             sc.env = "python-3";
             sc.file = "predict-filename.txt";
-            sc.info.length = bytes.length;
+            sc.info = new FunctionConfigYaml.FunctionInfo(false, bytes.length);
             sc.checksum = "sha2";
             sc.skipParams = false;
             sc.params = FUNCTION_PARAMS;
@@ -112,7 +115,7 @@ public class TestFunctionService {
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #2");
-            function = functionCache.save(s);
+            f = functionCache.save(s);
             log.info("functionRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
 
             mills = System.currentTimeMillis();
@@ -120,6 +123,7 @@ public class TestFunctionService {
             functionDataService.save(new ByteArrayInputStream(bytes), bytes.length, s.getCode());
             log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
         }
+        return f;
     }
 
     @After

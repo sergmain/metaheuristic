@@ -28,7 +28,7 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "mh_function_data")
+@Table(name = "MH_FUNCTION_DATA")
 @Data
 @EqualsAndHashCode(of = {"functionCode"})
 @ToString(exclude={"data", "bytes"})
@@ -38,7 +38,6 @@ public class FunctionData implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NonNull
     public Long id;
 
     @Version

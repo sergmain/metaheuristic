@@ -28,7 +28,7 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "mh_variable")
+@Table(name = "MH_VARIABLE")
 @Data
 @EqualsAndHashCode(of = {"id", "version"})
 @ToString(exclude={"data", "bytes"})
@@ -38,7 +38,6 @@ public class Variable implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NonNull
     public Long id;
 
     @Version

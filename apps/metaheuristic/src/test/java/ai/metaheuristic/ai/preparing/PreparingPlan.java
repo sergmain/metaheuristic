@@ -333,12 +333,11 @@ public abstract class PreparingPlan extends PreparingExperiment {
         sc.setEnv("env-"+functionCode);
         sc.sourcing = EnumsApi.FunctionSourcing.processor;
 
-        sc.info.setSigned(false);
-        sc.info.setLength(1000);
+        sc.info = new FunctionConfigYaml.FunctionInfo(false, 1000);
 //  metas:
 //  - key: mh.task-params-version
 //    value: '3'
-        sc.metas.add(new Meta(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5", null));
+        Objects.requireNonNull(sc.metas).add(new Meta(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5", null));
         Function s = new Function();
         Long functionId = functionRepository.findIdByCode(functionCode);
         if (functionId!=null) {

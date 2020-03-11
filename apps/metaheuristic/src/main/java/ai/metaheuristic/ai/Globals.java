@@ -319,10 +319,10 @@ public class Globals {
             branding = "Metaheuristic project";
         }
 
-        if (dispatcherEnabled && dispatcherDirTemp==null) {
+        if (dispatcherDirTemp==null) {
             dispatcherDirTemp = new File("target/mh-dispatcher");
-            log.warn("Dispatcher is enabled, but dispatcherDir in null. " +
-                    "Will be used a default value as: {}", dispatcherDir.getAbsolutePath());
+            log.warn("DispatcherDir in null. " +
+                    "Will be used a default value as: {}", dispatcherDirTemp.getAbsolutePath());
         }
         dispatcherDir = Objects.requireNonNull(dispatcherDirTemp);
 

@@ -29,7 +29,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "mh_exec_context")
+@Table(name = "MH_EXEC_CONTEXT")
 @Data
 @NoArgsConstructor
 @ToString(exclude = "wpy")
@@ -38,7 +38,6 @@ public class ExecContextImpl implements Serializable, ExecContext {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NonNull
     public Long id;
 
     @Version

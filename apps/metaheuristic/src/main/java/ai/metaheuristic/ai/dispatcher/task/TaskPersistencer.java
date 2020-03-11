@@ -68,9 +68,9 @@ public class TaskPersistencer {
         });
     }
 
-    public Enums.UploadResourceStatus setResultReceived(long taskId, boolean resultReceived) {
+    public Enums.UploadResourceStatus setResultReceived(Long taskId, boolean resultReceived) {
         return TaskFunctions.getWithSync(taskId, () -> {
-            for (int i = 0; i < NUMBER_OF_TRY; i++) {
+//            for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
                     TaskImpl task = taskRepository.findByIdForUpdate(taskId);
                     if (task == null) {
@@ -86,10 +86,11 @@ public class TaskPersistencer {
                     taskRepository.save(task);
                     return Enums.UploadResourceStatus.OK;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.warn("#307.040 !!!NEED TO INVESTIGATE. Error set resultReceived to {} try #{}, taskId: {}, error: {}", resultReceived, i, taskId, e.toString());
+                    log.warn("#307.040 !!!NEED TO INVESTIGATE. Error set resultReceived to {}, taskId: {}, error: {}", resultReceived, taskId, e.toString());
+                    return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
                 }
-            }
-            return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
+//            }
+//            return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
         });
     }
 
@@ -119,8 +120,7 @@ public class TaskPersistencer {
         });
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public Task storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, Consumer<Task> action) {
+    public void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, Consumer<Task> action) {
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(result.getResult());
         FunctionApiData.SystemExecResult systemExecResult = functionExec.generalExec!=null ? functionExec.generalExec : functionExec.exec;
         if (!systemExecResult.isOk) {
@@ -136,11 +136,9 @@ public class TaskPersistencer {
                     state==EnumsApi.TaskExecState.OK ? EnumsApi.DispatcherEventType.TASK_FINISHED : EnumsApi.DispatcherEventType.TASK_ERROR,
                     null, result.taskId, t.getExecContextId());
             action.accept(t);
-            return t;
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#307.060 !!!NEED TO INVESTIGATE. Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
         }
-        return null;
     }
 
     public void finishTaskAsBrokenOrError(Long taskId, EnumsApi.TaskExecState state) {

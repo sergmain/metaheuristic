@@ -41,12 +41,10 @@ import java.io.Serializable;
 public class Company implements Serializable {
     private static final long serialVersionUID = -159889135750827404L;
 
-    @Nullable
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
-    @Nullable
     @Version
     public Integer version;
 
