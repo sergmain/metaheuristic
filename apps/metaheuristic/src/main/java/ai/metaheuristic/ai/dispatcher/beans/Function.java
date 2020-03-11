@@ -15,20 +15,23 @@
  */
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "mh_function")
+@Table(name = "MH_FUNCTION")
 @Data
 @NoArgsConstructor
+@ToString(exclude = "fcy")
 public class Function implements Serializable {
     private static final long serialVersionUID = 4066977399166436522L;
 
@@ -52,7 +55,7 @@ public class Function implements Serializable {
     public void setParams(String params) {
         synchronized (this) {
             this.params = params;
-            this.sc=null;
+            this.fcy =null;
         }
     }
 
@@ -62,26 +65,26 @@ public class Function implements Serializable {
 
     @Transient
     @JsonIgnore
-    private FunctionConfigYaml sc = null;
+    private @Nullable FunctionConfigYaml fcy = null;
 
     @JsonIgnore
     public FunctionConfigYaml getFunctionConfig(boolean isClone) {
-        if (sc==null) {
+        if (fcy ==null) {
             synchronized (this) {
-                if (sc==null) {
+                if (fcy ==null) {
                     //noinspection UnnecessaryLocalVariable
                     FunctionConfigYaml temp = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(params);
-                    sc = temp;
-                    return sc;
+                    fcy = temp;
+                    return fcy;
                 }
             }
         }
-        return isClone ? sc.clone() : sc;
+        return isClone ? fcy.clone() : fcy;
     }
 
     public void reset() {
         synchronized (this) {
-            sc = null;
+            fcy = null;
         }
     }
 

@@ -37,7 +37,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_EXPERIMENT")
 @Data
-@ToString(exclude = {"params"})
+@ToString(exclude = {"epy"})
 @NoArgsConstructor
 public class Experiment implements Serializable, Cloneable {
     private static final long serialVersionUID = -3509391644278818781L;

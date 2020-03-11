@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.*;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,15 +50,8 @@ public class FunctionConfigYamlV1 implements Cloneable, BaseParams {
     @SneakyThrows
     public FunctionConfigYamlV1 clone() {
         final FunctionConfigYamlV1 clone = (FunctionConfigYamlV1) super.clone();
-        if (this.checksumMap != null) {
-            clone.checksumMap = new HashMap<>(this.checksumMap);
-        }
-        if (this.metas != null) {
-            clone.metas = new ArrayList<>();
-            for (Meta meta : this.metas) {
-                clone.metas.add(new Meta(meta.key, meta.value, meta.ext));
-            }
-        }
+        clone.checksumMap.putAll(this.checksumMap);
+        clone.metas.addAll(this.metas);
         return clone;
     }
 
@@ -70,6 +64,14 @@ public class FunctionConfigYamlV1 implements Cloneable, BaseParams {
          * function's binary length
          */
         public long length;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MachineLearningV1 {
+        public boolean metrics = false;
+        public boolean fitting = false;
     }
 
     /**
@@ -86,12 +88,12 @@ public class FunctionConfigYamlV1 implements Cloneable, BaseParams {
     public String params;
     public String env;
     public EnumsApi.FunctionSourcing sourcing;
-    public boolean metrics = false;
-    public Map<EnumsApi.Type, String> checksumMap;
-    public FunctionInfoV1 info = new FunctionInfoV1();
+    public final Map<EnumsApi.Type, String> checksumMap = new HashMap<>();
+    public final FunctionInfoV1 info = new FunctionInfoV1();
     public String checksum;
-    public GitInfo git;
+    public @Nullable GitInfo git;
     public boolean skipParams = false;
-    public List<Meta> metas = new ArrayList<>();
+    public final List<Meta> metas = new ArrayList<>();
+    public MachineLearningV1 ml;
 
 }

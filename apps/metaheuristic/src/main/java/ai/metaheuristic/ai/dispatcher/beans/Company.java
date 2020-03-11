@@ -24,6 +24,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -37,14 +38,13 @@ import java.io.Serializable;
 @Table(name = "MH_COMPANY")
 @Data
 @NoArgsConstructor
-@ToString(exclude = "params")
+@ToString(exclude = {"cpy"})
 public class Company implements Serializable {
     private static final long serialVersionUID = -159889135750827404L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NonNull
-    public Long id;
+    public @NonNull Long id;
 
     @Version
     public Integer version;
@@ -70,7 +70,7 @@ public class Company implements Serializable {
 
     @Transient
     @JsonIgnore
-    private CompanyParamsYaml cpy = null;
+    private @Nullable CompanyParamsYaml cpy = null;
 
     @JsonIgnore
     public CompanyParamsYaml getCompanyParamsYaml() {

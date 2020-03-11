@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -37,10 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.security.PublicKey;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -134,16 +132,16 @@ public class Globals {
     public String chunkSizeStr;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.mode')) }")
-    public String assetModeStr;
+    public @Nullable String assetModeStr;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.source-url')) }")
-    public String assetSourceUrl;
+    public @Nullable String assetSourceUrl;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.username')) }")
-    public String assetUsername;
+    public @Nullable String assetUsername;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.password')) }")
-    public String assetPassword;
+    public @Nullable String assetPassword;
 
     // Processor's globals
 
@@ -223,14 +221,15 @@ public class Globals {
         }
 
         String size = env.getProperty("MH_CHUNK_SIZE");
-        chunkSize = parseChunkSizeValue(size);
-        if (chunkSize==null) {
-            chunkSize = parseChunkSizeValue(chunkSizeStr);
+        Long tempChunkSize = parseChunkSizeValue(size);
+        if (tempChunkSize==null) {
+            tempChunkSize = parseChunkSizeValue(chunkSizeStr);
         }
         // we will use 10mb size of chunk by default
-        if (chunkSize==null) {
-            chunkSize = parseChunkSizeValue("10m");
+        if (tempChunkSize==null) {
+            tempChunkSize = parseChunkSizeValue("10m");
         }
+        chunkSize = Objects.requireNonNull(tempChunkSize);
 
         if (!S.b(env.getProperty("MH_DISPATCHER_ASSET_MODE"))) {
             assetModeStr = env.getProperty("MH_DISPATCHER_ASSET_MODE");
@@ -303,13 +302,13 @@ public class Globals {
         }
 
         String dispatcherDirAsStr = env.getProperty("MH_DISPATCHER_DIR");
+        File dispatcherDirTemp = null;
         if (dispatcherDirAsStr!=null && !dispatcherDirAsStr.isBlank()) {
             try {
-                dispatcherDir = new File(dispatcherDirAsStr);
+                dispatcherDirTemp = new File(dispatcherDirAsStr);
             } catch (Throwable th) {
                 log.error("Wrong value in env MH_DISPATCHER_DIR, must be a correct path to dir, " +
                         "actual: " + dispatcherDirAsStr);
-                dispatcherDir = null;
             }
         }
         String tempBranding = env.getProperty("MH_BRANDING");
@@ -320,11 +319,12 @@ public class Globals {
             branding = "Metaheuristic project";
         }
 
-        if (dispatcherEnabled && dispatcherDir==null) {
-            dispatcherDir = new File("target/mh-dispatcher");
+        if (dispatcherEnabled && dispatcherDirTemp==null) {
+            dispatcherDirTemp = new File("target/mh-dispatcher");
             log.warn("Dispatcher is enabled, but dispatcherDir in null. " +
                     "Will be used a default value as: {}", dispatcherDir.getAbsolutePath());
         }
+        dispatcherDir = Objects.requireNonNull(dispatcherDirTemp);
 
         if (dispatcherEnabled) {
             if (dispatcherMasterUsername ==null || dispatcherMasterPassword ==null) {
@@ -374,7 +374,7 @@ public class Globals {
     private static final Map<Character, Long> sizes = Map.of(
             'b',1L, 'k',1024L, 'm', 1024L*1024, 'g', 1024L*1024*1024);
 
-    private Long parseChunkSizeValue(String str) {
+    private @Nullable Long parseChunkSizeValue(@Nullable String str) {
         if (str==null || str.isBlank()) {
             return null;
         }

@@ -23,6 +23,8 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
+ * !!! This class must be top-level class. Do not move it as inner class to any other
+ *
  * @author Serge
  * Date: 8/17/2019
  * Time: 4:51 PM

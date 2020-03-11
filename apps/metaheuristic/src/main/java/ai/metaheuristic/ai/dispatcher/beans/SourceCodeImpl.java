@@ -21,7 +21,9 @@ import ai.metaheuristic.api.dispatcher.SourceCode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -31,6 +33,7 @@ import java.io.Serializable;
 @Table(name = "MH_SOURCE_CODE")
 @Data
 @NoArgsConstructor
+@ToString(exclude = "scspy")
 public class SourceCodeImpl implements Serializable, SourceCode {
     private static final long serialVersionUID = 6764501814772365639L;
 
@@ -74,14 +77,7 @@ public class SourceCodeImpl implements Serializable, SourceCode {
 
     @Transient
     @JsonIgnore
-    private SourceCodeStoredParamsYaml scspy = null;
-
-    // for controlling of SnakeYaml
-    @SuppressWarnings("unused")
-    @Transient
-    private SourceCodeStoredParamsYaml getScspy(){
-        return scspy;
-    }
+    private @Nullable SourceCodeStoredParamsYaml scspy = null;
 
     @JsonIgnore
     public SourceCodeStoredParamsYaml getSourceCodeStoredParamsYaml() {

@@ -21,6 +21,7 @@ import ai.metaheuristic.api.dispatcher.ExecContext;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -31,6 +32,7 @@ import java.io.Serializable;
 @Table(name = "mh_exec_context")
 @Data
 @NoArgsConstructor
+@ToString(exclude = "wpy")
 public class ExecContextImpl implements Serializable, ExecContext {
     private static final long serialVersionUID = -8687758209537096490L;
 

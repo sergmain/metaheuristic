@@ -40,7 +40,7 @@ import java.util.Map;
 @EqualsAndHashCode(of = "code")
 public class FunctionConfigYaml implements Cloneable, BaseParams {
 
-    public final int version=2;
+    public final int version=1;
 
     @Override
     public boolean checkIntegrity() {

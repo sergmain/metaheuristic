@@ -24,13 +24,11 @@ import java.util.Map;
 public class FunctionConfigYamlUtils {
 
     private static final FunctionConfigYamlUtilsV1 YAML_UTILS_V_1 = new FunctionConfigYamlUtilsV1();
-    private static final FunctionConfigYamlUtilsV2 YAML_UTILS_V_2 = new FunctionConfigYamlUtilsV2();
-    private static final FunctionConfigYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final FunctionConfigYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
     public static final BaseYamlUtils<FunctionConfigYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
+                    1, YAML_UTILS_V_1
             ),
             DEFAULT_UTILS
     );

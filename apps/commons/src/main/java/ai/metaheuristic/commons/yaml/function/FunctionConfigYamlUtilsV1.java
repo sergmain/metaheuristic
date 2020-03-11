@@ -24,8 +24,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -33,7 +33,7 @@ import java.util.HashMap;
  * Time: 12:10 AM
  */
 public class FunctionConfigYamlUtilsV1
-        extends AbstractParamsYamlUtils<FunctionConfigYamlV1, FunctionConfigYamlV2, FunctionConfigYamlUtilsV2, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<FunctionConfigYamlV1, FunctionConfigYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -48,22 +48,17 @@ public class FunctionConfigYamlUtilsV1
 
     @NonNull
     @Override
-    public FunctionConfigYamlV2 upgradeTo(@NonNull FunctionConfigYamlV1 src, Long ... vars) {
+    public FunctionConfigYaml upgradeTo(@NonNull FunctionConfigYamlV1 src, Long ... vars) {
         src.checkIntegrity();
-        FunctionConfigYamlV2 trg = new FunctionConfigYamlV2();
+        FunctionConfigYaml trg = new FunctionConfigYaml();
         BeanUtils.copyProperties(src, trg);
 
-        if (src.checksumMap!=null) {
-            trg.checksumMap = new HashMap<>(src.checksumMap);
-        }
-        if (src.info!=null) {
-            trg.info = new FunctionConfigYamlV2.FunctionInfoV2(src.info.signed, src.info.length);
-        }
-        if (src.metas!=null) {
-            trg.metas = new ArrayList<>(src.metas);
-        }
-        if (src.metrics) {
-            trg.ml = new FunctionConfigYamlV2.MachineLearningV2(true, false);
+        trg.checksumMap.putAll(src.checksumMap);
+        trg.info.signed = src.info.signed;
+        trg.info.length = src.info.length;
+        trg.metas.addAll(src.metas);
+        if (src.ml!=null) {
+            trg.ml = new FunctionConfigYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
         }
         trg.checkIntegrity();
         return trg;
@@ -76,8 +71,8 @@ public class FunctionConfigYamlUtilsV1
     }
 
     @Override
-    public FunctionConfigYamlUtilsV2 nextUtil() {
-        return (FunctionConfigYamlUtilsV2) FunctionConfigYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override

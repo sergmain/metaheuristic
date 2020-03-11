@@ -18,13 +18,10 @@ package ai.metaheuristic.api.data;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import ai.metaheuristic.commons.yaml.function.*;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtilsV1;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlV1;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -38,7 +35,7 @@ public class TestFunctionConfigYaml {
     @Test
     public void testUpgradeToV2() {
         FunctionConfigYamlV1 sc = getFunctionConfigYamlV1();
-        FunctionConfigYamlV2 sc2 = new FunctionConfigYamlUtilsV1().upgradeTo(sc);
+        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV1().upgradeTo(sc);
 
         // to be sure that values were copied
         sc.checksumMap.put(EnumsApi.Type.SHA256WithSignature, "321qwe");
@@ -57,6 +54,7 @@ public class TestFunctionConfigYaml {
         assertEquals(sc2.info.length, 42);
         assertTrue(sc2.info.signed);
         assertEquals(sc2.checksum, "sc.checksum");
+        assertNotNull(sc2.git);
         assertEquals(sc2.git.repo, "repo");
         assertEquals(sc2.git.branch, "branch");
         assertEquals(sc2.git.commit, "commit");
@@ -69,9 +67,10 @@ public class TestFunctionConfigYaml {
     @Test
     public void testUpgradeToLatest() {
         FunctionConfigYamlV1 sc1 = getFunctionConfigYamlV1();
-        FunctionConfigYamlV2 sc2 = new FunctionConfigYamlUtilsV1().upgradeTo(sc1);
-        FunctionConfigYaml sc = new FunctionConfigYamlUtilsV2().upgradeTo(sc2);
-        checkLatest(sc);
+        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV1().upgradeTo(sc1);
+        checkLatest(sc2);
+//        FunctionConfigYaml sc = new FunctionConfigYamlUtilsV1().upgradeTo(sc2);
+//        checkLatest(sc);
     }
 
     private FunctionConfigYamlV1 getFunctionConfigYamlV1() {
@@ -82,13 +81,15 @@ public class TestFunctionConfigYaml {
         sc.params = "sc.params";
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        sc.metrics = true;
-        sc.checksumMap = new HashMap<>(Map.of(EnumsApi.Type.SHA256, "qwe321"));
-        sc.info = new FunctionConfigYamlV1.FunctionInfoV1(true, 42);
+        sc.ml = new FunctionConfigYamlV1.MachineLearningV1();
+        sc.ml.metrics = true;
+        sc.checksumMap.put(EnumsApi.Type.SHA256, "qwe321");
+        sc.info.signed = true;
+        sc.info.length = 42;
         sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;
-        sc.metas = new ArrayList<>(List.of( new Meta("key1", "value1", "ext1" )));
+        sc.metas.add(new Meta("key1", "value1", "ext1" ));
         return sc;
     }
 
