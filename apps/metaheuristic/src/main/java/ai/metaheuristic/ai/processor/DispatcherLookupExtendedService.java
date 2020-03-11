@@ -23,14 +23,12 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfigUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -40,13 +38,12 @@ import java.util.Map;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
 public class DispatcherLookupExtendedService {
 
     private final Globals globals;
 
     // Collections.unmodifiableMap
-    public Map<String, DispatcherLookupExtended> lookupExtendedMap = null;
+    public Map<String, DispatcherLookupExtended> lookupExtendedMap = Map.of();
 
     @Data
     public static class DispatcherLookupExtended {
@@ -55,17 +52,17 @@ public class DispatcherLookupExtendedService {
         public final DispatcherContext context = new DispatcherContext();
     }
 
-    @PostConstruct
-    public void init() {
+    public DispatcherLookupExtendedService(Globals globals) {
+        this.globals = globals;
         final File dispatcherFile = new File(globals.processorDir, Consts.DISPATCHER_YAML_FILE_NAME);
         final String cfg;
         if (!dispatcherFile.exists()) {
             if (globals.defaultDispatcherYamlFile == null) {
-                log.warn("Processor's dispatcher config file {} doesn't exist and default file wasn't specified", dispatcherFile.getPath());
+                log.error("Processor's dispatcher config file {} doesn't exist and default file wasn't specified", dispatcherFile.getPath());
                 return;
             }
             if (!globals.defaultDispatcherYamlFile.exists()) {
-                log.warn("Processor's default dispatcher.yaml file doesn't exist: {}", globals.defaultDispatcherYamlFile.getAbsolutePath());
+                log.error("Processor's default dispatcher.yaml file doesn't exist: {}", globals.defaultDispatcherYamlFile.getAbsolutePath());
                 return;
             }
             try {

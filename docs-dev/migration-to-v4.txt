@@ -33,9 +33,35 @@ station на processor
 накатить скрипты на прод бд
 
 3.
+сделать бекапы диров на которые указывают параметны в application.properties
+mh.dispatcher.dir
+mh.processor.dir:
+
+4.
 удалить директории которые указаны в application.properties в параметрах
 
 mh.dispatcher.dir
-mh.processor.dir
 
 
+5.
+в дире на который указывает mh.processor.dir:
+
+удалить файлы metadata.yaml и metadata.yaml.bak
+
+
+переименовать файл launchpad.yaml в dispatcher.yaml
+
+в файле dispatcher.yaml заменить название переменной
+launchpads:
+
+на
+dispatchers:
+
+
+6.
+в файле dispatcher.yaml
+
+строку
+ securityEnabled: true
+
+надо удалить.
