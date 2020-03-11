@@ -35,7 +35,7 @@ public class ControllerUtils {
 
     @SuppressWarnings("unchecked")
     public static void addMessagesToModel(Model model, BaseDataClass baseData) {
-        if (CollectionUtils.isNotEmpty(baseData.errorMessages)) {
+        if (CollectionUtils.isNotEmpty(baseData.getErrorMessagesAsList())) {
             List errorMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_ERROR_MESSAGE));
             if (errorMessages==null) {
                 errorMessages = new ArrayList();
@@ -43,13 +43,13 @@ public class ControllerUtils {
             }
             errorMessages.addAll(baseData.getErrorMessagesAsList());
         }
-        if (CollectionUtils.isNotEmpty(baseData.infoMessages)) {
+        if (CollectionUtils.isNotEmpty(baseData.getInfoMessagesAsList())) {
             List infoMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_INFO_MESSAGES));
             if (infoMessages==null) {
                 infoMessages = new ArrayList();
                 model.addAttribute(Consts.MODEL_ATTR_INFO_MESSAGES, infoMessages);
             }
-            infoMessages.addAll(baseData.infoMessages);
+            infoMessages.addAll(baseData.getInfoMessagesAsList());
         }
     }
 }

@@ -116,6 +116,8 @@ public class Account implements UserDetails, Serializable, Cloneable {
     @JsonIgnore
     private String password2;
 
+    @Transient
+    @JsonIgnore
     public boolean maskPassword = false;
 
     @NonNull

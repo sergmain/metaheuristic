@@ -15,6 +15,8 @@
  */
 package ai.metaheuristic.ai.processor.actors;
 
+import org.springframework.lang.Nullable;
+
 import java.util.LinkedList;
 
 public abstract class AbstractTaskQueue<T> {
@@ -35,6 +37,7 @@ public abstract class AbstractTaskQueue<T> {
         }
     }
 
+    @Nullable
     public T poll() {
         synchronized (QUEUE) {
             return QUEUE.pollFirst();

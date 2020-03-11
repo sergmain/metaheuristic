@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor.actors;
 
 import ai.metaheuristic.ai.Consts;
 import org.apache.http.Header;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 
@@ -40,6 +41,7 @@ class DownloadUtils {
         return "true".equals(getHeader(headers, Consts.HEADER_MH_IS_LAST_CHUNK));
     }
 
+    @Nullable
     private static String getHeader(Header[] headers, String name) {
         for (Header header : headers) {
             if (name.equals(header.getName())) {

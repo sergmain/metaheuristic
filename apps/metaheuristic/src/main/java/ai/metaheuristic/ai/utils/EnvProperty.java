@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.utils;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 
@@ -25,14 +26,14 @@ public class EnvProperty {
         return new File(filename);
     }
 
-    public static String strIfNotBlankElseNull(String prop) {
+    public static @Nullable String strIfNotBlankElseNull(@Nullable String prop) {
         if (StringUtils.isBlank(prop)) {
             return null;
         }
         return prop;
     }
 
-    public static Long longIfNotBlankElseNull(String prop) {
+    public static @Nullable Long longIfNotBlankElseNull(@Nullable String prop) {
         if (StringUtils.isBlank(prop)) {
             return null;
         }
@@ -59,7 +60,7 @@ public class EnvProperty {
         return max;
     }
 
-    public static File toFile(String dirAsString) {
+    public static @Nullable File toFile(@Nullable String dirAsString) {
         if (StringUtils.isBlank(dirAsString)) {
             return null;
         }

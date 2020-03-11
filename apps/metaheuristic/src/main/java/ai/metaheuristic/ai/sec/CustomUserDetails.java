@@ -24,6 +24,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -56,6 +57,7 @@ public class CustomUserDetails implements UserDetailsService {
             this.username = username;
         }
 
+        @Nullable
         public static ComplexUsername getInstance(String fullUsername) {
             int idx = fullUsername.lastIndexOf('=');
             final String username;

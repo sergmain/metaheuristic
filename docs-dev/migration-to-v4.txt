@@ -1,8 +1,23 @@
 1.
-в файле application.properties заменить
+в файле application.properties
 
+заменить
 mh.launchpad на mh.dispatcher
 mh.station на mh.processor
+
+
+заменить
+logging.file
+на
+logging.file.name
+
+в профиле заменить:
+launchpad на dispatcher
+station на processor
+
+например:
+было - spring.profiles.active=launchpad, station
+стало - spring.profiles.active=dispatcher, processor
 
 
 2.

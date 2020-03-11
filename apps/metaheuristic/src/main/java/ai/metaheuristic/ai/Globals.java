@@ -459,6 +459,7 @@ public class Globals {
         log.info("'\tisSslRequired: {}", isSslRequired);
         log.info("'\tdispatcherEnabled: {}", dispatcherEnabled);
         log.info("'\tdispatcherDir: {}", dispatcherDir!=null ? dispatcherDir.getAbsolutePath() : null);
+        log.info("'\tdispatcherMasterUsername: {}", dispatcherMasterUsername);
         log.info("'\tassetMode: {}", assetMode);
         log.info("'\tassetUsername: {}", assetUsername);
         log.info("'\tassetSourceUrl: {}", assetSourceUrl);
