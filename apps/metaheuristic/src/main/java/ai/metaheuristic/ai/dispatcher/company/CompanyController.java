@@ -176,8 +176,6 @@ public class CompanyController {
             redirectAttributes.addFlashAttribute("errorMessage", accountResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/company/company-accounts/" + companyUniqueId;
         }
-        accountResult.account.setPassword(null);
-        accountResult.account.setPassword2(null);
         model.addAttribute("account", accountResult.account);
         model.addAttribute("companyUniqueId", companyUniqueId);
         return "dispatcher/company/company-account-edit";
@@ -206,8 +204,6 @@ public class CompanyController {
             redirectAttributes.addFlashAttribute("errorMessage", accountResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/company/company-accounts/" + companyUniqueId;
         }
-        accountResult.account.setPassword(null);
-        accountResult.account.setPassword2(null);
         model.addAttribute("account", accountResult.account);
         model.addAttribute("companyUniqueId", companyUniqueId);
         return "dispatcher/company/company-account-password-edit";
@@ -235,8 +231,6 @@ public class CompanyController {
             redirectAttributes.addFlashAttribute("errorMessage", accountResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/company/company-accounts/"+companyUniqueId;
         }
-        accountResult.account.setPassword(null);
-        accountResult.account.setPassword2(null);
         model.addAttribute("account", accountResult.account);
         model.addAttribute("roles", Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES);
         model.addAttribute("companyUniqueId", companyUniqueId);

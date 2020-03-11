@@ -16,6 +16,7 @@
 package ai.metaheuristic.api.data;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -56,7 +57,7 @@ public class OperationStatusRest extends BaseDataClass {
         if (infoMessage!=null) {
             this.infoMessages = List.of(infoMessage);
         }
-        if (errorMessage!=null) {
+        if (!S.b(errorMessage)) {
             this.errorMessages = List.of(errorMessage);
         }
     }

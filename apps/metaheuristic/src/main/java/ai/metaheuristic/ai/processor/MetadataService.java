@@ -42,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -143,6 +144,7 @@ public class MetadataService {
         }
     }
 
+    @Nullable
     public FunctionDownloadStatusYaml.Status syncFunctionStatus(String dispatcherUrl, DispatcherLookupConfig.Asset asset, final String functionCode) {
         try {
             syncFunctionStatusInternal(dispatcherUrl, asset, functionCode);
@@ -231,6 +233,7 @@ public class MetadataService {
         return status;
     }
 
+    @Nullable
     public String findHostByCode(String code) {
         synchronized (syncObj) {
             for (Map.Entry<String, Metadata.DispatcherInfo> entry : metadata.dispatcher.entrySet()) {
@@ -389,6 +392,8 @@ public class MetadataService {
         }
     }
 
+    // it could be null if this function was deleted
+    @Nullable
     public FunctionDownloadStatusYaml.Status getFunctionDownloadStatuses(String dispatcherUrl, String functionCode) {
         synchronized (syncObj) {
             return getFunctionDownloadStatusYamlInternal().statuses.stream()

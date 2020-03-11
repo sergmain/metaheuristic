@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
@@ -42,10 +41,12 @@ import java.io.Serializable;
 public class Company implements Serializable {
     private static final long serialVersionUID = -159889135750827404L;
 
+    @Nullable
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public @NonNull Long id;
+    public Long id;
 
+    @Nullable
     @Version
     public Integer version;
 

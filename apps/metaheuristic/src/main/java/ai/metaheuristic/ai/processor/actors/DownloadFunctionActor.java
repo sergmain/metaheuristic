@@ -89,13 +89,16 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
                 continue;
             }
 
-            // it could be null if this function was deleted
             FunctionDownloadStatusYaml.Status sdsy = metadataService.syncFunctionStatus(dispatcher.url, asset, functionCode);
             if (sdsy==null || sdsy.functionState == Enums.FunctionState.ready) {
                 continue;
             }
 
             final FunctionDownloadStatusYaml.Status functionDownloadStatus = metadataService.getFunctionDownloadStatuses(dispatcher.url, functionCode);
+            if (functionDownloadStatus==null) {
+                log.warn("#811.010 Function {} wasn't found on Dispatcher {}", functionCode, dispatcher.url);
+                continue;
+            }
             if (functionDownloadStatus.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
                 log.warn("#811.010 Function {} can't be downloaded from {} because a sourcing isn't 'dispatcher'.", functionCode, dispatcher.url);
                 continue;

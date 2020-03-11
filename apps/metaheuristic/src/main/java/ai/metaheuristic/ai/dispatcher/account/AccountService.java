@@ -114,7 +114,7 @@ public class AccountService {
         a.setPublicName(publicName);
         a.updatedOn = System.currentTimeMillis();
         accountCache.save(a);
-        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", null);
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", "");
     }
 
     public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, Long companyUniqueId) {
@@ -133,7 +133,7 @@ public class AccountService {
         a.updatedOn = System.currentTimeMillis();
         accountCache.save(a);
 
-        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", null);
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", "");
     }
 
     // this method is using with angular's rest
@@ -150,7 +150,7 @@ public class AccountService {
         account.setRoles(str);
         account.updatedOn = System.currentTimeMillis();
         accountCache.save(account);
-        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", null);
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", "");
     }
 
     // this method is using with company-accounts
@@ -164,20 +164,20 @@ public class AccountService {
         String role = possibleRoles.get(roleId);
         boolean isAccountContainsRole = account.hasRole(role);
         if (isAccountContainsRole && !checkbox){
-            account.getRolesAsList().remove(role);
+            account.removeRole(role);
         } else if (!isAccountContainsRole && checkbox) {
-            account.getRolesAsList().add(role);
+            account.addRole(role);
         }
 
         if (!Consts.ID_1.equals(account.getCompanyId())) {
-            account.getRolesAsList().remove(SecConsts.ROLE_SERVER_REST_ACCESS);
+            account.removeRole(SecConsts.ROLE_SERVER_REST_ACCESS);
         }
 
         String roles = String.join(", ", account.getRolesAsList());
         account.setRoles(roles);
         account.updatedOn = System.currentTimeMillis();
         accountCache.save(account);
-        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Roles was changed successfully", null);
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Roles was changed successfully", "");
     }
 
 }

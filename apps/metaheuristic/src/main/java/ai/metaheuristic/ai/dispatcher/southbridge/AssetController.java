@@ -91,7 +91,7 @@ public class AssetController {
         if (function ==null) {
             log.warn("#440.100 Function {} wasn't", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
-            return null;
+            return "";
         }
         FunctionConfigYaml sc = function.getFunctionConfig(false);
         log.info("#440.120 Send checksum {} for function {}", sc.checksum, sc.getCode());
@@ -114,12 +114,10 @@ public class AssetController {
         if (function ==null) {
             log.warn("#440.140 Function {} wasn't found", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
-            return null;
+            return "";
         }
         FunctionConfigYaml sc = function.getFunctionConfig(false);
         log.info("Send function config for function {}", sc.getCode());
         return FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
     }
-
-
 }

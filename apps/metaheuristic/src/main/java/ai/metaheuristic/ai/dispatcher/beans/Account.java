@@ -50,7 +50,6 @@ public class Account implements UserDetails, Serializable, Cloneable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NonNull
     public Long id;
 
     @Version
@@ -83,9 +82,11 @@ public class Account implements UserDetails, Serializable, Cloneable {
     @Column(name="PUBLIC_NAME")
     public String publicName;
 
+    @Nullable
     @Column(name="MAIL_ADDRESS")
     public String mailAddress;
 
+    @Nullable
     @Column(name="PHONE")
     public String phone;
 
@@ -98,6 +99,7 @@ public class Account implements UserDetails, Serializable, Cloneable {
     @Nullable
     public String roles;
 
+    @Nullable
     @Column(name="SECRET_KEY")
     public String secretKey;
 
@@ -111,7 +113,7 @@ public class Account implements UserDetails, Serializable, Cloneable {
         return a;
     }
 
-    @NonNull
+    @Nullable
     @Transient
     @JsonIgnore
     private String password2;
@@ -127,7 +129,7 @@ public class Account implements UserDetails, Serializable, Cloneable {
 
     @NonNull
     public String getPassword2() {
-        return maskPassword ? "" : password2;
+        return maskPassword || password2==null ? "" : password2;
     }
 
     //TODO add checks on max length
@@ -150,6 +152,10 @@ public class Account implements UserDetails, Serializable, Cloneable {
                 throw new IllegalStateException("(!inited)");
             }
             return roles.contains(role);
+        }
+
+        public void addRole(String role) {
+            roles.add(role);
         }
 
         public void removeRole(String role) {
@@ -198,6 +204,19 @@ public class Account implements UserDetails, Serializable, Cloneable {
 
     @Transient
     @JsonIgnore
+    public void addRole(@NonNull String role) {
+        synchronized (this) {
+            initedRoles.addRole(role);
+            this.roles = initedRoles.asString();
+            initedRoles.reset();
+
+            grantedAuthorities.clear();
+            initRoles();
+        }
+    }
+
+    @Transient
+    @JsonIgnore
     public void removeRole(@NonNull String role) {
         synchronized (this) {
             initedRoles.removeRole(role);
@@ -226,6 +245,7 @@ public class Account implements UserDetails, Serializable, Cloneable {
                     grantedAuthorities.add(new SerializableGrantedAuthority(role));
                 }
             }
+            initedRoles.inited = true;
         }
     }
 
