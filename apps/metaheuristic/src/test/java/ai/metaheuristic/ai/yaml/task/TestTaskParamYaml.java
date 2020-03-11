@@ -25,6 +25,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -97,9 +98,12 @@ public class TestTaskParamYaml {
                 "112233",
                 "python",
                 EnumsApi.FunctionSourcing.dispatcher,
+                Map.of(),
+                null,
                 null,
                 null,
                 false,
+                List.of(),
                 new FunctionConfigYaml.MachineLearning(true, false)
         )));
 

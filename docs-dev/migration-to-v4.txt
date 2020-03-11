@@ -65,3 +65,16 @@ dispatchers:
  securityEnabled: true
 
 надо удалить.
+
+7.
+в dispatcher.yaml заменить
+acceptOnlySignedSnippets
+
+
+на
+acceptOnlySignedFunctions
+
+если параметра acceptOnlySignedSnippets в файле нет, то делать ничего не надо
+
+
+8.

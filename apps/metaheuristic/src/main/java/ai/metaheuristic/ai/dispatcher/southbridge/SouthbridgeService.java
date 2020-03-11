@@ -420,10 +420,12 @@ public class SouthbridgeService {
             }
 
             // for debugging behaviour of cache only
+/*
             Processor p = processorCache.findById(processor.id);
             if (p!=null) {
                 log.debug("#442.086 old processor.version: {}, in cache processor.version: {}, processor.status:\n{},\n", processor.version, p.version, p.status);
             }
+*/
 
             // the same processorId but new sessionId
             return;

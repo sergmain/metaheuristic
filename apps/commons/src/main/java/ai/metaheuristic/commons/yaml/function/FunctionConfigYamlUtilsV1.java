@@ -25,7 +25,7 @@ import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Serge
@@ -53,10 +53,13 @@ public class FunctionConfigYamlUtilsV1
         FunctionConfigYaml trg = new FunctionConfigYaml();
         BeanUtils.copyProperties(src, trg);
 
-        trg.checksumMap.putAll(src.checksumMap);
-        trg.info.signed = src.info.signed;
-        trg.info.length = src.info.length;
-        trg.metas.addAll(src.metas);
+        if (src.checksumMap!=null) {
+            Objects.requireNonNull(trg.checksumMap).putAll(src.checksumMap);
+        }
+        if (src.info!=null) {
+            trg.info = new FunctionConfigYaml.FunctionInfo(src.info.signed, src.info.length);
+        }
+        trg.metas = src.metas!=null ? src.metas : List.of();
         if (src.ml!=null) {
             trg.ml = new FunctionConfigYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
         }

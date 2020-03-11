@@ -88,12 +88,12 @@ public class FunctionConfigYaml implements Cloneable, BaseParams {
     public String params;
     public String env;
     public EnumsApi.FunctionSourcing sourcing;
-    public final Map<EnumsApi.Type, String> checksumMap = new HashMap<>();
-    public final FunctionInfo info = new FunctionInfo();
+    public @Nullable Map<EnumsApi.Type, String> checksumMap = new HashMap<>();
+    public @Nullable FunctionInfo info = null;
     public String checksum;
     public @Nullable GitInfo git;
     public boolean skipParams = false;
-    public final List<Meta> metas = new ArrayList<>();
-    public MachineLearning ml;
+    public @Nullable List<Meta> metas = new ArrayList<>();
+    public @Nullable MachineLearning ml;
 
 }
