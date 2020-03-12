@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
@@ -101,6 +102,7 @@ public class TestFunctionService {
             Function s = new Function();
             FunctionConfigYaml sc = new FunctionConfigYaml();
             sc.code = TEST_FUNCTION;
+            sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
             sc.type = "test";
             sc.env = "python-3";
             sc.file = "predict-filename.txt";

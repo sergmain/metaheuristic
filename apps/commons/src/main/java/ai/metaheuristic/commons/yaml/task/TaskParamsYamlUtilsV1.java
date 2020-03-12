@@ -18,6 +18,8 @@ package ai.metaheuristic.commons.yaml.task;
 
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV1;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -132,9 +134,12 @@ public class TaskParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public TaskParamsYamlV1 to(String s) {
+    public TaskParamsYamlV1 to(String yaml) {
+        if (S.b(yaml)) {
+            throw new BlankYamlParamsException("'yaml' parameter is blank");
+        }
         //noinspection UnnecessaryLocalVariable
-        final TaskParamsYamlV1 p = getYaml().load(s);
+        final TaskParamsYamlV1 p = getYaml().load(yaml);
         return p;
     }
 

@@ -101,6 +101,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertFalse(tasks.isEmpty());
 
         int taskNumber = 0;
+/*
         for (SourceCodeParamsYaml.Process process : sourceCodeParamsYaml.source.processes) {
             if (process.subProcesses!=null) {
                 if (true) {
@@ -116,6 +117,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         long numberFromGraph = execContextService.getCountUnfinishedTasks(execContextForFeature);
         assertEquals(actualTaskNumber, numberFromGraph);
+*/
 
         // ======================
 

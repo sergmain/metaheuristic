@@ -20,6 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
 import org.springframework.lang.Nullable;
 
@@ -44,14 +45,21 @@ public class FunctionConfigYamlV1 implements Cloneable, BaseParams {
 
     @Override
     public boolean checkIntegrity() {
+        if (sourcing==null) {
+            throw new CheckIntegrityFailedException("sourcing==null");
+        }
         return true;
     }
 
     @SneakyThrows
     public FunctionConfigYamlV1 clone() {
         final FunctionConfigYamlV1 clone = (FunctionConfigYamlV1) super.clone();
-        clone.checksumMap.putAll(this.checksumMap);
-        clone.metas.addAll(this.metas);
+        if (this.checksumMap!=null) {
+            clone.checksumMap = new HashMap<>(this.checksumMap);
+        }
+        if (this.metas!=null) {
+            clone.metas = new ArrayList<>(this.metas);
+        }
         return clone;
     }
 
@@ -89,7 +97,7 @@ public class FunctionConfigYamlV1 implements Cloneable, BaseParams {
     public String env;
     public EnumsApi.FunctionSourcing sourcing;
     public @Nullable Map<EnumsApi.Type, String> checksumMap = new HashMap<>();
-    public @Nullable FunctionInfoV1 info = new FunctionInfoV1();
+    public @Nullable FunctionInfoV1 info = null;
     public String checksum;
     public @Nullable GitInfo git;
     public boolean skipParams = false;

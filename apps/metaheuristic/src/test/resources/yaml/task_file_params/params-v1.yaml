@@ -8,22 +8,22 @@ task:
       batches: '20'
       seed: '42'
   inputs:
-    - name: feature
+    - id: 649-941-3-function-03-1_1-feature-processing
+      name: feature-1
       sourcing: dispatcher
-      resources:
-        - id: 649-941-3-function-03-1_1-feature-processing
-        - id: 649-941-3-function-04-1_1-feature-processing
-        - id: 649-941-3-function-05-1_1-feature-processing
-    - name: assembled-raw
+    - id: 649-941-3-function-04-1_1-feature-processing
+      name: feature-2
       sourcing: dispatcher
-      resources:
-        - id: 649-941-1-function-01-1_1-assembly-raw-file
-    - name: dataset
+    - id: 649-941-3-function-05-1_1-feature-processing
+      name: feature-3
       sourcing: dispatcher
-      resources:
-        - id: 649-941-2-function-02-1_1-dataset-processing
+    - id: 649-941-1-function-01-1_1-assembly-raw-file
+      name: assembled-raw
+      sourcing: dispatcher
+    - id: 649-941-2-function-02-1_1-dataset-processing
+      name: dataset
+      sourcing: dispatcher
   outputs:
-    - name: model
+    - id: task-51648-ml_model.bin
+      name: model
       sourcing: dispatcher
-      resources:
-        id: task-51648-ml_model.bin

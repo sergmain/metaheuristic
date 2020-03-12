@@ -151,6 +151,7 @@ public abstract class PreparingExperiment {
                 function = new Function();
                 FunctionConfigYaml sc = new FunctionConfigYaml();
                 sc.code = TEST_FIT_FUNCTION;
+                sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
                 sc.env = "python-3";
                 sc.type = CommonConsts.FIT_TYPE;
                 sc.file = "fit-filename.txt";
@@ -178,6 +179,7 @@ public abstract class PreparingExperiment {
                 predictFunction = new Function();
                 FunctionConfigYaml sc = new FunctionConfigYaml();
                 sc.code = TEST_PREDICT_FUNCTION;
+                sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
                 sc.type = CommonConsts.PREDICT_TYPE;
                 sc.env = "python-3";
                 sc.file = "predict-filename.txt";
@@ -246,6 +248,7 @@ public abstract class PreparingExperiment {
             th.printStackTrace();
             isCorrectInit = false;
         }
+        assertTrue(isCorrectInit);
     }
 
     @After

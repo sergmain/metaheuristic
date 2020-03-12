@@ -16,7 +16,6 @@
 package ai.metaheuristic.ai.core;
 
 import ai.metaheuristic.ai.utils.EnvProperty;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -26,6 +25,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
+
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -49,27 +50,27 @@ public class TestEnvProperty {
 
     @Test
     public void testProp() {
-        Assert.assertEquals(5, envProperty);
-        Assert.assertEquals(new File("aaa.xml"), file1);
-        Assert.assertEquals(new File("pom.xml"), file2);
+        assertEquals(5, envProperty);
+        assertEquals(new File("aaa.xml"), file1);
+        assertEquals(new File("pom.xml"), file2);
 
 
-        Assert.assertEquals(4, EnvProperty.minMax("4", 1, 5, 3));
-        Assert.assertEquals(1, EnvProperty.minMax("-1", 1, 5, 3));
-        Assert.assertEquals(1, EnvProperty.minMax("1", 1, 5,3 ));
-        Assert.assertEquals(5, EnvProperty.minMax("5", 1, 5, 3));
-        Assert.assertEquals(5, EnvProperty.minMax("9", 1, 5, 3));
+        assertEquals(4, EnvProperty.minMax("4", 1, 5, 3));
+        assertEquals(1, EnvProperty.minMax("-1", 1, 5, 3));
+        assertEquals(1, EnvProperty.minMax("1", 1, 5,3 ));
+        assertEquals(5, EnvProperty.minMax("5", 1, 5, 3));
+        assertEquals(5, EnvProperty.minMax("9", 1, 5, 3));
 
-        Assert.assertEquals(2, EnvProperty.minMax(" ", 1, 5, 2));
-
-        thrown.expect(IllegalStateException.class);
-        Assert.assertEquals(5, EnvProperty.minMax(" ", 1, 5, null));
+        assertEquals(2, EnvProperty.minMax(" ", 1, 5, 2));
 
         thrown.expect(IllegalStateException.class);
-        Assert.assertEquals(5, EnvProperty.minMax(" ", 1, 5, 0));
+        assertEquals(5, EnvProperty.minMax(" ", 1, 5, null));
 
         thrown.expect(IllegalStateException.class);
-        Assert.assertEquals(5, EnvProperty.minMax(" ", 1, 5, 6));
+        assertEquals(5, EnvProperty.minMax(" ", 1, 5, 0));
+
+        thrown.expect(IllegalStateException.class);
+        assertEquals(5, EnvProperty.minMax(" ", 1, 5, 6));
 
         thrown.expect(NumberFormatException.class);
         EnvProperty.minMax("abc", 1, 5, 3);

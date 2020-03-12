@@ -347,7 +347,7 @@ public class ExecContextService {
 
     public static List<Long> getIdsForSearch(List<ExecContextData.TaskVertex> vertices, int page, int pageSize) {
         final int fromIndex = page * pageSize;
-        if (vertices.size()== fromIndex) {
+        if (vertices.size()<=fromIndex) {
             return List.of();
         }
         int toIndex = fromIndex + (vertices.size()-pageSize>=fromIndex ? pageSize : vertices.size() - fromIndex);

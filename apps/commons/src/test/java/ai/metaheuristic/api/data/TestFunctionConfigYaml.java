@@ -90,9 +90,7 @@ public class TestFunctionConfigYaml {
         sc.ml.metrics = true;
         assertNotNull(sc.checksumMap);
         sc.checksumMap.put(EnumsApi.Type.SHA256, "qwe321");
-        assertNotNull(sc.info);
-        sc.info.signed = true;
-        sc.info.length = 42;
+        sc.info = new FunctionConfigYamlV1.FunctionInfoV1(true, 42);
         sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;

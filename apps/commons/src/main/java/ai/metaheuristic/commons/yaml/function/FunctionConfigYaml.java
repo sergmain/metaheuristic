@@ -20,6 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
 import org.springframework.lang.Nullable;
 
@@ -44,6 +45,9 @@ public class FunctionConfigYaml implements Cloneable, BaseParams {
 
     @Override
     public boolean checkIntegrity() {
+        if (sourcing==null) {
+            throw new CheckIntegrityFailedException("sourcing==null");
+        }
         return true;
     }
 

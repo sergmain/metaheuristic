@@ -16,12 +16,15 @@
 
 package ai.metaheuristic.ai.yaml.metadata;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 /**
@@ -86,10 +89,12 @@ public class FunctionDownloadStatusYamlUtilsV1
     @Override
     public FunctionDownloadStatusYamlV1 to(String s) {
         if (S.b(s)) {
-            return null;
+            throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
         //noinspection UnnecessaryLocalVariable
         final FunctionDownloadStatusYamlV1 p = getYaml().load(s);
+        // trying to fix a bad config
+        p.statuses.stream().filter(c -> c.sourcing==null).forEach(o->o.sourcing= EnumsApi.FunctionSourcing.dispatcher);
         return p;
     }
 
