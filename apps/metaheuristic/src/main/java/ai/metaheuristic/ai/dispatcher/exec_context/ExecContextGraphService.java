@@ -315,7 +315,7 @@ class ExecContextGraphService {
 
                 iterator.forEachRemaining(v -> {
                     if (v.execState==EnumsApi.TaskExecState.NONE) {
-                        // remove all tasks which have non-processed as direct parent
+                        // remove all tasks which have non-processed tasks as direct parent
                         if (isParentFullyProcessedWithoutErrors(graph, v)) {
                             vertices.add(v);
                         }

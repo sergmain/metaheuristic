@@ -49,9 +49,6 @@ public class TaskParamsYamlV1 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        if (task.context==null) {
-            throw new CheckIntegrityFailedException("function exec context is null");
-        }
         if (S.b(task.processCode)) {
             throw new CheckIntegrityFailedException("processCode is blank");
         }
@@ -75,6 +72,12 @@ public class TaskParamsYamlV1 implements BaseParams {
                     throw new CheckIntegrityFailedException("(input.resources.get(0).context!= EnumsApi.VariableContext.global)");
                 }
             }
+        }
+        if (task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file)) {
+            throw new CheckIntegrityFailedException("(task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file))");
+        }
+        if (task.context== EnumsApi.FunctionExecContext.external && S.b(task.function.file)) {
+            throw new CheckIntegrityFailedException("(task.context== EnumsApi.FunctionExecContext.external && S.b(task.function.file))");
         }
         return true;
     }

@@ -49,6 +49,9 @@ public class TestSourceCodeGraphLanguageYaml {
         assertTrue(graph.clean);
         assertEquals(6, graph.processGraph.vertexSet().size());
 
+        // it's 5, not 6, because mh.finish isn't defined in this SourceCode
+        assertEquals(5, graph.processes.size());
+
         Map<String, Long> ids = new HashMap<>();
         AtomicLong currId = new AtomicLong();
 

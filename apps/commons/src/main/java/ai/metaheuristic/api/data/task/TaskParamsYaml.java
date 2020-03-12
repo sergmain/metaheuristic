@@ -76,6 +76,12 @@ public class TaskParamsYaml implements BaseParams {
                 }
             }
         }
+        if (task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file)) {
+            throw new CheckIntegrityFailedException("(task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file))");
+        }
+        if (task.context== EnumsApi.FunctionExecContext.external && S.b(task.function.file)) {
+            throw new CheckIntegrityFailedException("(task.context== EnumsApi.FunctionExecContext.external && S.b(task.function.file))");
+        }
         return true;
     }
 
@@ -154,8 +160,8 @@ public class TaskParamsYaml implements BaseParams {
         public @NonNull String code;
         public @NonNull String type;
 
-        // todo 2020-03-10 must it be NonNull or Nullable?
-        public @NonNull String file;
+        // Nullable for internal context, NonNull for external
+        public @Nullable String file;
         /**
          * params for command line for invoking function
          * <p>

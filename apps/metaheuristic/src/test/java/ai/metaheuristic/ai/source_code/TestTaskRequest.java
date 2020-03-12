@@ -107,7 +107,7 @@ public class TestTaskRequest extends FeatureMethods {
         assertNotNull(d1);
         assertNull(d1.getAssignedTask());
 
-        finishCurrentWithOk(1);
+        finishCurrentWithOk();
         Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(t.taskId, true);
         assertEquals(Enums.UploadResourceStatus.OK, status);
 

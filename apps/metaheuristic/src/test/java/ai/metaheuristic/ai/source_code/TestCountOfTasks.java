@@ -23,12 +23,10 @@ import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +75,8 @@ public class TestCountOfTasks extends PreparingPlan {
 
 
         EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
+        assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
+
         execContextForFeature = Objects.requireNonNull(execContextCache.findById(this.execContextForFeature.id));
         assertNotNull(execContextForFeature);
         assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
@@ -110,14 +110,16 @@ public class TestCountOfTasks extends PreparingPlan {
         assertNotNull(taskResult);
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
-        // todo 2020-03-01 right now counting of tasks is disabled
-//        assertEquals(numberOfTasks, tasks.size());
+        assertEquals(numberOfTasks, tasks.size());
 
         taskResult = sourceCodeService.produceAllTasks(false, sourceCode, execContextForFeature);
         List<Object[]> tasks03 = taskCollector.getTasks(execContextForFeature);
         assertFalse(tasks03.isEmpty());
         assertEquals(numberOfTasks, tasks.size());
 
+        // todo 2020-03-11 because this test is just about calculating the number of tasks without processing any of them,
+        //  we don't need additional calculation
+/*
         int taskNumber = 0;
         for (SourceCodeParamsYaml.Process process : sourceCodeParamsYaml.source.processes) {
             if (process.subProcesses!=null) {
@@ -130,6 +132,7 @@ public class TestCountOfTasks extends PreparingPlan {
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         assertEquals( 1+1+3+ 2*12*7, taskNumber +  epy.processing.getNumberOfTask());
+*/
 
     }
 

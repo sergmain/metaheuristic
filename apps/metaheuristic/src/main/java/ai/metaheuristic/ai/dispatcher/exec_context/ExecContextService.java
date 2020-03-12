@@ -526,7 +526,7 @@ public class ExecContextService {
         }
         result.numberOfTasks = produceTaskResult.numberOfTasks;
         result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.OK;
-        result.taskProducingStatus = EnumsApi.TaskProducingStatus.OK;
+        result.taskProducingStatus = produceTaskResult.status;
 
         return result;
     }

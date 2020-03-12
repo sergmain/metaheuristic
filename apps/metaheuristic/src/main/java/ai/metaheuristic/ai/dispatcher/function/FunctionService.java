@@ -27,6 +27,7 @@ import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -41,14 +42,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,7 +61,7 @@ public class FunctionService {
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
 
-    public Function findByCode(String functionCode) {
+    public @Nullable Function findByCode(String functionCode) {
         Long id = functionRepository.findIdByCode(functionCode);
         if (id==null) {
             return null;
@@ -97,12 +96,13 @@ public class FunctionService {
         //noinspection UnnecessaryLocalVariable
         List<Function> list = functionRepository.findIdsByCodes(functionCodes).stream()
                 .map(functionCache::findById)
+                .filter(Objects::nonNull)
                 .sorted(FunctionService::experimentFunctionComparator)
                 .collect(Collectors.toList());
         return list;
     }
 
-    public TaskParamsYaml.FunctionConfig getFunctionConfig(ExecContextParamsYaml.FunctionDefinition functionDef) {
+    public @Nullable TaskParamsYaml.FunctionConfig getFunctionConfig(ExecContextParamsYaml.FunctionDefinition functionDef) {
         TaskParamsYaml.FunctionConfig functionConfig = null;
         if(StringUtils.isNotBlank(functionDef.code)) {
             Function function = findByCode(functionDef.code);
@@ -115,13 +115,16 @@ public class FunctionService {
                 if (!functionConfig.skipParams) {
                     // TODO 2019-10-09 need to handle a case when field 'params'
                     //  contains actual code (mh.function-params-as-file==true)
-                    if (functionConfig.params!=null && functionDef.params!=null) {
+                    if (!S.b(functionConfig.params) && !S.b(functionDef.params)) {
                         functionConfig.params = functionConfig.params + ' ' + functionDef.params;
                     }
-                    else if (functionConfig.params == null) {
+                    else if (S.b(functionConfig.params) && !S.b(functionDef.params)) {
                         if (functionDef.params != null) {
                             functionConfig.params = functionDef.params;
                         }
+                    }
+                    else {
+                        functionConfig.params = "";
                     }
                 }
             } else {
@@ -257,7 +260,7 @@ public class FunctionService {
         return statuses;
     }
 
-    private void storeFunction(FunctionConfigListYaml.FunctionConfig functionConfig, String sum, File file, Function function) throws IOException {
+    private void storeFunction(FunctionConfigListYaml.FunctionConfig functionConfig, @Nullable String sum, @Nullable File file, Function function) throws IOException {
         setChecksum(functionConfig, sum);
         function.code = functionConfig.code;
         function.type = functionConfig.type;
@@ -272,7 +275,7 @@ public class FunctionService {
         }
     }
 
-    private void setChecksum(FunctionConfigListYaml.FunctionConfig functionConfig, String sum) {
+    private void setChecksum(FunctionConfigListYaml.FunctionConfig functionConfig, @Nullable String sum) {
         if (sum==null) {
             functionConfig.checksum = null;
             functionConfig.info.setSigned(false);

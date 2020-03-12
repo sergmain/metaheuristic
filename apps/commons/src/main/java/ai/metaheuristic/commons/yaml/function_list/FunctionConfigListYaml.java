@@ -20,6 +20,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.*;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -87,7 +88,7 @@ public class FunctionConfigListYaml implements BaseParams {
         public EnumsApi.FunctionSourcing sourcing;
         public Map<EnumsApi.Type, String> checksumMap;
         public FunctionInfo info = new FunctionInfo();
-        public String checksum;
+        public @Nullable String checksum;
         public GitInfo git;
         public boolean skipParams = false;
         public List<Meta> metas = new ArrayList<>();

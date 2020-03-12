@@ -96,6 +96,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 List<ExecContextData.ProcessVertex> andProcesses = new ArrayList<>();
                 for (SourceCodeParamsYaml.Process subP : subProcesses.processes) {
                     checkProcessCode(processCodes, subP);
+                    scg.processes.add( toProcessForExecCode(sourceCodeParams, subP) );
 
                     if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
                         subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();

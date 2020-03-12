@@ -16,15 +16,14 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
+import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -131,13 +130,11 @@ public abstract class FeatureMethods extends PreparingPlan {
         return task;
     }
 
-    protected void finishCurrentWithError(int expectedSeqs) {
+    protected void finishCurrentWithError() {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
         List<Task> tasks = taskRepository.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
-        if (expectedSeqs!=0) {
-            assertEquals(expectedSeqs, tasks.size());
-        }
+        assertEquals(1, tasks.size());
         for (Task task : tasks) {
             FunctionApiData.SystemExecResult systemExecResult = new FunctionApiData.SystemExecResult("output-of-a-function",false, -1, "This is sample console output");
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec(systemExecResult, null, null, null);
@@ -151,13 +148,11 @@ public abstract class FeatureMethods extends PreparingPlan {
         execContextService.storeAllConsoleResults(results);
     }
 
-    protected void finishCurrentWithOk(int expectedTasks) {
+    protected void finishCurrentWithOk() {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
         List<Task> tasks = taskRepository.findByProcessorIdAndResultReceivedIsFalse(processor.getId());
-        if (expectedTasks!=0) {
-            assertEquals(expectedTasks, tasks.size());
-        }
+        assertEquals(1, tasks.size());
         for (Task task : tasks) {
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
             functionExec.setExec( new FunctionApiData.SystemExecResult("output-of-a-function", true, 0, "This is sample console output. fit"));

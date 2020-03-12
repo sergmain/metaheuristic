@@ -53,7 +53,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         mills = System.currentTimeMillis();
         log.info("Start finishCurrentWithError()");
-        finishCurrentWithError(1);
+        finishCurrentWithError();
         log.info("finishCurrentWithError() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();

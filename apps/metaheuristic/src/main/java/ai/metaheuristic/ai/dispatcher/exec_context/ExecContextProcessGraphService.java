@@ -31,16 +31,19 @@ import org.jgrapht.nio.DefaultAttribute;
 import org.jgrapht.nio.GraphImporter;
 import org.jgrapht.nio.dot.DOTExporter;
 import org.jgrapht.nio.dot.DOTImporter;
-import org.jgrapht.traverse.BreadthFirstIterator;
 import org.jgrapht.util.SupplierUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -166,24 +169,11 @@ public class ExecContextProcessGraphService {
     }
 
     public static Set<ExecContextData.ProcessVertex> findDescendants(SourceCodeGraph sourceCodeGraph, ExecContextData.ProcessVertex startVertex) {
-        ExecContextData.ProcessVertex vertex = sourceCodeGraph.processGraph.vertexSet()
-                .stream()
-                .filter(startVertex::equals)
-                .findFirst().orElse(null);
-        if (vertex==null) {
-            return Set.of();
-        }
+        return sourceCodeGraph.processGraph.getDescendants(startVertex);
+    }
 
-        Iterator<ExecContextData.ProcessVertex> iterator = new BreadthFirstIterator<>(sourceCodeGraph.processGraph, vertex);
-        Set<ExecContextData.ProcessVertex> descendants = new HashSet<>();
-
-        // Do not add start vertex to result.
-        if (iterator.hasNext()) {
-            iterator.next();
-        }
-
-        iterator.forEachRemaining(descendants::add);
-        return descendants;
+    public static Set<ExecContextData.ProcessVertex> findAncestors(SourceCodeGraph sourceCodeGraph, ExecContextData.ProcessVertex startVertex) {
+        return sourceCodeGraph.processGraph.getAncestors(startVertex);
     }
 
     public static List<ExecContextData.ProcessVertex> findLeafs(SourceCodeGraph sourceCodeGraph) {
@@ -195,7 +185,7 @@ public class ExecContextProcessGraphService {
         return vertices;
     }
 
-    public static ExecContextData.ProcessVertex findVertex(SourceCodeGraph sourceCodeGraph, String process) {
+    public @Nullable static ExecContextData.ProcessVertex findVertex(SourceCodeGraph sourceCodeGraph, String process) {
         //noinspection UnnecessaryLocalVariable
         ExecContextData.ProcessVertex vertex = sourceCodeGraph.processGraph.vertexSet()
                 .stream()

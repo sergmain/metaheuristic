@@ -102,6 +102,7 @@ public class GitSourcingService {
             return new GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
         }
 
+        // at this point result.systemExecResult must be not null
         if (result.systemExecResult.exitCode!=0) {
             return new GitStatusInfo(
                     Enums.GitStatus.not_found, null,
