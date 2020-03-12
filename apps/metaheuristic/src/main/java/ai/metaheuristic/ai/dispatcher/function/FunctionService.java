@@ -115,23 +115,27 @@ public class FunctionService {
                 if (!functionConfig.skipParams) {
                     // TODO 2019-10-09 need to handle a case when field 'params'
                     //  contains actual code (mh.function-params-as-file==true)
-                    if (!S.b(functionConfig.params) && !S.b(functionDef.params)) {
-                        functionConfig.params = functionConfig.params + ' ' + functionDef.params;
-                    }
-                    else if (S.b(functionConfig.params) && !S.b(functionDef.params)) {
-                        if (functionDef.params != null) {
-                            functionConfig.params = functionDef.params;
-                        }
-                    }
-                    else {
-                        functionConfig.params = "";
-                    }
+                    functionConfig.params = produceFinalCommandLineParams(functionConfig.params, functionDef.params);
                 }
             } else {
                 log.warn("#295.010 Can't find function for code {}", functionDef.code);
             }
         }
         return functionConfig;
+    }
+
+    public static String produceFinalCommandLineParams(@Nullable String functionConfigParams, @Nullable String functionDefParams) {
+        String s;
+        if (!S.b(functionConfigParams) && !S.b(functionDefParams)) {
+            s = functionConfigParams + ' ' + functionDefParams;
+        }
+        else if (S.b(functionConfigParams) && !S.b(functionDefParams)) {
+            s = functionDefParams;
+        }
+        else {
+            s = functionConfigParams;
+        }
+        return S.b(s) ? "" : s;
     }
 
     public boolean hasType(List<Function> experimentFunctions, String type) {

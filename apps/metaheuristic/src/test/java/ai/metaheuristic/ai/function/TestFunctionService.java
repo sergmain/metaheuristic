@@ -79,7 +79,7 @@ public class TestFunctionService {
         sd.code = TEST_FUNCTION;
         sd.params = null;
         TaskParamsYaml.FunctionConfig sc = functionService.getFunctionConfig(sd);
-
+        assertNotNull(sc);
         assertNotNull(sc.params);
         final String[] split = StringUtils.split(sc.params);
         assertNotNull(split);
