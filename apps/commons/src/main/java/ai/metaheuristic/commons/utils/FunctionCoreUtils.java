@@ -28,6 +28,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -38,24 +39,36 @@ public class FunctionCoreUtils {
 
     public static FunctionConfigYaml to(FunctionConfigListYaml.FunctionConfig snSrc) {
         FunctionConfigYaml snTrg = new FunctionConfigYaml();
-        BeanUtils.copyProperties(snSrc, snTrg);
+        BeanUtils.copyProperties(snSrc, snTrg, "checksumMap", "metas");
 
-        snTrg.checksumMap.putAll(snSrc.checksumMap);
-        snTrg.info.signed = snSrc.info.signed;
-        snTrg.info.length = snSrc.info.length;
-        snTrg.metas.addAll(snSrc.metas);
+        snTrg.checksumMap = new HashMap<>();
+        if (snSrc.checksumMap!=null) {
+            snTrg.checksumMap.putAll(snSrc.checksumMap);
+        }
+        snTrg.metas = new ArrayList<>();
+        if (snSrc.metas!=null) {
+            snTrg.metas.addAll(snSrc.metas);
+        }
+
+        snTrg.info = new FunctionConfigYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
         return  snTrg;
-
     }
 
+    // todo 2020-03-12 can we delete this method
     public static FunctionConfigYaml to1(FunctionConfigListYaml.FunctionConfig snSrc) {
         FunctionConfigYaml snTrg = new FunctionConfigYaml();
-        BeanUtils.copyProperties(snSrc, snTrg);
+        BeanUtils.copyProperties(snSrc, snTrg, "checksumMap", "metas");
 
-        snTrg.checksumMap.putAll(snSrc.checksumMap);
-        snTrg.info.signed = snSrc.info.signed;
-        snTrg.info.length = snSrc.info.length;
-        snTrg.metas.addAll(snSrc.metas);
+        snTrg.checksumMap = new HashMap<>();
+        if (snSrc.checksumMap!=null) {
+            snTrg.checksumMap.putAll(snSrc.checksumMap);
+        }
+        snTrg.metas = new ArrayList<>();
+        if (snSrc.metas!=null) {
+            snTrg.metas.addAll(snSrc.metas);
+        }
+
+        snTrg.info = new FunctionConfigYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
         return  snTrg;
     }
 
@@ -114,8 +127,6 @@ public class FunctionCoreUtils {
         return List.of();
     }
 
-    // TODO 2020-02-14 why it was deprecated?
-    @SuppressWarnings("deprecation")
     public static int getTaskParamsVersion(List<Meta> metas) {
         final Meta meta = MetaUtils.getMeta(metas, ConstsApi.META_MH_TASK_PARAMS_VERSION);
         return (meta!=null) ? Integer.parseInt(meta.value) : 1;

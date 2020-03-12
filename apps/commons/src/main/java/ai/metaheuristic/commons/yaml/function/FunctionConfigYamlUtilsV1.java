@@ -24,8 +24,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author Serge
@@ -51,15 +51,19 @@ public class FunctionConfigYamlUtilsV1
     public FunctionConfigYaml upgradeTo(@NonNull FunctionConfigYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         FunctionConfigYaml trg = new FunctionConfigYaml();
-        BeanUtils.copyProperties(src, trg);
+        BeanUtils.copyProperties(src, trg, "checksumMap", "metas");
 
+        trg.checksumMap = new HashMap<>();
         if (src.checksumMap!=null) {
-            Objects.requireNonNull(trg.checksumMap).putAll(src.checksumMap);
+            trg.checksumMap.putAll(src.checksumMap);
+        }
+        trg.metas = new ArrayList<>();
+        if (src.metas!=null) {
+            trg.metas.addAll(src.metas);
         }
         if (src.info!=null) {
             trg.info = new FunctionConfigYaml.FunctionInfo(src.info.signed, src.info.length);
         }
-        trg.metas = src.metas!=null ? src.metas : List.of();
         if (src.ml!=null) {
             trg.ml = new FunctionConfigYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
         }

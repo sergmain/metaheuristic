@@ -76,6 +76,7 @@ public class TestTaskParamsYaml {
         ty.postFunctions.add(postFunction);
         ty.execContextId = 1L;
         ty.context = EnumsApi.FunctionExecContext.external;
+        ty.function.file = "exec file";
         ty.processCode = "test-process-01";
 
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(v1);

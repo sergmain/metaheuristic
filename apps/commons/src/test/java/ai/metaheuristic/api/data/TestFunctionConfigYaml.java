@@ -23,6 +23,8 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtilsV1;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlV1;
 import org.junit.Test;
 
+import java.util.Objects;
+
 import static org.junit.Assert.*;
 
 /**
@@ -38,8 +40,8 @@ public class TestFunctionConfigYaml {
         FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV1().upgradeTo(sc);
 
         // to be sure that values were copied
-        sc.checksumMap.put(EnumsApi.Type.SHA256WithSignature, "321qwe");
-        sc.metas.add(new Meta("key2", "value2", "ext2" ));
+        Objects.requireNonNull(sc.checksumMap).put(EnumsApi.Type.SHA256WithSignature, "321qwe");
+        Objects.requireNonNull(sc.metas).add(new Meta("key2", "value2", "ext2" ));
 
         assertEquals(sc2.code, "sc.code");
         assertEquals(sc2.type, "sc.type");
@@ -49,8 +51,10 @@ public class TestFunctionConfigYaml {
         assertEquals(sc2.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc2.ml);
         assertTrue(sc2.ml.metrics);
+        assertNotNull(sc2.checksumMap);
         assertEquals(1, sc2.checksumMap.size());
         assertNotNull(sc2.checksumMap.get(EnumsApi.Type.SHA256));
+        assertNotNull(sc2.info);
         assertEquals(sc2.info.length, 42);
         assertTrue(sc2.info.signed);
         assertEquals(sc2.checksum, "sc.checksum");
@@ -59,6 +63,7 @@ public class TestFunctionConfigYaml {
         assertEquals(sc2.git.branch, "branch");
         assertEquals(sc2.git.commit, "commit");
         assertTrue(sc2.skipParams);
+        assertNotNull(sc2.metas);
         assertEquals(1, sc2.metas.size());
         assertEquals("key1", sc2.metas.get(0).getKey());
         assertEquals("value1", sc2.metas.get(0).getValue());
@@ -83,12 +88,15 @@ public class TestFunctionConfigYaml {
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         sc.ml = new FunctionConfigYamlV1.MachineLearningV1();
         sc.ml.metrics = true;
+        assertNotNull(sc.checksumMap);
         sc.checksumMap.put(EnumsApi.Type.SHA256, "qwe321");
+        assertNotNull(sc.info);
         sc.info.signed = true;
         sc.info.length = 42;
         sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;
+        assertNotNull(sc.metas);
         sc.metas.add(new Meta("key1", "value1", "ext1" ));
         return sc;
     }
@@ -103,17 +111,16 @@ public class TestFunctionConfigYaml {
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         sc.ml = new FunctionConfigYaml.MachineLearning(true, false);
-        sc.checksumMap.put(EnumsApi.Type.SHA256, "qwe321");
-        sc.info.signed= true;
-        sc.info.length = 42;
+        Objects.requireNonNull(sc.checksumMap).put(EnumsApi.Type.SHA256, "qwe321");
+        sc.info = new FunctionConfigYaml.FunctionInfo(true, 42);
         sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;
-        sc.metas.add((new Meta("key1", "value1", "ext1" )));
+        Objects.requireNonNull(sc.metas).add((new Meta("key1", "value1", "ext1" )));
 
         FunctionConfigYaml sc1 = sc.clone();
 
-        // to be sure that values were copied
+        // to be sure that values were copied, we'll change original checksumMap
         sc.checksumMap.put(EnumsApi.Type.SHA256WithSignature, "321qwe");
         sc.metas.add(new Meta("key2", "value2", "ext2" ));
 
@@ -129,9 +136,11 @@ public class TestFunctionConfigYaml {
         assertEquals(sc.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc.ml);
         assertTrue(sc.ml.metrics);
-        assertEquals(2, sc.checksumMap.size());
+        assertNotNull(sc.checksumMap);
+        assertEquals(1, sc.checksumMap.size());
         assertNotNull(sc.checksumMap.get(EnumsApi.Type.SHA256));
-        assertNotNull(sc.checksumMap.get(EnumsApi.Type.SHA256WithSignature));
+        assertNull(sc.checksumMap.get(EnumsApi.Type.SHA256WithSignature));
+        assertNotNull(sc.info);
         assertEquals(sc.info.length, 42);
         assertTrue(sc.info.signed);
         assertEquals(sc.checksum, "sc.checksum");
@@ -140,7 +149,8 @@ public class TestFunctionConfigYaml {
         assertEquals(sc.git.branch, "branch");
         assertEquals(sc.git.commit, "commit");
         assertTrue(sc.skipParams);
-        assertEquals(3, sc.metas.size());
+        assertNotNull(sc.metas);
+        assertEquals(1, sc.metas.size());
         assertEquals("key1", sc.metas.get(0).getKey());
         assertEquals("value1", sc.metas.get(0).getValue());
     }
@@ -168,10 +178,12 @@ public class TestFunctionConfigYaml {
         assertEquals(sc1.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc1.ml);
         assertTrue(sc1.ml.metrics);
+        assertNotNull(sc1.checksumMap);
         assertTrue(sc1.checksumMap.isEmpty());
         assertEquals(sc1.checksum, "sc.checksum");
         assertNull(sc1.git);
         assertTrue(sc1.skipParams);
+        assertNotNull(sc1.metas);
         assertTrue(sc1.metas.isEmpty());
     }
 }
