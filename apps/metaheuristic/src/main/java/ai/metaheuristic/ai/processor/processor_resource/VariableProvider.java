@@ -26,22 +26,21 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import java.io.File;
 import java.util.List;
 
-public interface ResourceProvider {
-    List<AssetFile> prepareForDownloadingDataFile(
+public interface VariableProvider {
+    List<AssetFile> prepareForDownloadingVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String resourceId, TaskParamsYaml.InputVariable variable);
+            TaskParamsYaml.InputVariable variable);
 
-    FunctionApiData.SystemExecResult processResultingFile(
+    FunctionApiData.SystemExecResult processOutputVariable(
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String outputResourceId,
+            String outputVariableId,
             TaskParamsYaml.FunctionConfig functionConfig
     );
 
-    File getOutputResourceFile(
+    File getOutputVariableFromFile(
             File taskDir,
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task,
-            String outputResourceId, TaskParamsYaml.OutputVariable variable);
+            ProcessorTask task, TaskParamsYaml.OutputVariable variable);
 }

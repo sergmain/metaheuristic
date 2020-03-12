@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
-import ai.metaheuristic.ai.processor.tasks.UploadResourceTask;
+import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -53,7 +53,7 @@ import java.util.UUID;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
+public class UploadResourceActor extends AbstractTaskQueue<UploadVariableTask> {
 
     private static ObjectMapper mapper;
 
@@ -84,8 +84,8 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             return;
         }
 
-        UploadResourceTask task;
-        List<UploadResourceTask> repeat = new ArrayList<>();
+        UploadVariableTask task;
+        List<UploadVariableTask> repeat = new ArrayList<>();
         while((task = poll())!=null) {
             ProcessorTask processorTask = processorTaskService.findById(task.dispatcher.url, task.taskId);
             if (processorTask == null) {
@@ -94,16 +94,16 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(processorTask.getParams());
 
-            final UploadResourceTask finalTask = task;
-            TaskParamsYaml.OutputVariable v = taskParamYaml.task.outputs.stream().filter(o->o.resource.id.equals(finalTask.resourceId)).findAny().orElse(null);
+            final UploadVariableTask finalTask = task;
+            TaskParamsYaml.OutputVariable v = taskParamYaml.task.outputs.stream().filter(o->o.id.equals(finalTask.variableId)).findAny().orElse(null);
             if (v==null) {
-                log.error("#311.022 outputVariable with resourceId {} wasn't found.", finalTask.resourceId);
+                log.error("#311.022 outputVariable with variableId {} wasn't found.", finalTask.variableId);
                 processorTaskService.delete(task.dispatcher.url, task.taskId);
                 continue;
             }
-            ProcessorTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.resourceId.equals(finalTask.resourceId)).findAny().orElse(null);
+            ProcessorTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.resourceId.equals(finalTask.variableId)).findAny().orElse(null);
             if (outputStatus==null) {
-                log.error("#311.024 outputStatus for resourceId {} wasn't found.", finalTask.resourceId);
+                log.error("#311.024 outputStatus for variableId {} wasn't found.", finalTask.variableId);
                 processorTaskService.delete(task.dispatcher.url, task.taskId);
                 continue;
             }
@@ -112,9 +112,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 continue;
             }
             if (v.sourcing!= EnumsApi.DataSourcing.dispatcher) {
-                if (true) {
-                    throw new NotImplementedException("Implement");
-                }
+                throw new NotImplementedException("Implement");
             }
             log.info("Start uploading result data to server, resultDataFile: {}", task.file);
             if (!task.file.exists()) {
@@ -166,7 +164,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 switch(status) {
                     case OK:
                         log.info("Resource was successfully uploaded to server, {}, {} ", task.dispatcher.url, task.taskId);
-                        processorTaskService.setResourceUploadedAndCompleted(task.dispatcher.url, task.taskId, finalTask.resourceId);
+                        processorTaskService.setResourceUploadedAndCompleted(task.dispatcher.url, task.taskId, finalTask.variableId);
                         break;
                     case FILENAME_IS_BLANK:
                     case TASK_WAS_RESET:
@@ -190,7 +188,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 repeat.add(task);
             }
         }
-        for (UploadResourceTask uploadResourceTask : repeat) {
+        for (UploadVariableTask uploadResourceTask : repeat) {
             add(uploadResourceTask);
         }
     }

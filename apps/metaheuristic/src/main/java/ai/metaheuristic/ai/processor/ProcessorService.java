@@ -21,10 +21,10 @@ import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.exceptions.ResourceProviderException;
 import ai.metaheuristic.ai.processor.actors.UploadResourceActor;
 import ai.metaheuristic.ai.processor.env.EnvService;
-import ai.metaheuristic.ai.processor.processor_resource.ResourceProvider;
+import ai.metaheuristic.ai.processor.processor_resource.VariableProvider;
 import ai.metaheuristic.ai.processor.processor_resource.ResourceProviderFactory;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.processor.tasks.UploadResourceTask;
+import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -145,7 +145,7 @@ public class ProcessorService {
     }
 
     private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(String dispatcherUrl, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
-        final AssetFile assetFile = ResourceUtils.prepareOutputAssetFile(taskDir, outputVariable.resource.id);
+        final AssetFile assetFile = ResourceUtils.prepareOutputAssetFile(taskDir, outputVariable.id);
 
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
@@ -162,7 +162,7 @@ public class ProcessorService {
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
-        UploadResourceTask uploadResourceTask = new UploadResourceTask(taskId, assetFile.file, outputVariable.resource.id);
+        UploadVariableTask uploadResourceTask = new UploadVariableTask(taskId, assetFile.file, outputVariable.id);
         uploadResourceTask.dispatcher = dispatcher.dispatcherLookup;
         uploadResourceTask.processorId = dispatcherCode.processorId;
         uploadResourceActor.add(uploadResourceTask);
@@ -181,9 +181,8 @@ public class ProcessorService {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         try {
             taskParamYaml.task.inputs.forEach(input -> {
-                for (TaskParamsYaml.Resource resource : input.resources) {
-                    ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(input.sourcing);
-                    List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, dispatcher, task, dispatcherCode, resource.id, input);
+                    VariableProvider resourceProvider = resourceProviderFactory.getResourceProvider(input.sourcing);
+                    List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(taskDir, dispatcher, task, dispatcherCode, input);
                     for (AssetFile assetFile : assetFiles) {
                         // is this resource prepared?
                         if (assetFile.isError || !assetFile.isContent) {
@@ -191,7 +190,6 @@ public class ProcessorService {
                             break;
                         }
                     }
-                }
             });
         }
         catch (BreakFromForEachException e) {
@@ -222,10 +220,10 @@ public class ProcessorService {
     public boolean checkOutputResourceFile(ProcessorTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             try {
-                ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
+                VariableProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
 
                 //noinspection unused
-                File outputResourceFile = resourceProvider.getOutputResourceFile(taskDir, dispatcher, task, outputVariable.resource.id, outputVariable);
+                File outputResourceFile = resourceProvider.getOutputVariableFromFile(taskDir, dispatcher, task, outputVariable);
             } catch (ResourceProviderException e) {
                 final String msg = "#749.080 Error: " + e.toString();
                 log.error(msg, e);

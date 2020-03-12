@@ -3,7 +3,8 @@ source:
   uid: experiment-branch-1.8-with-function-6.xx
   variables:
     globals:
-      - global-input
+      - global-input-1
+      - global-input-2
     inline:
       mh.hyper-params:
         RNN: LSTM
@@ -17,7 +18,8 @@ source:
         code: assembly.dataset:1.3
         params: 'assemble'
       inputs:
-        - name: global-input
+        - name: global-input-1
+        - name: global-input-2
       outputs:
         - name: assembled-raw
     - code: dataset-processing

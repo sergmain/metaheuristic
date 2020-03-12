@@ -28,13 +28,11 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -84,20 +82,17 @@ public class ExecContextService {
     private final @NonNull SourceCodeCache sourceCodeCache;
 
     private final @NonNull VariableService variableService;
-    private final @NonNull GlobalVariableService globalVariableService;
     private final @NonNull TaskRepository taskRepository;
     private final @NonNull TaskPersistencer taskPersistencer;
     private final @NonNull ProcessorCache processorCache;
     private final @NonNull ExecContextCache execContextCache;
     private final @NonNull ExecContextGraphService execContextGraphService;
-    private final @NonNull ExecContextProcessGraphService execContextProcessGraphService;
     private final @NonNull ExecContextSyncService execContextSyncService;
     private final @NonNull DispatcherEventService dispatcherEventService;
     private final @NonNull ExecContextFSM execContextFSM;
     private final @NonNull TaskProducingService taskProducingService;
     private final @NonNull ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final @NonNull ApplicationEventPublisher applicationEventPublisher;
-    private final @NonNull IdsRepository idsRepository;
 
     public OperationStatusRest resetBrokenTasks(@NonNull Long execContextId) {
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
@@ -288,11 +283,10 @@ public class ExecContextService {
             }
             Variable v = variableService.createUninitialized(variable.name, assignedTaskComplex.execContextId, p.internalContextId);
 
-            TaskParamsYaml.Resource resource = new TaskParamsYaml.Resource(EnumsApi.VariableContext.local, v.id.toString(), null);
             taskParams.task.outputs.add(
                     new TaskParamsYaml.OutputVariable(
-                            variable.name, EnumsApi.VariableContext.local, variable.sourcing, variable.git, variable.disk,
-                            resource, false
+                            v.id.toString(), EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
+                            null, false
                     ));
         }
     }

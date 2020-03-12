@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
  * Date: 8/08/2019
  * Time: 12:10 AM
  */
+@SuppressWarnings("DuplicatedCode")
 public class TaskParamsYamlUtilsV1
         extends AbstractParamsYamlUtils<TaskParamsYamlV1, TaskParamsYaml, Void, Void, Void, Void> {
 
@@ -53,8 +54,8 @@ public class TaskParamsYamlUtilsV1
         t.task = new TaskParamsYaml.TaskYaml();
         BeanUtils.copyProperties(v1.task, t.task, "function", "preFunctions", "postFunctions");
         t.task.function = toUp(v1.task.function);
-        v1.task.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toCollection(()->t.task.preFunctions));;
-        v1.task.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toCollection(()->t.task.postFunctions));;
+        v1.task.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toCollection(()->t.task.preFunctions));
+        v1.task.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toCollection(()->t.task.postFunctions));
         t.task.inline = v1.task.inline;
         v1.task.inputs.stream().map(TaskParamsYamlUtilsV1::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
         v1.task.outputs.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
@@ -66,22 +67,25 @@ public class TaskParamsYamlUtilsV1
 
     private static TaskParamsYaml.InputVariable upInputVariable(TaskParamsYamlV1.InputVariableV1 v1) {
         TaskParamsYaml.InputVariable v = new TaskParamsYaml.InputVariable();
+        v.id = v1.id;
         v.name = v1.name;
         v.context = v1.context;
+        v.sourcing = v1.sourcing;
         v.disk = v1.disk;
         v.git = v1.git;
-        v.sourcing = v1.sourcing;
-        v1.resources.stream().map(r->new TaskParamsYaml.Resource(r.context, r.id, r.realName)).collect(Collectors.toCollection(()->v.resources));
+        v.realName = v1.realName;
         return v;
     }
 
     private static TaskParamsYaml.OutputVariable upOutputVariable(TaskParamsYamlV1.OutputVariableV1 v1) {
         TaskParamsYaml.OutputVariable v = new TaskParamsYaml.OutputVariable();
+        v.id = v1.id;
+        v.name = v1.name;
+        v.context = v1.context;
+        v.sourcing = v1.sourcing;
         v.disk = v1.disk;
         v.git = v1.git;
-        v.name = v1.name;
-        v.sourcing = v1.sourcing;
-        v.resource = new TaskParamsYaml.Resource(v1.context, v1.resources.id, v1.resources.realName);
+        v.realName = v1.realName;
         return v;
     }
 

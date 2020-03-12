@@ -58,24 +58,6 @@ public class TaskParamsYaml implements BaseParams {
 
         }
 */
-        for (TaskParamsYaml.InputVariable input : task.inputs) {
-            if (input.resources.isEmpty()) {
-                throw new CheckIntegrityFailedException("(input.resources.isEmpty())");
-            }
-            if (input.context== EnumsApi.VariableContext.local) {
-                if (input.resources.size()>1) {
-                    throw new CheckIntegrityFailedException("(input.context== EnumsApi.VariableContext.local)  and (input.resources.size()>1)");
-                }
-                if (input.resources.get(0).context!= EnumsApi.VariableContext.local) {
-                    throw new CheckIntegrityFailedException("(input.resources.get(0).context!= EnumsApi.VariableContext.local)");
-                }
-            }
-            if (input.context== EnumsApi.VariableContext.global) {
-                if (input.resources.get(0).context!= EnumsApi.VariableContext.global) {
-                    throw new CheckIntegrityFailedException("(input.resources.get(0).context!= EnumsApi.VariableContext.global)");
-                }
-            }
-        }
         if (task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file)) {
             throw new CheckIntegrityFailedException("(task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file))");
         }
@@ -96,44 +78,44 @@ public class TaskParamsYaml implements BaseParams {
         public long length;
     }
 
-    /**
-     * Resource is related one-to-one to a record in table MH_VARIABLE or in table MH_VARIABLE_GLOBAL
-     * for MH_VARIABLE  context will be VariableContext.local
-     * for MH_VARIABLE_GLOBAL  context will be VariableContext.global
-     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Resource {
-        public @NonNull EnumsApi.VariableContext context;
+    public static class InputVariable {
+        // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
+        // for context==VariableContext.local the table is MH_VARIABLE
+        // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
         public @NonNull String id;
+        public @NonNull EnumsApi.VariableContext context;
+
+        public @NonNull String name;
+        public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public @Nullable GitInfo git;
+        public @Nullable DiskInfo disk;
+
+        // name of file if this variable was uploaded from file
         public @Nullable String realName;
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class InputVariable {
-        public @NonNull String name;
-        public @NonNull EnumsApi.VariableContext context;
-        public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
-        public @Nullable GitInfo git;
-        public @Nullable DiskInfo disk;
-
-        // Only for case when context==VariableContext.global, the list can contain more than one element
-        public @NonNull final List<Resource> resources = new ArrayList<>();
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
     public static class OutputVariable {
-        public @NonNull String name;
+        // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
+        // for context==VariableContext.local the table is MH_VARIABLE
+        // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
+        public @NonNull String id;
         public @NonNull EnumsApi.VariableContext context;
+        public @NonNull String name;
         public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
-        public @NonNull Resource resource;
+
+        // name of file if this variable was uploaded from file
+        // todo 2020-03-12 do we need 'realName' field for OutputVariable?
+        public @Nullable String realName;
+
+        // todo 2020-03-12 for what is that field?
         public boolean isInited;
     }
 

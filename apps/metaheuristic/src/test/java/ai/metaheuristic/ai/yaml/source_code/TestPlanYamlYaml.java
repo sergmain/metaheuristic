@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.source_code;
 
-import ai.metaheuristic.ai.preparing.PreparingPlan;
+import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.junit.Test;
@@ -35,7 +35,7 @@ public class TestPlanYamlYaml {
 
     @Test
     public void testYaml() {
-        String yaml = PreparingPlan.getSourceCodeV1();
+        String yaml = PreparingSourceCode.getSourceCodeV1();
         System.out.println(yaml);
         assertFalse(yaml.startsWith("!!"));
         SourceCodeParamsYaml planParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yaml);

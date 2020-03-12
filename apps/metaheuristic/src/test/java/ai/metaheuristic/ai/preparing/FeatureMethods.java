@@ -41,7 +41,7 @@ import java.util.Objects;
 import static org.junit.Assert.*;
 
 @Slf4j
-public abstract class FeatureMethods extends PreparingPlan {
+public abstract class FeatureMethods extends PreparingSourceCode {
 
     @Autowired
     protected Globals globals;

@@ -43,7 +43,7 @@ import java.util.List;
 @Service
 @Slf4j
 @Profile("processor")
-public class DiskResourceProvider implements ResourceProvider {
+public class DiskResourceProvider implements VariableProvider {
 
     private final EnvService envService;
     private final ProcessorTaskService processorTaskService;
@@ -54,13 +54,16 @@ public class DiskResourceProvider implements ResourceProvider {
     }
 
     @Override
-    public List<AssetFile> prepareForDownloadingDataFile(
+    public List<AssetFile> prepareForDownloadingVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String resourceId, TaskParamsYaml.InputVariable variable) {
+            TaskParamsYaml.InputVariable variable) {
 
         if (variable.sourcing!= EnumsApi.DataSourcing.disk) {
             throw new ResourceProviderException("#015.018 Wrong type of sourcing of data storage" + variable.sourcing);
+        }
+        if (variable.disk==null) {
+            throw new ResourceProviderException("#015.019 variable.sourcing==DataSourcing.disk but variable.disk is null");
         }
         DiskInfo diskInfo = variable.disk;
 
@@ -101,15 +104,15 @@ public class DiskResourceProvider implements ResourceProvider {
     }
 
     @Override
-    public FunctionApiData.SystemExecResult processResultingFile(
+    public FunctionApiData.SystemExecResult processOutputVariable(
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String outputResourceId, TaskParamsYaml.FunctionConfig functionConfig
+            String outputVariableId, TaskParamsYaml.FunctionConfig functionConfig
     ) {
-        File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
+        File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputVariableId).toFile();
         if (outputResourceFile.exists()) {
             log.info("The result data was already written to file {}, no need to upload to dispatcher", outputResourceFile.getPath());
-            processorTaskService.setResourceUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId, outputResourceId);
+            processorTaskService.setResourceUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId, outputVariableId);
         } else {
             String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
@@ -119,9 +122,9 @@ public class DiskResourceProvider implements ResourceProvider {
     }
 
     @Override
-    public File getOutputResourceFile(
+    public File getOutputVariableFromFile(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, String outputResourceId, TaskParamsYaml.OutputVariable variable) {
+            ProcessorTask task, TaskParamsYaml.OutputVariable variable) {
 
         EnvYaml env = envService.getEnvYaml();
         DiskStorage diskStorage = env.findDiskStorageByCode(variable.disk.code);
@@ -133,7 +136,7 @@ public class DiskResourceProvider implements ResourceProvider {
             throw new ResourceProviderException("#015.042 The path of disk storage doesn't exist: " + path.getAbsolutePath());
         }
 
-        return new File(path, outputResourceId);
+        return new File(path, variable.id);
     }
 
 }

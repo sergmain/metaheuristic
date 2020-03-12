@@ -15,7 +15,11 @@
  */
 package ai.metaheuristic.ai.utils.permutation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Function;
 
 public class Permutation<T> {
 
@@ -26,13 +30,13 @@ public class Permutation<T> {
         index  ---> Current index in data[]
         r ---> Size of a combination to be printed
     */
-    public int combinationUtil(ArrayList<T> arr, List<T> data, int start, int end, int index, int r, Acceptor<T> acceptor) {
+    public int combinationUtil(ArrayList<T> arr, List<T> data, int start, int end, int index, int r, Function<List<T>, Boolean> acceptor) {
         // Current combination is ready to be printed, print it
         if (index == r) {
             if (data.size()!=r) {
                 throw new IllegalStateException("data.length!=r");
             }
-            acceptor.accept(data);
+            acceptor.apply(data);
             return 1;
         }
 
@@ -58,12 +62,12 @@ public class Permutation<T> {
      * @param acceptor
      * @return
      */
-    public int printCombination(Collection<T> collection, int r, Acceptor<T> acceptor) {
+    public int printCombination(Collection<T> collection, int r, Function<List<T>, Boolean> acceptor) {
         final ArrayList<T> list = new ArrayList<>(collection);
         return printCombination(list, r, acceptor);
     }
 
-    public int printCombination(ArrayList<T> arr, int r, Acceptor<T> acceptor) {
+    public int printCombination(ArrayList<T> arr, int r, Function<List<T>, Boolean> acceptor) {
         int n = arr.size();
 
         if (n<r) {
@@ -87,8 +91,8 @@ public class Permutation<T> {
 
         int r = 3;
         Permutation<String> permutation = new Permutation<>();
-        System.out.println("\nTotal cnumber of combination: " + permutation.printCombination(arr, r,
-                data -> {
+        System.out.println("\nTotal number of combination: " + permutation.printCombination(arr, r, data ->
+                {
                     System.out.println("" + data);
                     return true;
                 }

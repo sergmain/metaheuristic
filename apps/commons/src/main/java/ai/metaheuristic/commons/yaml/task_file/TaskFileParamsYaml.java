@@ -53,26 +53,17 @@ public class TaskFileParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Resource {
-        public String id;
-        public String realName;
-
-        public Resource(String id) {
-            this.id = id;
-        }
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
     public static class InputVariable {
+        public String id;
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
-        public final List<Resource> resources = new ArrayList<>();
 
-        public InputVariable(String name, EnumsApi.DataSourcing sourcing) {
+        public @Nullable String realName;
+
+        public InputVariable(String id, String name, EnumsApi.DataSourcing sourcing) {
+            this.id = id;
             this.name = name;
             this.sourcing = sourcing;
         }
@@ -82,16 +73,17 @@ public class TaskFileParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class OutputVariable {
+        public String id;
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
-        public Resource resources;
+        public @Nullable String realName;
 
-        public OutputVariable(String name, EnumsApi.DataSourcing sourcing, Resource resources) {
+        public OutputVariable(String id, String name, EnumsApi.DataSourcing sourcing) {
+            this.id = id;
             this.name = name;
             this.sourcing = sourcing;
-            this.resources = resources;
         }
     }
 

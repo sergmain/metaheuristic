@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -55,9 +56,11 @@ public class Variable implements Serializable {
      * Also this field is used as refId for deleting any resources which were produced
      * while execContext was processed.
      */
+    @Nullable
     @Column(name = "EXEC_CONTEXT_ID")
     private Long execContextId;
 
+    @Nullable
     @Column(name = "CONTEXT_ID")
     private String contextId;
 
@@ -68,6 +71,7 @@ public class Variable implements Serializable {
     @Lob
     private Blob data;
 
+    @Nullable
     @Column(name = "FILENAME")
     public String filename;
 

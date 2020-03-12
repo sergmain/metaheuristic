@@ -31,35 +31,35 @@ public class ResourceUtils {
     /**
      *
      * @param rootDir File
-     * @param resourceId -  this is the code of resource
-     * @param resourceFilename String
+     * @param variableId -  this is the code of resource
+     * @param variableFilename String
      * @return AssetFile
      */
-    public static AssetFile prepareDataFile(File rootDir, String resourceId, @Nullable String resourceFilename) {
-        return prepareAssetFile(rootDir, resourceId, resourceFilename, EnumsApi.BinaryType.data.toString());
+    public static AssetFile prepareFileForVariable(File rootDir, String variableId, @Nullable String variableFilename) {
+        return prepareAssetFile(rootDir, variableId, variableFilename, EnumsApi.BinaryType.data.toString());
     }
 
     public static AssetFile prepareOutputAssetFile(File rootDir, String id) {
         return prepareAssetFile(rootDir, id, null, ConstsApi.ARTIFACTS_DIR);
     }
 
-    private static AssetFile prepareAssetFile(File rootDir, String resourceId, @Nullable String resourceFilename, String assetDirname ) {
+    private static AssetFile prepareAssetFile(File rootDir, String id, @Nullable String filename, String assetDirname ) {
         final File assetDir = new File(rootDir, assetDirname);
-        return prepareAssetFile(assetDir, resourceId, resourceFilename);
+        return prepareAssetFile(assetDir, id, filename);
     }
 
-    public static AssetFile prepareAssetFile(File assetDir, String resourceId, @Nullable String resourceFilename) {
+    public static AssetFile prepareAssetFile(File assetDir, String id, @Nullable String filename) {
         final AssetFile assetFile = new AssetFile();
         if (!assetDir.exists() && !assetDir.mkdirs()) {
             assetFile.isError = true;
             log.error("#025.42 Can't create resource dir for task: {}", assetDir.getAbsolutePath());
             return assetFile;
         }
-        if (StringUtils.isNotBlank(resourceFilename)) {
-            assetFile.file = new File(assetDir, resourceFilename);
+        if (StringUtils.isNotBlank(filename)) {
+            assetFile.file = new File(assetDir, filename);
         }
         else {
-            final String resId = resourceId.replace(':', '_');
+            final String resId = id.replace(':', '_');
             assetFile.file = new File(assetDir, "" + resId);
         }
         assetFile.isExist = assetFile.file.exists();

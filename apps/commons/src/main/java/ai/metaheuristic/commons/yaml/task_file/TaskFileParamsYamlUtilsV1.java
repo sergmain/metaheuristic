@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
  * Date: 8/08/2019
  * Time: 12:10 AM
  */
+@SuppressWarnings("DuplicatedCode")
 public class TaskFileParamsYamlUtilsV1
         extends AbstractParamsYamlUtils<TaskFileParamsYamlV1, TaskFileParamsYaml, Void, Void, Void, Void> {
 
@@ -62,21 +63,23 @@ public class TaskFileParamsYamlUtilsV1
 
     private static TaskFileParamsYaml.InputVariable upInputVariable(TaskFileParamsYamlV1.InputVariableV1 v1) {
         TaskFileParamsYaml.InputVariable v = new TaskFileParamsYaml.InputVariable();
+        v.id = v1.id;
         v.name = v1.name;
-        v.disk = v1.disk;
-        v.git = v1.git;
         v.sourcing = v1.sourcing;
-        v1.resources.stream().map(r->new TaskFileParamsYaml.Resource(r.id, r.realName)).collect(Collectors.toCollection(()->v.resources));
+        v.git = v1.git;
+        v.disk = v1.disk;
+        v.realName = v1.realName;
         return v;
     }
 
     private static TaskFileParamsYaml.OutputVariable upOutputVariable(TaskFileParamsYamlV1.OutputVariableV1 v1) {
         TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
+        v.id = v1.id;
         v.name = v1.name;
-        v.disk = v1.disk;
-        v.git = v1.git;
         v.sourcing = v1.sourcing;
-        v.resources = new TaskFileParamsYaml.Resource(v1.resources.id, v1.resources.realName);
+        v.git = v1.git;
+        v.disk = v1.disk;
+        v.realName = v1.realName;
         return v;
     }
 

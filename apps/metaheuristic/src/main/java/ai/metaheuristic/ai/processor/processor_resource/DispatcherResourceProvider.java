@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.actors.DownloadResourceActor;
 import ai.metaheuristic.ai.processor.actors.UploadResourceActor;
 import ai.metaheuristic.ai.processor.tasks.DownloadResourceTask;
-import ai.metaheuristic.ai.processor.tasks.UploadResourceTask;
+import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
@@ -42,36 +42,36 @@ import java.util.List;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-public class DispatcherResourceProvider implements ResourceProvider {
+public class DispatcherResourceProvider implements VariableProvider {
 
     private final DownloadResourceActor downloadResourceActor;
     private final UploadResourceActor uploadResourceActor;
 
     @Override
-    public List<AssetFile> prepareForDownloadingDataFile(
+    public List<AssetFile> prepareForDownloadingVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String resourceId, TaskParamsYaml.InputVariable variable) {
+            TaskParamsYaml.InputVariable variable) {
 
         // process it only if the dispatcher has already sent its config
         if (dispatcher.context.chunkSize != null) {
-            DownloadResourceTask resourceTask = new DownloadResourceTask(resourceId, task.getTaskId(), taskDir, dispatcher.context.chunkSize);
+            DownloadResourceTask resourceTask = new DownloadResourceTask(variable.id, task.getTaskId(), taskDir, dispatcher.context.chunkSize);
             resourceTask.dispatcher = dispatcher.dispatcherLookup;
             resourceTask.processorId = dispatcherCode.processorId;
             downloadResourceActor.add(resourceTask);
         }
-        return Collections.singletonList(ResourceUtils.prepareDataFile(taskDir, resourceId, null));
+        return Collections.singletonList(ResourceUtils.prepareFileForVariable(taskDir, variable.id, null));
     }
 
     @Override
-    public FunctionApiData.SystemExecResult processResultingFile(
+    public FunctionApiData.SystemExecResult processOutputVariable(
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String outputResourceId, TaskParamsYaml.FunctionConfig functionConfig) {
-        File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputResourceId).toFile();
+            String outputVariableId, TaskParamsYaml.FunctionConfig functionConfig) {
+        File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputVariableId).toFile();
         if (outputResourceFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputResourceFile.getPath());
-            UploadResourceTask uploadResourceTask = new UploadResourceTask(task.taskId, outputResourceFile, outputResourceId);
+            UploadVariableTask uploadResourceTask = new UploadVariableTask(task.taskId, outputResourceFile, outputVariableId);
             uploadResourceTask.dispatcher = dispatcher.dispatcherLookup;
             uploadResourceTask.processorId = dispatcherCode.processorId;
             uploadResourceActor.add(uploadResourceTask);
@@ -84,12 +84,12 @@ public class DispatcherResourceProvider implements ResourceProvider {
     }
 
     @Override
-    public File getOutputResourceFile(
+    public File getOutputVariableFromFile(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-            ProcessorTask task, String outputResourceCode, TaskParamsYaml.OutputVariable variable) {
+            ProcessorTask task, TaskParamsYaml.OutputVariable variable) {
 
         //noinspection UnnecessaryLocalVariable
-        File resultDataFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputResourceCode);
+        File resultDataFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + variable.id);
         return resultDataFile;
     }
 

@@ -13,15 +13,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.utils.permutation;
 
-import java.util.List;
+package ai.metaheuristic.ai.processor.tasks;
 
-/**
- * User: Serg
- * Date: 20.06.2016
- * Time: 19:09
- */
-public interface Acceptor<T> {
-    boolean accept(List<T> data);
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.io.File;
+
+@Data
+@AllArgsConstructor
+@EqualsAndHashCode(of={"taskId","variableId"}, callSuper = false)
+public class UploadVariableTask extends ProcessorRestTask {
+    public long taskId;
+    public File file;
+    public String variableId;
 }

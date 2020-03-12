@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.atlas;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.atlas.AtlasService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
-import ai.metaheuristic.ai.preparing.PreparingPlan;
+import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -36,7 +36,7 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
-public class TestExperimentToJson extends PreparingPlan {
+public class TestExperimentToJson extends PreparingSourceCode {
 
     @Autowired
     private ExperimentTopLevelService experimentTopLevelService;

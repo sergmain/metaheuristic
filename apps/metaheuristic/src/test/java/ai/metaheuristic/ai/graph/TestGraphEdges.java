@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.preparing.PreparingPlan;
+import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @Slf4j
-public class TestGraphEdges extends PreparingPlan {
+public class TestGraphEdges extends PreparingSourceCode {
 
     @Autowired
     public ExecContextCache execContextCache;

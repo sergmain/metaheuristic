@@ -33,7 +33,7 @@ public class ResourceProviderFactory {
         this.dispatcherResourceProvider = dispatcherResourceProvider;
     }
 
-    public ResourceProvider getResourceProvider(EnumsApi.DataSourcing sourcing) {
+    public VariableProvider getResourceProvider(EnumsApi.DataSourcing sourcing) {
         switch(sourcing) {
             case dispatcher:
                 return dispatcherResourceProvider;

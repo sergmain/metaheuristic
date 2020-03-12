@@ -22,18 +22,25 @@ import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
+ * This class is being used for storing a parameters of task for function in a file, ie params-v1.yaml
+ *
+ * Class TaskParamsYaml is for storing parameters of task internally at Processor side
+ *
  * @author Serge
  * Date: 6/17/2019
  * Time: 9:10 PM
  */
 @Data
+@EqualsAndHashCode
 public class TaskFileParamsYamlV1 implements BaseParams {
 
     public final int version = 1;
@@ -46,27 +53,18 @@ public class TaskFileParamsYamlV1 implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ResourceV1 {
+    public static class InputVariableV1 {
         public String id;
+        public String name;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public @Nullable GitInfo git;
+        public @Nullable DiskInfo disk;
+
         // real file name of resource, is present
         public String realName;
 
-        public ResourceV1(String id) {
+        public InputVariableV1(String id, String name, EnumsApi.DataSourcing sourcing) {
             this.id = id;
-        }
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class InputVariableV1 {
-        public String name;
-        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
-        public GitInfo git;
-        public DiskInfo disk;
-        public final List<ResourceV1> resources = new ArrayList<>();
-
-        public InputVariableV1(String name, EnumsApi.DataSourcing sourcing) {
             this.name = name;
             this.sourcing = sourcing;
         }
@@ -76,18 +74,26 @@ public class TaskFileParamsYamlV1 implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class OutputVariableV1 {
+        public String id;
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
-        public GitInfo git;
-        public DiskInfo disk;
-        public ResourceV1 resources;
+        public @Nullable GitInfo git;
+        public @Nullable DiskInfo disk;
+        public @Nullable String realName;
+
+        public OutputVariableV1(String id, String name, EnumsApi.DataSourcing sourcing) {
+            this.id = id;
+            this.name = name;
+            this.sourcing = sourcing;
+        }
     }
 
     @Data
     public static class TaskYamlV1 {
         public Long execContextId;
         public boolean clean = false;
-        public Map<String, Map<String, String>> inline;
+
+        public @Nullable Map<String, Map<String, String>> inline;
 
         public final List<InputVariableV1> inputs = new ArrayList<>();
         public final List<OutputVariableV1> outputs = new ArrayList<>();

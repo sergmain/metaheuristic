@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.preparing.PreparingPlan;
+import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -50,7 +50,7 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
-public class TestSourceCodeService extends PreparingPlan {
+public class TestSourceCodeService extends PreparingSourceCode {
 
     @Autowired
     public TaskService taskService;

@@ -19,6 +19,7 @@ import ai.metaheuristic.api.EnumsApi;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.SneakyThrows;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -38,11 +39,12 @@ public class Checksum {
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
-    public static String getChecksum(EnumsApi.Type type, String data) throws IOException {
+    public static String getChecksum(EnumsApi.Type type, String data)  {
         return getChecksum(type, IOUtils.toInputStream(data, Charsets.UTF_8));
     }
 
-    public static String getChecksum(EnumsApi.Type type, InputStream inputStream) throws IOException {
+    @SneakyThrows
+    public static String getChecksum(EnumsApi.Type type, InputStream inputStream) {
         switch (type) {
             case MD5:
                 return DigestUtils.md5Hex(inputStream);

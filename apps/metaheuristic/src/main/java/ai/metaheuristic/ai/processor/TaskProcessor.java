@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessService;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.processor.env.EnvService;
-import ai.metaheuristic.ai.processor.processor_resource.ResourceProvider;
+import ai.metaheuristic.ai.processor.processor_resource.VariableProvider;
 import ai.metaheuristic.ai.processor.processor_resource.ResourceProviderFactory;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.resource.AssetFile;
@@ -35,6 +35,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -324,9 +325,9 @@ public class TaskProcessor {
                     if (isOk && systemExecResult.isOk()) {
                         try {
                             for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
-                                ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
-                                generalExec = resourceProvider.processResultingFile(
-                                        dispatcher, task, dispatcherInfo, outputVariable.resource.id, mainFunctionConfig);
+                                VariableProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
+                                generalExec = resourceProvider.processOutputVariable(
+                                        dispatcher, task, dispatcherInfo, outputVariable.id, mainFunctionConfig);
                             }
                         }
                         catch (Throwable th) {
@@ -395,21 +396,23 @@ public class TaskProcessor {
 
     private static TaskFileParamsYaml.InputVariable  upInputVariable(TaskParamsYaml.InputVariable v1) {
         TaskFileParamsYaml.InputVariable  v = new TaskFileParamsYaml.InputVariable();
+        v.id = v1.id;
         v.name = v1.name;
         v.disk = v1.disk;
         v.git = v1.git;
         v.sourcing = v1.sourcing;
-        v1.resources.stream().map(r->new TaskFileParamsYaml.Resource(r.id, r.realName)).collect(Collectors.toCollection(()->v.resources));
+        v.realName = v1.realName;
         return v;
     }
 
     private static TaskFileParamsYaml.OutputVariable upOutputVariable(TaskParamsYaml.OutputVariable v1) {
         TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
+        v.id = v1.id;
         v.name = v1.name;
         v.disk = v1.disk;
         v.git = v1.git;
         v.sourcing = v1.sourcing;
-        v.resources = new TaskFileParamsYaml.Resource(v1.resource.id, v1.resource.realName);
+        v.realName = v1.realName;
         return v;
     }
 
@@ -461,8 +464,10 @@ public class TaskProcessor {
                     cmd.add(functionPrepareResult.functionAssetFile.file.getAbsolutePath());
                     break;
                 case processor:
-                    //noinspection UseBulkOperation
-                    Arrays.stream(StringUtils.split(functionPrepareResult.function.file)).forEachOrdered(cmd::add);
+                    if (!S.b(functionPrepareResult.function.file)) {
+                        //noinspection UseBulkOperation
+                        Arrays.stream(StringUtils.split(functionPrepareResult.function.file)).forEachOrdered(cmd::add);
+                    }
                     break;
                 default:
                     throw new IllegalStateException("#100.170 Unknown sourcing: "+ functionPrepareResult.function.sourcing );
@@ -536,6 +541,14 @@ public class TaskProcessor {
             }
         }
         else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {
+            if (S.b(functionPrepareResult.function.file)) {
+                String s = S.f("Function %s has a blank file", functionPrepareResult.function.code);
+                log.warn(s);
+                functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, s);
+                functionPrepareResult.isLoaded = false;
+                functionPrepareResult.isError = true;
+                return functionPrepareResult;
+            }
             final File resourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherCode);
             log.info("Root dir for function: " + resourceDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
@@ -547,7 +560,7 @@ public class TaskProcessor {
                 return functionPrepareResult;
             }
             functionPrepareResult.functionAssetFile = new AssetFile();
-            functionPrepareResult.functionAssetFile.file = new File(result.functionDir, functionPrepareResult.function.file);
+            functionPrepareResult.functionAssetFile.file = new File(result.functionDir, Objects.requireNonNull(functionPrepareResult.function.file));
             log.info("Function asset file: {}, exist: {}", functionPrepareResult.functionAssetFile.file.getAbsolutePath(), functionPrepareResult.functionAssetFile.file.exists() );
         }
         return functionPrepareResult;

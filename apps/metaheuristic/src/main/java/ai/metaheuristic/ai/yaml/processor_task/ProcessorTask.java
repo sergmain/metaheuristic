@@ -67,7 +67,7 @@ public class ProcessorTask {
     // when task was created
     public long createdOn;
 
-    // were all assets (resources of variables and function) prepared?
+    // were all assets (variables and functions) prepared?
     public boolean assetsPrepared;
 
     // when task was launched

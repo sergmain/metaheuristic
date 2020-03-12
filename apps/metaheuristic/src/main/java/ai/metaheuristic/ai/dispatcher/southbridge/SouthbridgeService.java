@@ -206,7 +206,7 @@ public class SouthbridgeService {
                 dataSaver = functionDataService::storeToFile;
                 break;
             case data:
-                assetFile = ResourceUtils.prepareDataFile(globals.dispatcherTempDir, resourceId, null);
+                assetFile = ResourceUtils.prepareFileForVariable(globals.dispatcherTempDir, resourceId, null);
                 dataSaver = variableService::storeToFile;
                 break;
             default:

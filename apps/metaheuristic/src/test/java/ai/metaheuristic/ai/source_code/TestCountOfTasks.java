@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.preparing.PreparingPlan;
+import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -43,7 +43,7 @@ import static org.junit.Assert.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @Slf4j
-public class TestCountOfTasks extends PreparingPlan {
+public class TestCountOfTasks extends PreparingSourceCode {
 
     @Override
     public String getSourceCodeYamlAsString() {

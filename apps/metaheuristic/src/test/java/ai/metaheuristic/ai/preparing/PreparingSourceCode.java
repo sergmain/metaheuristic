@@ -66,7 +66,7 @@ import static ai.metaheuristic.api.data.source_code.SourceCodeApiData.TaskProduc
 import static org.junit.Assert.*;
 
 @Slf4j
-public abstract class PreparingPlan extends PreparingExperiment {
+public abstract class PreparingSourceCode extends PreparingExperiment {
 
     @Autowired
     public CompanyTopLevelService companyTopLevelService;
@@ -138,7 +138,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
 //                time_steps: '7'
 
         planParamsYaml.source.variables = new SourceCodeParamsYamlV1.VariableDefinitionV1();
-        planParamsYaml.source.variables.globals = List.of(PreparingPlan.TEST_GLOBAL_VARIABLE);
+        planParamsYaml.source.variables.globals = List.of(PreparingSourceCode.TEST_GLOBAL_VARIABLE);
         planParamsYaml.source.variables.inline.put(ConstsApi.MH_HYPER_PARAMS, Map.of("RNN", "LSTM", "batches", "40", "seed", "42", "time_steps", "7"));
         {
             SourceCodeParamsYamlV1.ProcessV1 p = new SourceCodeParamsYamlV1.ProcessV1();
@@ -146,7 +146,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.code = "assembly-raw-file";
 
             p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1("function-01:1.1");
-            p.inputs.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, PreparingPlan.TEST_GLOBAL_VARIABLE));
+            p.inputs.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, PreparingSourceCode.TEST_GLOBAL_VARIABLE));
             p.outputs.add(new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher, "assembled-raw-output"));
 //      input:
 //        - variable: test-variable
@@ -421,11 +421,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
             experiment = Objects.requireNonNull(experimentCache.findById(experiment.id));
 
             this.execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
-            assertEquals(2, taskRepository.findAllTaskIdsByExecContextId(execContextForFeature.id).size());
-            assertEquals(2, execContextService.getCountUnfinishedTasks(execContextForFeature));
-//        assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForFeature.id).size());
-//        assertEquals(result1.numberOfTasks, execContextService.getCountUnfinishedTasks(execContextForFeature));
-
+            assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForFeature.id).size());
+            assertEquals(result1.numberOfTasks, execContextService.getCountUnfinishedTasks(execContextForFeature));
 
             assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(this.execContextForFeature.getState()));

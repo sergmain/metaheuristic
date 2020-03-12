@@ -73,7 +73,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 log.info("Task #{} was already finished, skip it", task.taskId);
                 continue;
             }
-            AssetFile assetFile = ResourceUtils.prepareDataFile(task.targetDir, task.resourceId, null);
+            AssetFile assetFile = ResourceUtils.prepareFileForVariable(task.targetDir, task.resourceId, null);
             if (assetFile.isError ) {
                 log.warn("#810.010 Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;

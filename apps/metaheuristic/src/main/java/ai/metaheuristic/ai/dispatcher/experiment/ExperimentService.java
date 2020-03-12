@@ -975,14 +975,7 @@ public class ExperimentService {
             permutation.printCombination(inputVariables, i+1,
                     permutedVariables -> {
                         final String permutedVariablesAsStr = String.valueOf(permutedVariables);
-                        final String checksumMD5;
-                        try {
-                            checksumMD5 = Checksum.getChecksum(EnumsApi.Type.MD5, permutedVariablesAsStr);
-                        } catch (IOException e) {
-                            String es = "Error while calculating MD5 for string " + permutedVariablesAsStr;
-                            log.error(es, e);
-                            throw new IllegalStateException(es);
-                        }
+                        final String checksumMD5 = Checksum.getChecksum(EnumsApi.Type.MD5, permutedVariablesAsStr);
                         String checksumIdCodes = StringUtils.substring(permutedVariablesAsStr, 0, 20) + "###" + checksumMD5;
                         if (list.contains(checksumIdCodes)) {
                             // already exist
