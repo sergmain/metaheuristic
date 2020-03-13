@@ -21,7 +21,7 @@
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
             th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/global-variables'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/global-variable/global-variables.html" th:href="@{/dispatcher/global-variable/global-variables}">Resources</a>
+            <a class="pure-menu-link" href="dispatcher/global-variable/global-variables.html" th:href="@{/dispatcher/global-variable/global-variables}">Variables</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
             th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/functions'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
