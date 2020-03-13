@@ -63,6 +63,8 @@ CREATE UNIQUE INDEX mh_variable_global_name_unq_idx
 
 truncate table mh_task;
 
+alter table mh_experiment change WORKBOOK_ID EXEC_CONTEXT_ID decimal null;
+
 update mh_experiment set EXEC_CONTEXT_ID=null where 1=1;
 
 alter table mh_task

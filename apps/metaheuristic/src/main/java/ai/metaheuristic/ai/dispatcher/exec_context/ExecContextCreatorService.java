@@ -114,7 +114,7 @@ public class ExecContextCreatorService {
         }
         // validate the sourceCode
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
-        if (sourceCodeValidation.status != EnumsApi.SourceCodeValidateStatus.OK) {
+        if (sourceCodeValidation.status.status != EnumsApi.SourceCodeValidateStatus.OK) {
             return new ExecContextCreationResult(sourceCodeValidation.getErrorMessagesAsList());
         }
 

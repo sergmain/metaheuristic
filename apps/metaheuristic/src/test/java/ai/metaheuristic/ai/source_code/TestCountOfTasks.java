@@ -64,8 +64,8 @@ public class TestCountOfTasks extends PreparingSourceCode {
 
         assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
-        EnumsApi.SourceCodeValidateStatus status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
-        assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status);
+        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
+        assertEquals(status.error, EnumsApi.SourceCodeValidateStatus.OK, status.status);
 
         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
         execContextForFeature = result.execContext;

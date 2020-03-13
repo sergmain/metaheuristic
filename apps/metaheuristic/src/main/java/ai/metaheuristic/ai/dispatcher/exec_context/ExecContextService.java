@@ -519,7 +519,7 @@ public class ExecContextService {
             execContextFSM.toProduced(execContext.id);
         }
         result.numberOfTasks = produceTaskResult.numberOfTasks;
-        result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.OK;
+        result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
         result.taskProducingStatus = produceTaskResult.status;
 
         return result;

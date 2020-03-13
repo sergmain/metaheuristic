@@ -70,7 +70,6 @@ public class SourceCodeTopLevelService {
 
     private final Globals globals;
     private final SourceCodeCache sourceCodeCache;
-    private final SourceCodeService sourceCodeService;
     private final SourceCodeRepository sourceCodeRepository;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final ExecContextService execContextService;
@@ -119,9 +118,10 @@ public class SourceCodeTopLevelService {
     public SourceCodeApiData.SourceCodeResult getSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
+            String errorMessage = "#560.050 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
             return new SourceCodeApiData.SourceCodeResult(
-                    "#560.050 sourceCode wasn't found, sourceCodeId: " + sourceCodeId,
-                    EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
+                    errorMessage,
+                    new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, errorMessage));
         }
         SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
         return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source);
@@ -130,8 +130,10 @@ public class SourceCodeTopLevelService {
     public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
-            return new SourceCodeApiData.SourceCodeResult("#560.070 sourceCode wasn't found, sourceCodeId: " + sourceCodeId,
-                    EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
+            String es = "#560.070 SourceCode wasn't found, sourceCodeId: " + sourceCodeId;
+            return new SourceCodeApiData.SourceCodeResult(es,
+                    new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, es)
+            );
         }
 
         SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
@@ -198,9 +200,9 @@ public class SourceCodeTopLevelService {
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
-            return new SourceCodeApiData.SourceCodeResult(
-                    "#560.010 sourceCode wasn't found, sourceCodeId: " + sourceCodeId,
-                    EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR);
+            String es = "#560.010 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
+            return new SourceCodeApiData.SourceCodeResult( es,
+                    new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, es));
         }
         if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
             return new SourceCodeApiData.SourceCodeResult("#560.170 sourceCode yaml is empty");

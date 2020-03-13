@@ -42,7 +42,8 @@ public class SourceCodeApiData {
     @Data
     @NoArgsConstructor
     public static class TaskProducingResultComplex {
-        public EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.NOT_VALIDATED_YET_ERROR;
+        public SourceCodeApiData.SourceCodeValidationResult sourceCodeValidationResult = new SourceCodeValidationResult(
+                EnumsApi.SourceCodeValidateStatus.NOT_VALIDATED_YET_ERROR, "Not validated yet");
         public EnumsApi.TaskProducingStatus taskProducingStatus = EnumsApi.TaskProducingStatus.NOT_PRODUCING_YET_ERROR;
         public List<Task> tasks = new ArrayList<>();
         public int numberOfTasks;
@@ -51,8 +52,8 @@ public class SourceCodeApiData {
             this.taskProducingStatus = taskProducingStatus;
         }
 
-        public TaskProducingResultComplex(EnumsApi.SourceCodeValidateStatus sourceCodeValidateStatus) {
-            this.sourceCodeValidateStatus = sourceCodeValidateStatus;
+        public TaskProducingResultComplex(SourceCodeApiData.SourceCodeValidationResult sourceCodeValidationResult) {
+            this.sourceCodeValidationResult = sourceCodeValidationResult;
         }
     }
 
@@ -70,14 +71,15 @@ public class SourceCodeApiData {
         public SourceCode sourceCode;
         public String sourceCodeYamlAsStr;
         public EnumsApi.SourceCodeLang lang;
-        public EnumsApi.SourceCodeValidateStatus status = EnumsApi.SourceCodeValidateStatus.NOT_VERIFIED_YET;
+        public SourceCodeValidationResult status = new SourceCodeValidationResult(
+                EnumsApi.SourceCodeValidateStatus.NOT_VERIFIED_YET, "Not verified yet");
 
-        public SourceCodeResult(String errorMessage, EnumsApi.SourceCodeValidateStatus status) {
+        public SourceCodeResult(String errorMessage, SourceCodeValidationResult status) {
             this.status = status;
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public SourceCodeResult(List<String> errorMessage, EnumsApi.SourceCodeValidateStatus status) {
+        public SourceCodeResult(List<String> errorMessage, SourceCodeValidationResult status) {
             this.status = status;
             this.errorMessages = errorMessage;
         }
@@ -132,11 +134,20 @@ public class SourceCodeApiData {
         }
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SourceCodeValidationResult {
+        public EnumsApi.SourceCodeValidateStatus status;
+        public String error;
+    }
+
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class SourceCodeValidation extends BaseDataClass {
-        public EnumsApi.SourceCodeValidateStatus status;
+        public SourceCodeValidationResult status;
     }
 
     @Data

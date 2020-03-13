@@ -17,6 +17,9 @@
 package ai.metaheuristic.api;
 
 import ai.metaheuristic.api.data.YamlVersion;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+
+import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 
 /**
  * @author Serge
@@ -54,4 +57,5 @@ public class ConstsApi {
 
     public static final YamlVersion YAML_VERSION_1 = new YamlVersion();
 
+    public final static SourceCodeApiData.SourceCodeValidationResult SOURCE_CODE_VALIDATION_RESULT_OK = new SourceCodeApiData.SourceCodeValidationResult(OK, null);
 }

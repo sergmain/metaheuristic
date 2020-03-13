@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -76,15 +76,16 @@ public class SourceCodeService {
     public SourceCodeApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, SourceCodeImpl sourceCode, ExecContextImpl execContext) {
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist && execContext.getState()!= EnumsApi.ExecContextState.PRODUCING.code) {
-            result.sourceCodeValidateStatus = EnumsApi.SourceCodeValidateStatus.ALREADY_PRODUCED_ERROR;
+            result.sourceCodeValidationResult = new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.ALREADY_PRODUCED_ERROR, "Tasks were produced already");
             return result;
         }
         long mills = System.currentTimeMillis();
-        result.sourceCodeValidateStatus = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
+        result.sourceCodeValidationResult = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
         log.info("#701.150 SourceCode was validated for "+(System.currentTimeMillis() - mills) + " ms.");
-        if (result.sourceCodeValidateStatus != EnumsApi.SourceCodeValidateStatus.OK &&
-                result.sourceCodeValidateStatus != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
-            log.error("#701.160 Can't produce tasks, error: {}", result.sourceCodeValidateStatus);
+        if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK &&
+                result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
+            log.error("#701.160 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
             if(isPersist) {
                 execContextFSM.toStopped(execContext.getId());
             }

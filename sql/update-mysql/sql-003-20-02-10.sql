@@ -71,9 +71,6 @@ CREATE TABLE mh_task
 CREATE INDEX mh_task_exec_context_id_idx
     ON mh_task (EXEC_CONTEXT_ID);
 
-
-alter table mh_experiment change WORKBOOK_ID EXEC_CONTEXT_ID decimal null;
-
 drop table mh_launchpad_address;
 
 rename table mh_station to mh_processor;

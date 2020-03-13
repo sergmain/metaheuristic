@@ -90,7 +90,7 @@ public class SourceCodeController {
         }
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
-        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
+        if (sourceCodeResultRest.status.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
@@ -104,7 +104,7 @@ public class SourceCodeController {
     public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.validateSourceCode(id, context);
-        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
+        if (sourceCodeResultRest.status.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
@@ -135,7 +135,7 @@ public class SourceCodeController {
         if (sourceCodeResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
         }
-        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.OK ) {
+        if (sourceCodeResultRest.status.status== EnumsApi.SourceCodeValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
         return REDIRECT_DISPATCHER_SOURCE_CODES;
@@ -151,7 +151,7 @@ public class SourceCodeController {
             return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.sourceCode.getId();
         }
 
-        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.OK ) {
+        if (sourceCodeResultRest.status.status== EnumsApi.SourceCodeValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
         return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.sourceCode.getId();
@@ -166,7 +166,7 @@ public class SourceCodeController {
         }
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
-        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
+        if (sourceCodeResultRest.status.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
@@ -191,7 +191,7 @@ public class SourceCodeController {
     public String archive(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
-        if (sourceCodeResultRest.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
+        if (sourceCodeResultRest.status.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
