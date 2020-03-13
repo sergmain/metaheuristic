@@ -9,13 +9,13 @@
         <!--/*@thymesVar id="sourceCode" type="ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl"*/-->
         <form class="pure-form pure-form-stacked" th:object="${sourceCode}">
             <fieldset>
-                <label for="uid">UID of sourceCode</label>
-                <input name="uid" id="uid" type="text" placeholder="uid" th:field="*{uid}">
-                <span class="pure-form-message">This is a required field.</span>
+                <label for="uid">UID of sourceCode:</label>
+                <p id="uid" th:text="*{uid}">
 
-                <label for="sourceCodeYamlAsStr">Parameters of sourceCode</label>
+                <p>&nbsp;</p>
+
+                <label for="sourceCodeYamlAsStr">Source code:</label>
                 <pre id="sourceCodeYamlAsStr"  th:text="${sourceCodeYamlAsStr}"></pre>
-                <span class="pure-form-message">This is a required field.</span>
             </fieldset>
         </form>
 

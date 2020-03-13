@@ -78,7 +78,7 @@
             <td><pre style="display: none;" id="processor-status" th:if="${r.processor.status}!=null" th:text="${r.processor.status}">Status of processor </pre></td>
             <td>
                 <div th:text="${r.active ? 'Yes' : 'No'}" th:class="${'no-wrap ' + (r.active ? 'alert-success' : 'alert-danger')}">Is active</div>
-                <div th:text="${r.isFunctionProblem ? 'Yes' : 'No'}" th:class="${'no-wrap ' + (r.isFunctionProblem ? 'alert-danger' : 'alert-success')}">Is any problem with Functions</div>
+                <div th:text="${r.functionProblem ? 'Yes' : 'No'}" th:class="${'no-wrap ' + (r.functionProblem ? 'alert-danger' : 'alert-success')}">Is any problem with Functions</div>
                 <div th:text="${r.blacklisted ? 'Yes' : 'No'}" th:class="${'no-wrap ' + (r.blacklisted ? 'alert-danger' : 'alert-success')}">Is blacklisted</div>
                 <div th:text="${r.blacklistReason}" class="no-wrap alert-danger">Reason</div>
             </td>
