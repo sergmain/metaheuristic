@@ -117,7 +117,7 @@ public class AssetController {
             return "";
         }
         FunctionConfigYaml sc = function.getFunctionConfig(false);
-        log.info("Send function config for function {}", sc.getCode());
+        log.info("Send config of function {}", sc.getCode());
         return FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
     }
 }

@@ -45,6 +45,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -54,6 +55,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -83,6 +85,7 @@ public class SourceCodeTopLevelService {
 
         List<SourceCode> activeSourceCodes = sourceCodeIds.stream()
                 .map(sourceCodeCache::findById)
+                .filter(Objects::nonNull)
                 .filter(sourceCode-> {
                     try {
                         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
@@ -103,7 +106,7 @@ public class SourceCodeTopLevelService {
         List<SourceCode> sourceCodes = activeSourceCodes.stream()
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .peek(o-> o.setParams(null))
+//                .peek(o-> o.setParams(""))
                 .collect(Collectors.toList());
 
         SourceCodeApiData.SourceCodesResult sourceCodesResultRest = new SourceCodeApiData.SourceCodesResult();
@@ -153,7 +156,9 @@ public class SourceCodeTopLevelService {
         try {
             ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
         } catch (WrongVersionOfYamlFileException e) {
-            return new SourceCodeApiData.SourceCodeResult("#560.110 An error parsing yaml: " + e.getMessage());
+            String es = "#560.110 An error parsing yaml: " + e.getMessage();
+            log.error(es, e);
+            return new SourceCodeApiData.SourceCodeResult(es);
         }
 
         final String code = ppy.source.uid;
@@ -301,7 +306,7 @@ public class SourceCodeTopLevelService {
             SourceCodeApiData.SourceCodeResult result = addSourceCode(yaml, context);
 
             if (result.isErrorMessages()) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages, result.infoMessages);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList(), result.getInfoMessagesAsList());
             }
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
@@ -341,7 +346,7 @@ public class SourceCodeTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
+    private @Nullable OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
         if (execContextId==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 execContextId is null");
         }

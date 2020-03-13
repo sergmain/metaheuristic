@@ -5,7 +5,7 @@ source:
   processes:
     - code: mh.resource-splitter
       name: mh.resource-splitter
-      snippet:
+      function:
         code: mh.resource-splitter
         context: internal
       inputs:
@@ -17,7 +17,7 @@ source:
         processes:
           - code: process-item
             name: process-item
-            snippet:
+            function:
               code: process-item:1.0
             inputs:
               - variable: batch-item
@@ -25,7 +25,7 @@ source:
               - variable: processed-file
     - code: mh.aggregate
       name: mh.aggregate
-      snippet:
+      function:
         code: mh.aggregate
         context: internal
       inputs:

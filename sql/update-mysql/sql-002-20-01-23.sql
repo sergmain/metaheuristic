@@ -58,11 +58,12 @@ CREATE TABLE mh_variable_global
     PARAMS          MEDIUMTEXT not null
 );
 
+CREATE UNIQUE INDEX mh_variable_global_name_unq_idx
+    ON mh_variable_global (NAME);
+
 truncate table mh_task;
 
 update mh_experiment set EXEC_CONTEXT_ID=null where 1=1;
-
-update mh_source_code set IS_LOCKED=0 where 1=1;
 
 alter table mh_task
     drop column PROCESS_TYPE;

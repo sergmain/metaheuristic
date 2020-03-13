@@ -40,7 +40,7 @@
         <thead>
         <tr>
             <th>Id</th>
-            <th>Code of sourceCode</th>
+            <th>UID of sourceCode</th>
             <th>Created on</th>
             <th>Is valid?</th>
             <th>Is locked?</th>
@@ -50,7 +50,7 @@
         <tbody>
         <tr th:each="f : ${result.items}">
             <td th:text="${f.id}">#Id</td>
-            <td th:text="${f.code}">Code of sourceCode</td>
+            <td th:text="${f.uid}">UID of sourceCode</td>
             <td th:text="${#dates.format(f.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
             <td th:text="${f.valid}">Is valid?</td>
             <td th:text="${f.locked}">Is locked?</td>

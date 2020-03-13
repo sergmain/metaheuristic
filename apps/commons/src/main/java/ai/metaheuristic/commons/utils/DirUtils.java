@@ -28,7 +28,7 @@ import java.util.Date;
 @Slf4j
 public class DirUtils {
 
-    public static void deleteAsync(final File fileOrDir) {
+    public static void deleteAsync(@Nullable final File fileOrDir) {
         if (fileOrDir != null) {
             Thread t = new Thread(() -> {
                 try {

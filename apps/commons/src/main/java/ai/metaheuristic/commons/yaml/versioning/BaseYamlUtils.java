@@ -87,7 +87,7 @@ public class BaseYamlUtils<T extends BaseParams> {
 
     public T to(@NonNull String s, Long ... vars) {
         try {
-            YamlVersion v = Objects.requireNonNull(YamlForVersioning.getYamlForVersion().load(s));
+            YamlVersion v = YamlForVersioning.getYamlVersion(s);
             AbstractParamsYamlUtils yamlUtils = getForVersion(v.getActualVersion());
             if (yamlUtils==null) {
                 throw new IllegalStateException("Unsupported version: " + v.getActualVersion());

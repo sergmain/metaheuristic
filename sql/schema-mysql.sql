@@ -132,6 +132,9 @@ CREATE TABLE mh_variable_global
     PARAMS          MEDIUMTEXT not null
 );
 
+CREATE UNIQUE INDEX mh_variable_global_name_unq_idx
+    ON mh_variable_global (NAME);
+
 CREATE TABLE mh_function_data
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.versioning;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.YamlVersion;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -39,5 +40,10 @@ public class YamlForVersioning {
         //noinspection UnnecessaryLocalVariable
         Yaml yaml = new Yaml(constructor, representer);
         return yaml;
+    }
+
+    public static YamlVersion getYamlVersion(String s) {
+        YamlVersion yamlVersion = getYamlForVersion().load(s);
+        return yamlVersion==null ? ConstsApi.YAML_VERSION_1 : yamlVersion;
     }
 }

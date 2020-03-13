@@ -24,7 +24,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.SimpleSelectOption;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
@@ -102,10 +102,10 @@ public class FunctionService {
         return list;
     }
 
-    public @Nullable TaskParamsYaml.FunctionConfig getFunctionConfig(ExecContextParamsYaml.FunctionDefinition functionDef) {
+    public @Nullable TaskParamsYaml.FunctionConfig getFunctionConfig(SimpleFunctionDefinition functionDef) {
         TaskParamsYaml.FunctionConfig functionConfig = null;
-        if(StringUtils.isNotBlank(functionDef.code)) {
-            Function function = findByCode(functionDef.code);
+        if(StringUtils.isNotBlank(functionDef.getCode())) {
+            Function function = findByCode(functionDef.getCode());
             if (function != null) {
                 functionConfig = TaskParamsUtils.toFunctionConfig(function.getFunctionConfig(true));
                 boolean paramsAsFile = MetaUtils.isTrue(functionConfig.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
@@ -115,10 +115,10 @@ public class FunctionService {
                 if (!functionConfig.skipParams) {
                     // TODO 2019-10-09 need to handle a case when field 'params'
                     //  contains actual code (mh.function-params-as-file==true)
-                    functionConfig.params = produceFinalCommandLineParams(functionConfig.params, functionDef.params);
+                    functionConfig.params = produceFinalCommandLineParams(functionConfig.params, functionDef.getParams());
                 }
             } else {
-                log.warn("#295.010 Can't find function for code {}", functionDef.code);
+                log.warn("#295.010 Can't find function for code {}", functionDef.getCode());
             }
         }
         return functionConfig;

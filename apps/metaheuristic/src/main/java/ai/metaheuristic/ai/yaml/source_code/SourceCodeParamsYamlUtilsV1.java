@@ -48,6 +48,7 @@ public class SourceCodeParamsYamlUtilsV1
     @Override
     public SourceCodeParamsYaml upgradeTo(@NonNull SourceCodeParamsYamlV1 v1, Long ... vars) {
         v1.checkIntegrity();
+
         SourceCodeParamsYaml p = new SourceCodeParamsYaml();
         p.source = new SourceCodeParamsYaml.SourceCodeYaml();
         if (v1.source.metas!=null){
@@ -76,9 +77,9 @@ public class SourceCodeParamsYamlUtilsV1
         pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
         o.inputs.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.inputs::add);
         o.outputs.stream().map(v->new SourceCodeParamsYaml.Variable(v.sourcing, v.git, v.disk, v.name)).forEach(pr.outputs::add);
-        pr.function = o.function !=null ? new SourceCodeParamsYaml.FunctionDefForSourceCode(o.function.code, o.function.params, o.function.context) : null;
-        pr.preFunctions = o.preFunctions !=null ? o.preFunctions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
-        pr.postFunctions = o.postFunctions !=null ? o.postFunctions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
+        pr.function = new SourceCodeParamsYaml.FunctionDefForSourceCode(o.function.code, o.function.params, o.function.context);
+        pr.preFunctions = o.preFunctions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList());
+        pr.postFunctions = o.postFunctions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context)).collect(Collectors.toList());
         pr.metas = o.metas;
 
         pr.subProcesses = o.subProcesses!=null

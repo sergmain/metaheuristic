@@ -53,7 +53,6 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
                 throw new CheckIntegrityFailedException("(process.function==null)");
             }
         }
-
         return true;
     }
 
@@ -109,8 +108,8 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public String name;
         public String code;
         public FunctionDefForSourceCodeV1 function;
-        public List<FunctionDefForSourceCodeV1> preFunctions;
-        public List<FunctionDefForSourceCodeV1> postFunctions;
+        public List<FunctionDefForSourceCodeV1> preFunctions = new ArrayList<>();
+        public List<FunctionDefForSourceCodeV1> postFunctions = new ArrayList<>();
 
         /**
          * Timeout before terminating a process with function
@@ -121,7 +120,7 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public final List<VariableV1> inputs = new ArrayList<>();
         public final List<VariableV1> outputs = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
-        public SubProcessesV1 subProcesses;
+        public @Nullable SubProcessesV1 subProcesses;
 
         @JsonIgnore
         @Nullable

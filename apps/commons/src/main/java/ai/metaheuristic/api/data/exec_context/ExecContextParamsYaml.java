@@ -20,6 +20,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -77,7 +78,7 @@ public class ExecContextParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class FunctionDefinition {
+    public static class FunctionDefinition implements SimpleFunctionDefinition {
         public @NonNull String code;
         public @Nullable String params;
         public @NonNull EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;

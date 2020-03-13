@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.YamlVersion;
+import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
@@ -41,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -159,7 +161,7 @@ public class SourceCodeValidationService {
     }
 
     private EnumsApi.SourceCodeValidateStatus checkFunctions(SourceCode sourceCode, SourceCodeParamsYaml.Process process) {
-        YamlVersion v = YamlForVersioning.getYamlForVersion().load(sourceCode.getParams());
+        YamlVersion v = YamlForVersioning.getYamlVersion(sourceCode.getParams());
 
         if (process.function !=null) {
             SourceCodeParamsYaml.FunctionDefForSourceCode snDef = process.function;
@@ -211,37 +213,9 @@ public class SourceCodeValidationService {
     }
 
     private boolean isFunctionVersionOk(int requiredVersion, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
-        TaskParamsYaml.FunctionConfig sc = getFunctionConfig(snDef);
+        TaskParamsYaml.FunctionConfig sc = functionService.getFunctionConfig(snDef);
         return sc != null && (sc.skipParams || requiredVersion <= FunctionCoreUtils.getTaskParamsVersion(sc.metas));
     }
 
-    private TaskParamsYaml.FunctionConfig getFunctionConfig(SourceCodeParamsYaml.FunctionDefForSourceCode functionDef) {
-        TaskParamsYaml.FunctionConfig functionConfig = null;
-        if(StringUtils.isNotBlank(functionDef.code)) {
-            Function function = functionService.findByCode(functionDef.code);
-            if (function != null) {
-                functionConfig = TaskParamsUtils.toFunctionConfig(function.getFunctionConfig(true));
-                boolean paramsAsFile = MetaUtils.isTrue(functionConfig.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
-                if (paramsAsFile) {
-                    throw new NotImplementedException("mh.function-params-as-file==true isn't supported right now");
-                }
-                if (!functionConfig.skipParams) {
-                    // TODO 2019-10-09 need to handle a case when field 'params'
-                    //  contains actual code (mh.function-params-as-file==true)
-                    if (functionConfig.params!=null && functionDef.params!=null) {
-                        functionConfig.params = functionConfig.params + ' ' + functionDef.params;
-                    }
-                    else if (functionConfig.params == null) {
-                        if (functionDef.params != null) {
-                            functionConfig.params = functionDef.params;
-                        }
-                    }
-                }
-            } else {
-                log.warn("#295.010 Can't find function for code {}", functionDef.code);
-            }
-        }
-        return functionConfig;
-    }
 
 }

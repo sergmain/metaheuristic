@@ -1,6 +1,3 @@
-CREATE UNIQUE INDEX mh_account_username_unq_idx
-    ON mh_account (USERNAME);
-
 alter table mh_company
     add UNIQUE_ID int unsigned null;
 

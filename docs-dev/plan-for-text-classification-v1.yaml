@@ -8,7 +8,7 @@ source:
   processes:
     - code: mh.resource-splitter
       name: mh.resource-splitter
-      snippet:
+      function:
         code: mh.resource-splitter
         context: internal
       inputs:
@@ -21,7 +21,7 @@ source:
         processes:
           - code: function-1
             name: function-1
-            snippet:
+            function:
               code: fit:6.2
             inputs:
               - name: batch-item

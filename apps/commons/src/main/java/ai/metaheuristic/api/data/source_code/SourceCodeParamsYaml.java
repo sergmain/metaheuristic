@@ -19,6 +19,7 @@ package ai.metaheuristic.api.data.source_code;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
@@ -61,7 +62,7 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class FunctionDefForSourceCode {
+    public static class FunctionDefForSourceCode implements SimpleFunctionDefinition {
         public String code;
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
@@ -117,8 +118,8 @@ public class SourceCodeParamsYaml implements BaseParams {
         public String name;
         public String code;
         public FunctionDefForSourceCode function;
-        public List<FunctionDefForSourceCode> preFunctions;
-        public List<FunctionDefForSourceCode> postFunctions;
+        public List<FunctionDefForSourceCode> preFunctions = new ArrayList<>();
+        public List<FunctionDefForSourceCode> postFunctions = new ArrayList<>();
 
         /**
          * Timeout before terminating a process with function
@@ -129,7 +130,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public final List<Variable> inputs = new ArrayList<>();
         public final List<Variable> outputs = new ArrayList<>();
         public List<Meta> metas = new ArrayList<>();
-        public SubProcesses subProcesses;
+        public @Nullable SubProcesses subProcesses;
 
         @JsonIgnore
         public @Nullable Meta getMeta(String key) {

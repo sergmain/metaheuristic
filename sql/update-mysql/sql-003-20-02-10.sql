@@ -1,9 +1,16 @@
-rename table mh_source_code to mh_source_code;
+drop table mh_plan;
 
-alter table mh_source_code
-    drop key mh_plan_code_unq_idx;
-
-alter table mh_source_code change CODE UID varchar(50) not null;
+CREATE TABLE mh_source_code
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    COMPANY_ID      INT UNSIGNED    not null,
+    UID             varchar(50)  NOT NULL,
+    CREATED_ON      bigint NOT NULL,
+    PARAMS          TEXT not null,
+    IS_LOCKED       BOOLEAN not null default false,
+    IS_VALID        BOOLEAN not null default false
+);
 
 CREATE UNIQUE INDEX mh_source_code_uid_unq_idx
     ON mh_source_code (UID);
