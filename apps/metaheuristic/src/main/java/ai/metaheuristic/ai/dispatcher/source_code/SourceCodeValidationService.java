@@ -91,11 +91,11 @@ public class SourceCodeValidationService {
                 if (process.outputs.isEmpty()) {
                     return EnumsApi.SourceCodeValidateStatus.PROCESS_PARAMS_EMPTY_ERROR;
                 }
-                for (SourceCodeParamsYaml.Variable params : process.outputs) {
-                    if (S.b(params.name)) {
+                for (SourceCodeParamsYaml.Variable variable : process.outputs) {
+                    if (S.b(variable.name)) {
                         return EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR;
                     }
-                    if (params.sourcing==null) {
+                    if (variable.getSourcing()==null) {
                         return EnumsApi.SourceCodeValidateStatus.SOURCING_OF_VARIABLE_NOT_DEFINED_ERROR;
                     }
                 }

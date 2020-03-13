@@ -14,7 +14,7 @@ CREATE UNIQUE INDEX mh_function_data_function_code_unq_idx
 insert into mh_function_data
 (ID, VERSION, FUNCTION_CODE, UPLOAD_TS, DATA, PARAMS)
 select ID, VERSION, CODE, UPLOAD_TS, DATA, PARAMS
-from mh_variable
+from mh_data
 where DATA_TYPE=2;
 
 commit;

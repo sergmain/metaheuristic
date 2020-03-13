@@ -152,7 +152,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
     @NonNull
     private static ExecContextParamsYaml.Variable getVariable(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Variable v) {
         EnumsApi.VariableContext context = sourceCodeParams.source.variables.globals!=null && sourceCodeParams.source.variables.globals.stream().anyMatch(g->g.equals(v.name)) ? EnumsApi.VariableContext.global :  EnumsApi.VariableContext.local;
-        return new ExecContextParamsYaml.Variable(v.name, context, v.sourcing, v.git, v.disk);
+        return new ExecContextParamsYaml.Variable(v.name, context, v.getSourcing(), v.git, v.disk);
     }
 
     private void checkProcessCode(Set<String> processCodes, SourceCodeParamsYaml.Process p) {
