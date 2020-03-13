@@ -57,7 +57,7 @@
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
                 <a class="pure-button pure-button-primary"
                    th:disabled="${f.locked}"
-                   th:href="${'/dispatcher/source-code/sourceCode-edit/' + f.id}">Edit</a></td>
+                   th:href="${'/dispatcher/source-code/source-code-edit/' + f.id}">Edit</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
                 <a class="pure-button pure-button-primary" th:href="${'/dispatcher/source-code/source-code-delete/' + f.id}">Delete</a></td>
             <td th:if="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated}">
@@ -71,17 +71,17 @@
                         <li class="table-nav-padding">
                             <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                               th:href="@{/dispatcher/source-code/sourceCodes-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                               th:href="@{/dispatcher/source-code/source-codes-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                               th:href="@{/dispatcher/source-code/sourceCodes-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/dispatcher/source-code/source-codes-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                               th:href='@{/dispatcher/source-code/sourceCodes-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
+                               th:href='@{/dispatcher/source-code/source-codes-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>

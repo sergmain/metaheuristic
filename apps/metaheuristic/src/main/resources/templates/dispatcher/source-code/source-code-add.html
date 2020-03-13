@@ -6,7 +6,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Add new source code</h1>
 
-        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/source-code/source-code-add-commit}" accept-charset="UTF-8" id="sourceCode-form" name="f">
+        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/source-code/source-code-add-commit}" accept-charset="UTF-8" id="source-code-form" name="f">
             <fieldset>
 
                 <label for="sourceCodeYamlAsStr">Parameters of source code</label>

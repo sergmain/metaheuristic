@@ -7,7 +7,7 @@
         <h1 class="widget-header">Edit the source code</h1>
 
         <!--/*@thymesVar id="sourceCode" type="ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl"*/-->
-        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/source-code/sourceCode-edit-commit}" accept-charset="UTF-8" id="processor-form" name="f">
+        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/source-code/source-code-edit-commit}" accept-charset="UTF-8" id="processor-form" name="f">
             <input type="hidden" name="sourceCodeId" th:value="${sourceCode.id}"/>
             <fieldset>
 

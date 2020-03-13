@@ -94,7 +94,7 @@ public class SourceCodeController {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
-        model.addAttribute("source-code", sourceCodeResultRest.sourceCode);
+        model.addAttribute("sourceCode", sourceCodeResultRest.sourceCode);
         model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
         return "dispatcher/source-code/source-code-edit";
     }

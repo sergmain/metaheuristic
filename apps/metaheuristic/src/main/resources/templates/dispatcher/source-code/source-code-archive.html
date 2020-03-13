@@ -9,8 +9,8 @@
         <!--/*@thymesVar id="sourceCode" type="ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl"*/-->
         <form class="pure-form pure-form-stacked" th:object="${sourceCode}">
             <fieldset>
-                <label for="code">Code of sourceCode</label>
-                <input name="code" id="code" type="text" placeholder="code" th:field="*{code}">
+                <label for="uid">UID of sourceCode</label>
+                <input name="uid" id="uid" type="text" placeholder="uid" th:field="*{uid}">
                 <span class="pure-form-message">This is a required field.</span>
 
                 <label for="sourceCodeYamlAsStr">Parameters of sourceCode</label>
@@ -24,7 +24,7 @@
                 <td>
                     <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${sourceCode}" th:method="post" th:action="@{/dispatcher/source-code/source-code-archive-commit}"
                           accept-charset="UTF-8"
-                          id="sourceCode-archive-commit"
+                          id="source-code-archive-commit"
                           name="f">
                         <input type="hidden" th:field="*{id}"/>
                         <fieldset>
@@ -36,7 +36,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/source-code/sourceCodes}" accept-charset="UTF-8" id="sourceCode-archive-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/source-code/sourceCodes}" accept-charset="UTF-8" id="source-code-archive-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

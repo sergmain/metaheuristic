@@ -142,7 +142,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;
         o.inputs.stream().map(v->getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(()->pr.inputs));
         o.outputs.stream().map(v->getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(()->pr.outputs));
-        pr.function = o.function !=null ? new ExecContextParamsYaml.FunctionDefinition(o.function.code, o.function.params, o.function.context) : null;
+        pr.function = new ExecContextParamsYaml.FunctionDefinition(o.function.code, o.function.params, o.function.context);
         pr.preFunctions = o.preFunctions !=null ? o.preFunctions.stream().map(d->new ExecContextParamsYaml.FunctionDefinition(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
         pr.postFunctions = o.postFunctions !=null ? o.postFunctions.stream().map(d->new ExecContextParamsYaml.FunctionDefinition(d.code, d.params, d.context)).collect(Collectors.toList()) : null;
         pr.metas = o.metas;

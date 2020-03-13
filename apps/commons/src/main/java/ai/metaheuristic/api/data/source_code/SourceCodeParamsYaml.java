@@ -127,8 +127,8 @@ public class SourceCodeParamsYaml implements BaseParams {
         public String name;
         public String code;
         public FunctionDefForSourceCode function;
-        public List<FunctionDefForSourceCode> preFunctions = new ArrayList<>();
-        public List<FunctionDefForSourceCode> postFunctions = new ArrayList<>();
+        public @Nullable List<FunctionDefForSourceCode> preFunctions = new ArrayList<>();
+        public @Nullable List<FunctionDefForSourceCode> postFunctions = new ArrayList<>();
 
         /**
          * Timeout before terminating a process with function
@@ -138,7 +138,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public Long timeoutBeforeTerminate;
         public final List<Variable> inputs = new ArrayList<>();
         public final List<Variable> outputs = new ArrayList<>();
-        public List<Meta> metas = new ArrayList<>();
+        public @Nullable List<Meta> metas = new ArrayList<>();
         public @Nullable SubProcesses subProcesses;
 
         @JsonIgnore
