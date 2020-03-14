@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-public class OAuthTokenRequestorActor extends AbstractTaskQueue<OAuthTokenTask>{
+public class OAuthTokenRequestorService extends AbstractTaskQueue<OAuthTokenTask>{
 
     private final Globals globals;
     private final OAuthTokenHolder oAuthTokenHolder;

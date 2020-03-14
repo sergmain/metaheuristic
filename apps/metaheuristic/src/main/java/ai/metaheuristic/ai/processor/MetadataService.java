@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -189,7 +189,7 @@ public class MetadataService {
             return;
         }
 
-        final AssetFile assetFile = ResourceUtils.prepareFunctionFile(simpleCache.baseResourceDir, status.code, functionConfig.file);
+        final AssetFile assetFile = AssetUtils.prepareFunctionFile(simpleCache.baseResourceDir, status.code, functionConfig.file);
         if (assetFile.isError) {
             setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.asset_error);
             return;

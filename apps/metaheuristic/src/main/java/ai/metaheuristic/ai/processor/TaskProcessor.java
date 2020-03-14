@@ -21,11 +21,11 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessService;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.processor.env.EnvService;
-import ai.metaheuristic.ai.processor.processor_resource.VariableProvider;
-import ai.metaheuristic.ai.processor.processor_resource.ResourceProviderFactory;
+import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
+import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.ExtendedTimePeriod;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
@@ -74,7 +74,7 @@ public class TaskProcessor {
     private final MetadataService metadataService;
     private final EnvService envService;
     private final ProcessorService processorService;
-    private final ResourceProviderFactory resourceProviderFactory;
+    private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
     @Data
@@ -325,7 +325,7 @@ public class TaskProcessor {
                     if (isOk && systemExecResult.isOk()) {
                         try {
                             for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
-                                VariableProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
+                                VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
                                 generalExec = resourceProvider.processOutputVariable(
                                         dispatcher, task, dispatcherInfo, outputVariable.id, mainFunctionConfig);
                             }
@@ -530,7 +530,7 @@ public class TaskProcessor {
 
         if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
             final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherCode);
-            functionPrepareResult.functionAssetFile = ResourceUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
+            functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
             // is this function prepared?
             if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
                 log.info("Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);

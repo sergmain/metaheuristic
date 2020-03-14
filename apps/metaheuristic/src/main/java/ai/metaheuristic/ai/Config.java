@@ -18,7 +18,7 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.batch.RefToBatchRepositories;
 import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
-import ai.metaheuristic.ai.resource.ResourceCleanerInterceptor;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
 import lombok.RequiredArgsConstructor;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.apache.catalina.connector.Connector;
@@ -93,7 +93,7 @@ public class Config {
     public static class MhMvcConfig implements WebMvcConfigurer {
         @Override
         public void addInterceptors(InterceptorRegistry registry) {
-            registry.addInterceptor(new ResourceCleanerInterceptor());
+            registry.addInterceptor(new CleanerInterceptor());
         }
     }
 

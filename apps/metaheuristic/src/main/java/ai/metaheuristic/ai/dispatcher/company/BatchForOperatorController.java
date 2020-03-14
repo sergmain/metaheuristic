@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -187,7 +187,7 @@ public class BatchForOperatorController {
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName) throws IOException {
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, companyUniqueId, true);
+            CleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, companyUniqueId, true);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }
@@ -210,7 +210,7 @@ public class BatchForOperatorController {
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName) {
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchOriginFile(batchId);
+            CleanerInfo resource = batchTopLevelService.getBatchOriginFile(batchId);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }

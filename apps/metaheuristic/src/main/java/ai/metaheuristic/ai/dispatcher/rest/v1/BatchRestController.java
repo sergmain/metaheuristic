@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -124,7 +124,7 @@ public class BatchRestController {
         DispatcherContext context = userContextService.getContext(authentication);
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context, false);
+            CleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context, false);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

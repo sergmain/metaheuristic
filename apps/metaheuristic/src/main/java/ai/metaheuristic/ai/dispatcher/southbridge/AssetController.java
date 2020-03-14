@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
-import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
@@ -66,7 +66,7 @@ public class AssetController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryType.function, code, chunkSize, chunkNum);
+            CleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryType.function, code, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

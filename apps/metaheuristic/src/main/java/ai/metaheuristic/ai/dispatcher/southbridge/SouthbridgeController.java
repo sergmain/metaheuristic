@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -70,7 +70,7 @@ public class SouthbridgeController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryType.data, id, chunkSize, chunkNum);
+            CleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryType.data, id, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

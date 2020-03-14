@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.batch;
 
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
-import ai.metaheuristic.ai.dispatcher.internal_functions.resource_splitter.VariableSplitterFunction;
+import ai.metaheuristic.ai.dispatcher.internal_functions.variable_splitter.VariableSplitterFunction;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.utils.DirUtils;
 import org.apache.commons.io.FileUtils;

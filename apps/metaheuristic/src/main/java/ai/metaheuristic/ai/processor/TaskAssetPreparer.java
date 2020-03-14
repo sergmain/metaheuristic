@@ -17,7 +17,7 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.processor.actors.DownloadFunctionActor;
+import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 public class TaskAssetPreparer {
 
     private final Globals globals;
-    private final DownloadFunctionActor downloadFunctionActor;
+    private final DownloadFunctionService downloadFunctionActor;
     private final CurrentExecState currentExecState;
     private final ProcessorTaskService processorTaskService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;

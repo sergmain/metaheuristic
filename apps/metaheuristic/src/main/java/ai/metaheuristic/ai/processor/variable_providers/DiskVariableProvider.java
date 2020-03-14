@@ -14,14 +14,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.processor.processor_resource;
+package ai.metaheuristic.ai.processor.variable_providers;
 
-import ai.metaheuristic.ai.exceptions.ResourceProviderException;
+import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.env.EnvService;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.env.DiskStorage;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
@@ -43,14 +43,19 @@ import java.util.List;
 @Service
 @Slf4j
 @Profile("processor")
-public class DiskResourceProvider implements VariableProvider {
+public class DiskVariableProvider implements VariableProvider {
 
     private final EnvService envService;
     private final ProcessorTaskService processorTaskService;
 
-    public DiskResourceProvider(EnvService envService, ProcessorTaskService processorTaskService) {
+    public DiskVariableProvider(EnvService envService, ProcessorTaskService processorTaskService) {
         this.envService = envService;
         this.processorTaskService = processorTaskService;
+    }
+
+    @Override
+    public EnumsApi.DataSourcing getSourcing() {
+        return EnumsApi.DataSourcing.disk;
     }
 
     @Override
@@ -60,21 +65,21 @@ public class DiskResourceProvider implements VariableProvider {
             TaskParamsYaml.InputVariable variable) {
 
         if (variable.sourcing!= EnumsApi.DataSourcing.disk) {
-            throw new ResourceProviderException("#015.018 Wrong type of sourcing of data storage" + variable.sourcing);
+            throw new VariableProviderException("#015.018 Wrong type of sourcing of data storage" + variable.sourcing);
         }
         if (variable.disk==null) {
-            throw new ResourceProviderException("#015.019 variable.sourcing==DataSourcing.disk but variable.disk is null");
+            throw new VariableProviderException("#015.019 variable.sourcing==DataSourcing.disk but variable.disk is null");
         }
         DiskInfo diskInfo = variable.disk;
 
         EnvYaml env = envService.getEnvYaml();
         DiskStorage diskStorage = env.findDiskStorageByCode(diskInfo.code);
         if (diskStorage==null) {
-            throw new ResourceProviderException("#015.020 The disk storage wasn't found for code: " + diskInfo.code);
+            throw new VariableProviderException("#015.020 The disk storage wasn't found for code: " + diskInfo.code);
         }
         File path = new File(diskStorage.path);
         if (!path.exists()) {
-            throw new ResourceProviderException("#015.024 The path of disk storage doesn't exist: " + path.getAbsolutePath());
+            throw new VariableProviderException("#015.024 The path of disk storage doesn't exist: " + path.getAbsolutePath());
         }
 
         AssetFile assetFile;
@@ -90,10 +95,10 @@ public class DiskResourceProvider implements VariableProvider {
         }
         else {
             if (diskInfo.mask!=null) {
-                assetFile = ResourceUtils.prepareAssetFile(path, null, diskInfo.mask);
+                assetFile = AssetUtils.prepareAssetFile(path, null, diskInfo.mask);
             }
             else if (diskInfo.path!=null) {
-                assetFile = ResourceUtils.prepareAssetFile(path, null, diskInfo.path);
+                assetFile = AssetUtils.prepareAssetFile(path, null, diskInfo.path);
             }
             else {
                 throw new IllegalStateException("diskInfo.mask and diskInfo.path are both blank");
@@ -109,12 +114,12 @@ public class DiskResourceProvider implements VariableProvider {
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
             String outputVariableId, TaskParamsYaml.FunctionConfig functionConfig
     ) {
-        File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputVariableId).toFile();
-        if (outputResourceFile.exists()) {
-            log.info("The result data was already written to file {}, no need to upload to dispatcher", outputResourceFile.getPath());
-            processorTaskService.setResourceUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId, outputVariableId);
+        File outputVariableFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputVariableId).toFile();
+        if (outputVariableFile.exists()) {
+            log.info("The result data was already written to file {}, no need to upload to dispatcher", outputVariableFile.getPath());
+            processorTaskService.setVariableUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId, outputVariableId);
         } else {
-            String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputResourceFile.getPath();
+            String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputVariableFile.getPath();
             log.error(es);
             return new FunctionApiData.SystemExecResult(functionConfig.code, false, -1, es);
         }
@@ -127,13 +132,16 @@ public class DiskResourceProvider implements VariableProvider {
             ProcessorTask task, TaskParamsYaml.OutputVariable variable) {
 
         EnvYaml env = envService.getEnvYaml();
+        if (variable.disk==null) {
+            throw new VariableProviderException("#015.036 The disk storage wasn't defined in variable: " + variable);
+        }
         DiskStorage diskStorage = env.findDiskStorageByCode(variable.disk.code);
         if (diskStorage==null) {
-            throw new ResourceProviderException("#015.037 The disk storage wasn't found for code: " + variable.disk.code);
+            throw new VariableProviderException("#015.037 The disk storage wasn't found for code: " + variable.disk.code);
         }
         File path = new File(diskStorage.path);
         if (!path.exists()) {
-            throw new ResourceProviderException("#015.042 The path of disk storage doesn't exist: " + path.getAbsolutePath());
+            throw new VariableProviderException("#015.042 The path of disk storage doesn't exist: " + path.getAbsolutePath());
         }
 
         return new File(path, variable.id);

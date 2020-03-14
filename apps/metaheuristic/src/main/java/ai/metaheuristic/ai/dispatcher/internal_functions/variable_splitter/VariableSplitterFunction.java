@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.internal_functions.resource_splitter;
+package ai.metaheuristic.ai.dispatcher.internal_functions.variable_splitter;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;

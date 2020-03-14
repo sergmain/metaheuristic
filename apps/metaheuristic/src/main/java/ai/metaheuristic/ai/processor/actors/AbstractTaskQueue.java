@@ -19,6 +19,7 @@ import org.springframework.lang.Nullable;
 
 import java.util.LinkedList;
 
+// todo 2020-03-13 replace with Spring's event system
 public abstract class AbstractTaskQueue<T> {
 
     private final LinkedList<T> QUEUE = new LinkedList<>();

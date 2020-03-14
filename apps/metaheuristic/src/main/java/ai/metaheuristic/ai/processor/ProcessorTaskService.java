@@ -202,7 +202,7 @@ public class ProcessorTaskService {
         }
     }
 
-    public void setResourceUploadedAndCompleted(String dispatcherUrl, Long taskId, String outputResourceId) {
+    public void setVariableUploadedAndCompleted(String dispatcherUrl, Long taskId, String outputVariableId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("setResourceUploadedAndCompleted({}, {})", dispatcherUrl, taskId);
             ProcessorTask task = findById(dispatcherUrl, taskId);
@@ -210,7 +210,7 @@ public class ProcessorTaskService {
                 log.error("#713.090 ProcessorTask wasn't found for Id {}", taskId);
                 return;
             }
-            task.output.outputStatuses.stream().filter(o -> o.resourceId.equals(outputResourceId)).findAny().ifPresent(status -> status.uploaded = true);
+            task.output.outputStatuses.stream().filter(o -> o.variableId.equals(outputVariableId)).findAny().ifPresent(status -> status.uploaded = true);
             task.setCompleted( task.isDelivered() );
             save(task);
         }

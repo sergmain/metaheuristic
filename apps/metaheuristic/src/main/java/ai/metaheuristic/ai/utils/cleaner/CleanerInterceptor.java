@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.resource;
+package ai.metaheuristic.ai.utils.cleaner;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -32,7 +32,7 @@ import java.util.List;
  * Time: 5:17 PM
  */
 @Slf4j
-public class ResourceCleanerInterceptor extends HandlerInterceptorAdapter {
+public class CleanerInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {

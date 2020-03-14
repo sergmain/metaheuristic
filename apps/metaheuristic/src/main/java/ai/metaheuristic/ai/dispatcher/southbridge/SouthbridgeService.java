@@ -33,9 +33,9 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
-import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -134,7 +134,7 @@ public class SouthbridgeService {
     }
 
     // return a requested resource to a processor
-    public ResourceWithCleanerInfo deliverResource(final EnumsApi.BinaryType binaryType, final String resourceId, final String chunkSize, final int chunkNum) {
+    public CleanerInfo deliverResource(final EnumsApi.BinaryType binaryType, final String resourceId, final String chunkSize, final int chunkNum) {
         return getWithSync(binaryType, resourceId,
                 () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryType, resourceId));
     }
@@ -196,17 +196,17 @@ public class SouthbridgeService {
                 : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+ variable.getId()+"");
     }
 
-    private ResourceWithCleanerInfo getAbstractResourceResponseEntity(String chunkSize, int chunkNum, EnumsApi.BinaryType binaryType, String resourceId) {
+    private CleanerInfo getAbstractResourceResponseEntity(String chunkSize, int chunkNum, EnumsApi.BinaryType binaryType, String resourceId) {
 
         AssetFile assetFile;
         BiConsumer<String, File> dataSaver;
         switch (binaryType) {
             case function:
-                assetFile = ResourceUtils.prepareFunctionFile(globals.dispatcherResourcesDir, resourceId, null);
+                assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesDir, resourceId, null);
                 dataSaver = functionDataService::storeToFile;
                 break;
             case data:
-                assetFile = ResourceUtils.prepareFileForVariable(globals.dispatcherTempDir, resourceId, null);
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, resourceId, null);
                 dataSaver = variableService::storeToFile;
                 break;
             default:
@@ -228,7 +228,7 @@ public class SouthbridgeService {
         }
         File f;
         boolean isLastChunk;
-        ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
+        CleanerInfo resource = new CleanerInfo();
         if (chunkSize == null || chunkSize.isBlank()) {
             f = assetFile.file;
             isLastChunk = true;

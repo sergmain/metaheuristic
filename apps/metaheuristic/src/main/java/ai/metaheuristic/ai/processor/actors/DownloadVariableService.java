@@ -17,11 +17,11 @@ package ai.metaheuristic.ai.processor.actors;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
-import ai.metaheuristic.ai.processor.tasks.DownloadResourceTask;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +52,7 @@ import java.util.UUID;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTask> {
+public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableTask> {
 
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
@@ -66,14 +66,14 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             return;
         }
 
-        DownloadResourceTask task;
+        DownloadVariableTask task;
         while ((task = poll()) != null) {
             ProcessorTask processorTask = processorTaskService.findById(task.dispatcher.url, task.taskId);
             if (processorTask !=null && processorTask.finishedOn!=null) {
                 log.info("Task #{} was already finished, skip it", task.taskId);
                 continue;
             }
-            AssetFile assetFile = ResourceUtils.prepareFileForVariable(task.targetDir, task.resourceId, null);
+            AssetFile assetFile = AssetUtils.prepareFileForVariable(task.targetDir, task.variableId, null);
             if (assetFile.isError ) {
                 log.warn("#810.010 Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
@@ -86,7 +86,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             log.info("Start processing the download task {}", task);
             try {
                 final String payloadRestUrl = task.dispatcher.url + "/rest/v1/payload/resource/data";
-                final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.resourceId, StandardCharsets.UTF_8.toString());
+                final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8.toString());
 
                 File parentDir = assetFile.file.getParentFile();
                 if (parentDir==null) {
@@ -112,7 +112,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 do {
                     try {
                         final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)
-                                .addParameter("id", task.resourceId)
+                                .addParameter("id", task.variableId)
                                 .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
                                 .addParameter("chunkNum", Integer.toString(idx));
 
@@ -152,21 +152,21 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                         }
                     } catch (HttpResponseException e) {
                         if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                            final String es = String.format("#810.035 Resource %s wasn't found on dispatcher. Task #%s is finished.", task.resourceId, task.getTaskId());
+                            final String es = String.format("#810.035 Resource %s wasn't found on dispatcher. Task #%s is finished.", task.variableId, task.getTaskId());
                             log.warn(es);
                             processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.resource_doesnt_exist;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
-                            final String es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.resourceId, task.getTaskId());
+                            final String es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
                             log.warn(es);
                             processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.unknown_error;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
-                            final String es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.resourceId, task.getTaskId());
+                            final String es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
                             log.warn(es);
                             processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.unknown_error;
@@ -205,10 +205,10 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                     log.warn("#810.060 Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());
                     continue;
                 }
-                log.info("Resource #{} was loaded", task.resourceId);
+                log.info("Resource #{} was loaded", task.variableId);
             } catch (HttpResponseException e) {
                 if (e.getStatusCode() == HttpServletResponse.SC_CONFLICT) {
-                    log.warn("#810.080 Resource with id {} is broken and need to be recreated", task.resourceId);
+                    log.warn("#810.080 Resource with id {} is broken and need to be recreated", task.variableId);
                 } else {
                     log.error("#810.090 HttpResponseException.getStatusCode(): {}", e.getStatusCode());
                     log.error("#810.091 HttpResponseException", e);

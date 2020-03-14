@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params.PermuteVariablesAndHyperParamsFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.resource_splitter.VariableSplitterFunction;
+import ai.metaheuristic.ai.dispatcher.internal_functions.variable_splitter.VariableSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -53,6 +53,10 @@ public class InternalFunctionProcessor {
 
     public void registerInternalFunction(InternalFunction internalFunction) {
         internalFunctions.put(internalFunction.getCode(), internalFunction);
+    }
+
+    public boolean isRegistered(String functionCode) {
+        return internalFunctions.containsKey(functionCode);
     }
 
     public InternalFunctionProcessingResult process(

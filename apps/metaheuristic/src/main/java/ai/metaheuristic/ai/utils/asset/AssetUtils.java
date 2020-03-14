@@ -13,12 +13,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.resource;
+package ai.metaheuristic.ai.utils.asset;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
@@ -26,7 +25,7 @@ import org.springframework.lang.Nullable;
 import java.io.File;
 
 @Slf4j
-public class ResourceUtils {
+public class AssetUtils {
 
     /**
      *
@@ -107,12 +106,5 @@ public class ResourceUtils {
             }
         }
         return assetFile;
-    }
-
-    public static String toResourceCode(String originFilename) {
-        long nanoTime = System.nanoTime();
-        String name = StrUtils.getName(originFilename);
-        String ext = StrUtils.getExtension(originFilename);
-        return StringUtils.replaceEach(name, new String[] {" "}, new String[] {"_"} ) + '-' + nanoTime + ext;
     }
 }

@@ -53,7 +53,7 @@ import java.util.UUID;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-public class UploadResourceActor extends AbstractTaskQueue<UploadVariableTask> {
+public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask> {
 
     private static ObjectMapper mapper;
 
@@ -101,7 +101,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadVariableTask> {
                 processorTaskService.delete(task.dispatcher.url, task.taskId);
                 continue;
             }
-            ProcessorTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.resourceId.equals(finalTask.variableId)).findAny().orElse(null);
+            ProcessorTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.variableId.equals(finalTask.variableId)).findAny().orElse(null);
             if (outputStatus==null) {
                 log.error("#311.024 outputStatus for variableId {} wasn't found.", finalTask.variableId);
                 processorTaskService.delete(task.dispatcher.url, task.taskId);
@@ -164,7 +164,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadVariableTask> {
                 switch(status) {
                     case OK:
                         log.info("Resource was successfully uploaded to server, {}, {} ", task.dispatcher.url, task.taskId);
-                        processorTaskService.setResourceUploadedAndCompleted(task.dispatcher.url, task.taskId, finalTask.variableId);
+                        processorTaskService.setVariableUploadedAndCompleted(task.dispatcher.url, task.taskId, finalTask.variableId);
                         break;
                     case FILENAME_IS_BLANK:
                     case TASK_WAS_RESET:

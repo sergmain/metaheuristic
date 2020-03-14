@@ -29,8 +29,8 @@ public class ProcessorTask {
 
     @Data
     public static class OutputStatus {
-        // resourceId of Resource. Resource is a part of Variable
-        public String resourceId;
+        // variableId of Variable.
+        public String variableId;
 
         // was resource(output resource as the result of execution of function) uploaded to dispatcher?
         public boolean uploaded;

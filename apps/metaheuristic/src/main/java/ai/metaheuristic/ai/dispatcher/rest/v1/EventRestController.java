@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -68,7 +68,7 @@ public class EventRestController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            ResourceWithCleanerInfo resource = dispatcherEventService.getEventsForPeriod(list);
+            CleanerInfo resource = dispatcherEventService.getEventsForPeriod(list);
             entity = resource.entity;
             if (resource.toClean!=null) {
                 request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);

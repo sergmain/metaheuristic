@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.processor.sourcing.git;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.core.SystemProcessService;
-import ai.metaheuristic.ai.resource.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;

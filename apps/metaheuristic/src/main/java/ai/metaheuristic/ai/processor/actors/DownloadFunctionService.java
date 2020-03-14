@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.processor.actors;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.MetadataService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
@@ -60,7 +60,7 @@ import java.util.UUID;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTask> {
+public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionTask> {
 
     private final Globals globals;
     private final MetadataService metadataService;
@@ -130,7 +130,7 @@ public class DownloadFunctionActor extends AbstractTaskQueue<DownloadFunctionTas
 
             final Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(dispatcher.url);
             final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo);
-            final AssetFile assetFile = ResourceUtils.prepareFunctionFile(baseResourceDir, functionCode, functionConfig.file);
+            final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionCode, functionConfig.file);
 
             switch (functionDownloadStatus.functionState) {
                 case none:

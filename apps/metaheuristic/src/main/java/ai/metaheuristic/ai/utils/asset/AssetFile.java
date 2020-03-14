@@ -13,24 +13,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-package ai.metaheuristic.ai.resource;
+package ai.metaheuristic.ai.utils.asset;
 
 import lombok.Data;
-import org.springframework.core.io.AbstractResource;
-import org.springframework.http.ResponseEntity;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
-/**
- * @author Serge
- * Date: 10/2/2019
- * Time: 5:20 PM
- */
 @Data
-public class ResourceWithCleanerInfo {
-    public ResponseEntity<AbstractResource> entity;
-    public List<File> toClean = new ArrayList<>();
+public class AssetFile {
+    public File file;
+    public long fileLength;
+    public boolean isError;
+    public boolean isContent;
+    public boolean isExist;
+    public boolean provided = false;
+
+    @Override
+    public String toString() {
+        return "AssetFile{" +
+                "file=" + (file!=null ? file.getPath()  : "null") +
+                ", fileLength=" + fileLength +
+                ", isError=" + isError +
+                ", isContent=" + isContent +
+                ", isExist=" + isExist +
+                ", isProvided=" + provided +
+                '}';
+    }
 }

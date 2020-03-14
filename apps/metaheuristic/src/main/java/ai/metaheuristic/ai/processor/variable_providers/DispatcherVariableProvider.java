@@ -14,18 +14,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.processor.processor_resource;
+package ai.metaheuristic.ai.processor.variable_providers;
 
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
-import ai.metaheuristic.ai.processor.actors.DownloadResourceActor;
-import ai.metaheuristic.ai.processor.actors.UploadResourceActor;
-import ai.metaheuristic.ai.processor.tasks.DownloadResourceTask;
+import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
+import ai.metaheuristic.ai.processor.actors.UploadVariableService;
+import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -42,10 +43,15 @@ import java.util.List;
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
-public class DispatcherResourceProvider implements VariableProvider {
+public class DispatcherVariableProvider implements VariableProvider {
 
-    private final DownloadResourceActor downloadResourceActor;
-    private final UploadResourceActor uploadResourceActor;
+    private final DownloadVariableService downloadVariableService;
+    private final UploadVariableService uploadVariableService;
+
+    @Override
+    public EnumsApi.DataSourcing getSourcing() {
+        return EnumsApi.DataSourcing.dispatcher;
+    }
 
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
@@ -55,12 +61,12 @@ public class DispatcherResourceProvider implements VariableProvider {
 
         // process it only if the dispatcher has already sent its config
         if (dispatcher.context.chunkSize != null) {
-            DownloadResourceTask resourceTask = new DownloadResourceTask(variable.id, task.getTaskId(), taskDir, dispatcher.context.chunkSize);
-            resourceTask.dispatcher = dispatcher.dispatcherLookup;
-            resourceTask.processorId = dispatcherCode.processorId;
-            downloadResourceActor.add(resourceTask);
+            DownloadVariableTask variableTask = new DownloadVariableTask(variable.id, task.getTaskId(), taskDir, dispatcher.context.chunkSize);
+            variableTask.dispatcher = dispatcher.dispatcherLookup;
+            variableTask.processorId = dispatcherCode.processorId;
+            downloadVariableService.add(variableTask);
         }
-        return Collections.singletonList(ResourceUtils.prepareFileForVariable(taskDir, variable.id, null));
+        return Collections.singletonList(AssetUtils.prepareFileForVariable(taskDir, variable.id, null));
     }
 
     @Override
@@ -68,15 +74,15 @@ public class DispatcherResourceProvider implements VariableProvider {
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
             String outputVariableId, TaskParamsYaml.FunctionConfig functionConfig) {
-        File outputResourceFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputVariableId).toFile();
-        if (outputResourceFile.exists()) {
-            log.info("Register task for uploading result data to server, resultDataFile: {}", outputResourceFile.getPath());
-            UploadVariableTask uploadResourceTask = new UploadVariableTask(task.taskId, outputResourceFile, outputVariableId);
-            uploadResourceTask.dispatcher = dispatcher.dispatcherLookup;
-            uploadResourceTask.processorId = dispatcherCode.processorId;
-            uploadResourceActor.add(uploadResourceTask);
+        File outputVariableFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputVariableId).toFile();
+        if (outputVariableFile.exists()) {
+            log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.getPath());
+            UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariableFile, outputVariableId);
+            uploadVariableTask.dispatcher = dispatcher.dispatcherLookup;
+            uploadVariableTask.processorId = dispatcherCode.processorId;
+            uploadVariableService.add(uploadVariableTask);
         } else {
-            String es = "Result data file doesn't exist, resultDataFile: " + outputResourceFile.getPath();
+            String es = "Result data file doesn't exist, resultDataFile: " + outputVariableFile.getPath();
             log.error(es);
             return new FunctionApiData.SystemExecResult(functionConfig.code,false, -1, es);
         }
@@ -92,5 +98,4 @@ public class DispatcherResourceProvider implements VariableProvider {
         File resultDataFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + variable.id);
         return resultDataFile;
     }
-
 }

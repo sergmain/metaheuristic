@@ -35,7 +35,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
@@ -304,11 +304,11 @@ public class BatchTopLevelService {
         return new BatchData.Status(batchId, status.getStatus(), status.ok);
     }
 
-    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, DispatcherContext context, boolean includeDeleted) throws IOException {
+    public CleanerInfo getBatchProcessingResult(Long batchId, DispatcherContext context, boolean includeDeleted) throws IOException {
         return getBatchProcessingResult(batchId, context.getCompanyId(), includeDeleted);
     }
 
-    public ResourceWithCleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
+    public CleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
         Batch batch = batchCache.findById(batchId);
         if (batch == null || !batch.companyId.equals(companyUniqueId) ||
                 (!includeDeleted && batch.deleted)) {
@@ -316,7 +316,7 @@ public class BatchTopLevelService {
             log.warn(es);
             return null;
         }
-        ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
+        CleanerInfo resource = new CleanerInfo();
 
         File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
         resource.toClean.add(resultDir);
@@ -344,14 +344,14 @@ public class BatchTopLevelService {
         return resource;
     }
 
-    public ResourceWithCleanerInfo getBatchOriginFile(Long batchId) throws IOException {
+    public CleanerInfo getBatchOriginFile(Long batchId) throws IOException {
         Batch batch = batchCache.findById(batchId);
         if (batch == null) {
             final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return null;
         }
-        ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
+        CleanerInfo resource = new CleanerInfo();
 
         File resultDir = DirUtils.createTempDir("prepare-origin-file-");
         resource.toClean.add(resultDir);

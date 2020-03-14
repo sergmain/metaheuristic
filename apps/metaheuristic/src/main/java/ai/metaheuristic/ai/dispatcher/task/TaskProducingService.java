@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.api.EnumsApi;
@@ -52,6 +53,7 @@ public class TaskProducingService {
     private final VariableService variableService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ExecContextProcessGraphService execContextProcessGraphService;
+    private final InternalFunctionProcessor internalFunctionProcessor;
 
     public TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = execContextProcessGraphService.importProcessGraph(execContextParamsYaml);
@@ -71,7 +73,7 @@ public class TaskProducingService {
                     return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR);
                 }
             }
-            if (Consts.MH_INTERNAL_FUNCTIONS.contains(p.function.code) && p.function.context!=EnumsApi.FunctionExecContext.internal) {
+            if (internalFunctionProcessor.isRegistered(p.function.code) && p.function.context!=EnumsApi.FunctionExecContext.internal) {
                 return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR);
             }
 

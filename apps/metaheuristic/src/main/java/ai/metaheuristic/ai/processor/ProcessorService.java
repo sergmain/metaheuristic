@@ -18,15 +18,15 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
-import ai.metaheuristic.ai.exceptions.ResourceProviderException;
-import ai.metaheuristic.ai.processor.actors.UploadResourceActor;
+import ai.metaheuristic.ai.exceptions.VariableProviderException;
+import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.env.EnvService;
-import ai.metaheuristic.ai.processor.processor_resource.VariableProvider;
-import ai.metaheuristic.ai.processor.processor_resource.ResourceProviderFactory;
+import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
+import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
@@ -55,11 +55,11 @@ public class ProcessorService {
 
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
-    private final UploadResourceActor uploadResourceActor;
+    private final UploadVariableService uploadResourceActor;
     private final MetadataService metadataService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final EnvService envService;
-    private final ResourceProviderFactory resourceProviderFactory;
+    private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
     ProcessorCommParamsYaml.ReportProcessorStatus produceReportProcessorStatus(String dispatcherUrl, DispatcherSchedule schedule) {
@@ -145,7 +145,7 @@ public class ProcessorService {
     }
 
     private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(String dispatcherUrl, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
-        final AssetFile assetFile = ResourceUtils.prepareOutputAssetFile(taskDir, outputVariable.id);
+        final AssetFile assetFile = AssetUtils.prepareOutputAssetFile(taskDir, outputVariable.id);
 
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
@@ -181,7 +181,7 @@ public class ProcessorService {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         try {
             taskParamYaml.task.inputs.forEach(input -> {
-                    VariableProvider resourceProvider = resourceProviderFactory.getResourceProvider(input.sourcing);
+                    VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(input.sourcing);
                     List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(taskDir, dispatcher, task, dispatcherCode, input);
                     for (AssetFile assetFile : assetFiles) {
                         // is this resource prepared?
@@ -197,7 +197,7 @@ public class ProcessorService {
             result.isError = true;
             return result;
         }
-        catch (ResourceProviderException e) {
+        catch (VariableProviderException e) {
             log.error("#749.070 Error", e);
             processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, e.toString());
             result.isError = true;
@@ -220,11 +220,11 @@ public class ProcessorService {
     public boolean checkOutputResourceFile(ProcessorTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             try {
-                VariableProvider resourceProvider = resourceProviderFactory.getResourceProvider(outputVariable.sourcing);
+                VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
 
                 //noinspection unused
                 File outputResourceFile = resourceProvider.getOutputVariableFromFile(taskDir, dispatcher, task, outputVariable);
-            } catch (ResourceProviderException e) {
+            } catch (VariableProviderException e) {
                 final String msg = "#749.080 Error: " + e.toString();
                 log.error(msg, e);
                 processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, msg);

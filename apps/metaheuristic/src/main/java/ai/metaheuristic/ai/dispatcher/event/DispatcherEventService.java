@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.DispatcherEventRepository;
-import ai.metaheuristic.ai.resource.ResourceWithCleanerInfo;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.CompanyApiData;
@@ -139,8 +139,8 @@ public class DispatcherEventService {
         public List<String> events;
     }
 
-    public ResourceWithCleanerInfo getEventsForPeriod(List<Integer> periods) throws IOException {
-        ResourceWithCleanerInfo resource = new ResourceWithCleanerInfo();
+    public CleanerInfo getEventsForPeriod(List<Integer> periods) throws IOException {
+        CleanerInfo resource = new CleanerInfo();
 
         File tempDir = DirUtils.createTempDir("events-");
         resource.toClean.add(tempDir);

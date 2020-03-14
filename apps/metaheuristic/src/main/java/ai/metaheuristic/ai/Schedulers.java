@@ -23,9 +23,9 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.processor.*;
-import ai.metaheuristic.ai.processor.actors.DownloadResourceActor;
-import ai.metaheuristic.ai.processor.actors.DownloadFunctionActor;
-import ai.metaheuristic.ai.processor.actors.UploadResourceActor;
+import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
+import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
+import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -182,9 +182,9 @@ public class Schedulers {
         private final Globals globals;
         private final TaskAssetPreparer taskAssetPreparer;
         private final TaskProcessor taskProcessor;
-        private final DownloadFunctionActor downloadFunctionActor;
-        private final DownloadResourceActor downloadResourceActor;
-        private final UploadResourceActor uploadResourceActor;
+        private final DownloadFunctionService downloadFunctionActor;
+        private final DownloadVariableService downloadResourceActor;
+        private final UploadVariableService uploadResourceActor;
         private final ArtifactCleanerAtProcessor artifactCleaner;
         private final MetadataService metadataService;
         private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
@@ -195,7 +195,7 @@ public class Schedulers {
         private final RoundRobinForDispatcher roundRobin;
         private final Map<String, DispatcherRequestor> dispatcherRequestorMap = new HashMap<>();
 
-        public ProcessorSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadFunctionActor downloadFunctionActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtProcessor artifactCleaner, ProcessorService processorService, ProcessorTaskService processorTaskService, MetadataService metadataService, DispatcherLookupExtendedService dispatcherLookupExtendedService, CurrentExecState currentExecState, EnvService envService, ProcessorCommandProcessor processorCommandProcessor) {
+        public ProcessorSchedulers(Globals globals, TaskAssetPreparer taskAssetPreparer, TaskProcessor taskProcessor, DownloadFunctionService downloadFunctionActor, DownloadVariableService downloadResourceActor, UploadVariableService uploadResourceActor, ArtifactCleanerAtProcessor artifactCleaner, ProcessorService processorService, ProcessorTaskService processorTaskService, MetadataService metadataService, DispatcherLookupExtendedService dispatcherLookupExtendedService, CurrentExecState currentExecState, EnvService envService, ProcessorCommandProcessor processorCommandProcessor) {
             this.globals = globals;
             this.taskAssetPreparer = taskAssetPreparer;
             this.taskProcessor = taskProcessor;

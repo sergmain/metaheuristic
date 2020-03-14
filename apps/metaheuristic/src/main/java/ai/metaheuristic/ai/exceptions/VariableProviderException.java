@@ -13,28 +13,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.processor.tasks;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+package ai.metaheuristic.ai.exceptions;
 
-import java.io.File;
-
-@Data
-@AllArgsConstructor
-@EqualsAndHashCode(of = {"resourceId"}, callSuper = false)
-public class DownloadResourceTask extends ProcessorRestTask {
-    public String resourceId;
-    public long taskId;
-    public File targetDir;
-    public Long chunkSize;
-
-    @Override
-    public String toString() {
-        return "DownloadResourceTask{" +
-                "resourceId='" + resourceId + '\'' +
-                ", targetDir=" + targetDir.getPath() +
-                '}';
+public class VariableProviderException extends RuntimeException {
+    public VariableProviderException(String message) {
+        super(message);
     }
 }

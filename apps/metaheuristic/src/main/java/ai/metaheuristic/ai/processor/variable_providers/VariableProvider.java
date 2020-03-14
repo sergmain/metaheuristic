@@ -14,12 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.processor.processor_resource;
+package ai.metaheuristic.ai.processor.variable_providers;
 
-import ai.metaheuristic.ai.resource.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 
@@ -43,4 +44,6 @@ public interface VariableProvider {
             File taskDir,
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, TaskParamsYaml.OutputVariable variable);
+
+    EnumsApi.DataSourcing getSourcing();
 }
