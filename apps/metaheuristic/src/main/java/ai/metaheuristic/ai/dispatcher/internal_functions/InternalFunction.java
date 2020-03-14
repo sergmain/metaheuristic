@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 
 import java.util.List;
@@ -27,7 +28,12 @@ import java.util.Map;
  * Time: 9:19 PM
  */
 public interface InternalFunction {
-    List<InternalFunctionOutput> process(
+
+    String getCode();
+
+    String getName();
+
+    InternalFunctionData.InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             Map<String, List<String>> inputResourceIds);
 }

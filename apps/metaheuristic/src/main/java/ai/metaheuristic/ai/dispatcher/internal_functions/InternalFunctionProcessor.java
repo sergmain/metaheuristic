@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
-import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params.PermuteVariablesAndHyperParamsFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.resource_splitter.ResourceSplitterFunction;
+import ai.metaheuristic.ai.dispatcher.internal_functions.resource_splitter.VariableSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -28,8 +28,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
  * @author Serge
@@ -42,23 +45,29 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class InternalFunctionProcessor {
 
-    public final ResourceSplitterFunction resourceSplitterFunction;
+    public final VariableSplitterFunction resourceSplitterFunction;
     public final PermuteVariablesAndHyperParamsFunction permuteVariablesAndHyperParamsFunction;
     public final SourceCodeCache sourceCodeCache;
 
-    public List<InternalFunctionOutput> process(
+    private final Map<String, InternalFunction> internalFunctions = new HashMap<>();
+
+    public void registerInternalFunction(InternalFunction internalFunction) {
+        internalFunctions.put(internalFunction.getCode(), internalFunction);
+    }
+
+    public InternalFunctionProcessingResult process(
             String functionCode, Long sourceCodeId, Long execContextId, String internalContextId, Map<String, List<String>> inputResourceIds) {
+        InternalFunction internalFunction = internalFunctions.get(functionCode);
+        if (internalFunction==null) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found);
+        }
 
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode.getSourceCodeStoredParamsYaml().source);
-
-        switch(functionCode) {
-            case Consts.MH_VARIABLE_SPLITTER_FUNCTION:
-                return resourceSplitterFunction.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, inputResourceIds);
-            case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION:
-                return permuteVariablesAndHyperParamsFunction.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, inputResourceIds);
-            default:
-                throw new IllegalStateException("Unknown internal function: " + functionCode);
+        if (sourceCode==null) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_not_found);
         }
+
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode.getSourceCodeStoredParamsYaml().source);
+        return internalFunction.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, inputResourceIds);
     }
 }

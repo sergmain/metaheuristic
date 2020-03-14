@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionOutput;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -27,10 +29,13 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.*;
 
 /**
  * @author Serge
@@ -44,8 +49,24 @@ import java.util.stream.Collectors;
 public class PermuteVariablesAndHyperParamsFunction implements InternalFunction {
 
     private final VariableRepository variableRepository;
+    private final InternalFunctionProcessor internalFunctionProcessor;
 
-    public List<InternalFunctionOutput> process(
+    @PostConstruct
+    public void postConstruct() {
+        internalFunctionProcessor.registerInternalFunction(this);
+    }
+
+    @Override
+    public String getCode() {
+        return Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION;
+    }
+
+    @Override
+    public String getName() {
+        return Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION;
+    }
+
+    public InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             Map<String, List<String>> inputResourceIds) {
 
@@ -61,7 +82,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
         if (true) {
             throw new NotImplementedException("not yet");
         }
-        return null;
+        return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 
 }

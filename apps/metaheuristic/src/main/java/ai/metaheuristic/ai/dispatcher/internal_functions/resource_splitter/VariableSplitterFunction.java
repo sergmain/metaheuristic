@@ -17,25 +17,26 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.resource_splitter;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.BatchConfigYamlException;
-import ai.metaheuristic.ai.exceptions.BatchProcessingException;
-import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
-import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.Ids;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionOutput;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.exceptions.BatchConfigYamlException;
+import ai.metaheuristic.ai.exceptions.BatchProcessingException;
+import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
+import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -50,18 +51,23 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
+import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
  * @author Serge
@@ -72,7 +78,7 @@ import static ai.metaheuristic.ai.Consts.ZIP_EXT;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class ResourceSplitterFunction implements InternalFunction {
+public class VariableSplitterFunction implements InternalFunction {
 
     private static final String ATTACHMENTS_POOL_CODE = "attachments";
     private static final Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml", ".yml");
@@ -85,8 +91,24 @@ public class ResourceSplitterFunction implements InternalFunction {
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
     private final IdsRepository idsRepository;
+    private final InternalFunctionProcessor internalFunctionProcessor;
 
-    public List<InternalFunctionOutput> process(
+    @PostConstruct
+    public void postConstruct() {
+        internalFunctionProcessor.registerInternalFunction(this);
+    }
+
+    @Override
+    public String getCode() {
+        return Consts.MH_VARIABLE_SPLITTER_FUNCTION;
+    }
+
+    @Override
+    public String getName() {
+        return Consts.MH_VARIABLE_SPLITTER_FUNCTION;
+    }
+
+    public InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             Map<String, List<String>> inputResourceIds) {
 
@@ -95,11 +117,15 @@ public class ResourceSplitterFunction implements InternalFunction {
             throw new IllegalStateException("Too many input codes");
         }
         String inputCode = values.get(0);
-        Variable bd = variableRepository.findById(Long.valueOf(inputCode)).orElse(null);
-        if (bd==null) {
+        Variable variable = variableRepository.findById(Long.valueOf(inputCode)).orElse(null);
+        if (variable==null) {
             throw new IllegalStateException("Variable not found for code " + inputCode);
         }
-        String originFilename = bd.filename;
+        String originFilename = variable.filename;
+        if (S.b(originFilename)) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, "variable.filename is blank");
+        }
+
         String ext = StrUtils.getExtension(originFilename);
 
         File tempDir=null;
@@ -107,14 +133,13 @@ public class ResourceSplitterFunction implements InternalFunction {
             tempDir = DirUtils.createTempDir("batch-file-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 String es = "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir");
-                throw new IllegalStateException(es);
-                // return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
+                log.error(es);
+                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
             }
 
             final File dataFile = File.createTempFile("uploaded-file-", ext, tempDir);
 
             if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
-
                 log.debug("Start unzipping archive");
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
                 log.debug("Start loading file data to db");
@@ -139,10 +164,7 @@ public class ResourceSplitterFunction implements InternalFunction {
                 log.warn("Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());
             }
         }
-        if (true) {
-            throw new NotImplementedException("not yet");
-        }
-        return null;
+        return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 
     public void loadFilesFromDirAfterZip(Long sourceCodeId, Long execContextId, String internalContextId, File srcDir, final Map<String, String> mapping) throws IOException {
