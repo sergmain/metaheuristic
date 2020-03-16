@@ -85,7 +85,7 @@ public class BaseYamlUtils<T extends BaseParams> {
         }
     }
 
-    public T to(@NonNull String s, Long ... vars) {
+    public T to(@NonNull String s, @Nullable Long ... vars) {
         try {
             YamlVersion v = YamlForVersioning.getYamlVersion(s);
             AbstractParamsYamlUtils yamlUtils = getForVersion(v.getActualVersion());

@@ -68,52 +68,52 @@ public class TestCountOfTasks extends PreparingSourceCode {
         assertEquals(status.error, EnumsApi.SourceCodeValidateStatus.OK, status.status);
 
         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
-        execContextForFeature = result.execContext;
+        execContextForTest = result.execContext;
         assertFalse(result.isErrorMessages());
-        assertNotNull(execContextForFeature);
-        assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
+        assertNotNull(execContextForTest);
+        assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
 
 
-        EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
+        EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForTest.id);
         assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
 
-        execContextForFeature = Objects.requireNonNull(execContextCache.findById(this.execContextForFeature.id));
-        assertNotNull(execContextForFeature);
-        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(this.execContextForTest.id));
+        assertNotNull(execContextForTest);
+        assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
 
         List<Object[]> tasks01 = taskCollector.getTasks(result.execContext);
         assertTrue(tasks01.isEmpty());
 
         long mills = System.currentTimeMillis();
-        SourceCodeApiData.TaskProducingResultComplex taskResult = sourceCodeService.produceAllTasks(false, sourceCode, execContextForFeature);
+        SourceCodeApiData.TaskProducingResultComplex taskResult = sourceCodeService.produceAllTasks(false, sourceCode, execContextForTest);
         log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
         assertEquals(EnumsApi.TaskProducingStatus.OK, taskResult.taskProducingStatus);
         int numberOfTasks = taskResult.numberOfTasks;
 
-        ExecContext execContext = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+        ExecContext execContext = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
         List<Object[]> tasks02 = taskCollector.getTasks(execContext);
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
-        taskResult = sourceCodeService.produceAllTasks(true, sourceCode, execContextForFeature);
+        taskResult = sourceCodeService.produceAllTasks(true, sourceCode, execContextForTest);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
         assertEquals(EnumsApi.TaskProducingStatus.OK, taskResult.taskProducingStatus);
-        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, execContextForFeature.getState());
+        assertEquals(EnumsApi.ExecContextState.PRODUCED.code, execContextForTest.getState());
 
         experiment = Objects.requireNonNull(experimentCache.findById(experiment.getId()));
 
-        List<Object[]> tasks = taskCollector.getTasks(execContextForFeature);
+        List<Object[]> tasks = taskCollector.getTasks(execContextForTest);
 
         assertNotNull(taskResult);
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
         assertEquals(numberOfTasks, tasks.size());
 
-        taskResult = sourceCodeService.produceAllTasks(false, sourceCode, execContextForFeature);
-        List<Object[]> tasks03 = taskCollector.getTasks(execContextForFeature);
+        taskResult = sourceCodeService.produceAllTasks(false, sourceCode, execContextForTest);
+        List<Object[]> tasks03 = taskCollector.getTasks(execContextForTest);
         assertFalse(tasks03.isEmpty());
         assertEquals(numberOfTasks, tasks.size());
 

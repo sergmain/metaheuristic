@@ -23,9 +23,12 @@ import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -33,8 +36,10 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -70,6 +75,9 @@ public abstract class FeatureMethods extends PreparingSourceCode {
     @Autowired
     public ExecContextCreatorService execContextCreatorService;
 
+    @Autowired
+    public SouthbridgeService southbridgeService;
+
     public boolean isCorrectInit = true;
 
     @Override
@@ -77,10 +85,41 @@ public abstract class FeatureMethods extends PreparingSourceCode {
         return getSourceParamsYamlAsString_Simple();
     }
 
+    public long countTasks(@Nullable List<EnumsApi.ExecContextState> states) {
+        List<Object[]> list = taskRepository.findAllExecStateByExecContextId(execContextForTest.id);
+        if (states==null) {
+            return list.size();
+        }
+        //noinspection UnnecessaryLocalVariable
+        long count = list.stream().filter(o->states.contains(EnumsApi.ExecContextState.toState((Integer)o[1]))).count();
+        return count;
+    }
+
     public void toStarted() {
-        execContextFSM.toStarted(execContextForFeature);
-        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.getId()));
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForFeature.getState());
+        execContextFSM.toStarted(execContextForTest);
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
+    }
+
+    public String initSessionId() {
+        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
+        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
+        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus(Collections.emptyList());
+
+
+        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
+        String dispatcherResponse = southbridgeService.processRequest(processorYaml, "127.0.0.1");
+
+        DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
+
+        assertNotNull(d0);
+        assertNotNull(d0.getReAssignedProcessorId());
+        assertNotNull(d0.getReAssignedProcessorId().sessionId);
+        assertEquals(processorIdAsStr, d0.getReAssignedProcessorId().reAssignedProcessorId);
+
+        //noinspection UnnecessaryLocalVariable
+        String sessionId = d0.getReAssignedProcessorId().sessionId;
+        return sessionId;
     }
 
     protected void produceTasks() {
@@ -89,16 +128,16 @@ public abstract class FeatureMethods extends PreparingSourceCode {
             assertEquals(status.error, EnumsApi.SourceCodeValidateStatus.OK, status.status);
 
             ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
-            execContextForFeature = result.execContext;
+            execContextForTest = result.execContext;
             assertFalse(result.isErrorMessages());
-            assertNotNull(execContextForFeature);
-            assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
+            assertNotNull(execContextForTest);
+            assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
 
 
-            EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
-            execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+            EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForTest.id);
+            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
-            assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
+            assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
 
             List<Object[]> tasks01 = taskCollector.getTasks(result.execContext);
             assertTrue(tasks01.isEmpty());
@@ -108,12 +147,12 @@ public abstract class FeatureMethods extends PreparingSourceCode {
         }
         {
             long mills = System.currentTimeMillis();
-            SourceCodeApiData.TaskProducingResultComplex taskProducingResultComplex = sourceCodeService.produceAllTasks(true, sourceCode, execContextForFeature);
+            SourceCodeApiData.TaskProducingResultComplex taskProducingResultComplex = sourceCodeService.produceAllTasks(true, sourceCode, execContextForTest);
             log.info("All tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
 
-            execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
             assertEquals(EnumsApi.TaskProducingStatus.OK, taskProducingResultComplex.taskProducingStatus);
-            assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(execContextForFeature.getState()));
+            assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(execContextForTest.getState()));
         }
     }
 
@@ -123,7 +162,7 @@ public abstract class FeatureMethods extends PreparingSourceCode {
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToProcessor()");
         DispatcherCommParamsYaml.AssignedTask task = execContextService.getTaskAndAssignToProcessor(
-                processor.getId(), false, execContextForFeature.id);
+                processor.getId(), false, execContextForTest.id);
         log.info("experimentService.getTaskAndAssignToProcessor() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(task);

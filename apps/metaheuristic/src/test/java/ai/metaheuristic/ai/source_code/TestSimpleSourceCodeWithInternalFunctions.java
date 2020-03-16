@@ -38,7 +38,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.Objects;
 
 import static org.junit.Assert.*;
@@ -55,7 +54,7 @@ import static org.junit.Assert.*;
 public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
 
     @Autowired
-    public SouthbridgeService serverService;
+    public SouthbridgeService southbridgeService;
 
     @Autowired
     public TaskService taskService;
@@ -72,36 +71,18 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
     @Test
     public void testTaskRequest() {
         produceTasks();
+        // Function mh.finish will be created even not defined explicitly
+        assertEquals(3, countTasks(null));
         toStarted();
-        String sessionId = step_1_initSessionId();
-        step_2(sessionId);
-        step_3(sessionId);
-        step_4(sessionId);
-    }
+        String sessionId = initSessionId();
 
-    public String step_1_initSessionId() {
-        String sessionId;
-        final ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
-        processorComm.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorIdAsStr, null);
-        processorComm.reportProcessorTaskStatus = new ProcessorCommParamsYaml.ReportProcessorTaskStatus(Collections.emptyList());
-
-
-        final String processorYaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm);
-        String dispatcherResponse = serverService.processRequest(processorYaml, "127.0.0.1");
-
-        DispatcherCommParamsYaml d0 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse);
-
-        assertNotNull(d0);
-        assertNotNull(d0.getReAssignedProcessorId());
-        assertNotNull(d0.getReAssignedProcessorId().sessionId);
-        assertEquals(processorIdAsStr, d0.getReAssignedProcessorId().reAssignedProcessorId);
-
-        sessionId = d0.getReAssignedProcessorId().sessionId;
-        return sessionId;
+//        step_2(sessionId);
+//        step_3(sessionId);
+//        step_4(sessionId);
     }
 
     public void step_2(String sessionId) {
-        DispatcherCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
+        DispatcherCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
@@ -109,7 +90,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         processorComm0.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
-        String dispatcherResponse0 = serverService.processRequest(processorYaml0, "127.0.0.1");
+        String dispatcherResponse0 = southbridgeService.processRequest(processorYaml0, "127.0.0.1");
 
         DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse0);
         assertNotNull(d1);
@@ -123,8 +104,8 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         assertNotNull(task);
         assertTrue(task.isCompleted);
 
-        execContextSchedulerService.updateExecContextStatus(execContextForFeature.id,true);
-        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+        execContextSchedulerService.updateExecContextStatus(execContextForTest.id,true);
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
     }
 
     public void step_3(String sessionId) {
@@ -133,7 +114,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         processorComm0.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
 
         final String processorYaml0 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm0);
-        String dispatcherResponse0 = serverService.processRequest(processorYaml0, Consts.LOCALHOST_IP);
+        String dispatcherResponse0 = southbridgeService.processRequest(processorYaml0, Consts.LOCALHOST_IP);
 
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse0);
 
@@ -148,7 +129,7 @@ public class TestSimpleSourceCodeWithInternalFunctions extends FeatureMethods {
         processorComm1.requestTask = new ProcessorCommParamsYaml.RequestTask(false);
 
         final String processorYaml1 = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm1);
-        String dispatcherResponse1 = serverService.processRequest(processorYaml1, Consts.LOCALHOST_IP);
+        String dispatcherResponse1 = southbridgeService.processRequest(processorYaml1, Consts.LOCALHOST_IP);
 
         DispatcherCommParamsYaml d1 = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherResponse1);
 

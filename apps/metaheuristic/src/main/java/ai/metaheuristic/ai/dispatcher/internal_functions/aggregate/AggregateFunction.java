@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.aggregate;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,14 +41,6 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class AggregateFunction implements InternalFunction {
-/*
-    private final InternalFunctionProcessor internalFunctionProcessor;
-
-    @PostConstruct
-    public void postConstruct() {
-        internalFunctionProcessor.registerInternalFunction(this);
-    }
-*/
 
     @Override
     public String getCode() {

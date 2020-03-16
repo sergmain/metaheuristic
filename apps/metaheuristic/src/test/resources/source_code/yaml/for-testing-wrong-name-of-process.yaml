@@ -1,0 +1,9 @@
+source:
+  uid: for-testing-presence-of-mh-finish-function
+  processes:
+    - code: mh.finish
+      name: mh.finish
+      function:
+        code: mh.variable-splitter
+        context: internal
+version: 1

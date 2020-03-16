@@ -59,41 +59,41 @@ public class TestGraphEdges extends PreparingSourceCode {
     public void test() {
 
         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
-        execContextForFeature = (ExecContextImpl)result.execContext;
+        execContextForTest = (ExecContextImpl)result.execContext;
 
-        assertNotNull(execContextForFeature);
+        assertNotNull(execContextForTest);
 
-        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForFeature.id, List.of(), List.of(1L));
-        execContextForFeature = execContextCache.findById(execContextForFeature.id);
+        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id, List.of(), List.of(1L));
+        execContextForTest = execContextCache.findById(execContextForTest.id);
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-        long count = execContextService.getCountUnfinishedTasks(execContextForFeature);
+        long count = execContextService.getCountUnfinishedTasks(execContextForTest);
         assertEquals(1, count);
 
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForFeature.id,List.of(1L), List.of(21L, 22L, 23L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(1L), List.of(21L, 22L, 23L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        execContextForFeature = execContextCache.findById(execContextForFeature.id);
+        execContextForTest = execContextCache.findById(execContextForTest.id);
 
-        List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForFeature);
+        List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
         assertEquals(3, leafs.size());
         assertTrue(leafs.contains(new ExecContextData.TaskVertex(21L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new ExecContextData.TaskVertex(22L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new ExecContextData.TaskVertex(23L, EnumsApi.TaskExecState.NONE)));
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph( execContextForFeature.id,List.of(21L), List.of(311L, 312L, 313L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph( execContextForTest.id,List.of(21L), List.of(311L, 312L, 313L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        execContextForFeature = execContextCache.findById(execContextForFeature.id);
+        execContextForTest = execContextCache.findById(execContextForTest.id);
 
-        Set<ExecContextData.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(execContextForFeature, 1L);
+        Set<ExecContextData.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 1L);
         assertEquals(6, descendands.size());
 
-        descendands = execContextGraphTopLevelService.findDescendants(execContextForFeature, 21L);
+        descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 21L);
         assertEquals(3, descendands.size());
 
-        leafs = execContextGraphTopLevelService.findLeafs(execContextForFeature);
+        leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
         assertEquals(5, leafs.size());
     }
 }

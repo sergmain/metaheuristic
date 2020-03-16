@@ -54,7 +54,7 @@ import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.HyperPar
 import static org.junit.Assert.assertTrue;
 
 @Slf4j
-public abstract class PreparingExperiment {
+public abstract class PreparingCore {
 
     public static final String TEST_FIT_FUNCTION = "test.fit.function:1.0";
     public static final String TEST_PREDICT_FUNCTION = "test.predict.function:1.0";
@@ -104,7 +104,7 @@ public abstract class PreparingExperiment {
     public Function predictFunction = null;
 
     @Before
-    public void beforePreparingExperiment() {
+    public void beforePreparingCore() {
         assertTrue(globals.isUnitTesting);
 
         try {
@@ -117,7 +117,7 @@ public abstract class PreparingExperiment {
             }
 
             // Prepare processor
-            processor = new Processor();
+            Processor p = new Processor();
             mills = System.currentTimeMillis();
             log.info("Start processorRepository.saveAndFlush()");
 
@@ -133,12 +133,12 @@ public abstract class PreparingExperiment {
                     ""+ UUID.randomUUID().toString(), System.currentTimeMillis(),
                     "[unknown]", "[unknown]", null, false,
                     TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown);
-            processor.setStatus(ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss));
+            p.setStatus(ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss));
 
-            processor.setDescription("Test processor. Must be deleted automatically");
-            processorCache.save(processor);
+            p.setDescription("Test processor. Must be deleted automatically");
+            processor = processorCache.save(p);
             log.info("processorRepository.save() was finished for {}", System.currentTimeMillis() - mills);
-            processorIdAsStr =  Long.toString(processor.getId());
+            processorIdAsStr =  Long.toString(p.getId());
 
             // Prepare functions
             mills = System.currentTimeMillis();
@@ -252,7 +252,7 @@ public abstract class PreparingExperiment {
     }
 
     @After
-    public void afterPreparingExperiment() {
+    public void afterPreparingCore() {
         long mills = System.currentTimeMillis();
         log.info("Start after()");
         if (experiment != null) {

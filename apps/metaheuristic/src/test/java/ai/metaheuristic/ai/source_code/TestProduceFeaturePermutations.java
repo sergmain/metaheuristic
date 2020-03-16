@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
-import ai.metaheuristic.ai.preparing.PreparingExperiment;
+import ai.metaheuristic.ai.preparing.PreparingCore;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +35,7 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
-public class TestProduceFeaturePermutations extends PreparingExperiment {
+public class TestProduceFeaturePermutations extends PreparingCore {
 
     @Autowired
     public ExperimentService experimentService;

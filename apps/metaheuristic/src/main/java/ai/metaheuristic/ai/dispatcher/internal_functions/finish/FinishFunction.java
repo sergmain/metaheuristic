@@ -44,15 +44,6 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.*;
 @RequiredArgsConstructor
 public class FinishFunction implements InternalFunction {
 
-/*
-    private final InternalFunctionProcessor internalFunctionProcessor;
-
-    @PostConstruct
-    public void postConstruct() {
-        internalFunctionProcessor.registerInternalFunction(this);
-    }
-
-*/
     @Override
     public String getCode() {
         return Consts.MH_FINISH_FUNCTION;

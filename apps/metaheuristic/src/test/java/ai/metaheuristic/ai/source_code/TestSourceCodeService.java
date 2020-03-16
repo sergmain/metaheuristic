@@ -29,11 +29,9 @@ import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
-import org.apache.commons.lang3.NotImplementedException;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,9 +76,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     @After
     public void afterTestPlanService() {
-        if (execContextForFeature !=null) {
+        if (execContextForTest !=null) {
             try {
-                taskRepository.deleteByExecContextId(execContextForFeature.getId());
+                taskRepository.deleteByExecContextId(execContextForTest.getId());
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -93,10 +91,10 @@ public class TestSourceCodeService extends PreparingSourceCode {
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getSourceCodeYamlAsString());
 
         SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();
-        List<Object[]> tasks = taskCollector.getTasks(execContextForFeature);
+        List<Object[]> tasks = taskCollector.getTasks(execContextForTest);
 
         assertNotNull(result);
-        assertNotNull(execContextForFeature);
+        assertNotNull(execContextForTest);
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
 
@@ -122,17 +120,17 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // ======================
 
         DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
+                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
 
         assertNull(simpleTask0);
 
-        execContextFSM.toStarted(execContextForFeature);
-        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.getId()));
+        execContextFSM.toStarted(execContextForTest);
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
 
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForFeature.getState());
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
 
             assertNotNull(simpleTask);
             assertNotNull(simpleTask.getTaskId());
@@ -140,7 +138,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertNotNull(task);
 
             DispatcherCommParamsYaml.AssignedTask simpleTask2 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
             assertNull(simpleTask2);
 
             storeExecResult(simpleTask);
@@ -148,7 +146,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         }
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask20 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
 
             assertNotNull(simpleTask20);
             assertNotNull(simpleTask20.getTaskId());
@@ -156,7 +154,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertNotNull(task3);
 
             DispatcherCommParamsYaml.AssignedTask simpleTask21 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
             assertNull(simpleTask21);
 
             storeExecResult(simpleTask20);
@@ -164,7 +162,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         }
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask30 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
 
             assertNotNull(simpleTask30);
             assertNotNull(simpleTask30.getTaskId());
@@ -172,7 +170,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertNotNull(task30);
 
             DispatcherCommParamsYaml.AssignedTask simpleTask31 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
 
             assertNull(simpleTask31);
 
@@ -181,7 +179,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         }
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask32 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
 
             assertNotNull(simpleTask32);
             assertNotNull(simpleTask32.getTaskId());
@@ -191,23 +189,23 @@ public class TestSourceCodeService extends PreparingSourceCode {
             execContextSchedulerService.updateExecContextStatuses(true);
         }
         int j;
-        long prevValue = execContextService.getCountUnfinishedTasks(execContextForFeature);
+        long prevValue = execContextService.getCountUnfinishedTasks(execContextForTest);
         for ( j = 0; j < 1000; j++) {
             if (j%20==0) {
                 System.out.println("j = " + j);
             }
             DispatcherCommParamsYaml.AssignedTask loopSimpleTask =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
 
             assertNotNull(loopSimpleTask);
             assertNotNull(loopSimpleTask.getTaskId());
             Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
             assertNotNull(loopTask);
             storeExecResult(loopSimpleTask);
-            execContextSchedulerService.updateExecContextStatus( execContextForFeature.id, true);
-            execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+            execContextSchedulerService.updateExecContextStatus( execContextForTest.id, true);
+            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
-            final long count = execContextService.getCountUnfinishedTasks(execContextForFeature);
+            final long count = execContextService.getCountUnfinishedTasks(execContextForTest);
             assertNotEquals(count, prevValue);
             prevValue = count;
             if (count==0) {

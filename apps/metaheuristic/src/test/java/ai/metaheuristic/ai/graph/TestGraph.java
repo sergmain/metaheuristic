@@ -63,56 +63,56 @@ public class TestGraph extends PreparingSourceCode {
     public void test() {
 
         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
-        execContextForFeature = result.execContext;
+        execContextForTest = result.execContext;
 
-        assertNotNull(execContextForFeature);
+        assertNotNull(execContextForTest);
 
-        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForFeature.id, List.of(), List.of(1L));
-        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id, List.of(), List.of(1L));
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-        long count = execContextService.getCountUnfinishedTasks(execContextForFeature);
+        long count = execContextService.getCountUnfinishedTasks(execContextForTest);
         assertEquals(1, count);
 
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForFeature.id,List.of(1L), List.of(2L, 3L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(1L), List.of(2L, 3L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
-        count = execContextService.getCountUnfinishedTasks(execContextForFeature);
+        count = execContextService.getCountUnfinishedTasks(execContextForTest);
         assertEquals(3, count);
 
-        List<TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForFeature);
+        List<TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
         assertEquals(2, leafs.size());
         assertTrue(leafs.contains(new TaskVertex(2L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new TaskVertex(3L, EnumsApi.TaskExecState.NONE)));
 
-        setExecState(execContextForFeature, 1L, EnumsApi.TaskExecState.BROKEN);
-        setExecState(execContextForFeature, 2L, EnumsApi.TaskExecState.NONE);
-        setExecState(execContextForFeature, 3L, EnumsApi.TaskExecState.NONE);
+        setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.BROKEN);
+        setExecState(execContextForTest, 2L, EnumsApi.TaskExecState.NONE);
+        setExecState(execContextForTest, 3L, EnumsApi.TaskExecState.NONE);
 
         ExecContextOperationStatusWithTaskList status =
-                execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(execContextForFeature.id,1L);
+                execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(execContextForTest.id,1L);
         assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
-        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         // there is only 'BROKEN' exec state
-        Set<EnumsApi.TaskExecState> states = execContextGraphTopLevelService.findAll(execContextForFeature).stream().map(o -> o.execState).collect(Collectors.toSet());
+        Set<EnumsApi.TaskExecState> states = execContextGraphTopLevelService.findAll(execContextForTest).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(1, states.size());
         assertTrue(states.contains(EnumsApi.TaskExecState.BROKEN));
 
-        count = execContextService.getCountUnfinishedTasks(execContextForFeature);
+        count = execContextService.getCountUnfinishedTasks(execContextForTest);
         assertEquals(0, count);
 
 
-        setExecState(execContextForFeature, 1L, EnumsApi.TaskExecState.NONE);
-        execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(execContextForFeature.id,1L);
-        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+        setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.NONE);
+        execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(execContextForTest.id,1L);
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         // there is only 'NONE' exec state
-        states = execContextGraphTopLevelService.findAll(execContextForFeature).stream().map(o -> o.execState).collect(Collectors.toSet());
+        states = execContextGraphTopLevelService.findAll(execContextForTest).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(1, states.size());
         assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
     }

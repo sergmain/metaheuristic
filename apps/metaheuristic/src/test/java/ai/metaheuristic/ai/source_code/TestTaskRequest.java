@@ -93,7 +93,7 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     public void step_2(String sessionId) {
-        DispatcherCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForFeature.getId());
+        DispatcherCommParamsYaml.AssignedTask t = execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
         assertNotNull(t);
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
@@ -115,8 +115,8 @@ public class TestTaskRequest extends FeatureMethods {
         assertNotNull(task);
         assertTrue(task.isCompleted);
 
-        execContextSchedulerService.updateExecContextStatus(execContextForFeature.id,true);
-        execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
+        execContextSchedulerService.updateExecContextStatus(execContextForTest.id,true);
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
     }
 
     public void step_3(String sessionId) {

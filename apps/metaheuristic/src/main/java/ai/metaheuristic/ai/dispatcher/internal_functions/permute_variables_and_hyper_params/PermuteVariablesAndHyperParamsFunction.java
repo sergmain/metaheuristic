@@ -49,14 +49,6 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.*;
 public class PermuteVariablesAndHyperParamsFunction implements InternalFunction {
 
     private final VariableRepository variableRepository;
-/*
-    private final InternalFunctionProcessor internalFunctionProcessor;
-
-    @PostConstruct
-    public void postConstruct() {
-        internalFunctionProcessor.registerInternalFunction(this);
-    }
-*/
 
     @Override
     public String getCode() {

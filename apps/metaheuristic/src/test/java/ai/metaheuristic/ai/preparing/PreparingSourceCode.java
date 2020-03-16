@@ -50,23 +50,23 @@ import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYamlV1;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import static ai.metaheuristic.api.data.source_code.SourceCodeApiData.TaskProducingResultComplex;
 import static org.junit.Assert.*;
 
 @Slf4j
-public abstract class PreparingSourceCode extends PreparingExperiment {
+public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     public CompanyTopLevelService companyTopLevelService;
@@ -116,7 +116,7 @@ public abstract class PreparingSourceCode extends PreparingExperiment {
     public Function s3 = null;
     public Function s4 = null;
     public Function s5 = null;
-    public ExecContextImpl execContextForFeature = null;
+    public ExecContextImpl execContextForTest = null;
 
     public ExecContextParamsYaml execContextYaml;
 
@@ -124,7 +124,11 @@ public abstract class PreparingSourceCode extends PreparingExperiment {
 
     public abstract String getSourceCodeYamlAsString();
 
+    @SneakyThrows
     public static String getSourceCodeV1() {
+        return IOUtils.resourceToString("/source_code/yaml/default-source-code-for-testing.yaml", StandardCharsets.UTF_8);
+/*
+
         SourceCodeParamsYamlV1 planParamsYaml = new SourceCodeParamsYamlV1();
         planParamsYaml.source = new SourceCodeParamsYamlV1.SourceCodeV1();
         planParamsYaml.source.uid = "SourceCode for experiment";
@@ -257,6 +261,7 @@ public abstract class PreparingSourceCode extends PreparingExperiment {
         final SourceCodeParamsYamlUtilsV1 forVersion = (SourceCodeParamsYamlUtilsV1) SourceCodeParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1);
         String yaml = Objects.requireNonNull(forVersion).toString(planParamsYaml);
         return yaml;
+*/
     }
 
     public String getSourceParamsYamlAsString_Simple() {
@@ -266,7 +271,7 @@ public abstract class PreparingSourceCode extends PreparingExperiment {
     public static final String TEST_GLOBAL_VARIABLE = "test-variable";
 
     @Before
-    public void beforePreparingPlan() {
+    public void beforePreparingSourceCode() {
         assertTrue(globals.isUnitTesting);
 
         company = new Company();
@@ -285,27 +290,32 @@ public abstract class PreparingSourceCode extends PreparingExperiment {
         s4 = createFunction("function-04:1.1");
         s5 = createFunction("function-05:1.1");
 
-        sourceCode = new SourceCodeImpl();
-        sourceCode.setUid("test-sourceCode-code");
+        SourceCodeImpl sc = new SourceCodeImpl();
+        sc.setUid("test-sourceCode-code");
 
         SourceCodeStoredParamsYamlV1 sourceCodeStored = new SourceCodeStoredParamsYamlV1();
         sourceCodeStored.source = getSourceCodeYamlAsString();
+
+        // check correctness of sourceCode
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeStored.source);
+        sourceCodeParamsYaml.checkIntegrity();
+
         sourceCodeStored.lang = EnumsApi.SourceCodeLang.yaml;
 
         final SourceCodeStoredParamsYamlUtilsV1 forVersion = (SourceCodeStoredParamsYamlUtilsV1) SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1);
         assertNotNull(forVersion);
         String params = forVersion.toString(sourceCodeStored);
 
-        sourceCode.setParams(params);
-        sourceCode.setCreatedOn(System.currentTimeMillis());
-        sourceCode.companyId = company.uniqueId;
+        sc.setParams(params);
+        sc.setCreatedOn(System.currentTimeMillis());
+        sc.companyId = company.uniqueId;
 
 
-        SourceCode tempSourceCode = sourceCodeRepository.findByUidAndCompanyId(sourceCode.getUid(), company.uniqueId);
+        SourceCode tempSourceCode = sourceCodeRepository.findByUidAndCompanyId(sc.getUid(), company.uniqueId);
         if (tempSourceCode !=null) {
             sourceCodeCache.deleteById(tempSourceCode.getId());
         }
-        sourceCodeCache.save(sourceCode);
+        sourceCode = sourceCodeCache.save(sc);
 
         byte[] bytes = "A resource for input pool".getBytes();
 
@@ -352,7 +362,7 @@ public abstract class PreparingSourceCode extends PreparingExperiment {
     }
 
     @After
-    public void afterPreparingPlan() {
+    public void afterPreparingSourceCode() {
         if (sourceCode !=null) {
             try {
                 sourceCodeCache.deleteById(sourceCode.getId());
@@ -372,15 +382,15 @@ public abstract class PreparingSourceCode extends PreparingExperiment {
         deleteFunction(s3);
         deleteFunction(s4);
         deleteFunction(s5);
-        if (execContextForFeature !=null) {
+        if (execContextForTest !=null) {
             try {
-                execContextRepository.deleteById(execContextForFeature.getId());
+                execContextRepository.deleteById(execContextForTest.getId());
             }
             catch (Throwable th) {
                 log.error("Error while workbookRepository.deleteById()", th);
             }
             try {
-                taskRepository.deleteByExecContextId(execContextForFeature.getId());
+                taskRepository.deleteByExecContextId(execContextForTest.getId());
             } catch (ObjectOptimisticLockingFailureException th) {
                 //
             } catch (Throwable th) {
@@ -403,29 +413,29 @@ public abstract class PreparingSourceCode extends PreparingExperiment {
             assertEquals(status.error, EnumsApi.SourceCodeValidateStatus.OK, status.status);
 
             ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
-            execContextForFeature = result.execContext;
+            execContextForTest = result.execContext;
 
             assertFalse(result.isErrorMessages());
-            assertNotNull(execContextForFeature);
-            assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForFeature.getState());
+            assertNotNull(execContextForTest);
+            assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
 
 
-            EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForFeature.id);
+            EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForTest.id);
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
-            execContextForFeature = Objects.requireNonNull(execContextCache.findById(this.execContextForFeature.id));
-            assertNotNull(execContextForFeature);
-            assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForFeature.getState());
+            execContextForTest = Objects.requireNonNull(execContextCache.findById(this.execContextForTest.id));
+            assertNotNull(execContextForTest);
+            assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
         }
         {
-            SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForFeature);
+            SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForTest);
             experiment = Objects.requireNonNull(experimentCache.findById(experiment.id));
 
-            this.execContextForFeature = Objects.requireNonNull(execContextCache.findById(execContextForFeature.id));
-            assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForFeature.id).size());
-            assertEquals(result1.numberOfTasks, execContextService.getCountUnfinishedTasks(execContextForFeature));
+            this.execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+            assertEquals(result1.numberOfTasks, taskRepository.findAllTaskIdsByExecContextId(execContextForTest.id).size());
+            assertEquals(result1.numberOfTasks, execContextService.getCountUnfinishedTasks(execContextForTest));
 
             assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
-            assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(this.execContextForFeature.getState()));
+            assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(this.execContextForTest.getState()));
             return result1;
         }
     }

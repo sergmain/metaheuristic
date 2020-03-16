@@ -106,17 +106,23 @@ public class SourceCodeValidationService {
                     }
                 }
             }
+            if (process.code.equals(Consts.MH_FINISH_FUNCTION) && !process.function.code.equals(Consts.MH_FINISH_FUNCTION)) {
+                // test that there isn't any mh.finish process which isn't actually for function mn.finish
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.WRONG_CODE_OF_PROCESS_ERROR, "There is process with code mh.finish but function is " + process.function.code);
+            }
             lastProcess = process;
             if (S.b(process.code) || !StrUtils.isCodeOk(process.code)){
                 log.error("Error while validating sourceCode {}", sourceCodeYaml);
                 return new SourceCodeApiData.SourceCodeValidationResult(
-                        EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR, "");
+                        EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR, "Code of process with illegal chars: " + process.code);
             }
             SourceCodeApiData.SourceCodeValidationResult status = checkFunctions(sourceCode, process);
             if (status.status!=OK) {
                 return status;
             }
         }
+
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
     }
 

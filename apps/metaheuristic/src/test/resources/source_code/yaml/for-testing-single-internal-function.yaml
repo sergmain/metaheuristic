@@ -1,0 +1,9 @@
+source:
+  uid: for-testing-single-internal-function
+  processes:
+    - code: mh.variable-splitter
+      name: mh.variable-splitter
+      function:
+        code: mh.variable-splitter
+        context: internal
+version: 1

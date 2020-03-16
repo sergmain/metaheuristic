@@ -1,0 +1,101 @@
+source:
+  clean: false
+  uid: SourceCode for experiment
+  variables:
+    globals:
+      - test-variable
+    inline:
+      mh.hyper-params:
+        seed: '42'
+        batches: '40'
+        time_steps: '7'
+        RNN: LSTM
+  processes:
+    - code: assembly-raw-file
+      function:
+        code: function-01:1.1
+        context: external
+      inputs:
+        - name: test-variable
+          sourcing: dispatcher
+      name: assembly raw file
+      outputs:
+        - name: assembled-raw-output
+          sourcing: dispatcher
+    - code: dataset-processing
+      function:
+        code: function-02:1.1
+        context: external
+      inputs:
+        - name: assembled-raw-output
+          sourcing: dispatcher
+      name: dataset processing
+      outputs:
+        - name: dataset-processing-output
+          sourcing: dispatcher
+      subProcesses:
+        logic: and
+        processes:
+          - code: feature-processing-1
+            function:
+              code: function-03:1.1
+              context: external
+            inputs:
+              - name: dataset-processing-output
+                sourcing: dispatcher
+            name: feature-processing-1
+            outputs:
+              - name: feature-output-1
+                sourcing: dispatcher
+          - code: feature-processing-2
+            function:
+              code: function-04:1.1
+              context: external
+            inputs:
+              - name: dataset-processing-output
+                sourcing: dispatcher
+            name: feature-processing-2
+            outputs:
+              - name: feature-output-2
+                sourcing: dispatcher
+    - code: mh.permute-variables-and-hyper-params
+      function:
+        code: mh.permute-variables-and-hyper-params
+        context: internal
+      metas:
+        - key: variables
+          value: feature-output-1,feature-output-2,feature-output-3
+      name: permute variables and hyper params
+      outputs:
+        - name: feature-per-task
+          sourcing: dispatcher
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: feature-processing-1
+            function:
+              code: test.fit.function:1.0
+              context: external
+            inputs:
+              - name: dataset-processing-output
+                sourcing: dispatcher
+              - name: feature-per-task
+                sourcing: dispatcher
+            name: feature-processing-1
+            outputs:
+              - name: model
+                sourcing: dispatcher
+          - code: feature-processing-2
+            function:
+              code: test.predict.function:1.0
+              context: external
+            inputs:
+              - name: dataset-processing-output
+                sourcing: dispatcher
+            name: feature-processing-2
+            outputs:
+              - name: metrics
+                sourcing: dispatcher
+              - name: predicted
+                sourcing: dispatcher
+version: 1

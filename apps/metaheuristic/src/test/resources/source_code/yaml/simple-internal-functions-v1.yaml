@@ -10,9 +10,9 @@ source:
         code: mh.variable-splitter
         context: internal
       inputs:
-        - variable: global-for-simple-test
+        - name: global-for-simple-test
       outputs:
-        - variable: splitted-element
+        - name: splitted-element
       subProcesses:
         logic: and
         processes:
@@ -20,16 +20,18 @@ source:
             name: mh.test.simple-internal-function
             function:
               code: mh.test.simple-internal-function
+              context: internal
             inputs:
-              - variable: splitted-element
+              - name: splitted-element
             outputs:
-              - variable: processes-element
+              - name: processes-element
     - code: mh.aggregate
       name: mh.aggregate
       function:
         code: mh.aggregate
+        context: internal
       inputs:
-        - variable: processes-element
+        - name: processes-element
       outputs:
-        - variable: result
+        - name: result
 version: 1
