@@ -3,10 +3,10 @@ source:
   variables:
     startInputAs: input-data
   processes:
-    - code: mh.resource-splitter
-      name: mh.resource-splitter
+    - code: mh.variable-splitter
+      name: mh.variable-splitter
       function:
-        code: mh.resource-splitter
+        code: mh.variable-splitter
         context: internal
       inputs:
         - variable: input-data

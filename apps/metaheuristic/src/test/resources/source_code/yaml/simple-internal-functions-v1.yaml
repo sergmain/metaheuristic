@@ -1,0 +1,35 @@
+source:
+  uid: simple-internal-functions-v1
+  variables:
+    globals:
+      - global-for-simple-test
+  processes:
+    - code: mh.variable-splitter
+      name: mh.variable-splitter
+      function:
+        code: mh.variable-splitter
+        context: internal
+      inputs:
+        - variable: global-for-simple-test
+      outputs:
+        - variable: splitted-element
+      subProcesses:
+        logic: and
+        processes:
+          - code: mh.test.simple-internal-function
+            name: mh.test.simple-internal-function
+            function:
+              code: mh.test.simple-internal-function
+            inputs:
+              - variable: splitted-element
+            outputs:
+              - variable: processes-element
+    - code: mh.aggregate
+      name: mh.aggregate
+      function:
+        code: mh.aggregate
+      inputs:
+        - variable: processes-element
+      outputs:
+        - variable: result
+version: 1

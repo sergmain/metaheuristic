@@ -42,12 +42,14 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class AggregateFunction implements InternalFunction {
+/*
     private final InternalFunctionProcessor internalFunctionProcessor;
 
     @PostConstruct
     public void postConstruct() {
         internalFunctionProcessor.registerInternalFunction(this);
     }
+*/
 
     @Override
     public String getCode() {

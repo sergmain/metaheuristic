@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,20 +49,27 @@ public class InternalFunctionProcessor {
     public final VariableSplitterFunction resourceSplitterFunction;
     public final PermuteVariablesAndHyperParamsFunction permuteVariablesAndHyperParamsFunction;
     public final SourceCodeCache sourceCodeCache;
+    public final List<InternalFunction> internalFunctions;
 
-    private final Map<String, InternalFunction> internalFunctions = new HashMap<>();
+    private final Map<String, InternalFunction> internalFunctionMap = new HashMap<>();
 
-    public void registerInternalFunction(InternalFunction internalFunction) {
-        internalFunctions.put(internalFunction.getCode(), internalFunction);
+    @PostConstruct
+    public void postConstruct() {
+        internalFunctions.forEach(o->internalFunctionMap.put(o.getCode(), o));
     }
+/*
+    public void registerInternalFunction(InternalFunction internalFunction) {
+        internalFunctionMap.put(internalFunction.getCode(), internalFunction);
+    }
+*/
 
     public boolean isRegistered(String functionCode) {
-        return internalFunctions.containsKey(functionCode);
+        return internalFunctionMap.containsKey(functionCode);
     }
 
     public InternalFunctionProcessingResult process(
             String functionCode, Long sourceCodeId, Long execContextId, String internalContextId, Map<String, List<String>> inputResourceIds) {
-        InternalFunction internalFunction = internalFunctions.get(functionCode);
+        InternalFunction internalFunction = internalFunctionMap.get(functionCode);
         if (internalFunction==null) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found);
         }

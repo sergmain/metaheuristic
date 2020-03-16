@@ -91,12 +91,14 @@ public class VariableSplitterFunction implements InternalFunction {
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
     private final IdsRepository idsRepository;
+/*
     private final InternalFunctionProcessor internalFunctionProcessor;
 
     @PostConstruct
     public void postConstruct() {
         internalFunctionProcessor.registerInternalFunction(this);
     }
+*/
 
     @Override
     public String getCode() {

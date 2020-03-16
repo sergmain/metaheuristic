@@ -41,7 +41,7 @@ public class TestSourceCodeGraphLanguageYaml {
 
     @Test
     public void test_01() throws IOException {
-        String sourceCode = IOUtils.resourceToString("/source_code/yaml/plan-for-preprocessing-and-classification-v1.yaml", StandardCharsets.UTF_8);
+        String sourceCode = IOUtils.resourceToString("/source_code/yaml/source-code-for-preprocessing-and-classification-v1.yaml", StandardCharsets.UTF_8);
         AtomicLong contextId = new AtomicLong();
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet());
 

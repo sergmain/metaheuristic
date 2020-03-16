@@ -14,20 +14,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.internal_functions.finish;
+package ai.metaheuristic.ai.internal_function;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 
@@ -35,36 +32,31 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.*;
 
 /**
  * @author Serge
- * Date: 3/13/2020
- * Time: 11:13 PM
+ * Date: 3/14/2020
+ * Time: 8:37 PM
  */
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class FinishFunction implements InternalFunction {
+public class SimpleInternalFunctionForTest implements InternalFunction {
 
-/*
-    private final InternalFunctionProcessor internalFunctionProcessor;
+    public static final String MH_TEST_SIMPLE_INTERNAL_FUNCTION = "mh.test.simple-internal-function";
 
-    @PostConstruct
-    public void postConstruct() {
-        internalFunctionProcessor.registerInternalFunction(this);
-    }
-
-*/
     @Override
     public String getCode() {
-        return Consts.MH_FINISH_FUNCTION;
+        return MH_TEST_SIMPLE_INTERNAL_FUNCTION;
     }
 
     @Override
     public String getName() {
-        return Consts.MH_FINISH_FUNCTION;
+        return MH_TEST_SIMPLE_INTERNAL_FUNCTION;
     }
 
     @Override
     public InternalFunctionProcessingResult process(Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition, Map<String, List<String>> inputResourceIds) {
-        return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
+
+
+        return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 }
