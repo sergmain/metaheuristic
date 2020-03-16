@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -271,7 +272,7 @@ public class ExecContextService {
             return;
         }
         if (p.function.context== EnumsApi.FunctionExecContext.internal) {
-            // resources for internal Function will be prepared by Function it self.
+            // resources for internal Function will be prepared by InternalFunctionProcessor.
             return;
         }
 
@@ -384,11 +385,11 @@ public class ExecContextService {
                     taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
                     continue;
                 }
-/*
-                catch (Exception e) {
-                    throw new RuntimeException("#705.200 Error", e);
+                // all tasks with internal function will be processed in different thread
+                if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
+                    applicationEventPublisher.publishEvent(new TaskWithInternalContextEvent(task.getId()));
+                    continue;
                 }
-*/
 
                 if (gitUnavailable(taskParamYaml.task, processorStatus.gitStatusInfo.status!= Enums.GitStatus.installed) ) {
                     log.warn("#705.210 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",

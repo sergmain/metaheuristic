@@ -17,15 +17,20 @@
 package ai.metaheuristic.ai.internal_function;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
@@ -40,6 +45,9 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @RequiredArgsConstructor
 public class SimpleInternalFunctionForTest implements InternalFunction {
 
+    private final VariableRepository variableRepository;
+    private final GlobalVariableRepository globalVariableRepository;
+
     public static final String MH_TEST_SIMPLE_INTERNAL_FUNCTION = "mh.test.simple-internal-function";
 
     @Override
@@ -53,8 +61,23 @@ public class SimpleInternalFunctionForTest implements InternalFunction {
     }
 
     @Override
-    public InternalFunctionProcessingResult process(Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition, Map<String, List<String>> inputResourceIds) {
+    public InternalFunctionProcessingResult process(
+            Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            List<TaskParamsYaml.InputVariable> inputs) {
 
+        TaskParamsYaml.InputVariable inputVariable = inputs.get(0);
+        if (inputVariable.context== EnumsApi.VariableContext.local) {
+            Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            if (bd == null) {
+                throw new IllegalStateException("Variable not found for code " + inputVariable);
+            }
+        }
+        else {
+            GlobalVariable gv = globalVariableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            if (gv == null) {
+                throw new IllegalStateException("GlobalVariable not found for code " + inputVariable);
+            }
+        }
 
         return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }

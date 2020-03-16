@@ -17,25 +17,23 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.*;
+import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
  * @author Serge
@@ -49,6 +47,7 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.*;
 public class PermuteVariablesAndHyperParamsFunction implements InternalFunction {
 
     private final VariableRepository variableRepository;
+    private final GlobalVariableRepository globalVariableRepository;
 
     @Override
     public String getCode() {
@@ -62,17 +61,25 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
 
     public InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
-            Map<String, List<String>> inputResourceIds) {
+            List<TaskParamsYaml.InputVariable> inputs) {
 
-        List<String> values = inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
-        if (values.size()>1) {
+        if (inputs.size()>1) {
             throw new IllegalStateException("Too many input codes");
         }
-        String inputCode = values.get(0);
-        Variable bd = variableRepository.findById(Long.valueOf(inputCode)).orElse(null);
-        if (bd==null) {
-            throw new IllegalStateException("Variable not found for code " + inputCode);
+        TaskParamsYaml.InputVariable inputVariable = inputs.get(0);
+        if (inputVariable.context== EnumsApi.VariableContext.local) {
+            Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            if (bd == null) {
+                throw new IllegalStateException("Variable not found for code " + inputVariable);
+            }
         }
+        else {
+            GlobalVariable gv = globalVariableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            if (gv == null) {
+                throw new IllegalStateException("GlobalVariable not found for code " + inputVariable);
+            }
+        }
+
         if (true) {
             throw new NotImplementedException("not yet");
         }

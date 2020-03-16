@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.variable_splitter.Varia
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -68,7 +69,7 @@ public class InternalFunctionProcessor {
     }
 
     public InternalFunctionProcessingResult process(
-            String functionCode, Long sourceCodeId, Long execContextId, String internalContextId, Map<String, List<String>> inputResourceIds) {
+            String functionCode, Long sourceCodeId, Long execContextId, String internalContextId, List<TaskParamsYaml.InputVariable> inputs) {
         InternalFunction internalFunction = internalFunctionMap.get(functionCode);
         if (internalFunction==null) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found);
@@ -80,6 +81,6 @@ public class InternalFunctionProcessor {
         }
 
         SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode.getSourceCodeStoredParamsYaml().source);
-        return internalFunction.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, inputResourceIds);
+        return internalFunction.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, inputs);
     }
 }

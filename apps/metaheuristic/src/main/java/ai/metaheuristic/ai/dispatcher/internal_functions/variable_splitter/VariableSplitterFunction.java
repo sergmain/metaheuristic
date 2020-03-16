@@ -20,12 +20,13 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Ids;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -34,7 +35,9 @@ import ai.metaheuristic.ai.exceptions.BatchConfigYamlException;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -51,19 +54,16 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
@@ -91,6 +91,8 @@ public class VariableSplitterFunction implements InternalFunction {
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
     private final IdsRepository idsRepository;
+    private final GlobalVariableRepository globalVariableRepository;
+
 
     @Override
     public String getCode() {
@@ -104,18 +106,26 @@ public class VariableSplitterFunction implements InternalFunction {
 
     public InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
-            Map<String, List<String>> inputResourceIds) {
+            List<TaskParamsYaml.InputVariable> inputs) {
 
-        List<String> values = inputResourceIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
-        if (values.size()>1) {
+        if (inputs.size()>1) {
             throw new IllegalStateException("Too many input codes");
         }
-        String inputCode = values.get(0);
-        Variable variable = variableRepository.findById(Long.valueOf(inputCode)).orElse(null);
-        if (variable==null) {
-            throw new IllegalStateException("Variable not found for code " + inputCode);
+        TaskParamsYaml.InputVariable inputVariable = inputs.get(0);
+        if (inputVariable.context== EnumsApi.VariableContext.local) {
+            Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            if (bd == null) {
+                throw new IllegalStateException("Variable not found for code " + inputVariable);
+            }
         }
-        String originFilename = variable.filename;
+        else {
+            GlobalVariable gv = globalVariableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            if (gv == null) {
+                throw new IllegalStateException("GlobalVariable not found for code " + inputVariable);
+            }
+        }
+
+        String originFilename = inputVariable.realName;
         if (S.b(originFilename)) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, "variable.filename is blank");
         }

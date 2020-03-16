@@ -16,11 +16,18 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -30,12 +37,18 @@ import java.util.function.Supplier;
  */
 @SuppressWarnings("Duplicates")
 @Slf4j
-public class TaskFunctions {
+@Service
+@RequiredArgsConstructor
+@Profile("dispatcher")
+public class TaskSyncService {
+
+    private final TaskRepository taskRepository;
+
     private static final ConcurrentHashMap<Long, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
     @SuppressWarnings("Duplicates")
-    static <T> T getWithSync(Long taskId, Supplier<T> function) {
+    public @Nullable <T> T getWithSync(Long taskId, Function<TaskImpl, T> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();
@@ -47,7 +60,12 @@ public class TaskFunctions {
         synchronized (obj) {
             obj.incrementAndGet();
             try {
-                return function.get();
+                TaskImpl task = taskRepository.findByIdForUpdate(taskId);
+                if (task==null) {
+                    log.warn("#307.110 Can't find Task for Id: {}", taskId);
+                    return null;
+                }
+                return function.apply(task);
             } finally {
                 try {
                     writeLock.lock();

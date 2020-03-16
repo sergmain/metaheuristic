@@ -33,72 +33,72 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.util.function.Consumer;
 
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class TaskPersistencer {
 
-    private static final int NUMBER_OF_TRY = 2;
     private final TaskRepository taskRepository;
+    private final TaskSyncService taskSyncService;
     private final DispatcherEventService dispatcherEventService;
 
+    @Nullable
     public TaskImpl setParams(Long taskId, String taskParams) {
-        return TaskFunctions.getWithSync(taskId, () -> {
-            for (int i = 0; i < NUMBER_OF_TRY; i++) {
-                try {
-                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
-                    if (task == null) {
-                        log.warn("#307.010 Task with taskId {} wasn't found", taskId);
-                        return null;
-                    }
-                    task.setParams(taskParams);
-                    taskRepository.save(task);
-                    return task;
-                } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.020 !!!NEED TO INVESTIGATE. Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
+        return taskSyncService.getWithSync(taskId, (task) -> {
+            try {
+                if (task == null) {
+                    log.warn("#307.010 Task with taskId {} wasn't found", taskId);
+                    return null;
                 }
+                task.setParams(taskParams);
+                taskRepository.save(task);
+                return task;
+            } catch (ObjectOptimisticLockingFailureException e) {
+                log.error("#307.020 !!!NEED TO INVESTIGATE. Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
             }
             return null;
         });
     }
 
     public Enums.UploadResourceStatus setResultReceived(Long taskId, boolean resultReceived) {
-        return TaskFunctions.getWithSync(taskId, () -> {
-//            for (int i = 0; i < NUMBER_OF_TRY; i++) {
-                try {
-                    TaskImpl task = taskRepository.findByIdForUpdate(taskId);
-                    if (task == null) {
-                        return Enums.UploadResourceStatus.TASK_NOT_FOUND;
-                    }
-                    if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
-                        log.warn("#307.030 Task {} was reset, can't set new value to field resultReceived", taskId);
-                        return Enums.UploadResourceStatus.TASK_WAS_RESET;
-                    }
-                    task.setCompleted(true);
-                    task.setCompletedOn(System.currentTimeMillis());
-                    task.setResultReceived(resultReceived);
-                    taskRepository.save(task);
-                    return Enums.UploadResourceStatus.OK;
-                } catch (ObjectOptimisticLockingFailureException e) {
-                    log.warn("#307.040 !!!NEED TO INVESTIGATE. Error set resultReceived to {}, taskId: {}, error: {}", resultReceived, taskId, e.toString());
-                    return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
+        Enums.UploadResourceStatus status = taskSyncService.getWithSync(taskId, (task) -> {
+            try {
+                if (task == null) {
+                    return Enums.UploadResourceStatus.TASK_NOT_FOUND;
                 }
-//            }
-//            return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
+                if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
+                    log.warn("#307.030 Task {} was reset, can't set new value to field resultReceived", taskId);
+                    return Enums.UploadResourceStatus.TASK_WAS_RESET;
+                }
+                task.setCompleted(true);
+                task.setCompletedOn(System.currentTimeMillis());
+                task.setResultReceived(resultReceived);
+                taskRepository.save(task);
+                return Enums.UploadResourceStatus.OK;
+            } catch (ObjectOptimisticLockingFailureException e) {
+                log.warn("#307.040 !!!NEED TO INVESTIGATE. Error set resultReceived to {}, taskId: {}, error: {}", resultReceived, taskId, e.toString());
+                return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
+            }
         });
+        if (status==null) {
+            return Enums.UploadResourceStatus.TASK_NOT_FOUND;
+        }
+        return status;
     }
 
+    @Nullable
     public Task resetTask(final Long taskId) {
-        return TaskFunctions.getWithSync(taskId, () -> {
+        return taskSyncService.getWithSync(taskId, (task) -> {
             log.info("Start resetting task #{}", taskId);
-            TaskImpl task = taskRepository.findByIdForUpdate(taskId);
-            if (task ==null) {
+            if (task==null) {
                 log.error("#307.045 task is null");
                 return null;
             }
@@ -132,6 +132,9 @@ public class TaskPersistencer {
         try {
             EnumsApi.TaskExecState state = functionExec.allFunctionsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR;
             Task t = prepareAndSaveTask(result, state);
+            if (t==null) {
+                return;
+            }
             dispatcherEventService.publishTaskEvent(
                     state==EnumsApi.TaskExecState.OK ? EnumsApi.DispatcherEventType.TASK_FINISHED : EnumsApi.DispatcherEventType.TASK_ERROR,
                     null, result.taskId, t.getExecContextId());
@@ -145,8 +148,7 @@ public class TaskPersistencer {
         if (state!=EnumsApi.TaskExecState.BROKEN && state!=EnumsApi.TaskExecState.ERROR) {
             throw new IllegalStateException("#307.070 state must be EnumsApi.TaskExecState.BROKEN or EnumsApi.TaskExecState.ERROR, actual: " +state);
         }
-        TaskFunctions.getWithSync(taskId, () -> {
-            TaskImpl task = taskRepository.findByIdForUpdate(taskId);
+        taskSyncService.getWithSync(taskId, (task) -> {
             if (task==null) {
                 log.warn("#307.080 Can't find Task for Id: {}", taskId);
                 return null;
@@ -176,8 +178,7 @@ public class TaskPersistencer {
     }
 
     public void toOkSimple(Long taskId) {
-        TaskFunctions.getWithSync(taskId, () -> {
-            TaskImpl task = taskRepository.findByIdForUpdate(taskId);
+        taskSyncService.getWithSync(taskId, (task) -> {
             if (task==null) {
                 log.warn("#307.090 Can't find Task for Id: {}", taskId);
                 return null;
@@ -187,21 +188,24 @@ public class TaskPersistencer {
         });
     }
 
-    public void toInProgressSimple(Long taskId) {
-        TaskFunctions.getWithSync(taskId, () -> {
-            TaskImpl task = taskRepository.findByIdForUpdate(taskId);
-            if (task==null) {
-                log.warn("#307.100 Can't find Task for Id: {}", taskId);
-                return null;
-            }
-            task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
-            return taskRepository.save(task);
-        });
+    @Nullable
+    public TaskImpl toInProgressSimple(Long taskId) {
+        return taskSyncService.getWithSync(taskId, (task) -> toInProgressSimpleLambda(taskId, task));
     }
 
+    @Nullable
+    public TaskImpl toInProgressSimpleLambda(Long taskId, TaskImpl task) {
+        if (task==null) {
+            log.warn("#307.100 Can't find Task for Id: {}", taskId);
+            return null;
+        }
+        task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
+        return taskRepository.save(task);
+    }
+
+    @Nullable
     private Task prepareAndSaveTask(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
-        return TaskFunctions.getWithSync(result.taskId, () -> {
-            TaskImpl task = taskRepository.findByIdForUpdate(result.taskId);
+        return taskSyncService.getWithSync(result.taskId, (task) -> {
             if (task==null) {
                 log.warn("#307.110 Can't find Task for Id: {}", result.taskId);
                 return null;

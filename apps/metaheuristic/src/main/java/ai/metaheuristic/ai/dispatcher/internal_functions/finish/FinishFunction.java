@@ -18,10 +18,14 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.finish;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -55,7 +59,25 @@ public class FinishFunction implements InternalFunction {
     }
 
     @Override
-    public InternalFunctionProcessingResult process(Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition, Map<String, List<String>> inputResourceIds) {
+    public InternalFunctionProcessingResult process(
+            Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            List<TaskParamsYaml.InputVariable> inputs) {
+/*
+        TaskParamsYaml.InputVariable inputVariable = inputs.get(0);
+        if (inputVariable.context== EnumsApi.VariableContext.local) {
+            Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            if (bd == null) {
+                throw new IllegalStateException("Variable not found for code " + inputVariable);
+            }
+        }
+        else {
+            GlobalVariable gv = globalVariableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            if (gv == null) {
+                throw new IllegalStateException("GlobalVariable not found for code " + inputVariable);
+            }
+        }
+*/
+
         return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }
 }

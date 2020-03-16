@@ -14,27 +14,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.internal_functions;
+package ai.metaheuristic.ai.dispatcher.event;
 
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
-
-import java.util.List;
-import java.util.Map;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 /**
  * @author Serge
- * Date: 2/1/2020
- * Time: 9:19 PM
+ * Date: 3/15/2020
+ * Time: 10:55 PM
  */
-public interface InternalFunction {
+@Data
+@AllArgsConstructor
+public class TaskWithInternalContextEvent {
 
-    String getCode();
-
-    String getName();
-
-    InternalFunctionData.InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
-            List<TaskParamsYaml.InputVariable> inputs);
+    public Long taskId;
 }
