@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -78,8 +77,6 @@ public class TaskWithInternalContextEventService {
                 return null;
             }
 
-//        String functionCode, Long sourceCodeId, Long execContextId,
-//        String internalContextId, Map<String, List<String>> inputResourceIds) {
             internalFunctionProcessor.process(
                     taskParamsYaml.task.function.code, execContext.sourceCodeId, execContext.id, p.internalContextId, taskParamsYaml.task.inputs);
 
