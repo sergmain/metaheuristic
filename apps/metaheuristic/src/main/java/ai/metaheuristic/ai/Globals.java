@@ -465,7 +465,7 @@ public class Globals {
         log.info("'\tisSecurityEnabled: {}", isSecurityEnabled);
         log.info("'\tisSslRequired: {}", isSslRequired);
         log.info("'\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
-        log.info("'\tlaunchpadDir: {}", launchpadDir!=null ? launchpadDir.getAbsolutePath() : null);
+        log.info("'\tlaunchpadDir: {}", launchpadDir!=null ? launchpadDir.getAbsolutePath() : "<launchpad dir is null>");
         log.info("'\tassetMode: {}", assetMode);
         log.info("'\tassetUsername: {}", assetUsername);
         log.info("'\tassetSourceUrl: {}", assetSourceUrl);
@@ -477,7 +477,7 @@ public class Globals {
         log.info("'\tstationRowsLimit: {}", stationRowsLimit);
         log.info("'\taccountRowsLimit: {}", accountRowsLimit);
         log.info("'\tisStationEnabled: {}", isStationEnabled);
-        log.info("'\tstationDir: {}", stationDir);
+        log.info("'\tstationDir: {}", stationDir!=null ? stationDir.getAbsolutePath() : "<station dir is null>");
     }
 
     // TODO 2019-07-20 should method createTempFileForLaunchpad() be moved to other class/package?
