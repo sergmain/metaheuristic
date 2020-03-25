@@ -458,7 +458,7 @@ public class Globals {
         log.info("'\tisUnitTesting: {}", isUnitTesting);
         log.info("'\tisSslRequired: {}", isSslRequired);
         log.info("'\tdispatcherEnabled: {}", dispatcherEnabled);
-        log.info("'\tdispatcherDir: {}", dispatcherDir!=null ? dispatcherDir.getAbsolutePath() : null);
+        log.info("'\tdispatcherDir: {}", dispatcherDir!=null ? dispatcherDir.getAbsolutePath() : "<dispatcher dir is null>");
         log.info("'\tdispatcherMasterUsername: {}", dispatcherMasterUsername);
         log.info("'\tassetMode: {}", assetMode);
         log.info("'\tassetUsername: {}", assetUsername);
@@ -471,7 +471,7 @@ public class Globals {
         log.info("'\tprocessorRowsLimit: {}", processorRowsLimit);
         log.info("'\taccountRowsLimit: {}", accountRowsLimit);
         log.info("'\tprocessorEnabled: {}", processorEnabled);
-        log.info("'\tprocessorDir: {}", processorDir);
+        log.info("'\tprocessorDir: {}", processorDir !=null ? processorDir.getAbsolutePath() : "<processor dir is null>");
     }
 
     // TODO 2019-07-20 should method createTempFileForDispatcher() be moved to other class/package?
