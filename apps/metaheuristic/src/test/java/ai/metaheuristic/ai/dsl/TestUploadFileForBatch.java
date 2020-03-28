@@ -33,26 +33,26 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV1;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
  * Date: 1/26/2020
  * Time: 1:26 AM
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @Slf4j
@@ -97,7 +97,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
 
     private BatchData.UploadingStatus uploadingStatus = null;
 
-    @After
+    @AfterEach
     public void afterTestUploadFileForBatch() {
         if (uploadingStatus!=null) {
             if (uploadingStatus.batchId!=null) {
@@ -141,7 +141,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
         MockMultipartFile mockFile = new MockMultipartFile("random-name.txt", "file-for-batch-processing.xml", StandardCharsets.UTF_8.toString(), "content of file".getBytes());
 
         uploadingStatus = batchTopLevelService.batchUploadFromFile(mockFile, sourceCode.getId(), context);
-        assertFalse(uploadingStatus.getErrorMessagesAsStr(), uploadingStatus.isErrorMessages());
+        assertFalse(uploadingStatus.isErrorMessages(), uploadingStatus.getErrorMessagesAsStr());
         assertNotNull(uploadingStatus.batchId);
         assertNotNull(uploadingStatus.execContextId);
 

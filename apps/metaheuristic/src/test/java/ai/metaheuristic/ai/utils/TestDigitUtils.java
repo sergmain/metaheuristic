@@ -16,16 +16,16 @@
 
 package ai.metaheuristic.ai.utils;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestDigitUtils {
 
     @Test
     public void testPower() {
 
-        assertEquals("Value of DigitUtils.DIV was changed, must be always 10_000", 10_000, DigitUtils.DIV);
+        assertEquals(10_000, DigitUtils.DIV, "Value of DigitUtils.DIV was changed, must be always 10_000");
         assertEquals(0, DigitUtils.getPower(42).power7);
         assertEquals(42, DigitUtils.getPower(42).power4);
         assertEquals(1, DigitUtils.getPower(10042).power7);

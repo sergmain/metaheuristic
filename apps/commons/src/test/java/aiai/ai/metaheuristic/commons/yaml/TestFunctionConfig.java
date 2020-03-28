@@ -19,7 +19,7 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 

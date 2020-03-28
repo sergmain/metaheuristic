@@ -16,10 +16,12 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.ai.utils.permutation.Permutation;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestPermutation {
 
@@ -50,11 +52,11 @@ public class TestPermutation {
                 }
         );
 
-        Assert.assertEquals(10, combination);
-        Assert.assertEquals(result.size(), combination);
+        assertEquals(10, combination);
+        assertEquals(result.size(), combination);
 
         for (String s : ss) {
-            Assert.assertTrue(result.contains(s));
+            assertTrue(result.contains(s));
         }
 
         // one more time for testing internal state
@@ -66,13 +68,13 @@ public class TestPermutation {
                 }
         );
 
-        Assert.assertEquals(10, combination);
-        Assert.assertEquals(result.size(), combination);
+        assertEquals(10, combination);
+        assertEquals(result.size(), combination);
 
         for (String s : ss) {
-            Assert.assertTrue(result.contains(s));
+            assertTrue(result.contains(s));
         }
-        System.out.println("\nTotal cnumber of combination: " + combination);
+        System.out.println("\nTotal number of combination: " + combination);
     }
 
     @Test
@@ -103,11 +105,11 @@ public class TestPermutation {
                     return true;
                 }
         );
-        Assert.assertEquals(10, combination);
-        Assert.assertEquals(result.size(), combination);
+        assertEquals(10, combination);
+        assertEquals(result.size(), combination);
 
         for (String s : ss) {
-            Assert.assertTrue(result.contains(s));
+            assertTrue(result.contains(s));
         }
         System.out.println("\nTotal cnumber of combination: " + combination);
     }

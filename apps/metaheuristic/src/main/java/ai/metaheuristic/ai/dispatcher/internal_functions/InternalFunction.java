@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,7 @@ public interface InternalFunction {
 
     String getName();
 
-    InternalFunctionData.InternalFunctionProcessingResult process(
+    @NonNull InternalFunctionData.InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             List<TaskParamsYaml.InputVariable> inputs);
 }

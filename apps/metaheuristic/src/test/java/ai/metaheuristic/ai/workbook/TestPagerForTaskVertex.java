@@ -18,12 +18,12 @@ package ai.metaheuristic.ai.workbook;
 
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static ai.metaheuristic.api.EnumsApi.TaskExecState.NONE;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge

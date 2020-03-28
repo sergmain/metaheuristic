@@ -16,8 +16,9 @@
 
 package ai.metaheuristic.ai.core;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * User: Serg
@@ -29,6 +30,6 @@ public class TestCreateDatasetPath {
 
     @Test
     public void testCreatePath() {
-        Assert.assertEquals("000004", String.format("%06d", 4) );
+        assertEquals("000004", String.format("%06d", 4) );
     }
 }

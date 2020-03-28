@@ -16,11 +16,11 @@
 
 package ai.metaheuristic.ai.resource;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestAssetFile {
 

@@ -20,13 +20,13 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import org.apache.commons.io.IOUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class TestTaskParamYamlWithoutRef {
 

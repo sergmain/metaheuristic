@@ -36,7 +36,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelServi
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtilsV1;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtilsV1;
 import ai.metaheuristic.api.ConstsApi;
@@ -44,7 +43,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV1;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYamlV1;
 import ai.metaheuristic.api.dispatcher.SourceCode;
@@ -53,8 +51,8 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
@@ -63,7 +61,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static ai.metaheuristic.api.data.source_code.SourceCodeApiData.TaskProducingResultComplex;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 public abstract class PreparingSourceCode extends PreparingCore {
@@ -270,7 +268,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     public static final String TEST_GLOBAL_VARIABLE = "test-variable";
 
-    @Before
+    @BeforeEach
     public void beforePreparingSourceCode() {
         assertTrue(globals.isUnitTesting);
 
@@ -361,7 +359,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         return s;
     }
 
-    @After
+    @AfterEach
     public void afterPreparingSourceCode() {
         if (sourceCode !=null) {
             try {
@@ -391,8 +389,8 @@ public abstract class PreparingSourceCode extends PreparingCore {
             }
             try {
                 taskRepository.deleteByExecContextId(execContextForTest.getId());
-            } catch (ObjectOptimisticLockingFailureException th) {
-                //
+//            } catch (ObjectOptimisticLockingFailureException th) {
+
             } catch (Throwable th) {
                 log.error("Error while taskRepository.deleteByRefIdAndRefType()", th);
             }
@@ -410,7 +408,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
             SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
-            assertEquals(status.error, EnumsApi.SourceCodeValidateStatus.OK, status.status);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
 
             ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
             execContextForTest = result.execContext;

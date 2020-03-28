@@ -19,9 +19,9 @@ package ai.metaheuristic.ai.utils;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge

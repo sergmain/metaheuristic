@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.TimePeriods;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.Data;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -35,7 +35,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestTimeParsing {
 

@@ -18,11 +18,11 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.dispatcher.RoundRobinForDispatcher;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestRoundRobinForDispatcher {
 

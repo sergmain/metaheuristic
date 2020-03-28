@@ -22,22 +22,22 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.context.WebApplicationContext;
 
 import javax.servlet.http.Cookie;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -50,7 +50,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
  * Date: 7/10/2019
  * Time: 1:29 AM
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Import({SpringSecurityWebAuxTestConfig.class})
 @ActiveProfiles("dispatcher")
@@ -61,7 +61,7 @@ public class TestAccessRestriction {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
-    @Before
+    @BeforeEach
     public void setup() {
         this.mockMvc = webAppContextSetup(webApplicationContext)
                 .apply(springSecurity())
@@ -91,13 +91,12 @@ public class TestAccessRestriction {
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
 
         Cookie[] cookies = result.getResponse().getCookies();
-        Assert.assertNotNull(cookies);
-        Assert.assertEquals(0, cookies.length);
+        assertNotNull(cookies);
+        assertEquals(0, cookies.length);
 
         mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
-
     }
 
     @Test
@@ -118,8 +117,8 @@ public class TestAccessRestriction {
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherYaml);
 
 
-        Assert.assertNotNull(d);
-        Assert.assertTrue(d.isSuccess());
+        assertNotNull(d);
+        assertTrue(d.isSuccess());
 
     }
 }

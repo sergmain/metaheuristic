@@ -29,26 +29,26 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
  * Date: 7/12/2019
  * Time: 5:42 PM
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @Slf4j
@@ -84,11 +84,11 @@ public class TestFunctionService {
         assertNotNull(sc.params);
         final String[] split = StringUtils.split(sc.params);
         assertNotNull(split);
-        assertEquals("Expected: ["+ FUNCTION_PARAMS +"], actual: " + Arrays.toString(split), 1, split.length);
+        assertEquals(1, split.length, "Expected: ["+ FUNCTION_PARAMS +"], actual: " + Arrays.toString(split));
         assertArrayEquals(new String[] {FUNCTION_PARAMS}, split);
     }
 
-    @Before
+    @BeforeEach
     public void beforePreparingExperiment() {
         assertTrue(globals.isUnitTesting);
         function = initFunction();
@@ -128,7 +128,7 @@ public class TestFunctionService {
         return f;
     }
 
-    @After
+    @AfterEach
     public void afterPreparingExperiment() {
         long mills = System.currentTimeMillis();
         log.info("Start after()");

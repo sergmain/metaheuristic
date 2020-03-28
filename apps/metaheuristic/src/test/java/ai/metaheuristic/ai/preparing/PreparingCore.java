@@ -41,8 +41,8 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
@@ -51,7 +51,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.HyperParam;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 public abstract class PreparingCore {
@@ -103,7 +103,7 @@ public abstract class PreparingCore {
     public Function fitFunction = null;
     public Function predictFunction = null;
 
-    @Before
+    @BeforeEach
     public void beforePreparingCore() {
         assertTrue(globals.isUnitTesting);
 
@@ -251,7 +251,7 @@ public abstract class PreparingCore {
         assertTrue(isCorrectInit);
     }
 
-    @After
+    @AfterEach
     public void afterPreparingCore() {
         long mills = System.currentTimeMillis();
         log.info("Start after()");

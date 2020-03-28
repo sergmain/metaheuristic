@@ -18,19 +18,19 @@ package ai.metaheuristic.ai.db;
 
 import ai.metaheuristic.ai.dispatcher.beans.LogData;
 import ai.metaheuristic.ai.dispatcher.repositories.LogDataRepository;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 public class TestLogDataRepository {
@@ -40,7 +40,7 @@ public class TestLogDataRepository {
 
     private LogData logData = null;
 
-    @Before
+    @BeforeEach
     public void before() {
         LogData logDataTemp = logDataRepository.findById(42L).orElse(null);
         assertNull(logDataTemp);
@@ -62,7 +62,7 @@ public class TestLogDataRepository {
 */
     }
 
-    @After
+    @AfterEach
     public void after() {
         if (logData!=null) {
             try {

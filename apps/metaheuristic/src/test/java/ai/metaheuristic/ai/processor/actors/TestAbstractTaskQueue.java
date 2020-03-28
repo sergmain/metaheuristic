@@ -17,11 +17,11 @@
 package ai.metaheuristic.ai.processor.actors;
 
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestAbstractTaskQueue {
 

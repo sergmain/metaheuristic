@@ -18,12 +18,12 @@ package ai.metaheuristic.ai.yaml;
 
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfigUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestDispatcherLookup {
 

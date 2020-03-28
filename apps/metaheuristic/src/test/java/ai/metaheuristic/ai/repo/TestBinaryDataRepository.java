@@ -18,20 +18,20 @@ package ai.metaheuristic.ai.repo;
 
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.ByteArrayInputStream;
 import java.sql.Timestamp;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 public class TestBinaryDataRepository {
@@ -40,7 +40,7 @@ public class TestBinaryDataRepository {
     private VariableService variableService;
 
     private Variable d1 = null;
-    @After
+    @AfterEach
     public void after() {
         if (d1!=null) {
             variableService.deleteById(d1.id);

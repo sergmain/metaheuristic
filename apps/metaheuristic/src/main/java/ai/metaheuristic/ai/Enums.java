@@ -17,7 +17,9 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
-    public enum InternalFunctionProcessing {ok, function_not_found, source_code_not_found, source_code_is_broken, system_error}
+    public enum InternalFunctionProcessing {
+        ok, function_not_found, source_code_not_found, source_code_is_broken,
+        system_error, number_of_inputs_is_incorrect, variable_not_found, global_variable_not_found}
 
     public enum AssetType { company, account, function, source}
 

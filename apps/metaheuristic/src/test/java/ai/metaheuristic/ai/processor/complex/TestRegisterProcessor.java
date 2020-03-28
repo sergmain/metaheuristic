@@ -31,17 +31,17 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -53,7 +53,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
@@ -64,7 +64,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
  * Time: 11:47 AM
  */
 @SuppressWarnings("FieldCanBeLocal")
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Import({SpringSecurityWebAuxTestConfig.class})
 @ActiveProfiles("dispatcher")
@@ -84,14 +84,14 @@ public class TestRegisterProcessor {
     @Autowired
     private ProcessorRepository processorRepository;
 
-    @Before
+    @BeforeEach
     public void setup() {
         this.mockMvc = webAppContextSetup(webApplicationContext)
                 .apply(springSecurity())
                 .build();
     }
 
-    @After
+    @AfterEach
     public void afterTest() {
         for (Long id : processorIds) {
             try {

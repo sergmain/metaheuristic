@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
@@ -64,19 +65,22 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
             List<TaskParamsYaml.InputVariable> inputs) {
 
         if (inputs.size()>1) {
-            throw new IllegalStateException("Too many input codes");
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect, "Too many input variables");
+        }
+        if (inputs.isEmpty()) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect, "There must be at least one input variable");
         }
         TaskParamsYaml.InputVariable inputVariable = inputs.get(0);
         if (inputVariable.context== EnumsApi.VariableContext.local) {
             Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
             if (bd == null) {
-                throw new IllegalStateException("Variable not found for code " + inputVariable);
+                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found, "Variable not found for code " + inputVariable);
             }
         }
         else {
             GlobalVariable gv = globalVariableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
             if (gv == null) {
-                throw new IllegalStateException("GlobalVariable not found for code " + inputVariable);
+                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.global_variable_not_found, "GlobalVariable not found for code " + inputVariable);
             }
         }
 

@@ -20,22 +20,21 @@ import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParamsUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+
+import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TextExperimentUtils {
 
     private Yaml yaml;
-    @Before
+
+    @BeforeEach
     public void init() {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -112,9 +111,6 @@ public class TextExperimentUtils {
         assertEquals(4, params.size());
     }
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void testMetaProducer() {
         List<HyperParams> allPaths;
@@ -160,10 +156,10 @@ public class TextExperimentUtils {
         scanner = new Scanner(mapYaml);
         scanner.useDelimiter("[\n]");
 
-        Assert.assertEquals("key1: '10'", scanner.next());
-        Assert.assertEquals("key2: '20'", scanner.next());
-        Assert.assertEquals("key3: '30'", scanner.next());
-        Assert.assertEquals("key4: '40'", scanner.next());
+        assertEquals("key1: '10'", scanner.next());
+        assertEquals("key2: '20'", scanner.next());
+        assertEquals("key3: '30'", scanner.next());
+        assertEquals("key4: '40'", scanner.next());
 
     }
 

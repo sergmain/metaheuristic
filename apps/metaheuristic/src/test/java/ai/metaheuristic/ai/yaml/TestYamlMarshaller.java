@@ -15,14 +15,15 @@
  */
 package ai.metaheuristic.ai.yaml;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestYamlMarshaller {
 
@@ -50,10 +51,10 @@ public class TestYamlMarshaller {
         scanner = new Scanner(mapYaml);
         scanner.useDelimiter("[\n]");
 
-        Assert.assertEquals("key 2: value 2", scanner.next());
-        Assert.assertEquals("key 1: 1.0", scanner.next());
-        Assert.assertEquals("key 4: value 4", scanner.next());
-        Assert.assertEquals("key 3: 12345678987634763924672346987326498.0", scanner.next());
+        assertEquals("key 2: value 2", scanner.next());
+        assertEquals("key 1: 1.0", scanner.next());
+        assertEquals("key 4: value 4", scanner.next());
+        assertEquals("key 3: 12345678987634763924672346987326498.0", scanner.next());
 
 
     }
@@ -83,10 +84,10 @@ public class TestYamlMarshaller {
         scanner = new Scanner(mapYaml);
         scanner.useDelimiter("[\n]");
 
-        Assert.assertEquals("key 2: value 2", scanner.next());
-        Assert.assertEquals("key 1: value 1", scanner.next());
-        Assert.assertEquals("key 4: value 4", scanner.next());
-        Assert.assertEquals("key 3: value 3", scanner.next());
+        assertEquals("key 2: value 2", scanner.next());
+        assertEquals("key 1: value 1", scanner.next());
+        assertEquals("key 4: value 4", scanner.next());
+        assertEquals("key 3: value 3", scanner.next());
 
         mapYaml = yaml.dump(map.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(
                 Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,(oldValue, newValue) -> oldValue, LinkedHashMap::new))
@@ -96,10 +97,10 @@ public class TestYamlMarshaller {
         scanner = new Scanner(mapYaml);
         scanner.useDelimiter("[\n]");
 
-        Assert.assertEquals("key 1: value 1", scanner.next());
-        Assert.assertEquals("key 2: value 2", scanner.next());
-        Assert.assertEquals("key 3: value 3", scanner.next());
-        Assert.assertEquals("key 4: value 4", scanner.next());
+        assertEquals("key 1: value 1", scanner.next());
+        assertEquals("key 2: value 2", scanner.next());
+        assertEquals("key 3: value 3", scanner.next());
+        assertEquals("key 4: value 4", scanner.next());
 
     }
 }

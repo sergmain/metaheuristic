@@ -20,12 +20,12 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.commons.CommonConsts;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestExperimentUtils {
 

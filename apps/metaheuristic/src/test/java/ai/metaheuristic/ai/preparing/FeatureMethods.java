@@ -43,7 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 public abstract class FeatureMethods extends PreparingSourceCode {
@@ -125,7 +125,7 @@ public abstract class FeatureMethods extends PreparingSourceCode {
     protected void produceTasks() {
         {
             SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
-            assertEquals(status.error, EnumsApi.SourceCodeValidateStatus.OK, status.status);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
 
             ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
             execContextForTest = result.execContext;

@@ -27,7 +27,7 @@ import org.jgrapht.io.ComponentNameProvider;
 import org.jgrapht.io.DOTExporter;
 import org.jgrapht.io.ExportException;
 import org.jgrapht.io.GraphExporter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.StringWriter;
 import java.io.Writer;

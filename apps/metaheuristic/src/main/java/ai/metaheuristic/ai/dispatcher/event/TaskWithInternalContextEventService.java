@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -53,35 +55,43 @@ public class TaskWithInternalContextEventService {
     @Async
     @EventListener
     public void handleAsync(TaskWithInternalContextEvent event) {
-        taskSyncService.getWithSync(event.taskId, (task) -> {
-            if (task==null) {
-                log.warn("step #1");
-                return null;
-            }
-            task = taskPersistencer.toInProgressSimpleLambda(event.taskId, task);
-            if (task==null) {
-                log.warn("step #2");
-                return null;
-            }
-            ExecContextImpl execContext = execContextCache.findById(task.execContextId);
-            if (execContext==null) {
-                taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN);
-                return null;
-            }
+        try {
+            taskSyncService.getWithSync(event.taskId, (task) -> {
+                if (task==null) {
+                    log.warn("#707.010 step #1");
+                    return null;
+                }
+                task = taskPersistencer.toInProgressSimpleLambda(event.taskId, task);
+                if (task==null) {
+                    log.warn("#707.020 step #2");
+                    return null;
+                }
+                ExecContextImpl execContext = execContextCache.findById(task.execContextId);
+                if (execContext==null) {
+                    taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN);
+                    return null;
+                }
 
-            TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-            ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
-            ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
-            if (p==null) {
-                log.warn("#705.136 can't find process '"+taskParamsYaml.task.processCode+"' in execContext with Id #"+execContext.id);
+                TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+                ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
+                ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
+                if (p==null) {
+                    log.warn("#707.030 can't find process '"+taskParamsYaml.task.processCode+"' in execContext with Id #"+execContext.id);
+                    return null;
+                }
+
+                InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
+                        taskParamsYaml.task.function.code, execContext.sourceCodeId, execContext.id, p.internalContextId, taskParamsYaml.task.inputs);
+
+                if (result.processing!= Enums.InternalFunctionProcessing.ok) {
+                    log.error("#707.040 {}", result.error);
+                    taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN);
+                }
                 return null;
-            }
-
-            internalFunctionProcessor.process(
-                    taskParamsYaml.task.function.code, execContext.sourceCodeId, execContext.id, p.internalContextId, taskParamsYaml.task.inputs);
-
-            return null;
-        });
-
+            });
+        } catch (Throwable th) {
+            taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN);
+            log.error("Error", th);
+        }
     }
 }

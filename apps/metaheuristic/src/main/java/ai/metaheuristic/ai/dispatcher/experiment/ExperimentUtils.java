@@ -22,6 +22,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.matcher.StringMatcherFactory;
+import org.springframework.lang.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,27 +37,27 @@ public class ExperimentUtils {
     @EqualsAndHashCode
     public static class NumberOfVariants {
         public boolean status;
-        public String error;
+        public @Nullable String error;
         public int count;
         public final List<String> values = new ArrayList<>();
 
-        public static NumberOfVariants instanceOf(boolean status, String error, int count) {
+        public static NumberOfVariants instanceOf(boolean status, @Nullable String error, int count) {
             return new NumberOfVariants(status, error, count);
         }
 
-        public static NumberOfVariants instanceOf(boolean status, String error, int count,  final List<String> values ) {
+        public static NumberOfVariants instanceOf(boolean status, @Nullable String error, int count,  final List<String> values ) {
             NumberOfVariants instance =  new NumberOfVariants(status, error, count);
             instance.values.addAll(values);
             return instance;
         }
 
-        public static NumberOfVariants instanceOf(boolean status, String error, int count,  final String[] values ) {
+        public static NumberOfVariants instanceOf(boolean status, @Nullable String error, int count,  final String[] values ) {
             NumberOfVariants instance =  new NumberOfVariants(status, error, count);
             instance.values.addAll(Arrays.asList(values));
             return instance;
         }
 
-        public static NumberOfVariants instanceOf(boolean status, String error, int count,  final String value ) {
+        public static NumberOfVariants instanceOf(boolean status, @Nullable String error, int count,  final String value ) {
             NumberOfVariants instance =  new NumberOfVariants(status, error, count);
             instance.values.add(value);
             return instance;
@@ -125,7 +126,7 @@ public class ExperimentUtils {
     }
 
     @SuppressWarnings("UnnecessaryLocalVariable")
-    public static NumberOfVariants getNumberOfVariants(String variantsAsStr) {
+    public static NumberOfVariants getNumberOfVariants(@Nullable String variantsAsStr) {
         if (StringUtils.isBlank(variantsAsStr)) {
             return ZERO_VARIANT;
         }

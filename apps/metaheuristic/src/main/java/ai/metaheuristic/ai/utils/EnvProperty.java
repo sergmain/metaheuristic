@@ -40,7 +40,7 @@ public class EnvProperty {
         return Long.valueOf(prop);
     }
 
-    public static int minMax(String prop, int min, int max, Integer defForBlank) {
+    public static int minMax(String prop, int min, int max, @Nullable Integer defForBlank) {
         if (StringUtils.isBlank(prop)) {
             if (defForBlank==null) {
                 throw new IllegalStateException("prop and defForBlank both are null");

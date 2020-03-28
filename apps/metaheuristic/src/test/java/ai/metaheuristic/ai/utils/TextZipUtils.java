@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.util.FileCopyUtils;
 
 import java.io.File;
@@ -28,7 +28,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import static ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService.VALIDATE_ZIP_FUNCTION;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Serge

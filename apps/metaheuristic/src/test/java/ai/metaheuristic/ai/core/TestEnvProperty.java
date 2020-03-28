@@ -16,19 +16,19 @@
 package ai.metaheuristic.ai.core;
 
 import ai.metaheuristic.ai.utils.EnvProperty;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.File;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class TestEnvProperty {
 
@@ -45,9 +45,6 @@ public class TestEnvProperty {
         return new File(defFilename);
     }
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void testProp() {
         assertEquals(5, envProperty);
@@ -63,16 +60,9 @@ public class TestEnvProperty {
 
         assertEquals(2, EnvProperty.minMax(" ", 1, 5, 2));
 
-        thrown.expect(IllegalStateException.class);
-        assertEquals(5, EnvProperty.minMax(" ", 1, 5, null));
-
-        thrown.expect(IllegalStateException.class);
-        assertEquals(5, EnvProperty.minMax(" ", 1, 5, 0));
-
-        thrown.expect(IllegalStateException.class);
-        assertEquals(5, EnvProperty.minMax(" ", 1, 5, 6));
-
-        thrown.expect(NumberFormatException.class);
-        EnvProperty.minMax("abc", 1, 5, 3);
+        assertThrows(IllegalStateException.class, ()->EnvProperty.minMax(" ", 1, 5, null));
+        assertThrows(IllegalStateException.class, ()->EnvProperty.minMax(" ", 1, 5, 0));
+        assertThrows(IllegalStateException.class, ()->EnvProperty.minMax(" ", 1, 5, 6));
+        assertThrows(NumberFormatException.class, ()->EnvProperty.minMax("abc", 1, 5, 3));
     }
 }

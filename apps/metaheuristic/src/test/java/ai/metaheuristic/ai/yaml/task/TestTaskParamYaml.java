@@ -22,16 +22,15 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-//@RunWith(SpringRunner.class)
+//@ExtendWith(SpringExtension.class)
 //@SpringBootTest
 public class TestTaskParamYaml {
 
@@ -113,6 +112,6 @@ public class TestTaskParamYaml {
         assertFalse(s.startsWith("!!"));
 
         TaskParamsYaml seq1 = TaskParamsYamlUtils.BASE_YAML_UTILS.to(s);
-        Assert.assertEquals(tpy, seq1);
+        assertEquals(tpy, seq1);
     }
 }

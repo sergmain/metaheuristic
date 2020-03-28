@@ -21,11 +21,11 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtilsV1;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlV1;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge

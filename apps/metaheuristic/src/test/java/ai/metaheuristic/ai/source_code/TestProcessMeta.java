@@ -22,16 +22,17 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Arrays;
 
-@RunWith(SpringRunner.class)
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
@@ -48,12 +49,10 @@ public class TestProcessMeta {
             p.outputs.add(new SourceCodeParamsYaml.Variable("model"));
             p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode(Consts.MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
-            p.metas.addAll(
-                    Arrays.asList(
-                            new Meta("assembled-raw", "assembled-raw", null),
-                            new Meta("dataset", "dataset-processing", null),
-                            new Meta("feature", "feature", null)
-                    )
+            p.metas = Arrays.asList(
+                    new Meta("assembled-raw", "assembled-raw", null),
+                    new Meta("dataset", "dataset-processing", null),
+                    new Meta("feature", "feature", null)
             );
 
             sourceCodeYaml.processes.add(p);
@@ -68,7 +67,7 @@ public class TestProcessMeta {
         SourceCodeParamsYaml planParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(s);
         SourceCodeParamsYaml.SourceCodeYaml yaml1 = planParams.source;
 
-        Assert.assertEquals(sourceCodeYaml, yaml1);
+        assertEquals(sourceCodeYaml, yaml1);
 
     }
 

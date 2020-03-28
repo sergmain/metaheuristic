@@ -24,23 +24,23 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
  * Date: 5/19/2019
  * Time: 3:14 AM
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
@@ -60,7 +60,7 @@ public class TestReAssignProcessorIdUnknownProcessorId {
 
     private Long unknownProcessorId;
 
-    @Before
+    @BeforeEach
     public void before() {
 
         for (int i = 0; i < 100; i++) {
@@ -95,7 +95,7 @@ public class TestReAssignProcessorIdUnknownProcessorId {
         System.out.println("sessionIdBefore: " + sessionIdBefore);
     }
 
-    @After
+    @AfterEach
     public void afterPreparingExperiment() {
         log.info("Start after()");
         if (processorIdBefore !=null) {

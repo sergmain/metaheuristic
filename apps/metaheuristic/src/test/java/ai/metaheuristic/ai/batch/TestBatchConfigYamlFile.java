@@ -21,9 +21,9 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.variable_splitter.Varia
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.utils.DirUtils;
 import org.apache.commons.io.FileUtils;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,9 +37,6 @@ import java.util.Map;
  * Time: 7:27 PM
  */
 public class TestBatchConfigYamlFile {
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testParsing() throws IOException {
@@ -59,8 +56,7 @@ public class TestBatchConfigYamlFile {
             FileUtils.write(new File(artifact, "bbb.xml"), "bbb", StandardCharsets.UTF_8);
             FileUtils.write(new File(artifact, "config.yaml"), "mainDocument: ccc.xml", StandardCharsets.UTF_8);
 
-            thrown.expect(BatchResourceProcessingException.class);
-            File f = VariableSplitterFunction.getMainDocumentFileFromConfig(artifact, Map.of());
+            assertThrows(BatchResourceProcessingException.class, ()->VariableSplitterFunction.getMainDocumentFileFromConfig(artifact, Map.of()));
         }
         finally {
             if (dir!=null) {

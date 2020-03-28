@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.metadata;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestMetadataYaml {
 

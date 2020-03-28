@@ -19,11 +19,11 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestMetricsYaml {
 

@@ -22,14 +22,14 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,15 +37,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Random;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Serge
  * Date: 6/6/2019
  * Time: 3:14 PM
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @Slf4j
@@ -64,7 +64,7 @@ public class TestBinaryDataSaveAndLoad {
     private static final int ARRAY_SIZE = 1_000_000;
     private static final Random r = new Random();
 
-    @Before
+    @BeforeEach
     public void before() {
         try {
             variableRepository.deleteByName(TEST_VARIABLE);
@@ -73,7 +73,7 @@ public class TestBinaryDataSaveAndLoad {
         }
     }
 
-    @After
+    @AfterEach
     public void after() {
         try {
             variableRepository.deleteByName(TEST_VARIABLE);

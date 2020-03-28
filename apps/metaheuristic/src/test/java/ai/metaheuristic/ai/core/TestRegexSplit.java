@@ -16,11 +16,13 @@
 
 package ai.metaheuristic.ai.core;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * User: Serg
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
 public class TestRegexSplit {
     @Test
     public void testSplit() {
-        Assert.assertArrayEquals(new String[]{"str1", "str2", "\"str 3\"", "str4"}, Arrays.stream("str1, str2, \"str 3\",  str4".split("[,]")).filter(s -> s != null && s.length() > 0).map(String :: trim).toArray());
-        Assert.assertEquals(Arrays.asList("str1", "str2", "\"str 3\"", "str4"), Arrays.stream("str1, str2, \"str 3\",  str4".split("[,]")).filter(s -> s != null && s.length() > 0).map(String :: trim).collect(Collectors.toList()));
+        assertArrayEquals(new String[]{"str1", "str2", "\"str 3\"", "str4"}, Arrays.stream("str1, str2, \"str 3\",  str4".split("[,]")).filter(s -> s != null && s.length() > 0).map(String :: trim).toArray());
+        assertEquals(Arrays.asList("str1", "str2", "\"str 3\"", "str4"), Arrays.stream("str1, str2, \"str 3\",  str4".split("[,]")).filter(s -> s != null && s.length() > 0).map(String :: trim).collect(Collectors.toList()));
     }
 }

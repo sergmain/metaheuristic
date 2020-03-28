@@ -32,20 +32,21 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 import java.util.Objects;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 public class TestSourceCodeService extends PreparingSourceCode {
@@ -74,15 +75,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         return getSourceParamsYamlAsString_Simple();
     }
 
-    @After
+    @AfterEach
     public void afterTestPlanService() {
-        if (execContextForTest !=null) {
-            try {
-                taskRepository.deleteByExecContextId(execContextForTest.getId());
-            } catch (Throwable th) {
-                th.printStackTrace();
-            }
-        }
         System.out.println("Finished TestSourceCodeService.afterTestPlanService()");
     }
 
@@ -119,6 +113,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         // ======================
 
+        // the calling of this method will produce warning "#705.180 ExecContext wasn't started." which is correct behaviour
         DispatcherCommParamsYaml.AssignedTask simpleTask0 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
 
@@ -137,6 +132,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             Task task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
             assertNotNull(task);
 
+            // the calling of this method will produce warning "#705.160 can't assign any new task to the processor" which is correct behaviour
             DispatcherCommParamsYaml.AssignedTask simpleTask2 =
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
             assertNull(simpleTask2);
@@ -153,6 +149,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             Task task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
             assertNotNull(task3);
 
+            // the calling of this method will produce warning "#705.160 can't assign any new task to the processor" which is correct behaviour
             DispatcherCommParamsYaml.AssignedTask simpleTask21 =
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
             assertNull(simpleTask21);

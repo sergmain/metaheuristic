@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.source_code.graph;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.api.EnumsApi;
 import org.apache.commons.io.IOUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph;
 import static ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge

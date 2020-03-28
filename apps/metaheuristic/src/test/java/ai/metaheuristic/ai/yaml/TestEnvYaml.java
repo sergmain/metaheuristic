@@ -17,12 +17,12 @@ package ai.metaheuristic.ai.yaml;
 
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.env.EnvYamlUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestEnvYaml {
 

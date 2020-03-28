@@ -19,26 +19,23 @@ package ai.metaheuristic.ai.rest;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.core.TestController;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
-import ai.metaheuristic.ai.processor.DispatcherRequestor;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.*;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,8 +48,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -60,7 +56,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Import({SpringSecurityWebAuxTestConfig.class, TestRest.JsonTestController.class})
 @ActiveProfiles("dispatcher")
@@ -83,7 +79,7 @@ public class TestRest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
-    @Before
+    @BeforeEach
     public void setup() {
         this.mockMvc = webAppContextSetup(webApplicationContext)
                 .apply(springSecurity())
@@ -146,17 +142,13 @@ public class TestRest {
     }
 
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
-    public void testJsonFromEmpty_1() throws IOException {
+    public void testJsonFromEmpty_1() {
         System.out.println("testJsonFromEmpty_1()");
         String json = "";
 
-        thrown.expect(MismatchedInputException.class);
-        NewMessage msg = JsonUtils.getMapper().readValue(json, NewMessage.class);
-        assertEquals(MSG_TEXT, msg.t);
+        assertThrows(MismatchedInputException.class, ()->JsonUtils.getMapper().readValue(json, NewMessage.class));
+//        assertEquals(MSG_TEXT, msg.t);
     }
 
     @Test
@@ -207,7 +199,7 @@ public class TestRest {
         DispatcherCommParamsYaml d = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherYaml);
 
         assertNotNull(d);
-        Assert.assertTrue(d.isSuccess());
+        assertTrue(d.isSuccess());
 
     }
 }

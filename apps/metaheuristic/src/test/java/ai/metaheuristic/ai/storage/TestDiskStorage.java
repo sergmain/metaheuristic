@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.storage;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Serge

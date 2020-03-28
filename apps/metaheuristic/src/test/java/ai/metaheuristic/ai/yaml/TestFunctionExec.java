@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.yaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TestFunctionExec {
@@ -37,7 +37,7 @@ public class TestFunctionExec {
 
         String yaml = FunctionExecUtils.toString(output);
         FunctionApiData.FunctionExec output1 = FunctionExecUtils.to(yaml);
-        Assert.assertEquals(output, output1);
+        assertEquals(output, output1);
     }
 
 }

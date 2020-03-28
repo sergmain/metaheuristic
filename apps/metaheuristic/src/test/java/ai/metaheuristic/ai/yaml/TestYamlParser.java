@@ -23,9 +23,13 @@ import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.CoreMatchers;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
@@ -38,15 +42,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestYamlParser {
 
-    public static Yaml init(Class<?> clazz) {
+    private static Yaml init(Class<?> clazz) {
         return initWithTags(clazz, new Class[]{clazz}, null);
     }
 
-    public static Yaml initWithTags(Class<?> clazz, Class<?>[] clazzMap, TypeDescription customTypeDescription) {
+    private static Yaml initWithTags(Class<?> clazz, Class<?>[] clazzMap, @Nullable TypeDescription customTypeDescription) {
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
@@ -86,23 +90,6 @@ public class TestYamlParser {
         assertTrue(map.containsKey(key));
         assertEquals(value, map.get(key));
     }
-
-    @Test
-    public void loadYmlAsMapFromString() {
-
-        String yamlAsString = "{JYaml: Original Java Implementation, "
-                + "JvYaml: Java port of RbYaml, SnakeYAML: Java 5 / YAML 1.1, "
-                + "YamlBeans: To/from JavaBeans}";
-
-        Yaml yaml = new Yaml();
-
-        Map<String, String> yamlParsers = yaml.load(yamlAsString);
-
-        assertThat(yamlParsers.keySet(), CoreMatchers.hasItems("JYaml", "JvYaml", "YamlBeans", "SnakeYAML"));
-    }
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void loadFunctionYamlWithError_01() throws IOException {

@@ -16,18 +16,19 @@
 package ai.metaheuristic.ai.schedule;
 
 import ai.metaheuristic.ai.Globals;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.annotation.PostConstruct;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Import({TestSpringScheduled.ScheduleService1.class, TestSpringScheduled.ScheduleService2.class})
 public class TestSpringScheduled {
@@ -63,7 +64,7 @@ public class TestSpringScheduled {
     public void preapre_1() {
     }
 
-    @Before
+    @BeforeEach
     public void prepare_2() {
     }
 

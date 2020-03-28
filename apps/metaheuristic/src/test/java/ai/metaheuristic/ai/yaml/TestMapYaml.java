@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.HashMap;

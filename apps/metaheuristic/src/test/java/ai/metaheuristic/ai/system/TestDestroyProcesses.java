@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.system;
 import ai.metaheuristic.ai.core.SystemProcessService;
 import com.mysql.cj.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
