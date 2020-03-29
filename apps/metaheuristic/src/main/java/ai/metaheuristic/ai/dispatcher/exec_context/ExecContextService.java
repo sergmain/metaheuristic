@@ -247,6 +247,7 @@ public class ExecContextService {
 
     public @Nullable DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(@NonNull Long processorId, boolean isAcceptOnlySigned, @Nullable Long execContextId) {
         ExecContextData.AssignedTaskComplex assignedTaskComplex = getTaskAndAssignToProcessorInternal(processorId, isAcceptOnlySigned, execContextId);
+        // assignedTaskComplex won't be returned for an internal function
         if (assignedTaskComplex==null) {
             return null;
         }
@@ -280,7 +281,7 @@ public class ExecContextService {
             return;
         }
 
-        // we dont need to create inputs because all inputs are outputs of previous process,
+        // we dont need to create inputs because all inputs are outputs of previous processes,
         // except globals and startInputAs
         for (TaskParamsYaml.OutputVariable variable : taskParams.task.outputs) {
             if (variable.isInited) {

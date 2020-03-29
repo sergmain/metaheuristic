@@ -210,6 +210,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
             finishTask = taskRepository.findById(taskVertices.get(1).taskId).orElse(null);
             assertNotNull(finishTask);
         }
+        tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(permuteTask.params);
+        assertFalse(tpy.task.metas.isEmpty());
+
         DispatcherCommParamsYaml.AssignedTask task40 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
         assertNull(task40);

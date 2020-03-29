@@ -64,7 +64,7 @@ source:
         context: internal
       metas:
         - key: variables
-          value: feature-output-1,feature-output-2,feature-output-3
+          value: feature-output-1,feature-output-2
       name: permute variables and hyper params
       outputs:
         - name: feature-per-task

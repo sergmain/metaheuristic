@@ -61,6 +61,10 @@ public class TaskWithInternalContextEventService {
                     log.warn("#707.010 step #1");
                     return null;
                 }
+                if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                    log.error("#707.012 already in progress. mustn't happened. it's, actually, illegal state");
+                    return null;
+                }
                 task = taskPersistencer.toInProgressSimpleLambda(event.taskId, task);
                 if (task==null) {
                     log.warn("#707.020 Task #"+ event.taskId+" wasn't found");

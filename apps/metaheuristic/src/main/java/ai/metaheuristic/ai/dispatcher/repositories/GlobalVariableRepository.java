@@ -42,6 +42,11 @@ import java.util.List;
 @Profile("dispatcher")
 public interface GlobalVariableRepository extends CrudRepository<GlobalVariable, Long> {
 
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query(value="select v.id from Variable v where v.name=:name")
+    GlobalVariable findIdByName(String name);
+
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(" +
             "b.id, b.variable, b.params, b.filename ) " +
             "from GlobalVariable b where b.variable in :vars")

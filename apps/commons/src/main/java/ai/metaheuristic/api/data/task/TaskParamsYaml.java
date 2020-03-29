@@ -94,6 +94,7 @@ public class TaskParamsYaml implements BaseParams {
         public @Nullable DiskInfo disk;
 
         // name of file if this variable was uploaded from file
+        // for global variable is always null
         public @Nullable String realName;
     }
 

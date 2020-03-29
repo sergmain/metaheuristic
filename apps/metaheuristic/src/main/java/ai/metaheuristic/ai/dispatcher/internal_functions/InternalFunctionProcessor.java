@@ -65,6 +65,7 @@ public class InternalFunctionProcessor {
 
     public InternalFunctionProcessingResult process(
             String functionCode, Long sourceCodeId, Long execContextId, String internalContextId, List<TaskParamsYaml.InputVariable> inputs) {
+
         InternalFunction internalFunction = internalFunctionMap.get(functionCode);
         if (internalFunction==null) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found);

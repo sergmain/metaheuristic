@@ -17,14 +17,18 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -41,6 +45,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -51,6 +56,8 @@ public class TaskProducingService {
     private final TaskRepository taskRepository;
     private final FunctionService functionService;
     private final VariableService variableService;
+    private final VariableRepository variableRepository;
+    private final GlobalVariableRepository globalVariableRepository;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ExecContextProcessGraphService execContextProcessGraphService;
     private final InternalFunctionProcessor internalFunctionProcessor;
@@ -116,6 +123,31 @@ public class TaskProducingService {
         return result;
     }
 
+    private TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, Long execContextId) {
+        TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
+        if (v.context== EnumsApi.VariableContext.local) {
+            Variable variable = variableRepository.findIdByNameAndContextId(v.name, execContextId);
+            if (variable==null) {
+                throw new IllegalStateException("(variable==null)");
+            }
+            iv.id = variable.id.toString();
+            iv.realName = variable.filename;
+        }
+        else {
+            GlobalVariable variable = globalVariableRepository.findIdByName(v.name);
+            if (variable==null) {
+                throw new IllegalStateException("(variable==null)");
+            }
+            iv.id = variable.id.toString();
+        }
+        iv.context = v.context;
+        iv.name = v.name;
+        iv.sourcing = v.sourcing;
+        iv.disk = v.disk;
+        iv.git = v.git;
+        return iv;
+    }
+
     @Nullable
     private TaskImpl createTaskInternal(
             ExecContextParamsYaml execContextParamsYaml, Long execContextId, ExecContextParamsYaml.Process process,
@@ -125,6 +157,7 @@ public class TaskProducingService {
         taskParams.task.execContextId = execContextId;
         taskParams.task.processCode = process.processCode;
         taskParams.task.context = process.function.context;
+        process.inputs.stream().map(v -> toInputVariable(v, execContextId)).collect(Collectors.toCollection(()->taskParams.task.inputs));
 
         if (taskParams.task.context==EnumsApi.FunctionExecContext.internal) {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(

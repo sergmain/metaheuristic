@@ -56,6 +56,11 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
             "b.execContextId=:execContextId")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVarsForExecContext(List<String> vars, Long execContextId);
 
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query(value="select v.id from Variable v where v.name=:name and v.execContextId=:execContextId")
+    Variable findIdByNameAndContextId(String name, Long execContextId);
+
     @Transactional(readOnly = true)
     @Query(value="select b.execContextId, b.filename from Variable b " +
             "where b.execContextId in :ids ")
