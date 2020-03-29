@@ -221,6 +221,20 @@ class ExecContextGraphService {
         }
     }
 
+    public List<ExecContextData.TaskVertex> getUnfinishedTaskVertices(ExecContextImpl execContext) {
+        try {
+            return readOnlyGraphListOfTaskVertex(execContext, graph -> graph
+                    .vertexSet()
+                    .stream()
+                    .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS)
+                    .collect(Collectors.toList()));
+        }
+        catch (Throwable th) {
+            log.error("#915.010 Error", th);
+            return List.of();
+        }
+    }
+
     public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(ExecContextImpl execContext, Long taskId) {
         try {
             final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);

@@ -66,6 +66,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 public abstract class PreparingSourceCode extends PreparingCore {
 
+    public static final String TEST_SOURCE_CODE_CODE = "test-sourceCode-code";
     @Autowired
     public CompanyTopLevelService companyTopLevelService;
 
@@ -272,6 +273,8 @@ public abstract class PreparingSourceCode extends PreparingCore {
     public void beforePreparingSourceCode() {
         assertTrue(globals.isUnitTesting);
 
+        cleanUp();
+
         company = new Company();
         company.name = "Test company #2";
         companyTopLevelService.addCompany(company);
@@ -289,7 +292,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         s5 = createFunction("function-05:1.1");
 
         SourceCodeImpl sc = new SourceCodeImpl();
-        sc.setUid("test-sourceCode-code");
+        sc.setUid(TEST_SOURCE_CODE_CODE);
 
         SourceCodeStoredParamsYamlV1 sourceCodeStored = new SourceCodeStoredParamsYamlV1();
         sourceCodeStored.source = getSourceCodeYamlAsString();
@@ -331,6 +334,53 @@ public abstract class PreparingSourceCode extends PreparingCore {
         execContextYaml.variables = new ExecContextParamsYaml.VariableDeclaration();
         execContextYaml.variables.globals = new ArrayList<>();
         execContextYaml.variables.globals.add(TEST_GLOBAL_VARIABLE);
+    }
+
+    private void cleanUp() {
+        SourceCode sc = sourceCodeRepository.findByUid(TEST_SOURCE_CODE_CODE);
+        Company c = null;
+        if (sc!=null) {
+            c = companyRepository.findByUniqueId(sc.getCompanyId());
+            List<Long> execContextIds = execContextRepository.findIdsBySourceCodeId(sc.getId());
+
+            for (Long execContextId : execContextIds) {
+                try {
+                    execContextRepository.deleteById(execContextId);
+                }
+                catch (Throwable th) {
+                    log.error("Error while workbookRepository.deleteById()", th);
+                }
+                try {
+                    taskRepository.deleteByExecContextId(execContextId);
+                } catch (Throwable th) {
+                    log.error("Error while taskRepository.deleteByRefIdAndRefType()", th);
+                }
+                try {
+                    variableService.deleteByExecContextId(execContextId);
+                } catch (Throwable th) {
+                    log.error("error", th);
+                }
+            }
+            try {
+                sourceCodeCache.deleteById(sc.getId());
+            } catch (Throwable th) {
+                log.error("Error while planCache.deleteById()", th);
+            }
+        }
+
+        if (c!=null) {
+            try {
+                companyRepository.deleteById(c.id);
+            } catch (Throwable th) {
+                log.error("Error while companyRepository.deleteById()", th);
+            }
+        }
+
+        try {
+            globalVariableService.deleteByVariable(TEST_GLOBAL_VARIABLE);
+        } catch (Throwable th) {
+            log.error("error", th);
+        }
     }
 
     private Function createFunction(String functionCode) {

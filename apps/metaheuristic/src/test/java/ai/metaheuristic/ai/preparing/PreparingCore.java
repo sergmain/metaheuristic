@@ -86,7 +86,7 @@ public abstract class PreparingCore {
     protected ExperimentCache experimentCache;
 
     @Autowired
-    private VariableService variableService;
+    public VariableService variableService;
 
     @Autowired
     public GlobalVariableService globalVariableService;

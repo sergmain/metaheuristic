@@ -175,6 +175,10 @@ public class ExecContextService {
         return execContextSyncService.getWithSync(execContextId, execContextGraphService::getCountUnfinishedTasks);
     }
 
+    public List<ExecContextData.TaskVertex> getUnfinishedTaskVertices(Long execContextId) {
+        return execContextSyncService.getWithSync(execContextId, execContextGraphService::getUnfinishedTaskVertices);
+    }
+
     public List<ExecContextData.TaskVertex> findAllVertices(Long execContextId) {
         return execContextSyncService.getWithSync(execContextId, execContextGraphService::findAll);
     }
@@ -297,7 +301,7 @@ public class ExecContextService {
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
-            log.error("#705.140 Processor wasn't found for id: {}", processorId);
+            log.error("#705.140 Processor with id #{} wasn't found", processorId);
             return null;
         }
         List<Long> anyTaskId = taskRepository.findAnyActiveForProcessorId(Consts.PAGE_REQUEST_1_REC, processorId);

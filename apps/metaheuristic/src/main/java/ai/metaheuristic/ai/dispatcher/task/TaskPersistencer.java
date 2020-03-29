@@ -145,6 +145,10 @@ public class TaskPersistencer {
     }
 
     public void finishTaskAsBrokenOrError(Long taskId, EnumsApi.TaskExecState state) {
+        finishTaskAsBrokenOrError(taskId, state, -999, "#307.080 Task is broken, error is unknown, cant' process it");
+    }
+
+    public void finishTaskAsBrokenOrError(Long taskId, EnumsApi.TaskExecState state, int exitCode, String console) {
         if (state!=EnumsApi.TaskExecState.BROKEN && state!=EnumsApi.TaskExecState.ERROR) {
             throw new IllegalStateException("#307.070 state must be EnumsApi.TaskExecState.BROKEN or EnumsApi.TaskExecState.ERROR, actual: " +state);
         }
@@ -163,9 +167,7 @@ public class TaskPersistencer {
             if (task.functionExecResults ==null || task.functionExecResults.isBlank()) {
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
                 FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
-                functionExec.exec = new FunctionApiData.SystemExecResult(
-                        tpy.task.function.code, false, -999, "#307.080 Task is broken, error is unknown, cant' process it"
-                );
+                functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, exitCode, console);
                 task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
             }
             task.setResultReceived(true);

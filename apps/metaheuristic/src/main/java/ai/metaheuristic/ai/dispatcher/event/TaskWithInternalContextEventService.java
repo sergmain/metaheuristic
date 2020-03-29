@@ -63,12 +63,13 @@ public class TaskWithInternalContextEventService {
                 }
                 task = taskPersistencer.toInProgressSimpleLambda(event.taskId, task);
                 if (task==null) {
-                    log.warn("#707.020 step #2");
+                    log.warn("#707.020 Task #"+ event.taskId+" wasn't found");
                     return null;
                 }
                 ExecContextImpl execContext = execContextCache.findById(task.execContextId);
                 if (execContext==null) {
-                    taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN);
+                    taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10000,
+                            "#707.030 Task #"+event.taskId+" is broken, execContext #" +task.execContextId+ " wasn't found.");
                     return null;
                 }
 
@@ -76,7 +77,7 @@ public class TaskWithInternalContextEventService {
                 ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
                 ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
                 if (p==null) {
-                    log.warn("#707.030 can't find process '"+taskParamsYaml.task.processCode+"' in execContext with Id #"+execContext.id);
+                    log.warn("#707.040 can't find process '"+taskParamsYaml.task.processCode+"' in execContext with Id #"+execContext.id);
                     return null;
                 }
 
@@ -84,13 +85,15 @@ public class TaskWithInternalContextEventService {
                         taskParamsYaml.task.function.code, execContext.sourceCodeId, execContext.id, p.internalContextId, taskParamsYaml.task.inputs);
 
                 if (result.processing!= Enums.InternalFunctionProcessing.ok) {
-                    log.error("#707.040 {}", result.error);
-                    taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN);
+                    log.error("#707.050 error type: {}, message: {}", result.processing, result.error);
+                    taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10001,
+                            "#707.030 Task #"+event.taskId+" was finished with status "+result.processing+", text of error: " + result.error);
                 }
                 return null;
             });
         } catch (Throwable th) {
-            taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN);
+            taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10002,
+                    "#707.030 Task #"+event.taskId+" was processed with error: " + th.getMessage());
             log.error("Error", th);
         }
     }

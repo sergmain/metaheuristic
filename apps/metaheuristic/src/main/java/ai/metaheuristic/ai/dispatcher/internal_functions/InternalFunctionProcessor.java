@@ -58,11 +58,6 @@ public class InternalFunctionProcessor {
     public void postConstruct() {
         internalFunctions.forEach(o->internalFunctionMap.put(o.getCode(), o));
     }
-/*
-    public void registerInternalFunction(InternalFunction internalFunction) {
-        internalFunctionMap.put(internalFunction.getCode(), internalFunction);
-    }
-*/
 
     public boolean isRegistered(String functionCode) {
         return internalFunctionMap.containsKey(functionCode);

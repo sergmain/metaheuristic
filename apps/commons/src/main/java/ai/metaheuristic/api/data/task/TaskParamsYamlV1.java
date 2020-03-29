@@ -188,6 +188,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         public Map<String, Map<String, String>> inline;
         public final List<InputVariableV1> inputs = new ArrayList<>();
         public final List<OutputVariableV1> outputs = new ArrayList<>();
+        public final List<Meta> metas = new ArrayList<>();
 
         /**
          * Timeout before terminate a process with function
