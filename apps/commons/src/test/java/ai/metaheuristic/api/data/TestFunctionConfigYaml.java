@@ -19,6 +19,7 @@ package ai.metaheuristic.api.data;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtilsV1;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlV1;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,8 @@ public class TestFunctionConfigYaml {
         FunctionConfigYamlV1 sc = getFunctionConfigYamlV1();
         FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV1().upgradeTo(sc);
 
+        System.out.println(FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc2));
+
         // to be sure that values were copied
         Objects.requireNonNull(sc.checksumMap).put(EnumsApi.Type.SHA256WithSignature, "321qwe");
         Objects.requireNonNull(sc.metas).add(new Meta("key2", "value2", "ext2" ));
@@ -49,8 +52,6 @@ public class TestFunctionConfigYaml {
         assertEquals(sc2.params, "sc.params");
         assertEquals(sc2.env, "sc.env");
         assertEquals(sc2.sourcing, EnumsApi.FunctionSourcing.dispatcher);
-        assertNotNull(sc2.ml);
-        assertTrue(sc2.ml.metrics);
         assertNotNull(sc2.checksumMap);
         assertEquals(1, sc2.checksumMap.size());
         assertNotNull(sc2.checksumMap.get(EnumsApi.Type.SHA256));
@@ -86,8 +87,6 @@ public class TestFunctionConfigYaml {
         sc.params = "sc.params";
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        sc.ml = new FunctionConfigYamlV1.MachineLearningV1();
-        sc.ml.metrics = true;
         assertNotNull(sc.checksumMap);
         sc.checksumMap.put(EnumsApi.Type.SHA256, "qwe321");
         sc.info = new FunctionConfigYamlV1.FunctionInfoV1(true, 42);
@@ -108,7 +107,6 @@ public class TestFunctionConfigYaml {
         sc.params = "sc.params";
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        sc.ml = new FunctionConfigYaml.MachineLearning(true, false);
         Objects.requireNonNull(sc.checksumMap).put(EnumsApi.Type.SHA256, "qwe321");
         sc.info = new FunctionConfigYaml.FunctionInfo(true, 42);
         sc.checksum = "sc.checksum";
@@ -132,8 +130,6 @@ public class TestFunctionConfigYaml {
         assertEquals(sc.params, "sc.params");
         assertEquals(sc.env, "sc.env");
         assertEquals(sc.sourcing, EnumsApi.FunctionSourcing.dispatcher);
-        assertNotNull(sc.ml);
-        assertTrue(sc.ml.metrics);
         assertNotNull(sc.checksumMap);
         assertEquals(1, sc.checksumMap.size());
         assertNotNull(sc.checksumMap.get(EnumsApi.Type.SHA256));
@@ -162,7 +158,6 @@ public class TestFunctionConfigYaml {
         sc.params = "sc.params";
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        sc.ml = new FunctionConfigYaml.MachineLearning(true, false);
         sc.checksum = "sc.checksum";
         sc.skipParams = true;
 
@@ -174,8 +169,6 @@ public class TestFunctionConfigYaml {
         assertEquals(sc1.params, "sc.params");
         assertEquals(sc1.env, "sc.env");
         assertEquals(sc1.sourcing, EnumsApi.FunctionSourcing.dispatcher);
-        assertNotNull(sc1.ml);
-        assertTrue(sc1.ml.metrics);
         assertNotNull(sc1.checksumMap);
         assertTrue(sc1.checksumMap.isEmpty());
         assertEquals(sc1.checksum, "sc.checksum");

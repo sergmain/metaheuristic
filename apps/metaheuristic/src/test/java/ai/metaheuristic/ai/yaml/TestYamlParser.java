@@ -107,6 +107,9 @@ public class TestYamlParser {
     public void loadFunctionsFromYaml() throws IOException {
 
         FunctionConfigListYaml config = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/functions-test.yaml", StandardCharsets.UTF_8));
+        for (FunctionConfigListYaml.FunctionConfig function : config.functions) {
+            FunctionCoreUtils.validate(function);
+        }
 
         assertNotNull(config);
         assertNotNull(config.functions);

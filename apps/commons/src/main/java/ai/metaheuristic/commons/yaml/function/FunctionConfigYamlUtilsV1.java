@@ -64,9 +64,6 @@ public class FunctionConfigYamlUtilsV1
         if (src.info!=null) {
             trg.info = new FunctionConfigYaml.FunctionInfo(src.info.signed, src.info.length);
         }
-        if (src.ml!=null) {
-            trg.ml = new FunctionConfigYaml.MachineLearning(src.ml.metrics, src.ml.fitting);
-        }
         trg.checkIntegrity();
         return trg;
     }

@@ -102,8 +102,7 @@ public class TestTaskParamYaml {
                 null,
                 null,
                 false,
-                List.of(),
-                new FunctionConfigYaml.MachineLearning(true, false)
+                List.of()
         )));
 
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);

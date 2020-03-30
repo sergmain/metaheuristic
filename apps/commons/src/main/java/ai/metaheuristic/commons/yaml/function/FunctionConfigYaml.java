@@ -74,14 +74,6 @@ public class FunctionConfigYaml implements Cloneable, BaseParams {
         public long length;
     }
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class MachineLearning {
-        public boolean metrics = false;
-        public boolean fitting = false;
-    }
-
     /**
      * code of function, i.e. simple-app:1.0
      */
@@ -102,6 +94,5 @@ public class FunctionConfigYaml implements Cloneable, BaseParams {
     public @Nullable GitInfo git;
     public boolean skipParams = false;
     public @Nullable List<Meta> metas = new ArrayList<>();
-    public @Nullable MachineLearning ml;
 
 }
