@@ -4,18 +4,18 @@ functions:
       file: fit-model.py
       env: python-3
       params: abc1
-      sourcing: dispatcher
+      sourcing: processor
     - code: aiai.predict.default.function:1.0-SNAPSHOT
       type: predict
       file: predict-model.py
       env: python-3
       params: abc2
-      sourcing: dispatcher
+      sourcing: processor
     - code: aiai.predict-model-for-test-only.function:1.0-SNAPSHOT
       type: predict
       file: predict-model-for-test-only.py
       env: python-3
       params: abc3
-      sourcing: dispatcher
+      sourcing: processor
 
 
