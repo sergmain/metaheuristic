@@ -91,7 +91,7 @@ public class TaskWithInternalContextEventService {
                 if (result.processing!= Enums.InternalFunctionProcessing.ok) {
                     log.error("#707.050 error type: {}, message: {}", result.processing, result.error);
                     taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10001,
-                            "#707.030 Task #"+event.taskId+" was finished with status "+result.processing+", text of error: " + result.error);
+                            "#707.030 Task #"+event.taskId+" was finished with status '"+result.processing+"', text of error: " + result.error);
                 }
                 return null;
             });
