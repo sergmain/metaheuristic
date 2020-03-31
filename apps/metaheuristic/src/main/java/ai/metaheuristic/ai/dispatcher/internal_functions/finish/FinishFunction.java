@@ -18,22 +18,13 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.finish;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import java.util.List;
-import java.util.Map;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.*;
 
@@ -61,7 +52,7 @@ public class FinishFunction implements InternalFunction {
     @Override
     public InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
-            List<TaskParamsYaml.InputVariable> inputs) {
+            TaskParamsYaml taskParamsYaml) {
 /*
         TaskParamsYaml.InputVariable inputVariable = inputs.get(0);
         if (inputVariable.context== EnumsApi.VariableContext.local) {

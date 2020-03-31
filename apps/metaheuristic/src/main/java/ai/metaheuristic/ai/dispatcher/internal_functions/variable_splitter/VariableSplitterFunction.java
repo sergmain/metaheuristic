@@ -106,12 +106,12 @@ public class VariableSplitterFunction implements InternalFunction {
 
     public InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
-            List<TaskParamsYaml.InputVariable> inputs) {
+            TaskParamsYaml taskParamsYaml) {
 
-        if (inputs.size()>1) {
+        if (taskParamsYaml.task.inputs.size()>1) {
             throw new IllegalStateException("Too many input codes");
         }
-        TaskParamsYaml.InputVariable inputVariable = inputs.get(0);
+        TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
         if (inputVariable.context== EnumsApi.VariableContext.local) {
             Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
             if (bd == null) {

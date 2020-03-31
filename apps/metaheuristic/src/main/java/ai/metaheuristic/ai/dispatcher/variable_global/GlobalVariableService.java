@@ -116,13 +116,13 @@ public class GlobalVariableService {
     }
 
     public void deleteByVariable(String variable) {
-        globalVariableRepository.deleteByVariable(variable);
+        globalVariableRepository.deleteByName(variable);
     }
 
     public GlobalVariable save(InputStream is, long size, String variable, String filename) {
         try {
             GlobalVariable data = new GlobalVariable();
-            data.setVariable(variable);
+            data.setName(variable);
             data.setFilename(filename);
             data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
@@ -157,7 +157,7 @@ public class GlobalVariableService {
 
         try {
             GlobalVariable data = new GlobalVariable();
-            data.setVariable(variable);
+            data.setName(variable);
             data.setFilename(null);
             data.setParams(params);
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));

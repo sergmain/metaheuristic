@@ -44,17 +44,17 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
 
     @Nullable
     @Transactional(readOnly = true)
-    @Query(value="select v.id from Variable v where v.name=:name")
+    @Query(value="select v from GlobalVariable v where v.name=:name")
     GlobalVariable findIdByName(String name);
 
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(" +
-            "b.id, b.variable, b.params, b.filename ) " +
-            "from GlobalVariable b where b.variable in :vars")
+            "b.id, b.name, b.params, b.filename ) " +
+            "from GlobalVariable b where b.name in :vars")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(List<String> vars);
 
-    List<GlobalVariable> findAllByVariable(String variable);
+    List<GlobalVariable> findAllByName(String name);
 
-    @Query(value="select b.filename from GlobalVariable b where b.variable=:var")
+    @Query(value="select b.filename from GlobalVariable b where b.name=:var")
     List<String> findFilenamesByVar(String var);
 
     @Nullable
@@ -72,11 +72,11 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
     Page<GlobalVariable> findAll(@NonNull Pageable pageable);
 
     @Transactional
-    void deleteByVariable(String variable);
+    void deleteByName(String variable);
 
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable(" +
-            "b.id, b.version, b.variable, b.uploadTs, b.filename, b.params ) " +
+            "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
             "from GlobalVariable b " +
             "order by b.uploadTs desc ")
     Slice<SimpleGlobalVariable> getAllAsSimpleGlobalVariable(Pageable pageable);

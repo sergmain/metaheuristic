@@ -27,7 +27,7 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "MH_VARIABLE")
+@Table(name = "MH_VARIABLE_GLOBAL")
 @Data
 @EqualsAndHashCode(of = {"id", "version"})
 @ToString(exclude={"data", "bytes"})
@@ -43,7 +43,7 @@ public class GlobalVariable implements Serializable {
     public Integer version;
 
     @Column(name = "NAME")
-    public String variable;
+    public String name;
 
     @Column(name = "UPLOAD_TS")
     public Timestamp uploadTs;

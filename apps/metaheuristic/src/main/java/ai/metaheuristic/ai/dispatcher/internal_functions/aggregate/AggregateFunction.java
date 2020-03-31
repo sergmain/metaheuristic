@@ -31,10 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import java.util.List;
-import java.util.Map;
-
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
@@ -64,9 +60,9 @@ public class AggregateFunction implements InternalFunction {
     @Override
     public InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String internalContextId,
-            SourceCodeParamsYaml.VariableDefinition variableDefinition, List<TaskParamsYaml.InputVariable> inputs) {
+            SourceCodeParamsYaml.VariableDefinition variableDefinition, TaskParamsYaml taskParamsYaml) {
 
-        TaskParamsYaml.InputVariable inputVariable = inputs.get(0);
+        TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
         if (inputVariable.context== EnumsApi.VariableContext.local) {
             Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
             if (bd == null) {

@@ -30,8 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
@@ -63,9 +61,9 @@ public class SimpleInternalFunctionForTest implements InternalFunction {
     @Override
     public InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
-            List<TaskParamsYaml.InputVariable> inputs) {
+            TaskParamsYaml taskParamsYaml) {
 
-        TaskParamsYaml.InputVariable inputVariable = inputs.get(0);
+        TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
         if (inputVariable.context== EnumsApi.VariableContext.local) {
             Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
             if (bd == null) {

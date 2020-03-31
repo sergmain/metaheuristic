@@ -63,10 +63,9 @@ public class InternalFunctionProcessor {
         return internalFunctionMap.containsKey(functionCode);
     }
 
-    public InternalFunctionProcessingResult process(
-            String functionCode, Long sourceCodeId, Long execContextId, String internalContextId, List<TaskParamsYaml.InputVariable> inputs) {
+    public InternalFunctionProcessingResult process(Long sourceCodeId, Long execContextId, String internalContextId, TaskParamsYaml taskParamsYaml) {
 
-        InternalFunction internalFunction = internalFunctionMap.get(functionCode);
+        InternalFunction internalFunction = internalFunctionMap.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found);
         }
@@ -77,6 +76,6 @@ public class InternalFunctionProcessor {
         }
 
         SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode.getSourceCodeStoredParamsYaml().source);
-        return internalFunction.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, inputs);
+        return internalFunction.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, taskParamsYaml);
     }
 }

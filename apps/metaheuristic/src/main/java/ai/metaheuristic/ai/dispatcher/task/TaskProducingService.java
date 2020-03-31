@@ -128,7 +128,7 @@ public class TaskProducingService {
         if (v.context== EnumsApi.VariableContext.local) {
             Variable variable = variableRepository.findIdByNameAndContextId(v.name, execContextId);
             if (variable==null) {
-                throw new IllegalStateException("(variable==null)");
+                throw new IllegalStateException("(variable==null), name: "+ v.name+", execContextId: " + execContextId);
             }
             iv.id = variable.id.toString();
             iv.realName = variable.filename;
@@ -136,7 +136,7 @@ public class TaskProducingService {
         else {
             GlobalVariable variable = globalVariableRepository.findIdByName(v.name);
             if (variable==null) {
-                throw new IllegalStateException("(variable==null)");
+                throw new IllegalStateException("(variable==null), name: "+ v.name+", execContextId: " + execContextId);
             }
             iv.id = variable.id.toString();
         }
@@ -157,7 +157,11 @@ public class TaskProducingService {
         taskParams.task.execContextId = execContextId;
         taskParams.task.processCode = process.processCode;
         taskParams.task.context = process.function.context;
-        process.inputs.stream().map(v -> toInputVariable(v, execContextId)).collect(Collectors.toCollection(()->taskParams.task.inputs));
+        if (process.metas!=null) {
+            taskParams.task.metas.addAll(process.metas);
+        }
+        // inputs and outputs will be initialized at the time of task selection
+//        process.inputs.stream().map(v -> toInputVariable(v, execContextId)).collect(Collectors.toCollection(()->taskParams.task.inputs));
 
         if (taskParams.task.context==EnumsApi.FunctionExecContext.internal) {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(

@@ -86,7 +86,7 @@ public class TaskWithInternalContextEventService {
                 }
 
                 InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
-                        taskParamsYaml.task.function.code, execContext.sourceCodeId, execContext.id, p.internalContextId, taskParamsYaml.task.inputs);
+                        execContext.sourceCodeId, execContext.id, p.internalContextId, taskParamsYaml);
 
                 if (result.processing!= Enums.InternalFunctionProcessing.ok) {
                     log.error("#707.050 error type: {}, message: {}", result.processing, result.error);

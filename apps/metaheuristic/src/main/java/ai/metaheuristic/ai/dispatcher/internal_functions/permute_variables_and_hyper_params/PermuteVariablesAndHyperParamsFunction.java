@@ -23,16 +23,23 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.MetaUtils;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
@@ -50,6 +57,12 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
     private final VariableRepository variableRepository;
     private final GlobalVariableRepository globalVariableRepository;
 
+    @Data
+    public static class VariableHolder {
+        public Variable variable;
+        public GlobalVariable globalVariable;
+    }
+
     @Override
     public String getCode() {
         return Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION;
@@ -62,26 +75,65 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
 
     public InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
-            List<TaskParamsYaml.InputVariable> inputs) {
+            TaskParamsYaml taskParamsYaml) {
 
-        if (inputs.size()>1) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect, "Too many input variables");
+        if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
+            log.warn("List of input variables isn't empty");
         }
-        if (inputs.isEmpty()) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect, "There must be at least one input variable");
+
+        String variableNames = MetaUtils.getValue(taskParamsYaml.task.metas, "variables");
+        if (S.b(variableNames)) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "Meta 'variable' must be defined and can't be empty");
         }
-        TaskParamsYaml.InputVariable inputVariable = inputs.get(0);
-        if (inputVariable.context== EnumsApi.VariableContext.local) {
-            Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
-            if (bd == null) {
-                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found, "Variable not found for code " + inputVariable);
+        String[] names = StringUtils.split(variableNames, ",");
+
+        List<VariableHolder> holders = new ArrayList<>();
+        for (String name : names) {
+            VariableHolder holder = new VariableHolder();
+            holders.add(holder);
+            Variable v = variableRepository.findIdByNameAndContextId(name, execContextId);
+            if (v!=null) {
+                holder.variable = v;
+            }
+            else {
+                GlobalVariable gv = globalVariableRepository.findIdByName(name);
+                if (gv!=null) {
+                    holder.globalVariable = gv;
+                }
+                else {
+                    return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
+                            "Variable '"+name+"'not found");
+                }
             }
         }
-        else {
-            GlobalVariable gv = globalVariableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
-            if (gv == null) {
-                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.global_variable_not_found, "GlobalVariable not found for code " + inputVariable);
-            }
+
+        final Permutation<VariableHolder> permutation = new Permutation<>();
+        AtomicLong featureId = new AtomicLong(0);
+        for (int i = 0; i < holders.size(); i++) {
+            permutation.printCombination(holders, i+1,
+                    permutedVariables -> {
+                        System.out.println(permutedVariables);
+/*
+                        final String permutedVariablesAsStr = String.valueOf(permutedVariables);
+                        final String checksumMD5 = Checksum.getChecksum(EnumsApi.Type.MD5, permutedVariablesAsStr);
+                        String checksumIdCodes = StringUtils.substring(permutedVariablesAsStr, 0, 20) + "###" + checksumMD5;
+                        if (list.contains(checksumIdCodes)) {
+                            // already exist
+                            return true;
+                        }
+
+                        ExperimentParamsYaml.ExperimentFeature feature = new ExperimentParamsYaml.ExperimentFeature();
+                        feature.id = featureId.incrementAndGet();
+                        feature.setExperimentId(experiment.id);
+                        feature.setVariables(permutedVariablesAsStr);
+                        feature.setChecksumIdCodes(checksumIdCodes);
+                        epy.processing.features.add(feature);
+
+                        total.incrementAndGet();
+*/
+                        return true;
+                    }
+            );
         }
 
         if (true) {
