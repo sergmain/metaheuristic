@@ -47,6 +47,7 @@ source:
             outputs:
               - name: feature-output-1
                 sourcing: dispatcher
+                parentContextId: true
           - code: feature-processing-2
             function:
               code: function-04:1.1
@@ -58,6 +59,7 @@ source:
             outputs:
               - name: feature-output-2
                 sourcing: dispatcher
+                parentContextId: true
     - code: mh.permute-variables-and-hyper-params
       function:
         code: mh.permute-variables-and-hyper-params

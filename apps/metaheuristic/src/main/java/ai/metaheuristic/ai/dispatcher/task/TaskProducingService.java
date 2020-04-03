@@ -125,7 +125,13 @@ public class TaskProducingService {
     public TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String internalContextId, Long execContextId) {
         TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
         if (v.context== EnumsApi.VariableContext.local) {
-            SimpleVariableAndStorageUrl variable = variableService.findVariableInAllInternalContexts(v.name, internalContextId, execContextId);
+            String contextId = Boolean.TRUE.equals(v.parentContextId) ? VariableService.getParentContext(internalContextId) : internalContextId;
+            if (S.b(contextId)) {
+                throw new IllegalStateException(
+                        S.f("(S.b(contextId)), name: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
+                                v.name, v.context, internalContextId, execContextId));
+            }
+            SimpleVariableAndStorageUrl variable = variableService.findVariableInAllInternalContexts(v.name, contextId, execContextId);
             if (variable==null) {
                 throw new IllegalStateException(
                         S.f("(variable==null), name: %s, variableContext: %s, internalContextId: %s, execContextId: %s",

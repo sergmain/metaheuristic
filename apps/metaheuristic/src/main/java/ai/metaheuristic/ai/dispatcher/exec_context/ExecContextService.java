@@ -294,7 +294,13 @@ public class ExecContextService {
             if (sv!=null) {
                 continue;
             }
-            Variable v = variableService.createUninitialized(variable.name, assignedTaskComplex.execContextId, p.internalContextId);
+            String contextId = Boolean.TRUE.equals(variable.parentContextId) ? VariableService.getParentContext(p.internalContextId) : p.internalContextId;
+            if (S.b(contextId)) {
+                throw new IllegalStateException(
+                        S.f("(S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
+                                p.processCode, variable.context, p.internalContextId, assignedTaskComplex.execContextId));
+            }
+            Variable v = variableService.createUninitialized(variable.name, assignedTaskComplex.execContextId, contextId);
 
             taskParams.task.outputs.add(
                     new TaskParamsYaml.OutputVariable(

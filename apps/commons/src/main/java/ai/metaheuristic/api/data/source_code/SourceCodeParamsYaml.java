@@ -94,6 +94,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public GitInfo git;
         public DiskInfo disk;
         public String name;
+        public Boolean parentContextId;
 
         public Variable(String name) {
             this.name = name;
