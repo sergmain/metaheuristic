@@ -97,6 +97,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @AfterEach
     public void afterTestPlanService() {
         System.out.println("Finished TestSourceCodeService.afterTestPlanService()");
+        variableRepository.deleteByExecContextId(execContextForTest.id);
     }
 
     @SneakyThrows
@@ -112,28 +113,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
 
-        int taskNumber = 0;
-/*
-        for (SourceCodeParamsYaml.Process process : sourceCodeParamsYaml.source.processes) {
-            if (process.subProcesses!=null) {
-                if (true) {
-                    throw new NotImplementedException("Need to calc number of tasks for parallel case");
-                }
-            }
-            taskNumber++;
-        }
-        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-
-        final int actualTaskNumber = taskNumber + epy.processing.getNumberOfTask();
-        assertEquals(1 + 1 + 3 + 2 * 12 * 7, actualTaskNumber);
-
-        long numberFromGraph = execContextService.getCountUnfinishedTasks(execContextForFeature);
-        assertEquals(actualTaskNumber, numberFromGraph);
-*/
-
         // ======================
 
-        // the calling of this method will produce warning "#705.180 ExecContext wasn't started." which is correct behaviour
+        // the calling of this method will produce a warning "#705.180 ExecContext wasn't started." which is correct behaviour
         DispatcherCommParamsYaml.AssignedTask simpleTask0 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
 
@@ -160,8 +142,25 @@ public class TestSourceCodeService extends PreparingSourceCode {
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
             assertNull(simpleTask2);
 
+            TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask.params);
+            assertNotNull(taskParamsYaml.task.processCode);
+            assertNotNull(taskParamsYaml.task.inputs);
+            assertNotNull(taskParamsYaml.task.outputs);
+            assertEquals(1, taskParamsYaml.task.inputs.size());
+            assertEquals(1, taskParamsYaml.task.outputs.size());
+
+            TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
+            assertEquals("test-variable", inputVariable.name);
+            assertEquals(EnumsApi.VariableContext.global, inputVariable.context);
+            assertEquals(testGlobalVariable.id.toString(), inputVariable.id);
+
+            TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
+            assertEquals("assembled-raw-output", outputVariable.name);
+            assertEquals(EnumsApi.VariableContext.local, outputVariable.context);
+            assertNotNull(outputVariable.id);
+
             SimpleVariableAndStorageUrl v = variableService.getVariableAsSimple(
-                    "assembled-raw-output", TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask.params).task.processCode, execContextForTest);
+                    "assembled-raw-output", taskParamsYaml.task.processCode, execContextForTest);
 
             assertNotNull(v);
             storeExecResult(simpleTask);
@@ -214,30 +213,42 @@ public class TestSourceCodeService extends PreparingSourceCode {
         }
         int j;
         List<ExecContextData.TaskVertex> taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
-        assertEquals(2, taskVertices.size());
-        TaskImpl finishTask, permuteTask, tempTask;
-        tempTask = taskRepository.findById(taskVertices.get(0).taskId).orElse(null);
-        assertNotNull(tempTask);
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
-        assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION).contains(tpy.task.function.code));
-        if (Consts.MH_FINISH_FUNCTION.equals(tpy.task.function.code)) {
-            finishTask = tempTask;
-            permuteTask = taskRepository.findById(taskVertices.get(1).taskId).orElse(null);
-            assertNotNull(permuteTask);
+        assertEquals(3, taskVertices.size());
+        TaskImpl finishTask = null, permuteTask = null, aggregateTask = null;
+
+        for (ExecContextData.TaskVertex taskVertex : taskVertices) {
+            TaskImpl tempTask = taskRepository.findById(taskVertex.taskId).orElse(null);
+            assertNotNull(tempTask);
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
+            assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION, Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION)
+                    .contains(tpy.task.function.code));
+
+            switch(tpy.task.function.code) {
+                case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION:
+                    permuteTask = tempTask;
+                    break;
+                case Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION:
+                    aggregateTask = tempTask;
+                    break;
+                case Consts.MH_FINISH_FUNCTION:
+                    finishTask = tempTask;
+                    break;
+                default:
+                    throw new IllegalStateException("unknown code: " + tpy.task.function.code );
+            }
         }
-        else {
-            permuteTask = tempTask;
-            finishTask = taskRepository.findById(taskVertices.get(1).taskId).orElse(null);
-            assertNotNull(finishTask);
-        }
-        tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(permuteTask.params);
+        assertNotNull(permuteTask);
+        assertNotNull(aggregateTask);
+        assertNotNull(finishTask);
+
+        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(permuteTask.params);
         assertFalse(tpy.task.metas.isEmpty());
 
         DispatcherCommParamsYaml.AssignedTask task40 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
         assertNull(task40);
         TimeUnit.SECONDS.sleep(1);
-        tempTask = taskRepository.findById(permuteTask.id).orElse(null);
+        TaskImpl tempTask = taskRepository.findById(permuteTask.id).orElse(null);
         assertNotNull(tempTask);
         EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(tempTask.execState);
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(tempTask.functionExecResults);

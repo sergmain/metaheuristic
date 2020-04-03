@@ -17,10 +17,7 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.Company;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -120,6 +117,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     public ExecContextParamsYaml execContextYaml;
 
     public Company company;
+    public GlobalVariable testGlobalVariable;
 
     public abstract String getSourceCodeYamlAsString();
 
@@ -191,7 +189,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
             log.error("error preparing variables", th);
         }
 
-        globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-01.txt");
+        testGlobalVariable = globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-01.txt");
 
         execContextYaml = new ExecContextParamsYaml();
         execContextYaml.variables = new ExecContextParamsYaml.VariableDeclaration();

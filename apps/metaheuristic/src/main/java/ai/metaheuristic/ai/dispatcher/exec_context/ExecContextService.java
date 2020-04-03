@@ -254,10 +254,15 @@ public class ExecContextService {
         }
 
         //noinspection UnnecessaryLocalVariable
-        DispatcherCommParamsYaml.AssignedTask result = execContextSyncService.getWithSync(assignedTaskComplex.execContextId,
+        DispatcherCommParamsYaml.AssignedTask result = execContextSyncService.getWithSyncNullable(assignedTaskComplex.execContextId,
                 execContext -> {
                     prepareVariables(assignedTaskComplex);
-                    return new DispatcherCommParamsYaml.AssignedTask(assignedTaskComplex.params, assignedTaskComplex.task.getId(), assignedTaskComplex.execContextId);
+                    TaskImpl task = taskRepository.findById(assignedTaskComplex.task.getId()).orElse(null);
+                    if (task==null) {
+                        log.warn("#705.133 task wasn't found with id #"+ assignedTaskComplex.task.getId());
+                        return null;
+                    }
+                    return new DispatcherCommParamsYaml.AssignedTask(task.params, task.getId(), task.execContextId);
         });
         return result;
     }
