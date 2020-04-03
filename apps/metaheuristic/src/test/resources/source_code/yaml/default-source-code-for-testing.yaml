@@ -53,20 +53,20 @@ source:
               - name: feature-output-2
                 parentContextId: true
     - code: mh.permute-variables-and-hyper-params
+      name: permute variables and hyper params
       function:
         code: mh.permute-variables-and-hyper-params
         context: internal
       metas:
         - key: variables
           value: feature-output-1,feature-output-2
-      name: permute variables and hyper params
       outputs:
         - name: feature-array-per-task
       subProcesses:
         logic: sequential
         processes:
-          - code: feature-processing-1
-            name: feature-processing-1
+          - code: fit-dataset
+            name: fit-dataset
             function:
               code: test.fit.function:1.0
               context: external
@@ -75,8 +75,8 @@ source:
               - name: feature-array-per-task
             outputs:
               - name: model
-          - code: feature-processing-2
-            name: feature-processing-2
+          - code: predict-dataset
+            name: predict-dataset
             function:
               code: test.predict.function:1.0
               context: external
@@ -87,13 +87,13 @@ source:
               - name: metrics
               - name: predicted
     - code: mh.aggregate-internal-context
+      name: aggregate variables in internal context
       function:
         code: mh.aggregate-internal-context
         context: internal
       metas:
         - key: variables
           value: metrics, predicted
-      name: permute variables and hyper params
       outputs:
         - name: final-result
 version: 1

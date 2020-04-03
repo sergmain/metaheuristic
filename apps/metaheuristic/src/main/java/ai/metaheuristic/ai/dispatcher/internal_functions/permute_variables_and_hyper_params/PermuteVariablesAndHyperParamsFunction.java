@@ -18,13 +18,18 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -41,6 +46,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
@@ -57,11 +63,17 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
 
     private final VariableRepository variableRepository;
     private final GlobalVariableRepository globalVariableRepository;
+    private final TaskProducingCoreService taskProducingCoreService;
+    private final ExecContextCache execContextCache;
 
     @Data
     public static class VariableHolder {
         public SimpleVariableAndStorageUrl variable;
         public GlobalVariable globalVariable;
+
+        public String getName() {
+            return globalVariable!=null ? globalVariable.name : variable.variable;
+        }
     }
 
     @Override
@@ -80,6 +92,19 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
 
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
             log.warn("List of input variables isn't empty");
+        }
+
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.exec_context_not_found,
+                    "ExecContext not found for id #"+execContextId);
+        }
+        ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
+
+        ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
+        if (process==null) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found,
+                    "Process '"+taskParamsYaml.task.processCode+"'not found");
         }
 
         String variableNames = MetaUtils.getValue(taskParamsYaml.task.metas, "variables");
@@ -103,7 +128,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
                 }
                 else {
                     return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                            "Variable '"+name+"'not found in internal context #"+internalContextId);
+                            "Variable '"+name+"'not found in local and global contexts, internal context #"+internalContextId);
                 }
             }
         }
@@ -113,7 +138,15 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
         for (int i = 0; i < holders.size(); i++) {
             permutation.printCombination(holders, i+1,
                     permutedVariables -> {
-                        System.out.println(permutedVariables);
+                        System.out.println(permutedVariables.stream()
+                                .map(VariableHolder::getName)
+                                .collect(Collectors.joining(", ")));
+
+//                        for (VariableHolder holder : process.) {
+//
+//                        }
+//                        taskProducingService.createTaskInternal(execContextId, execContextParamsYaml, process);
+
 /*
                         final String permutedVariablesAsStr = String.valueOf(permutedVariables);
                         final String checksumMD5 = Checksum.getChecksum(EnumsApi.Type.MD5, permutedVariablesAsStr);

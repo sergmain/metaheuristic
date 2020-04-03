@@ -38,9 +38,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -85,8 +87,15 @@ public class SourceCodeValidationService {
 
         SourceCodeParamsYaml.Process lastProcess = null;
         List<SourceCodeParamsYaml.Process> processes = sourceCodeYaml.getProcesses();
+        List<String> processCodes = new ArrayList<>();
         for (int i = 0; i < processes.size(); i++) {
             SourceCodeParamsYaml.Process process = processes.get(i);
+            String code = validateProcessCode(processCodes, process);
+            if (code!=null) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_NOT_UNIQUE_ERROR,
+                        "There are at least two processes with the same code '" + process.code+"'");
+            }
             if (i + 1 < processes.size()) {
                 if (process.outputs.isEmpty()) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
@@ -124,6 +133,24 @@ public class SourceCodeValidationService {
         }
 
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+    }
+
+    private @Nullable String validateProcessCode(List<String> processCodes, SourceCodeParamsYaml.Process process) {
+        if (processCodes.contains(process.code)) {
+            return process.code;
+        }
+        processCodes.add(process.code);
+
+        if (process.subProcesses==null) {
+            return null;
+        }
+        for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
+            String code = validateProcessCode(processCodes, subProcess);
+            if (code!=null) {
+                return code;
+            }
+        }
+        return null;
     }
 
     public SourceCodeApiData.SourceCodeValidation validate(SourceCodeImpl sourceCode) {

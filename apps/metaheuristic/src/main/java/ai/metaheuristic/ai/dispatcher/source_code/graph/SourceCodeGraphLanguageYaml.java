@@ -83,12 +83,9 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
             SourceCodeParamsYaml.SubProcesses subProcesses = p.subProcesses;
             // tasks for sub-processes of internal function will be produced at runtime phase
-            if (subProcesses !=null && p.function.context!= EnumsApi.FunctionExecContext.internal) {
+            if (subProcesses!=null && CollectionUtils.isNotEmpty(subProcesses.processes)) {
                 // todo 2020-04-02 replace with recursion for supporting case then there are more than 2 levels of inclusion
 
-                if (CollectionUtils.isEmpty(subProcesses.processes)) {
-                    throw new SourceCodeGraphException("(subProcesses !=null) && (CollectionUtils.isEmpty(subProcesses.processes))");
-                }
                 List<ExecContextData.ProcessVertex> prevProcesses = new ArrayList<>();
                 prevProcesses.add(vertex);
                 String subInternalContextId = null;

@@ -47,8 +47,6 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @RequiredArgsConstructor
 public class InternalFunctionProcessor {
 
-    public final VariableSplitterFunction resourceSplitterFunction;
-    public final PermuteVariablesAndHyperParamsFunction permuteVariablesAndHyperParamsFunction;
     public final SourceCodeCache sourceCodeCache;
     public final List<InternalFunction> internalFunctions;
 

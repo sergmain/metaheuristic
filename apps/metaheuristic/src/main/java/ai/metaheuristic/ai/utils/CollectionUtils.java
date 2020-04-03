@@ -16,6 +16,9 @@
 
 package ai.metaheuristic.ai.utils;
 
+import ai.metaheuristic.api.data.Meta;
+import org.springframework.lang.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

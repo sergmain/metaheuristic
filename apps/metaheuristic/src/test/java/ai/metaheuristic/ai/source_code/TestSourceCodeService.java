@@ -213,14 +213,15 @@ public class TestSourceCodeService extends PreparingSourceCode {
         }
         int j;
         List<ExecContextData.TaskVertex> taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
-        assertEquals(3, taskVertices.size());
+        assertEquals(5, taskVertices.size());
         TaskImpl finishTask = null, permuteTask = null, aggregateTask = null;
 
         for (ExecContextData.TaskVertex taskVertex : taskVertices) {
             TaskImpl tempTask = taskRepository.findById(taskVertex.taskId).orElse(null);
             assertNotNull(tempTask);
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
-            assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION, Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION)
+            assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION, Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION,
+                    "test.fit.function:1.0", "test.predict.function:1.0")
                     .contains(tpy.task.function.code));
 
             switch(tpy.task.function.code) {
@@ -232,6 +233,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
                     break;
                 case Consts.MH_FINISH_FUNCTION:
                     finishTask = tempTask;
+                    break;
+                case "test.fit.function:1.0":
+                case "test.predict.function:1.0":
                     break;
                 default:
                     throw new IllegalStateException("unknown code: " + tpy.task.function.code );
