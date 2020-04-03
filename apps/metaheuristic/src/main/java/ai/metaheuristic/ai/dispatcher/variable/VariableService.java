@@ -17,15 +17,20 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.exceptions.StoreNewFileException;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.StoreNewFileException;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -36,7 +41,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +56,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
@@ -65,6 +70,37 @@ public class VariableService {
     private final EntityManager em;
     private final VariableRepository variableRepository;
     private final Globals globals;
+
+    @SuppressWarnings({"SameParameterValue", "UnnecessaryLocalVariable"})
+    @Transactional(readOnly = true)
+    public @Nullable SimpleVariableAndStorageUrl getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
+        ExecContextParamsYaml.Process p = execContext.getExecContextParamsYaml().findProcess(processCode);
+        if (p==null) {
+            return null;
+        }
+        SimpleVariableAndStorageUrl v = findVariableInAllInternalContexts(variable, p.internalContextId, execContext.id);
+        return v;
+    }
+
+    @Transactional(readOnly = true)
+    public @Nullable SimpleVariableAndStorageUrl findVariableInAllInternalContexts(String variable, String internalContextId, Long execContextId) {
+        String currInternalContextId = internalContextId;
+        while( !S.b(currInternalContextId)) {
+            SimpleVariableAndStorageUrl v = variableRepository.findIdByNameAndContextIdAndExecContextId(variable, currInternalContextId, execContextId);
+            if (v!=null) {
+                return v;
+            }
+            currInternalContextId = getParentContext(currInternalContextId);
+        }
+        return null;
+    }
+
+    private @Nullable String getParentContext(String contextId) {
+        if (!contextId.contains(",")) {
+            return null;
+        }
+        return contextId.substring(0, contextId.lastIndexOf(',')).strip();
+    }
 
     @Transactional(readOnly = true)
     public @Nullable Variable getBinaryData(Long id) {

@@ -17,14 +17,19 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -32,6 +37,7 @@ import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -43,6 +49,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.lang.Nullable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -72,6 +79,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     @Autowired
     public ExecContextFSM execContextFSM;
+
+    @Autowired
+    public GlobalVariableRepository globalVariableRepository;
+
+    @Autowired
+    public VariableRepository variableRepository;
 
     @Autowired
     public ExecContextGraphTopLevelService execContextGraphTopLevelService;
@@ -129,11 +142,14 @@ public class TestSourceCodeService extends PreparingSourceCode {
         execContextFSM.toStarted(execContextForTest);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
 
+        GlobalVariable gv = globalVariableRepository.findIdByName("test-variable");
+        assertNotNull(gv);
+
         assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask =
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-
+            // function code is function-01:1.1
             assertNotNull(simpleTask);
             assertNotNull(simpleTask.getTaskId());
             Task task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
@@ -144,13 +160,17 @@ public class TestSourceCodeService extends PreparingSourceCode {
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
             assertNull(simpleTask2);
 
+            SimpleVariableAndStorageUrl v = variableService.getVariableAsSimple(
+                    "assembled-raw-output", TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask.params).task.processCode, execContextForTest);
+
+            assertNotNull(v);
             storeExecResult(simpleTask);
             execContextSchedulerService.updateExecContextStatuses(true);
         }
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask20 =
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-
+            // function code is function-02:1.1
             assertNotNull(simpleTask20);
             assertNotNull(simpleTask20.getTaskId());
             Task task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
@@ -167,7 +187,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask30 =
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-
+            //   processCode: feature-processing-1, function code: function-03:1.1
             assertNotNull(simpleTask30);
             assertNotNull(simpleTask30.getTaskId());
             Task task30 = taskRepository.findById(simpleTask30.getTaskId()).orElse(null);
@@ -184,7 +204,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         {
             DispatcherCommParamsYaml.AssignedTask simpleTask32 =
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-
+            //   processCode: feature-processing-2, function code: function-04:1.1
             assertNotNull(simpleTask32);
             assertNotNull(simpleTask32.getTaskId());
             Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);

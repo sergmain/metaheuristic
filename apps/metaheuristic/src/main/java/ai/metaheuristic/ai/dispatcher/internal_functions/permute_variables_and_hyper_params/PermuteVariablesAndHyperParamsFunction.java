@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -59,7 +60,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
 
     @Data
     public static class VariableHolder {
-        public Variable variable;
+        public SimpleVariableAndStorageUrl variable;
         public GlobalVariable globalVariable;
     }
 
@@ -91,7 +92,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
         for (String name : names) {
             VariableHolder holder = new VariableHolder();
             holders.add(holder);
-            Variable v = variableRepository.findIdByNameAndContextId(name, execContextId);
+            SimpleVariableAndStorageUrl v = variableRepository.findIdByNameAndContextIdAndExecContextId(name, internalContextId, execContextId);
             if (v!=null) {
                 holder.variable = v;
             }
@@ -102,7 +103,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
                 }
                 else {
                     return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                            "Variable '"+name+"'not found");
+                            "Variable '"+name+"'not found in internal context #"+internalContextId);
                 }
             }
         }

@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
@@ -29,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcess
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -45,7 +45,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -123,20 +122,24 @@ public class TaskProducingService {
         return result;
     }
 
-    private TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, Long execContextId) {
+    public TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String internalContextId, Long execContextId) {
         TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
         if (v.context== EnumsApi.VariableContext.local) {
-            Variable variable = variableRepository.findIdByNameAndContextId(v.name, execContextId);
+            SimpleVariableAndStorageUrl variable = variableService.findVariableInAllInternalContexts(v.name, internalContextId, execContextId);
             if (variable==null) {
-                throw new IllegalStateException("(variable==null), name: "+ v.name+", execContextId: " + execContextId);
+                throw new IllegalStateException(
+                        S.f("(variable==null), name: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
+                                v.name, v.context, internalContextId, execContextId));
             }
-            iv.id = variable.id.toString();
-            iv.realName = variable.filename;
+            iv.id = variable.id;
+            iv.realName = variable.originalFilename;
         }
         else {
             GlobalVariable variable = globalVariableRepository.findIdByName(v.name);
             if (variable==null) {
-                throw new IllegalStateException("(variable==null), name: "+ v.name+", execContextId: " + execContextId);
+                throw new IllegalStateException(
+                        S.f("(variable==null), name: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
+                                v.name, v.context, internalContextId, execContextId));
             }
             iv.id = variable.id.toString();
         }

@@ -115,20 +115,16 @@ public class TaskAssetPreparer {
             if ( !prepareFunction(functionConfig, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId) ) {
                 isAllReady.set(false);
             }
-            if (taskParamYaml.task.preFunctions !=null) {
-                taskParamYaml.task.preFunctions.forEach(sc-> {
-                    if ( !prepareFunction(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId) ) {
-                        isAllReady.set(false);
-                    }
-                });
-            }
-            if (taskParamYaml.task.postFunctions !=null) {
-                taskParamYaml.task.postFunctions.forEach(sc-> {
-                    if ( !prepareFunction(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId) ) {
-                        isAllReady.set(false);
-                    }
-                });
-            }
+            taskParamYaml.task.preFunctions.forEach(sc-> {
+                if ( !prepareFunction(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId) ) {
+                    isAllReady.set(false);
+                }
+            });
+            taskParamYaml.task.postFunctions.forEach(sc-> {
+                if ( !prepareFunction(sc, task.dispatcherUrl, dispatcher, dispatcherInfo.processorId) ) {
+                    isAllReady.set(false);
+                }
+            });
 
             // update the status of task if everything is prepared
             if (isAllReady.get()) {

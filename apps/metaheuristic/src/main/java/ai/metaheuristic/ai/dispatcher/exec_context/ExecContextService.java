@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -283,8 +284,14 @@ public class ExecContextService {
 
         // we dont need to create inputs because all inputs are outputs of previous processes,
         // except globals and startInputAs
-        for (TaskParamsYaml.OutputVariable variable : taskParams.task.outputs) {
-            if (variable.isInited) {
+        // but we need to initialize descriptor of input variable
+        p.inputs.stream()
+                .map(v -> taskProducingService.toInputVariable(v, p.internalContextId, assignedTaskComplex.execContextId))
+                .collect(Collectors.toCollection(()->taskParams.task.inputs));
+
+        for (ExecContextParamsYaml.Variable variable : p.outputs) {
+            SimpleVariableAndStorageUrl sv = variableService.getVariableAsSimple(variable.name, p.processCode, execContext);
+            if (sv!=null) {
                 continue;
             }
             Variable v = variableService.createUninitialized(variable.name, assignedTaskComplex.execContextId, p.internalContextId);
@@ -295,6 +302,7 @@ public class ExecContextService {
                             null, false
                     ));
         }
+        taskPersistencer.setParams(assignedTaskComplex.task.getId(), taskParams);
     }
 
     @Nullable

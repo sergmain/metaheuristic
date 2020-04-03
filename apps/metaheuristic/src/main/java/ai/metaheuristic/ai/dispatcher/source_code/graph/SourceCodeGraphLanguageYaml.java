@@ -55,10 +55,9 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         scg.variables.startInputAs = sourceCodeParams.source.variables.startInputAs;
         scg.variables.inline.putAll(sourceCodeParams.source.variables.inline);
 
-        long internalContextId = 1L;
         List<ExecContextData.ProcessVertex> parentProcesses =  new ArrayList<>();
 
-        String currentInternalContextId = "" + internalContextId;
+        String currentInternalContextId = contextIdSupplier.get();
         boolean finishPresent = false;
         Set<String> processCodes = new HashSet<>();
         Map<String, Long> ids = new HashMap<>();
@@ -68,7 +67,8 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 throw new SourceCodeGraphException("(finishPresent)");
             }
             checkProcessCode(processCodes, p);
-            scg.processes.add( toProcessForExecCode(sourceCodeParams, p) );
+            ExecContextParamsYaml.Process processInGraph = toProcessForExecCode(sourceCodeParams, p, currentInternalContextId);
+            scg.processes.add(processInGraph);
 
 
             ExecContextData.ProcessVertex vertex = getVertex(ids, currId, p.code);
@@ -84,6 +84,8 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             SourceCodeParamsYaml.SubProcesses subProcesses = p.subProcesses;
             // tasks for sub-processes of internal function will be produced at runtime phase
             if (subProcesses !=null && p.function.context!= EnumsApi.FunctionExecContext.internal) {
+                // todo 2020-04-02 replace with recursion for supporting case then there are more than 2 levels of inclusion
+
                 if (CollectionUtils.isEmpty(subProcesses.processes)) {
                     throw new SourceCodeGraphException("(subProcesses !=null) && (CollectionUtils.isEmpty(subProcesses.processes))");
                 }
@@ -95,15 +97,20 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 }
                 List<ExecContextData.ProcessVertex> andProcesses = new ArrayList<>();
                 for (SourceCodeParamsYaml.Process subP : subProcesses.processes) {
+                    if (subP.subProcesses!=null && CollectionUtils.isNotEmpty(subP.subProcesses.processes)) {
+                        throw new IllegalStateException("SubProcesses with level of recursion more that 1 isn't supported right now.");
+                    }
                     checkProcessCode(processCodes, subP);
-                    scg.processes.add( toProcessForExecCode(sourceCodeParams, subP) );
-
                     if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
                         subInternalContextId = currentInternalContextId + ',' + contextIdSupplier.get();
                     }
                     if (subInternalContextId==null) {
                         throw new IllegalStateException("(subInternalContextId==null)");
                     }
+
+                    processInGraph = toProcessForExecCode(sourceCodeParams, subP, subInternalContextId);
+                    scg.processes.add(processInGraph);
+
                     ExecContextData.ProcessVertex subV = getVertex(ids, currId, subP.code);
 
                     ExecContextProcessGraphService.addNewTasksToGraph(scg, subV, prevProcesses);
@@ -135,8 +142,9 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
     }
 
     @NonNull
-    private static ExecContextParamsYaml.Process toProcessForExecCode(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Process o) {
+    private static ExecContextParamsYaml.Process toProcessForExecCode(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Process o, String internalContextId) {
         ExecContextParamsYaml.Process pr = new ExecContextParamsYaml.Process();
+        pr.internalContextId = internalContextId;
         pr.processName = o.name;
         pr.processCode = o.code;
         pr.timeoutBeforeTerminate = o.timeoutBeforeTerminate;

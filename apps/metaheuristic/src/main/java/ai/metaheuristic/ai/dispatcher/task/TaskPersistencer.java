@@ -51,6 +51,11 @@ public class TaskPersistencer {
     private final DispatcherEventService dispatcherEventService;
 
     @Nullable
+    public TaskImpl setParams(Long taskId, TaskParamsYaml params) {
+        return setParams(taskId, TaskParamsYamlUtils.BASE_YAML_UTILS.toString(params));
+    }
+
+    @Nullable
     public TaskImpl setParams(Long taskId, String taskParams) {
         return taskSyncService.getWithSync(taskId, (task) -> {
             try {
