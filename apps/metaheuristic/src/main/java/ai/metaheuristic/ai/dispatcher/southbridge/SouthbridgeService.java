@@ -42,10 +42,12 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -139,22 +141,23 @@ public class SouthbridgeService {
                 () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryType, resourceId));
     }
 
-    public UploadResult uploadResource(MultipartFile file, Long resourceId) {
+    public UploadResult uploadResource(MultipartFile file, Long variableId) {
         String originFilename = file.getOriginalFilename();
         if (StringUtils.isBlank(originFilename)) {
             return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
         }
-        if (resourceId==null) {
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.020 resourceId is null" );
+        if (variableId==null) {
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.020 variableId is null" );
         }
-        Variable variable = variableService.findById(resourceId).orElse(null);
+        Variable variable = variableService.findById(variableId).orElse(null);
         if (variable ==null) {
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable for resourceId "+resourceId+" wasn't found" );
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable for variableId "+variableId+" wasn't found" );
         }
         if (true) {
-            throw new NotImplementedException("Need to re-write a logic of storing resources from processor");
+            throw new NotImplementedException("Need to re-write a logic of storing variables from processor");
         }
-        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(variable.getParams());
+//        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable)));
+//        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(variable.getParams());
 
         File tempDir=null;
         try {

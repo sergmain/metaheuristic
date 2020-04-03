@@ -26,7 +26,14 @@ public class EnumsApi {
 
     public enum SourceCodeSubProcessLogic { and, or, sequential}
 
-    public enum VariableContext { global, local }
+    public enum VariableContext {
+        // this variable is global
+        global,
+        // this variable is local
+        local,
+        // this variable is an array of other variables, local and global
+        array
+    }
 
     public enum FunctionExecContext { external, internal }
 
@@ -80,11 +87,11 @@ public class EnumsApi {
     public enum DataSourcing {
         // data will be downloaded from dispatcher
         dispatcher(1),
-        // function already has been deployed locally at processor
+        // data already has been deployed locally at processor
         disk(2),
-        // function will be downloaded from git
+        // data will be downloaded from git
         git(3),
-        // data will be provided via inline in params.yaml
+        // data will be provided via inline as metadata
         inline(4);
 
         public int value;
