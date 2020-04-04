@@ -17,7 +17,7 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
+import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.env.EnvService;
@@ -192,7 +192,7 @@ public class ProcessorService {
                     }
             });
         }
-        catch (BreakFromForEachException e) {
+        catch (BreakFromLambdaException e) {
             processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, e.getMessage());
             result.isError = true;
             return result;

@@ -71,7 +71,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             scg.processes.add(processInGraph);
 
 
-            ExecContextData.ProcessVertex vertex = getVertex(ids, currId, p.code);
+            ExecContextData.ProcessVertex vertex = getVertex(ids, currId, p.code, currentInternalContextId);
 
             ExecContextProcessGraphService.addNewTasksToGraph(scg, vertex, parentProcesses);
             if (Consts.MH_FINISH_FUNCTION.equals(p.function.code)) {
@@ -108,7 +108,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                     processInGraph = toProcessForExecCode(sourceCodeParams, subP, subInternalContextId);
                     scg.processes.add(processInGraph);
 
-                    ExecContextData.ProcessVertex subV = getVertex(ids, currId, subP.code);
+                    ExecContextData.ProcessVertex subV = getVertex(ids, currId, subP.code, subInternalContextId);
 
                     ExecContextProcessGraphService.addNewTasksToGraph(scg, subV, prevProcesses);
                     if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
@@ -127,15 +127,15 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             }
         }
         if (!finishPresent) {
-            ExecContextData.ProcessVertex finishVertex = getVertex(ids, currId, Consts.MH_FINISH_FUNCTION);
+            ExecContextData.ProcessVertex finishVertex = getVertex(ids, currId, Consts.MH_FINISH_FUNCTION, currentInternalContextId);
             ExecContextProcessGraphService.addNewTasksToGraph(scg, finishVertex, parentProcesses);
         }
         return scg;
     }
 
     @NonNull
-    public static ExecContextData.ProcessVertex getVertex(Map<String, Long> ids, AtomicLong currId, String process) {
-        return new ExecContextData.ProcessVertex(ids.computeIfAbsent(process, o -> currId.incrementAndGet()), process);
+    public static ExecContextData.ProcessVertex getVertex(Map<String, Long> ids, AtomicLong currId, String process, String internalContextId) {
+        return new ExecContextData.ProcessVertex(ids.computeIfAbsent(process, o -> currId.incrementAndGet()), process, internalContextId);
     }
 
     @NonNull

@@ -21,13 +21,16 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -40,6 +43,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -101,11 +106,16 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
         }
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
-        ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
+        final ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found,
                     "Process '"+taskParamsYaml.task.processCode+"'not found");
         }
+
+        ExecContextParamsYaml wpy = execContext.getExecContextParamsYaml();
+        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(wpy);
+
+        List<ExecContextData.ProcessVertex> subProcesses = ExecContextProcessGraphService.findSubProcesses(processGraph, process.processCode);
 
         String variableNames = MetaUtils.getValue(taskParamsYaml.task.metas, "variables");
         if (S.b(variableNames)) {
@@ -136,42 +146,43 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
         final Permutation<VariableHolder> permutation = new Permutation<>();
         AtomicLong featureId = new AtomicLong(0);
         for (int i = 0; i < holders.size(); i++) {
-            permutation.printCombination(holders, i+1,
-                    permutedVariables -> {
-                        System.out.println(permutedVariables.stream()
-                                .map(VariableHolder::getName)
-                                .collect(Collectors.joining(", ")));
+            try {
+                permutation.printCombination(holders, i+1,
+                        permutedVariables -> {
+                            System.out.println(permutedVariables.stream().map(VariableHolder::getName).collect(Collectors.joining(", ")));
+                            for (ExecContextData.ProcessVertex subProcess : subProcesses) {
+                                final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
+                                if (p==null) {
+                                    throw new BreakFromLambdaException("Process '"+subProcess.process+"' wasn't found");
+                                }
+                                taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p);
+                            }
 
-//                        for (VariableHolder holder : process.) {
-//
-//                        }
-//                        taskProducingService.createTaskInternal(execContextId, execContextParamsYaml, process);
+    /*
+                            final String permutedVariablesAsStr = String.valueOf(permutedVariables);
+                            final String checksumMD5 = Checksum.getChecksum(EnumsApi.Type.MD5, permutedVariablesAsStr);
+                            String checksumIdCodes = StringUtils.substring(permutedVariablesAsStr, 0, 20) + "###" + checksumMD5;
+                            if (list.contains(checksumIdCodes)) {
+                                // already exist
+                                return true;
+                            }
 
-/*
-                        final String permutedVariablesAsStr = String.valueOf(permutedVariables);
-                        final String checksumMD5 = Checksum.getChecksum(EnumsApi.Type.MD5, permutedVariablesAsStr);
-                        String checksumIdCodes = StringUtils.substring(permutedVariablesAsStr, 0, 20) + "###" + checksumMD5;
-                        if (list.contains(checksumIdCodes)) {
-                            // already exist
+                            ExperimentParamsYaml.ExperimentFeature feature = new ExperimentParamsYaml.ExperimentFeature();
+                            feature.id = featureId.incrementAndGet();
+                            feature.setExperimentId(experiment.id);
+                            feature.setVariables(permutedVariablesAsStr);
+                            feature.setChecksumIdCodes(checksumIdCodes);
+                            epy.processing.features.add(feature);
+
+                            total.incrementAndGet();
+    */
                             return true;
                         }
-
-                        ExperimentParamsYaml.ExperimentFeature feature = new ExperimentParamsYaml.ExperimentFeature();
-                        feature.id = featureId.incrementAndGet();
-                        feature.setExperimentId(experiment.id);
-                        feature.setVariables(permutedVariablesAsStr);
-                        feature.setChecksumIdCodes(checksumIdCodes);
-                        epy.processing.features.add(feature);
-
-                        total.incrementAndGet();
-*/
-                        return true;
-                    }
-            );
-        }
-
-        if (true) {
-            throw new NotImplementedException("not yet");
+                );
+            } catch (BreakFromLambdaException e) {
+                log.error(e.getMessage());
+                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found, e.getMessage());
+            }
         }
         return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }

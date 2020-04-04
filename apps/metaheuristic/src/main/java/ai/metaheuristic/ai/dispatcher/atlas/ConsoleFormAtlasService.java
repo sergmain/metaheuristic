@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.atlas;
 
-import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
+import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -77,13 +77,13 @@ public class ConsoleFormAtlasService {
                         pw.print(',');
                         pw.println(json);
                     } catch (IOException e) {
-                        throw new BreakFromForEachException(e);
+                        throw new BreakFromLambdaException(e);
                     }
                 });
             }
             return new ConsoleOutputStoredToAtlas(output);
         }
-        catch(BreakFromForEachException e) {
+        catch(BreakFromLambdaException e) {
             String es = "#605.18 Error while dumping of console outputs " + e.getCause().toString();
             log.error(es);
             return new ConsoleOutputStoredToAtlas(es);

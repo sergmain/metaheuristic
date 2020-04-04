@@ -16,15 +16,15 @@
 
 package ai.metaheuristic.ai.exceptions;
 
-public class BreakFromForEachException extends RuntimeException {
-    public BreakFromForEachException() {
+public class BreakFromLambdaException extends RuntimeException {
+    public BreakFromLambdaException() {
     }
 
-    public BreakFromForEachException(String message) {
+    public BreakFromLambdaException(String message) {
         super(message);
     }
 
-    public BreakFromForEachException(Throwable cause) {
+    public BreakFromLambdaException(Throwable cause) {
         super(cause);
     }
 }

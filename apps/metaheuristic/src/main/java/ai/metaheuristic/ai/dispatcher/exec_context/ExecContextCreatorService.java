@@ -124,6 +124,10 @@ public class ExecContextCreatorService {
         SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
                 EnumsApi.SourceCodeLang.yaml, scspy.source, () -> "" + contextId.incrementAndGet());
 
+        if (ExecContextProcessGraphService.anyError(sourceCodeGraph)) {
+            return new ExecContextCreationResult("#560.006 processGraph is broken");
+        }
+
         // TODO 2020-02-24 add this line
         // changeValidStatus(producingResult.execContext.getId(), true);
 

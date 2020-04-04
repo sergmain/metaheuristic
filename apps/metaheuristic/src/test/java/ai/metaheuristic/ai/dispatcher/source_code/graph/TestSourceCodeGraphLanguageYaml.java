@@ -55,14 +55,15 @@ public class TestSourceCodeGraphLanguageYaml {
         Map<String, Long> ids = new HashMap<>();
         AtomicLong currId = new AtomicLong();
 
-        ExecContextData.ProcessVertex vertexAssembly = SourceCodeGraphLanguageYaml.getVertex(ids, currId, "assembly-raw-file");
+        // value of internalContextId doesn't matter in this case
+        ExecContextData.ProcessVertex vertexAssembly = SourceCodeGraphLanguageYaml.getVertex(ids, currId, "assembly-raw-file", "1");
         assertEquals(5, findDescendants(graph, vertexAssembly).size());
         assertEquals(1, findLeafs(graph).size());
 
-        ExecContextData.ProcessVertex v = findVertex(graph, vertexAssembly.process);
+        ExecContextData.ProcessVertex v = findVertex(graph.processGraph, vertexAssembly.process);
         assertNotNull(v);
 
-        List<ExecContextData.ProcessVertex> vs1 = findTargets(graph, vertexAssembly.process);
+        List<ExecContextData.ProcessVertex> vs1 = findTargets(graph.processGraph, vertexAssembly.process);
 
         assertEquals(1, vs1.size());
 
@@ -71,7 +72,7 @@ public class TestSourceCodeGraphLanguageYaml {
         String processDataset = "dataset-processing";
         assertEquals(processDataset, v1.process);
 
-        List<ExecContextData.ProcessVertex> vs2 = findTargets(graph, processDataset);
+        List<ExecContextData.ProcessVertex> vs2 = findTargets(graph.processGraph, processDataset);
 
         assertEquals(3, vs2.size());
 
@@ -79,8 +80,8 @@ public class TestSourceCodeGraphLanguageYaml {
         ExecContextData.ProcessVertex v22 = vs2.stream().filter(o->o.process.equals("feature-processing_matrix")).findFirst().orElseThrow();
         ExecContextData.ProcessVertex v23 = vs2.stream().filter(o->o.process.equals("mh.permute-variables-and-hyper-params")).findFirst().orElseThrow();
 
-        assertEquals(1, findTargets(graph, v21.process).size());
-        assertEquals(1, findTargets(graph, v22.process).size());
-        assertEquals(1, findTargets(graph, v23.process).size());
+        assertEquals(1, findTargets(graph.processGraph, v21.process).size());
+        assertEquals(1, findTargets(graph.processGraph, v22.process).size());
+        assertEquals(1, findTargets(graph.processGraph, v23.process).size());
     }
 }
