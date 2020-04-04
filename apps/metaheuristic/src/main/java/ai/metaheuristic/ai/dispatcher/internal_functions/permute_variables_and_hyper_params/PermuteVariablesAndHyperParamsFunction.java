@@ -20,15 +20,15 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
-import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
@@ -41,7 +41,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
@@ -70,6 +69,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
     private final GlobalVariableRepository globalVariableRepository;
     private final TaskProducingCoreService taskProducingCoreService;
     private final ExecContextCache execContextCache;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     @Data
     public static class VariableHolder {
@@ -145,6 +145,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
 
         final Permutation<VariableHolder> permutation = new Permutation<>();
         AtomicLong featureId = new AtomicLong(0);
+        List<Long> parentTaskIds = new ArrayList<>();
         for (int i = 0; i < holders.size(); i++) {
             try {
                 permutation.printCombination(holders, i+1,
@@ -155,7 +156,12 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
                                 if (p==null) {
                                     throw new BreakFromLambdaException("Process '"+subProcess.process+"' wasn't found");
                                 }
-                                taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p);
+                                TaskImpl t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p);
+                                if (t==null) {
+                                    throw new BreakFromLambdaException("Creation of task failed");
+                                }
+
+                                execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, List.of(t.getId()));
                             }
 
     /*
