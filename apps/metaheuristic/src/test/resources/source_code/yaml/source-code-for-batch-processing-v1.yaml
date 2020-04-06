@@ -1,5 +1,5 @@
 source:
-  code: plan-for-batch-processing-1:0
+  uid: plan-for-batch-processing-1:0
   variables:
     startInputAs: input-data
   processes:
@@ -9,9 +9,9 @@ source:
         code: mh.variable-splitter
         context: internal
       inputs:
-        - variable: input-data
+        - name: input-data
       outputs:
-        - variable: batch-item
+        - name: batch-item
       subProcesses:
         logic: and
         processes:
@@ -20,16 +20,16 @@ source:
             function:
               code: process-item:1.0
             inputs:
-              - variable: batch-item
+              - name: batch-item
             outputs:
-              - variable: processed-file
+              - name: processed-file
     - code: mh.aggregate
       name: mh.aggregate
       function:
         code: mh.aggregate
         context: internal
       inputs:
-        - variable: processed-file
+        - name: processed-file
       outputs:
-        - variable: batch-result
+        - name: batch-result
 version: 1

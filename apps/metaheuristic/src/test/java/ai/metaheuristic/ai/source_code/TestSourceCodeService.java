@@ -213,7 +213,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         }
         int j;
         List<ExecContextData.TaskVertex> taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
-        assertEquals(5, taskVertices.size());
+        assertEquals(3, taskVertices.size());
         TaskImpl finishTask = null, permuteTask = null, aggregateTask = null;
 
         for (ExecContextData.TaskVertex taskVertex : taskVertices) {
@@ -234,9 +234,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
                 case Consts.MH_FINISH_FUNCTION:
                     finishTask = tempTask;
                     break;
-                case "test.fit.function:1.0":
-                case "test.predict.function:1.0":
-                    break;
+//                case "test.fit.function:1.0":
+//                case "test.predict.function:1.0":
+//                    break;
                 default:
                     throw new IllegalStateException("unknown code: " + tpy.task.function.code );
             }
@@ -254,6 +254,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
         TimeUnit.SECONDS.sleep(1);
         TaskImpl tempTask = taskRepository.findById(permuteTask.id).orElse(null);
         assertNotNull(tempTask);
+
+//        storeExecResult(task40);
+
         EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(tempTask.execState);
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(tempTask.functionExecResults);
         assertTrue(List.of(EnumsApi.TaskExecState.IN_PROGRESS, EnumsApi.TaskExecState.OK).contains(taskExecState),

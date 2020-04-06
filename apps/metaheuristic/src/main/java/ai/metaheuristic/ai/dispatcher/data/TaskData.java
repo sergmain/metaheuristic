@@ -23,6 +23,7 @@ import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,10 +42,11 @@ public class TaskData {
     @AllArgsConstructor
     public static class ProduceTaskResult {
         public EnumsApi.TaskProducingStatus status;
+        public @Nullable String error;
         public int numberOfTasks=0;
         public Long taskId;
 
-        public ProduceTaskResult(EnumsApi.TaskProducingStatus status) {
+        public ProduceTaskResult(EnumsApi.TaskProducingStatus status, @Nullable String error) {
             this.status = status;
         }
     }

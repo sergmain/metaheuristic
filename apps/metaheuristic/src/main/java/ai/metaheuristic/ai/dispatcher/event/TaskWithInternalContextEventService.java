@@ -20,11 +20,14 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -46,11 +49,11 @@ import org.springframework.stereotype.Service;
 @Profile("dispatcher")
 public class TaskWithInternalContextEventService {
 
-    private final TaskService taskService;
     private final TaskPersistencer taskPersistencer;
     private final TaskSyncService taskSyncService;
     private final InternalFunctionProcessor internalFunctionProcessor;
     private final ExecContextCache execContextCache;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     @Async
     @EventListener
@@ -92,7 +95,21 @@ public class TaskWithInternalContextEventService {
                     log.error("#707.050 error type: {}, message: {}", result.processing, result.error);
                     taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10001,
                             "#707.030 Task #"+event.taskId+" was finished with status '"+result.processing+"', text of error: " + result.error);
+                    return null;
                 }
+
+                ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
+                r.taskId = event.taskId;
+                FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
+                functionExec.exec = new FunctionApiData.SystemExecResult(taskParamsYaml.task.function.code, true, 0, "");
+                r.result = FunctionExecUtils.toString(functionExec);
+
+                taskPersistencer.storeExecResult(r, t -> {
+                    if (t!=null) {
+                        execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState());
+                    }
+                });
+
                 return null;
             });
         } catch (Throwable th) {

@@ -123,10 +123,13 @@ public class ExecContextProcessGraphService {
             switch(vertex.getSecond()) {
                 case PROCESS_NAME_ATTR:
                     vertex.getFirst().process = attribute.getValue();
+                    break;
                 case CONTEXT_ID_NAME_ATTR:
                     vertex.getFirst().internalContextId = attribute.getValue();
+                    break;
                 case "ID":
                     // do nothing
+                    break;
                 default:
                     log.error("Unknown attribute in vertex: " + vertex.getSecond()+", attr value: " + attribute.getValue());
             }
@@ -183,8 +186,8 @@ public class ExecContextProcessGraphService {
         return sourceCodeGraph.processGraph.getDescendants(startVertex);
     }
 
-    public static Set<ExecContextData.ProcessVertex> findAncestors(SourceCodeGraph sourceCodeGraph, ExecContextData.ProcessVertex startVertex) {
-        return sourceCodeGraph.processGraph.getAncestors(startVertex);
+    public static Set<ExecContextData.ProcessVertex> findAncestors(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex startVertex) {
+        return processGraph.getAncestors(startVertex);
     }
 
     public static List<ExecContextData.ProcessVertex> findLeafs(SourceCodeGraph sourceCodeGraph) {

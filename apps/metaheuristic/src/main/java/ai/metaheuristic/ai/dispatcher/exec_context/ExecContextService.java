@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -533,11 +532,11 @@ public class ExecContextService {
 
     public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, @NonNull ExecContextImpl execContext) {
 
-        Monitoring.log("##023", Enums.Monitor.MEMORY);
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
         // create all not dynamic tasks
         TaskData.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(isPersist, execContext.sourceCodeId, execContext.id, execContextParamsYaml);
+        log.info(S.f("Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist) {

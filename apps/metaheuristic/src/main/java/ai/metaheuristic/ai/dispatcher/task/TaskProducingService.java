@@ -36,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -54,9 +55,9 @@ public class TaskProducingService {
     private final InternalFunctionProcessor internalFunctionProcessor;
 
     public TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
-        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = execContextProcessGraphService.importProcessGraph(execContextParamsYaml);
+        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
-        TaskData.ProduceTaskResult okResult = new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.OK);
+        TaskData.ProduceTaskResult okResult = new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.OK, null);
         Map<String, List<Long>> parentProcesses = new HashMap<>();
         for (ExecContextData.ProcessVertex processVertex : processGraph) {
             String processCode = processVertex.process;
@@ -68,12 +69,21 @@ public class TaskProducingService {
                             Consts.MH_FINISH_FUNCTION_INSTANCE);
                 }
                 else {
-                    return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR);
+                    return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR, "Process '"+processCode+"' wasn't found");
                 }
             }
             if (internalFunctionProcessor.isRegistered(p.function.code) && p.function.context!=EnumsApi.FunctionExecContext.internal) {
-                return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR);
+                return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR,
+                        "Process '"+processCode+"' must be internal");
             }
+            Set<ExecContextData.ProcessVertex> ancestors = ExecContextProcessGraphService.findAncestors(processGraph, processVertex);
+            ExecContextParamsYaml.Process internalFuncProcess = checkForInternalFunctions(execContextParamsYaml, ancestors, p);
+
+            if (internalFuncProcess!=null) {
+                log.info(S.f("There is ancestor which is internal function: %s, process: %s", internalFuncProcess.function.code, internalFuncProcess.processCode));
+                continue;
+            }
+
 
             List<Long> parentTaskIds = new ArrayList<>();
             processGraph.incomingEdgesOf(processVertex).stream()
@@ -90,6 +100,26 @@ public class TaskProducingService {
             okResult.numberOfTasks += result.numberOfTasks;
         }
         return okResult;
+    }
+
+    private @Nullable ExecContextParamsYaml.Process checkForInternalFunctions(ExecContextParamsYaml execContextParamsYaml, Set<ExecContextData.ProcessVertex> ancestors, ExecContextParamsYaml.Process currProcess) {
+        for (ExecContextData.ProcessVertex ancestor : ancestors) {
+            ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(ancestor.process);
+            if (p==null) {
+                log.warn("Unusual state, need to investigate");
+                continue;
+            }
+            if (!currProcess.internalContextId.startsWith(p.internalContextId)) {
+                continue;
+            }
+            if (p.internalContextId.equals(currProcess.internalContextId)) {
+                continue;
+            }
+            if (p.function.context== EnumsApi.FunctionExecContext.internal) {
+                return p;
+            }
+        }
+        return null;
     }
 
 

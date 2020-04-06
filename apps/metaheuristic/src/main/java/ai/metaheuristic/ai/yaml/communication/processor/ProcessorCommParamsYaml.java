@@ -142,6 +142,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
         @NoArgsConstructor
         public static class SimpleTaskExecResult {
             public long taskId;
+            // string form of FunctionApiData.FunctionExec
             public String result;
         }
 

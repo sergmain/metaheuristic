@@ -20,6 +20,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
@@ -35,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Data
 public class ExecContextParamsYaml implements BaseParams {
@@ -138,8 +140,14 @@ public class ExecContextParamsYaml implements BaseParams {
     public @NonNull String processesGraph = ConstsApi.EMPTY_GRAPH;
 
     @JsonIgnore
+    private HashMap<String, Process> processMap = null;
+
+    @JsonIgnore
     public @Nullable Process findProcess(String processCode) {
-        return processes.stream().filter(o -> o.processCode.equals(processCode)).findAny().orElse(null);
+        if (processMap==null) {
+            processMap = processes.stream().collect(Collectors.toMap(o->o.processCode, o->o, (a, b) -> b, HashMap::new));
+        }
+        return processMap.get(processCode);
     }
 
 }

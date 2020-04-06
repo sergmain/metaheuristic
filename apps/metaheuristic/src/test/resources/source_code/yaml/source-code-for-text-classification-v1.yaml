@@ -17,7 +17,7 @@ source:
       outputs:
         - name: batch-item
       subProcesses:
-        exec: parallel
+        logic: and
         processes:
           - code: function-1
             name: function-1
@@ -27,5 +27,4 @@ source:
               - name: batch-item
             outputs:
               - name: processed-file
-
 version: 1
