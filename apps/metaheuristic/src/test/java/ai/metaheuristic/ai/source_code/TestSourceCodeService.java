@@ -248,8 +248,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         DispatcherCommParamsYaml.AssignedTask task40 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-
         assertNull(task40);
+
         long mills = System.currentTimeMillis();
         boolean finished = false;
         System.out.println("Start waiting for finishing of task #"+permuteTask.id);
@@ -270,6 +270,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.OK, taskExecState,
                 "Current status: " + taskExecState + ", exitCode: " + functionExec.exec.exitCode+", console: " + functionExec.exec.console);
 
+        taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+        assertEquals(9, taskVertices.size());
 
 /*        for ( j = 0; j < 1000; j++) {
             if (j%20==0) {
