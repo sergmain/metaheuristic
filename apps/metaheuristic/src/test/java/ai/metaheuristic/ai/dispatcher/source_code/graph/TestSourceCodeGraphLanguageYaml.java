@@ -47,17 +47,17 @@ public class TestSourceCodeGraphLanguageYaml {
 
         assertNotNull(graph);
         assertTrue(graph.clean);
-        assertEquals(6, graph.processGraph.vertexSet().size());
+        assertEquals(9, graph.processGraph.vertexSet().size());
 
-        // it's 5, not 6, because mh.finish isn't defined in this SourceCode
-        assertEquals(5, graph.processes.size());
+        // it's 8, not 9, because mh.finish isn't defined in this SourceCode
+        assertEquals(8, graph.processes.size());
 
         Map<String, Long> ids = new HashMap<>();
         AtomicLong currId = new AtomicLong();
 
         // value of internalContextId doesn't matter in this case
         ExecContextData.ProcessVertex vertexAssembly = SourceCodeGraphLanguageYaml.getVertex(ids, currId, "assembly-raw-file", "1");
-        assertEquals(5, findDescendants(graph, vertexAssembly).size());
+        assertEquals(8, findDescendants(graph, vertexAssembly).size());
         assertEquals(1, findLeafs(graph).size());
 
         ExecContextData.ProcessVertex v = findVertex(graph.processGraph, vertexAssembly.process);
@@ -82,6 +82,6 @@ public class TestSourceCodeGraphLanguageYaml {
 
         assertEquals(1, findTargets(graph.processGraph, v21.process).size());
         assertEquals(1, findTargets(graph.processGraph, v22.process).size());
-        assertEquals(1, findTargets(graph.processGraph, v23.process).size());
+        assertEquals(2, findTargets(graph.processGraph, v23.process).size());
     }
 }
