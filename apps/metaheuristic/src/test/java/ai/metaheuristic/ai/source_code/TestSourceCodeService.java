@@ -19,25 +19,24 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -49,7 +48,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.lang.Nullable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -250,16 +248,26 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         DispatcherCommParamsYaml.AssignedTask task40 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+
         assertNull(task40);
-        TimeUnit.SECONDS.sleep(1);
+        long mills = System.currentTimeMillis();
+        boolean finished = false;
+        System.out.println("Start waiting for finishing of task #"+permuteTask.id);
+        while( System.currentTimeMillis() - mills <20_000) {
+            TimeUnit.SECONDS.sleep(1);
+            finished = TaskWithInternalContextEventService.taskFinished(permuteTask.id);
+            if (finished) {
+                break;
+            }
+        }
+        assertTrue(finished, "After 60 seconds permuteTask still isn't finished ");
+
         TaskImpl tempTask = taskRepository.findById(permuteTask.id).orElse(null);
         assertNotNull(tempTask);
 
-//        storeExecResult(task40);
-
         EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(tempTask.execState);
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(tempTask.functionExecResults);
-        assertTrue(List.of(EnumsApi.TaskExecState.IN_PROGRESS, EnumsApi.TaskExecState.OK).contains(taskExecState),
+        assertEquals(EnumsApi.TaskExecState.OK, taskExecState,
                 "Current status: " + taskExecState + ", exitCode: " + functionExec.exec.exitCode+", console: " + functionExec.exec.console);
 
 
