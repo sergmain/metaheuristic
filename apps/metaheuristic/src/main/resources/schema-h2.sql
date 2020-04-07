@@ -151,8 +151,7 @@ CREATE TABLE mh_task
     EXEC_CONTEXT_ID              NUMERIC(10, 0) NOT NULL,
     EXEC_STATE                   tinyint(1)     not null default 0,
     IS_RESULT_RECEIVED           tinyint(1)     not null default 0,
-    RESULT_RESOURCE_SCHEDULED_ON bigint,
-    EXTENDED_RESULT              MEDIUMTEXT
+    RESULT_RESOURCE_SCHEDULED_ON bigint
 );
 
 CREATE INDEX mh_task_exec_context_id_idx
