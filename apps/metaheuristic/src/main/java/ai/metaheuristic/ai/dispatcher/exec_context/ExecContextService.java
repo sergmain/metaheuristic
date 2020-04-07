@@ -394,11 +394,11 @@ public class ExecContextService {
         final ProcessorStatusYaml processorStatus = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
 
         int page = 0;
-        Task resultTask = null;
+        TaskImpl resultTask = null;
         String resultTaskParams = null;
-        List<Task> tasks;
+        List<TaskImpl> tasks;
         while ((tasks = getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
-            for (Task task : tasks) {
+            for (TaskImpl task : tasks) {
                 final TaskParamsYaml taskParamYaml;
                 try {
                     taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
@@ -410,6 +410,12 @@ public class ExecContextService {
                 }
                 // all tasks with internal function will be processed in different thread
                 if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
+                    // Do Not set EnumsApi.TaskExecState.IN_PROGRESS here.
+                    // it'll be set in ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEventService.handleAsync
+                    task.setAssignedOn(System.currentTimeMillis());
+                    task.setResultResourceScheduledOn(0);
+                    taskRepository.save(task);
+
                     applicationEventPublisher.publishEvent(new TaskWithInternalContextEvent(task.getId()));
                     continue;
                 }
@@ -483,8 +489,8 @@ public class ExecContextService {
         resultTask.setProcessorId(processor.getId());
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         resultTask.setResultResourceScheduledOn(0);
+        taskRepository.save(resultTask);
 
-        taskRepository.save((TaskImpl)resultTask);
         execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
         dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.getId(), resultTask.getId(), execContextId);
 
@@ -508,7 +514,7 @@ public class ExecContextService {
         return false;
     }
 
-    private List<Task> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex> vertices, int page) {
+    private List<TaskImpl> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex> vertices, int page) {
         final List<Long> idsForSearch = getIdsForSearch(vertices, page, 20);
         if (idsForSearch.isEmpty()) {
             return List.of();

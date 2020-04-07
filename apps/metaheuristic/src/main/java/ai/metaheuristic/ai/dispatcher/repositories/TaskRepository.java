@@ -81,8 +81,12 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     Stream<Object[]> findByExecContextId(Long execContextId);
 
     @Transactional(readOnly = true)
+    @Query(value="select t from TaskImpl t where t.execContextId=:execContextId")
+    List<TaskImpl> findByExecContextIdAsList(Long execContextId);
+
+    @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.processorId is null and t.execContextId=:execContextId and t.id in :ids ")
-    List<Task> findForAssigning(Long execContextId, List<Long> ids);
+    List<TaskImpl> findForAssigning(Long execContextId, List<Long> ids);
 
     @Transactional(readOnly = true)
     @Query("SELECT t.id FROM TaskImpl t where t.processorId=:processorId and t.isCompleted=false")

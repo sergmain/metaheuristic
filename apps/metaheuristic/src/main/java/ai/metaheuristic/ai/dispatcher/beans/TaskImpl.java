@@ -62,9 +62,6 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "FUNCTION_EXEC_RESULTS")
     public String functionExecResults;
 
-    @Column(name = "EXTENDED_RESULT")
-    public String extendedResult;
-
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 

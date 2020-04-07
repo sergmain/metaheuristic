@@ -111,6 +111,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
 
+        verifyGraphIntegrity();
+
         // ======================
 
         // the calling of this method will produce a warning "#705.180 ExecContext wasn't started." which is correct behaviour
@@ -162,6 +164,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
             assertNotNull(v);
             storeExecResult(simpleTask);
+
             execContextSchedulerService.updateExecContextStatuses(true);
         }
         {
@@ -209,7 +212,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             storeExecResult(simpleTask32);
             execContextSchedulerService.updateExecContextStatuses(true);
         }
-        int j;
+        verifyGraphIntegrity();
         List<ExecContextData.TaskVertex> taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
         assertEquals(3, taskVertices.size());
         TaskImpl finishTask = null, permuteTask = null, aggregateTask = null;
@@ -270,8 +273,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.OK, taskExecState,
                 "Current status: " + taskExecState + ", exitCode: " + functionExec.exec.exitCode+", console: " + functionExec.exec.console);
 
+        verifyGraphIntegrity();
         taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
-        assertEquals(9, taskVertices.size());
+        assertEquals(8, taskVertices.size());
 
 /*        for ( j = 0; j < 1000; j++) {
             if (j%20==0) {
@@ -298,7 +302,23 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertEquals(0, prevValue);*/
     }
 
+    private void verifyGraphIntegrity() {
+
+        List<TaskImpl> tasks = taskRepository.findByExecContextIdAsList(execContextForTest.id);
+        List<ExecContextData.TaskVertex> taskVertices = execContextService.findAllVertices(execContextForTest.id);
+        assertEquals(tasks.size(), taskVertices.size());
+
+        for (ExecContextData.TaskVertex taskVertex : taskVertices) {
+            Task t = tasks.stream().filter(o->o.id.equals(taskVertex.taskId)).findAny().orElse(null);
+            assertNotNull(t, "task with id #"+ taskVertex.taskId+"wasn't found");
+            assertEquals(t.getExecState(), taskVertex.execState.value, "task has a different states in db and graph, " +
+                    "db: " + EnumsApi.TaskExecState.from(t.getExecState())+", graph: " + taskVertex.execState);
+        }
+    }
+
     public void storeExecResult(DispatcherCommParamsYaml.AssignedTask simpleTask) {
+        verifyGraphIntegrity();
+
         ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
         r.setTaskId(simpleTask.getTaskId());
         r.setResult(getOKExecResult());
@@ -309,6 +329,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
             }
         });
         taskPersistencer.setResultReceived(simpleTask.getTaskId(), true);
+
+        verifyGraphIntegrity();
     }
 
     private String getOKExecResult() {

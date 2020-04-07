@@ -69,7 +69,7 @@ public class TaskWithInternalContextEventService {
 
     @Async
     @EventListener
-    public void handleAsync(TaskWithInternalContextEvent event) {
+    public void handleAsync(final TaskWithInternalContextEvent event) {
         try {
             taskSyncService.getWithSync(event.taskId, (task) -> {
                 try {
@@ -122,6 +122,7 @@ public class TaskWithInternalContextEventService {
                             execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState());
                         }
                     });
+                    Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(event.taskId, true);
 
                     return null;
                 } catch (Throwable th) {

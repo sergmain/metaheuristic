@@ -90,6 +90,7 @@ public class TaskPersistencer {
                 return Enums.UploadResourceStatus.OK;
             } catch (ObjectOptimisticLockingFailureException e) {
                 log.warn("#307.040 !!!NEED TO INVESTIGATE. Error set resultReceived to {}, taskId: {}, error: {}", resultReceived, taskId, e.toString());
+                log.warn("#307.041 ObjectOptimisticLockingFailureException", e);
                 return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
             }
         });
@@ -146,6 +147,7 @@ public class TaskPersistencer {
             action.accept(t);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#307.060 !!!NEED TO INVESTIGATE. Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
+            log.error("#307.061 ObjectOptimisticLockingFailureException", e);
         }
     }
 
@@ -234,7 +236,6 @@ public class TaskPersistencer {
                 }
             }
             task.setFunctionExecResults(result.getResult());
-            task.setExtendedResult(null);
             task = taskRepository.save(task);
 
             return task;
