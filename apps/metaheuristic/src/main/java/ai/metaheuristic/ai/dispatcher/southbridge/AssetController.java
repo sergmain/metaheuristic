@@ -66,7 +66,7 @@ public class AssetController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            CleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryType.function, code, chunkSize, chunkNum);
+            CleanerInfo resource = serverService.deliverVariable(EnumsApi.BinaryType.function, code, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

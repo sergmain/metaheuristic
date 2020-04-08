@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
@@ -37,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.lang.NonNull;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -95,8 +97,14 @@ public class TaskWithInternalContextEventService {
                     ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
                     ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
                     if (p == null) {
-                        log.warn("#707.040 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + execContext.id);
-                        return null;
+                        if (Consts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {
+                            ExecContextParamsYaml.FunctionDefinition function = new ExecContextParamsYaml.FunctionDefinition(Consts.MH_FINISH_FUNCTION, "", EnumsApi.FunctionExecContext.internal);
+                            p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, "1", function);
+                        }
+                        else {
+                            log.warn("#707.040 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + execContext.id);
+                            return null;
+                        }
                     }
 
                     variableService.initOutputVariables(taskParamsYaml, execContext, p);

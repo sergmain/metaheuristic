@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -46,11 +45,6 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
     @Transactional(readOnly = true)
     @Query(value="select v from GlobalVariable v where v.name=:name")
     GlobalVariable findIdByName(String name);
-
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(" +
-            "b.id, b.name, b.params, b.filename) " +
-            "from GlobalVariable b where b.name in :vars")
-    List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(List<String> vars);
 
     List<GlobalVariable> findAllByName(String name);
 

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
@@ -51,6 +52,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -128,91 +130,15 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(gv);
 
         assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
-        {
-            DispatcherCommParamsYaml.AssignedTask simpleTask =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-            // function code is function-01:1.1
-            assertNotNull(simpleTask);
-            assertNotNull(simpleTask.getTaskId());
-            Task task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
-            assertNotNull(task);
+        step_AssembledRaw();
+        step_DatasetProcessing();
 
-            // the calling of this method will produce warning "#705.160 can't assign any new task to the processor" which is correct behaviour
-            DispatcherCommParamsYaml.AssignedTask simpleTask2 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-            assertNull(simpleTask2);
+        //   processCode: feature-processing-1, function code: function-03:1.1
+        step_CommonProcessing();
 
-            TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask.params);
-            assertNotNull(taskParamsYaml.task.processCode);
-            assertNotNull(taskParamsYaml.task.inputs);
-            assertNotNull(taskParamsYaml.task.outputs);
-            assertEquals(1, taskParamsYaml.task.inputs.size());
-            assertEquals(1, taskParamsYaml.task.outputs.size());
+        //   processCode: feature-processing-2, function code: function-04:1.1
+        step_CommonProcessing();
 
-            TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
-            assertEquals("test-variable", inputVariable.name);
-            assertEquals(EnumsApi.VariableContext.global, inputVariable.context);
-            assertEquals(testGlobalVariable.id.toString(), inputVariable.id);
-
-            TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-            assertEquals("assembled-raw-output", outputVariable.name);
-            assertEquals(EnumsApi.VariableContext.local, outputVariable.context);
-            assertNotNull(outputVariable.id);
-
-            SimpleVariableAndStorageUrl v = variableService.getVariableAsSimple(
-                    "assembled-raw-output", taskParamsYaml.task.processCode, execContextForTest);
-
-            assertNotNull(v);
-            storeExecResult(simpleTask);
-
-            execContextSchedulerService.updateExecContextStatuses(true);
-        }
-        {
-            DispatcherCommParamsYaml.AssignedTask simpleTask20 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-            // function code is function-02:1.1
-            assertNotNull(simpleTask20);
-            assertNotNull(simpleTask20.getTaskId());
-            Task task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
-            assertNotNull(task3);
-
-            // the calling of this method will produce warning "#705.160 can't assign any new task to the processor" which is correct behaviour
-            DispatcherCommParamsYaml.AssignedTask simpleTask21 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-            assertNull(simpleTask21);
-
-            storeExecResult(simpleTask20);
-            execContextSchedulerService.updateExecContextStatuses(true);
-        }
-        {
-            DispatcherCommParamsYaml.AssignedTask simpleTask30 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-            //   processCode: feature-processing-1, function code: function-03:1.1
-            assertNotNull(simpleTask30);
-            assertNotNull(simpleTask30.getTaskId());
-            Task task30 = taskRepository.findById(simpleTask30.getTaskId()).orElse(null);
-            assertNotNull(task30);
-
-            DispatcherCommParamsYaml.AssignedTask simpleTask31 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-
-            assertNull(simpleTask31);
-
-            storeExecResult(simpleTask30);
-            execContextSchedulerService.updateExecContextStatuses(true);
-        }
-        {
-            DispatcherCommParamsYaml.AssignedTask simpleTask32 =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-            //   processCode: feature-processing-2, function code: function-04:1.1
-            assertNotNull(simpleTask32);
-            assertNotNull(simpleTask32.getTaskId());
-            Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
-            assertNotNull(task32);
-            storeExecResult(simpleTask32);
-            execContextSchedulerService.updateExecContextStatuses(true);
-        }
-        verifyGraphIntegrity();
         List<ExecContextData.TaskVertex> taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
         assertEquals(3, taskVertices.size());
         TaskImpl finishTask = null, permuteTask = null, aggregateTask = null;
@@ -251,7 +177,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         DispatcherCommParamsYaml.AssignedTask task40 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-        // null because current task is 'internal' and will be processed async
+        // null because current task is 'internal' and will be processed in async way
         assertNull(task40);
 
         waitForFinishing(permuteTask.id, 20);
@@ -275,14 +201,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         // process and complete fit/predict tasks
         for (int i = 0; i < 6; i++) {
-            DispatcherCommParamsYaml.AssignedTask assignedMlTask =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-            assertNotNull(assignedMlTask);
-            assertNotNull(assignedMlTask.getTaskId());
-            Task mlTask = taskRepository.findById(assignedMlTask.getTaskId()).orElse(null);
-            assertNotNull(mlTask);
-            storeExecResult(assignedMlTask);
-            execContextSchedulerService.updateExecContextStatuses(true);
+            step_FitAndPredict();
         }
 
         verifyGraphIntegrity();
@@ -294,7 +213,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         {
             DispatcherCommParamsYaml.AssignedTask t =
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-            // null because current task is 'internal' and will be processed async
+            // null because current task is 'internal' and will be processed in async way
             assertNull(t);
             waitForFinishing(aggregateTask.id, 20);
         }
@@ -303,12 +222,176 @@ public class TestSourceCodeService extends PreparingSourceCode {
         {
             DispatcherCommParamsYaml.AssignedTask t =
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-            // null because current task is 'internal' and will be processed async
+            // null because current task is 'internal' and will be processed in async way
             assertNull(t);
             waitForFinishing(finishTask.id, 20);
         }
         taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
         assertEquals(0, taskVertices.size());
+    }
+
+    public void step_CommonProcessing() {
+        DispatcherCommParamsYaml.AssignedTask simpleTask32 =
+                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+
+        assertNotNull(simpleTask32);
+        assertNotNull(simpleTask32.getTaskId());
+        Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
+        assertNotNull(task32);
+
+        DispatcherCommParamsYaml.AssignedTask simpleTask31 =
+                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+
+        assertNull(simpleTask31);
+
+        storeExecResult(simpleTask32);
+        execContextSchedulerService.updateExecContextStatuses(true);
+    }
+
+    public void step_FitAndPredict() {
+        DispatcherCommParamsYaml.AssignedTask simpleTask32 =
+                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+
+        assertNotNull(simpleTask32);
+        assertNotNull(simpleTask32.getTaskId());
+        Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
+        assertNotNull(task32);
+
+        DispatcherCommParamsYaml.AssignedTask simpleTask31 =
+                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+
+        assertNull(simpleTask31);
+
+        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask32.params);
+        assertNotNull(taskParamsYaml.task.processCode);
+        assertNotNull(taskParamsYaml.task.inputs);
+        assertNotNull(taskParamsYaml.task.outputs);
+
+        boolean fitTask = "fit-dataset".equals(taskParamsYaml.task.processCode);
+
+        assertEquals(2, taskParamsYaml.task.inputs.size());
+        assertEquals(fitTask ? 1 : 2, taskParamsYaml.task.outputs.size());
+
+        if (fitTask) {
+            storeOutputVariableWithTaskContextId(
+                    "model", "model-data-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode);
+        }
+        else {
+            storeOutputVariableWithTaskContextId(
+                    "metrics", "metrics-output-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode);
+            storeOutputVariableWithTaskContextId(
+                    "predicted", "predicted-output-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode);
+        }
+
+        storeExecResult(simpleTask32);
+        execContextSchedulerService.updateExecContextStatuses(true);
+    }
+
+    public void step_DatasetProcessing() {
+        DispatcherCommParamsYaml.AssignedTask simpleTask20 =
+                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+        // function code is function-02:1.1
+        assertNotNull(simpleTask20);
+        assertNotNull(simpleTask20.getTaskId());
+        Task task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
+        assertNotNull(task3);
+
+        // the calling of this method will produce warning "#705.160 can't assign any new task to the processor" which is correct behaviour
+        DispatcherCommParamsYaml.AssignedTask simpleTask21 =
+                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+        assertNull(simpleTask21);
+
+        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask20.params);
+        assertNotNull(taskParamsYaml.task.processCode);
+        assertNotNull(taskParamsYaml.task.inputs);
+        assertNotNull(taskParamsYaml.task.outputs);
+        assertEquals(1, taskParamsYaml.task.inputs.size());
+        assertEquals(1, taskParamsYaml.task.outputs.size());
+
+        storeOutputVariable("dataset-processing-output", "dataset-processing-output-result", taskParamsYaml.task.processCode);
+        storeExecResult(simpleTask20);
+
+        execContextSchedulerService.updateExecContextStatuses(true);
+    }
+
+    private void storeOutputVariable(String variableName, String variableData, String processCode) {
+
+        SimpleVariableAndStorageUrl v = variableService.getVariableAsSimple(
+                variableName, processCode, execContextForTest);
+
+        assertNotNull(v);
+        assertFalse(v.inited);
+
+        Variable variable = variableService.findById(v.id).orElse(null);
+        assertNotNull(variable);
+
+        byte[] bytes = variableData.getBytes();
+        variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable);
+
+
+
+        v = variableService.getVariableAsSimple(v.variable, processCode, execContextForTest);
+        assertNotNull(v);
+        assertTrue(v.inited);
+
+
+    }
+
+    private void storeOutputVariableWithTaskContextId(String variableName, String variableData, String taskContextId, String processCode) {
+
+        SimpleVariableAndStorageUrl v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextForTest.id);
+
+        assertNotNull(v);
+        assertFalse(v.inited);
+
+        Variable variable = variableService.findById(v.id).orElse(null);
+        assertNotNull(variable);
+
+        byte[] bytes = variableData.getBytes();
+        variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable);
+
+        v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextForTest.id);
+        assertNotNull(v);
+        assertTrue(v.inited);
+
+
+    }
+
+    public void step_AssembledRaw() {
+        DispatcherCommParamsYaml.AssignedTask simpleTask =
+                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+        // function code is function-01:1.1
+        assertNotNull(simpleTask);
+        assertNotNull(simpleTask.getTaskId());
+        Task task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
+        assertNotNull(task);
+
+        // the calling of this method will produce warning "#705.160 can't assign any new task to the processor" which is correct behaviour
+        DispatcherCommParamsYaml.AssignedTask simpleTask2 =
+                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+        assertNull(simpleTask2);
+
+        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask.params);
+        assertNotNull(taskParamsYaml.task.processCode);
+        assertNotNull(taskParamsYaml.task.inputs);
+        assertNotNull(taskParamsYaml.task.outputs);
+        assertEquals(1, taskParamsYaml.task.inputs.size());
+        assertEquals(1, taskParamsYaml.task.outputs.size());
+
+        TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
+        assertEquals("test-variable", inputVariable.name);
+        assertEquals(EnumsApi.VariableContext.global, inputVariable.context);
+        assertEquals(testGlobalVariable.id.toString(), inputVariable.id);
+
+        TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
+        assertEquals("assembled-raw-output", outputVariable.name);
+        assertEquals(EnumsApi.VariableContext.local, outputVariable.context);
+        assertNotNull(outputVariable.id);
+
+        storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
+        storeExecResult(simpleTask);
+
+        execContextSchedulerService.updateExecContextStatuses(true);
     }
 
     public void waitForFinishing(Long id, int secs) throws InterruptedException {

@@ -20,33 +20,27 @@ import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 
 @Data
 @AllArgsConstructor
 public class SimpleVariableAndStorageUrl {
-    public final String id;
+    public final Long id;
     public final String variable;
     public final String storageUrl;
     public final String originalFilename;
-    public final @Nullable String taskContextId;
+    public final boolean inited;
+    public final String taskContextId;
 
-    public SimpleVariableAndStorageUrl(Long id, String variable, String storageUrl, String originalFilename, @NonNull String taskContextId) {
-        this.id = id.toString();
+/*
+    public SimpleVariableAndStorageUrl(Long id, String variable, String storageUrl, String originalFilename, boolean inited, String taskContextId) {
+        this.id = id;
         this.variable = variable;
         this.storageUrl = storageUrl;
         this.originalFilename = originalFilename;
+        this.inited = inited;
         this.taskContextId = taskContextId;
     }
-
-    public SimpleVariableAndStorageUrl(Long id, String variable, String storageUrl, String originalFilename) {
-        this.id = id.toString();
-        this.variable = variable;
-        this.storageUrl = storageUrl;
-        this.originalFilename = originalFilename;
-        this.taskContextId = null;
-    }
+*/
 
     public DataStorageParams getParams() {
         return DataStorageParamsUtils.to(storageUrl);

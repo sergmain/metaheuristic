@@ -70,7 +70,7 @@ public class SouthbridgeController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            CleanerInfo resource = serverService.deliverResource(EnumsApi.BinaryType.data, id, chunkSize, chunkNum);
+            CleanerInfo resource = serverService.deliverVariable(EnumsApi.BinaryType.data, id, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {
@@ -87,7 +87,7 @@ public class SouthbridgeController {
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) {
         log.debug("uploadResourceAuth(), resourceId: {}", resourceId);
-        return serverService.uploadResource(file, resourceId);
+        return serverService.uploadVariable(file, resourceId);
     }
 
     /**

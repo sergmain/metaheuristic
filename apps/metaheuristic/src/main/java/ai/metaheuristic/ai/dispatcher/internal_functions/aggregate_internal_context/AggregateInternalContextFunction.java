@@ -77,11 +77,11 @@ public class AggregateInternalContextFunction implements InternalFunction {
                     "There must be only one output variable, current: "+ taskParamsYaml.task.outputs);
         }
 
-        Variable bd;
+        Variable variable;
         TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
         if (outputVariable.context==EnumsApi.VariableContext.local) {
-            bd = variableRepository.findById(Long.valueOf(outputVariable.id)).orElse(null);
-            if (bd == null) {
+            variable = variableRepository.findById(Long.valueOf(outputVariable.id)).orElse(null);
+            if (variable == null) {
                 throw new IllegalStateException("Variable not found for code " + outputVariable);
             }
         }
@@ -96,20 +96,20 @@ public class AggregateInternalContextFunction implements InternalFunction {
         }
         List<SimpleVariableAndStorageUrl> list = variableRepository.findByExecContextIdAndNames(execContextId, names);
 
-        File dir = DirUtils.createTempDir("mh-aggregate-internal-context");
-        if (dir==null) {
+        File tempDir = DirUtils.createTempDir("mh-aggregate-internal-context-");
+        if (tempDir==null) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
                     "Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
         }
-        File resultDir = DirUtils.createTempDir("mh-aggregate-internal-context-result");
-        if (resultDir==null) {
+        File outputDir = new File(tempDir, outputVariable.name);
+        if (!outputDir.mkdirs()) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                    "Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
+                    "Can't create output directory  "+ outputDir.getAbsolutePath());
         }
 
         list.stream().map(o->o.taskContextId).collect(Collectors.toSet())
                 .forEach(contextId->{
-                    File taskContextDir = new File(dir, contextId);
+                    File taskContextDir = new File(outputDir, contextId);
                     //noinspection ResultOfMethodCallIgnored
                     taskContextDir.mkdirs();
                     list.stream().filter(t-> contextId.equals(t.taskContextId))
@@ -119,13 +119,14 @@ public class AggregateInternalContextFunction implements InternalFunction {
                             });
                 });
 
-        File zipFile = new File(resultDir, "result.zip");
-        ZipUtils.createZip(dir, zipFile);
+        File zipFile = new File(tempDir, "result-for-"+outputVariable.name+".zip");
+
+        ZipUtils.createZip(outputDir, zipFile);
         try (InputStream is = new FileInputStream(zipFile)) {
-            variableService.update(is, zipFile.length(), bd);
+            variableService.update(is, zipFile.length(), variable);
         } catch (Throwable e) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                    "Error while storing result to variable '"+bd.name);
+                    "Error while storing result to variable '"+variable.name);
         }
 
         return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);

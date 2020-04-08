@@ -104,7 +104,7 @@ public class VariableService {
     @Transactional(readOnly = true)
     public @Nullable Variable getBinaryData(Long id) {
         if (!globals.isUnitTesting) {
-            throw new IllegalStateException("this method intended to be only for test cases");
+            throw new IllegalStateException("#087.010 this method intended to be only for test cases");
         }
         return getBinaryData(id, true);
     }
@@ -120,16 +120,16 @@ public class VariableService {
             }
             return data;
         } catch (SQLException e) {
-            throw new IllegalStateException("SQL error", e);
+            throw new IllegalStateException("#087.020 SQL error", e);
         }
     }
 
-    public void storeToFile(String id, File trgFile) {
+    public void storeToFile(Long variableId, File trgFile) {
         try {
-            Blob blob = variableRepository.getDataAsStreamById(Long.valueOf(id));
+            Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                log.warn("#087.010 Binary data for id {} wasn't found", id);
-                throw new BinaryDataNotFoundException("#087.010 Binary data wasn't found, code: " + id);
+                log.warn("#087.030 Binary data for variableId {} wasn't found", variableId);
+                throw new BinaryDataNotFoundException("#087.040 Binary data wasn't found, code: " + variableId);
             }
             try (InputStream is = blob.getBinaryStream()) {
                 FileUtils.copyInputStreamToFile(is, trgFile);
@@ -137,7 +137,7 @@ public class VariableService {
         } catch (BinaryDataNotFoundException e) {
             throw e;
         } catch (Exception e) {
-            String es = "#087.020 Error while storing binary data";
+            String es = "#087.050 Error while storing binary data";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -188,7 +188,7 @@ public class VariableService {
         catch(VariableSavingException | PessimisticLockingFailureException e) {
             throw e;
         } catch(Throwable th) {
-            throw new VariableSavingException("#087.070 error storing data to db - " + th.getMessage(), th);
+            throw new VariableSavingException("#087.060 error storing data to db - " + th.getMessage(), th);
         }
     }
 
@@ -297,7 +297,7 @@ public class VariableService {
             }
         } catch (IOException e) {
             log.error("Error", e);
-            throw new StoreNewFileException("Error while storing", e, tempFile.getPath(), filename);
+            throw new StoreNewFileException("#087.080 Error while storing", e, tempFile.getPath(), filename);
         }
     }
 }

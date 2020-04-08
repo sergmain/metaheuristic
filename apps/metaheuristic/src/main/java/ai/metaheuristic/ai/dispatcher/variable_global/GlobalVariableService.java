@@ -67,7 +67,7 @@ public class GlobalVariableService {
     @Transactional(readOnly = true)
     public GlobalVariable getBinaryData(Long id) {
         if (!globals.isUnitTesting) {
-            throw new IllegalStateException("this method intended to be only for test cases");
+            throw new IllegalStateException("#089.010 this method intended to be only for test cases");
         }
         return getBinaryData(id, true);
     }
@@ -84,7 +84,7 @@ public class GlobalVariableService {
             }
             return data;
         } catch (SQLException e) {
-            throw new IllegalStateException("SQL error", e);
+            throw new IllegalStateException("#089.020 SQL error", e);
         }
     }
 
@@ -92,8 +92,8 @@ public class GlobalVariableService {
         try {
             Blob blob = globalVariableRepository.getDataAsStreamById(id);
             if (blob==null) {
-                log.warn("#087.010 Binary data for id {} wasn't found", id);
-                throw new BinaryDataNotFoundException("#087.010 Binary data wasn't found, id: " + id);
+                log.warn("#089.030 Binary data for id {} wasn't found", id);
+                throw new BinaryDataNotFoundException("#089.040 Binary data wasn't found, id: " + id);
             }
             try (InputStream is = blob.getBinaryStream()) {
                 FileUtils.copyInputStreamToFile(is, trgFile);
@@ -101,18 +101,10 @@ public class GlobalVariableService {
         } catch (BinaryDataNotFoundException e) {
             throw e;
         } catch (Exception e) {
-            String es = "#087.020 Error while storing binary data";
+            String es = "#089.050 Error while storing binary data";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
-    }
-
-    @Transactional(readOnly = true)
-    public List<SimpleVariableAndStorageUrl> getIdInVariables(List<String> variables) {
-        if (variables.isEmpty()) {
-            return List.of();
-        }
-        return globalVariableRepository.getIdAndStorageUrlInVars(variables);
     }
 
     public void deleteByVariable(String variable) {
@@ -137,7 +129,7 @@ public class GlobalVariableService {
         catch(VariableSavingException | PessimisticLockingFailureException e) {
             throw e;
         } catch(Throwable th) {
-            throw new VariableSavingException("#087.070 error storing data to db - " + th.getMessage(), th);
+            throw new VariableSavingException("#089.060 error storing data to db - " + th.getMessage(), th);
         }
     }
 
@@ -147,8 +139,8 @@ public class GlobalVariableService {
                 return save(is, tempFile.length(), variable, filename);
             }
         } catch (IOException e) {
-            log.error("Error", e);
-            throw new StoreNewFileException("Error while storing", e, tempFile.getPath(), filename);
+            log.error("#089.070 Error", e);
+            throw new StoreNewFileException("#089.080 Error while storing", e, tempFile.getPath(), filename);
         }
     }
 
@@ -170,7 +162,7 @@ public class GlobalVariableService {
             throw e;
         }
         catch(Throwable th) {
-            log.error("#087.100 error storing data to db", th);
+            log.error("#089.090 error storing data to db", th);
             throw new RuntimeException("Error", th);
         }
     }

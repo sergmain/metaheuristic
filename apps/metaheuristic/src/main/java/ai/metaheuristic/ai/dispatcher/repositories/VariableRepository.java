@@ -49,19 +49,19 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     List<Long> findAllOrphanExecContextData();
 
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(" +
-            "b.id, b.name, b.params, b.filename, b.taskContextId ) " +
+            "b.id, b.name, b.params, b.filename, b.inited, b.taskContextId ) " +
             "from Variable b where b.name in :vars and " +
             "b.execContextId=:execContextId")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVarsForExecContext(List<String> vars, Long execContextId);
 
     @Nullable
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(v.id, v.name, v.params, v.filename, v.taskContextId) " +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
             "from Variable v where v.name=:name and v.taskContextId=:taskContextId and v.execContextId=:execContextId")
     SimpleVariableAndStorageUrl findByNameAndTaskContextIdAndExecContextId(String name, String taskContextId, Long execContextId);
 
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(v.id, v.name, v.params, v.filename, v.taskContextId) " +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
             "from Variable v where v.execContextId=:execContextId and v.name in (:names)")
     List<SimpleVariableAndStorageUrl> findByExecContextIdAndNames(Long execContextId, String[] names);
 
@@ -76,7 +76,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     List<Object[]> getFilenamesForBatchIds(Collection<Long> ids);
 
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(" +
-            "b.id, b.name, b.params, b.filename, b.taskContextId) " +
+            "b.id, b.name, b.params, b.filename, b.inited, b.taskContextId) " +
             "from Variable b where b.name in :vars")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(Set<String> vars);
 

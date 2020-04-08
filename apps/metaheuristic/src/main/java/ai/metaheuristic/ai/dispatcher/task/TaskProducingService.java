@@ -159,7 +159,7 @@ public class TaskProducingService {
                         S.f("(variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
-            iv.id = variable.id;
+            iv.id = variable.id.toString();
             iv.realName = variable.originalFilename;
         }
         else {

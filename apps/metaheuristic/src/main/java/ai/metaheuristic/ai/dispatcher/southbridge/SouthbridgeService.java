@@ -131,13 +131,13 @@ public class SouthbridgeService {
         }
     }
 
-    // return a requested resource to a processor
-    public CleanerInfo deliverResource(final EnumsApi.BinaryType binaryType, final String resourceId, final String chunkSize, final int chunkNum) {
-        return getWithSync(binaryType, resourceId,
-                () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryType, resourceId));
+    // return a requested variable to a processor
+    public CleanerInfo deliverVariable(final EnumsApi.BinaryType binaryType, final String variableId, final String chunkSize, final int chunkNum) {
+        return getWithSync(binaryType, variableId,
+                () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryType, variableId));
     }
 
-    public UploadResult uploadResource(MultipartFile file, Long variableId) {
+    public UploadResult uploadVariable(MultipartFile file, Long variableId) {
         String originFilename = file.getOriginalFilename();
         if (StringUtils.isBlank(originFilename)) {
             return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
@@ -206,7 +206,7 @@ public class SouthbridgeService {
                 break;
             case data:
                 assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, resourceId, null);
-                dataSaver = variableService::storeToFile;
+                dataSaver = (variableId, trgFile) -> variableService.storeToFile(Long.parseLong(variableId), trgFile);
                 break;
             default:
                 throw new IllegalStateException("#442.008 Unknown type of data: " + binaryType);

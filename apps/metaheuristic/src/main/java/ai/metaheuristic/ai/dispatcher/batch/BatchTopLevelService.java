@@ -364,8 +364,9 @@ public class BatchTopLevelService {
             if (true) {
                 throw new NotImplementedException("need to re-write with using execContextId and find the first vatiable in execContext");
             }
-            String dataId = "1";
-            variableService.storeToFile(dataId, tempFile);
+            // todo 1L is fictional number, need to change to actual value
+            Long variableId = 1L;
+            variableService.storeToFile(variableId, tempFile);
         } catch (BinaryDataNotFoundException e) {
             String msg = "#990.375 Error store data to temp file, data doesn't exist in db, batchId " + batchId +
                     ", file: " + tempFile.getPath();
