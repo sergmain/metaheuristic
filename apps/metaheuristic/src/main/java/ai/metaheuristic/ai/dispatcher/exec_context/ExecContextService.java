@@ -20,7 +20,10 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
@@ -32,7 +35,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -270,48 +272,33 @@ public class ExecContextService {
 
         TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(assignedTaskComplex.task.getParams());
 
-        ExecContextImpl execContext = execContextCache.findById(assignedTaskComplex.execContextId);
+        final Long execContextId = assignedTaskComplex.execContextId;
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            log.warn("#705.135 can't assign a new task in execContext with Id #"+assignedTaskComplex.execContextId+". This execContext doesn't exist");
+            log.warn("#705.135 can't assign a new task in execContext with Id #"+ execContextId +". This execContext doesn't exist");
             return;
         }
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
         if (p==null) {
-            log.warn("#705.136 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+assignedTaskComplex.execContextId);
+            log.warn("#705.136 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
             return;
         }
+/*
         if (p.function.context== EnumsApi.FunctionExecContext.internal) {
             // resources for internal Function will be prepared by InternalFunctionProcessor.
             return;
         }
+*/
 
         // we dont need to create inputs because all inputs are outputs of previous processes,
         // except globals and startInputAs
         // but we need to initialize descriptor of input variable
         p.inputs.stream()
-                .map(v -> taskProducingService.toInputVariable(v, taskParams.task.taskContextId, assignedTaskComplex.execContextId))
+                .map(v -> taskProducingService.toInputVariable(v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
-        for (ExecContextParamsYaml.Variable variable : p.outputs) {
-            SimpleVariableAndStorageUrl sv = variableService.getVariableAsSimple(variable.name, p.processCode, execContext);
-            if (sv!=null) {
-                continue;
-            }
-            String contextId = Boolean.TRUE.equals(variable.parentContext) ? VariableService.getParentContext(taskParams.task.taskContextId) : taskParams.task.taskContextId;
-            if (S.b(contextId)) {
-                throw new IllegalStateException(
-                        S.f("(S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
-                                p.processCode, variable.context, p.internalContextId, assignedTaskComplex.execContextId));
-            }
-            Variable v = variableService.createUninitialized(variable.name, assignedTaskComplex.execContextId, contextId);
-
-            taskParams.task.outputs.add(
-                    new TaskParamsYaml.OutputVariable(
-                            v.id.toString(), EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
-                            null, false
-                    ));
-        }
+        variableService.initOutputVariables(taskParams, execContext, p);
         taskPersistencer.setParams(assignedTaskComplex.task.getId(), taskParams);
     }
 

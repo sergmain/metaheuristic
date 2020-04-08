@@ -51,12 +51,11 @@ public class TaskProducingCoreService {
 
         TaskParamsYaml taskParams = new TaskParamsYaml();
         taskParams.task.execContextId = execContextId;
+        taskParams.task.taskContextId = taskContextId;
         taskParams.task.processCode = process.processCode;
         taskParams.task.context = process.function.context;
-        taskParams.task.taskContextId = taskContextId;
-        if (process.metas!=null) {
-            taskParams.task.metas.addAll(process.metas);
-        }
+        taskParams.task.metas.addAll(process.metas);
+
         // inputs and outputs will be initialized at the time of task selection
 
         if (taskParams.task.context== EnumsApi.FunctionExecContext.internal) {

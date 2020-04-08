@@ -117,7 +117,8 @@ public class TaskParamsYaml implements BaseParams {
         public @Nullable String realName;
 
         // todo 2020-03-12 for what is that field?
-        public boolean isInited;
+        //  2020-04-07 this field shows that output variable is initialized
+        public boolean inited;
     }
 
     @Data

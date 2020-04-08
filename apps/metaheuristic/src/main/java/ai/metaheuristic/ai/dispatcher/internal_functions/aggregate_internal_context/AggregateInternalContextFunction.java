@@ -112,7 +112,7 @@ public class AggregateInternalContextFunction implements InternalFunction {
                     File taskContextDir = new File(dir, contextId);
                     //noinspection ResultOfMethodCallIgnored
                     taskContextDir.mkdirs();
-                    list.stream().filter(t->t.taskContextId.equals(contextId))
+                    list.stream().filter(t-> contextId.equals(t.taskContextId))
                             .forEach( v->{
                                 File varFile = new File(taskContextDir, v.variable);
                                 variableService.storeToFile(v.id, varFile);

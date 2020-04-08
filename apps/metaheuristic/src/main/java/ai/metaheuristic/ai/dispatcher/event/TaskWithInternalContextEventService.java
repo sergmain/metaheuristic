@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelServi
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -38,10 +39,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Serge
@@ -60,6 +57,7 @@ public class TaskWithInternalContextEventService {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final VariableService variableService;
 
     // this code is only for testing
     private static Long lastTaskId=null;
@@ -100,6 +98,9 @@ public class TaskWithInternalContextEventService {
                         log.warn("#707.040 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + execContext.id);
                         return null;
                     }
+
+                    variableService.initOutputVariables(taskParamsYaml, execContext, p);
+                    taskPersistencer.setParams(event.taskId, taskParamsYaml);
 
                     InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
                             execContext.sourceCodeId, execContext.id, p.internalContextId, taskParamsYaml);

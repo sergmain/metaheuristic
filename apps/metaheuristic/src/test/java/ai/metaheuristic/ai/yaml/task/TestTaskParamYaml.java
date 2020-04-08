@@ -84,6 +84,7 @@ public class TestTaskParamYaml {
     public void testTaskParamsYaml() {
         TaskParamsYaml tpy = new TaskParamsYaml();
         tpy.task.execContextId = 42L;
+        tpy.task.taskContextId = "4242";
         tpy.task.processCode = "test-process";
         tpy.task.context = EnumsApi.FunctionExecContext.external;
         tpy.task.inputs.add(newVariable("type1", "1"));

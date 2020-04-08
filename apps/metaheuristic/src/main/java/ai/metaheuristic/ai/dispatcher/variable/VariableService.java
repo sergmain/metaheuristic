@@ -25,7 +25,9 @@ import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -187,6 +189,28 @@ public class VariableService {
             throw e;
         } catch(Throwable th) {
             throw new VariableSavingException("#087.070 error storing data to db - " + th.getMessage(), th);
+        }
+    }
+
+    public void initOutputVariables(TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
+        for (ExecContextParamsYaml.Variable variable : p.outputs) {
+            SimpleVariableAndStorageUrl sv = getVariableAsSimple(variable.name, p.processCode, execContext);
+            if (sv!=null) {
+                continue;
+            }
+            String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParams.task.taskContextId) : taskParams.task.taskContextId;
+            if (S.b(contextId)) {
+                throw new IllegalStateException(
+                        S.f("(S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
+                                p.processCode, variable.context, p.internalContextId, execContext.id));
+            }
+            Variable v = createUninitialized(variable.name, execContext.id, contextId);
+
+            taskParams.task.outputs.add(
+                    new TaskParamsYaml.OutputVariable(
+                            v.id.toString(), EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
+                            null, false
+                    ));
         }
     }
 

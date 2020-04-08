@@ -39,6 +39,7 @@ public class TestTaskParamsYaml {
         TaskParamsYamlV1 v1 = new TaskParamsYamlV1();
         final TaskParamsYamlV1.TaskYamlV1 ty = new TaskParamsYamlV1.TaskYamlV1();
         v1.task = ty;
+        v1.task.taskContextId = "42";
 /*
         // I left it here only for helping with GlobalVariable later
         TaskParamsYamlV1.InputVariableV1 input = new TaskParamsYamlV1.InputVariableV1("code-1", EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher, null, null);
@@ -91,6 +92,9 @@ public class TestTaskParamsYaml {
         assertNotNull(tpy.task.inline);
         assertNotNull(tpy.task.inline.get(ConstsApi.MH_HYPER_PARAMS));
         assertNotNull(tpy.task.workingPath);
+
+        assertNotNull(tpy.task.taskContextId);
+        assertEquals("42", tpy.task.taskContextId);
 
         assertTrue(tpy.task.clean);
         assertEquals("working-path", tpy.task.workingPath);

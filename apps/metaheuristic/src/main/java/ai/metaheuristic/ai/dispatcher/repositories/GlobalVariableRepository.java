@@ -48,7 +48,7 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
     GlobalVariable findIdByName(String name);
 
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(" +
-            "b.id, b.name, b.params, b.filename, b. ) " +
+            "b.id, b.name, b.params, b.filename) " +
             "from GlobalVariable b where b.name in :vars")
     List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(List<String> vars);
 
