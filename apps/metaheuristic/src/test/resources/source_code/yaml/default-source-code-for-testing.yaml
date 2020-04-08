@@ -41,7 +41,7 @@ source:
             outputs:
               - name: feature-output-1
                 sourcing: dispatcher
-                parentContextId: false
+                parentContextId: true
           - code: feature-processing-2
             name: feature-processing-2
             function:
@@ -51,7 +51,7 @@ source:
               - name: dataset-processing-output
             outputs:
               - name: feature-output-2
-                parentContextId: false
+                parentContextId: true
     - code: mh.permute-variables-and-hyper-params
       name: permute variables and hyper params
       function:

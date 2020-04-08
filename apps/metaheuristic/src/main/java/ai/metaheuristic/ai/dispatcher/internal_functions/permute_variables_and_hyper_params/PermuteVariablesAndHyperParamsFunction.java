@@ -121,7 +121,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
         if (S.b(variableNames)) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "Meta 'variable' must be defined and can't be empty");
         }
-        String[] names = StringUtils.split(variableNames, ",");
+        String[] names = StringUtils.split(variableNames, ", ");
 
         List<VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
@@ -138,7 +138,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
                 }
                 else {
                     return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                            "Variable '"+name+"'not found in local and global contexts, internal context #"+internalContextId);
+                            "Variable '"+name+"' not found in local and global contexts, internal context #"+internalContextId);
                 }
             }
         }
