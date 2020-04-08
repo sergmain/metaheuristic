@@ -82,7 +82,7 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public GitInfo git;
         public DiskInfo disk;
         public String name;
-        public Boolean parentContextId;
+        public Boolean parentContext;
 
         public VariableV1(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;

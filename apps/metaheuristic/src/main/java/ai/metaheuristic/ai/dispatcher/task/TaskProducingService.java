@@ -122,7 +122,6 @@ public class TaskProducingService {
         return null;
     }
 
-
     private TaskData.ProduceTaskResult produceTaskForProcess(
             boolean isPersist, Long sourceCodeId, ExecContextParamsYaml.Process process,
             ExecContextParamsYaml execContextParamsYaml, Long execContextId,
@@ -145,20 +144,20 @@ public class TaskProducingService {
         return result;
     }
 
-    public TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String internalContextId, Long execContextId) {
+    public TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
         TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
         if (v.context== EnumsApi.VariableContext.local) {
-            String contextId = Boolean.TRUE.equals(v.parentContextId) ? VariableService.getParentContext(internalContextId) : internalContextId;
+            String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableService.getParentContext(taskContextId) : taskContextId;
             if (S.b(contextId)) {
                 throw new IllegalStateException(
-                        S.f("(S.b(contextId)), name: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
-                                v.name, v.context, internalContextId, execContextId));
+                        S.f("(S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                                v.name, v.context, taskContextId, execContextId));
             }
             SimpleVariableAndStorageUrl variable = variableService.findVariableInAllInternalContexts(v.name, contextId, execContextId);
             if (variable==null) {
                 throw new IllegalStateException(
-                        S.f("(variable==null), name: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
-                                v.name, v.context, internalContextId, execContextId));
+                        S.f("(variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                                v.name, v.context, taskContextId, execContextId));
             }
             iv.id = variable.id;
             iv.realName = variable.originalFilename;
@@ -167,8 +166,8 @@ public class TaskProducingService {
             GlobalVariable variable = globalVariableRepository.findIdByName(v.name);
             if (variable==null) {
                 throw new IllegalStateException(
-                        S.f("(variable==null), name: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
-                                v.name, v.context, internalContextId, execContextId));
+                        S.f("(variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                                v.name, v.context, taskContextId, execContextId));
             }
             iv.id = variable.id.toString();
         }

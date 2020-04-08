@@ -59,7 +59,7 @@ public class ExecContextParamsYamlV1 implements BaseParams {
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
-        public Boolean parentContextId;
+        public Boolean parentContext;
 
         public VariableV1(String name) {
             this.name = name;

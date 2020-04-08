@@ -251,19 +251,10 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         DispatcherCommParamsYaml.AssignedTask task40 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+        // null because current task is 'internal' and will be processed async
         assertNull(task40);
 
-        long mills = System.currentTimeMillis();
-        boolean finished = false;
-        System.out.println("Start waiting for finishing of task #"+permuteTask.id);
-        while( System.currentTimeMillis() - mills <20_000) {
-            TimeUnit.SECONDS.sleep(1);
-            finished = TaskWithInternalContextEventService.taskFinished(permuteTask.id);
-            if (finished) {
-                break;
-            }
-        }
-        assertTrue(finished, "After 60 seconds permuteTask still isn't finished ");
+        waitForFinishing(permuteTask.id, 20);
 
         TaskImpl tempTask = taskRepository.findById(permuteTask.id).orElse(null);
         assertNotNull(tempTask);
@@ -300,34 +291,40 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // and 1 'mh.finish' task
         assertEquals(2, taskVertices.size());
 
-
-
-/*        for ( j = 0; j < 1000; j++) {
-            if (j%20==0) {
-                System.out.println("j = " + j);
-            }
-            DispatcherCommParamsYaml.AssignedTask loopSimpleTask =
+        {
+            DispatcherCommParamsYaml.AssignedTask t =
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+            // null because current task is 'internal' and will be processed async
+            assertNull(t);
+            waitForFinishing(aggregateTask.id, 20);
+        }
+        taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+        assertEquals(1, taskVertices.size());
+        {
+            DispatcherCommParamsYaml.AssignedTask t =
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+            // null because current task is 'internal' and will be processed async
+            assertNull(t);
+            waitForFinishing(finishTask.id, 20);
+        }
+        taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+        assertEquals(0, taskVertices.size());
+    }
 
-            assertNotNull(loopSimpleTask);
-            assertNotNull(loopSimpleTask.getTaskId());
-            Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
-            assertNotNull(loopTask);
-            storeExecResult(loopSimpleTask);
-            execContextSchedulerService.updateExecContextStatus( execContextForTest.id, true);
-            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
-
-            final long count = execContextService.getCountUnfinishedTasks(execContextForTest);
-            assertNotEquals(count, prevValue);
-            prevValue = count;
-            if (count==0) {
+    public void waitForFinishing(Long id, int secs) throws InterruptedException {
+        long mills = System.currentTimeMillis();
+        boolean finished = false;
+        System.out.println("Start waiting for finishing of task #"+ id);
+        int period = secs * 1000;
+        while(true) {
+            if (!(System.currentTimeMillis() - mills < period)) break;
+            TimeUnit.SECONDS.sleep(1);
+            finished = TaskWithInternalContextEventService.taskFinished(id);
+            if (finished) {
                 break;
             }
         }
-        assertEquals(0, prevValue);*/
-
-        taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
-        assertEquals(0, taskVertices.size());
+        assertTrue(finished, "After 60 seconds permuteTask still isn't finished ");
     }
 
     private void verifyGraphIntegrity() {

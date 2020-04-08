@@ -66,7 +66,7 @@ public class ExecContextParamsYaml implements BaseParams {
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
-        public Boolean parentContextId;
+        public Boolean parentContext;
 
         public Variable(@NonNull String name) {
             this.name = name;
@@ -119,7 +119,7 @@ public class ExecContextParamsYaml implements BaseParams {
         public Long timeoutBeforeTerminate;
         public @NonNull final List<Variable> inputs = new ArrayList<>();
         public @NonNull final List<Variable> outputs = new ArrayList<>();
-        public @Nullable List<Meta> metas = new ArrayList<>();
+        public @NonNull List<Meta> metas = new ArrayList<>();
 
         public Process(@NonNull String processName, @NonNull String processCode, @NonNull String internalContextId, @NonNull FunctionDefinition function) {
             this.processName = processName;

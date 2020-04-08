@@ -290,7 +290,7 @@ public class ExecContextService {
         // except globals and startInputAs
         // but we need to initialize descriptor of input variable
         p.inputs.stream()
-                .map(v -> taskProducingService.toInputVariable(v, p.internalContextId, assignedTaskComplex.execContextId))
+                .map(v -> taskProducingService.toInputVariable(v, taskParams.task.taskContextId, assignedTaskComplex.execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
@@ -298,7 +298,7 @@ public class ExecContextService {
             if (sv!=null) {
                 continue;
             }
-            String contextId = Boolean.TRUE.equals(variable.parentContextId) ? VariableService.getParentContext(p.internalContextId) : p.internalContextId;
+            String contextId = Boolean.TRUE.equals(variable.parentContext) ? VariableService.getParentContext(taskParams.task.taskContextId) : taskParams.task.taskContextId;
             if (S.b(contextId)) {
                 throw new IllegalStateException(
                         S.f("(S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",

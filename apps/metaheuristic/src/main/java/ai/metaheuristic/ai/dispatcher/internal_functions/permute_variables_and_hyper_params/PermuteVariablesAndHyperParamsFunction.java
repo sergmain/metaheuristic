@@ -53,7 +53,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
@@ -163,6 +162,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
                             permutationNumber.incrementAndGet();
                             System.out.println(permutedVariables.stream().map(VariableHolder::getName).collect(Collectors.joining(", ")));
 
+                            String subProcessContextId = null;
                             for (ExecContextData.ProcessVertex subProcess : subProcesses) {
                                 final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
                                 if (p==null) {
@@ -174,6 +174,16 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
                                     throw new BreakFromLambdaException("Creation of task failed");
                                 }
                                 execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, List.of(t.getId()));
+
+                                // all subProcesses must have the same processContextId
+                                if (subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {
+                                    throw new BreakFromLambdaException("Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
+                                }
+                                subProcessContextId = subProcess.processContextId;
+                            }
+
+                            if (subProcessContextId!=null) {
+                                String taskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
                                 Variable v = variableService.createUninitialized(variableName, execContextId, taskContextId);
                             }
                             return true;
