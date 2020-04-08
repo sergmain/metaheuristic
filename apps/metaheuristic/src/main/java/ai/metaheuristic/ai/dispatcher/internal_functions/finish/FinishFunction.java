@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.finish;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -26,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.*;
+import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**
  * @author Serge
@@ -38,6 +39,8 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.*;
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class FinishFunction implements InternalFunction {
+
+    private final ExecContextFSM execContextFSM;
 
     @Override
     public String getCode() {
@@ -53,22 +56,8 @@ public class FinishFunction implements InternalFunction {
     public InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             TaskParamsYaml taskParamsYaml) {
-/*
-        TaskParamsYaml.InputVariable inputVariable = inputs.get(0);
-        if (inputVariable.context== EnumsApi.VariableContext.local) {
-            Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
-            if (bd == null) {
-                throw new IllegalStateException("Variable not found for code " + inputVariable);
-            }
-        }
-        else {
-            GlobalVariable gv = globalVariableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
-            if (gv == null) {
-                throw new IllegalStateException("GlobalVariable not found for code " + inputVariable);
-            }
-        }
-*/
 
+        execContextFSM.toFinished(execContextId);
         return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }
 }

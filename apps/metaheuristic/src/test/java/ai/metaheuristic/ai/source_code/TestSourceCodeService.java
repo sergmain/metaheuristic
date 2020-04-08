@@ -41,6 +41,7 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.SneakyThrows;
@@ -228,6 +229,14 @@ public class TestSourceCodeService extends PreparingSourceCode {
         }
         taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
         assertEquals(0, taskVertices.size());
+
+        ExecContext execContext = execContextCache.findById(execContextForTest.id);
+        assertNotNull(execContext);
+        assertEquals(EnumsApi.ExecContextState.FINISHED, EnumsApi.ExecContextState.toState(execContext.getState()));
+
+        execContext = execContextRepository.findById(execContextForTest.id).orElse(null);
+        assertNotNull(execContext);
+        assertEquals(EnumsApi.ExecContextState.FINISHED, EnumsApi.ExecContextState.toState(execContext.getState()));
     }
 
     public void step_CommonProcessing() {
