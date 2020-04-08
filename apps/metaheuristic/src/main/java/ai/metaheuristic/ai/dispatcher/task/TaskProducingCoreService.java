@@ -46,12 +46,14 @@ public class TaskProducingCoreService {
 
     @Nullable
     public TaskImpl createTaskInternal(
-            Long execContextId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process) {
+            Long execContextId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
+            String taskContextId) {
 
         TaskParamsYaml taskParams = new TaskParamsYaml();
         taskParams.task.execContextId = execContextId;
         taskParams.task.processCode = process.processCode;
         taskParams.task.context = process.function.context;
+        taskParams.task.taskContextId = taskContextId;
         if (process.metas!=null) {
             taskParams.task.metas.addAll(process.metas);
         }

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
@@ -30,7 +31,9 @@ import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -49,6 +52,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -66,6 +70,7 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 public class PermuteVariablesAndHyperParamsFunction implements InternalFunction {
 
     private final VariableRepository variableRepository;
+    private final VariableService variableService;
     private final GlobalVariableRepository globalVariableRepository;
     private final TaskProducingCoreService taskProducingCoreService;
     private final ExecContextCache execContextCache;
@@ -144,24 +149,32 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
         }
 
         final Permutation<VariableHolder> permutation = new Permutation<>();
-        AtomicLong permutationNumber = new AtomicLong(1);
+        AtomicInteger permutationNumber = new AtomicInteger(0);
         List<Long> parentTaskIds = new ArrayList<>();
-        List<String> variables = new ArrayList<>();
+        final String variableName = MetaUtils.getValue(process.metas, "output-variable");
+        if (S.b(variableName)) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.output_variable_not_defined,
+                    "Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
+        }
         for (int i = 0; i < holders.size(); i++) {
             try {
                 permutation.printCombination(holders, i+1,
                         permutedVariables -> {
+                            permutationNumber.incrementAndGet();
                             System.out.println(permutedVariables.stream().map(VariableHolder::getName).collect(Collectors.joining(", ")));
+
                             for (ExecContextData.ProcessVertex subProcess : subProcesses) {
                                 final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
                                 if (p==null) {
                                     throw new BreakFromLambdaException("Process '"+subProcess.process+"' wasn't found");
                                 }
-                                TaskImpl t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p);
+                                String taskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
+                                TaskImpl t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, taskContextId);
                                 if (t==null) {
                                     throw new BreakFromLambdaException("Creation of task failed");
                                 }
                                 execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, List.of(t.getId()));
+                                Variable v = variableService.createUninitialized(variableName, execContextId, taskContextId);
                             }
                             return true;
                         }

@@ -177,6 +177,7 @@ public class TaskParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class TaskYamlV1 {
         public Long execContextId;
+        public @NonNull String taskContextId;
         public String processCode;
         @NonNull public FunctionConfigV1 function;
         @NonNull public final List<FunctionConfigV1> preFunctions = new ArrayList<>();

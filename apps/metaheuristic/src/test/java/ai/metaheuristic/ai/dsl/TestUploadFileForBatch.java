@@ -109,6 +109,13 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
             }
             if (uploadingStatus.execContextId !=null) {
                 try {
+                    taskRepository.deleteByExecContextId(uploadingStatus.execContextId);
+                } catch (Throwable th) {
+                    log.error("Error", th);
+                }
+            }
+            if (uploadingStatus.execContextId !=null) {
+                try {
                     execContextCache.deleteById(uploadingStatus.execContextId);
                 } catch (Throwable th) {
                     log.error("Error", th);
