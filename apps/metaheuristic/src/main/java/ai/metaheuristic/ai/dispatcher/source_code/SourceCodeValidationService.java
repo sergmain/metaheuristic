@@ -32,6 +32,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.RequiredArgsConstructor;
@@ -96,22 +97,31 @@ public class SourceCodeValidationService {
                         EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_NOT_UNIQUE_ERROR,
                         "There are at least two processes with the same code '" + process.code+"'");
             }
-            if (i + 1 < processes.size()) {
-                if (process.outputs.isEmpty()) {
+            if (MetaUtils.isTrue(process.metas, ConstsApi.META_MH_OUTPUT_IS_DYNAMIC)) {
+                if (process.function.context!= EnumsApi.FunctionExecContext.internal) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
-                            EnumsApi.SourceCodeValidateStatus.PROCESS_PARAMS_EMPTY_ERROR,
-                            "At least one output variable must be defined in process " + process.code);
+                            EnumsApi.SourceCodeValidateStatus.DYNAMIC_OUTPUT_SUPPORTED_ONLY_FOR_INTERNAL_ERROR,
+                            "Dynamic output variables are supported only for internal functions. Process: " + process.code);
                 }
-                for (SourceCodeParamsYaml.Variable variable : process.outputs) {
-                    if (S.b(variable.name)) {
+            }
+            else {
+                if (i + 1 < processes.size()) {
+                    if (process.outputs.isEmpty()) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
-                                EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
-                                "Output variable in process "+ process.code+" must have a name");
+                                EnumsApi.SourceCodeValidateStatus.PROCESS_PARAMS_EMPTY_ERROR,
+                                "At least one output variable must be defined in process " + process.code);
                     }
-                    if (variable.getSourcing()==null) {
-                        return new SourceCodeApiData.SourceCodeValidationResult(
-                                EnumsApi.SourceCodeValidateStatus.SOURCING_OF_VARIABLE_NOT_DEFINED_ERROR,
-                                "Output variable "+variable.name+" in process "+ process.code+" must have a defined sourcing");
+                    for (SourceCodeParamsYaml.Variable variable : process.outputs) {
+                        if (S.b(variable.name)) {
+                            return new SourceCodeApiData.SourceCodeValidationResult(
+                                    EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
+                                    "Output variable in process " + process.code + " must have a name");
+                        }
+                        if (variable.getSourcing() == null) {
+                            return new SourceCodeApiData.SourceCodeValidationResult(
+                                    EnumsApi.SourceCodeValidateStatus.SOURCING_OF_VARIABLE_NOT_DEFINED_ERROR,
+                                    "Output variable " + variable.name + " in process " + process.code + " must have a defined sourcing");
+                        }
                     }
                 }
             }

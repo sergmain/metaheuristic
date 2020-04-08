@@ -60,7 +60,7 @@ public class ExecContextData {
     public static class ProcessVertex {
         public Long id;
         public String process;
-        public String internalContextId;
+        public String processContextId;
 
         public ProcessVertex(Long id) {
             this.id = id;

@@ -94,7 +94,7 @@ public class TestBinaryDataSaveAndLoad {
 
         Variable variable = null;
         try (InputStream is = new FileInputStream(dataFile)) {
-            variable = variableService.save(is, dataFile.length(), TEST_VARIABLE, DATA_FILE_BIN, 1L,  "1,2,3");
+            variable = variableService.createInitialized(is, dataFile.length(), TEST_VARIABLE, DATA_FILE_BIN, 1L,  "1,2,3");
         }
         assertNotNull(variable);
         assertNotNull(variable.id);

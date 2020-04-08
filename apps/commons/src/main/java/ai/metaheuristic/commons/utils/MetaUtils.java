@@ -35,15 +35,19 @@ public class MetaUtils {
         return m!=null && "true".equals(m.getValue());
     }
 
-    public static boolean isFalse(Meta m) {
+    public static boolean isFalse(@Nullable Meta m) {
         return !isTrue(m);
     }
 
-    public static boolean isTrue(List<Meta> metas, String... keys) {
+    public static boolean isTrue(@Nullable List<Meta> metas, String... keys) {
         return isTrue(getMeta(metas, keys));
     }
 
-    public static @Nullable String getValue(List<Meta> metas, String... keys) {
+    public static boolean isFalse(@Nullable List<Meta> metas, String... keys) {
+        return isFalse(getMeta(metas, keys));
+    }
+
+    public static @Nullable String getValue(@Nullable List<Meta> metas, String... keys) {
         Meta m = getMeta(metas, keys);
         return m!=null ? m.getValue() : null;
     }

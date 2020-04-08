@@ -63,7 +63,7 @@ import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph
 public class ExecContextProcessGraphService {
 
     private static final String PROCESS_NAME_ATTR = "process";
-    private static final String CONTEXT_ID_NAME_ATTR = "context_id";
+    private static final String PROCESS_CONTEXT_ID_NAME_ATTR = "process_context_id";
 
     private final ExecContextCache execContextCache;
 
@@ -85,7 +85,7 @@ public class ExecContextProcessGraphService {
         Function<ExecContextData.ProcessVertex, Map<String, Attribute>> vertexAttributeProvider = v -> {
             Map<String, Attribute> m = new HashMap<>();
             m.put(PROCESS_NAME_ATTR, DefaultAttribute.createAttribute(v.process));
-            m.put(CONTEXT_ID_NAME_ATTR, DefaultAttribute.createAttribute(v.internalContextId));
+            m.put(PROCESS_CONTEXT_ID_NAME_ATTR, DefaultAttribute.createAttribute(v.processContextId));
             return m;
         };
 
@@ -124,8 +124,8 @@ public class ExecContextProcessGraphService {
                 case PROCESS_NAME_ATTR:
                     vertex.getFirst().process = attribute.getValue();
                     break;
-                case CONTEXT_ID_NAME_ATTR:
-                    vertex.getFirst().internalContextId = attribute.getValue();
+                case PROCESS_CONTEXT_ID_NAME_ATTR:
+                    vertex.getFirst().processContextId = attribute.getValue();
                     break;
                 case "ID":
                     // do nothing
@@ -210,14 +210,14 @@ public class ExecContextProcessGraphService {
         //noinspection UnnecessaryLocalVariable
         List<ExecContextData.ProcessVertex> vertices = processGraph.getDescendants(startVertex)
                 .stream()
-                .filter(o -> !o.internalContextId.equals(startVertex.internalContextId))
+                .filter(o -> !o.processContextId.equals(startVertex.processContextId))
                 .collect(Collectors.toList());
         return vertices;
     }
 
     public static boolean anyError(SourceCodeGraph sourceCodeGraph) {
         //noinspection UnnecessaryLocalVariable
-        boolean error = sourceCodeGraph.processGraph.vertexSet().stream().anyMatch(o -> S.b(o.process) || S.b(o.internalContextId) );
+        boolean error = sourceCodeGraph.processGraph.vertexSet().stream().anyMatch(o -> S.b(o.process) || S.b(o.processContextId) );
         return error;
     }
 

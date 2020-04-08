@@ -59,8 +59,8 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Nullable
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(v.id, v.name, v.params, v.filename ) " +
-            "from Variable v where v.name=:name and v.contextId=:contextId and v.execContextId=:execContextId")
-    SimpleVariableAndStorageUrl findIdByNameAndContextIdAndExecContextId(String name, String contextId, Long execContextId);
+            "from Variable v where v.name=:name and v.taskContextId=:taskContextId and v.execContextId=:execContextId")
+    SimpleVariableAndStorageUrl findIdByNameAndContextIdAndExecContextId(String name, String taskContextId, Long execContextId);
 
     @Nullable
     @Transactional(readOnly = true)

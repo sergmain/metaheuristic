@@ -275,7 +275,32 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         verifyGraphIntegrity();
         taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+
+        // there are 3 'test.fit.function:1.0' tasks,
+        // 3 'test.predict.function:1.0',
+        // 1 'mh.aggregate-internal-context'  task,
+        // and 1 'mh.finish' task
         assertEquals(8, taskVertices.size());
+
+        // process and complete fit/predict tasks
+        for (int i = 0; i < 6; i++) {
+            DispatcherCommParamsYaml.AssignedTask assignedMlTask =
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+            assertNotNull(assignedMlTask);
+            assertNotNull(assignedMlTask.getTaskId());
+            Task mlTask = taskRepository.findById(assignedMlTask.getTaskId()).orElse(null);
+            assertNotNull(mlTask);
+            storeExecResult(assignedMlTask);
+            execContextSchedulerService.updateExecContextStatuses(true);
+        }
+
+        verifyGraphIntegrity();
+        taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+        // 1 'mh.aggregate-internal-context'  task,
+        // and 1 'mh.finish' task
+        assertEquals(2, taskVertices.size());
+
+
 
 /*        for ( j = 0; j < 1000; j++) {
             if (j%20==0) {
@@ -300,6 +325,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
             }
         }
         assertEquals(0, prevValue);*/
+
+        taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+        assertEquals(0, taskVertices.size());
     }
 
     private void verifyGraphIntegrity() {

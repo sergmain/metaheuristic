@@ -144,8 +144,9 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
         }
 
         final Permutation<VariableHolder> permutation = new Permutation<>();
-        AtomicLong featureId = new AtomicLong(0);
+        AtomicLong permutationNumber = new AtomicLong(1);
         List<Long> parentTaskIds = new ArrayList<>();
+        List<String> variables = new ArrayList<>();
         for (int i = 0; i < holders.size(); i++) {
             try {
                 permutation.printCombination(holders, i+1,
@@ -160,28 +161,8 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
                                 if (t==null) {
                                     throw new BreakFromLambdaException("Creation of task failed");
                                 }
-
                                 execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, List.of(t.getId()));
                             }
-
-    /*
-                            final String permutedVariablesAsStr = String.valueOf(permutedVariables);
-                            final String checksumMD5 = Checksum.getChecksum(EnumsApi.Type.MD5, permutedVariablesAsStr);
-                            String checksumIdCodes = StringUtils.substring(permutedVariablesAsStr, 0, 20) + "###" + checksumMD5;
-                            if (list.contains(checksumIdCodes)) {
-                                // already exist
-                                return true;
-                            }
-
-                            ExperimentParamsYaml.ExperimentFeature feature = new ExperimentParamsYaml.ExperimentFeature();
-                            feature.id = featureId.incrementAndGet();
-                            feature.setExperimentId(experiment.id);
-                            feature.setVariables(permutedVariablesAsStr);
-                            feature.setChecksumIdCodes(checksumIdCodes);
-                            epy.processing.features.add(feature);
-
-                            total.incrementAndGet();
-    */
                             return true;
                         }
                 );

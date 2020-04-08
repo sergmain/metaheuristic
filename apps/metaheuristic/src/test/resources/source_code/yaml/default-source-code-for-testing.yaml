@@ -41,7 +41,7 @@ source:
             outputs:
               - name: feature-output-1
                 sourcing: dispatcher
-                parentContextId: true
+                parentContextId: false
           - code: feature-processing-2
             name: feature-processing-2
             function:
@@ -51,17 +51,19 @@ source:
               - name: dataset-processing-output
             outputs:
               - name: feature-output-2
-                parentContextId: true
+                parentContextId: false
     - code: mh.permute-variables-and-hyper-params
       name: permute variables and hyper params
       function:
         code: mh.permute-variables-and-hyper-params
         context: internal
       metas:
+        - key: mh.output-is-dynamic
+          value: true
         - key: variables
-          value: feature-output-1,feature-output-2
-      outputs:
-        - name: feature-array-per-task
+          value: feature-output-1, feature-output-2
+        - key: output-variable
+          value: feature-item
       subProcesses:
         logic: sequential
         processes:
@@ -72,7 +74,7 @@ source:
               context: external
             inputs:
               - name: dataset-processing-output
-              - name: feature-array-per-task
+              - name: feature-item
             outputs:
               - name: model
           - code: predict-dataset

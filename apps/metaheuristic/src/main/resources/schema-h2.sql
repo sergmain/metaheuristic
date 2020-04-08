@@ -88,7 +88,7 @@ CREATE TABLE mh_variable
     VERSION     NUMERIC(5, 0)  NOT NULL,
     IS_INITED   BOOLEAN        default false not null,
     NAME        VARCHAR(200)  not null,
-    CONTEXT_ID  VARCHAR(250)  not null,
+    TASK_CONTEXT_ID  VARCHAR(250)  not null,
     EXEC_CONTEXT_ID NUMERIC(10, 0),
     UPLOAD_TS   TIMESTAMP     NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     DATA        LONGBLOB,

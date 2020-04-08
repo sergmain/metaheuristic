@@ -79,24 +79,24 @@ public class VariableService {
     }
 
     @Transactional(readOnly = true)
-    public @Nullable SimpleVariableAndStorageUrl findVariableInAllInternalContexts(String variable, String internalContextId, Long execContextId) {
-        String currInternalContextId = internalContextId;
-        while( !S.b(currInternalContextId)) {
-            SimpleVariableAndStorageUrl v = variableRepository.findIdByNameAndContextIdAndExecContextId(variable, currInternalContextId, execContextId);
+    public @Nullable SimpleVariableAndStorageUrl findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
+        String currTaskContextId = taskContextId;
+        while( !S.b(currTaskContextId)) {
+            SimpleVariableAndStorageUrl v = variableRepository.findIdByNameAndContextIdAndExecContextId(variable, currTaskContextId, execContextId);
             if (v!=null) {
                 return v;
             }
-            currInternalContextId = getParentContext(currInternalContextId);
+            currTaskContextId = getParentContext(currTaskContextId);
         }
         return null;
     }
 
     @Nullable
-    public static String getParentContext(String contextId) {
-        if (!contextId.contains(",")) {
+    public static String getParentContext(String taskContextId) {
+        if (!taskContextId.contains(",")) {
             return null;
         }
-        return contextId.substring(0, contextId.lastIndexOf(',')).strip();
+        return taskContextId.substring(0, taskContextId.lastIndexOf(',')).strip();
     }
 
     @Transactional(readOnly = true)
@@ -165,7 +165,7 @@ public class VariableService {
         variableRepository.deleteByName(variable);
     }
 
-    public Variable save(InputStream is, long size, String variable, String filename, Long execContextId, String internalContextId) {
+    public Variable createInitialized(InputStream is, long size, String variable, String filename, Long execContextId, String taskContextId) {
         try {
             Variable data = new Variable();
             data.inited = true;
@@ -174,7 +174,7 @@ public class VariableService {
             data.setExecContextId(execContextId);
             data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-            data.setContextId(internalContextId);
+            data.setTaskContextId(taskContextId);
 
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
             data.setData(blob);
@@ -196,17 +196,19 @@ public class VariableService {
         }
     }
 
-    public Variable createUninitialized(String variable, Long execContextId, String contextId) {
+    public Variable createUninitialized(String variable, Long execContextId, String taskContextId) {
         try {
             Variable data = new Variable();
             data.inited = false;
             data.setName(variable);
             data.setExecContextId(execContextId);
+
             // TODO right now only DataSourcing.dispatcher is supporting as internal variable.
             //  the code has to be added for another type of sourcing
             data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
+
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-            data.setContextId(contextId);
+            data.setTaskContextId(taskContextId);
             variableRepository.save(data);
             return data;
         }
@@ -264,13 +266,14 @@ public class VariableService {
         return variableRepository.getFilenamesForBatchIds(batchIds);
     }
 
-    public Variable storeInitialResource(File tempFile, String variable, String filename, Long execContextId, String internalContextId) {
+    public Variable createInitializedFromFile(File tempFile, String variable, String filename, Long execContextId, String internalContextId) {
         try {
             try (InputStream is = new FileInputStream(tempFile)) {
-                return save(is, tempFile.length(), variable, filename, execContextId, internalContextId);
+                return createInitialized(is, tempFile.length(), variable, filename, execContextId, internalContextId);
             }
         } catch (IOException e) {
             log.error("Error", e);
             throw new StoreNewFileException("Error while storing", e, tempFile.getPath(), filename);
         }
-    }}
+    }
+}

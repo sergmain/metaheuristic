@@ -20,7 +20,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
@@ -61,8 +60,8 @@ public class Variable implements Serializable {
     private Long execContextId;
 
     @Nullable
-    @Column(name = "CONTEXT_ID")
-    private String contextId;
+    @Column(name = "TASK_CONTEXT_ID")
+    private String taskContextId;
 
     @Column(name = "UPLOAD_TS")
     private Timestamp uploadTs;

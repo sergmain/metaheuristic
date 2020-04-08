@@ -223,7 +223,7 @@ public class BatchTopLevelService {
             if (S.b(startInputAs)) {
                 return new BatchData.UploadingStatus("#995.078 Wrong format of sourceCode, startInputAs isn't specified");
             }
-            variableService.save(
+            variableService.createInitialized(
                     file.getInputStream(), file.getSize(), startInputAs,
                     originFilename, creationResult.execContext.getId(),
                     ""+idsRepository.save(new Ids()).id

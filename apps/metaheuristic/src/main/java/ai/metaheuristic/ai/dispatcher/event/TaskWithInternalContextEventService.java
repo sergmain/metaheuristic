@@ -107,7 +107,7 @@ public class TaskWithInternalContextEventService {
                     if (result.processing != Enums.InternalFunctionProcessing.ok) {
                         log.error("#707.050 error type: {}, message: {}", result.processing, result.error);
                         taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10001,
-                                "#707.030 Task #" + event.taskId + " was finished with status '" + result.processing + "', text of error: " + result.error);
+                                "#707.060 Task #" + event.taskId + " was finished with status '" + result.processing + "', text of error: " + result.error);
                         return null;
                     }
 
@@ -127,14 +127,14 @@ public class TaskWithInternalContextEventService {
                     return null;
                 } catch (Throwable th) {
                     taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10002,
-                            "#707.030 Task #" + event.taskId + " was processed with error: " + th.getMessage());
+                            "#707.070 Task #" + event.taskId + " was processed with error: " + th.getMessage());
                     log.error("Error", th);
                 }
                 return null;
             });
         } catch (Throwable th) {
             taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10003,
-                    "#707.040 Task #" + event.taskId + " was processed with error: " + th.getMessage());
+                    "#707.080 Task #" + event.taskId + " was processed with error: " + th.getMessage());
             log.error("Error", th);
         }
         finally {

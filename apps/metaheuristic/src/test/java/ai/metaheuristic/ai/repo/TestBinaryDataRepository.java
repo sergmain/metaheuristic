@@ -53,7 +53,7 @@ public class TestBinaryDataRepository {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        d1 = variableService.save(inputStream, bytes.length, "test-01","test-file.bin", 10L, "1");
+        d1 = variableService.createInitialized(inputStream, bytes.length, "test-01","test-file.bin", 10L, "1");
 
         Timestamp ts = d1.getUploadTs();
 
