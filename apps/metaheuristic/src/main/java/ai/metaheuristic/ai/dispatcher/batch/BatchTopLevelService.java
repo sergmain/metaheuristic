@@ -62,6 +62,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -344,7 +345,7 @@ public class BatchTopLevelService {
         return resource;
     }
 
-    public CleanerInfo getBatchOriginFile(Long batchId) throws IOException {
+    public @Nullable CleanerInfo getBatchOriginFile(Long batchId) throws IOException {
         Batch batch = batchCache.findById(batchId);
         if (batch == null) {
             final String es = "#995.260 Batch wasn't found, batchId: " + batchId;

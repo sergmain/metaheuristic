@@ -59,7 +59,7 @@ public class AggregateFunction implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, String internalContextId,
+            Long sourceCodeId, Long execContextId, String taskContextId,
             SourceCodeParamsYaml.VariableDefinition variableDefinition, TaskParamsYaml taskParamsYaml) {
 
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);

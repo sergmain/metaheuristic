@@ -47,7 +47,7 @@ public class Variable implements Serializable {
     public boolean inited;
 
     @Column(name = "NAME")
-    private String name;
+    public String name;
 
     /**
      * This field is initialized only for data resources which were produced while processing execContext.

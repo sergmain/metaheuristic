@@ -51,7 +51,7 @@ public class FinishFunction implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long execContextId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             TaskParamsYaml taskParamsYaml) {
 /*
         TaskParamsYaml.InputVariable inputVariable = inputs.get(0);

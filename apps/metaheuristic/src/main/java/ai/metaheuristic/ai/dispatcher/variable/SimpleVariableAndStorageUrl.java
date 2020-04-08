@@ -16,26 +16,26 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class SimpleVariableAndStorageUrl {
-    public String id;
-    public String variable;
-    public String storageUrl;
-    public String originalFilename;
+    public final String id;
+    public final String variable;
+    public final String storageUrl;
+    public final String originalFilename;
+    public final String taskContextId;
 
-    public SimpleVariableAndStorageUrl(Long id, String variable, String storageUrl, String originalFilename) {
+    public SimpleVariableAndStorageUrl(Long id, String variable, String storageUrl, String originalFilename, String taskContextId) {
         this.id = id.toString();
         this.variable = variable;
         this.storageUrl = storageUrl;
         this.originalFilename = originalFilename;
+        this.taskContextId = taskContextId;
     }
 
     public DataStorageParams getParams() {

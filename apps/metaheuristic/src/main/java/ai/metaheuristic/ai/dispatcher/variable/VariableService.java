@@ -82,7 +82,7 @@ public class VariableService {
     public @Nullable SimpleVariableAndStorageUrl findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
         String currTaskContextId = taskContextId;
         while( !S.b(currTaskContextId)) {
-            SimpleVariableAndStorageUrl v = variableRepository.findIdByNameAndContextIdAndExecContextId(variable, currTaskContextId, execContextId);
+            SimpleVariableAndStorageUrl v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);
             if (v!=null) {
                 return v;
             }
@@ -124,7 +124,7 @@ public class VariableService {
 
     public void storeToFile(String id, File trgFile) {
         try {
-            Blob blob = variableRepository.getDataAsStreamByCode(Long.valueOf(id));
+            Blob blob = variableRepository.getDataAsStreamById(Long.valueOf(id));
             if (blob==null) {
                 log.warn("#087.010 Binary data for id {} wasn't found", id);
                 throw new BinaryDataNotFoundException("#087.010 Binary data wasn't found, code: " + id);

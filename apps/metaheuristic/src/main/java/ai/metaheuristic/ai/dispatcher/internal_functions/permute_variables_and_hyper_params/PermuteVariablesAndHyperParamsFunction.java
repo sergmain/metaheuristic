@@ -96,7 +96,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
     }
 
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long execContextId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             TaskParamsYaml taskParamsYaml) {
 
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
@@ -131,7 +131,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
         for (String name : names) {
             VariableHolder holder = new VariableHolder();
             holders.add(holder);
-            SimpleVariableAndStorageUrl v = variableRepository.findIdByNameAndContextIdAndExecContextId(name, internalContextId, execContextId);
+            SimpleVariableAndStorageUrl v = variableRepository.findByNameAndTaskContextIdAndExecContextId(name, taskContextId, execContextId);
             if (v!=null) {
                 holder.variable = v;
             }
@@ -142,7 +142,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
                 }
                 else {
                     return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                            "Variable '"+name+"' not found in local and global contexts, internal context #"+internalContextId);
+                            "Variable '"+name+"' not found in local and global contexts, internal context #"+taskContextId);
                 }
             }
         }
@@ -168,8 +168,8 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
                                 if (p==null) {
                                     throw new BreakFromLambdaException("Process '"+subProcess.process+"' wasn't found");
                                 }
-                                String taskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
-                                TaskImpl t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, taskContextId);
+                                String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
+                                TaskImpl t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId);
                                 if (t==null) {
                                     throw new BreakFromLambdaException("Creation of task failed");
                                 }
@@ -183,8 +183,8 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
                             }
 
                             if (subProcessContextId!=null) {
-                                String taskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
-                                Variable v = variableService.createUninitialized(variableName, execContextId, taskContextId);
+                                String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
+                                Variable v = variableService.createUninitialized(variableName, execContextId, currTaskContextId);
                             }
                             return true;
                         }

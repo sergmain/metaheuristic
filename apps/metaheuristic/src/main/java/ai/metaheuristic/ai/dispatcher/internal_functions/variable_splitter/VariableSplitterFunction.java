@@ -105,7 +105,7 @@ public class VariableSplitterFunction implements InternalFunction {
     }
 
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, String internalContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long execContextId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             TaskParamsYaml taskParamsYaml) {
 
         if (taskParamsYaml.task.inputs.size()>1) {
@@ -147,11 +147,11 @@ public class VariableSplitterFunction implements InternalFunction {
                 log.debug("Start unzipping archive");
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(sourceCodeId, execContextId, internalContextId, tempDir, mapping);
+                loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, mapping);
             }
             else {
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(sourceCodeId, execContextId, internalContextId, tempDir, Map.of(dataFile.getName(), originFilename));
+                loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, Map.of(dataFile.getName(), originFilename));
             }
         }
         catch(Throwable th) {
