@@ -39,29 +39,23 @@ public class GlobalVariableRestController {
 
     private final GlobalVariableTopLevelService globalVariableTopLevelService;
 
-    @GetMapping("/resources")
+    @GetMapping("/global-variables")
     public GlobalVariableData.GlobalVariablesResult getResources(@PageableDefault(size = 5) Pageable pageable) {
         return globalVariableTopLevelService.getGlobalVariables(pageable);
     }
 
-    @PostMapping(value = "/resource-upload-from-file-with-params/{variable}")
-    public OperationStatusRest createResourceFromFileWithParams(
-            MultipartFile file, @PathVariable String variable) {
-        return globalVariableTopLevelService.createGlobalVariableFromFile(file, variable);
-    }
-
-    @PostMapping(value = "/resource-upload-from-file", headers = ("content-type=multipart/*"), produces = "application/json", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(value = "/global-variable-upload-from-file", headers = ("content-type=multipart/*"), produces = "application/json", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public OperationStatusRest createResourceFromFile(
             @RequestPart MultipartFile file,
-            @RequestParam(name = "poolCode") String variable ) {
+            @RequestParam(name = "variable") String variable ) {
         return globalVariableTopLevelService.createGlobalVariableFromFile(file, variable);
     }
 
-    @PostMapping(value = "/resource-in-external-storage")
+    @PostMapping(value = "/global-variable-in-external-storage")
     public OperationStatusRest registerResourceInExternalStorage(
-            @RequestParam(name = "poolCode") String variable,
-            @RequestParam(name = "storageUrl") String storageUrl ) {
-        return globalVariableTopLevelService.createGlobalVariableWithExternalStorage(variable, storageUrl);
+            @RequestParam(name = "variable") String variable,
+            @RequestParam(name = "params") String params ) {
+        return globalVariableTopLevelService.createGlobalVariableWithExternalStorage(variable, params);
     }
 
     @GetMapping("/global-variable/{id}")
