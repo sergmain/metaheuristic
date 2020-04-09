@@ -34,7 +34,7 @@ public class AssetUtils {
      * @param variableFilename String
      * @return AssetFile
      */
-    public static AssetFile prepareFileForVariable(File rootDir, String variableId, @Nullable String variableFilename, EnumsApi.BinaryType binaryType) {
+    public static AssetFile prepareFileForVariable(File rootDir, String variableId, @Nullable String variableFilename, EnumsApi.DataType binaryType) {
         return prepareAssetFile(rootDir, variableId, variableFilename, binaryType.toString());
     }
 
@@ -79,7 +79,7 @@ public class AssetUtils {
     public static AssetFile prepareFunctionFile(File baseDir, String functionCode, @Nullable String resourceFilename) {
 
         final AssetFile assetFile = new AssetFile();
-        final File trgDir = new File(baseDir, EnumsApi.BinaryType.function.toString());
+        final File trgDir = new File(baseDir, EnumsApi.DataType.function.toString());
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
             log.error("#025.37 Can't create function dir: {}", trgDir.getAbsolutePath());

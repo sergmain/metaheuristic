@@ -71,7 +71,7 @@ public class SouthbridgeController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            CleanerInfo resource = serverService.deliverVariable(EnumsApi.BinaryType.valueOf(variableType), id, chunkSize, chunkNum);
+            CleanerInfo resource = serverService.deliverVariable(EnumsApi.DataType.valueOf(variableType), id, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

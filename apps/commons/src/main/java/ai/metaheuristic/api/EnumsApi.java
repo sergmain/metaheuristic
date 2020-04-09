@@ -242,7 +242,7 @@ public class EnumsApi {
         INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR
     }
 
-    public enum BinaryType {variable, global_variable, function}
+    public enum DataType {variable, global_variable, function}
 
     public enum OperationStatus {OK, ERROR}
 

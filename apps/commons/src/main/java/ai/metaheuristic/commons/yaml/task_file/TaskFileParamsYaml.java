@@ -59,6 +59,7 @@ public class TaskFileParamsYaml implements BaseParams {
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
+        public EnumsApi.DataType type;
 
         public @Nullable String realName;
 
@@ -79,6 +80,7 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
         public @Nullable String realName;
+        public EnumsApi.DataType type;
 
         public OutputVariable(String id, String name, EnumsApi.DataSourcing sourcing) {
             this.id = id;

@@ -69,14 +69,14 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
         DownloadVariableTask task;
         while ((task = poll()) != null) {
-            EnumsApi.BinaryType type;
+            EnumsApi.DataType type;
             String es;
             switch(task.context) {
                 case global:
-                    type = EnumsApi.BinaryType.global_variable;
+                    type = EnumsApi.DataType.global_variable;
                     break;
                 case local:
-                    type = EnumsApi.BinaryType.variable;
+                    type = EnumsApi.DataType.variable;
                     break;
                 case array:
                     es = "#810.005 Array type of variable isn't supported right now, variableId: " + task.variableId;
@@ -88,7 +88,6 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     log.error(es);
                     processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.taskId, es);
                     continue;
-
             }
             ProcessorTask processorTask = processorTaskService.findById(task.dispatcher.url, task.taskId);
             if (processorTask !=null && processorTask.finishedOn!=null) {

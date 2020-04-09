@@ -67,14 +67,14 @@ public class DispatcherVariableProvider implements VariableProvider {
             variableTask.processorId = dispatcherCode.processorId;
             downloadVariableService.add(variableTask);
         }
-        EnumsApi.BinaryType type;
+        EnumsApi.DataType type;
         String es;
         switch(variable.context) {
             case global:
-                type = EnumsApi.BinaryType.global_variable;
+                type = EnumsApi.DataType.global_variable;
                 break;
             case local:
-                type = EnumsApi.BinaryType.variable;
+                type = EnumsApi.DataType.variable;
                 break;
             case array:
                 es = "#810.005 Array type of variable isn't supported right now, variableId: " + variable.id;

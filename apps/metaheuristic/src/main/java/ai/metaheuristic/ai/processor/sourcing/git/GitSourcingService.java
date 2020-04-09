@@ -130,7 +130,7 @@ public class GitSourcingService {
 
     private static AssetFile prepareFunctionDir(final File resourceDir, String functionCode) {
         final AssetFile assetFile = new AssetFile();
-        final File trgDir = new File(resourceDir, EnumsApi.BinaryType.function.toString());
+        final File trgDir = new File(resourceDir, EnumsApi.DataType.function.toString());
         log.info("Target dir: {}, exist: {}", trgDir.getAbsolutePath(), trgDir.exists() );
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;

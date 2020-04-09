@@ -105,7 +105,7 @@ public class SouthbridgeService {
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
     @SuppressWarnings("Duplicates")
-    private static <T> T getWithSync(final EnumsApi.BinaryType binaryType, final String code, Supplier<T> function) {
+    private static <T> T getWithSync(final EnumsApi.DataType binaryType, final String code, Supplier<T> function) {
         final String key = "--" + binaryType + "--" + code;
         final AtomicInteger obj;
         try {
@@ -134,7 +134,7 @@ public class SouthbridgeService {
     }
 
     // return a requested variable to a processor
-    public CleanerInfo deliverVariable(final EnumsApi.BinaryType binaryType, final String variableId, final String chunkSize, final int chunkNum) {
+    public CleanerInfo deliverVariable(final EnumsApi.DataType binaryType, final String variableId, final String chunkSize, final int chunkNum) {
         return getWithSync(binaryType, variableId,
                 () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryType, variableId));
     }
@@ -197,7 +197,7 @@ public class SouthbridgeService {
                 : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+ variable.getId()+"");
     }
 
-    private CleanerInfo getAbstractResourceResponseEntity(String chunkSize, int chunkNum, EnumsApi.BinaryType binaryType, String resourceId) {
+    private CleanerInfo getAbstractResourceResponseEntity(String chunkSize, int chunkNum, EnumsApi.DataType binaryType, String resourceId) {
 
         AssetFile assetFile;
         BiConsumer<String, File> dataSaver;

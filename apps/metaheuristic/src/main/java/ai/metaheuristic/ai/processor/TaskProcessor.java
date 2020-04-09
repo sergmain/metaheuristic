@@ -233,7 +233,14 @@ public class TaskProcessor {
                 continue;
             }
 
-            if (!prepareParamsFileForTask(taskDir, taskParamYaml, results)) {
+            try {
+                if (!prepareParamsFileForTask(taskDir, taskParamYaml, results)) {
+                    continue;
+                }
+            } catch (Throwable th) {
+                String es = "Error while preparing params.yaml file for task #"+task.taskId+", error: " + th.getMessage();
+                log.warn(es);
+                processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
                 continue;
             }
 
@@ -394,9 +401,21 @@ public class TaskProcessor {
         return t;
     }
 
+    private static EnumsApi.DataType toType(EnumsApi.VariableContext context) {
+        switch(context) {
+            case global:
+                return EnumsApi.DataType.global_variable;
+            case local:
+                return EnumsApi.DataType.variable;
+            default:
+                throw new IllegalStateException("wrong context: " + context);
+        }
+    }
+
     private static TaskFileParamsYaml.InputVariable  upInputVariable(TaskParamsYaml.InputVariable v1) {
         TaskFileParamsYaml.InputVariable  v = new TaskFileParamsYaml.InputVariable();
         v.id = v1.id;
+        v.type = toType(v1.context);
         v.name = v1.name;
         v.disk = v1.disk;
         v.git = v1.git;
@@ -409,6 +428,7 @@ public class TaskProcessor {
         TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
         v.id = v1.id;
         v.name = v1.name;
+        v.type = toType(v1.context);
         v.disk = v1.disk;
         v.git = v1.git;
         v.sourcing = v1.sourcing;
