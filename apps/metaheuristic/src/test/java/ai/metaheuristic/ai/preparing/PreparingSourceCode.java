@@ -255,7 +255,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         sc.info = new FunctionConfigYaml.FunctionInfo(false, 1000);
 //  metas:
 //  - key: mh.task-params-version
-//    value: '3'
+//    value: '5'
         Objects.requireNonNull(sc.metas).add(new Meta(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5", null));
         Function s = new Function();
         Long functionId = functionRepository.findIdByCode(functionCode);

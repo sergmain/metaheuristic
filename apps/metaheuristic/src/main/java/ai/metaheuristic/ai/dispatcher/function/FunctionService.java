@@ -237,7 +237,7 @@ public class FunctionService {
                 // there is a function with the same code
                 if (function !=null) {
                     status = new FunctionApiData.FunctionConfigStatus(false,
-                            "#295.040 Updating of function isn't supported any more, need to upload a function as a new version. Function code: "+ function.code);
+                            "#295.040 Replacing of existing function isn't supported any more, need to upload a function as a new one. Function code: "+ function.code);
                     //noinspection UnnecessaryContinue
                     continue;
                 }
