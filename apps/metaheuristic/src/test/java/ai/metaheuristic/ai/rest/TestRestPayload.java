@@ -57,7 +57,7 @@ public class TestRestPayload {
     @Test
     @WithUserDetails("data_rest")
     public void testRestPayload_asRest() throws Exception {
-        final String url = "/rest/v1/payload/resource/data/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
+        final String url = "/rest/v1/payload/resource/variable/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
         //noinspection ConstantConditions
         assertTrue(url.endsWith(".bin"));
 
@@ -71,7 +71,7 @@ public class TestRestPayload {
     @Test
     @WithUserDetails("data")
     public void testRestPayload_asUser() throws Exception {
-        final String url = "/rest/v1/payload/resource/data/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
+        final String url = "/rest/v1/payload/resource/variable/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
         //noinspection ConstantConditions
         assertTrue(url.endsWith(".bin"));
 

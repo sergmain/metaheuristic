@@ -119,7 +119,7 @@ public class TestAccessForAllEndPoints {
             new AccessUrl("/rest/v1/srv/1", AccessMethod.POST),
             new AccessUrl("/rest/v1/srv-v2/1", AccessMethod.POST),
             new AccessUrl("/rest/v1/payload/resource/1/1", AccessMethod.GET),
-            new AccessUrl("/rest/v1/payload/resource/data/1/1", AccessMethod.GET),
+            new AccessUrl("/rest/v1/payload/resource/variable/1/1", AccessMethod.GET),
             new AccessUrl("/rest/v1/upload/1", AccessMethod.POST),
             new AccessUrl("/rest/v1/payload/function-config/1", AccessMethod.POST),
             new AccessUrl("/rest/v1/test", AccessMethod.GET),
@@ -176,7 +176,7 @@ public class TestAccessForAllEndPoints {
     @Test
     @WithUserDetails("data_rest")
     public void testRestPayload_asRest() throws Exception {
-        final String url = "/rest/v1/payload/resource/data/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
+        final String url = "/rest/v1/payload/resource/variable/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
         //noinspection ConstantConditions
         assertTrue(url.endsWith(".bin"));
 
@@ -190,7 +190,7 @@ public class TestAccessForAllEndPoints {
     @Test
     @WithUserDetails("data")
     public void testRestPayload_asUser() throws Exception {
-        final String url = "/rest/v1/payload/resource/data/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
+        final String url = "/rest/v1/payload/resource/variable/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
         //noinspection ConstantConditions
         assertTrue(url.endsWith(".bin"));
 

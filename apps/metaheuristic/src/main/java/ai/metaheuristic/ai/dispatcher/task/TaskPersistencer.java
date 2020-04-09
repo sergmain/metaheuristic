@@ -128,6 +128,12 @@ public class TaskPersistencer {
 
     public void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, Consumer<Task> action) {
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(result.getResult());
+        if (functionExec==null) {
+            String es = "#307.045 Task #" + result.taskId + " has empty execResult";
+            log.info(es);
+            functionExec = new FunctionApiData.FunctionExec();
+//            functionExec.generalExec = new FunctionApiData.SystemExecResult("<unknown>", false, -996, es);
+        }
         FunctionApiData.SystemExecResult systemExecResult = functionExec.generalExec!=null ? functionExec.generalExec : functionExec.exec;
         if (!systemExecResult.isOk) {
             log.warn("#307.050 Task #{} finished with error, functionCode: {}, console: {}",

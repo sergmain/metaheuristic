@@ -92,6 +92,14 @@ public class YamlUtils {
         return yaml.load(s);
     }
 
+    @Nullable
+    public static Object toNullable(String s, Yaml yaml) {
+        if (S.b(s)) {
+            return null;
+        }
+        return yaml.load(s);
+    }
+
     public static Object to(InputStream is, Yaml yaml) {
         return yaml.load(is);
     }
