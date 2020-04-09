@@ -51,7 +51,7 @@ public class GlobalVariableController {
     @GetMapping("/global-variables")
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
                        @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
-                       @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
+                       @ModelAttribute("errorMessage") final ArrayList<String> errorMessages) {
         GlobalVariableData.GlobalVariablesResult globalVariablesResultRest = globalVariableTopLevelService.getGlobalVariables(pageable);
         ControllerUtils.addMessagesToModel(model, globalVariablesResultRest);
         model.addAttribute("result", globalVariablesResultRest);
@@ -97,7 +97,7 @@ public class GlobalVariableController {
         GlobalVariableData.GlobalVariableResult globalVariableResultRest = globalVariableTopLevelService.getGlobalVariableById(id);
         if (globalVariableResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", globalVariableResultRest.getErrorMessagesAsList());
-            return "redirect:/dispatcher/global-variables";
+            return "redirect:/dispatcher/global-variable/global-variables";
         }
         model.addAttribute("globalVariable", globalVariableResultRest.data);
         return "dispatcher/global-variable/global-variable-delete";

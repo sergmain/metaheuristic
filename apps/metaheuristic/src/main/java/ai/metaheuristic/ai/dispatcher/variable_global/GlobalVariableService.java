@@ -40,10 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -133,14 +130,9 @@ public class GlobalVariableService {
         }
     }
 
-    public GlobalVariable storeInitialGlobalVariable(File tempFile, String variable, String filename) {
-        try {
-            try (InputStream is = new FileInputStream(tempFile)) {
-                return save(is, tempFile.length(), variable, filename);
-            }
-        } catch (IOException e) {
-            log.error("#089.070 Error", e);
-            throw new StoreNewFileException("#089.080 Error while storing", e, tempFile.getPath(), filename);
+    public GlobalVariable storeInitialGlobalVariable(File tempFile, String variable, String filename) throws IOException {
+        try (InputStream is = new FileInputStream(tempFile)) {
+            return save(is, tempFile.length(), variable, filename);
         }
     }
 

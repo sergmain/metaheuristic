@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,18 +54,21 @@ public class GlobalVariableTopLevelService {
 
     public OperationStatusRest createGlobalVariableFromFile(MultipartFile file, String variable) {
         String originFilename = file.getOriginalFilename();
+        if (S.b(originFilename)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.010 name of uploaded file is blank");
+        }
         return storeFileInternal(file, variable, originFilename);
     }
 
     private OperationStatusRest storeFileInternal(MultipartFile file, String variable, String originFilename) {
         if (originFilename == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.010 name of uploaded file is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.020 name of uploaded file is null");
         }
         File tempFile = globals.createTempFileForDispatcher("temp-raw-file-");
         if (tempFile.exists()) {
             if (!tempFile.delete() ) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#172.020 can't delete dir " + tempFile.getAbsolutePath());
+                        "#172.030 can't delete dir " + tempFile.getAbsolutePath());
             }
         }
         try {
@@ -73,14 +77,14 @@ public class GlobalVariableTopLevelService {
             } catch (IOException e) {
                 log.error("Error while storing data to temp file", e);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#172.030 can't persist uploaded file as " +
+                        "#172.040 can't persist uploaded file as " +
                                 tempFile.getAbsolutePath()+", error: " + e.toString());
             }
 
             try {
                 globalVariableService.storeInitialGlobalVariable(tempFile, variable, originFilename);
-            } catch (StoreNewFileException e) {
-                String es = "#172.040 An error while saving data to file, " + e.toString();
+            } catch (Throwable e) {
+                String es = "#172.050 An error while saving data to file, " + e.toString();
                 log.error(es, e);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
             }
@@ -93,13 +97,13 @@ public class GlobalVariableTopLevelService {
     public OperationStatusRest createGlobalVariableWithExternalStorage(String variable, String params ) {
 
         if (StringUtils.isBlank(params)) {
-            String es = "#172.050 GlobalVariable params is blank";
+            String es = "#172.060 GlobalVariable params is blank";
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
         DataStorageParams dsp = DataStorageParamsUtils.to(params);
         if (dsp.sourcing==null || dsp.sourcing== EnumsApi.DataSourcing.dispatcher) {
-            String es = "#172.055 Sourcing must be "+ EnumsApi.DataSourcing.disk + " or " +EnumsApi.DataSourcing.git +", actual: " + dsp.sourcing;
+            String es = "#172.070 Sourcing must be "+ EnumsApi.DataSourcing.disk + " or " +EnumsApi.DataSourcing.git +", actual: " + dsp.sourcing;
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }

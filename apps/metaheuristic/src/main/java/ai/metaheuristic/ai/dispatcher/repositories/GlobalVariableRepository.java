@@ -79,7 +79,7 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable(" +
             "b.id, b.version, b.name, b.uploadTs, b.filename, b.params ) " +
-            "from Variable b " +
+            "from GlobalVariable b " +
             "where b.id=:id")
     SimpleGlobalVariable getByIdAsSimpleGlobalVariable(Long id);
 
