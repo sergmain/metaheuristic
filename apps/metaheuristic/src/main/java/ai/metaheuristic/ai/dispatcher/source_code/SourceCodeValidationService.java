@@ -254,6 +254,15 @@ public class SourceCodeValidationService {
             }
         }
 
+        if (process.subProcesses!=null) {
+            for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
+                SourceCodeApiData.SourceCodeValidationResult result = checkFunctions(sourceCode, subProcess);
+                if (result != ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK) {
+                    return result;
+                }
+            }
+        }
+
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
     }
 

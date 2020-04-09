@@ -7,7 +7,7 @@
         <h1 class="widget-header">Delete execContext</h1>
 
         <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.source_code.SourceCodeApiData$ExecContextResult"*/-->
-        <p>Code of sourceCode:</p>
+        <p>Source code UID:</p>
         <pre style="width:50%" th:text="${result.sourceCode.uid}"></pre>
 
         <p>Parameters of sourceCode:</p>
@@ -17,7 +17,7 @@
         <pre style="width:50%" th:text="${result.execContext.params}"></pre>
 
         <p>Exec state:</p>
-        <pre style="width:50%" th:text="${T(ai.metaheuristic.api.EnumsApi.ExecContextState).from(result.execContext.execState)}"></pre>
+        <pre style="width:50%" th:text="${T(ai.metaheuristic.api.EnumsApi.ExecContextState).from(result.execContext.state)}"></pre>
 
         <table>
             <tr>

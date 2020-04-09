@@ -533,7 +533,12 @@ public class ExecContextService {
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist) {
-            execContextFSM.toProduced(execContext.id);
+            if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
+                execContextFSM.toProduced(execContext.id);
+            }
+            else {
+                execContextFSM.toError(execContext.id);
+            }
         }
         result.numberOfTasks = produceTaskResult.numberOfTasks;
         result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;

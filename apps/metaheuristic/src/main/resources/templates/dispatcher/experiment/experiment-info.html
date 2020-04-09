@@ -30,14 +30,14 @@
             <td valign="top">
                 <a class="pure-button pure-button-primary" href="#"
                    th:if="${experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).NONE.code}"
-                   th:href="${'/dispatcher/experiment/exec-context-target-exec-state/'+experiment.id+'/producing/' + experimentResult.execContext.id}">Produce tasks</a>
+                   th:href="${'/dispatcher/experiment/exec-context-target-state/'+experiment.id+'/producing/' + experimentResult.execContext.id}">Produce tasks</a>
                 <a class="pure-button pure-button-primary" href="#"
                    th:if="${experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).PRODUCED.code or
                    experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STOPPED.code}"
-                   th:href="${'/dispatcher/experiment/exec-context-target-exec-state/'+experiment.id+'/started/' + experimentResult.execContext.id}">Start</a>
+                   th:href="${'/dispatcher/experiment/exec-context-target-state/'+experiment.id+'/started/' + experimentResult.execContext.id}">Start</a>
                 <a class="pure-button pure-button-primary" href="#"
                    th:if="${experimentResult.execContext.execState==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STARTED.code}"
-                   th:href="${'/dispatcher/experiment/exec-context-target-exec-state/'+experiment.id+'/stopped/' + experimentResult.execContext.id}">Stop</a>
+                   th:href="${'/dispatcher/experiment/exec-context-target-state/'+experiment.id+'/stopped/' + experimentResult.execContext.id}">Stop</a>
             </td>
             <td width="20">&nbsp; </td>
             <td valign="top">

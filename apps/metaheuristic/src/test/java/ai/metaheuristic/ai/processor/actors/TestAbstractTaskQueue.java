@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.processor.actors;
 
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
+import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -32,12 +33,12 @@ public class TestAbstractTaskQueue {
     public void test() {
         SimpleClass actor = new SimpleClass();
 
-        DownloadVariableTask task = new DownloadVariableTask("resource-id-01", 10, new File("aaa"), null);
+        DownloadVariableTask task = new DownloadVariableTask("resource-id-01", EnumsApi.VariableContext.local, 10, new File("aaa"), null);
 
         actor.add(task);
         assertEquals(1, actor.queueSize());
 
-        DownloadVariableTask task1 = new DownloadVariableTask("resource-id-01", 10, new File("bbb"), null);
+        DownloadVariableTask task1 = new DownloadVariableTask("resource-id-01", EnumsApi.VariableContext.local, 10, new File("bbb"), null);
         actor.add(task1);
         assertEquals(1, actor.queueSize());
 
@@ -47,15 +48,19 @@ public class TestAbstractTaskQueue {
         DownloadVariableTask t2 = actor.poll();
         assertNull(t2);
 
-        DownloadVariableTask task2 = new DownloadVariableTask("resource-id-02", 10, new File("."), null);
+        DownloadVariableTask task2 = new DownloadVariableTask("resource-id-02", EnumsApi.VariableContext.local, 10, new File("."), null);
         actor.add(task1);
         actor.add(task2);
         assertEquals(2, actor.queueSize());
 
         // now it doesn't matter which task because resourceId is unique across all tasks
-        DownloadVariableTask task3 = new DownloadVariableTask("resource-id-02", 11, new File("."), null);
-        actor.add(task3);
+        DownloadVariableTask task31 = new DownloadVariableTask("resource-id-02", EnumsApi.VariableContext.local, 11, new File("."), null);
+        actor.add(task31);
         assertEquals(2, actor.queueSize());
+
+        DownloadVariableTask task32 = new DownloadVariableTask("resource-id-02", EnumsApi.VariableContext.global, 11, new File("."), null);
+        actor.add(task32);
+        assertEquals(3, actor.queueSize());
 
     }
 }

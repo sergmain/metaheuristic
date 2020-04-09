@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor.variable_providers;
 
+import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
@@ -61,12 +62,30 @@ public class DispatcherVariableProvider implements VariableProvider {
 
         // process it only if the dispatcher has already sent its config
         if (dispatcher.context.chunkSize != null) {
-            DownloadVariableTask variableTask = new DownloadVariableTask(variable.id, task.getTaskId(), taskDir, dispatcher.context.chunkSize);
+            DownloadVariableTask variableTask = new DownloadVariableTask(variable.id, variable.context, task.getTaskId(), taskDir, dispatcher.context.chunkSize);
             variableTask.dispatcher = dispatcher.dispatcherLookup;
             variableTask.processorId = dispatcherCode.processorId;
             downloadVariableService.add(variableTask);
         }
-        return Collections.singletonList(AssetUtils.prepareFileForVariable(taskDir, variable.id, null));
+        EnumsApi.BinaryType type;
+        String es;
+        switch(variable.context) {
+            case global:
+                type = EnumsApi.BinaryType.global_variable;
+                break;
+            case local:
+                type = EnumsApi.BinaryType.variable;
+                break;
+            case array:
+                es = "#810.005 Array type of variable isn't supported right now, variableId: " + variable.id;
+                log.error(es);
+                throw new BreakFromLambdaException(es);
+            default:
+                es = "#810.007 Unknown context: " + variable.context+ ", variableId: " +  variable.id;
+                log.error(es);
+                throw new BreakFromLambdaException(es);
+        }
+        return Collections.singletonList(AssetUtils.prepareFileForVariable(taskDir, variable.id, null, type));
     }
 
     @Override

@@ -120,6 +120,6 @@ public class ExperimentProcessValidator implements ProcessValidator {
                 return EnumsApi.SourceCodeValidateStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
             }
         }
-        return null;
+        return EnumsApi.SourceCodeValidateStatus.OK;
     }
 }

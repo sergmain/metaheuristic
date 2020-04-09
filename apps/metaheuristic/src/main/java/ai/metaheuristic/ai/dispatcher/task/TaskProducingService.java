@@ -134,6 +134,7 @@ public class TaskProducingService {
             Task t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId);
             if (t == null) {
                 result.status = EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR;
+                result.error = "Unknown reason of error while task creation";
                 return result;
             }
             result.taskId = t.getId();

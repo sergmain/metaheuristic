@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class FunctionApiData {
         public SystemExecResult exec = new SystemExecResult();
         public List<SystemExecResult> preExecs;
         public List<SystemExecResult> postExecs;
-        public SystemExecResult generalExec;
+        public @Nullable SystemExecResult generalExec;
 
         public boolean allFunctionsAreOk() {
             if (exec==null || !exec.isOk) {

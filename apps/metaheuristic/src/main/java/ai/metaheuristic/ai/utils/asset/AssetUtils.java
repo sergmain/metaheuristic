@@ -34,8 +34,8 @@ public class AssetUtils {
      * @param variableFilename String
      * @return AssetFile
      */
-    public static AssetFile prepareFileForVariable(File rootDir, String variableId, @Nullable String variableFilename) {
-        return prepareAssetFile(rootDir, variableId, variableFilename, EnumsApi.BinaryType.data.toString());
+    public static AssetFile prepareFileForVariable(File rootDir, String variableId, @Nullable String variableFilename, EnumsApi.BinaryType binaryType) {
+        return prepareAssetFile(rootDir, variableId, variableFilename, binaryType.toString());
     }
 
     public static AssetFile prepareOutputAssetFile(File rootDir, String id) {

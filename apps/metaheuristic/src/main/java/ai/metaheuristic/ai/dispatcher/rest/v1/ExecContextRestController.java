@@ -118,9 +118,9 @@ public class ExecContextRestController {
         return sourceCodeTopLevelService.deleteExecContextById(execContextId, context);
     }
 
-    @GetMapping("/exec-context-target-exec-state/{sourceCodeId}/{state}/{id}")
+    @GetMapping("/exec-context-target-state/{sourceCodeId}/{state}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public OperationStatusRest execContextTargetExecState(
+    public OperationStatusRest execContextTargetState(
             @SuppressWarnings("unused") @PathVariable Long sourceCodeId, @PathVariable String state,
             @PathVariable Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);

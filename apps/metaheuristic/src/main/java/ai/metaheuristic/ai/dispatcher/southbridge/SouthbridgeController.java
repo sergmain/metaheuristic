@@ -58,9 +58,10 @@ public class SouthbridgeController {
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
-    @GetMapping(value="/payload/resource/data/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value="/payload/resource/{variableType}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<AbstractResource> deliverResourceAuth(
             HttpServletRequest request,
+            @PathVariable("variableType") String variableType,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             String id, String chunkSize, Integer chunkNum) {
         log.debug("deliverResourceAuth(), id: {}, chunkSize: {}, chunkNum: {}", id, chunkSize, chunkNum);
@@ -70,7 +71,7 @@ public class SouthbridgeController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            CleanerInfo resource = serverService.deliverVariable(EnumsApi.BinaryType.data, id, chunkSize, chunkNum);
+            CleanerInfo resource = serverService.deliverVariable(EnumsApi.BinaryType.valueOf(variableType), id, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (BinaryDataNotFoundException e) {

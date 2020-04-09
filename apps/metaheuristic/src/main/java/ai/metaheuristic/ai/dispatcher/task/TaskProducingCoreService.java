@@ -67,7 +67,7 @@ public class TaskProducingCoreService {
         else {
             TaskParamsYaml.FunctionConfig fConfig = functionService.getFunctionConfig(process.function);
             if (fConfig == null) {
-                log.error("#171.07 Function wasn't found for code: {}", process.function.code);
+                log.error("#171.010 Function '{}' wasn't found", process.function.code);
                 return null;
             }
             taskParams.task.function = fConfig;

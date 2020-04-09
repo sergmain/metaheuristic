@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -68,12 +69,33 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
         DownloadVariableTask task;
         while ((task = poll()) != null) {
+            EnumsApi.BinaryType type;
+            String es;
+            switch(task.context) {
+                case global:
+                    type = EnumsApi.BinaryType.global_variable;
+                    break;
+                case local:
+                    type = EnumsApi.BinaryType.variable;
+                    break;
+                case array:
+                    es = "#810.005 Array type of variable isn't supported right now, variableId: " + task.variableId;
+                    log.error(es);
+                    processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.taskId, es);
+                    continue;
+                default:
+                    es = "#810.007 Unknown context: " + task.context+ ", variableId: " +  task.variableId;
+                    log.error(es);
+                    processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.taskId, es);
+                    continue;
+
+            }
             ProcessorTask processorTask = processorTaskService.findById(task.dispatcher.url, task.taskId);
             if (processorTask !=null && processorTask.finishedOn!=null) {
                 log.info("Task #{} was already finished, skip it", task.taskId);
                 continue;
             }
-            AssetFile assetFile = AssetUtils.prepareFileForVariable(task.targetDir, task.variableId, null);
+            AssetFile assetFile = AssetUtils.prepareFileForVariable(task.targetDir, task.variableId, null, type);
             if (assetFile.isError ) {
                 log.warn("#810.010 Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
@@ -85,12 +107,12 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
             log.info("Start processing the download task {}", task);
             try {
-                final String payloadRestUrl = task.dispatcher.url + "/rest/v1/payload/resource/data";
+                final String payloadRestUrl = task.dispatcher.url + "/rest/v1/payload/resource/"+type;
                 final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8.toString());
 
                 File parentDir = assetFile.file.getParentFile();
                 if (parentDir==null) {
-                    String es = "#810.020 Can't get parent dir for asset file " + assetFile.file.getAbsolutePath();
+                    es = "#810.020 Can't get parent dir for asset file " + assetFile.file.getAbsolutePath();
                     log.error(es);
                     processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.taskId, es);
                     continue;
@@ -99,7 +121,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 try {
                     tempFile = File.createTempFile("resource-", ".temp", parentDir);
                 } catch (IOException e) {
-                    String es = "#810.030 Error creating temp file in parent dir: " + parentDir.getAbsolutePath();
+                    es = "#810.030 Error creating temp file in parent dir: " + parentDir.getAbsolutePath();
                     log.error(es, e);
                     processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.taskId, es);
                     continue;
@@ -152,21 +174,21 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         }
                     } catch (HttpResponseException e) {
                         if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                            final String es = String.format("#810.035 Resource %s wasn't found on dispatcher. Task #%s is finished.", task.variableId, task.getTaskId());
+                            es = String.format("#810.035 Resource %s wasn't found on dispatcher. Task #%s is finished.", task.variableId, task.getTaskId());
                             log.warn(es);
                             processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.resource_doesnt_exist;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
-                            final String es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
+                            es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
                             log.warn(es);
                             processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.unknown_error;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
-                            final String es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
+                            es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
                             log.warn(es);
                             processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
                             resourceState = Enums.ResourceState.unknown_error;

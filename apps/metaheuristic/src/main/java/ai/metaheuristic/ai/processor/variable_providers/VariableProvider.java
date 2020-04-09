@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -33,6 +34,7 @@ public interface VariableProvider {
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
             TaskParamsYaml.InputVariable variable);
 
+    @Nullable
     FunctionApiData.SystemExecResult processOutputVariable(
             DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,

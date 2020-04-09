@@ -242,7 +242,7 @@ public class EnumsApi {
         INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR
     }
 
-    public enum BinaryType {data, function}
+    public enum BinaryType {variable, global_variable, function}
 
     public enum OperationStatus {OK, ERROR}
 
@@ -316,6 +316,15 @@ public class EnumsApi {
                     return EXPORTED_TO_ATLAS;
                 default:
                     return UNKNOWN;
+            }
+        }
+
+        public static ExecContextState from(String state) {
+            try {
+                return valueOf(state);
+            }
+            catch(Throwable th) {
+                return UNKNOWN;
             }
         }
 

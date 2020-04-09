@@ -91,7 +91,7 @@ public class ExecContextController {
     /**
      * right now reference to global variable isn't supported. all global variables must be specified in SourceCode.
      */
-    @PostMapping("/exec-context-code-add-commit")
+    @PostMapping("/exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextAddCommit(Long sourceCodeId, String variable, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);

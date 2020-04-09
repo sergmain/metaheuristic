@@ -174,7 +174,7 @@ public class ExperimentController {
         return "dispatcher/experiment/experiment-edit-form";
     }
 
-    @GetMapping("/exec-context-target-exec-state/{experimentId}/{state}/{id}")
+    @GetMapping("/exec-context-target-state/{experimentId}/{state}/{id}")
     public String execContextTargetExecState(@PathVariable Long experimentId, @PathVariable String state,
                                           @PathVariable Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);

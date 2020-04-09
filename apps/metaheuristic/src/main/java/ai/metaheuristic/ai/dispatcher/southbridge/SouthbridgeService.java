@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
@@ -90,6 +91,7 @@ public class SouthbridgeService {
 
     private final Globals globals;
     private final VariableService variableService;
+    private final GlobalVariableService globalVariableService;
     private final FunctionDataService functionDataService;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final ProcessorCache processorCache;
@@ -204,9 +206,13 @@ public class SouthbridgeService {
                 assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesDir, resourceId, null);
                 dataSaver = functionDataService::storeToFile;
                 break;
-            case data:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, resourceId, null);
+            case variable:
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, resourceId, null, binaryType);
                 dataSaver = (variableId, trgFile) -> variableService.storeToFile(Long.parseLong(variableId), trgFile);
+                break;
+            case global_variable:
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, resourceId, null, binaryType);
+                dataSaver = (variableId, trgFile) -> globalVariableService.storeToFile(Long.parseLong(variableId), trgFile);
                 break;
             default:
                 throw new IllegalStateException("#442.008 Unknown type of data: " + binaryType);

@@ -102,7 +102,7 @@ public class SourceCodeSelectorService {
         }).collect(Collectors.toList());
 
         Company company = companyCache.findByUniqueId(companyUniqueId);
-        if (!S.b(company.getParams())) {
+        if (company!=null && !S.b(company.getParams())) {
             final Set<String> groups = new HashSet<>();
             try {
                 CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
