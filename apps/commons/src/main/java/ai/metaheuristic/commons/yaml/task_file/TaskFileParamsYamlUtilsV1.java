@@ -65,6 +65,7 @@ public class TaskFileParamsYamlUtilsV1
         TaskFileParamsYaml.InputVariable v = new TaskFileParamsYaml.InputVariable();
         v.id = v1.id;
         v.name = v1.name;
+        v.type = v1.type;
         v.sourcing = v1.sourcing;
         v.git = v1.git;
         v.disk = v1.disk;
@@ -76,6 +77,7 @@ public class TaskFileParamsYamlUtilsV1
         TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
         v.id = v1.id;
         v.name = v1.name;
+        v.type = v1.type;
         v.sourcing = v1.sourcing;
         v.git = v1.git;
         v.disk = v1.disk;
