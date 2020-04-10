@@ -36,7 +36,7 @@ public interface VariableProvider {
 
     @Nullable
     FunctionApiData.SystemExecResult processOutputVariable(
-            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
             String outputVariableId,
             TaskParamsYaml.FunctionConfig functionConfig

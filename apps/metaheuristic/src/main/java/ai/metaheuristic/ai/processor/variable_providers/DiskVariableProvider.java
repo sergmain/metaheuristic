@@ -110,11 +110,11 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public FunctionApiData.SystemExecResult processOutputVariable(
-            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
             String outputVariableId, TaskParamsYaml.FunctionConfig functionConfig
     ) {
-        File outputVariableFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputVariableId).toFile();
+        File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariableId);
         if (outputVariableFile.exists()) {
             log.info("The result data was already written to file {}, no need to upload to dispatcher", outputVariableFile.getPath());
             processorTaskService.setVariableUploadedAndCompleted(dispatcher.dispatcherLookup.url, task.taskId, outputVariableId);

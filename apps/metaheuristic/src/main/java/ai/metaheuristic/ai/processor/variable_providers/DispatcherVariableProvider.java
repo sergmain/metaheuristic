@@ -90,10 +90,10 @@ public class DispatcherVariableProvider implements VariableProvider {
 
     @Override
     public FunctionApiData.SystemExecResult processOutputVariable(
-            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
             String outputVariableId, TaskParamsYaml.FunctionConfig functionConfig) {
-        File outputVariableFile = Path.of(ConstsApi.ARTIFACTS_DIR, outputVariableId).toFile();
+        File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariableId);
         if (outputVariableFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.getPath());
             UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariableFile, outputVariableId);
