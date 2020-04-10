@@ -36,7 +36,7 @@ public class FunctionExecUtils {
     }
 
     @Nullable
-    public static FunctionApiData.FunctionExec to(String s) {
+    public static FunctionApiData.FunctionExec to(@Nullable String s) {
         return (FunctionApiData.FunctionExec) YamlUtils.toNullable(s, getYaml());
     }
 

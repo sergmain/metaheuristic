@@ -139,7 +139,7 @@ public class SouthbridgeService {
                 () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryType, variableId));
     }
 
-    public UploadResult uploadVariable(MultipartFile file, Long variableId) {
+    public UploadResult uploadVariable(MultipartFile file, Long taskId, Long variableId) {
         String originFilename = file.getOriginalFilename();
         if (StringUtils.isBlank(originFilename)) {
             return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
@@ -150,9 +150,6 @@ public class SouthbridgeService {
         Variable variable = variableService.findById(variableId).orElse(null);
         if (variable ==null) {
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable for variableId "+variableId+" wasn't found" );
-        }
-        if (true) {
-            throw new NotImplementedException("Need to re-write a logic of storing variables from processor");
         }
 //        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable)));
 //        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(variable.getParams());

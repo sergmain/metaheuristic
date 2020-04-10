@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -28,7 +27,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_TASK")
 @Data
-@ToString(exclude = {"params", "extendedResult"} )
+@ToString(exclude = {"params"} )
 @NoArgsConstructor
 public class TaskImpl implements Serializable, Task {
     private static final long serialVersionUID = 268796211406267810L;
@@ -41,7 +40,7 @@ public class TaskImpl implements Serializable, Task {
     private Integer version;
 
     /**
-     * TaskParamsYaml represented as String
+     * TaskParamsYaml represented as a String
      */
     @Column(name = "PARAMS")
     public String params;
@@ -68,7 +67,7 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "EXEC_STATE")
     public int execState;
 
-    // by result that means a file which is created by this task
+    // by result it means all outputs which are created by this task
     @Column(name = "IS_RESULT_RECEIVED")
     public boolean resultReceived;
 

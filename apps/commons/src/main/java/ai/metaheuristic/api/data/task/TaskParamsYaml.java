@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
  * Date: 6/17/2019
  * Time: 9:10 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Data
 @EqualsAndHashCode
 public class TaskParamsYaml implements BaseParams {

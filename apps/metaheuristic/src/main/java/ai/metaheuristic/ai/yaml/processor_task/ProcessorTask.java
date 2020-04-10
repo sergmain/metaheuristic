@@ -17,17 +17,23 @@ package ai.metaheuristic.ai.yaml.processor_task;
 
 import ai.metaheuristic.api.data.Meta;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @ToString
+@NoArgsConstructor
 public class ProcessorTask {
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class OutputStatus {
         // variableId of Variable.
         public String variableId;
@@ -37,6 +43,7 @@ public class ProcessorTask {
     }
 
     @Data
+    @NoArgsConstructor
     public static class Output {
         public final List<OutputStatus> outputStatuses = new ArrayList<>();
 
@@ -57,6 +64,7 @@ public class ProcessorTask {
 
     // function exec result
     // it contains data of FunctionApiData.FunctionExec in yaml format
+    @Nullable
     public String functionExecResult;
 
     // need to clean a dir of task after processing this task?
@@ -71,12 +79,15 @@ public class ProcessorTask {
     public boolean assetsPrepared;
 
     // when task was launched
+    @Nullable
     public Long launchedOn;
 
     // when execution of function finished
+    @Nullable
     public Long finishedOn;
 
     // when status and console output were reported to dispatcher
+    @Nullable
     public Long reportedOn;
 
     // was this task reported to dispatcher?

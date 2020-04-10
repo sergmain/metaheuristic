@@ -84,11 +84,12 @@ public class SouthbridgeController {
     public UploadResult uploadResourceAuth(
             MultipartFile file,
             @SuppressWarnings("unused") String processorId,
-            Long resourceId,
+            @SuppressWarnings("unused") Long taskId,
+            Long variableId,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) {
-        log.debug("uploadResourceAuth(), resourceId: {}", resourceId);
-        return serverService.uploadVariable(file, resourceId);
+        log.debug("uploadResourceAuth(), variableId: {}", variableId);
+        return serverService.uploadVariable(file, taskId, variableId);
     }
 
     /**

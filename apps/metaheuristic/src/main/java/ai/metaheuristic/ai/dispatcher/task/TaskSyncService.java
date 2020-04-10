@@ -63,7 +63,7 @@ public class TaskSyncService {
             try {
                 TaskImpl task = taskRepository.findByIdForUpdate(taskId);
                 if (task==null) {
-                    log.warn("#307.110 Can't find Task for Id: {}", taskId);
+                    log.warn("#306.010 Can't find Task for Id: {}", taskId);
                     return null;
                 }
                 return function.apply(task);

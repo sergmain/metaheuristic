@@ -130,6 +130,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                         .setCharset(StandardCharsets.UTF_8)
                         .addTextBody("processorId", task.processorId)
                         .addTextBody("taskId", Long.toString(task.taskId))
+                        .addTextBody("variableId", task.variableId)
                         .addBinaryBody("file", task.file, ContentType.APPLICATION_OCTET_STREAM, task.file.getName())
                         .build();
 

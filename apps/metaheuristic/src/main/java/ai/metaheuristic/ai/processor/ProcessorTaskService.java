@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -242,6 +243,7 @@ public class ProcessorTaskService {
         }
     }
 
+    @Nullable
     public ProcessorCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult(String dispatcherUrl) {
         final List<ProcessorTask> list = getForReporting(dispatcherUrl);
         if (list.isEmpty()) {
@@ -418,8 +420,10 @@ public class ProcessorTaskService {
             task.reportedOn = null;
             task.reported = false;
             task.delivered = false;
-            task.output.outputStatuses.clear();
             task.completed = false;
+            taskParamYaml.task.outputs.stream()
+                    .map(o->new ProcessorTask.OutputStatus(o.id, false) )
+                    .collect(Collectors.toCollection(()->task.output.outputStatuses));
 
             File dispatcherDir = new File(globals.processorTaskDir, metadataService.dispatcherUrlAsCode(dispatcherUrl).code);
             String path = getTaskPath(taskId);
@@ -446,6 +450,7 @@ public class ProcessorTaskService {
         }
     }
 
+    @Nullable
     public ProcessorTask resetTask(String dispatcherUrl, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             ProcessorTask task = findById(dispatcherUrl, taskId);
@@ -457,6 +462,7 @@ public class ProcessorTaskService {
         }
     }
 
+    @Nullable
     public ProcessorTask setLaunchOn(String dispatcherUrl, long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             ProcessorTask task = findById(dispatcherUrl, taskId);
@@ -493,6 +499,7 @@ public class ProcessorTaskService {
         return task;
     }
 
+    @Nullable
     public ProcessorTask findById(String dispatcherUrl, Long taskId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             return getMapForDispatcherUrl(dispatcherUrl)
@@ -565,6 +572,7 @@ public class ProcessorTaskService {
         return taskDir;
     }
 
+    @Nullable
     File prepareTaskSubDir(File taskDir, String subDir) {
         File taskSubDir = new File(taskDir, subDir);
         //noinspection ResultOfMethodCallIgnored
@@ -590,6 +598,7 @@ public class ProcessorTaskService {
         return YamlUtils.toString(envYamlShort, getYamlForEnvYamlShort());
     }
 
+    @Nullable
     public String prepareEnvironment(File artifactDir) {
         File envFile = new File(artifactDir, ConstsApi.MH_ENV_FILE);
         if (envFile.isDirectory()) {

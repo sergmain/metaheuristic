@@ -93,7 +93,7 @@ public class YamlUtils {
     }
 
     @Nullable
-    public static Object toNullable(String s, Yaml yaml) {
+    public static Object toNullable(@Nullable String s, Yaml yaml) {
         if (S.b(s)) {
             return null;
         }
