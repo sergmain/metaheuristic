@@ -391,7 +391,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
         assertEquals("test-variable", inputVariable.name);
         assertEquals(EnumsApi.VariableContext.global, inputVariable.context);
-        assertEquals(testGlobalVariable.id.toString(), inputVariable.id);
+        assertEquals(testGlobalVariable.id, inputVariable.id);
 
         TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
         assertEquals("assembled-raw-output", outputVariable.name);
