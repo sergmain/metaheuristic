@@ -505,7 +505,7 @@ public class ProcessorTaskService {
             return getMapForDispatcherUrl(dispatcherUrl)
                     .entrySet()
                     .stream()
-                    .filter(e -> e.getValue().taskId == taskId)
+                    .filter(e -> e.getValue().taskId.equals(taskId))
                     .findFirst()
                     .map(Map.Entry::getValue)
                     .orElse(null);

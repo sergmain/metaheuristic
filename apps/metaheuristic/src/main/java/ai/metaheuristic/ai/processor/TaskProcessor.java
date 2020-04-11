@@ -121,7 +121,7 @@ public class TaskProcessor {
 
             if (dispatcher.schedule.isCurrentTimeInactive()) {
                 processorTaskService.delete(task.dispatcherUrl, task.taskId);
-                log.info("Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.dispatcherUrl, new Date(), dispatcher.schedule.asString);
+                log.info("#100.025 Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.dispatcherUrl, new Date(), dispatcher.schedule.asString);
                 return;
             }
 
@@ -133,13 +133,13 @@ public class TaskProcessor {
             EnumsApi.ExecContextState state = currentExecState.getState(task.dispatcherUrl, task.execContextId);
             if (state== EnumsApi.ExecContextState.UNKNOWN) {
                 processorTaskService.delete(task.dispatcherUrl, task.taskId);
-                log.info("The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.execContextId, task.dispatcherUrl, task.taskId);
+                log.info("#100.032 The state for ExecContext #{}, host {} is unknown, delete a task #{}", task.execContextId, task.dispatcherUrl, task.taskId);
                 continue;
             }
 
             if (state!= EnumsApi.ExecContextState.STARTED) {
                 processorTaskService.delete(task.dispatcherUrl, task.taskId);
-                log.info("The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.execContextId, task.dispatcherUrl, state, task.taskId);
+                log.info("#100.034 The state for ExecContext #{}, host: {}, is {}, delete a task #{}", task.execContextId, task.dispatcherUrl, state, task.taskId);
                 continue;
             }
 
@@ -238,7 +238,7 @@ public class TaskProcessor {
                     continue;
                 }
             } catch (Throwable th) {
-                String es = "Error while preparing params.yaml file for task #"+task.taskId+", error: " + th.getMessage();
+                String es = "#100.110 Error while preparing params.yaml file for task #"+task.taskId+", error: " + th.getMessage();
                 log.warn(es);
                 processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
                 continue;
@@ -247,7 +247,7 @@ public class TaskProcessor {
             // at this point all required resources have to be prepared
             ProcessorTask taskResult = processorTaskService.setLaunchOn(task.dispatcherUrl, task.taskId);
             if (taskResult==null) {
-                String es = "Task #"+task.taskId+" wasn't found";
+                String es = "#100.120 Task #"+task.taskId+" wasn't found";
                 log.warn(es);
                 // there isn't this tasls any more. So we can't mark it as Finished
 //                processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
@@ -259,7 +259,7 @@ public class TaskProcessor {
             catch(ScheduleInactivePeriodException e) {
                 processorTaskService.resetTask(task.dispatcherUrl, task.taskId);
                 processorTaskService.delete(task.dispatcherUrl, task.taskId);
-                log.info("An execution of task #{} was terminated because of the beginning of inactivity period. " +
+                log.info("#100.130 An execution of task #{} was terminated because of the beginning of inactivity period. " +
                         "This task will be processed later", task.taskId);
             }
         }
@@ -268,7 +268,7 @@ public class TaskProcessor {
     private void markFunctionAsFinishedWithPermanentError(String dispatcherUrl, Long taskId, FunctionPrepareResult result) {
         FunctionApiData.SystemExecResult execResult = new FunctionApiData.SystemExecResult(
                 result.getFunction().code, false, -990,
-                "#100.105 Function "+result.getFunction().code+" has permanent error: " + result.getSystemExecResult().console);
+                "#100.150 Function "+result.getFunction().code+" has permanent error: " + result.getSystemExecResult().console);
         processorTaskService.markAsFinished(dispatcherUrl, taskId,
                 new FunctionApiData.FunctionExec(null, null, null, execResult));
 
@@ -291,7 +291,7 @@ public class TaskProcessor {
             if (result==null) {
                 execResult = new FunctionApiData.SystemExecResult(
                         preFunctionConfig.code, false, -999,
-                        "#100.110 Illegal State, result of preparing of function "+ preFunctionConfig.code+" is null");
+                        "#100.170 Illegal State, result of preparing of function "+ preFunctionConfig.code+" is null");
             }
             else {
                 execResult = execFunction(task, taskDir, taskParamYaml, systemDir, result, schedule);
@@ -309,7 +309,7 @@ public class TaskProcessor {
             if (result==null) {
                 systemExecResult = new FunctionApiData.SystemExecResult(
                         taskParamYaml.task.getFunction().code, false, -999,
-                        "#100.120 Illegal State, result of preparing of function "+taskParamYaml.task.getFunction()+" is null");
+                        "#100.190 Illegal State, result of preparing of function "+taskParamYaml.task.getFunction()+" is null");
                 isOk = false;
             }
             if (isOk) {
@@ -325,7 +325,7 @@ public class TaskProcessor {
                         if (result==null) {
                             execResult = new FunctionApiData.SystemExecResult(
                                     postFunctionConfig.code, false, -999,
-                                    "#100.130 Illegal State, result of preparing of function "+ postFunctionConfig.code+" is null");
+                                    "#100.210 Illegal State, result of preparing of function "+ postFunctionConfig.code+" is null");
                         }
                         else {
                             execResult = execFunction(task, taskDir, taskParamYaml, systemDir, result, schedule);
@@ -347,7 +347,7 @@ public class TaskProcessor {
                         catch (Throwable th) {
                             generalExec = new FunctionApiData.SystemExecResult(
                                     mainFunctionConfig.code, false, -997,
-                                    "#100.132 Error storing function's result, error: " + th.getMessage());
+                                    "#100.230 Error storing function's result, error: " + th.getMessage());
 
                         }
                     }
@@ -386,7 +386,7 @@ public class TaskProcessor {
             try {
                 FileUtils.writeStringToFile(paramFile, params, StandardCharsets.UTF_8);
             } catch (IOException e) {
-                log.error("#100.140 Error with writing to " + paramFile.getAbsolutePath() + " file", e);
+                log.error("#100.250 Error with writing to " + paramFile.getAbsolutePath() + " file", e);
                 return false;
             }
         }
@@ -415,7 +415,7 @@ public class TaskProcessor {
             case local:
                 return EnumsApi.DataType.variable;
             default:
-                throw new IllegalStateException("wrong context: " + context);
+                throw new IllegalStateException("#100.270 wrong context: " + context);
         }
     }
 
@@ -467,7 +467,7 @@ public class TaskProcessor {
         if (StringUtils.isNotBlank(functionPrepareResult.function.env)) {
             interpreter = new Interpreter(envService.getEnvYaml().getEnvs().get(functionPrepareResult.function.env));
             if (interpreter.list == null) {
-                String es = "#100.150 Can't process the task, the interpreter wasn't found for env: " + functionPrepareResult.function.env;
+                String es = "#100.290 Can't process the task, the interpreter wasn't found for env: " + functionPrepareResult.function.env;
                 log.warn(es);
                 return new FunctionApiData.SystemExecResult(functionPrepareResult.function.code, false, -991, es);
             }
@@ -486,7 +486,7 @@ public class TaskProcessor {
                 case dispatcher:
                 case git:
                     if (functionPrepareResult.functionAssetFile ==null) {
-                        throw new IllegalStateException("#100.160 functionAssetFile is null");
+                        throw new IllegalStateException("#100.310 functionAssetFile is null");
                     }
                     cmd.add(functionPrepareResult.functionAssetFile.file.getAbsolutePath());
                     break;
@@ -497,7 +497,7 @@ public class TaskProcessor {
                     }
                     break;
                 default:
-                    throw new IllegalStateException("#100.170 Unknown sourcing: "+ functionPrepareResult.function.sourcing );
+                    throw new IllegalStateException("#100.330 Unknown sourcing: "+ functionPrepareResult.function.sourcing );
             }
 
             if (!functionPrepareResult.function.skipParams) {
@@ -532,7 +532,7 @@ public class TaskProcessor {
             throw e;
         }
         catch (Throwable th) {
-            log.error("#100.180 Error exec process:\n" +
+            log.error("#100.350 Error exec process:\n" +
                     "\tenv: " + functionPrepareResult.function.env +"\n" +
                     "\tinterpreter: " + interpreter+"\n" +
                     "\tfile: " + (functionPrepareResult.functionAssetFile !=null && functionPrepareResult.functionAssetFile.file!=null
@@ -560,7 +560,7 @@ public class TaskProcessor {
             functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
             // is this function prepared?
             if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
-                log.info("Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
+                log.info("#100.370 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
                 functionPrepareResult.isLoaded = false;
 
                 metadataService.setFunctionDownloadStatus(dispatcherUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, Enums.FunctionState.none);
@@ -569,7 +569,7 @@ public class TaskProcessor {
         }
         else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {
             if (S.b(functionPrepareResult.function.file)) {
-                String s = S.f("Function %s has a blank file", functionPrepareResult.function.code);
+                String s = S.f("#100.390 Function %s has a blank file", functionPrepareResult.function.code);
                 log.warn(s);
                 functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, s);
                 functionPrepareResult.isLoaded = false;
@@ -580,7 +580,7 @@ public class TaskProcessor {
             log.info("Root dir for function: " + resourceDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
             if (!result.ok) {
-                log.warn("Function {} has a permanent error, {}", functionPrepareResult.function.code, result.error);
+                log.warn("#100.410 Function {} has a permanent error, {}", functionPrepareResult.function.code, result.error);
                 functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, result.error);
                 functionPrepareResult.isLoaded = false;
                 functionPrepareResult.isError = true;
