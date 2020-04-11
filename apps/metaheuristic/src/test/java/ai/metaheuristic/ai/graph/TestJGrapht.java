@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.graph;
 
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -84,6 +83,34 @@ public class TestJGrapht {
         assertEquals(v1002.id, item.id);
 
         assertThrows(IllegalArgumentException.class, ()->graph.addEdge(v1001, v1002));
+    }
+
+    @Test
+    public void test_1() {
+        DirectedAcyclicGraph<Item, DefaultEdge> graph = new DirectedAcyclicGraph<>(
+                null, SupplierUtil.DEFAULT_EDGE_SUPPLIER, false, true);
+
+        final Item v1001 = new Item(1001L, 1001L, "code-1001");
+        graph.addVertex(v1001);
+
+        Item item = graph.vertexSet()
+                .stream()
+                .filter(o -> o.itemId.equals(1001L))
+                .findAny().orElse(null);
+        assertNotNull(item);
+        assertEquals(v1001.id, item.id);
+
+        final Item v1002 = new Item(1002L, 1002L, "code-1002");
+        graph.addVertex(v1002);
+
+        item = graph.vertexSet()
+                .stream()
+                .filter(o -> o.itemId.equals(1002L))
+                .findAny().orElse(null);
+        assertNotNull(item);
+        assertEquals(v1002.id, item.id);
+
+        graph.addEdge(v1001, v1002);
     }
 
 }

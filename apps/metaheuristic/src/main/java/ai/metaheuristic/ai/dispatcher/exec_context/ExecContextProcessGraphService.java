@@ -148,15 +148,15 @@ public class ExecContextProcessGraphService {
 */
 
     public static void addNewTasksToGraph(
-            SourceCodeGraph sourceCodeGraph, ExecContextData.ProcessVertex vertex, List<ExecContextData.ProcessVertex> parentProcesses) {
+            DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex vertex, List<ExecContextData.ProcessVertex> parentProcesses) {
 
-        List<ExecContextData.ProcessVertex> parentVertices = sourceCodeGraph.processGraph.vertexSet()
+        List<ExecContextData.ProcessVertex> parentVertices = processGraph.vertexSet()
                 .stream()
                 .filter(parentProcesses::contains)
                 .collect(Collectors.toList());
 
-        sourceCodeGraph.processGraph.addVertex(vertex);
-        parentVertices.forEach(parentV -> sourceCodeGraph.processGraph.addEdge(parentV, vertex) );
+        processGraph.addVertex(vertex);
+        parentVertices.forEach(parentV -> processGraph.addEdge(parentV, vertex) );
     }
 
     public static Set<ExecContextData.ProcessVertex> findDescendants(SourceCodeGraph sourceCodeGraph, ExecContextData.ProcessVertex startVertex) {

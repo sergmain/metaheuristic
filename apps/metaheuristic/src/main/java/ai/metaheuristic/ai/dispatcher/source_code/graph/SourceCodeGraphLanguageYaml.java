@@ -73,7 +73,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
             ExecContextData.ProcessVertex vertex = getVertex(ids, currId, p.code, currentInternalContextId);
 
-            ExecContextProcessGraphService.addNewTasksToGraph(scg, vertex, parentProcesses);
+            ExecContextProcessGraphService.addNewTasksToGraph(scg.processGraph, vertex, parentProcesses);
             if (Consts.MH_FINISH_FUNCTION.equals(p.function.code)) {
                 finishPresent = true;
             }
@@ -110,7 +110,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
                     ExecContextData.ProcessVertex subV = getVertex(ids, currId, subP.code, subInternalContextId);
 
-                    ExecContextProcessGraphService.addNewTasksToGraph(scg, subV, prevProcesses);
+                    ExecContextProcessGraphService.addNewTasksToGraph(scg.processGraph, subV, prevProcesses);
                     if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
                         prevProcesses.clear();
                         prevProcesses.add(subV);
@@ -128,7 +128,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         }
         if (!finishPresent) {
             ExecContextData.ProcessVertex finishVertex = getVertex(ids, currId, Consts.MH_FINISH_FUNCTION, currentInternalContextId);
-            ExecContextProcessGraphService.addNewTasksToGraph(scg, finishVertex, parentProcesses);
+            ExecContextProcessGraphService.addNewTasksToGraph(scg.processGraph, finishVertex, parentProcesses);
         }
         return scg;
     }
