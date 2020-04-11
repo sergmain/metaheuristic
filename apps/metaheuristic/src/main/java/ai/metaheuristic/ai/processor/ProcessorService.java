@@ -110,7 +110,7 @@ public class ProcessorService {
         }
     }
 
-    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(String dispatcherUrl, long taskId) {
+    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(String dispatcherUrl, Long taskId, Long variableId) {
         if (dispatcherUrl==null) {
             throw new IllegalStateException("#749.020 dispatcherUrl is null");
         }
@@ -122,6 +122,9 @@ public class ProcessorService {
         File taskDir = processorTaskService.prepareTaskDir(metadataService.dispatcherUrlAsCode(dispatcherUrl), taskId);
 
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
+            if (!outputVariable.id.equals(variableId)) {
+                continue;
+            }
             Enums.ResendTaskOutputResourceStatus status;
             switch (outputVariable.sourcing) {
                 case dispatcher:
@@ -132,7 +135,7 @@ public class ProcessorService {
                 case inline:
                 default:
                     if (true) {
-                        throw new NotImplementedException("need to set uploaded in params for this resourceId");
+                        throw new NotImplementedException("need to set uploaded in params for this variableId");
                     }
                     status = Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
                     break;
@@ -145,7 +148,7 @@ public class ProcessorService {
     }
 
     private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(String dispatcherUrl, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
-        final AssetFile assetFile = AssetUtils.prepareOutputAssetFile(taskDir, outputVariable.id);
+        final AssetFile assetFile = AssetUtils.prepareOutputAssetFile(taskDir, outputVariable.id.toString());
 
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {

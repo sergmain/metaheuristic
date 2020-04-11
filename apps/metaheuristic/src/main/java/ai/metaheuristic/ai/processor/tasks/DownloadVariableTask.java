@@ -26,7 +26,7 @@ import java.io.File;
 @AllArgsConstructor
 @EqualsAndHashCode(of = {"variableId", "context"}, callSuper = false)
 public class DownloadVariableTask extends ProcessorRestTask {
-    public final String variableId;
+    public final Long variableId;
     public final EnumsApi.VariableContext context;
     public final long taskId;
     public final File targetDir;

@@ -17,17 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +33,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -49,12 +44,19 @@ public class TaskService {
     private final TaskPersistencer taskPersistencer;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
-    public List<Long> resourceReceivingChecker(long processorId) {
+    public DispatcherCommParamsYaml.ResendTaskOutputs resourceReceivingChecker(long processorId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(processorId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
-        return tasks.stream().map(Task::getId).collect(Collectors.toList());
+        DispatcherCommParamsYaml.ResendTaskOutputs result = new DispatcherCommParamsYaml.ResendTaskOutputs();
+        for (Task task : tasks) {
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
+                result.resends.add( new DispatcherCommParamsYaml.ResendTaskOutput(task.getId(), output.id));
+            }
+        }
+        return result;
     }
 
-    public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId) {
+    public void processResendTaskOutputResourceResult(@Nullable String processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
         switch(status) {
             case SEND_SCHEDULED:
                 log.info("#317.010 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, taskId);
@@ -76,7 +78,7 @@ public class TaskService {
                 }
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
-                Enums.UploadResourceStatus uploadResourceStatus = taskPersistencer.setResultReceived(taskId, true);
+                Enums.UploadResourceStatus uploadResourceStatus = taskPersistencer.setResultReceived(taskId, variableId);
                 if (uploadResourceStatus==Enums.UploadResourceStatus.OK) {
                     log.info("#317.040 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of sourceCode", taskId);
                 }

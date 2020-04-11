@@ -30,24 +30,25 @@ public class AssetUtils {
     /**
      *
      * @param rootDir File
-     * @param variableId -  this is the code of resource
+     * @param dataId -  this is the code of resource
      * @param variableFilename String
      * @return AssetFile
      */
-    public static AssetFile prepareFileForVariable(File rootDir, String variableId, @Nullable String variableFilename, EnumsApi.DataType binaryType) {
-        return prepareAssetFile(rootDir, variableId, variableFilename, binaryType.toString());
+    public static AssetFile prepareFileForVariable(File rootDir, String dataId, @Nullable String variableFilename, EnumsApi.DataType binaryType) {
+        return prepareAssetFile(rootDir, dataId, variableFilename, binaryType.toString());
     }
 
-    public static AssetFile prepareOutputAssetFile(File rootDir, String id) {
-        return prepareAssetFile(rootDir, id, null, ConstsApi.ARTIFACTS_DIR);
+    public static AssetFile prepareOutputAssetFile(File rootDir, String dataId) {
+        return prepareAssetFile(rootDir, dataId, null, ConstsApi.ARTIFACTS_DIR);
     }
 
-    private static AssetFile prepareAssetFile(File rootDir, String id, @Nullable String filename, String assetDirname ) {
+    // dataId must be String because for Function it's a code of function
+    private static AssetFile prepareAssetFile(File rootDir, String dataId, @Nullable String filename, String assetDirname ) {
         final File assetDir = new File(rootDir, assetDirname);
-        return prepareAssetFile(assetDir, id, filename);
+        return prepareAssetFile(assetDir, dataId, filename);
     }
 
-    public static AssetFile prepareAssetFile(File assetDir, String id, @Nullable String filename) {
+    public static AssetFile prepareAssetFile(File assetDir, @Nullable String dataId, @Nullable String filename) {
         final AssetFile assetFile = new AssetFile();
         if (!assetDir.exists() && !assetDir.mkdirs()) {
             assetFile.isError = true;
@@ -57,9 +58,12 @@ public class AssetUtils {
         if (StringUtils.isNotBlank(filename)) {
             assetFile.file = new File(assetDir, filename);
         }
-        else {
-            final String resId = id.replace(':', '_');
+        else if (!S.b(dataId)) {
+            final String resId = dataId.replace(':', '_');
             assetFile.file = new File(assetDir, "" + resId);
+        }
+        else {
+            throw new IllegalArgumentException("filename==null && S.b(dataId)");
         }
         assetFile.isExist = assetFile.file.exists();
 

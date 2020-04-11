@@ -203,7 +203,7 @@ public class ProcessorTaskService {
         }
     }
 
-    public void setVariableUploadedAndCompleted(String dispatcherUrl, Long taskId, String outputVariableId) {
+    public void setVariableUploadedAndCompleted(String dispatcherUrl, Long taskId, Long outputVariableId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             log.info("setResourceUploadedAndCompleted({}, {})", dispatcherUrl, taskId);
             ProcessorTask task = findById(dispatcherUrl, taskId);

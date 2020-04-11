@@ -86,7 +86,7 @@ public class TaskParamsYaml implements BaseParams {
         // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
         // for context==VariableContext.local the table is MH_VARIABLE
         // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
-        public @NonNull String id;
+        public @NonNull Long id;
         public @NonNull EnumsApi.VariableContext context;
 
         public @NonNull String name;
@@ -106,7 +106,7 @@ public class TaskParamsYaml implements BaseParams {
         // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
         // for context==VariableContext.local the table is MH_VARIABLE
         // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
-        public @NonNull String id;
+        public @NonNull Long id;
         public @NonNull EnumsApi.VariableContext context;
         public @NonNull String name;
         public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
@@ -117,9 +117,7 @@ public class TaskParamsYaml implements BaseParams {
         // todo 2020-03-12 do we need 'realName' field for OutputVariable?
         public @Nullable String realName;
 
-        // todo 2020-03-12 for what is that field?
-        //  2020-04-07 this field shows that output variable is initialized
-        public boolean inited;
+        public boolean uploaded;
     }
 
     @Data

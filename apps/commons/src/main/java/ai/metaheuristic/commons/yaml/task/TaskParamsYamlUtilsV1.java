@@ -89,6 +89,7 @@ public class TaskParamsYamlUtilsV1
         v.disk = v1.disk;
         v.git = v1.git;
         v.realName = v1.realName;
+        v.uploaded = v1.uploaded;
         return v;
     }
 

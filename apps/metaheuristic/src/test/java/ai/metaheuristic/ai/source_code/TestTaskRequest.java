@@ -27,6 +27,8 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -108,10 +110,14 @@ public class TestTaskRequest extends FeatureMethods {
         assertNull(d1.getAssignedTask());
 
         finishCurrentWithOk();
-        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(t.taskId, true);
-        assertEquals(Enums.UploadResourceStatus.OK, status);
-
         TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
+        assertNotNull(task);
+        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
+            Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(t.taskId, output.id);
+            assertEquals(Enums.UploadResourceStatus.OK, status);
+        }
+        task = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task);
         assertTrue(task.isCompleted);
 

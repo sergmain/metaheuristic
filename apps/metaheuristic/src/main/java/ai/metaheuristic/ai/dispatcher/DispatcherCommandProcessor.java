@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
  * Date: 8/29/2019
  * Time: 8:03 PM
  */
+@SuppressWarnings("UnnecessaryLocalVariable")
 @Slf4j
 @Service
 @Profile("dispatcher")
@@ -66,7 +67,7 @@ public class DispatcherCommandProcessor {
     private long mills = System.currentTimeMillis();
 
     public void process(ProcessorCommParamsYaml scpy, DispatcherCommParamsYaml lcpy) {
-        lcpy.resendTaskOutputResource = checkForMissingOutputResources(scpy);
+        lcpy.resendTaskOutputs = checkForMissingOutputResources(scpy);
         processProcessorTaskStatus(scpy);
         processResendTaskOutputResourceResult(scpy);
 
@@ -95,13 +96,13 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public @Nullable DispatcherCommParamsYaml.ResendTaskOutputResource checkForMissingOutputResources(ProcessorCommParamsYaml request) {
+    public @Nullable DispatcherCommParamsYaml.ResendTaskOutputs checkForMissingOutputResources(ProcessorCommParamsYaml request) {
         if (request.checkForMissingOutputResources==null || request.processorCommContext==null || request.processorCommContext.processorId==null) {
             return null;
         }
         final long processorId = Long.parseLong(request.processorCommContext.processorId);
-        List<Long> ids = taskService.resourceReceivingChecker(processorId);
-        return new DispatcherCommParamsYaml.ResendTaskOutputResource(ids);
+        DispatcherCommParamsYaml.ResendTaskOutputs outputs = taskService.resourceReceivingChecker(processorId);
+        return outputs;
     }
 
     // processing at dispatcher side
@@ -114,7 +115,7 @@ public class DispatcherCommandProcessor {
             return;
         }
         for (ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {
-            taskService.processResendTaskOutputResourceResult(request.processorCommContext.processorId, status.status, status.taskId);
+            taskService.processResendTaskOutputResourceResult(request.processorCommContext.processorId, status.status, status.taskId, status.variableId);
         }
     }
 
@@ -135,7 +136,6 @@ public class DispatcherCommandProcessor {
         if (request.reportTaskProcessingResult==null || request.reportTaskProcessingResult.results==null) {
             return null;
         }
-        //noinspection UnnecessaryLocalVariable
         final DispatcherCommParamsYaml.ReportResultDelivering cmd1 = new DispatcherCommParamsYaml.ReportResultDelivering(
                 execContextService.storeAllConsoleResults(request.reportTaskProcessingResult.results)
         );

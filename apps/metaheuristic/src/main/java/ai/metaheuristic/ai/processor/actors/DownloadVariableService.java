@@ -94,7 +94,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 log.info("Task #{} was already finished, skip it", task.taskId);
                 continue;
             }
-            AssetFile assetFile = AssetUtils.prepareFileForVariable(task.targetDir, task.variableId, null, type);
+            AssetFile assetFile = AssetUtils.prepareFileForVariable(task.targetDir, task.variableId.toString(), null, type);
             if (assetFile.isError ) {
                 log.warn("#810.010 Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
@@ -107,7 +107,8 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
             log.info("Start processing the download task {}", task);
             try {
                 final String payloadRestUrl = task.dispatcher.url + "/rest/v1/payload/resource/"+type;
-                final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8.toString());
+                final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' +
+                        task.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId.toString(), StandardCharsets.UTF_8.toString());
 
                 File parentDir = assetFile.file.getParentFile();
                 if (parentDir==null) {
@@ -133,7 +134,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 do {
                     try {
                         final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)
-                                .addParameter("id", task.variableId)
+                                .addParameter("id", task.variableId.toString())
                                 .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
                                 .addParameter("chunkNum", Integer.toString(idx));
 

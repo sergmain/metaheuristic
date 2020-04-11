@@ -131,8 +131,9 @@ public class TaskWithInternalContextEventService {
                             execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState());
                         }
                     });
-                    Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(event.taskId, true);
-
+                    for (TaskParamsYaml.OutputVariable output : taskParamsYaml.task.outputs) {
+                        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(event.taskId, output.id);
+                    }
                     return null;
                 } catch (Throwable th) {
                     taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10002,

@@ -80,7 +80,7 @@ public class AggregateInternalContextFunction implements InternalFunction {
         Variable variable;
         TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
         if (outputVariable.context==EnumsApi.VariableContext.local) {
-            variable = variableRepository.findById(Long.valueOf(outputVariable.id)).orElse(null);
+            variable = variableRepository.findById(outputVariable.id).orElse(null);
             if (variable == null) {
                 throw new IllegalStateException("Variable not found for code " + outputVariable);
             }

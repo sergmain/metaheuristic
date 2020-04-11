@@ -188,6 +188,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(tempTask.execState);
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(tempTask.functionExecResults);
+        assertNotNull(functionExec);
         assertEquals(EnumsApi.TaskExecState.OK, taskExecState,
                 "Current status: " + taskExecState + ", exitCode: " + functionExec.exec.exitCode+", console: " + functionExec.exec.console);
 
@@ -445,7 +446,13 @@ public class TestSourceCodeService extends PreparingSourceCode {
                 execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState());
             }
         });
-        taskPersistencer.setResultReceived(simpleTask.getTaskId(), true);
+        TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
+        assertNotNull(task);
+
+        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
+            taskPersistencer.setResultReceived(simpleTask.getTaskId(), output.id);
+        }
 
         verifyGraphIntegrity();
     }

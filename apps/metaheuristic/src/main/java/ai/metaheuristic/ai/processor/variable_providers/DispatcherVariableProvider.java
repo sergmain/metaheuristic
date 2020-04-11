@@ -36,7 +36,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -85,14 +84,14 @@ public class DispatcherVariableProvider implements VariableProvider {
                 log.error(es);
                 throw new BreakFromLambdaException(es);
         }
-        return Collections.singletonList(AssetUtils.prepareFileForVariable(taskDir, variable.id, null, type));
+        return Collections.singletonList(AssetUtils.prepareFileForVariable(taskDir, variable.id.toString(), null, type));
     }
 
     @Override
     public FunctionApiData.SystemExecResult processOutputVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String outputVariableId, TaskParamsYaml.FunctionConfig functionConfig) {
+            Long outputVariableId, TaskParamsYaml.FunctionConfig functionConfig) {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariableId);
         if (outputVariableFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.getPath());

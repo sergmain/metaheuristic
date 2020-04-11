@@ -48,11 +48,11 @@ public class TestTaskParamsYaml {
 */
 
         TaskParamsYamlV1.InputVariableV1 input = new TaskParamsYamlV1.InputVariableV1(
-                "value-1-1", EnumsApi.VariableContext.local, "code-1", EnumsApi.DataSourcing.dispatcher, null, null, null);
+                42L, EnumsApi.VariableContext.local, "code-1", EnumsApi.DataSourcing.dispatcher, null, null, null);
         ty.inputs.add(input);
 
         TaskParamsYamlV1.OutputVariableV1 output = new TaskParamsYamlV1.OutputVariableV1(
-                "1", EnumsApi.VariableContext.local, "output-code-1", EnumsApi.DataSourcing.dispatcher, null, null, null, true);
+                43L, EnumsApi.VariableContext.local, "output-code-1", EnumsApi.DataSourcing.dispatcher, null, null, null, true);
         ty.outputs.add(output);
 
         ty.clean = true;
@@ -105,7 +105,7 @@ public class TestTaskParamsYaml {
 
         TaskParamsYaml.InputVariable inputVariable = tpy.task.inputs.stream().filter(o -> o.name.equals("code-1")).findFirst().orElseThrow();
         assertNotNull(inputVariable);
-        assertEquals("value-1-1", inputVariable.id);
+        assertEquals(42L, inputVariable.id);
 
         Map<String, String> hyperParams = tpy.task.inline.get(ConstsApi.MH_HYPER_PARAMS);
         assertEquals(1, hyperParams.size());

@@ -53,7 +53,7 @@ public class DispatcherCommParamsYaml implements BaseParams {
     public ReAssignProcessorId reAssignedProcessorId;
     public @Nullable ReportResultDelivering reportResultDelivering;
     public ExecContextStatus execContextStatus;
-    public @Nullable ResendTaskOutputResource resendTaskOutputResource;
+    public @Nullable ResendTaskOutputs resendTaskOutputs;
 
     @Data
     @AllArgsConstructor
@@ -124,8 +124,15 @@ public class DispatcherCommParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ResendTaskOutputResource {
-        public List<Long> taskIds;
+    public static class ResendTaskOutput {
+        public Long taskId;
+        public Long variableId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ResendTaskOutputs {
+        public final List<ResendTaskOutput> resends = new ArrayList<>();
     }
 
     @Data

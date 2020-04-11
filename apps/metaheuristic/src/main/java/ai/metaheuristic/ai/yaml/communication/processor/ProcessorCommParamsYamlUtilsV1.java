@@ -106,7 +106,7 @@ public class ProcessorCommParamsYamlUtilsV1
                     v1.resendTaskOutputResourceResult.statuses!=null
                             ? v1.resendTaskOutputResourceResult.statuses
                             .stream()
-                            .map(o->new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(o.taskId, o.status))
+                            .map(o->new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(o.taskId, o.variableId, o.status))
                             .collect(Collectors.toList())
                             : new ArrayList<>();
         }

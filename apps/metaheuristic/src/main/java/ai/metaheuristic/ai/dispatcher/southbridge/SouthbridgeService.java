@@ -51,7 +51,6 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
@@ -133,10 +132,11 @@ public class SouthbridgeService {
         }
     }
 
-    // return a requested variable to a processor
-    public CleanerInfo deliverVariable(final EnumsApi.DataType binaryType, final String variableId, final String chunkSize, final int chunkNum) {
-        return getWithSync(binaryType, variableId,
-                () -> getAbstractResourceResponseEntity(chunkSize, chunkNum, binaryType, variableId));
+    // return a requested data to a processor
+    // data can be Function or Variable
+    public CleanerInfo deliverData(final EnumsApi.DataType binaryType, final String dataId, final String chunkSize, final int chunkNum) {
+        return getWithSync(binaryType, dataId,
+                () -> getAbstractDataResponseEntity(chunkSize, chunkNum, binaryType, dataId));
     }
 
     public UploadResult uploadVariable(MultipartFile file, Long taskId, Long variableId) {
@@ -188,43 +188,43 @@ public class SouthbridgeService {
         finally {
             DirUtils.deleteAsync(tempDir);
         }
-        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(variable.getId(), true);
+        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(taskId, variable.getId());
         return status== Enums.UploadResourceStatus.OK
                 ? OK_UPLOAD_RESULT
                 : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+ variable.getId()+"");
     }
 
-    private CleanerInfo getAbstractResourceResponseEntity(String chunkSize, int chunkNum, EnumsApi.DataType binaryType, String resourceId) {
+    private CleanerInfo getAbstractDataResponseEntity(String chunkSize, int chunkNum, EnumsApi.DataType binaryType, String dataId) {
 
         AssetFile assetFile;
         BiConsumer<String, File> dataSaver;
         switch (binaryType) {
             case function:
-                assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesDir, resourceId, null);
+                assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesDir, dataId, null);
                 dataSaver = functionDataService::storeToFile;
                 break;
             case variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, resourceId, null, binaryType);
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.variable+'-'+dataId, null, binaryType);
                 dataSaver = (variableId, trgFile) -> variableService.storeToFile(Long.parseLong(variableId), trgFile);
                 break;
             case global_variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, resourceId, null, binaryType);
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.global_variable+'-'+dataId, null, binaryType);
                 dataSaver = (variableId, trgFile) -> globalVariableService.storeToFile(Long.parseLong(variableId), trgFile);
                 break;
             default:
                 throw new IllegalStateException("#442.008 Unknown type of data: " + binaryType);
         }
         if (assetFile.isError) {
-            String es = "#442.006 Resource with id " + resourceId + " is broken";
+            String es = "#442.006 Resource with id " + dataId + " is broken";
             log.error(es);
             throw new BinaryDataNotFoundException(es);
         }
 
         if (!assetFile.isContent) {
             try {
-                dataSaver.accept(resourceId, assetFile.file);
+                dataSaver.accept(dataId, assetFile.file);
             } catch (BinaryDataNotFoundException e) {
-                log.error("#442.020 Error store data to temp file, data doesn't exist in db, id " + resourceId + ", file: " + assetFile.file.getPath());
+                log.error("#442.020 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file.getPath());
                 throw e;
             }
         }

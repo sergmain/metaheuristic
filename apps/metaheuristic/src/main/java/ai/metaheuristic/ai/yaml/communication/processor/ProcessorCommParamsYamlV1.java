@@ -193,6 +193,7 @@ public class ProcessorCommParamsYamlV1 implements BaseParams {
         @NoArgsConstructor
         public static class SimpleStatus {
             public long taskId;
+            public Long variableId;
             public Enums.ResendTaskOutputResourceStatus status;
         }
 

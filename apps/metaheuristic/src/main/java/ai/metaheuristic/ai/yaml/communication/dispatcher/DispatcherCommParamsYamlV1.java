@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,12 +47,12 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
 
     // always send info about functions
     public FunctionsV1 functions = new FunctionsV1();
-    public AssignedTaskV1 assignedTask;
-    public AssignedProcessorIdV1 assignedProcessorId;
+    public @Nullable AssignedTaskV1 assignedTask;
+    public @Nullable AssignedProcessorIdV1 assignedProcessorId;
     public ReAssignProcessorIdV1 reAssignedProcessorId;
-    public ReportResultDeliveringV1 reportResultDelivering;
+    public @Nullable ReportResultDeliveringV1 reportResultDelivering;
     public ExecContextStatusV1 execContextStatus;
-    public ResendTaskOutputResourceV1 resendTaskOutputResource;
+    public @Nullable ResendTaskOutputsV1 resendTaskOutputs;
 
     @Data
     @AllArgsConstructor
@@ -122,8 +123,15 @@ public class DispatcherCommParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ResendTaskOutputResourceV1 {
-        public List<Long> taskIds;
+    public static class ResendTaskOutputV1 {
+        public Long taskId;
+        public Long variableId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ResendTaskOutputsV1 {
+        public final List<ResendTaskOutputV1> resends = new ArrayList<>();
     }
 
     @Data

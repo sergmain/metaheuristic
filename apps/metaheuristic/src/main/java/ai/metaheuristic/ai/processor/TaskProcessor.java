@@ -245,7 +245,14 @@ public class TaskProcessor {
             }
 
             // at this point all required resources have to be prepared
-            task = processorTaskService.setLaunchOn(task.dispatcherUrl, task.taskId);
+            ProcessorTask taskResult = processorTaskService.setLaunchOn(task.dispatcherUrl, task.taskId);
+            if (taskResult==null) {
+                String es = "Task #"+task.taskId+" wasn't found";
+                log.warn(es);
+                // there isn't this tasls any more. So we can't mark it as Finished
+//                processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
+                continue;
+            }
             try {
                 execAllFunctions(task, dispatcherInfo, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
             }

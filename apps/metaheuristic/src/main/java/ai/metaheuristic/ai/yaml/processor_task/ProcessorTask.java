@@ -36,7 +36,7 @@ public class ProcessorTask {
     @AllArgsConstructor
     public static class OutputStatus {
         // variableId of Variable.
-        public String variableId;
+        public Long variableId;
 
         // was resource(output resource as the result of execution of function) uploaded to dispatcher?
         public boolean uploaded;
@@ -55,7 +55,7 @@ public class ProcessorTask {
 
     public final Output output = new Output();
 
-    public long taskId;
+    public Long taskId;
 
     public Long execContextId;
 

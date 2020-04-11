@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
@@ -34,6 +35,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.lang.Nullable;
 import org.springframework.web.client.*;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -42,6 +44,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -162,7 +165,7 @@ public class DispatcherRequestor {
         withSync(() -> { scpy.checkForMissingOutputResources = checkForMissingOutputResources; return null; });
     }
 
-    private void setReportTaskProcessingResult(ProcessorCommParamsYaml scpy, ProcessorCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult) {
+    private void setReportTaskProcessingResult(ProcessorCommParamsYaml scpy, @Nullable ProcessorCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult) {
         withSync(() -> { scpy.reportTaskProcessingResult = reportTaskProcessingResult; return null; });
     }
 
@@ -241,16 +244,22 @@ public class DispatcherRequestor {
                     }
                     else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
-                            // let's check resources for not completed and not sended yet tasks
-                            List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = processorTaskService.findAllByCompletedIsFalse(dispatcherUrl).stream()
+                            // let's check resources for not completed and not sent yet tasks
+                            List<ProcessorTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(dispatcherUrl).stream()
                                     .filter(t -> t.delivered && t.finishedOn!=null && !t.output.allUploaded())
-                                    .map(t->
-                                            new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(
-                                                    t.taskId, processorService.resendTaskOutputResources(dispatcherUrl, t.taskId)
-                                            )
-                                    ).collect(Collectors.toList());
+                                    .collect(Collectors.toList());
 
-                            setResendTaskOutputResourceResult(scpy, new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses));
+                            List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
+                            for (ProcessorTask processorTask : processorTasks) {
+                                for (ProcessorTask.OutputStatus outputStatus : processorTask.output.outputStatuses) {
+                                    statuses.add(new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(
+                                            processorTask.taskId, outputStatus.variableId,
+                                            processorService.resendTaskOutputResources(dispatcherUrl, processorTask.taskId, outputStatus.variableId))
+                                    );
+                                }
+                            }
+
+                                setResendTaskOutputResourceResult(scpy, new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses));
                             lastCheckForResendTaskOutputResource = System.currentTimeMillis();
                         }
                     }

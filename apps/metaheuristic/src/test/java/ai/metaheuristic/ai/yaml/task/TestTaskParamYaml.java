@@ -74,7 +74,7 @@ public class TestTaskParamYaml {
 */
     }
 
-    private TaskParamsYaml.InputVariable newVariable(String name, String variableId) {
+    private TaskParamsYaml.InputVariable newVariable(String name, Long variableId) {
         //noinspection UnnecessaryLocalVariable
         TaskParamsYaml.InputVariable v1 = new TaskParamsYaml.InputVariable(variableId, EnumsApi.VariableContext.local, name, EnumsApi.DataSourcing.dispatcher, null, null, null);
         return v1;
@@ -87,9 +87,9 @@ public class TestTaskParamYaml {
         tpy.task.taskContextId = "4242";
         tpy.task.processCode = "test-process";
         tpy.task.context = EnumsApi.FunctionExecContext.external;
-        tpy.task.inputs.add(newVariable("type1", "1"));
-        tpy.task.inputs.add(newVariable("type2", "2"));
-        tpy.task.inputs.add(newVariable("type3", "3"));
+        tpy.task.inputs.add(newVariable("type1", 1L));
+        tpy.task.inputs.add(newVariable("type2", 2L));
+        tpy.task.inputs.add(newVariable("type3", 3L));
         tpy.task.inline = Map.of(ConstsApi.MH_HYPER_PARAMS, Map.of("key1", "#1", "key2", "#1"));
         tpy.task.setFunction(TaskParamsUtils.toFunctionConfig(new FunctionConfigYaml(
                 "123:1.0",

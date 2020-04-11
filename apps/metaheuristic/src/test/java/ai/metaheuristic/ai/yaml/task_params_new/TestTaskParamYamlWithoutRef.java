@@ -51,11 +51,11 @@ public class TestTaskParamYamlWithoutRef {
         t.clean = true;
         t.execContextId = 42L;
         t.inline = Map.of(ConstsApi.MH_HYPER_PARAMS, Map.of("k1", "vInput1", "k2", "v2"));
-        TaskFileParamsYaml.InputVariable vInput1 = new TaskFileParamsYaml.InputVariable("rInput1", "vInput1", EnumsApi.DataSourcing.dispatcher);
+        TaskFileParamsYaml.InputVariable vInput1 = new TaskFileParamsYaml.InputVariable(1122L, "vInput1", EnumsApi.DataSourcing.dispatcher);
         t.inputs.add(vInput1);
 
         TaskFileParamsYaml.OutputVariable vOutput1 =
-                new TaskFileParamsYaml.OutputVariable("r1", "vOutput1", EnumsApi.DataSourcing.dispatcher);
+                new TaskFileParamsYaml.OutputVariable(1133L, "vOutput1", EnumsApi.DataSourcing.dispatcher);
 
         t.outputs.add(vOutput1);
 

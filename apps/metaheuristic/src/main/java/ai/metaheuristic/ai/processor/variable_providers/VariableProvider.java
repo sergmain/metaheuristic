@@ -38,7 +38,7 @@ public interface VariableProvider {
     FunctionApiData.SystemExecResult processOutputVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String outputVariableId,
+            Long outputVariableId,
             TaskParamsYaml.FunctionConfig functionConfig
     );
 

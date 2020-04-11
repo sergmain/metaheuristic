@@ -28,5 +28,5 @@ import java.io.File;
 public class UploadVariableTask extends ProcessorRestTask {
     public long taskId;
     public File file;
-    public String variableId;
+    public Long variableId;
 }

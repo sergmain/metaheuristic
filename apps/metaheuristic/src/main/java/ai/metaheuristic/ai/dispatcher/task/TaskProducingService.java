@@ -51,7 +51,6 @@ public class TaskProducingService {
     private final TaskProducingCoreService taskProducingCoreService;
     private final GlobalVariableRepository globalVariableRepository;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final ExecContextProcessGraphService execContextProcessGraphService;
     private final InternalFunctionProcessor internalFunctionProcessor;
 
     public TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
@@ -160,7 +159,7 @@ public class TaskProducingService {
                         S.f("(variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
-            iv.id = variable.id.toString();
+            iv.id = variable.id;
             iv.realName = variable.originalFilename;
         }
         else {
@@ -170,7 +169,7 @@ public class TaskProducingService {
                         S.f("(variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
-            iv.id = variable.id.toString();
+            iv.id = variable.id;
         }
         iv.context = v.context;
         iv.name = v.name;

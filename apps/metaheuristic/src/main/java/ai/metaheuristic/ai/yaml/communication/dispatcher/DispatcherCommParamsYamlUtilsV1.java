@@ -89,10 +89,9 @@ public class DispatcherCommParamsYamlUtilsV1 extends
                             .collect(Collectors.toList())
                             : new ArrayList<>();
         }
-        if (v1.resendTaskOutputResource!=null) {
-            t.resendTaskOutputResource = new DispatcherCommParamsYaml.ResendTaskOutputResource();
-            t.resendTaskOutputResource.taskIds =
-                    v1.resendTaskOutputResource.taskIds!=null ? new ArrayList<>(v1.resendTaskOutputResource.taskIds) : new ArrayList<>();
+        if (v1.resendTaskOutputs!=null) {
+            t.resendTaskOutputs = new DispatcherCommParamsYaml.ResendTaskOutputs();
+            v1.resendTaskOutputs.resends.stream().map(o -> new DispatcherCommParamsYaml.ResendTaskOutput(o.taskId, o.variableId)).collect(Collectors.toCollection(() -> t.resendTaskOutputs.resends));
         }
 
         BeanUtils.copyProperties(v1, t);

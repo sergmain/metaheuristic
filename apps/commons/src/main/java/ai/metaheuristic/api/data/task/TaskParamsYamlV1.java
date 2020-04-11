@@ -61,6 +61,11 @@ public class TaskParamsYamlV1 implements BaseParams {
         if (task.context== EnumsApi.FunctionExecContext.external && S.b(task.function.file)) {
             throw new CheckIntegrityFailedException("(task.context== EnumsApi.FunctionExecContext.external && S.b(task.function.file))");
         }
+        for (OutputVariableV1 output : task.outputs) {
+            if (output.context!= EnumsApi.VariableContext.local && output.context!= EnumsApi.VariableContext.array) {
+                throw new CheckIntegrityFailedException("(output.context!= EnumsApi.VariableContext.local && output.context!= EnumsApi.VariableContext.array)");
+            }
+        }
         return true;
     }
 
@@ -96,7 +101,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
         // for context==VariableContext.local the table is MH_VARIABLE
         // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
-        public @NonNull String id;
+        public @NonNull Long id;
         public @NonNull EnumsApi.VariableContext context;
 
         public @NonNull String name;
@@ -115,7 +120,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
         // for context==VariableContext.local the table is MH_VARIABLE
         // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
-        public @NonNull String id;
+        public @NonNull Long id;
         public @NonNull EnumsApi.VariableContext context;
         public @NonNull String name;
         public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
@@ -125,8 +130,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         // name of file if this variable was uploaded from file
         public @Nullable String realName;
 
-        // todo 2020-03-12 for what is that field?
-        public boolean isInited;
+        public boolean uploaded;
     }
 
     @Data

@@ -112,7 +112,7 @@ public class DiskVariableProvider implements VariableProvider {
     public FunctionApiData.SystemExecResult processOutputVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
-            String outputVariableId, TaskParamsYaml.FunctionConfig functionConfig
+            Long outputVariableId, TaskParamsYaml.FunctionConfig functionConfig
     ) {
         File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariableId);
         if (outputVariableFile.exists()) {
@@ -144,7 +144,7 @@ public class DiskVariableProvider implements VariableProvider {
             throw new VariableProviderException("#015.042 The path of disk storage doesn't exist: " + path.getAbsolutePath());
         }
 
-        return new File(path, variable.id);
+        return new File(path, Long.toString(variable.id));
     }
 
 }

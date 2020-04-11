@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -61,14 +62,15 @@ public class ProcessorCommandProcessor {
     }
 
     // processing at processor side
+    @Nullable
     private ProcessorCommParamsYaml.ResendTaskOutputResourceResult resendTaskOutputResource(String dispatcherUrl, DispatcherCommParamsYaml request) {
-        if (request.resendTaskOutputResource==null || request.resendTaskOutputResource.taskIds==null || request.resendTaskOutputResource.taskIds.isEmpty()) {
+        if (request.resendTaskOutputs==null || request.resendTaskOutputs.resends.isEmpty()) {
             return null;
         }
         List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
-        for (Long taskId : request.resendTaskOutputResource.taskIds) {
-            Enums.ResendTaskOutputResourceStatus status = processorService.resendTaskOutputResources(dispatcherUrl, taskId);
-            statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(taskId, status));
+        for (DispatcherCommParamsYaml.ResendTaskOutput output : request.resendTaskOutputs.resends) {
+            Enums.ResendTaskOutputResourceStatus status = processorService.resendTaskOutputResources(dispatcherUrl, output.taskId, output.variableId);
+            statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(output.taskId, output.variableId, status));
         }
         return new ProcessorCommParamsYaml.ResendTaskOutputResourceResult(statuses);
     }
