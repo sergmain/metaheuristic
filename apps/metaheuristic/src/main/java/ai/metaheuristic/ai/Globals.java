@@ -301,16 +301,6 @@ public class Globals {
 //            checkOwnership(processorEnvHotDeployDir);
         }
 
-        String dispatcherDirAsStr = env.getProperty("MH_DISPATCHER_DIR");
-        File dispatcherDirTemp = null;
-        if (dispatcherDirAsStr!=null && !dispatcherDirAsStr.isBlank()) {
-            try {
-                dispatcherDirTemp = new File(dispatcherDirAsStr);
-            } catch (Throwable th) {
-                log.error("Wrong value in env MH_DISPATCHER_DIR, must be a correct path to dir, " +
-                        "actual: " + dispatcherDirAsStr);
-            }
-        }
         String tempBranding = env.getProperty("MH_BRANDING");
         if (tempBranding!=null && !tempBranding.isBlank()) {
             branding = tempBranding;
@@ -319,6 +309,16 @@ public class Globals {
             branding = "Metaheuristic project";
         }
 
+        String dispatcherDirAsStr = env.getProperty("MH_DISPATCHER_DIR");
+        File dispatcherDirTemp = dispatcherDir;
+        if (!S.b(dispatcherDirAsStr)) {
+            try {
+                dispatcherDirTemp = new File(dispatcherDirAsStr);
+            } catch (Throwable th) {
+                log.error("Wrong value in env MH_DISPATCHER_DIR, must be a correct path to dir, " +
+                        "actual: " + dispatcherDirAsStr);
+            }
+        }
         if (dispatcherDirTemp==null) {
             dispatcherDirTemp = new File("target/mh-dispatcher");
             log.warn("DispatcherDir in null. " +
