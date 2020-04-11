@@ -139,7 +139,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public Long timeoutBeforeTerminate;
         public final List<Variable> inputs = new ArrayList<>();
         public final List<Variable> outputs = new ArrayList<>();
-        public @Nullable List<Meta> metas = new ArrayList<>();
+        public List<Meta> metas = new ArrayList<>();
         public @Nullable SubProcesses subProcesses;
 
         @JsonIgnore

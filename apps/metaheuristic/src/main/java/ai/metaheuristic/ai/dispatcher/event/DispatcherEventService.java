@@ -82,8 +82,8 @@ public class DispatcherEventService {
     }
 
     public void publishBatchEvent(
-            EnumsApi.DispatcherEventType event, Long companyUniqueId, String filename,
-            Long size, @Nullable Long batchId, @Nullable Long execContextId, DispatcherContext dispatcherContext) {
+            EnumsApi.DispatcherEventType event, @Nullable Long companyUniqueId, @Nullable String filename,
+            @Nullable Long size, @Nullable Long batchId, @Nullable Long execContextId, @Nullable DispatcherContext dispatcherContext) {
         if (!globals.isEventEnabled) {
             return;
         }

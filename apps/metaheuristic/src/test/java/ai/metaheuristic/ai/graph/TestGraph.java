@@ -76,8 +76,8 @@ public class TestGraph extends PreparingSourceCode {
         assertEquals(1, count);
 
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(1L), List.of(2L, 3L));
-        assertEquals(EnumsApi.OperationStatus.OK, osr.status);
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id, List.of(1L), List.of(2L, 3L));
+        assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         count = execContextService.getCountUnfinishedTasks(execContextForTest);
@@ -88,6 +88,12 @@ public class TestGraph extends PreparingSourceCode {
         assertEquals(2, leafs.size());
         assertTrue(leafs.contains(new TaskVertex(2L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new TaskVertex(3L, EnumsApi.TaskExecState.NONE)));
+
+/*
+        // value of id field doesn't matter because isn't included in "@EqualsAndHashCode"
+        assertTrue(leafs.contains(new TaskVertex(1L, 2L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new TaskVertex(1L, 3L, EnumsApi.TaskExecState.NONE)));
+*/
 
         setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.BROKEN);
         setExecState(execContextForTest, 2L, EnumsApi.TaskExecState.NONE);
@@ -117,7 +123,7 @@ public class TestGraph extends PreparingSourceCode {
         assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
     }
 
-    public void setExecState(ExecContextImpl workbook, Long id, EnumsApi.TaskExecState execState) {
+    private void setExecState(ExecContextImpl workbook, Long id, EnumsApi.TaskExecState execState) {
         TaskImpl t1 = new TaskImpl();
         t1.id = id;
         t1.execState = execState.value;

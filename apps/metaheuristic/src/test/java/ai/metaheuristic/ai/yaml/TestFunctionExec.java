@@ -20,14 +20,13 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestFunctionExec {
 
     @Test
     public void testEmptyString() {
-        assertThrows(BlankYamlParamsException.class, ()->FunctionExecUtils.to(""));
+        assertNull(FunctionExecUtils.to(""));
     }
 
     @Test

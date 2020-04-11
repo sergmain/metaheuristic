@@ -54,6 +54,20 @@ public class ExecContextData {
     }
 
     @Data
+    @EqualsAndHashCode(of = "taskId")
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TaskVertex_140 {
+        public Long id;
+        public Long taskId;
+        public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
+
+        public TaskVertex_140(Long id) {
+            this.id = id;
+        }
+    }
+
+    @Data
     @EqualsAndHashCode(of = "id")
     @NoArgsConstructor
     @AllArgsConstructor

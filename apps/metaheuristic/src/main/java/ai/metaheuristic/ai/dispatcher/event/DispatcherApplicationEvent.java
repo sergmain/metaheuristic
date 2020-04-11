@@ -33,9 +33,9 @@ import java.time.LocalDateTime;
 public class DispatcherApplicationEvent {
 
     public final DispatcherEventYaml dispatcherEventYaml;
-    public Long companyUniqueId;
+    public @Nullable Long companyUniqueId;
 
-    public DispatcherApplicationEvent(EnumsApi.DispatcherEventType event, Long companyUniqueId, @Nullable String contextId, DispatcherEventYaml.BatchEventData batchEventData) {
+    public DispatcherApplicationEvent(EnumsApi.DispatcherEventType event, @Nullable Long companyUniqueId, @Nullable String contextId, DispatcherEventYaml.BatchEventData batchEventData) {
         this.companyUniqueId = companyUniqueId;
         DispatcherEventYaml dispatcherEventYaml = new DispatcherEventYaml();
         dispatcherEventYaml.createdOn = CommonConsts.EVENT_DATE_TIME_FORMATTER.format(LocalDateTime.now());

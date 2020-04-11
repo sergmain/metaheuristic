@@ -45,8 +45,8 @@ public class DispatcherEventYaml implements BaseParams {
 
     @Data
     public static class BatchEventData {
-        public Long size;
-        public String filename;
+        public @Nullable Long size;
+        public @Nullable String filename;
         public String username;
         public @Nullable Long batchId;
         public @Nullable Long execContextId;

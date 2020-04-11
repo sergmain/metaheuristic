@@ -61,12 +61,14 @@ public class TestSourceCodeParamsYamlCloning {
         assertEquals("function-code", p1.function.code);
         assertEquals("function-params", p1.function.params);
 
+        assertNotNull(p1.preFunctions);
         assertEquals(2, p1.preFunctions.size());
         assertEquals("pre1-code", p1.preFunctions.get(0).code);
         assertEquals("pre1-params", p1.preFunctions.get(0).params);
         assertEquals("pre2-code", p1.preFunctions.get(1).code);
         assertEquals("pre2-params", p1.preFunctions.get(1).params);
 
+        assertNotNull(p1.postFunctions);
         assertEquals(3, p1.postFunctions.size());
 
         assertNotNull(p1.timeoutBeforeTerminate);

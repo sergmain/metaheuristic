@@ -96,6 +96,17 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertTrue(leafs.contains(new TaskVertex(322L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new TaskVertex(323L, EnumsApi.TaskExecState.NONE)));
 
+/*
+        // value of id field doesn't matter because isn't included in "@EqualsAndHashCode"
+        assertTrue(leafs.contains(new TaskVertex(1L, 311L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new TaskVertex(1L, 312L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new TaskVertex(1L, 313L, EnumsApi.TaskExecState.NONE)));
+
+        assertTrue(leafs.contains(new TaskVertex(1L, 321L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new TaskVertex(1L, 322L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new TaskVertex(1L, 323L, EnumsApi.TaskExecState.NONE)));
+
+*/
 
         Set<EnumsApi.TaskExecState> states;
         execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(execContextForTest.id,1L);

@@ -427,7 +427,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         for (ExecContextData.TaskVertex taskVertex : taskVertices) {
             Task t = tasks.stream().filter(o->o.id.equals(taskVertex.taskId)).findAny().orElse(null);
-            assertNotNull(t, "task with id #"+ taskVertex.taskId+"wasn't found");
+            assertNotNull(t, "task with id #"+ taskVertex.taskId+" wasn't found");
             assertEquals(t.getExecState(), taskVertex.execState.value, "task has a different states in db and graph, " +
                     "db: " + EnumsApi.TaskExecState.from(t.getExecState())+", graph: " + taskVertex.execState);
         }

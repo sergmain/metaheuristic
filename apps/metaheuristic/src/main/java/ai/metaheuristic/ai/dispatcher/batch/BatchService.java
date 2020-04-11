@@ -62,6 +62,8 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -365,7 +367,7 @@ public class BatchService {
         return batchParams.batchStatus;
     }
 
-    private String getStatusForError(Long batchId, ExecContext ec, String mainDocument, Task task, FunctionApiData.FunctionExec functionExec, String processorIpAndHost) {
+    private String getStatusForError(Long batchId, ExecContext ec, String mainDocument, Task task, @NonNull FunctionApiData.FunctionExec functionExec, String processorIpAndHost) {
 
         final String header =
                 "#990.210 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", execContextId: " + ec.getId() + ", " +
@@ -417,7 +419,7 @@ public class BatchService {
         public Long execContextId;
     }
 
-    public BatchStatusProcessor prepareStatusAndData(Batch batch, BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir) {
+    public BatchStatusProcessor prepareStatusAndData(Batch batch, BiFunction<PrepareZipData, File, Boolean> prepareZip, @Nullable File zipDir) {
         Long batchId = batch.id;
         final BatchStatusProcessor bs = new BatchStatusProcessor();
         bs.originArchiveName = getUploadedFilename(batchId, batch.execContextId);
@@ -439,7 +441,7 @@ public class BatchService {
         return bs;
     }
 
-    public boolean prepareStatus(BiFunction<PrepareZipData, File, Boolean> prepareZip, File zipDir, Long batchId, BatchStatusProcessor bs, Long execContextId) {
+    public boolean prepareStatus(BiFunction<PrepareZipData, File, Boolean> prepareZip, @Nullable File zipDir, Long batchId, BatchStatusProcessor bs, Long execContextId) {
         if (true) {
             throw new NotImplementedException(
                     "Previous version was using list of exec contexts and in this method " +
@@ -498,15 +500,6 @@ public class BatchService {
         }
 
         EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
-        FunctionApiData.FunctionExec functionExec;
-        try {
-            functionExec = FunctionExecUtils.to(task.getFunctionExecResults());
-        } catch (YAMLException e) {
-            bs.getGeneralStatus().add("#990.310 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                    ", batchId:" + batchId + ", execContextId: " + wb.getId() + ", " +
-                    "taskId: " + task.getId(),'\n');
-            return false;
-        }
         Processor s = null;
         if (task.getProcessorId()!=null) {
             s = processorCache.findById(task.getProcessorId());
@@ -523,7 +516,23 @@ public class BatchService {
                 return true;
             case ERROR:
             case BROKEN:
-                bs.getErrorStatus().add(getStatusForError(batchId, wb, mainDocument, task, functionExec, processorIpAndHost));
+                FunctionApiData.FunctionExec functionExec;
+                try {
+                    functionExec = FunctionExecUtils.to(task.getFunctionExecResults());
+                } catch (YAMLException e) {
+                    bs.getGeneralStatus().add("#990.310 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                            ", batchId:" + batchId + ", execContextId: " + wb.getId() + ", " +
+                            "taskId: " + task.getId(),'\n');
+                    return false;
+                }
+                if (functionExec==null) {
+                    bs.getGeneralStatus().add("#990.310 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                            ", batchId:" + batchId + ", execContextId: " + wb.getId() + ", " +
+                            "taskId: " + task.getId(),'\n');
+                    return false;
+                }
+                String statusForError = getStatusForError(batchId, wb, mainDocument, task, functionExec, processorIpAndHost);
+                bs.getErrorStatus().add(statusForError);
                 return true;
             case OK:
                 break;
@@ -550,6 +559,7 @@ public class BatchService {
         return true;
     }
 
+    @Nullable
     private String getMainDocumentFilenameForPoolCode(String mainDocumentPoolCode, Long execContextId) {
         final List<String> filename = variableService.getFilenameByVariableAndExecContextId(mainDocumentPoolCode, execContextId);
         if (filename==null || filename.isEmpty() || StringUtils.isBlank(filename.get(0))) {

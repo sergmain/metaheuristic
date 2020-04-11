@@ -28,8 +28,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
@@ -84,7 +83,7 @@ public class TestJGrapht {
         assertNotNull(item);
         assertEquals(v1002.id, item.id);
 
-        graph.addEdge(v1001, v1002);
+        assertThrows(IllegalArgumentException.class, ()->graph.addEdge(v1001, v1002));
     }
 
 }

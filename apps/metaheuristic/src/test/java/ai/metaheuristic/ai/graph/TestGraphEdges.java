@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.graph;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
@@ -32,6 +31,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -59,12 +59,12 @@ public class TestGraphEdges extends PreparingSourceCode {
     public void test() {
 
         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
-        execContextForTest = (ExecContextImpl)result.execContext;
+        execContextForTest = result.execContext;
 
         assertNotNull(execContextForTest);
 
         OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id, List.of(), List.of(1L));
-        execContextForTest = execContextCache.findById(execContextForTest.id);
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
@@ -74,18 +74,19 @@ public class TestGraphEdges extends PreparingSourceCode {
 
         osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(1L), List.of(21L, 22L, 23L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        execContextForTest = execContextCache.findById(execContextForTest.id);
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
         assertEquals(3, leafs.size());
+        // value of id field doesn't matter because isn't included in "@EqualsAndHashCode"
         assertTrue(leafs.contains(new ExecContextData.TaskVertex(21L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new ExecContextData.TaskVertex(22L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new ExecContextData.TaskVertex(23L, EnumsApi.TaskExecState.NONE)));
 
         osr = execContextGraphTopLevelService.addNewTasksToGraph( execContextForTest.id,List.of(21L), List.of(311L, 312L, 313L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        execContextForTest = execContextCache.findById(execContextForTest.id);
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         Set<ExecContextData.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 1L);
         assertEquals(6, descendands.size());
