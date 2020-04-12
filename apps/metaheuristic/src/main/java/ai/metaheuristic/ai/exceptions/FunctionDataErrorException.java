@@ -16,15 +16,22 @@
 
 package ai.metaheuristic.ai.exceptions;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+/**
+ * @author Serge
+ * Date: 4/11/2020
+ * Time: 5:14 PM
+ */
+public class FunctionDataErrorException extends CommonErrorWithDataException {
 
-@ResponseStatus(HttpStatus.GONE)
-public class BinaryDataNotFoundException extends RuntimeException {
-    public BinaryDataNotFoundException() {
+    public String code;
+
+    public FunctionDataErrorException(String code, String message) {
+        super(message);
+        this.code = code;
     }
 
-    public BinaryDataNotFoundException(String message) {
-        super(message);
+    @Override
+    public String getAdditionalInfo() {
+        return "Function code: " + code;
     }
 }

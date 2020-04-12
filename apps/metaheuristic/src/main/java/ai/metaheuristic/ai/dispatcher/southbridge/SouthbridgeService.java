@@ -26,13 +26,13 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -96,9 +96,7 @@ public class SouthbridgeService {
     private final ProcessorCache processorCache;
     private final ExecContextRepository execContextRepository;
     private final ProcessorRepository processorRepository;
-    private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final IdsRepository idsRepository;
 
     private static final ConcurrentHashMap<String, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
@@ -201,30 +199,40 @@ public class SouthbridgeService {
         switch (binaryType) {
             case function:
                 assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesDir, dataId, null);
+                if (assetFile.isError) {
+                    String es = "#440.100 Function with id " + dataId + " is broken";
+                    log.error(es);
+                    throw new FunctionDataNotFoundException(dataId, es);
+                }
                 dataSaver = functionDataService::storeToFile;
                 break;
             case variable:
                 assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.variable+'-'+dataId, null, binaryType);
+                if (assetFile.isError) {
+                    String es = "#440.120 Resource with id " + dataId + " is broken";
+                    log.error(es);
+                    throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
+                }
                 dataSaver = (variableId, trgFile) -> variableService.storeToFile(Long.parseLong(variableId), trgFile);
                 break;
             case global_variable:
                 assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.global_variable+'-'+dataId, null, binaryType);
+                if (assetFile.isError) {
+                    String es = "#440.140 Resource with id " + dataId + " is broken";
+                    log.error(es);
+                    throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
+                }
                 dataSaver = (variableId, trgFile) -> globalVariableService.storeToFile(Long.parseLong(variableId), trgFile);
                 break;
             default:
-                throw new IllegalStateException("#442.008 Unknown type of data: " + binaryType);
-        }
-        if (assetFile.isError) {
-            String es = "#442.006 Resource with id " + dataId + " is broken";
-            log.error(es);
-            throw new BinaryDataNotFoundException(es);
+                throw new IllegalStateException("#440.160 Unknown type of data: " + binaryType);
         }
 
         if (!assetFile.isContent) {
             try {
                 dataSaver.accept(dataId, assetFile.file);
-            } catch (BinaryDataNotFoundException e) {
-                log.error("#442.020 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file.getPath());
+            } catch (CommonErrorWithDataException e) {
+                log.error("#440.180 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file.getPath());
                 throw e;
             }
         }
@@ -277,7 +285,7 @@ public class SouthbridgeService {
                     throw e;
                 }
                 if (state==-1) {
-                    log.error("#442.030 Error in algo, read after EOF, file len: {}, offset: {}, size: {}", raf.length(), offset, size);
+                    log.error("#440.200 Error in algo, read after EOF, file len: {}, offset: {}, size: {}", raf.length(), offset, size);
                     break;
                 }
                 fos.write(bytes, 0, realSize);
@@ -324,8 +332,8 @@ public class SouthbridgeService {
             dispatcherCommandProcessor.process(scpy, lcpy);
             setDispatcherCommContext(lcpy);
         } catch (Throwable th) {
-            log.error("#442.040 Error while processing client's request, ProcessorCommParamsYaml:\n{}", scpy);
-            log.error("#442.041 Error", th);
+            log.error("#440.220 Error while processing client's request, ProcessorCommParamsYaml:\n{}", scpy);
+            log.error("#440.230 Error", th);
             lcpy.success = false;
             lcpy.msg = th.getMessage();
         }
@@ -346,14 +354,14 @@ public class SouthbridgeService {
     @SuppressWarnings("UnnecessaryReturnStatement")
     private void checkProcessorId(@Nullable String processorId, @Nullable String sessionId, String remoteAddress, DispatcherCommParamsYaml lcpy) {
         if (StringUtils.isBlank(processorId)) {
-            log.warn("#442.045 StringUtils.isBlank(processorId), return RequestProcessorId()");
+            log.warn("#440.240 StringUtils.isBlank(processorId), return RequestProcessorId()");
             lcpy.assignedProcessorId = dispatcherCommandProcessor.getNewProcessorId(new ProcessorCommParamsYaml.RequestProcessorId());
             return;
         }
 
         final Processor processor = processorRepository.findByIdForUpdate(Long.parseLong(processorId));
         if (processor == null) {
-            log.warn("#442.046 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+            log.warn("#440.260 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
             lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
             return;
         }
@@ -361,13 +369,13 @@ public class SouthbridgeService {
         try {
             ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
         } catch (Throwable e) {
-            log.error("#442.065 Error parsing current status of processor:\n{}", processor.status);
-            log.error("#442.066 Error ", e);
+            log.error("#440.280 Error parsing current status of processor:\n{}", processor.status);
+            log.error("#440.300 Error ", e);
             // skip any command from this processor
             return;
         }
         if (StringUtils.isBlank(sessionId)) {
-            log.debug("#442.070 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
+            log.debug("#440.320 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
             // the same processor but with different and expired sessionId
             // so we can continue to use this processorId with new sessionId
             lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
@@ -375,14 +383,14 @@ public class SouthbridgeService {
         }
         if (!ss.sessionId.equals(sessionId)) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
-                log.debug("#442.071 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
+                log.debug("#440.340 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
                 // the same processor but with different and expired sessionId
                 // so we can continue to use this processorId with new sessionId
                 // we won't use processor's sessionIf to be sure that sessionId has valid format
                 lcpy.reAssignedProcessorId = assignNewSessionId(processor, ss);
                 return;
             } else {
-                log.debug("#442.072 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
+                log.debug("#440.360 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
                 // different processors with the same processorId
                 // there is other active processor with valid sessionId
                 lcpy.reAssignedProcessorId = reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
@@ -403,7 +411,7 @@ public class SouthbridgeService {
         final long millis = System.currentTimeMillis();
         final long diff = millis - ss.sessionCreatedOn;
         if (diff > SESSION_UPDATE_TIMEOUT) {
-            log.debug("#442.074 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
+            log.debug("#440.380 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
                     "'    processor.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
                     "'    processor.status:\n{},\n" +
                     "'    return ReAssignProcessorId() with the same processorId and sessionId. only session'p timestamp was updated.",
@@ -416,8 +424,8 @@ public class SouthbridgeService {
             try {
                 processorCache.save(processor);
             } catch (ObjectOptimisticLockingFailureException e) {
-                log.error("#442.080 Error saving processor. old : {}, new: {}", processorCache.findById(processor.id), processor);
-                log.error("#442.085 Error");
+                log.error("#440.400 Error saving processor. old : {}, new: {}", processorCache.findById(processor.id), processor);
+                log.error("#440.420 Error");
                 throw e;
             }
 

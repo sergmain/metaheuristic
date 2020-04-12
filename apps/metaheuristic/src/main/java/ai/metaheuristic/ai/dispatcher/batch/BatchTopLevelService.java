@@ -34,7 +34,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -367,7 +367,7 @@ public class BatchTopLevelService {
             // todo 1L is fictional number, need to change to actual value
             Long variableId = 1L;
             variableService.storeToFile(variableId, tempFile);
-        } catch (BinaryDataNotFoundException e) {
+        } catch (CommonErrorWithDataException e) {
             String msg = "#990.375 Error store data to temp file, data doesn't exist in db, batchId " + batchId +
                     ", file: " + tempFile.getPath();
             log.error(msg);
@@ -419,7 +419,7 @@ public class BatchTopLevelService {
 /*
         try {
             variableService.storeToFile(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), tempFile);
-        } catch (BinaryDataNotFoundException e) {
+        } catch (CommonErrorWithDataException e) {
             String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " +
                     taskParamYaml.taskYaml.outputResourceIds.values().iterator().next() +
                     ", file: " + tempFile.getPath();

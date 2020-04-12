@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcess
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -38,7 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.NonNull;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -135,17 +135,21 @@ public class TaskWithInternalContextEventService {
                         Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(event.taskId, output.id);
                     }
                     return null;
+                } catch (CommonErrorWithDataException th) {
+                    String es = "#707.067 Task #" + event.taskId + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
+                    taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10002, es);
+                    log.error(es);
                 } catch (Throwable th) {
-                    taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10002,
-                            "#707.070 Task #" + event.taskId + " was processed with error: " + th.getMessage());
-                    log.error("Error", th);
+                    String es = "#707.070 Task #" + event.taskId + " was processed with error: " + th.getMessage();
+                    taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10003, es);
+                    log.error(es, th);
                 }
                 return null;
             });
         } catch (Throwable th) {
-            taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10003,
-                    "#707.080 Task #" + event.taskId + " was processed with error: " + th.getMessage());
-            log.error("Error", th);
+            String es = "#707.080 Task #" + event.taskId + " was processed with error: " + th.getMessage();
+            taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10004, es);
+            log.error(es, th);
         }
         finally {
             lastTaskId = event.taskId;

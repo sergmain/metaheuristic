@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -69,7 +69,7 @@ public class AssetController {
             CleanerInfo resource = serverService.deliverData(EnumsApi.DataType.function, code, chunkSize, chunkNum);
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
-        } catch (BinaryDataNotFoundException e) {
+        } catch (CommonErrorWithDataException e) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
         return entity;
@@ -89,12 +89,12 @@ public class AssetController {
     private String getFunctionChecksum(HttpServletResponse response, String functionCode) throws IOException {
         Function function = functionService.findByCode(functionCode);
         if (function ==null) {
-            log.warn("#440.100 Function {} wasn't", functionCode);
+            log.warn("#442.100 Function {} wasn't", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return "";
         }
         FunctionConfigYaml sc = function.getFunctionConfig(false);
-        log.info("#440.120 Send checksum {} for function {}", sc.checksum, sc.getCode());
+        log.info("#442.120 Send checksum {} for function {}", sc.checksum, sc.getCode());
         return sc.checksum;
     }
 
@@ -112,7 +112,7 @@ public class AssetController {
     private String getFunctionConfig(HttpServletResponse response, String functionCode) throws IOException {
         Function function = functionService.findByCode(functionCode);
         if (function ==null) {
-            log.warn("#440.140 Function {} wasn't found", functionCode);
+            log.warn("#442.140 Function {} wasn't found", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return "";
         }

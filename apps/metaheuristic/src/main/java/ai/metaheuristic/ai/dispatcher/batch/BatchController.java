@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
@@ -167,7 +167,7 @@ public class BatchController {
             }
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
-        } catch (BinaryDataNotFoundException e) {
+        } catch (CommonErrorWithDataException e) {
             // TODO 2019-10-13 in case of this exception resources won't be cleaned, need to re-write
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }

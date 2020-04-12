@@ -16,10 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.function;
 
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
+import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -59,17 +60,17 @@ public class FunctionDataService {
             Blob blob = functionDataRepository.getDataAsStreamByCode(code);
             if (blob==null) {
                 log.warn("#088.010 Binary data for code {} wasn't found", code);
-                throw new BinaryDataNotFoundException("#088.010 Binary data wasn't found, code: " + code);
+                throw new FunctionDataNotFoundException(code, "#088.010 Function data wasn't found, code: " + code);
             }
             try (InputStream is = blob.getBinaryStream()) {
                 FileUtils.copyInputStreamToFile(is, trgFile);
             }
-        } catch (BinaryDataNotFoundException e) {
+        } catch (CommonErrorWithDataException e) {
             throw e;
-        } catch (Exception e) {
-            String es = "#088.020 Error while storing binary data";
-            log.error(es, e);
-            throw new IllegalStateException(es, e);
+        } catch (Throwable th) {
+            String es = "#088.020 Error while storing binary data, error: " + th.getMessage();
+            log.error(es, th);
+            throw new FunctionDataErrorException(code, es);
         }
     }
 
@@ -88,7 +89,7 @@ public class FunctionDataService {
                 DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
                 if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.dispatcher) {
                     // this is an exception for the case when two resources have the same names but different pool codes
-                    throw new VariableSavingException("#088.060 Sourcing must be dispatcher, value in db: " + data.getParams());
+                    throw new FunctionDataErrorException(functionCode, "#088.060 Sourcing must be dispatcher, value in db: " + data.getParams());
                 }
             }
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
@@ -100,10 +101,12 @@ public class FunctionDataService {
 
             return data;
         }
-        catch(VariableSavingException | PessimisticLockingFailureException e) {
+        catch(FunctionDataErrorException | PessimisticLockingFailureException e) {
             throw e;
         } catch(Throwable th) {
-            throw new VariableSavingException("#088.070 error storing data to db - " + th.getMessage(), th);
+            String es = "#088.070 error storing data to db - " + th.getMessage();
+            log.error(es, th);
+            throw new FunctionDataErrorException(functionCode, es);
         }
     }
 

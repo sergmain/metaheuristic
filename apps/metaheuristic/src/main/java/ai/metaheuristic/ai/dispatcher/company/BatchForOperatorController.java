@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.company;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
@@ -193,7 +193,7 @@ public class BatchForOperatorController {
             }
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
-        } catch (BinaryDataNotFoundException e) {
+        } catch (CommonErrorWithDataException e) {
             // TODO 2019-10-13 in case of this exception resources won't be cleaned, need to re-write
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
@@ -216,7 +216,7 @@ public class BatchForOperatorController {
             }
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
-        } catch (BinaryDataNotFoundException e) {
+        } catch (CommonErrorWithDataException e) {
             // TODO 2019-10-13 in case of this exception resources won't be cleaned, need to re-write
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         } catch (Throwable e) {

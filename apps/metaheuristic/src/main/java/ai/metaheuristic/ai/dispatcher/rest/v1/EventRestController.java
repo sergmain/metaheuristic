@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import lombok.RequiredArgsConstructor;
@@ -73,7 +73,7 @@ public class EventRestController {
             if (resource.toClean!=null) {
                 request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
             }
-        } catch (BinaryDataNotFoundException e) {
+        } catch (CommonErrorWithDataException e) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
         return entity;

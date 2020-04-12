@@ -17,13 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.variable_global;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,17 +85,17 @@ public class GlobalVariableService {
         }
     }
 
-    public void storeToFile(Long id, File trgFile) {
+    public void storeToFile(Long variableId, File trgFile) {
         try {
-            Blob blob = globalVariableRepository.getDataAsStreamById(id);
+            Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                log.warn("#089.030 Binary data for id {} wasn't found", id);
-                throw new BinaryDataNotFoundException("#089.040 Binary data wasn't found, id: " + id);
+                log.warn("#089.030 Binary data for variableId {} wasn't found", variableId);
+                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.global, "#089.040 Binary data wasn't found, variableId: " + variableId);
             }
             try (InputStream is = blob.getBinaryStream()) {
                 FileUtils.copyInputStreamToFile(is, trgFile);
             }
-        } catch (BinaryDataNotFoundException e) {
+        } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
             String es = "#089.050 Error while storing binary data";

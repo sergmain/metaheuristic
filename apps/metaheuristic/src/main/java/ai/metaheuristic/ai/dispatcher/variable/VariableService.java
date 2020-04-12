@@ -21,8 +21,9 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
+import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -129,12 +130,12 @@ public class VariableService {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
                 log.warn("#087.030 Binary data for variableId {} wasn't found", variableId);
-                throw new BinaryDataNotFoundException("#087.040 Binary data wasn't found, code: " + variableId);
+                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, "#087.040 Variable data wasn't found, variableId: " + variableId);
             }
             try (InputStream is = blob.getBinaryStream()) {
                 FileUtils.copyInputStreamToFile(is, trgFile);
             }
-        } catch (BinaryDataNotFoundException e) {
+        } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
             String es = "#087.050 Error while storing binary data";
