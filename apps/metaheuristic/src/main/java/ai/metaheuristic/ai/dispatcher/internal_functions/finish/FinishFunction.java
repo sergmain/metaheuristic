@@ -54,9 +54,10 @@ public class FinishFunction implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             TaskParamsYaml taskParamsYaml) {
 
+        log.info("054.010 Set task #" + taskId+" as 'finished'");
         execContextFSM.toFinished(execContextId);
         return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }

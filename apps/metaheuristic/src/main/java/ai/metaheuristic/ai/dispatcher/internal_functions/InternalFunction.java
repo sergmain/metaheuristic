@@ -36,6 +36,6 @@ public interface InternalFunction {
     String getName();
 
     InternalFunctionData.InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             TaskParamsYaml taskParamsYaml);
 }

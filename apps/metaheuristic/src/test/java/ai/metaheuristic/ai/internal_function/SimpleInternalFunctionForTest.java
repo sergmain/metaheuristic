@@ -60,7 +60,7 @@ public class SimpleInternalFunctionForTest implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             TaskParamsYaml taskParamsYaml) {
 
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);

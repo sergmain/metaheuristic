@@ -59,18 +59,18 @@ public class AggregateFunction implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, String taskContextId,
+            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
             SourceCodeParamsYaml.VariableDefinition variableDefinition, TaskParamsYaml taskParamsYaml) {
 
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
         if (inputVariable.context== EnumsApi.VariableContext.local) {
-            Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            Variable bd = variableRepository.findById(inputVariable.id).orElse(null);
             if (bd == null) {
                 throw new IllegalStateException("Variable not found for code " + inputVariable);
             }
         }
         else {
-            GlobalVariable gv = globalVariableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            GlobalVariable gv = globalVariableRepository.findById(inputVariable.id).orElse(null);
             if (gv == null) {
                 throw new IllegalStateException("GlobalVariable not found for code " + inputVariable);
             }

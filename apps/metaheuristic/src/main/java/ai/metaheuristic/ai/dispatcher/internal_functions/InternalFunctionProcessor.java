@@ -18,8 +18,6 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.internal_functions.permute_variables_and_hyper_params.PermuteVariablesAndHyperParamsFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.variable_splitter.VariableSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -61,7 +59,7 @@ public class InternalFunctionProcessor {
         return internalFunctionMap.containsKey(functionCode);
     }
 
-    public InternalFunctionProcessingResult process(Long sourceCodeId, Long execContextId, String internalContextId, TaskParamsYaml taskParamsYaml) {
+    public InternalFunctionProcessingResult process(Long sourceCodeId, Long execContextId, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
 
         InternalFunction internalFunction = internalFunctionMap.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {
@@ -74,6 +72,6 @@ public class InternalFunctionProcessor {
         }
 
         SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode.getSourceCodeStoredParamsYaml().source);
-        return internalFunction.process(sourceCodeId, execContextId, internalContextId, scpy.source.variables, taskParamsYaml);
+        return internalFunction.process(sourceCodeId, execContextId, taskId, internalContextId, scpy.source.variables, taskParamsYaml);
     }
 }

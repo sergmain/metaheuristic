@@ -36,6 +36,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
@@ -121,7 +122,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 try {
                     tempFile = File.createTempFile("resource-", ".temp", parentDir);
                 } catch (IOException e) {
-                    es = "#810.030 Error creating temp file in parent dir: " + parentDir.getAbsolutePath();
+                    es = "#810.025 Error creating temp file in parent dir: " + parentDir.getAbsolutePath();
                     log.error(es, e);
                     processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.taskId, es);
                     continue;
@@ -149,6 +150,10 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                                 task.dispatcher.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
                         File partFile = new File(dir, String.format(mask, idx));
                         final HttpResponse httpResponse = response.returnResponse();
+                        if (httpResponse.getStatusLine().getStatusCode()==HttpServletResponse.SC_GONE) {
+                            resourceState = setVariableWasntFound(task);
+                            break;
+                        }
                         try (final FileOutputStream out = new FileOutputStream(partFile)) {
                             final HttpEntity entity = httpResponse.getEntity();
                             if (entity != null) {
@@ -174,10 +179,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         }
                     } catch (HttpResponseException e) {
                         if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                            es = String.format("#810.035 Resource %s wasn't found on dispatcher. Task #%s is finished.", task.variableId, task.getTaskId());
-                            log.warn(es);
-                            processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
-                            resourceState = Enums.ResourceState.resource_doesnt_exist;
+                            resourceState = setVariableWasntFound(task);
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
@@ -202,11 +204,11 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     idx++;
                 } while (idx<1000);
                 if (resourceState == Enums.ResourceState.none) {
-                    log.error("#810.050  something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
+                    log.error("#810.050 something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
                     continue;
                 }
                 else if (resourceState == Enums.ResourceState.unknown_error || resourceState == Enums.ResourceState.resource_doesnt_exist) {
-                    log.warn("#810.053 resource {} can't be acquired, state: {}", assetFile.file.getPath(), resourceState);
+                    log.warn("#810.053 Variable {} can't be acquired, state: {}", assetFile.file.getPath(), resourceState);
                     continue;
                 }
                 else if (resourceState == Enums.ResourceState.transmitting_error) {
@@ -230,7 +232,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 log.info("Resource #{} was loaded", task.variableId);
             } catch (HttpResponseException e) {
                 if (e.getStatusCode() == HttpServletResponse.SC_CONFLICT) {
-                    log.warn("#810.080 Resource with id {} is broken and need to be recreated", task.variableId);
+                    log.warn("#810.080 Variable with id {} is broken and need to be recreated", task.variableId);
                 } else {
                     log.error("#810.090 HttpResponseException.getStatusCode(): {}", e.getStatusCode());
                     log.error("#810.091 HttpResponseException", e);
@@ -243,5 +245,16 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 log.error("#810.120 URISyntaxException", e);
             }
         }
+    }
+
+    @NonNull
+    public Enums.ResourceState setVariableWasntFound(DownloadVariableTask task) {
+        String es;
+        Enums.ResourceState resourceState;
+        es = String.format("#810.027 Variable %s wasn't found on dispatcher. Set state of ask #%s to 'finished'.", task.variableId, task.getTaskId());
+        log.warn(es);
+        processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
+        resourceState = Enums.ResourceState.resource_doesnt_exist;
+        return resourceState;
     }
 }

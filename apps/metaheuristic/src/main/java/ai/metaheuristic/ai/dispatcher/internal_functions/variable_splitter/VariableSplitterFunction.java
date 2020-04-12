@@ -105,7 +105,7 @@ public class VariableSplitterFunction implements InternalFunction {
     }
 
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
             TaskParamsYaml taskParamsYaml) {
 
         if (taskParamsYaml.task.inputs.size()>1) {

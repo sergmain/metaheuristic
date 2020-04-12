@@ -69,7 +69,7 @@ public class AggregateInternalContextFunction implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, String taskContextId,
+            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
             SourceCodeParamsYaml.VariableDefinition variableDefinition, TaskParamsYaml taskParamsYaml) {
 
         if (taskParamsYaml.task.outputs.size()!=1) {
