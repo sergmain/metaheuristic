@@ -127,6 +127,7 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
         }
         String[] names = StringUtils.split(variableNames, ", ");
 
+
         List<VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
             VariableHolder holder = new VariableHolder();
