@@ -336,6 +336,26 @@ class ExecContextGraphService {
                     }
                 });
 
+                if (vertices.isEmpty()) {
+                    // this case is about when all tasks in graph is completed and only mh_finish is left
+                    ExecContextData.TaskVertex endVertex = graph.vertexSet().stream()
+                            .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.outgoingEdgesOf(v).isEmpty())
+                            .findFirst()
+                            .orElse(null);
+
+                    if (endVertex!=null) {
+                        ExecContextData.TaskVertex finishVertex = graph.incomingEdgesOf(endVertex).stream()
+                                .map(graph::getEdgeSource)
+                                .filter( v -> v.execState!=EnumsApi.TaskExecState.NONE)
+                                .findFirst()
+                                .orElse(null);
+
+                        if (finishVertex!=null) {
+                            return List.of(finishVertex);
+                        }
+                    }
+                }
+
                 return vertices;
             });
         }
@@ -365,7 +385,7 @@ class ExecContextGraphService {
         // todo 2020-03-15 actually, we don't need to get all ancestors, we need only direct.
         //  So it can be done just with edges
         for (ExecContextData.TaskVertex ancestor : graph.getAncestors(vertex)) {
-            if (ancestor.execState==EnumsApi.TaskExecState.NONE) {
+            if (ancestor.execState!=EnumsApi.TaskExecState.OK) {
                 return false;
             }
         }

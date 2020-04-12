@@ -8,22 +8,22 @@ task:
       batches: '20'
       seed: '42'
   inputs:
-    - id: 649-941-3-function-03-1_1-feature-processing
+    - id: 649
       name: feature-1
       sourcing: dispatcher
-    - id: 649-941-3-function-04-1_1-feature-processing
+    - id: 650
       name: feature-2
       sourcing: dispatcher
-    - id: 649-941-3-function-05-1_1-feature-processing
+    - id: 651
       name: feature-3
       sourcing: dispatcher
-    - id: 649-941-1-function-01-1_1-assembly-raw-file
+    - id: 652
       name: assembled-raw
       sourcing: dispatcher
-    - id: 649-941-2-function-02-1_1-dataset-processing
+    - id: 653
       name: dataset
       sourcing: dispatcher
   outputs:
-    - id: task-51648-ml_model.bin
+    - id: 655
       name: model
       sourcing: dispatcher
