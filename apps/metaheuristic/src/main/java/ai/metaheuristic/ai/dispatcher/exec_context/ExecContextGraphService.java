@@ -313,6 +313,12 @@ class ExecContextGraphService {
         try {
             return readOnlyGraphListOfTaskVertex(execContext, graph -> {
 
+                log.debug("Start find a task for assigning");
+                if (log.isDebugEnabled()) {
+                    log.debug("\tcurrent state of tasks:");
+                    graph.vertexSet().forEach(o->log.debug("\t\ttask #{}, state {}", o.taskId, o.execState));
+                }
+
                 // if this is newly created graph then return only start vertex of graph
                 ExecContextData.TaskVertex startVertex = graph.vertexSet().stream()
                         .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.incomingEdgesOf(v).isEmpty())
@@ -320,8 +326,11 @@ class ExecContextGraphService {
                         .orElse(null);
 
                 if (startVertex!=null) {
+                    log.debug("\tthere is a task without any ancestors, #{}, state {}", startVertex.taskId, startVertex.execState);
                     return List.of(startVertex);
                 }
+
+                log.debug("\tthere isn't any task which doesn't have ancestors");
 
                 // get all non-processed tasks
                 Iterator<ExecContextData.TaskVertex> iterator = new BreadthFirstIterator<>(graph, (ExecContextData.TaskVertex)null);
@@ -336,25 +345,36 @@ class ExecContextGraphService {
                     }
                 });
 
-                if (vertices.isEmpty()) {
-                    // this case is about when all tasks in graph is completed and only mh_finish is left
-                    ExecContextData.TaskVertex endVertex = graph.vertexSet().stream()
-                            .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.outgoingEdgesOf(v).isEmpty())
-                            .findFirst()
-                            .orElse(null);
-
-                    if (endVertex!=null) {
-                        boolean allDone = graph.incomingEdgesOf(endVertex).stream()
-                                .map(graph::getEdgeSource)
-                                .allMatch( v -> v.execState!=EnumsApi.TaskExecState.NONE && v.execState!=EnumsApi.TaskExecState.IN_PROGRESS);
-
-                        if (allDone) {
-                            return List.of(endVertex);
-                        }
+                if (!vertices.isEmpty()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("\tfound tasks for assigning:");
+                        vertices.forEach(o->log.debug("\t\ttask #{}, state {}", o.taskId, o.execState));
                     }
+                    return vertices;
                 }
 
-                return vertices;
+                log.debug("\tthere isn't any task for assigning, let's check for 'mh.finish' task");
+
+                // this case is about when all tasks in graph is completed and only mh_finish is left
+                ExecContextData.TaskVertex endVertex = graph.vertexSet().stream()
+                        .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.outgoingEdgesOf(v).isEmpty())
+                        .findFirst()
+                        .orElse(null);
+
+                if (endVertex!=null) {
+                    log.debug("\tfound task which doesn't have any descendant, #{}, state {}", endVertex.taskId, endVertex.execState);
+
+                    boolean allDone = graph.incomingEdgesOf(endVertex).stream()
+                            .map(graph::getEdgeSource)
+                            .peek(o->log.debug("\t\tancestor of task #{} is #{}, state {}", endVertex.taskId, o.taskId, o.execState))
+                            .allMatch( v -> v.execState!=EnumsApi.TaskExecState.NONE && v.execState!=EnumsApi.TaskExecState.IN_PROGRESS);
+
+                    log.debug("\talldone: {}", allDone);
+                    if (allDone) {
+                        return List.of(endVertex);
+                    }
+                }
+                return List.of();
             });
         }
         catch (Throwable th) {

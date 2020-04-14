@@ -165,7 +165,7 @@ public class DispatcherCommandProcessor {
                 execContextService.getTaskAndAssignToProcessor(Long.parseLong(request.processorCommContext.processorId), request.requestTask.isAcceptOnlySigned(), null);
 
         if (assignedTask!=null) {
-            log.info("Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
+            log.info("#997.050 Assign task #{} to processor #{}", assignedTask.getTaskId(), request.processorCommContext.processorId);
         }
         return assignedTask;
     }
@@ -173,7 +173,7 @@ public class DispatcherCommandProcessor {
     public void checkProcessorId(ProcessorCommParamsYaml request) {
         if (request.processorCommContext ==null  || request.processorCommContext.processorId ==null) {
             // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("processorId is null");
+            throw new IllegalStateException("#997.070 processorId is null");
         }
     }
 

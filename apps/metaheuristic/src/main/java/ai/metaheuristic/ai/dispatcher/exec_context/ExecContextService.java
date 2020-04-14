@@ -378,6 +378,9 @@ public class ExecContextService {
             return null;
         }
         final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext);
+        if (vertices.isEmpty()) {
+            return null;
+        }
         final ProcessorStatusYaml processorStatus = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
 
         int page = 0;

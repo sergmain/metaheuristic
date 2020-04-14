@@ -197,7 +197,13 @@ public class ProcessorTaskService {
             // then we don't have to set isCompleted any more
             // because we've already marked this task as completed
             if (!task.isCompleted()) {
-                task.setCompleted(task.output.allUploaded());
+                FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
+                if (functionExec!=null && !functionExec.allFunctionsAreOk()) {
+                    task.setCompleted(true);
+                }
+                else {
+                    task.setCompleted(task.output.allUploaded());
+                }
             }
             save(task);
         }

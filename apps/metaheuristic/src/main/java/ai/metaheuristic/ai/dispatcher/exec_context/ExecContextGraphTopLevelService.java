@@ -79,6 +79,10 @@ public class ExecContextGraphTopLevelService {
     }
 
     private ExecContextOperationStatusWithTaskList updateTaskExecStateWithoutSync(ExecContextImpl execContext, Long taskId, int execState) {
+        if (execContext==null) {
+            // this execContext was deleted
+            return new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+        }
         taskPersistencer.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState);
         taskPersistencer.updateTasksStateInDb(status);

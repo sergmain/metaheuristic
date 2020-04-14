@@ -130,7 +130,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
                 String mask = assetFile.file.getName() + ".%s.tmp";
                 File dir = assetFile.file.getParentFile();
-                Enums.ResourceState resourceState = Enums.ResourceState.none;
+                Enums.VariableState resourceState = Enums.VariableState.none;
                 int idx = 0;
                 do {
                     try {
@@ -166,15 +166,15 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         final Header[] headers = httpResponse.getAllHeaders();
                         if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
                             log.error("#810.032 error while downloading chunk of resource {}, size is different", assetFile.file.getPath());
-                            resourceState = Enums.ResourceState.transmitting_error;
+                            resourceState = Enums.VariableState.transmitting_error;
                             break;
                         }
                         if (DownloadUtils.isLastChunk(headers)) {
-                            resourceState = Enums.ResourceState.ok;
+                            resourceState = Enums.VariableState.ok;
                             break;
                         }
                         if (partFile.length()==0) {
-                            resourceState = Enums.ResourceState.ok;
+                            resourceState = Enums.VariableState.ok;
                             break;
                         }
                     } catch (HttpResponseException e) {
@@ -186,14 +186,14 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                             es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
                             log.warn(es);
                             processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
-                            resourceState = Enums.ResourceState.unknown_error;
+                            resourceState = Enums.VariableState.unknown_error;
                             break;
                         }
                         else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
                             es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.variableId, task.getTaskId());
                             log.warn(es);
                             processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
-                            resourceState = Enums.ResourceState.unknown_error;
+                            resourceState = Enums.VariableState.unknown_error;
                             break;
                         }
                     }
@@ -203,15 +203,15 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     }
                     idx++;
                 } while (idx<1000);
-                if (resourceState == Enums.ResourceState.none) {
+                if (resourceState == Enums.VariableState.none) {
                     log.error("#810.050 something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
                     continue;
                 }
-                else if (resourceState == Enums.ResourceState.unknown_error || resourceState == Enums.ResourceState.resource_doesnt_exist) {
-                    log.warn("#810.053 Variable {} can't be acquired, state: {}", assetFile.file.getPath(), resourceState);
+                else if (resourceState == Enums.VariableState.unknown_error || resourceState == Enums.VariableState.variable_doesnt_exist) {
+                    log.warn("#810.053 Variable {} can't be acquired, state: {}", task.variableId, resourceState);
                     continue;
                 }
-                else if (resourceState == Enums.ResourceState.transmitting_error) {
+                else if (resourceState == Enums.VariableState.transmitting_error) {
                     continue;
                 }
 
@@ -247,14 +247,11 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
         }
     }
 
-    @NonNull
-    public Enums.ResourceState setVariableWasntFound(DownloadVariableTask task) {
+    private Enums.VariableState setVariableWasntFound(DownloadVariableTask task) {
         String es;
-        Enums.ResourceState resourceState;
-        es = String.format("#810.027 Variable %s wasn't found on dispatcher. Set state of task #%s to 'finished'.", task.variableId, task.getTaskId());
+        es = String.format("#810.027 Variable %s wasn't found on dispatcher. Set state of task #%s to 'finished' with error.", task.variableId, task.getTaskId());
         log.warn(es);
         processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
-        resourceState = Enums.ResourceState.resource_doesnt_exist;
-        return resourceState;
+        return Enums.VariableState.variable_doesnt_exist;
     }
 }

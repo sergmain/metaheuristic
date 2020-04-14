@@ -35,7 +35,7 @@ public final class Enums {
 
     public enum StoringStatus {OK, CANT_BE_STORED}
 
-    public enum ResourceState {none, ok, file_too_big, resource_doesnt_exist, unknown_error, transmitting_error}
+    public enum VariableState {none, ok, file_too_big, variable_doesnt_exist, unknown_error, transmitting_error}
 
     public enum UploadResourceStatus {
         OK,
