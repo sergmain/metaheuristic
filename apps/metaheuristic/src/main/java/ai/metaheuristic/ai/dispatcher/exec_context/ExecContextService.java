@@ -537,7 +537,13 @@ public class ExecContextService {
 
         // create all not dynamic tasks
         TaskData.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(isPersist, execContext.sourceCodeId, execContext.id, execContextParamsYaml);
-        log.info(S.f("Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
+        if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
+            log.info(S.f("Tasks were produced with status %s", produceTaskResult.status));
+        }
+        else {
+            log.info(S.f("Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
+        }
+
 
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         if (isPersist) {
