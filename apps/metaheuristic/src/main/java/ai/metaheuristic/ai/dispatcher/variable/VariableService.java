@@ -168,7 +168,7 @@ public class VariableService {
         variableRepository.deleteByName(variable);
     }
 
-    public Variable createInitialized(InputStream is, long size, String variable, String filename, Long execContextId, String taskContextId) {
+    public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
         try {
             Variable data = new Variable();
             data.inited = true;

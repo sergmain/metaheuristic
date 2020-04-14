@@ -26,22 +26,27 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
+import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
+import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
+import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +58,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -205,13 +211,13 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                     map.remove(inlineKey);
                                     map.put(inlineKey, inlineVariable.params);
 
-                                    createTasksForSubProcesses(execContextId, execContextParamsYaml,
+                                    createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml,
                                             subProcesses, permutationNumber, taskId, variableName, map, lastIds);
                                 }
                             }
                             else {
                                 permutationNumber.incrementAndGet();
-                                createTasksForSubProcesses(execContextId, execContextParamsYaml, subProcesses, permutationNumber, taskId, variableName,
+                                createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml, subProcesses, permutationNumber, taskId, variableName,
                                         execContextParamsYaml.variables!=null ? execContextParamsYaml.variables.inline : null, lastIds);
                             }
                             return true;
@@ -227,7 +233,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     }
 
     public void createTasksForSubProcesses(
-            Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
+            List<VariableHolder> permutedVariables, Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
             AtomicInteger permutationNumber, Long parentTaskId, String variableName, @Nullable Map<String, Map<String, String>> inlines, List<Long> lastIds) {
         List<Long> parentTaskIds = List.of(parentTaskId);
         TaskImpl t = null;
@@ -253,10 +259,45 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         }
 
         if (subProcessContextId!=null) {
+            VariableArrayParamsYaml vapy = toVariableArrayParamsYaml(permutedVariables);
+            String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
+            byte[] bytes = yaml.getBytes();
+            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             lastIds.add(t.id);
             String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
-            Variable v = variableService.createUninitialized(variableName, execContextId, currTaskContextId);
+            Variable v = variableService.createInitialized(bais, bytes.length, variableName, null, execContextId, currTaskContextId);
         }
+    }
+
+    private VariableArrayParamsYaml toVariableArrayParamsYaml(List<VariableHolder> permutedVariables) {
+        VariableArrayParamsYaml vapy = new VariableArrayParamsYaml();
+        for (VariableHolder pv : permutedVariables) {
+            VariableArrayParamsYaml.Variable v = new VariableArrayParamsYaml.Variable();
+            if (pv.globalVariable!=null) {
+                v.id = pv.globalVariable.id;
+                v.name = pv.globalVariable.name;
+
+                DataStorageParams dsp = DataStorageParamsUtils.to(pv.globalVariable.params);
+                v.sourcing = dsp.sourcing;
+                v.git = dsp.git;
+                v.disk = dsp.disk;
+                v.realName = pv.globalVariable.filename;
+                v.type = EnumsApi.DataType.global_variable;
+            }
+            else {
+                v.id = pv.variable.id;
+                v.name = pv.variable.variable;
+
+                DataStorageParams dsp = pv.variable.getParams();
+                v.sourcing = dsp.sourcing;
+                v.git = dsp.git;
+                v.disk = dsp.disk;
+                v.realName = pv.variable.originalFilename;
+                v.type = EnumsApi.DataType.variable;
+            }
+            vapy.array.add(v);
+        }
+        return vapy;
     }
 
 }
