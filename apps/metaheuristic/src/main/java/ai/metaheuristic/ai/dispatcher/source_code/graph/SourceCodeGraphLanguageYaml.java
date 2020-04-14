@@ -156,6 +156,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
     @NonNull
     private static ExecContextParamsYaml.Variable getVariable(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Variable v) {
+        !!!!!!!!!!!!!!!!! add 'array' type of variable here
         EnumsApi.VariableContext context = sourceCodeParams.source.variables.globals!=null && sourceCodeParams.source.variables.globals.stream().anyMatch(g->g.equals(v.name)) ? EnumsApi.VariableContext.global :  EnumsApi.VariableContext.local;
         return new ExecContextParamsYaml.Variable(v.name, context, v.getSourcing(), v.git, v.disk, v.parentContext);
     }

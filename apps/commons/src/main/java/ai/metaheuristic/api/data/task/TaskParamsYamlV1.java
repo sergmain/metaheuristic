@@ -62,6 +62,7 @@ public class TaskParamsYamlV1 implements BaseParams {
             throw new CheckIntegrityFailedException("(task.context== EnumsApi.FunctionExecContext.external && S.b(task.function.file))");
         }
         for (OutputVariableV1 output : task.outputs) {
+            // global variable as output isn't supported right now
             if (output.context!= EnumsApi.VariableContext.local && output.context!= EnumsApi.VariableContext.array) {
                 throw new CheckIntegrityFailedException("(output.context!= EnumsApi.VariableContext.local && output.context!= EnumsApi.VariableContext.array)");
             }
