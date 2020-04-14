@@ -62,6 +62,10 @@ public class ExecContextGraphTopLevelService {
         return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findDescendants(execContext, taskId));
     }
 
+    public Set<ExecContextData.TaskVertex> findDirectDescendants(ExecContextImpl execContext, Long taskId) {
+        return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findDirectDescendants(execContext, taskId));
+    }
+
     public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
         return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findAllForAssigning(execContext));
     }
@@ -95,7 +99,8 @@ public class ExecContextGraphTopLevelService {
 
     public OperationStatusRest addNewTasksToGraph(Long execContextId, List<Long> parentTaskIds, List<Long> taskIds) {
         //noinspection UnnecessaryLocalVariable
-        final OperationStatusRest withSync = execContextSyncService.getWithSync(execContextId, (execContext) -> execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds));
+        final OperationStatusRest withSync = execContextSyncService.getWithSync(execContextId,
+                (execContext) -> execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds));
         return withSync;
     }
 
@@ -114,8 +119,9 @@ public class ExecContextGraphTopLevelService {
         });
     }
 
-    // end of section 'execContext graph methods'
+    public void createEdges(Long execContextId, List<Long> lastIds, Set<ExecContextData.TaskVertex> descendants) {
+        execContextSyncService.getWithSyncNullable(execContextId,
+                (execContext) -> execContextGraphService.createEdges(execContext, lastIds, descendants));
 
-
-
+    }
 }

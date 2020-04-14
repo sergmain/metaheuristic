@@ -77,7 +77,7 @@ public class ExecContextSchedulerService {
                 log.info("Exporting of execContext #{} was finished", execContextId);
             } else {
                 execContextFSM.toError(execContextId);
-                log.error("Error exporting experiment to atlas, execContextId #{}\n{}", execContextId, status.getErrorMessagesAsStr());
+                log.error("#751.020 Error exporting experiment to atlas, execContextId #{}\n{}", execContextId, status.getErrorMessagesAsStr());
             }
         }
     }
@@ -128,7 +128,7 @@ public class ExecContextSchedulerService {
                 isNullState.set(true);
             }
             else if (tv.execState.value!=state) {
-                log.info("#705.054 Found different states for task #"+tv.taskId+", " +
+                log.info("#751.040 Found different states for task #"+tv.taskId+", " +
                         "db: "+ EnumsApi.TaskExecState.from(state)+", " +
                         "graph: "+tv.execState);
                 taskStates.put(tv.taskId, state);
@@ -136,7 +136,7 @@ public class ExecContextSchedulerService {
         });
 
         if (isNullState.get()) {
-            log.info("#705.052 Found non-created task, graph consistency is failed");
+            log.info("#751.060 Found non-created task, graph consistency is failed");
             execContextFSM.toError(execContextId);
         }
         else {
@@ -160,7 +160,7 @@ public class ExecContextSchedulerService {
                             final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
                             long timeout = Math.min(multiplyBy2, oneHourToMills);
                             if ((System.currentTimeMillis() - task.assignedOn) > timeout) {
-                                log.info("Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
+                                log.info("#751.080 Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
                                 execContextService.resetTask(task.id);
                             }
                         }

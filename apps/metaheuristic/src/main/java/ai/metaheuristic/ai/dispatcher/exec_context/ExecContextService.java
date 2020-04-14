@@ -100,11 +100,11 @@ public class ExecContextService {
     public OperationStatusRest resetBrokenTasks(@NonNull Long execContextId) {
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.003 Can't find execContext with id #"+execContextId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.020 Can't find execContext with id #"+execContextId);
         }
         List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllBroken(execContext);
         if (vertices==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.005 Can't find execContext with id #"+execContextId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.040 Can't find execContext with id #"+execContextId);
         }
         for (ExecContextData.TaskVertex vertex : vertices) {
             resetTask(vertex.taskId);
@@ -121,7 +121,7 @@ public class ExecContextService {
         final ExecContextImpl execContext = (ExecContextImpl) result.execContext;
         final SourceCode sourceCode = result.sourceCode;
         if (sourceCode ==null || execContext ==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#701.110 Error: (result.sourceCode==null || result.execContext==null)");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.060 Error: (result.sourceCode==null || result.execContext==null)");
         }
 
         if (execContext.state !=execState.code) {
@@ -135,7 +135,7 @@ public class ExecContextService {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#705.010 Can't re-run task "+taskId+", task with such taskId wasn't found");
+                    "#705.080 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
 
         // TODO 2019-11-03 need to investigate why without this call nothing is working
@@ -144,7 +144,7 @@ public class ExecContextService {
             ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.getExecContextId(), task.id);
             taskPersistencer.updateTasksStateInDb(withTaskList);
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.030 Can't re-run task #" + taskId + ", see log for more information");
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.100 Can't re-run task #" + taskId + ", see log for more information");
             }
         }
         else {
@@ -152,11 +152,11 @@ public class ExecContextService {
             if (withTaskList == null) {
                 taskPersistencer.finishTaskAsBrokenOrError(taskId, EnumsApi.TaskExecState.BROKEN);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#705.020 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any execContext");
+                        "#705.120 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any execContext");
             }
 
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.040 Can't re-run task #" + taskId + ", see log for more information");
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.140 Can't re-run task #" + taskId + ", see log for more information");
             }
             taskPersistencer.updateTasksStateInDb(withTaskList);
 
@@ -206,20 +206,20 @@ public class ExecContextService {
 
     public @NonNull SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
         if (execContextId==null) {
-            return new SourceCodeApiData.ExecContextResult("#705.090 execContextId is null");
+            return new SourceCodeApiData.ExecContextResult("#705.160 execContextId is null");
         }
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return new SourceCodeApiData.ExecContextResult("#705.100 execContext wasn't found, execContextId: " + execContextId);
+            return new SourceCodeApiData.ExecContextResult("#705.180 execContext wasn't found, execContextId: " + execContextId);
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
         if (sourceCode == null) {
-            return new SourceCodeApiData.ExecContextResult("#705.110 sourceCode wasn't found, sourceCodeId: " + execContext.getSourceCodeId());
+            return new SourceCodeApiData.ExecContextResult("#705.200 sourceCode wasn't found, sourceCodeId: " + execContext.getSourceCodeId());
         }
 
         if (!sourceCode.getId().equals(execContext.getSourceCodeId())) {
             changeValidStatus(execContextId, false);
-            return new SourceCodeApiData.ExecContextResult("#705.120 sourceCodeId doesn't match to execContext.sourceCodeId, sourceCodeId: " + execContext.getSourceCodeId()+", execContext.sourceCodeId: " + execContext.getSourceCodeId());
+            return new SourceCodeApiData.ExecContextResult("#705.220 sourceCodeId doesn't match to execContext.sourceCodeId, sourceCodeId: " + execContext.getSourceCodeId()+", execContext.sourceCodeId: " + execContext.getSourceCodeId());
         }
 
         //noinspection UnnecessaryLocalVariable
@@ -239,7 +239,7 @@ public class ExecContextService {
             execContext.setParams( ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
             SourceCode sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
             if (sourceCode ==null) {
-                log.warn("#705.130 Found execContext with wrong sourceCodeId. sourceCodeId: {}", execContext.getSourceCodeId());
+                log.warn("#705.240 Found execContext with wrong sourceCodeId. sourceCodeId: {}", execContext.getSourceCodeId());
                 continue;
             }
             result.sourceCodes.put(execContext.getId(), sourceCode);
@@ -260,7 +260,7 @@ public class ExecContextService {
                     prepareVariables(assignedTaskComplex);
                     TaskImpl task = taskRepository.findById(assignedTaskComplex.task.getId()).orElse(null);
                     if (task==null) {
-                        log.warn("#705.133 task wasn't found with id #"+ assignedTaskComplex.task.getId());
+                        log.warn("#705.260 task wasn't found with id #"+ assignedTaskComplex.task.getId());
                         return null;
                     }
                     return new DispatcherCommParamsYaml.AssignedTask(task.params, task.getId(), task.execContextId);
@@ -275,13 +275,13 @@ public class ExecContextService {
         final Long execContextId = assignedTaskComplex.execContextId;
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            log.warn("#705.135 can't assign a new task in execContext with Id #"+ execContextId +". This execContext doesn't exist");
+            log.warn("#705.280 can't assign a new task in execContext with Id #"+ execContextId +". This execContext doesn't exist");
             return;
         }
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
         if (p==null) {
-            log.warn("#705.136 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
+            log.warn("#705.300 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
             return;
         }
 /*
@@ -307,13 +307,13 @@ public class ExecContextService {
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
-            log.error("#705.140 Processor with id #{} wasn't found", processorId);
+            log.error("#705.320 Processor with id #{} wasn't found", processorId);
             return null;
         }
         List<Long> anyTaskId = taskRepository.findAnyActiveForProcessorId(Consts.PAGE_REQUEST_1_REC, processorId);
         if (!anyTaskId.isEmpty()) {
             // this processor already has active task
-            log.info("#705.160 can't assign any new task to the processor #{} because this processor has an active task #{}", processorId, anyTaskId);
+            log.info("#705.340 can't assign any new task to the processor #{} because this processor has an active task #{}", processorId, anyTaskId);
             return null;
         }
 
@@ -322,11 +322,11 @@ public class ExecContextService {
         if (specificExecContextId != null) {
             ExecContextImpl execContext = execContextCache.findById(specificExecContextId);
             if (execContext==null) {
-                log.warn("#705.170 ExecContext wasn't found for id: {}", specificExecContextId);
+                log.warn("#705.360 ExecContext wasn't found for id: {}", specificExecContextId);
                 return null;
             }
             if (execContext.getState()!= EnumsApi.ExecContextState.STARTED.code) {
-                log.warn("#705.180 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getState()));
+                log.warn("#705.380 ExecContext wasn't started. Current exec state: {}", EnumsApi.ExecContextState.toState(execContext.getState()));
                 return null;
             }
             execContextIds = List.of(execContext.id);
@@ -339,8 +339,8 @@ public class ExecContextService {
         try {
             ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
         } catch (Throwable e) {
-            log.error("#705.150 Error parsing current status of processor:\n{}", processor.status);
-            log.error("#705.151 Error ", e);
+            log.error("#705.400 Error parsing current status of processor:\n{}", processor.status);
+            log.error("#705.410 Error ", e);
             return null;
         }
 
@@ -394,12 +394,12 @@ public class ExecContextService {
                     taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                 }
                 catch (YAMLException e) {
-                    log.error("#705.190 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
+                    log.error("#705.420 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
                     taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
                     continue;
                 }
                 if (task.execState!=EnumsApi.TaskExecState.NONE.value) {
-                    log.warn("#705.193 Task #{} with function '{}' was already processed with status {}",
+                    log.warn("#705.440 Task #{} with function '{}' was already processed with status {}",
                             task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
                     continue;
                 }
@@ -416,7 +416,7 @@ public class ExecContextService {
                 }
 
                 if (gitUnavailable(taskParamYaml.task, processorStatus.gitStatusInfo.status!= Enums.GitStatus.installed) ) {
-                    log.warn("#705.210 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
+                    log.warn("#705.460 Can't assign task #{} to processor #{} because this processor doesn't correctly installed git, git status info: {}",
                             processor.getId(), task.getId(), processorStatus.gitStatusInfo
                     );
                     longHolder.set(System.currentTimeMillis());
@@ -426,7 +426,7 @@ public class ExecContextService {
                 if (!S.b(taskParamYaml.task.function.env)) {
                     String interpreter = processorStatus.env.getEnvs().get(taskParamYaml.task.function.env);
                     if (interpreter == null) {
-                        log.warn("#705.213 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
+                        log.warn("#705.480 Can't assign task #{} to processor #{} because this processor doesn't have defined interpreter for function's env {}",
                                 processor.getId(), task.getId(), taskParamYaml.task.function.env
                         );
                         longHolder.set(System.currentTimeMillis());
@@ -436,7 +436,7 @@ public class ExecContextService {
 
                 final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(taskParamYaml.task.function.metas);
                 if (processorStatus.os!=null && !supportedOS.isEmpty() && !supportedOS.contains(processorStatus.os)) {
-                    log.info("#705.217 Can't assign task #{} to processor #{}, " +
+                    log.info("#705.500 Can't assign task #{} to processor #{}, " +
                                     "because this processor doesn't support required OS version. processor: {}, function: {}",
                             processor.getId(), task.getId(), processorStatus.os, supportedOS
                     );
@@ -446,7 +446,7 @@ public class ExecContextService {
 
                 if (isAcceptOnlySigned) {
                     if (!taskParamYaml.task.function.info.isSigned()) {
-                        log.warn("#705.220 Function with code {} wasn't signed", taskParamYaml.task.function.getCode());
+                        log.warn("#705.520 Function with code {} wasn't signed", taskParamYaml.task.function.getCode());
                         continue;
                     }
                 }
@@ -455,7 +455,7 @@ public class ExecContextService {
                     TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                     resultTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, ss.taskParamsVersion);
                 } catch (DowngradeNotSupportedException e) {
-                    log.warn("Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                    log.warn("#705.540 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
                             resultTask.getId(), processor.id, ss.taskParamsVersion);
                     longHolder.set(System.currentTimeMillis());
                     resultTask = null;
@@ -538,10 +538,10 @@ public class ExecContextService {
         // create all not dynamic tasks
         TaskData.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(isPersist, execContext.sourceCodeId, execContext.id, execContextParamsYaml);
         if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
-            log.info(S.f("Tasks were produced with status %s", produceTaskResult.status));
+            log.info(S.f("#705.560 Tasks were produced with status %s", produceTaskResult.status));
         }
         else {
-            log.info(S.f("Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
+            log.info(S.f("#705.580 Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
         }
 
 
@@ -562,7 +562,6 @@ public class ExecContextService {
     }
 
     public void deleteExecContext(Long execContextId, Long companyUniqueId) {
-//        experimentService.resetExperimentByExecContextId(execContextId);
         applicationEventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExecContextEvent(execContextId));
         variableService.deleteByExecContextId(execContextId);
         ExecContext execContext = execContextCache.findById(execContextId);
@@ -572,16 +571,15 @@ public class ExecContextService {
             if (ids.size()==1) {
                 if (ids.get(0).equals(execContextId)) {
                     if (execContext.getSourceCodeId() != null) {
-//                        setLockedTo(execContext.getSourceCodeId(), companyUniqueId, false);
                         applicationEventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, false));
                     }
                 }
                 else {
-                    log.warn("#701.300 unexpected state, execContextId: {}, ids: {}, ", execContextId, ids);
+                    log.warn("#705.600 unexpected state, execContextId: {}, ids: {}, ", execContextId, ids);
                 }
             }
             else if (ids.isEmpty()) {
-                log.warn("#701.310 unexpected state, execContextId: {}, ids is empty", execContextId);
+                log.warn("#705.320 unexpected state, execContextId: {}, ids is empty", execContextId);
             }
             execContextCache.deleteById(execContextId);
         }

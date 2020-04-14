@@ -57,6 +57,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -119,7 +120,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         // ======================
 
-        // the calling of this method will produce a warning "#705.180 ExecContext wasn't started." which is correct behaviour
+        // the calling of this method will produce a warning "#705.380 ExecContext wasn't started." which is correct behaviour
         DispatcherCommParamsYaml.AssignedTask simpleTask0 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
 
@@ -183,6 +184,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNull(task40);
 
         waitForFinishing(permuteTask.id, 20);
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         TaskImpl tempTask = taskRepository.findById(permuteTask.id).orElse(null);
         assertNotNull(tempTask);
@@ -201,6 +203,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // 1 'mh.aggregate-internal-context'  task,
         // and 1 'mh.finish' task
         assertEquals(14, taskVertices.size());
+
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContextForTest, permuteTask.id);
+        assertEquals(14, descendants.size());
+
+        descendants = execContextGraphTopLevelService.findDirectDescendants(execContextForTest, permuteTask.id);
+        assertEquals(7, descendants.size());
 
         // process and complete fit/predict tasks
         for (int i = 0; i < 12; i++) {
@@ -307,7 +315,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         Task task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
         assertNotNull(task3);
 
-        // the calling of this method will produce warning "#705.160 can't assign any new task to the processor" which is correct behaviour
+        // the calling of this method will produce warning "#705.340 can't assign any new task to the processor" which is correct behaviour
         DispatcherCommParamsYaml.AssignedTask simpleTask21 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
         assertNull(simpleTask21);
@@ -377,7 +385,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         Task task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
         assertNotNull(task);
 
-        // the calling of this method will produce warning "#705.160 can't assign any new task to the processor" which is correct behaviour
+        // the calling of this method will produce warning "#705.340 can't assign any new task to the processor" which is correct behaviour
         DispatcherCommParamsYaml.AssignedTask simpleTask2 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
         assertNull(simpleTask2);

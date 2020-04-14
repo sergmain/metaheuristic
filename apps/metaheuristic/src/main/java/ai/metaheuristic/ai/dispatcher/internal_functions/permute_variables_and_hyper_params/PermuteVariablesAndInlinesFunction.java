@@ -53,10 +53,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -122,6 +119,11 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.exec_context_not_found,
                     "ExecContext not found for id #"+execContextId);
         }
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext, taskId);
+        if (descendants.isEmpty()) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
+                    "Graph for ExecContext #"+execContextId+" is broken");
+        }
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
         final ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
@@ -185,12 +187,12 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
         final Permutation<VariableHolder> permutation = new Permutation<>();
         AtomicInteger permutationNumber = new AtomicInteger(0);
-        List<Long> parentTaskIds = new ArrayList<>();
         final String variableName = MetaUtils.getValue(process.metas, "output-variable");
         if (S.b(variableName)) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.output_variable_not_defined,
                     "Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
         }
+        final List<Long> lastIds = new ArrayList<>();
         for (int i = 0; i < holders.size(); i++) {
             try {
                 permutation.printCombination(holders, i+1,
@@ -204,13 +206,13 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                     map.put(inlineKey, inlineVariable.params);
 
                                     createTasksForSubProcesses(execContextId, execContextParamsYaml,
-                                            subProcesses, permutationNumber, parentTaskIds, variableName, map);
+                                            subProcesses, permutationNumber, taskId, variableName, map, lastIds);
                                 }
                             }
                             else {
                                 permutationNumber.incrementAndGet();
-                                createTasksForSubProcesses(execContextId, execContextParamsYaml, subProcesses, permutationNumber, parentTaskIds, variableName,
-                                        execContextParamsYaml.variables!=null ? execContextParamsYaml.variables.inline : null);
+                                createTasksForSubProcesses(execContextId, execContextParamsYaml, subProcesses, permutationNumber, taskId, variableName,
+                                        execContextParamsYaml.variables!=null ? execContextParamsYaml.variables.inline : null, lastIds);
                             }
                             return true;
                         }
@@ -220,12 +222,15 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found, e.getMessage());
             }
         }
+        execContextGraphTopLevelService.createEdges(execContextId, lastIds, descendants);
         return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 
     public void createTasksForSubProcesses(
             Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
-            AtomicInteger permutationNumber, List<Long> parentTaskIds, String variableName, @Nullable Map<String, Map<String, String>> inlines) {
+            AtomicInteger permutationNumber, Long parentTaskId, String variableName, @Nullable Map<String, Map<String, String>> inlines, List<Long> lastIds) {
+        List<Long> parentTaskIds = List.of(parentTaskId);
+        TaskImpl t = null;
         String subProcessContextId = null;
         for (ExecContextData.ProcessVertex subProcess : subProcesses) {
             final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
@@ -233,12 +238,13 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 throw new BreakFromLambdaException("Process '"+subProcess.process+"' wasn't found");
             }
             String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
-            TaskImpl t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
+            t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
             if (t==null) {
                 throw new BreakFromLambdaException("Creation of task failed");
             }
-            execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, List.of(t.getId()));
-
+            List<Long> currTaskIds = List.of(t.getId());
+            execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, currTaskIds);
+            parentTaskIds = currTaskIds;
             // all subProcesses must have the same processContextId
             if (subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {
                 throw new BreakFromLambdaException("Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
@@ -247,6 +253,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         }
 
         if (subProcessContextId!=null) {
+            lastIds.add(t.id);
             String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
             Variable v = variableService.createUninitialized(variableName, execContextId, currTaskContextId);
         }

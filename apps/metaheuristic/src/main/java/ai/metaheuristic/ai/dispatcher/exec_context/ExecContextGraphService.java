@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
  * Date: 7/6/2019
  * Time: 10:42 PM
  */
+@SuppressWarnings("UnnecessaryLocalVariable")
 @Service
 @Profile("dispatcher")
 @Slf4j
@@ -140,7 +141,6 @@ class ExecContextGraphService {
     private static final EdgeProvider<ExecContextData.TaskVertex, DefaultEdge> ep = (f, t, l, attrs) -> new DefaultEdge();
 
     private static GraphImporter<ExecContextData.TaskVertex, DefaultEdge> buildImporter() {
-        //noinspection UnnecessaryLocalVariable
         DOTImporter<ExecContextData.TaskVertex, DefaultEdge> importer = new DOTImporter<>(ExecContextGraphService::toTaskVertex, ep);
         return importer;
     }
@@ -258,7 +258,6 @@ class ExecContextGraphService {
             return readOnlyGraphListOfTaskVertex(execContext, graph -> {
 
                 try {
-                    //noinspection UnnecessaryLocalVariable
                     List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
                             .stream()
                             .filter(o -> graph.outDegreeOf(o)==0)
@@ -306,6 +305,30 @@ class ExecContextGraphService {
         }
 
         iterator.forEachRemaining(descendants::add);
+        return descendants;
+    }
+
+    public Set<ExecContextData.TaskVertex> findDirectDescendants(ExecContextImpl execContext, Long taskId) {
+        try {
+            return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDirectDescendantsInternal(graph, taskId));
+        }
+        catch (Throwable th) {
+            log.error("#915.022 Error", th);
+            // TODO 2020.03.09 need to implement better handling of Throwable
+            return Set.of();
+        }
+    }
+
+    private Set<ExecContextData.TaskVertex> findDirectDescendantsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Long taskId) {
+        ExecContextData.TaskVertex vertex = graph.vertexSet()
+                .stream()
+                .filter(o -> taskId.equals(o.taskId))
+                .findFirst().orElse(null);
+        if (vertex==null) {
+            return Set.of();
+        }
+
+        Set<ExecContextData.TaskVertex> descendants = graph.outgoingEdgesOf(vertex).stream().map(graph::getEdgeTarget).collect(Collectors.toSet());
         return descendants;
     }
 
@@ -413,7 +436,6 @@ class ExecContextGraphService {
     public @NonNull List<ExecContextData.TaskVertex> findAll(@NonNull ExecContextImpl execContext) {
         try {
             return readOnlyGraphListOfTaskVertex(execContext, graph -> {
-                //noinspection UnnecessaryLocalVariable
                 List<ExecContextData.TaskVertex> vertices = new ArrayList<>(graph.vertexSet());
                 return vertices;
             });
@@ -428,7 +450,6 @@ class ExecContextGraphService {
     public @Nullable ExecContextData.TaskVertex findVertex(@NonNull ExecContextImpl execContext, @NonNull Long taskId) {
         try {
             return readOnlyGraphTaskVertex(execContext, graph -> {
-                //noinspection UnnecessaryLocalVariable
                 ExecContextData.TaskVertex vertex = graph.vertexSet()
                         .stream()
                         .filter(o -> o.taskId.equals(taskId))
@@ -486,5 +507,15 @@ class ExecContextGraphService {
             log.error("Error while adding task to graph", th);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
+    }
+
+    @Nullable
+    public Void createEdges(ExecContextImpl execContext, List<Long> lastIds, Set<ExecContextData.TaskVertex> descendants) {
+        changeGraph(execContext, graph ->
+                graph.vertexSet().stream()
+                        .filter(o -> lastIds.contains(o.taskId))
+                        .forEach(parentV-> descendants.forEach(trgV -> graph.addEdge(parentV, trgV)))
+        );
+        return null;
     }
 }

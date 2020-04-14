@@ -22,7 +22,9 @@ public final class Enums {
         system_error, number_of_inputs_is_incorrect, number_of_outputs_is_incorrect, variable_not_found, global_variable_not_found,
         exec_context_not_found, process_not_found,
         output_variable_not_defined, inline_not_found,
-        number_of_metas_is_incorrect, meta_not_found }
+        number_of_metas_is_incorrect, meta_not_found,
+        broken_graph_error
+    }
 
     public enum AssetType { company, account, function, source}
 
