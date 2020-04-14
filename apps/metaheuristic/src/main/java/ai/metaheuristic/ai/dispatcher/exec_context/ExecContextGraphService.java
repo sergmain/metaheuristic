@@ -344,14 +344,12 @@ class ExecContextGraphService {
                             .orElse(null);
 
                     if (endVertex!=null) {
-                        ExecContextData.TaskVertex finishVertex = graph.incomingEdgesOf(endVertex).stream()
+                        boolean allDone = graph.incomingEdgesOf(endVertex).stream()
                                 .map(graph::getEdgeSource)
-                                .filter( v -> v.execState!=EnumsApi.TaskExecState.NONE)
-                                .findFirst()
-                                .orElse(null);
+                                .allMatch( v -> v.execState!=EnumsApi.TaskExecState.NONE && v.execState!=EnumsApi.TaskExecState.IN_PROGRESS);
 
-                        if (finishVertex!=null) {
-                            return List.of(finishVertex);
+                        if (allDone) {
+                            return List.of(endVertex);
                         }
                     }
                 }

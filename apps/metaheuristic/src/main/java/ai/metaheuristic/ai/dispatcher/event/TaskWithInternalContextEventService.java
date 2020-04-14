@@ -78,7 +78,11 @@ public class TaskWithInternalContextEventService {
                         return null;
                     }
                     if (task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                        log.error("#707.012 already in progress. mustn't happened. it's, actually, illegal state");
+                        log.error("#707.012 Task #"+event.taskId+" already in progress. mustn't happened. it's, actually, illegal state");
+                        return null;
+                    }
+                    if (task.execState==EnumsApi.TaskExecState.OK.value || task.execState==EnumsApi.TaskExecState.BROKEN.value || task.execState==EnumsApi.TaskExecState.ERROR.value) {
+                        log.error("#707.015  Task #"+event.taskId+" already was finished");
                         return null;
                     }
                     task = taskPersistencer.toInProgressSimpleLambda(event.taskId, task);

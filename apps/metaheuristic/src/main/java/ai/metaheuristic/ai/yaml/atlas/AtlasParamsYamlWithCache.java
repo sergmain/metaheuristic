@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.atlas;
 
-import ai.metaheuristic.ai.dispatcher.experiment.ExperimentUtils;
+import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -61,7 +61,7 @@ public class AtlasParamsYamlWithCache {
     public Map<String, Map<String, Integer>> getHyperParamsAsMap(boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
         for (ExperimentParamsYaml.HyperParam hyperParam : getExperimentParamsYaml().experimentYaml.getHyperParams()) {
-            ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
+            InlineVariableUtils.NumberOfVariants ofVariants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues() );
             Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);
             for (int i = 0; i <ofVariants.values.size(); i++) {

@@ -121,9 +121,9 @@ public class AtlasData {
         public final List<ExperimentApiData.HyperParamList> elements = new ArrayList<>();
 
         /**
-         * for plotting we need at least 2 HyperParams to be selected.
+         * for plotting we need at least 2 InlineVariable to be selected.
          * in case when there is only one list ov values of params
-         * we will use all HyperParams for axises
+         * we will use all InlineVariable for axises
          */
         public boolean useAllHyperParamsInPlot() {
             int count=0;

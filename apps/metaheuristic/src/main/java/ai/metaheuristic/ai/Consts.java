@@ -113,7 +113,7 @@ public class Consts {
     public static final Long ID_1 = 1L;
 
     public static final String MH_VARIABLE_SPLITTER_FUNCTION = "mh.variable-splitter";
-    public static final String MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION = "mh.permute-variables-and-hyper-params";
+    public static final String MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION = "mh.permute-variables-and-inlines";
     public static final String MH_AGGREGATE_FUNCTION = "mh.aggregate";
     public static final String MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION = "mh.aggregate-internal-context";
     public static final String MH_FINISH_FUNCTION = "mh.finish";

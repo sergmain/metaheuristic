@@ -295,7 +295,8 @@ public class ProcessorTaskService {
                 log.error("#713.110 ProcessorTask wasn't found for Id #" + taskId);
             } else {
                 if (task.getLaunchedOn()==null) {
-                    log.info("#713.113 task #{} doesn't have the launchedOn as inited", taskId);
+                    final TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                    log.info("#713.113 task #{}, function '{}' doesn't have the launchedOn as inited", taskId, tpy.task.function.code);
                     task.setLaunchedOn(System.currentTimeMillis());
                 }
                 if (!functionExec.allFunctionsAreOk()) {
@@ -402,7 +403,8 @@ public class ProcessorTaskService {
             throw new IllegalStateException("#713.150 dispatcherUrl is null");
         }
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            log.info("Assign new task #{}, params:\n{}", taskId, params );
+//            log.info("Assign new task #{}, params:\n{}", taskId, params );
+            log.info("Assign new task #{}", taskId);
             Map<Long, ProcessorTask> mapForDispatcherUrl = getMapForDispatcherUrl(dispatcherUrl);
             ProcessorTask task = mapForDispatcherUrl.computeIfAbsent(taskId, k -> new ProcessorTask());
 

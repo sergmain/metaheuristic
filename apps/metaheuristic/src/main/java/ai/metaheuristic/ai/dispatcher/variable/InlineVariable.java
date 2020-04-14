@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.yaml.hyper_params;
+package ai.metaheuristic.ai.dispatcher.variable;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,16 +24,16 @@ import java.util.stream.Collectors;
 
 @Data
 @AllArgsConstructor
-public class HyperParams {
+public class InlineVariable {
     public Map<String, String> params = new LinkedHashMap<>();
     public String path;
 
-    public HyperParams() {
+    public InlineVariable() {
         this.path = "";
     }
 
-    public HyperParams asClone() {
-        return new HyperParams(new LinkedHashMap<>(params), path);
+    public InlineVariable asClone() {
+        return new InlineVariable(new LinkedHashMap<>(params), path);
     }
 
     @Override
@@ -41,7 +41,7 @@ public class HyperParams {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        HyperParams that = (HyperParams) o;
+        InlineVariable that = (InlineVariable) o;
 
         return path.equals(that.path);
     }

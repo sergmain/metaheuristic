@@ -395,6 +395,11 @@ public class ExecContextService {
                     taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
                     continue;
                 }
+                if (task.execState!=EnumsApi.TaskExecState.NONE.value) {
+                    log.warn("#705.193 Task #{} with function '{}' was already processed with status {}",
+                            task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
+                    continue;
+                }
                 // all tasks with internal function will be processed in different thread
                 if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
                     // Do Not set EnumsApi.TaskExecState.IN_PROGRESS here.

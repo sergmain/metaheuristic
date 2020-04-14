@@ -21,7 +21,7 @@ public final class Enums {
         ok, function_not_found, source_code_not_found, source_code_is_broken,
         system_error, number_of_inputs_is_incorrect, number_of_outputs_is_incorrect, variable_not_found, global_variable_not_found,
         exec_context_not_found, process_not_found,
-        output_variable_not_defined,
+        output_variable_not_defined, inline_not_found,
         number_of_metas_is_incorrect, meta_not_found }
 
     public enum AssetType { company, account, function, source}

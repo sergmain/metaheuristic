@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -67,7 +68,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -213,7 +213,7 @@ public class ExperimentService {
     public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<HyperParam> experimentHyperParams, boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
         for (HyperParam hyperParam : experimentHyperParams) {
-            ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
+            InlineVariableUtils.NumberOfVariants ofVariants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues() );
             Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);
             for (int i = 0; i <ofVariants.values.size(); i++) {
@@ -574,7 +574,7 @@ public class ExperimentService {
 
         ExperimentApiData.HyperParamResult hyperParamResult = new ExperimentApiData.HyperParamResult();
         for (HyperParam hyperParam : experiment.getExperimentParamsYaml().experimentYaml.hyperParams) {
-            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
+            InlineVariableUtils.NumberOfVariants variants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues());
             ExperimentApiData.HyperParamList list = new ExperimentApiData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
                 list.getList().add( new ExperimentApiData.HyperParamElement(value, false));
@@ -716,7 +716,7 @@ public class ExperimentService {
                         new ExperimentFunctionItem(EnumsApi.ExperimentFunction.PREDICT, epy.experimentYaml.predictFunction));
 
         final Map<String, String> map = toMap(epy.experimentYaml.getHyperParams(), epy.experimentYaml.seed);
-        final int calcTotalVariants = ExperimentUtils.calcTotalVariants(map);
+        final int calcTotalVariants = InlineVariableUtils.calcTotalVariants(map);
 
         final List<ExperimentFeature> features = epy.processing.features;
 
@@ -729,7 +729,7 @@ public class ExperimentService {
                                 "Allowed maximum number of tasks per execContext: " + globals.maxTasksPerExecContext +", tasks in this execContext: " + totalVariants);
             return TOO_MANY_TASKS_PER_SOURCE_CODE_ERROR;
         }
-        final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+        final List<InlineVariable> allHyperParams = InlineVariableUtils.getAllHyperParams(map);
 
         final Map<String, Function> localCache = new HashMap<>();
         final AtomicInteger size = new AtomicInteger();
@@ -758,13 +758,13 @@ public class ExperimentService {
             AtomicLong id = new AtomicLong(0);
             AtomicLong taskIdForEmulation = new AtomicLong(0);
             for (ExperimentFeature feature : features) {
-                ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(feature.variables);
+                InlineVariableUtils.NumberOfVariants numberOfVariants = InlineVariableUtils.getNumberOfVariants(feature.variables);
                 if (!numberOfVariants.status) {
                     log.warn("#179.100 empty list of feature, feature: {}", feature);
                     continue;
                 }
                 List<String> inputResourceCodes = numberOfVariants.values;
-                for (HyperParams hyperParams : allHyperParams) {
+                for (InlineVariable hyperParams : allHyperParams) {
 
                     TaskImpl prevTask;
                     TaskImpl task = null;

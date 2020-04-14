@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.AtlasData;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
-import ai.metaheuristic.ai.dispatcher.experiment.ExperimentUtils;
+import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.AtlasRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.AtlasTaskRepository;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
@@ -356,7 +356,7 @@ public class AtlasTopLevelService {
             if (StringUtils.isBlank(hyperParams.getValues())) {
                 continue;
             }
-            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParams.getValues());
+            InlineVariableUtils.NumberOfVariants variants = InlineVariableUtils.getNumberOfVariants(hyperParams.getValues());
             hyperParams.setVariants(variants.status ? variants.count : 0);
         }
 
@@ -676,7 +676,7 @@ public class AtlasTopLevelService {
 
         AtlasData.HyperParamResult hyperParamResult = new AtlasData.HyperParamResult();
         for (HyperParam hyperParam : epy.experimentYaml.getHyperParams()) {
-            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
+            InlineVariableUtils.NumberOfVariants variants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues());
             ExperimentApiData.HyperParamList list = new ExperimentApiData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
                 list.getList().add( new ExperimentApiData.HyperParamElement(value, false));

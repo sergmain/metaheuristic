@@ -26,6 +26,8 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
+import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
+import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -48,10 +50,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -66,7 +71,7 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class PermuteVariablesAndHyperParamsFunction implements InternalFunction {
+public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
     private final VariableRepository variableRepository;
     private final VariableService variableService;
@@ -74,6 +79,15 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
     private final TaskProducingCoreService taskProducingCoreService;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+
+/*
+    - key: inline-key
+      value: mh.hyper-params
+    - key: permute-inline
+      value: true
+*/
+    private static final String INLINE_KEY = "inline-key";
+    private static final String PERMUTE_INLINE = "permute-inline";
 
     @Data
     public static class VariableHolder {
@@ -87,12 +101,12 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
 
     @Override
     public String getCode() {
-        return Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION;
+        return Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION;
     }
 
     @Override
     public String getName() {
-        return Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION;
+        return Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION;
     }
 
     public InternalFunctionProcessingResult process(
@@ -127,6 +141,27 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
         }
         String[] names = StringUtils.split(variableNames, ", ");
 
+        boolean permuteInlines = MetaUtils.isTrue(taskParamsYaml.task.metas, PERMUTE_INLINE);
+
+        Map<String, String> inlines = null;
+        final String inlineKey;
+        if (MetaUtils.isTrue(taskParamsYaml.task.metas, PERMUTE_INLINE)) {
+            inlineKey = MetaUtils.getValue(taskParamsYaml.task.metas, INLINE_KEY);
+            if (S.b(inlineKey)) {
+                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
+                        "Meta 'inline-key' wasn't found or empty.");
+            }
+            inlines = variableDefinition.inline.get(inlineKey);
+            if (inlines==null || inlines.isEmpty()) {
+                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.inline_not_found,
+                        "Inline variable '"+inlineKey+"' wasn't found or empty. List of keys in inlines: " + variableDefinition.inline.keySet());
+            }
+        }
+        else  {
+            inlineKey = null;
+        }
+
+        final List<InlineVariable> inlineVariables = InlineVariableUtils.getAllInlineVariants(inlines);
 
         List<VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
@@ -160,32 +195,22 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
             try {
                 permutation.printCombination(holders, i+1,
                         permutedVariables -> {
-                            permutationNumber.incrementAndGet();
-                            System.out.println(permutedVariables.stream().map(VariableHolder::getName).collect(Collectors.joining(", ")));
+                            log.info(permutedVariables.stream().map(VariableHolder::getName).collect(Collectors.joining(", ")));
+                            if (permuteInlines) {
+                                for (InlineVariable inlineVariable : inlineVariables) {
+                                    permutationNumber.incrementAndGet();
+                                    Map<String, Map<String, String>> map = new HashMap<>(variableDefinition.inline);
+                                    map.remove(inlineKey);
+                                    map.put(inlineKey, inlineVariable.params);
 
-                            String subProcessContextId = null;
-                            for (ExecContextData.ProcessVertex subProcess : subProcesses) {
-                                final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
-                                if (p==null) {
-                                    throw new BreakFromLambdaException("Process '"+subProcess.process+"' wasn't found");
+                                    createTasksForSubProcesses(execContextId, execContextParamsYaml,
+                                            subProcesses, permutationNumber, parentTaskIds, variableName, map);
                                 }
-                                String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
-                                TaskImpl t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId);
-                                if (t==null) {
-                                    throw new BreakFromLambdaException("Creation of task failed");
-                                }
-                                execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, List.of(t.getId()));
-
-                                // all subProcesses must have the same processContextId
-                                if (subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {
-                                    throw new BreakFromLambdaException("Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
-                                }
-                                subProcessContextId = subProcess.processContextId;
                             }
-
-                            if (subProcessContextId!=null) {
-                                String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
-                                Variable v = variableService.createUninitialized(variableName, execContextId, currTaskContextId);
+                            else {
+                                permutationNumber.incrementAndGet();
+                                createTasksForSubProcesses(execContextId, execContextParamsYaml, subProcesses, permutationNumber, parentTaskIds, variableName,
+                                        execContextParamsYaml.variables!=null ? execContextParamsYaml.variables.inline : null);
                             }
                             return true;
                         }
@@ -196,6 +221,35 @@ public class PermuteVariablesAndHyperParamsFunction implements InternalFunction 
             }
         }
         return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
+    }
+
+    public void createTasksForSubProcesses(
+            Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
+            AtomicInteger permutationNumber, List<Long> parentTaskIds, String variableName, @Nullable Map<String, Map<String, String>> inlines) {
+        String subProcessContextId = null;
+        for (ExecContextData.ProcessVertex subProcess : subProcesses) {
+            final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
+            if (p==null) {
+                throw new BreakFromLambdaException("Process '"+subProcess.process+"' wasn't found");
+            }
+            String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
+            TaskImpl t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
+            if (t==null) {
+                throw new BreakFromLambdaException("Creation of task failed");
+            }
+            execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, List.of(t.getId()));
+
+            // all subProcesses must have the same processContextId
+            if (subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {
+                throw new BreakFromLambdaException("Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
+            }
+            subProcessContextId = subProcess.processContextId;
+        }
+
+        if (subProcessContextId!=null) {
+            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
+            Variable v = variableService.createUninitialized(variableName, execContextId, currTaskContextId);
+        }
     }
 
 }

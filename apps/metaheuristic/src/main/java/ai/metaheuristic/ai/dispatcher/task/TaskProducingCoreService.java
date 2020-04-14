@@ -30,6 +30,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 /**
  * @author Serge
  * Date: 4/3/2020
@@ -47,7 +49,7 @@ public class TaskProducingCoreService {
     @Nullable
     public TaskImpl createTaskInternal(
             Long execContextId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
-            String taskContextId) {
+            String taskContextId, @Nullable Map<String, Map<String, String>> inlines) {
 
         TaskParamsYaml taskParams = new TaskParamsYaml();
         taskParams.task.execContextId = execContextId;
@@ -55,6 +57,7 @@ public class TaskProducingCoreService {
         taskParams.task.processCode = process.processCode;
         taskParams.task.context = process.function.context;
         taskParams.task.metas.addAll(process.metas);
+        taskParams.task.inline = inlines;
 
         // inputs and outputs will be initialized at the time of task selection
 

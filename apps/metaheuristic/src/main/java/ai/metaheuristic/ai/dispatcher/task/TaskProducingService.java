@@ -130,7 +130,8 @@ public class TaskProducingService {
 
         if (isPersist) {
             // for external Functions internalContextId==process.internalContextId
-            Task t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId);
+            Task t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
+                    execContextParamsYaml.variables!=null ? execContextParamsYaml.variables.inline : null);
             if (t == null) {
                 result.status = EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR;
                 result.error = "Unknown reason of error while task creation";

@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,6 +77,7 @@ public class ExecContextParamsYamlV1 implements BaseParams {
     @AllArgsConstructor
     public static class FunctionDefinitionV1 {
         public String code;
+        @Nullable
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
 
@@ -100,7 +102,9 @@ public class ExecContextParamsYamlV1 implements BaseParams {
         public String internalContextId;
 
         public FunctionDefinitionV1 function;
+        @Nullable
         public List<FunctionDefinitionV1> preFunctions;
+        @Nullable
         public List<FunctionDefinitionV1> postFunctions;
 
         /**
@@ -116,8 +120,8 @@ public class ExecContextParamsYamlV1 implements BaseParams {
 
     public boolean clean;
     public List<ProcessV1> processes;
+    @Nullable
     public VariableDeclarationV1 variables;
-
 
     // this is a graph for runtime phase
     public String graph;

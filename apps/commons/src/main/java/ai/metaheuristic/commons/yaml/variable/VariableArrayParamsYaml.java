@@ -35,7 +35,6 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class VariableArrayParamsYaml implements BaseParams {
 
     public final int version = 1;

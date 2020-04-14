@@ -7,7 +7,7 @@ source:
     inline:
       mh.hyper-params:
         seed: '42'
-        batches: '40'
+        batches: '[40, 60]'
         time_steps: '7'
         RNN: LSTM
   processes:
@@ -52,10 +52,10 @@ source:
             outputs:
               - name: feature-output-2
                 parentContext: true
-    - code: mh.permute-variables-and-hyper-params
-      name: permute variables and hyper params
+    - code: mh.permute-variables-and-inlines
+      name: permute variables and inlines
       function:
-        code: mh.permute-variables-and-hyper-params
+        code: mh.permute-variables-and-inlines
         context: internal
       metas:
         - key: mh.output-is-dynamic
@@ -64,6 +64,10 @@ source:
           value: feature-output-1, feature-output-2
         - key: output-variable
           value: feature-item
+        - key: inline-key
+          value: mh.hyper-params
+        - key: permute-inline
+          value: true
       subProcesses:
         logic: sequential
         processes:

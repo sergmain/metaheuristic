@@ -13,10 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.dispatcher.experiment;
+package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -27,7 +26,7 @@ import org.springframework.lang.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ExperimentUtils {
+public class InlineVariableUtils {
 
     private static final String RANGE = "range";
     private static final NumberOfVariants ZERO_VARIANT = new NumberOfVariants(true, null, 0);
@@ -78,12 +77,12 @@ public class ExperimentUtils {
         return total.get();
     }
 
-    public static List<HyperParams> getAllHyperParams(Map<String, String> experimentMetadatas) {
+    public static List<InlineVariable> getAllInlineVariants(@Nullable Map<String, String> experimentMetadatas) {
         if (experimentMetadatas==null || experimentMetadatas.isEmpty()) {
             return new ArrayList<>();
         }
 
-        List<HyperParams> allHyperParams = new ArrayList<>();
+        List<InlineVariable> allHyperParams = new ArrayList<>();
 
         List<Map.Entry<String, String>> entries = new ArrayList<>(experimentMetadatas.entrySet());
 
@@ -96,12 +95,12 @@ public class ExperimentUtils {
             else {
                 for (int i = 0; i < ofVariants.count-1; i++) {
                     for (int j = 0; j < originSize; j++) {
-                        HyperParams elem = allHyperParams.get(j);
+                        InlineVariable elem = allHyperParams.get(j);
                         allHyperParams.add(elem.asClone());
                     }
                 }
             }
-            for (HyperParams list : allHyperParams) {
+            for (InlineVariable list : allHyperParams) {
                 for (String value : ofVariants.values) {
                     if ( alreadyExists(allHyperParams, list, entry.getKey(), value)) {
                         continue;
@@ -114,15 +113,15 @@ public class ExperimentUtils {
         return allHyperParams;
     }
 
-    private static void addInstances(List<HyperParams> allHyperParams, int count) {
+    private static void addInstances(List<InlineVariable> allHyperParams, int count) {
         for (int i = 0; i < count; i++) {
-            allHyperParams.add(new HyperParams());
+            allHyperParams.add(new InlineVariable());
         }
     }
 
-    private static boolean alreadyExists(List<HyperParams> allPaths, HyperParams hyper, String key, String value) {
+    private static boolean alreadyExists(List<InlineVariable> allPaths, InlineVariable hyper, String key, String value) {
         String path = hyper.path + ',' + key+':'+value;
-        return allPaths.contains(new HyperParams(Consts.EMPTY_UNMODIFIABLE_MAP, path));
+        return allPaths.contains(new InlineVariable(Consts.EMPTY_UNMODIFIABLE_MAP, path));
     }
 
     @SuppressWarnings("UnnecessaryLocalVariable")

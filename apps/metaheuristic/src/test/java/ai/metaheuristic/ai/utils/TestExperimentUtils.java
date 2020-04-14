@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.experiment.ExperimentUtils;
+import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.commons.CommonConsts;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ public class TestExperimentUtils {
     public void testNumberOfVariants() {
 
         final String listAsStr = String.valueOf(Arrays.asList("aaa","bbb","ccc"));
-        ExperimentUtils.NumberOfVariants nov = ExperimentUtils.getNumberOfVariants(listAsStr);
+        InlineVariableUtils.NumberOfVariants nov = InlineVariableUtils.getNumberOfVariants(listAsStr);
 
         assertNotNull(nov);
         assertTrue(nov.status);

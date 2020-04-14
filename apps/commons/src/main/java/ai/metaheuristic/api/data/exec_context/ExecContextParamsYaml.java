@@ -54,6 +54,7 @@ public class ExecContextParamsYaml implements BaseParams {
     public static class VariableDeclaration {
         public List<String> globals;
         public String startInputAs;
+        @Nullable
         public Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
@@ -83,7 +84,8 @@ public class ExecContextParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class FunctionDefinition implements SimpleFunctionDefinition {
         public @NonNull String code;
-        public @Nullable String params;
+        @Nullable
+        public String params;
         public @NonNull EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
 
         public FunctionDefinition(@NonNull String code) {
@@ -108,8 +110,10 @@ public class ExecContextParamsYaml implements BaseParams {
         public String internalContextId;
 
         public @NonNull FunctionDefinition function;
-        public @Nullable List<FunctionDefinition> preFunctions;
-        public @Nullable List<FunctionDefinition> postFunctions;
+        @Nullable
+        public List<FunctionDefinition> preFunctions;
+        @Nullable
+        public List<FunctionDefinition> postFunctions;
 
         /**
          * Timeout before terminating a process with function
@@ -131,7 +135,8 @@ public class ExecContextParamsYaml implements BaseParams {
 
     public boolean clean;
     public @NonNull final List<Process> processes = new ArrayList<>();
-    public @Nullable VariableDeclaration variables;
+    @Nullable
+    public VariableDeclaration variables;
 
     // this is a graph for runtime phase
     public @NonNull String graph = ConstsApi.EMPTY_GRAPH;

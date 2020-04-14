@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.source_code;
+package ai.metaheuristic.ai.complex;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
+import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -148,12 +149,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
             TaskImpl tempTask = taskRepository.findById(taskVertex.taskId).orElse(null);
             assertNotNull(tempTask);
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
-            assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION, Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION,
+            assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION, Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION,
                     "test.fit.function:1.0", "test.predict.function:1.0")
                     .contains(tpy.task.function.code));
 
             switch(tpy.task.function.code) {
-                case Consts.MH_PERMUTE_VARIABLES_AND_HYPER_PARAMS_FUNCTION:
+                case Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION:
                     permuteTask = tempTask;
                     break;
                 case Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION:
@@ -199,10 +200,10 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // 3 'test.predict.function:1.0',
         // 1 'mh.aggregate-internal-context'  task,
         // and 1 'mh.finish' task
-        assertEquals(8, taskVertices.size());
+        assertEquals(14, taskVertices.size());
 
         // process and complete fit/predict tasks
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 12; i++) {
             step_FitAndPredict();
         }
 
@@ -387,6 +388,23 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(taskParamsYaml.task.outputs);
         assertEquals(1, taskParamsYaml.task.inputs.size());
         assertEquals(1, taskParamsYaml.task.outputs.size());
+        assertNotNull(taskParamsYaml.task.inline);
+        assertTrue(taskParamsYaml.task.inline.containsKey("mh.hyper-params"));
+/*
+      mh.hyper-params:
+        seed: '42'
+        batches: '[40, 60]'
+        time_steps: '7'
+        RNN: LSTM
+*/
+        assertTrue(taskParamsYaml.task.inline.get("mh.hyper-params").containsKey("seed"));
+        assertEquals("42", taskParamsYaml.task.inline.get("mh.hyper-params").get("seed"));
+        assertTrue(taskParamsYaml.task.inline.get("mh.hyper-params").containsKey("batches"));
+        assertEquals("[40, 60]", taskParamsYaml.task.inline.get("mh.hyper-params").get("batches"));
+        assertTrue(taskParamsYaml.task.inline.get("mh.hyper-params").containsKey("time_steps"));
+        assertEquals("7", taskParamsYaml.task.inline.get("mh.hyper-params").get("time_steps"));
+        assertTrue(taskParamsYaml.task.inline.get("mh.hyper-params").containsKey("RNN"));
+        assertEquals("LSTM", taskParamsYaml.task.inline.get("mh.hyper-params").get("RNN"));
 
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
         assertEquals("test-variable", inputVariable.name);
