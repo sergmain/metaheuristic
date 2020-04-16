@@ -5,12 +5,8 @@
     <a class="pure-menu-heading">Batch</a>
     <ul>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')"
-                th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/batch/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/batch/index.html" th:href="@{/dispatcher/batch/index}">Batch index</a>
-        </li>
-        <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')"
                 th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/batch/batches/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/batch/batches.html" th:href="@{/dispatcher/batch/batches}">Process resources</a>
+            <a class="pure-menu-link" href="dispatcher/batch/batches.html" th:href="@{/dispatcher/batch/batches}">Batch index</a>
         </li>
     </ul>
 </div>

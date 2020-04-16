@@ -288,7 +288,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         boolean fitTask = "fit-dataset".equals(taskParamsYaml.task.processCode);
 
-        assertEquals(2, taskParamsYaml.task.inputs.size());
+        assertEquals(fitTask ? 2 : 3, taskParamsYaml.task.inputs.size());
         assertEquals(fitTask ? 1 : 2, taskParamsYaml.task.outputs.size());
 
         if (fitTask) {

@@ -15,18 +15,6 @@ create table mh_gen_ids
 CREATE UNIQUE INDEX mh_gen_ids_sequence_name_unq_idx
     ON mh_gen_ids (SEQUENCE_NAME);
 
-/*
-stub for future implementation when there will be tons of records for synchronizing
-CREATE TABLE mh_replication
-(
-    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,
-    RESOURCE        VARCHAR(10) not null,
-    PAGE            INT UNSIGNED not null,
-    LAST_UPDATED_ON bigint not null
-);
-*/
-
 CREATE TABLE mh_company
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -87,7 +75,7 @@ CREATE TABLE mh_processor
     UPDATED_ON  bigint not null,
     IP          VARCHAR(30),
     DESCRIPTION VARCHAR(250),
-    STATUS      TEXT not null
+    STATUS      TEXT NOT NULL
 );
 
 CREATE TABLE mh_log_data
@@ -217,7 +205,7 @@ CREATE TABLE mh_exec_context
     CREATED_ON      bigint NOT NULL,
     COMPLETED_ON    bigint,
     PARAMS  LONGTEXT NOT NULL,
-    IS_VALID        BOOLEAN not null default false,
+    IS_VALID        BOOLEAN  default false not null,
     STATE           smallint not null default 0
 );
 
@@ -253,7 +241,7 @@ create table mh_batch
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
     COMPANY_ID      INT UNSIGNED    not null,
-    ACCOUNT_ID      INT UNSIGNED,
+    ACCOUNT_ID      INT UNSIGNED    NOT NULL,
     SOURCE_CODE_ID         NUMERIC(10, 0) NOT NULL,
     EXEC_CONTEXT_ID     NUMERIC(10, 0),
     DATA_ID         NUMERIC(10, 0),
@@ -280,4 +268,17 @@ CREATE TABLE mh_event
 
 CREATE INDEX mh_event_period_idx
     ON mh_event (PERIOD);
+
+
+/*
+stub for future implementation when there will be tons of records for synchronizing
+CREATE TABLE mh_replication
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    RESOURCE        VARCHAR(10) not null,
+    PAGE            INT UNSIGNED not null,
+    LAST_UPDATED_ON bigint not null
+);
+*/
 
