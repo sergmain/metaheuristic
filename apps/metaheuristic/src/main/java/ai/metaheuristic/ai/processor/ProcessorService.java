@@ -185,6 +185,7 @@ public class ProcessorService {
         try {
             taskParamYaml.task.inputs.forEach(input -> {
                     VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(input.sourcing);
+                    // the method prepareForDownloadingVariable() is creating a list dynamically. So don't cache the result
                     List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(taskDir, dispatcher, task, dispatcherCode, input);
                     for (AssetFile assetFile : assetFiles) {
                         // is this resource prepared?

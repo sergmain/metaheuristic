@@ -83,6 +83,7 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public DiskInfo disk;
         public String name;
         public Boolean parentContext;
+        public boolean array = false;
 
         public VariableV1(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;

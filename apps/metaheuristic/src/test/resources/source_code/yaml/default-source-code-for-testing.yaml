@@ -79,6 +79,7 @@ source:
             inputs:
               - name: dataset-processing-output
               - name: feature-item
+                array: true
             outputs:
               - name: model
           - code: predict-dataset
@@ -89,6 +90,8 @@ source:
             inputs:
               - name: dataset-processing-output
               - name: model
+              - name: feature-item
+                array: true
             outputs:
               - name: metrics
               - name: predicted

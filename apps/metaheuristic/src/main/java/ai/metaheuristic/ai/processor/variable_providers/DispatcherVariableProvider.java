@@ -24,20 +24,30 @@ import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.util.Collections;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+
+import static ai.metaheuristic.api.EnumsApi.DataSourcing;
+import static ai.metaheuristic.api.EnumsApi.DataType;
 
 @Service
 @Slf4j
@@ -49,8 +59,8 @@ public class DispatcherVariableProvider implements VariableProvider {
     private final UploadVariableService uploadVariableService;
 
     @Override
-    public EnumsApi.DataSourcing getSourcing() {
-        return EnumsApi.DataSourcing.dispatcher;
+    public DataSourcing getSourcing() {
+        return DataSourcing.dispatcher;
     }
 
     @Override
@@ -59,32 +69,78 @@ public class DispatcherVariableProvider implements VariableProvider {
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
             TaskParamsYaml.InputVariable variable) {
 
-        // process it only if the dispatcher has already sent its config
-        if (dispatcher.context.chunkSize != null) {
-            DownloadVariableTask variableTask = new DownloadVariableTask(variable.id, variable.context, task.getTaskId(), taskDir, dispatcher.context.chunkSize);
-            variableTask.dispatcher = dispatcher.dispatcherLookup;
-            variableTask.processorId = dispatcherCode.processorId;
-            downloadVariableService.add(variableTask);
+        try {
+
+            // process it only if the dispatcher has already sent its config
+            if (dispatcher.context.chunkSize != null) {
+                if (variable.context==EnumsApi.VariableContext.array) {
+                    createDownloadTasksForArray(variable.id, task.getTaskId(), taskDir, dispatcher.context.chunkSize,
+                            dispatcher.dispatcherLookup, dispatcherCode.processorId);
+                }
+                else {
+                    DownloadVariableTask variableTask = new DownloadVariableTask(
+                            variable.id, variable.context, task.getTaskId(), taskDir, dispatcher.context.chunkSize,
+                            dispatcher.dispatcherLookup, dispatcherCode.processorId);
+                    downloadVariableService.add(variableTask);
+                }
+            }
+            String es;
+            switch(variable.context) {
+                case global:
+                    return List.of(AssetUtils.prepareFileForVariable(taskDir, variable.id.toString(), null, DataType.global_variable));
+                case local:
+                    return List.of(AssetUtils.prepareFileForVariable(taskDir, variable.id.toString(), null, DataType.variable));
+                case array:
+                    return prepareArrayVariable(taskDir, variable);
+                default:
+                    es = "#810.007 Unknown context: " + variable.context+ ", variableId: " +  variable.id;
+                    log.error(es);
+                    throw new BreakFromLambdaException(es);
+            }
+        } catch (IOException e) {
+            throw new BreakFromLambdaException(e);
         }
-        EnumsApi.DataType type;
-        String es;
-        switch(variable.context) {
-            case global:
-                type = EnumsApi.DataType.global_variable;
-                break;
-            case local:
-                type = EnumsApi.DataType.variable;
-                break;
-            case array:
-                es = "#810.005 Array type of variable isn't supported right now, variableId: " + variable.id;
-                log.error(es);
-                throw new BreakFromLambdaException(es);
-            default:
-                es = "#810.007 Unknown context: " + variable.context+ ", variableId: " +  variable.id;
-                log.error(es);
-                throw new BreakFromLambdaException(es);
+    }
+
+    private void createDownloadTasksForArray(Long variableId, Long taskId, File taskDir, Long chunkSize,
+                                             DispatcherLookupConfig.DispatcherLookup dispatcherLookup, String processorId) throws IOException {
+        DownloadVariableTask task = new DownloadVariableTask(
+                variableId, EnumsApi.VariableContext.local, taskId, taskDir, chunkSize, dispatcherLookup, processorId);
+        downloadVariableService.add(task);
+
+        AssetFile assetFile = AssetUtils.prepareFileForVariable(taskDir, variableId.toString(), null, DataType.variable);
+
+        List<VariableArrayParamsYaml.Variable> variables = getVariablesForArray(assetFile);
+
+        for (VariableArrayParamsYaml.Variable v : variables) {
+            DownloadVariableTask task1 = new DownloadVariableTask(
+                    v.id, EnumsApi.VariableContext.local, taskId, taskDir, chunkSize, dispatcherLookup, processorId);
+            downloadVariableService.add(task1);
         }
-        return Collections.singletonList(AssetUtils.prepareFileForVariable(taskDir, variable.id.toString(), null, type));
+    }
+
+    private List<AssetFile> prepareArrayVariable(File taskDir, TaskParamsYaml.InputVariable variable) throws IOException {
+        AssetFile assetFile = AssetUtils.prepareFileForVariable(taskDir, variable.id.toString(), null, DataType.variable);
+        List<AssetFile> assetFiles = new ArrayList<>();
+        assetFiles.add(assetFile);
+        List<VariableArrayParamsYaml.Variable> variables = getVariablesForArray(assetFile);
+
+        for (VariableArrayParamsYaml.Variable v : variables) {
+            AssetFile af = AssetUtils.prepareFileForVariable(taskDir, v.id.toString(), null, v.type);
+            assetFiles.add(af);
+        }
+        return assetFiles;
+    }
+
+    @NonNull
+    private List<VariableArrayParamsYaml.Variable> getVariablesForArray(AssetFile assetFile) throws IOException {
+        List<VariableArrayParamsYaml.Variable> variables = new ArrayList<>();
+        if (assetFile.isContent && !assetFile.isError) {
+            String data = FileUtils.readFileToString(assetFile.file, StandardCharsets.UTF_8);
+            VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
+            variables.addAll(vapy.array);
+        }
+        return variables;
     }
 
     @Override
@@ -112,7 +168,6 @@ public class DispatcherVariableProvider implements VariableProvider {
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, TaskParamsYaml.OutputVariable variable) {
 
-        //noinspection UnnecessaryLocalVariable
         File resultDataFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + variable.id);
         return resultDataFile;
     }

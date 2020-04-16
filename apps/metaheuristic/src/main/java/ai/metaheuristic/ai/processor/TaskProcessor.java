@@ -413,6 +413,7 @@ public class TaskProcessor {
             case global:
                 return EnumsApi.DataType.global_variable;
             case local:
+            case array:
                 return EnumsApi.DataType.variable;
             default:
                 throw new IllegalStateException("#100.270 wrong context: " + context);

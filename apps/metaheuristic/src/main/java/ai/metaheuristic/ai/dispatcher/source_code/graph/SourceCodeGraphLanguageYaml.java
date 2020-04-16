@@ -27,7 +27,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.apache.commons.lang3.NotImplementedException;
-import org.springframework.lang.NonNull;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -53,7 +52,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         scg.clean = sourceCodeParams.source.clean;
         scg.variables.globals = sourceCodeParams.source.variables.globals;
         scg.variables.startInputAs = sourceCodeParams.source.variables.startInputAs;
-        scg.variables.inline.putAll(sourceCodeParams.source.variables.inline);
+        scg.variables.inline = sourceCodeParams.source.variables.inline;
 
         List<ExecContextData.ProcessVertex> parentProcesses =  new ArrayList<>();
 
@@ -133,12 +132,10 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         return scg;
     }
 
-    @NonNull
     public static ExecContextData.ProcessVertex getVertex(Map<String, Long> ids, AtomicLong currId, String process, String internalContextId) {
         return new ExecContextData.ProcessVertex(ids.computeIfAbsent(process, o -> currId.incrementAndGet()), process, internalContextId);
     }
 
-    @NonNull
     private static ExecContextParamsYaml.Process toProcessForExecCode(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Process o, String internalContextId) {
         ExecContextParamsYaml.Process pr = new ExecContextParamsYaml.Process();
         pr.internalContextId = internalContextId;
@@ -154,10 +151,11 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         return pr;
     }
 
-    @NonNull
     private static ExecContextParamsYaml.Variable getVariable(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Variable v) {
-        !!!!!!!!!!!!!!!!! add 'array' type of variable here
-        EnumsApi.VariableContext context = sourceCodeParams.source.variables.globals!=null && sourceCodeParams.source.variables.globals.stream().anyMatch(g->g.equals(v.name)) ? EnumsApi.VariableContext.global :  EnumsApi.VariableContext.local;
+        EnumsApi.VariableContext context = sourceCodeParams.source.variables.globals!=null &&
+                sourceCodeParams.source.variables.globals.stream().anyMatch(g->g.equals(v.name))
+                ? EnumsApi.VariableContext.global
+                : ( v.array ? EnumsApi.VariableContext.array :  EnumsApi.VariableContext.local );
         return new ExecContextParamsYaml.Variable(v.name, context, v.getSourcing(), v.git, v.disk, v.parentContext);
     }
 

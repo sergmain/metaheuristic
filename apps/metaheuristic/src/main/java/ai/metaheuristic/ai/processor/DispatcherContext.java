@@ -26,6 +26,8 @@ import lombok.Data;
 @Data
 public class DispatcherContext {
 
+    // chunkSize must be inited with value from Dispatcher. Until then Processor will wait for initializing
     public Long chunkSize;
+
     public Integer maxVersionOfProcessor;
 }

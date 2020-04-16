@@ -95,6 +95,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public DiskInfo disk;
         public String name;
         public Boolean parentContext;
+        public boolean array = false;
 
         public Variable(String name) {
             this.name = name;

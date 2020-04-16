@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.processor.tasks;
 
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,7 +24,6 @@ import lombok.EqualsAndHashCode;
 import java.io.File;
 
 @Data
-@AllArgsConstructor
 @EqualsAndHashCode(of = {"variableId", "context"}, callSuper = false)
 public class DownloadVariableTask extends ProcessorRestTask {
     public final Long variableId;
@@ -31,6 +31,20 @@ public class DownloadVariableTask extends ProcessorRestTask {
     public final long taskId;
     public final File targetDir;
     public final Long chunkSize;
+    public final DispatcherLookupConfig.DispatcherLookup dispatcher;
+    public final String processorId;
+
+    public DownloadVariableTask(
+            Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
+                                DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId) {
+        this.variableId = variableId;
+        this.context = context;
+        this.taskId = taskId;
+        this.targetDir = targetDir;
+        this.chunkSize = chunkSize;
+        this.dispatcher = dispatcher;
+        this.processorId = processorId;
+    }
 
     @Override
     public String toString() {

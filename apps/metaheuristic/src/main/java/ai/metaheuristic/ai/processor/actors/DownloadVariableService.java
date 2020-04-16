@@ -80,10 +80,9 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     type = EnumsApi.DataType.variable;
                     break;
                 case array:
-                    es = "#810.005 Array type of variable isn't supported right now, variableId: " + task.variableId;
-                    log.error(es);
-                    processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.taskId, es);
-                    continue;
+                    type = EnumsApi.DataType.variable;
+                    log.debug("Start downloading array variable with variableId: " +  task.variableId);
+                    break;
                 default:
                     es = "#810.007 Unknown context: " + task.context+ ", variableId: " +  task.variableId;
                     log.error(es);
