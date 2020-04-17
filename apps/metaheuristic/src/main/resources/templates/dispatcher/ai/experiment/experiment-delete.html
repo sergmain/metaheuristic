@@ -1,6 +1,6 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     layout:decorate="~{layout-dispatcher}"
+     layout:decorate="~{layout-ai}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
@@ -26,7 +26,7 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${experiment}" th:method="post" th:action="@{/dispatcher/experiment/experiment-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${experiment}" th:method="post" th:action="@{/dispatcher/ai/experiment/experiment-delete-commit}"
                           accept-charset="UTF-8"
                           id="experiment-delete-commit"
                           name="f">
@@ -40,7 +40,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/experiment/experiments}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/ai/experiment/experiments}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

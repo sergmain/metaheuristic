@@ -44,9 +44,6 @@ public class TestExperimentToJson extends PreparingSourceCode {
     @Autowired
     private AtlasService atlasService;
 
-    @Autowired
-    private AtlasParamsYamlUtils atlasParamsYamlUtils;
-
     @Override
     public String getSourceCodeYamlAsString() {
         return getSourceParamsYamlAsString_Simple();
@@ -65,10 +62,10 @@ public class TestExperimentToJson extends PreparingSourceCode {
         AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(sourceCode, execContextForTest, experiment);
         assertEquals(Enums.StoringStatus.OK, r.status);
 
-        String yaml = atlasParamsYamlUtils.BASE_YAML_UTILS.toString(r.atlasParamsYamlWithCache.atlasParams);
+        String yaml = AtlasParamsYamlUtils.BASE_YAML_UTILS.toString(r.atlasParamsYamlWithCache.atlasParams);
 
         System.out.println("yaml =\n" + yaml);
-        AtlasParamsYamlWithCache atywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(yaml));
+        AtlasParamsYamlWithCache atywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(yaml));
         System.out.println("atywc = " + atywc);
 
         // TODO 2019-07-13 add here comparisons of r.atlasParamsYamlWithCache.atlasParams and atywc

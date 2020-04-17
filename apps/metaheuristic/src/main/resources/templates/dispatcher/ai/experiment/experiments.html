@@ -1,5 +1,5 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
-     layout:decorate="~{layout-dispatcher}"
+     layout:decorate="~{layout-ai}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
 
@@ -20,14 +20,14 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/dispatcher/experiment/experiments-part', table);
+            $.post('/dispatcher/ai/experiment/experiments-part', table);
         });
 
     </script>
 
     <h1 class="widget-header">Experiments</h1>
 
-    <a class="pure-button pure-button-primary" href="experiment-add-form.html" th:href="@{/dispatcher/experiment/experiment-add}">Add new experiment</a>
+    <a class="pure-button pure-button-primary" href="experiment-add-form.html" th:href="@{/dispatcher/ai/experiment/experiment-add}">Add new experiment</a>
     <p></p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
@@ -45,11 +45,11 @@
                     <div th:text="${'Code: ' + r.experiment.code}">Code</div>
                     <div th:text="${'Desc: ' + r.experiment.description}">Description</div>
                 </td>
-                <td rowspan="2"><a class="pure-button pure-button-primary" th:disabled="${r.experiment.getExecContextId!=null}" th:href="${'/dispatcher/experiment/experiment-edit/' + r.experiment.id}">Edit</a></td>
-                <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/dispatcher/experiment/experiment-delete/' + r.experiment.id}">Delete</a></td>
-                <td rowspan="2"><a class="pure-button pure-button-primary" th:disabled="${r.experiment.getExecContextId==null}" th:href="${'/dispatcher/experiment/experiment-info/' + r.experiment.id}">Info</a></td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:disabled="${r.experiment.getExecContextId!=null}" th:href="${'/dispatcher/ai/experiment/experiment-edit/' + r.experiment.id}">Edit</a></td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/experiment/experiment-delete/' + r.experiment.id}">Delete</a></td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:disabled="${r.experiment.getExecContextId==null}" th:href="${'/dispatcher/ai/experiment/experiment-info/' + r.experiment.id}">Info</a></td>
                 <td rowspan="2">
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/dispatcher/experiment/experiment-clone-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/dispatcher/ai/experiment/experiment-clone-commit}"
                           accept-charset="UTF-8"
                           id="experiment-clone-commit"
                           name="f">
@@ -98,17 +98,17 @@
                         <li class="table-nav-padding">
                             <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                               th:href="@{/dispatcher/experiment/experiments-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                               th:href="@{/dispatcher/ai/experiment/experiments-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                               th:href="@{/dispatcher/experiment/experiments-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/dispatcher/ai/experiment/experiments-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                               th:href='@{/dispatcher/experiment/experiments-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
+                               th:href='@{/dispatcher/ai/experiment/experiments-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>

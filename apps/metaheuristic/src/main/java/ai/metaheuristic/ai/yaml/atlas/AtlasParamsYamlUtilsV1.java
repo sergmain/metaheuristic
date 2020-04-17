@@ -31,9 +31,6 @@ import org.yaml.snakeyaml.Yaml;
  * Date: 6/22/2019
  * Time: 11:36 PM
  */
-@Service
-@Profile("dispatcher")
-@RequiredArgsConstructor
 public class AtlasParamsYamlUtilsV1
         extends AbstractParamsYamlUtils<AtlasParamsYamlV1, AtlasParamsYaml, Void, Void, Void, Void> {
 
@@ -87,7 +84,6 @@ public class AtlasParamsYamlUtilsV1
     @NonNull
     @Override
     public AtlasParamsYamlV1 to(String s) {
-        //noinspection UnnecessaryLocalVariable
         final AtlasParamsYamlV1 p = getYaml().load(s);
         return p;
     }

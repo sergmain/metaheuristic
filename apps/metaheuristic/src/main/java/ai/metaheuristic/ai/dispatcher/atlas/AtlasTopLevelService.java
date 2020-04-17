@@ -95,7 +95,6 @@ public class AtlasTopLevelService {
 
     private final AtlasRepository atlasRepository;
     private final AtlasTaskRepository atlasTaskRepository;
-    private final AtlasParamsYamlUtils atlasParamsYamlUtils;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     private static class ParamFilter {
@@ -169,7 +168,7 @@ public class AtlasTopLevelService {
             atlas.params = params;
             atlas = atlasRepository.save(atlas);
 
-            AtlasParamsYaml apy = atlasParamsYamlUtils.BASE_YAML_UTILS.to(params);
+            AtlasParamsYaml apy = AtlasParamsYamlUtils.BASE_YAML_UTILS.to(params);
             int count = 0;
             for (Long taskId : apy.taskIds) {
                 if (++count%100==0) {
@@ -227,7 +226,7 @@ public class AtlasTopLevelService {
         }
         Set<Long> atlasTaskIds = atlasTaskRepository.findIdsByAtlasId(atlasId);
 
-        AtlasParamsYaml apy = atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params);
+        AtlasParamsYaml apy = AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params);
         if (atlasTaskIds.size()!=apy.taskIds.size()) {
             log.warn("numbers of tasks in params of stored experiment and in db are different, " +
                     "atlasTaskIds.size: {}, apy.taskIds.size: {}", atlasTaskIds.size(), apy.taskIds.size());
@@ -269,7 +268,7 @@ public class AtlasTopLevelService {
 
         AtlasParamsYamlWithCache ypywc;
         try {
-            ypywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
         } catch (YAMLException e) {
             String es = "#422.130 Can't parse an atlas, error: " + e.toString();
             log.error(es, e);
@@ -319,7 +318,7 @@ public class AtlasTopLevelService {
 
         AtlasParamsYamlWithCache ypywc;
         try {
-            ypywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
         } catch (YAMLException e) {
             String es = "#422.180 Can't parse an atlas, error: " + e.toString();
             log.error(es, e);
@@ -413,7 +412,7 @@ public class AtlasTopLevelService {
 
         AtlasParamsYamlWithCache ypywc;
         try {
-            ypywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
         } catch (YAMLException e) {
             String es = "#422.240 Can't parse an atlas, error: " + e.toString();
             log.error(es, e);
@@ -631,7 +630,7 @@ public class AtlasTopLevelService {
 
         AtlasParamsYamlWithCache ypywc;
         try {
-            ypywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
         } catch (YAMLException e) {
             final String es = "#422.270 Can't extract experiment from atlas, error: " + e.toString();
             log.error(es, e);
@@ -763,7 +762,7 @@ public class AtlasTopLevelService {
 
         AtlasParamsYamlWithCache ypywc;
         try {
-            ypywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
         } catch (YAMLException e) {
             final String es = "#422.330 Can't extract experiment from atlas, error: " + e.toString();
             log.error(es, e);

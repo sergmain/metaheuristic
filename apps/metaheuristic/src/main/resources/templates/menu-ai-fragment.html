@@ -5,11 +5,11 @@
     <ul>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
             th:attr="class=${#httpServletRequest.requestURI=='/dispatcher/experiments'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/experiment/experiments.html" th:href="@{/dispatcher/ml-ai/experiment/experiments}">Experiments</a>
+            <a class="pure-menu-link" href="dispatcher/ai/experiment/experiments.html" th:href="@{/dispatcher/ai/experiment/experiments}">Experiments</a>
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
-            th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/atlas/atlas')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/atlas/atlas-experiments.html" th:href="@{/dispatcher/atlas/atlas-experiments}">Atlas</a>
+            th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/ai/atlas/atlas')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="dispatcher/ai/atlas/atlas-experiments.html" th:href="@{/dispatcher/ai/atlas/atlas-experiments}">Atlas</a>
         </li>
     </ul>
 </div>

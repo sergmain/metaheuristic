@@ -66,7 +66,6 @@ public class AtlasService {
     private final TaskRepository taskRepository;
     private final AtlasRepository atlasRepository;
     private final AtlasTaskRepository atlasTaskRepository;
-    private final AtlasParamsYamlUtils atlasParamsYamlUtils;
     private final ExecContextCache execContextCache;
     private final ExecContextService execContextService;
     private final ExecContextFSM execContextFSM;
@@ -129,7 +128,7 @@ public class AtlasService {
 */
         Atlas a = new Atlas();
         try {
-            a.params = atlasParamsYamlUtils.BASE_YAML_UTILS.toString(stored.atlasParamsYamlWithCache.atlasParams);
+            a.params = AtlasParamsYamlUtils.BASE_YAML_UTILS.toString(stored.atlasParamsYamlWithCache.atlasParams);
         } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "General error while storing experiment, " + e.toString());
