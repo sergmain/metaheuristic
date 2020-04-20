@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.apps.package_snippet;
+package ai.metaheuristic.apps.package_function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -32,6 +32,7 @@ import java.security.PublicKey;
  * Date: 10/2/2019
  * Time: 9:07 PM
  */
+// TODO 2020-04-19 do we need this test still?
 public class VerifySignature {
 
     public static final String checksumStr = "cc4c932c51885be27c052001eb0456d302d3baa11704510674484c0fe34d91d9";

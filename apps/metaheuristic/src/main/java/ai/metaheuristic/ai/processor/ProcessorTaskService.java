@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@SuppressWarnings({"UnnecessaryLocalVariable", "WeakerAccess"})
+@SuppressWarnings({"WeakerAccess"})
 @Service
 @Slf4j
 @Profile("processor")

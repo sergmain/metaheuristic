@@ -54,24 +54,6 @@ public class FunctionCoreUtils {
         return  snTrg;
     }
 
-    // todo 2020-03-12 can we delete this method
-    public static FunctionConfigYaml to1(FunctionConfigListYaml.FunctionConfig snSrc) {
-        FunctionConfigYaml snTrg = new FunctionConfigYaml();
-        BeanUtils.copyProperties(snSrc, snTrg, "checksumMap", "metas");
-
-        snTrg.checksumMap = new HashMap<>();
-        if (snSrc.checksumMap!=null) {
-            snTrg.checksumMap.putAll(snSrc.checksumMap);
-        }
-        snTrg.metas = new ArrayList<>();
-        if (snSrc.metas!=null) {
-            snTrg.metas.addAll(snSrc.metas);
-        }
-
-        snTrg.info = new FunctionConfigYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
-        return  snTrg;
-    }
-
     public static FunctionApiData.FunctionConfigStatus validate(FunctionConfigListYaml.FunctionConfig functionConfig) {
         if ((functionConfig.file ==null || functionConfig.file.isBlank()) && (functionConfig.env ==null || functionConfig.env.isBlank())) {
             return new FunctionApiData.FunctionConfigStatus(false, "#401.10 Fields 'file' and 'env' can't be null or empty both.");

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
@@ -64,6 +65,7 @@ public class SourceCodeValidationService {
     private final FunctionRepository functionRepository;
     private final SourceCodeStateService sourceCodeStateService;
     private final InternalFunctionProcessor internalFunctionProcessor;
+    private final DispatcherParamsService dispatcherParamsService;
 
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
         if (sourceCode==null) {
@@ -167,12 +169,15 @@ public class SourceCodeValidationService {
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = getSourceCodesValidation(sourceCode);
         sourceCodeStateService.setValidTo(sourceCode, sourceCodeValidation.status.status == EnumsApi.SourceCodeValidateStatus.OK );
         if (sourceCode.isValid() || sourceCodeValidation.status.status==OK) {
+            dispatcherParamsService.registerSourceCode(sourceCode);
             if (sourceCode.isValid() && sourceCodeValidation.status.status!=OK) {
                 log.error("#177.240 Need to investigate: (sourceCode.isValid() && sourceCodeValidation.status!=OK)");
             }
             sourceCodeValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
         else {
+            // we don't need to know is this sourceCode for experiment or not. Just unregister this sourceCode because it's broken
+            dispatcherParamsService.unregisterExperiment(sourceCode.uid);
             final String es = "#177.260 Validation error: " + sourceCodeValidation.status.status;
             log.error(es);
             sourceCodeValidation.addErrorMessage(es);

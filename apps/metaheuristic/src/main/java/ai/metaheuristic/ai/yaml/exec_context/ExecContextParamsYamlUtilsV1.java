@@ -106,7 +106,6 @@ public class ExecContextParamsYamlUtilsV1
     @NonNull
     @Override
     public ExecContextParamsYamlV1 to(String s) {
-        //noinspection UnnecessaryLocalVariable
         final ExecContextParamsYamlV1 p = getYaml().load(s);
         return p;
     }

@@ -121,7 +121,6 @@ public class SourceCodeParamsYaml implements BaseParams {
 
         @SneakyThrows
         public Process clone() {
-            //noinspection UnnecessaryLocalVariable
             final Process clone = (Process) super.clone();
             return clone;
         }

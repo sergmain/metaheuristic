@@ -249,7 +249,7 @@ public class TaskProcessor {
             if (taskResult==null) {
                 String es = "#100.120 Task #"+task.taskId+" wasn't found";
                 log.warn(es);
-                // there isn't this tasls any more. So we can't mark it as Finished
+                // there isn't this task any more. So we can't mark it as Finished
 //                processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
                 continue;
             }

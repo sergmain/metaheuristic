@@ -92,6 +92,7 @@ public class Consts {
     public static final String EXPERIMENTS_CACHE = "experiments";
     public static final String SOURCE_CODES_CACHE = "source_codes";
     public static final String FUNCTIONS_CACHE = "functions";
+    public static final String DISPATCHERS_CACHE = "dispatchers";
 
     public static final String MAIN_DOCUMENT_POOL_CODE_FOR_BATCH = "mainDocument";
 
@@ -116,6 +117,8 @@ public class Consts {
     public static final String MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION = "mh.permute-variables-and-inlines";
     public static final String MH_AGGREGATE_FUNCTION = "mh.aggregate";
     public static final String MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION = "mh.aggregate-internal-context";
+    public static final String MH_EXPERIMENT_RESULT_PROCESSOR = "mh.experiment-result-processor";
+    public static final String MH_BATCH_RESULT_PROCESSOR = "mh.batch-result-processor";
     public static final String MH_FINISH_FUNCTION = "mh.finish";
 
     public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);

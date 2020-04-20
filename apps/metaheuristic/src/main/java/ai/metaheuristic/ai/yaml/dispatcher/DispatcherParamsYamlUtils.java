@@ -14,12 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.source_code;
+package ai.metaheuristic.ai.yaml.dispatcher;
 
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
-public interface ProcessValidator {
-    EnumsApi.SourceCodeValidateStatus validate(SourceCode sourceCode, SourceCodeParamsYaml.Process process, boolean isFirst);
+import java.util.Map;
+
+/**
+ * @author Serge
+ * Date: 4/19/2020
+ * Time: 4:33 PM
+ */
+public class DispatcherParamsYamlUtils {
+
+    private static final DispatcherParamsYamlUtilsV1 YAML_UTILS_V_1 = new DispatcherParamsYamlUtilsV1();
+    private static final DispatcherParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+
+    public static final BaseYamlUtils<DispatcherParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, YAML_UTILS_V_1
+            ),
+            DEFAULT_UTILS
+    );
 }

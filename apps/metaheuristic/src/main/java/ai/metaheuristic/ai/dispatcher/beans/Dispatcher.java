@@ -13,11 +13,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
+import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,16 +30,20 @@ import lombok.ToString;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
+/**
+ * @author Serge
+ * Date: 4/19/2020
+ * Time: 4:23 PM
+ */
 @Entity
-@Table(name = "MH_SOURCE_CODE")
+@Table(name = "MH_DISPATCHER")
 @Data
 @NoArgsConstructor
-@ToString(exclude = "scspy")
-public class SourceCodeImpl implements Serializable, SourceCode {
-    private static final long serialVersionUID = 6764501814772365639L;
+@ToString(exclude = {"dpy"})
+public class Dispatcher implements Serializable {
+    private static final long serialVersionUID = 2499919383081808903L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,23 +52,13 @@ public class SourceCodeImpl implements Serializable, SourceCode {
     @Version
     public Integer version;
 
-    @NotNull
-    @Column(name = "COMPANY_ID")
-    public Long companyId;
-
-    @Column(name = "UID")
-    public String uid;
-
-    @Column(name="CREATED_ON")
-    public long createdOn;
-
     @Column(name = "PARAMS")
-    private String params;
+    public String params;
 
     public void setParams(String params) {
         synchronized (this) {
             this.params = params;
-            this.scspy =null;
+            this.dpy=null;
         }
     }
 
@@ -67,33 +66,32 @@ public class SourceCodeImpl implements Serializable, SourceCode {
         return params;
     }
 
-    @Column(name = "IS_LOCKED")
-    public boolean locked;
-
-    @Column(name = "IS_VALID")
-    public boolean valid;
+    @Column(name = "CODE")
+    public String code;
 
     @Transient
     @JsonIgnore
     @Nullable
-    private SourceCodeStoredParamsYaml scspy = null;
+    private DispatcherParamsYaml dpy = null;
 
     @JsonIgnore
-    public SourceCodeStoredParamsYaml getSourceCodeStoredParamsYaml() {
-        if (scspy ==null) {
+    public DispatcherParamsYaml getDispatcherParamsYaml() {
+        if (dpy ==null) {
             synchronized (this) {
-                if (scspy ==null) {
+                if (dpy ==null) {
+                    // to create a corrected structure of params
+                    String p = S.b(params) ? DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(new DispatcherParamsYaml()) : params;
                     //noinspection UnnecessaryLocalVariable
-                    SourceCodeStoredParamsYaml temp = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    scspy = temp;
+                    DispatcherParamsYaml temp = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(p);
+                    dpy = temp;
                 }
             }
         }
-        return scspy;
+        return dpy;
     }
 
     @JsonIgnore
-    public void updateParams(SourceCodeStoredParamsYaml scspy) {
-        setParams(SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.toString(scspy));
+    public void updateParams(DispatcherParamsYaml dpy) {
+        setParams(DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(dpy));
     }
 }

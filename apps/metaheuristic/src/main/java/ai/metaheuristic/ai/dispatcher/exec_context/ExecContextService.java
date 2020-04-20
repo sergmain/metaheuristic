@@ -60,7 +60,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -80,24 +79,24 @@ import java.util.stream.Collectors;
 @SuppressWarnings("UnusedReturnValue")
 public class ExecContextService {
 
-    private final @NonNull Globals globals;
-    private final @NonNull ExecContextRepository execContextRepository;
-    private final @NonNull SourceCodeCache sourceCodeCache;
+    private final Globals globals;
+    private final ExecContextRepository execContextRepository;
+    private final SourceCodeCache sourceCodeCache;
 
-    private final @NonNull VariableService variableService;
-    private final @NonNull TaskRepository taskRepository;
-    private final @NonNull TaskPersistencer taskPersistencer;
-    private final @NonNull ProcessorCache processorCache;
-    private final @NonNull ExecContextCache execContextCache;
-    private final @NonNull ExecContextGraphService execContextGraphService;
-    private final @NonNull ExecContextSyncService execContextSyncService;
-    private final @NonNull DispatcherEventService dispatcherEventService;
-    private final @NonNull ExecContextFSM execContextFSM;
-    private final @NonNull TaskProducingService taskProducingService;
-    private final @NonNull ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final @NonNull ApplicationEventPublisher applicationEventPublisher;
+    private final VariableService variableService;
+    private final TaskRepository taskRepository;
+    private final TaskPersistencer taskPersistencer;
+    private final ProcessorCache processorCache;
+    private final ExecContextCache execContextCache;
+    private final ExecContextGraphService execContextGraphService;
+    private final ExecContextSyncService execContextSyncService;
+    private final DispatcherEventService dispatcherEventService;
+    private final ExecContextFSM execContextFSM;
+    private final TaskProducingService taskProducingService;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    public OperationStatusRest resetBrokenTasks(@NonNull Long execContextId) {
+    public OperationStatusRest resetBrokenTasks(Long execContextId) {
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.020 Can't find execContext with id #"+execContextId);
@@ -112,7 +111,7 @@ public class ExecContextService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest execContextTargetState(@NonNull Long execContextId, @NonNull EnumsApi.ExecContextState execState) {
+    public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState) {
         SourceCodeApiData.ExecContextResult result = getExecContextExtended(execContextId);
         if (result.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList());
@@ -131,7 +130,7 @@ public class ExecContextService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest resetTask(@NonNull Long taskId) {
+    public OperationStatusRest resetTask(Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -185,7 +184,7 @@ public class ExecContextService {
         return execContextSyncService.getWithSync(execContextId, execContextGraphService::findAll);
     }
 
-    public void changeValidStatus(Long execContextId, boolean status) {
+    private void changeValidStatus(Long execContextId, boolean status) {
         execContextSyncService.getWithSyncNullable(execContextId, execContext -> {
             execContext.setValid(status);
             execContextCache.save(execContext);
@@ -204,7 +203,7 @@ public class ExecContextService {
         });
     }
 
-    public @NonNull SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
+    public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
         if (execContextId==null) {
             return new SourceCodeApiData.ExecContextResult("#705.160 execContextId is null");
         }
@@ -222,7 +221,6 @@ public class ExecContextService {
             return new SourceCodeApiData.ExecContextResult("#705.220 sourceCodeId doesn't match to execContext.sourceCodeId, sourceCodeId: " + execContext.getSourceCodeId()+", execContext.sourceCodeId: " + execContext.getSourceCodeId());
         }
 
-        //noinspection UnnecessaryLocalVariable
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(sourceCode, execContext);
         return result;
     }
@@ -247,14 +245,13 @@ public class ExecContextService {
         return result;
     }
 
-    public @Nullable DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(@NonNull Long processorId, boolean isAcceptOnlySigned, @Nullable Long execContextId) {
+    public @Nullable DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(Long processorId, boolean isAcceptOnlySigned, @Nullable Long execContextId) {
         ExecContextData.AssignedTaskComplex assignedTaskComplex = getTaskAndAssignToProcessorInternal(processorId, isAcceptOnlySigned, execContextId);
         // assignedTaskComplex won't be returned for an internal function
         if (assignedTaskComplex==null) {
             return null;
         }
 
-        //noinspection UnnecessaryLocalVariable
         DispatcherCommParamsYaml.AssignedTask result = execContextSyncService.getWithSyncNullable(assignedTaskComplex.execContextId,
                 execContext -> {
                     prepareVariables(assignedTaskComplex);
@@ -303,7 +300,7 @@ public class ExecContextService {
     }
 
     @Nullable
-    private ExecContextData.AssignedTaskComplex getTaskAndAssignToProcessorInternal(@NonNull Long processorId, boolean isAcceptOnlySigned, @Nullable Long specificExecContextId) {
+    private ExecContextData.AssignedTaskComplex getTaskAndAssignToProcessorInternal(Long processorId, boolean isAcceptOnlySigned, @Nullable Long specificExecContextId) {
 
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
@@ -354,7 +351,7 @@ public class ExecContextService {
         return null;
     }
 
-    private final @NonNull Map<Long, AtomicLong> bannedSince = new HashMap<>();
+    private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
     public static List<Long> getIdsForSearch(List<ExecContextData.TaskVertex> vertices, int page, int pageSize) {
         final int fromIndex = page * pageSize;
@@ -531,7 +528,7 @@ public class ExecContextService {
         return ids;
     }
 
-    public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, @NonNull ExecContextImpl execContext) {
+    public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, ExecContextImpl execContext) {
 
         ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
@@ -584,7 +581,4 @@ public class ExecContextService {
             execContextCache.deleteById(execContextId);
         }
     }
-
-
-
 }

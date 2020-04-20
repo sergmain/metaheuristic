@@ -165,11 +165,6 @@ public class TaskProducingService {
             iv.id = variable.id;
             iv.realName = variable.originalFilename;
         }
-/*
-        else if (v.context== EnumsApi.VariableContext.array) {
-
-        }
-*/
         else {
             GlobalVariable variable = globalVariableRepository.findIdByName(v.name);
             if (variable==null) {

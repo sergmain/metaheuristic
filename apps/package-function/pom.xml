@@ -75,7 +75,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>ai.metaheuristic.apps.package_snippet.PackageSnippet</mainClass>
+                    <mainClass>ai.metaheuristic.apps.package_function.PackageFunction</mainClass>
                 </configuration>
             </plugin>
         </plugins>

@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.apps.package_snippet;
+package ai.metaheuristic.apps.package_function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -40,13 +40,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 @SpringBootApplication
-public class PackageSnippet implements CommandLineRunner {
+public class PackageFunction implements CommandLineRunner {
 
     private static final String SNIPPETS_YAML = "functions.yaml";
     private static final String ZIP_EXTENSION = ".zip";
 
     public static void main(String[] args) {
-            SpringApplication.run(PackageSnippet.class, args);
+            SpringApplication.run(PackageFunction.class, args);
         }
 
     @Override
@@ -98,7 +98,6 @@ public class PackageSnippet implements CommandLineRunner {
         boolean isError = false;
         Set<String> set = new HashSet<>();
         for (FunctionConfigListYaml.FunctionConfig snippet : snippetConfigList.getFunctions()) {
-//            FunctionConfigYaml function = FunctionCoreUtils.to(snTemp);
             final FunctionApiData.FunctionConfigStatus verify = FunctionCoreUtils.validate(snippet);
             if (!verify.isOk) {
                 System.out.println(verify.error);
