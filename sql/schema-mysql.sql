@@ -155,7 +155,7 @@ CREATE TABLE mh_experiment
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
     EXEC_CONTEXT_ID  NUMERIC(10, 0),
-    CODE            VARCHAR(50)   NOT NULL,
+    CODE            VARCHAR(255)   NOT NULL,
     PARAMS          MEDIUMTEXT not null
 );
 

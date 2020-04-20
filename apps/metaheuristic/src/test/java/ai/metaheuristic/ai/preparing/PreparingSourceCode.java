@@ -19,18 +19,18 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
+import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
@@ -38,9 +38,9 @@ import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtilsV1;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYamlV1;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
@@ -51,11 +51,12 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import static ai.metaheuristic.api.data.source_code.SourceCodeApiData.TaskProducingResultComplex;
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,7 +64,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 public abstract class PreparingSourceCode extends PreparingCore {
 
-    public static final String TEST_SOURCE_CODE_CODE = "test-sourceCode-code";
+    private static final String TEST_SOURCE_CODE_CODE = "test-sourceCode-code";
+
     @Autowired
     public CompanyTopLevelService companyTopLevelService;
 
