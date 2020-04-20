@@ -178,7 +178,7 @@ public class SourceCodeValidationService {
         else {
             // we don't need to know is this sourceCode for experiment or not. Just unregister this sourceCode because it's broken
             dispatcherParamsService.unregisterExperiment(sourceCode.uid);
-            final String es = "#177.260 Validation error: " + sourceCodeValidation.status.status;
+            final String es = "#177.260 Validation error: " + sourceCodeValidation.status.status+", sourceCode UID: " + sourceCode.uid;
             log.error(es);
             sourceCodeValidation.addErrorMessage(es);
             sourceCodeValidation.addErrorMessage(sourceCodeValidation.status.error);

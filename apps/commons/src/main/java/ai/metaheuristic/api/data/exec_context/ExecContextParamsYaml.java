@@ -134,15 +134,19 @@ public class ExecContextParamsYaml implements BaseParams {
     }
 
     public boolean clean;
-    public @NonNull final List<Process> processes = new ArrayList<>();
+    public String sourceCodeUid;
+    @NonNull
+    public final List<Process> processes = new ArrayList<>();
     @Nullable
     public VariableDeclaration variables;
 
-    // this is a graph for runtime phase
-    public @NonNull String graph = ConstsApi.EMPTY_GRAPH;
+    // this is a graph of processes for runtime phase
+    @NonNull
+    public String graph = ConstsApi.EMPTY_GRAPH;
 
     // this graph is for creating tasks dynamically
-    public @NonNull String processesGraph = ConstsApi.EMPTY_GRAPH;
+    @NonNull
+    public String processesGraph = ConstsApi.EMPTY_GRAPH;
 
     @JsonIgnore
     private HashMap<String, Process> processMap = null;

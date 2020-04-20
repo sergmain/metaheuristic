@@ -99,7 +99,6 @@ public class ExecContextRestController {
         DispatcherContext context = userContextService.getContext(authentication);
         ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorService.createExecContext(sourceCodeId, context);
 
-        //noinspection UnnecessaryLocalVariable
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(execContextResult.sourceCode, execContextResult.execContext);
         return result;
     }

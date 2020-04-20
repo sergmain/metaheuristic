@@ -17,16 +17,16 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import static ai.metaheuristic.api.data.source_code.SourceCodeApiData.*;
 
 /**
  * @author Serge
@@ -39,28 +39,25 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExecContextTopLevelService {
 
-    private final ExecContextRepository execContextRepository;
+    private final ExecContextCache execContextCache;
     private final ExecContextService execContextService;
-    private final SourceCodeCache sourceCodeCache;
 
-    public SourceCodeApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
+    public ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         return execContextService.getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
     }
 
-    public SourceCodeApiData.ExecContextResult getExecContextExtendedForDeletion(Long execContextId, DispatcherContext context) {
-        SourceCodeApiData.ExecContextResult result = execContextService.getExecContextExtended(execContextId);
-
-        // don't show actual graph for this execContext
-        ExecContextParamsYaml wpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(result.execContext.getParams());
-        wpy.graph = null;
-        result.execContext.setParams( ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
-
+    public ExecContextForDeletion getExecContextExtendedForDeletion(Long execContextId, DispatcherContext context) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext == null) {
+            return new ExecContextForDeletion("#778.020 execContext wasn't found, execContextId: " + execContextId);
+        }
+        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
+        ExecContextForDeletion result = new ExecContextForDeletion(execContext.sourceCodeId, execContext.id, ecpy.sourceCodeUid, EnumsApi.ExecContextState.from(execContext.state));
         return result;
     }
 
-    public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
-        //noinspection UnnecessaryLocalVariable
-        SourceCodeApiData.ExecContextResult result = execContextService.getExecContextExtended(execContextId);
+    public ExecContextResult getExecContextExtended(Long execContextId) {
+        ExecContextResult result = execContextService.getExecContextExtended(execContextId);
         return result;
     }
 

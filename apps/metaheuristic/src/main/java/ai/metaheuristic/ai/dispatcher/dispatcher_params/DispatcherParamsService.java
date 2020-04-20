@@ -28,12 +28,12 @@ import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -92,7 +92,7 @@ public class DispatcherParamsService {
         return null;
     }
 
-    public void registerExperiment(String uid) {
+    private void registerExperiment(String uid) {
         updateParams((dpy) -> {
             if (dpy.experiments.contains(uid)) {
                 return;
@@ -102,12 +102,10 @@ public class DispatcherParamsService {
     }
 
     public void unregisterExperiment(String uid) {
-        updateParams((dpy) -> {
-            dpy.experiments.remove(uid);
-        });
+        updateParams((dpy) -> dpy.experiments.remove(uid));
     }
 
-    public void registerBatch(String uid) {
+    private void registerBatch(String uid) {
         updateParams((dpy) -> {
             if (dpy.batches.contains(uid)) {
                 return;
@@ -117,9 +115,7 @@ public class DispatcherParamsService {
     }
 
     public void unregisterBatch(String uid) {
-        updateParams((dpy) -> {
-            dpy.batches.remove(uid);
-        });
+        updateParams((dpy) -> dpy.batches.remove(uid));
     }
 
     private void updateParams(Consumer<DispatcherParamsYaml> consumer) {
@@ -132,28 +128,56 @@ public class DispatcherParamsService {
         }
     }
 
+    public List<String> getExperiments() {
+        find();
+        return Objects.requireNonNull(dispatcherParamsYaml).experiments;
+    }
+
+    public List<String> getBatches() {
+        find();
+        return Objects.requireNonNull(dispatcherParamsYaml).experiments;
+    }
+
     @Nullable
     private Dispatcher dispatcherCacheValue = null;
 
-    public Dispatcher save(Dispatcher dispatcher) {
+    @Nullable
+    private DispatcherParamsYaml dispatcherParamsYaml = null;
+
+    private void save(Dispatcher dispatcher) {
         if (!Consts.DISPATCHERS_CACHE.equals(dispatcher.code)) {
             throw new IllegalStateException("(!Consts.DISPATCHERS_CACHE.equals(dispatcher.code))");
         }
         if (S.b(dispatcher.params)) {
             throw new IllegalStateException("(S.b(dispatcher.params))");
         }
-        dispatcherCacheValue = dispatcherParamsRepository.save(dispatcher);
-        return dispatcherCacheValue;
+        if (dispatcherCacheValue!=null && dispatcher.params.equals(dispatcherCacheValue.params)) {
+            log.info("Dispatcher params is the same. Won't be saved  to db");
+            return;
+        }
+        try {
+            dispatcherCacheValue = dispatcherParamsRepository.save(dispatcher);
+            dispatcherParamsYaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherCacheValue.params);
+        } catch (Throwable th) {
+            log.error("Error while saving DispatcherParams", th);
+            dispatcherCacheValue = null;
+            dispatcherParamsYaml = null;
+        }
     }
 
-    public Dispatcher find() {
+    private Dispatcher find() {
         if (dispatcherCacheValue==null) {
             dispatcherCacheValue = dispatcherParamsRepository.findByCode(Consts.DISPATCHERS_CACHE);
             if (dispatcherCacheValue==null) {
+
                 Dispatcher entity = new Dispatcher();
                 entity.code = Consts.DISPATCHERS_CACHE;
-                entity.params = DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(new DispatcherParamsYaml());
+                dispatcherParamsYaml = new DispatcherParamsYaml();
+                entity.params = DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(dispatcherParamsYaml);
                 dispatcherCacheValue = dispatcherParamsRepository.save(entity);
+            }
+            else {
+                dispatcherParamsYaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherCacheValue.params);
             }
         }
         return dispatcherCacheValue;

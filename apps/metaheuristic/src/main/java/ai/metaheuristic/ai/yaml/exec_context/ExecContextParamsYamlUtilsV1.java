@@ -53,6 +53,7 @@ public class ExecContextParamsYamlUtilsV1
         // right now we don't need to convert Graph because it has only one version of structure
         // so just copying of graph field is Ok
         t.clean = v1.clean;
+        t.sourceCodeUid = v1.sourceCodeUid;
         t.graph = v1.graph;
         t.processesGraph = v1.processesGraph;
         v1.processes.stream().map(ExecContextParamsYamlUtilsV1::toProcess).collect(Collectors.toCollection(()->t.processes));

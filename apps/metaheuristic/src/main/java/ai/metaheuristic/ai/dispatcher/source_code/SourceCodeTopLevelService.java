@@ -333,7 +333,7 @@ public class SourceCodeTopLevelService {
         if (status != null) {
             return status;
         }
-        status = execContextService.execContextTargetState(execContextId, execState);
+        status = execContextService.execContextTargetState(execContextId, execState, context.getCompanyId());
         return status;
     }
 

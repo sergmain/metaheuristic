@@ -16,8 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +36,6 @@ public class ExecContextFSM {
 
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
-    private final SourceCodeCache sourceCodeCache;
 
     public void toState(Long execContextId, EnumsApi.ExecContextState state) {
         execContextSyncService.getWithSyncNullable(execContextId, execContext -> {
@@ -62,21 +59,15 @@ public class ExecContextFSM {
     }
 
     public void toStarted(ExecContext execContext) {
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
-        if (sourceCode == null) {
-            toError(execContext.getId());
-        }
-        else {
-            toStarted(execContext.getId());
-        }
+        toStarted(execContext.getId());
+    }
+
+    private void toStarted(Long execContextId) {
+        toState(execContextId, EnumsApi.ExecContextState.STARTED);
     }
 
     public void toStopped(Long execContextId) {
         toState(execContextId, EnumsApi.ExecContextState.STOPPED);
-    }
-
-    public void toStarted(Long execContextId) {
-        toState(execContextId, EnumsApi.ExecContextState.STARTED);
     }
 
     public void toProduced(Long execContextId) {

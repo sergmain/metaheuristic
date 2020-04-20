@@ -129,6 +129,7 @@ public class ExecContextCreatorService {
         }
 
         // TODO 2020-02-24 add this line
+        //  2020-04-19 why?
         // changeValidStatus(producingResult.execContext.getId(), true);
 
         //noinspection UnnecessaryLocalVariable
@@ -144,10 +145,11 @@ public class ExecContextCreatorService {
         ec.setCreatedOn(System.currentTimeMillis());
         ec.setState(EnumsApi.ExecContextState.NONE.code);
         ec.setCompletedOn(null);
-        ec.updateParams(to(sourceCodeGraph));
+        ExecContextParamsYaml expy = to(sourceCodeGraph);
+        expy.sourceCodeUid = sourceCode.uid;
+        ec.updateParams(expy);
         ec.setValid(true);
 
-        //noinspection UnnecessaryLocalVariable
         ExecContextImpl execContext = execContextCache.save(ec);
         return execContext;
     }

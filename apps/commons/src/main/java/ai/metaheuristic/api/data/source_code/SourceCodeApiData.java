@@ -134,6 +134,30 @@ public class SourceCodeApiData {
         }
     }
 
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class ExecContextForDeletion extends BaseDataClass {
+        public Long sourceCodeId;
+        public Long execContextId;
+        public String sourceCodeUid;
+        public String execState;
+
+        public ExecContextForDeletion(List<String> errorMessages) {
+            this.errorMessages = errorMessages;
+        }
+        public ExecContextForDeletion(String errorMessage) {
+            this.addErrorMessage(errorMessage);
+        }
+
+        public ExecContextForDeletion(Long sourceCodeId, Long execContextId, String sourceCodeUid, String execState) {
+            this.sourceCodeId = sourceCodeId;
+            this.execContextId = execContextId;
+            this.sourceCodeUid = sourceCodeUid;
+            this.execState = execState;
+        }
+    }
+
 
     @Data
     @NoArgsConstructor

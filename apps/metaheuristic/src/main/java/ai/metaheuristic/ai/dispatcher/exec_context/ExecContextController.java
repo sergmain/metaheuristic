@@ -107,7 +107,7 @@ public class ExecContextController {
     public String execContextDelete(Model model, @PathVariable Long sourceCodeId, @PathVariable Long execContextId,
                                  final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeApiData.ExecContextResult result = execContextTopLevelService.getExecContextExtendedForDeletion(execContextId, context);
+        SourceCodeApiData.ExecContextForDeletion result = execContextTopLevelService.getExecContextExtendedForDeletion(execContextId, context);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;

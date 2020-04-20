@@ -253,7 +253,6 @@ public class BatchTopLevelService {
             //noinspection unused
             int i=0;
 
-            //noinspection UnnecessaryLocalVariable
             BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, creationResult.execContext.getId());
             return uploadingStatus;
         }

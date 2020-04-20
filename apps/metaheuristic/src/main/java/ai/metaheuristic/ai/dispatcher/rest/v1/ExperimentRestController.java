@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
@@ -28,6 +29,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -154,13 +156,15 @@ public class ExperimentRestController {
     }
 
     @PostMapping("/produce-tasks")
-    public OperationStatusRest produceTasks(String experimentCode) {
-        return experimentTopLevelService.produceTasks(experimentCode);
+    public OperationStatusRest produceTasks(String experimentCode, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return experimentTopLevelService.produceTasks(experimentCode, context.getCompanyId());
     }
 
     @PostMapping("/start-processing-of-tasks")
-    public OperationStatusRest startProcessingOfTasks(String experimentCode) {
-        return experimentTopLevelService.startProcessingOfTasks(experimentCode);
+    public OperationStatusRest startProcessingOfTasks(String experimentCode, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return experimentTopLevelService.startProcessingOfTasks(experimentCode, context.getCompanyId());
     }
 
     @GetMapping("/processing-status/{experimentCode}")

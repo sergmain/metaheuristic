@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -61,10 +62,16 @@ public class SourceCodeStateService {
 
     private final static Object syncObj = new Object();
 
-    private void setLockedTo(Long sourceCodeId, Long companyUniqueId, boolean locked) {
+    private void setLockedTo(Long sourceCodeId, @Nullable Long companyUniqueId, boolean locked) {
         synchronized (syncObj) {
-            SourceCodeImpl p = sourceCodeRepository.findByIdForUpdate(sourceCodeId, companyUniqueId);
-            if (p!=null && p.isLocked()!=locked) {
+            SourceCodeImpl p;
+            if (companyUniqueId==null) {
+                p = sourceCodeRepository.findById(sourceCodeId).orElse(null);
+            }
+            else {
+                p = sourceCodeRepository.findByIdForUpdate(sourceCodeId, companyUniqueId);
+            }
+            if (p != null && p.isLocked() != locked) {
                 p.setLocked(locked);
                 saveInternal(p);
             }

@@ -111,21 +111,15 @@ public class ExecContextService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState) {
-        SourceCodeApiData.ExecContextResult result = getExecContextExtended(execContextId);
-        if (result.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList());
-        }
-
-        final ExecContextImpl execContext = (ExecContextImpl) result.execContext;
-        final SourceCode sourceCode = result.sourceCode;
-        if (sourceCode ==null || execContext ==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.060 Error: (result.sourceCode==null || result.execContext==null)");
+    public OperationStatusRest execContextTargetState(Long execContextId, EnumsApi.ExecContextState execState, Long companyUniqueId) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.180 execContext wasn't found, execContextId: " + execContextId);
         }
 
         if (execContext.state !=execState.code) {
             execContextFSM.toState(execContext.id, execState);
-            applicationEventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(sourceCode.getId(), sourceCode.getCompanyId(), true));
+            applicationEventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, true));
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

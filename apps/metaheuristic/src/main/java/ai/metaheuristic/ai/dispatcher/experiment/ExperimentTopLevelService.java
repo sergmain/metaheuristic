@@ -721,8 +721,8 @@ public class ExperimentTopLevelService {
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK, "Exporting of experiment was successfully started", "");
     }
 
-    public OperationStatusRest produceTasks(String experimentCode) {
-        return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.PRODUCING);
+    public OperationStatusRest produceTasks(String experimentCode, Long companyUniqueId) {
+        return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.PRODUCING, companyUniqueId);
     }
 
     public EnumsApi.ExecContextState getExperimentProcessingStatus(String experimentCode) {
@@ -740,11 +740,11 @@ public class ExperimentTopLevelService {
         return EnumsApi.ExecContextState.toState(ec.getState());
     }
 
-    public OperationStatusRest startProcessingOfTasks(String experimentCode) {
-        return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.STARTED);
+    public OperationStatusRest startProcessingOfTasks(String experimentCode, Long companyUniqueId) {
+        return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.STARTED, companyUniqueId);
     }
 
-    private OperationStatusRest changeExecStateTo(String experimentCode, EnumsApi.ExecContextState execState) {
+    private OperationStatusRest changeExecStateTo(String experimentCode, EnumsApi.ExecContextState execState, Long companyUniqueId) {
         if (experimentCode==null || experimentCode.isBlank()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.550 experiment code is blank");
         }
@@ -752,7 +752,7 @@ public class ExperimentTopLevelService {
         if (experiment==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.560 can't find an experiment for code: " + experimentCode);
         }
-        OperationStatusRest status = execContextService.execContextTargetState(experiment.execContextId, execState);
+        OperationStatusRest status = execContextService.execContextTargetState(experiment.execContextId, execState, companyUniqueId);
         if (status.isErrorMessages()) {
             return status;
         }
