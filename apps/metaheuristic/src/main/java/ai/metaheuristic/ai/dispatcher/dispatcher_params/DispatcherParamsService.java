@@ -19,12 +19,17 @@ package ai.metaheuristic.ai.dispatcher.dispatcher_params;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Dispatcher;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.repositories.DispatcherParamsRepository;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
+import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -42,7 +47,7 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class DispatcherParamsService {
 
-    public final DispatcherParamsCache dispatcherParamsCache;
+    private final DispatcherParamsRepository dispatcherParamsRepository;
 
     public void registerSourceCode(SourceCodeImpl sourceCode) {
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
@@ -67,7 +72,6 @@ public class DispatcherParamsService {
             if (result!=null) {
                 return result;
             }
-
         }
         return null;
     }
@@ -120,11 +124,39 @@ public class DispatcherParamsService {
 
     private void updateParams(Consumer<DispatcherParamsYaml> consumer) {
         synchronized(this) {
-            Dispatcher d = dispatcherParamsCache.find();
+            Dispatcher d = find();
             DispatcherParamsYaml dpy = d.getDispatcherParamsYaml();
             consumer.accept(dpy);
             d.updateParams(dpy);
-            dispatcherParamsCache.save(d);
+            save(d);
         }
     }
+
+    @Nullable
+    private Dispatcher dispatcherCacheValue = null;
+
+    public Dispatcher save(Dispatcher dispatcher) {
+        if (!Consts.DISPATCHERS_CACHE.equals(dispatcher.code)) {
+            throw new IllegalStateException("(!Consts.DISPATCHERS_CACHE.equals(dispatcher.code))");
+        }
+        if (S.b(dispatcher.params)) {
+            throw new IllegalStateException("(S.b(dispatcher.params))");
+        }
+        dispatcherCacheValue = dispatcherParamsRepository.save(dispatcher);
+        return dispatcherCacheValue;
+    }
+
+    public Dispatcher find() {
+        if (dispatcherCacheValue==null) {
+            dispatcherCacheValue = dispatcherParamsRepository.findByCode(Consts.DISPATCHERS_CACHE);
+            if (dispatcherCacheValue==null) {
+                Dispatcher entity = new Dispatcher();
+                entity.code = Consts.DISPATCHERS_CACHE;
+                entity.params = DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(new DispatcherParamsYaml());
+                dispatcherCacheValue = dispatcherParamsRepository.save(entity);
+            }
+        }
+        return dispatcherCacheValue;
+    }
+
 }
