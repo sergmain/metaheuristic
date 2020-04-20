@@ -192,7 +192,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
         testGlobalVariable = globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-01.txt");
 
         execContextYaml = new ExecContextParamsYaml();
-        execContextYaml.variables = new ExecContextParamsYaml.VariableDeclaration();
         execContextYaml.variables.globals = new ArrayList<>();
         execContextYaml.variables.globals.add(TEST_GLOBAL_VARIABLE);
     }

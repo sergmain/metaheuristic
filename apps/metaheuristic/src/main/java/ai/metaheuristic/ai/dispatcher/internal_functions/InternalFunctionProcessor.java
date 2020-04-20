@@ -17,10 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +43,6 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @RequiredArgsConstructor
 public class InternalFunctionProcessor {
 
-    public final SourceCodeCache sourceCodeCache;
     public final List<InternalFunction> internalFunctions;
 
     private final Map<String, InternalFunction> internalFunctionMap = new HashMap<>();
@@ -59,19 +56,14 @@ public class InternalFunctionProcessor {
         return internalFunctionMap.containsKey(functionCode);
     }
 
-    public InternalFunctionProcessingResult process(Long sourceCodeId, Long execContextId, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
+    public InternalFunctionProcessingResult process(ExecContextImpl execContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
 
         InternalFunction internalFunction = internalFunctionMap.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found);
         }
 
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        if (sourceCode==null) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_not_found);
-        }
-
-        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode.getSourceCodeStoredParamsYaml().source);
-        return internalFunction.process(sourceCodeId, execContextId, taskId, internalContextId, scpy.source.variables, taskParamsYaml);
+        ExecContextParamsYaml expy = execContext.getExecContextParamsYaml();
+        return internalFunction.process(execContext.sourceCodeId, execContext.id, taskId, internalContextId, expy.variables, taskParamsYaml);
     }
 }

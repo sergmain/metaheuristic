@@ -158,10 +158,17 @@ public class ExecContextCreatorService {
         ExecContextParamsYaml params = new ExecContextParamsYaml();
         params.clean = sourceCodeGraph.clean;
         params.processes.addAll(sourceCodeGraph.processes);
-        params.variables = sourceCodeGraph.variables;
         params.graph = ConstsApi.EMPTY_GRAPH;
         params.processesGraph = ExecContextProcessGraphService.asString(sourceCodeGraph.processGraph);
+        initVariables(sourceCodeGraph.variables, params.variables);
 
         return params;
     }
+
+    private void initVariables(ExecContextParamsYaml.VariableDeclaration v1, ExecContextParamsYaml.VariableDeclaration v) {
+        v.inline.putAll(v1.inline);
+        v.globals = v1.globals;
+        v.startInputAs = v1.startInputAs;
+    }
+
 }

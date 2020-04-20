@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.api.data.exec_context.ExecContextsListItem;
 import lombok.NonNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -63,7 +63,12 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     List<Long> findIdsBySourceCodeId(Long sourceCodeId);
 
     @Transactional(readOnly = true)
-    Slice<ExecContext> findBySourceCodeIdOrderByCreatedOnDesc(Pageable pageable, Long sourceCodeId);
+    @Query(value="select new ai.metaheuristic.api.data.exec_context.ExecContextsListItem(" +
+            "b.id, b.createdOn, b.valid, b.completedOn, b.state ) " +
+            "from ExecContextImpl b " +
+            "where b.sourceCodeId=:sourceCodeId " +
+            "order by b.createdOn desc ")
+    Slice<ExecContextsListItem> findBySourceCodeIdOrderByCreatedOnDesc(Pageable pageable, Long sourceCodeId);
 
 }
 

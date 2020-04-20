@@ -40,7 +40,6 @@ import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
@@ -112,8 +111,10 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         return Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION;
     }
 
+    @Override
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
+            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
 
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
@@ -159,10 +160,10 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
                         "Meta 'inline-key' wasn't found or empty.");
             }
-            inlines = variableDefinition.inline.get(inlineKey);
+            inlines = variableDeclaration.inline.get(inlineKey);
             if (inlines==null || inlines.isEmpty()) {
                 return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.inline_not_found,
-                        "Inline variable '"+inlineKey+"' wasn't found or empty. List of keys in inlines: " + variableDefinition.inline.keySet());
+                        "Inline variable '"+inlineKey+"' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
             }
         }
         else  {
@@ -207,7 +208,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                             if (permuteInlines) {
                                 for (InlineVariable inlineVariable : inlineVariables) {
                                     permutationNumber.incrementAndGet();
-                                    Map<String, Map<String, String>> map = new HashMap<>(variableDefinition.inline);
+                                    Map<String, Map<String, String>> map = new HashMap<>(variableDeclaration.inline);
                                     map.remove(inlineKey);
                                     map.put(inlineKey, inlineVariable.params);
 

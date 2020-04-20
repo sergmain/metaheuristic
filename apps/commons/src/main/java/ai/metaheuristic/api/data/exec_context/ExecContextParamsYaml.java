@@ -20,7 +20,6 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
@@ -54,8 +53,7 @@ public class ExecContextParamsYaml implements BaseParams {
     public static class VariableDeclaration {
         public List<String> globals;
         public String startInputAs;
-        @Nullable
-        public Map<String, Map<String, String>> inline = new HashMap<>();
+        public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
     @Data
@@ -135,10 +133,8 @@ public class ExecContextParamsYaml implements BaseParams {
 
     public boolean clean;
     public String sourceCodeUid;
-    @NonNull
     public final List<Process> processes = new ArrayList<>();
-    @Nullable
-    public VariableDeclaration variables;
+    public final VariableDeclaration variables = new VariableDeclaration();
 
     // this is a graph of processes for runtime phase
     @NonNull

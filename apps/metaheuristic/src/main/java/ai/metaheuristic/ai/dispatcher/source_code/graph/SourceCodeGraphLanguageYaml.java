@@ -52,7 +52,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         scg.clean = sourceCodeParams.source.clean;
         scg.variables.globals = sourceCodeParams.source.variables.globals;
         scg.variables.startInputAs = sourceCodeParams.source.variables.startInputAs;
-        scg.variables.inline = sourceCodeParams.source.variables.inline;
+        scg.variables.inline.putAll(sourceCodeParams.source.variables.inline);
 
         List<ExecContextData.ProcessVertex> parentProcesses =  new ArrayList<>();
 

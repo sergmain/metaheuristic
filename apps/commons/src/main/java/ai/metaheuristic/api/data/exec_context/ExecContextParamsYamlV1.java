@@ -25,7 +25,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -121,9 +120,8 @@ public class ExecContextParamsYamlV1 implements BaseParams {
 
     public boolean clean;
     public String sourceCodeUid;
-    public List<ProcessV1> processes = new ArrayList<>();
-    @Nullable
-    public VariableDeclarationV1 variables;
+    public final List<ProcessV1> processes = new ArrayList<>();
+    public final VariableDeclarationV1 variables = new VariableDeclarationV1();
 
     // this is a graph for runtime phase
     public String graph;

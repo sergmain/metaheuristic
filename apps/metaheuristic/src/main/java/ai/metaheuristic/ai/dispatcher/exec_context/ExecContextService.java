@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
@@ -32,24 +31,22 @@ import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
-import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
@@ -81,7 +78,6 @@ public class ExecContextService {
 
     private final Globals globals;
     private final ExecContextRepository execContextRepository;
-    private final SourceCodeCache sourceCodeCache;
 
     private final VariableService variableService;
     private final TaskRepository taskRepository;
@@ -178,7 +174,7 @@ public class ExecContextService {
         return execContextSyncService.getWithSync(execContextId, execContextGraphService::findAll);
     }
 
-    private void changeValidStatus(Long execContextId, boolean status) {
+    public void changeValidStatus(Long execContextId, boolean status) {
         execContextSyncService.getWithSyncNullable(execContextId, execContext -> {
             execContext.setValid(status);
             execContextCache.save(execContext);
@@ -197,45 +193,10 @@ public class ExecContextService {
         });
     }
 
-    public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
-        if (execContextId==null) {
-            return new SourceCodeApiData.ExecContextResult("#705.160 execContextId is null");
-        }
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext == null) {
-            return new SourceCodeApiData.ExecContextResult("#705.180 execContext wasn't found, execContextId: " + execContextId);
-        }
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
-        if (sourceCode == null) {
-            return new SourceCodeApiData.ExecContextResult("#705.200 sourceCode wasn't found, sourceCodeId: " + execContext.getSourceCodeId());
-        }
-
-        if (!sourceCode.getId().equals(execContext.getSourceCodeId())) {
-            changeValidStatus(execContextId, false);
-            return new SourceCodeApiData.ExecContextResult("#705.220 sourceCodeId doesn't match to execContext.sourceCodeId, sourceCodeId: " + execContext.getSourceCodeId()+", execContext.sourceCodeId: " + execContext.getSourceCodeId());
-        }
-
-        SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(sourceCode, execContext);
-        return result;
-    }
-
-    public SourceCodeApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
+    public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         pageable = ControllerUtils.fixPageSize(globals.execContextRowsLimit, pageable);
-        SourceCodeApiData.ExecContextsResult result = new SourceCodeApiData.ExecContextsResult();
+        ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult();
         result.instances = execContextRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
-        result.currentSourceCodeId = sourceCodeId;
-
-        for (ExecContext execContext : result.instances) {
-            ExecContextParamsYaml wpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(execContext.getParams());
-            wpy.graph = ConstsApi.EMPTY_GRAPH;
-            execContext.setParams( ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
-            SourceCode sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
-            if (sourceCode ==null) {
-                log.warn("#705.240 Found execContext with wrong sourceCodeId. sourceCodeId: {}", execContext.getSourceCodeId());
-                continue;
-            }
-            result.sourceCodes.put(execContext.getId(), sourceCode);
-        }
         return result;
     }
 

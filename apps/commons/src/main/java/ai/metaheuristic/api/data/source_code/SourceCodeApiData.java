@@ -103,15 +103,6 @@ public class SourceCodeApiData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class ExecContextsResult extends BaseDataClass {
-        public Slice<ExecContext> instances;
-        public long currentSourceCodeId;
-        public Map<Long, SourceCode> sourceCodes = new HashMap<>();
-
-    }
-
-    @Data
-    @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ExecContextResult extends BaseDataClass {
         public ExecContext execContext;

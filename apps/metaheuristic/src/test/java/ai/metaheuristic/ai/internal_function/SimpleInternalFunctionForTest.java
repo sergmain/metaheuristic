@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +46,7 @@ public class SimpleInternalFunctionForTest implements InternalFunction {
     private final VariableRepository variableRepository;
     private final GlobalVariableRepository globalVariableRepository;
 
-    public static final String MH_TEST_SIMPLE_INTERNAL_FUNCTION = "mh.test.simple-internal-function";
+    private static final String MH_TEST_SIMPLE_INTERNAL_FUNCTION = "mh.test.simple-internal-function";
 
     @Override
     public String getCode() {
@@ -60,18 +60,18 @@ public class SimpleInternalFunctionForTest implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, SourceCodeParamsYaml.VariableDefinition variableDefinition,
+            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
 
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
         if (inputVariable.context== EnumsApi.VariableContext.local) {
-            Variable bd = variableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            Variable bd = variableRepository.findById(inputVariable.id).orElse(null);
             if (bd == null) {
                 throw new IllegalStateException("Variable not found for code " + inputVariable);
             }
         }
         else {
-            GlobalVariable gv = globalVariableRepository.findById(Long.valueOf(inputVariable.id)).orElse(null);
+            GlobalVariable gv = globalVariableRepository.findById(inputVariable.id).orElse(null);
             if (gv == null) {
                 throw new IllegalStateException("GlobalVariable not found for code " + inputVariable);
             }

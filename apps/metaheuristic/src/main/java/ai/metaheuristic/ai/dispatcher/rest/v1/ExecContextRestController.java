@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -65,8 +66,8 @@ public class ExecContextRestController {
 
     @GetMapping("/exec-contexts/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
-    public SourceCodeApiData.ExecContextsResult execContexts(@PathVariable Long sourceCodeId,
-                                                          @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
+    public ExecContextApiData.ExecContextsResult execContexts(@PathVariable Long sourceCodeId,
+                                                              @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         return execContextTopLevelService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context);
     }

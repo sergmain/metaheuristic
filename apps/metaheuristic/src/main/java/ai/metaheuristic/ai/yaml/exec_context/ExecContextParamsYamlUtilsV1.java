@@ -57,9 +57,15 @@ public class ExecContextParamsYamlUtilsV1
         t.graph = v1.graph;
         t.processesGraph = v1.processesGraph;
         v1.processes.stream().map(ExecContextParamsYamlUtilsV1::toProcess).collect(Collectors.toCollection(()->t.processes));
-        t.variables = v1.variables!=null ? new ExecContextParamsYaml.VariableDeclaration(v1.variables.globals, v1.variables.startInputAs, v1.variables.inline) : null;
+        initVariables(v1.variables, t.variables);
 
         return t;
+    }
+
+    private void initVariables(ExecContextParamsYamlV1.VariableDeclarationV1 v1, ExecContextParamsYaml.VariableDeclaration v) {
+        v.inline.putAll(v1.inline);
+        v.globals = v1.globals;
+        v.startInputAs = v1.startInputAs;
     }
 
     private static ExecContextParamsYaml.Process toProcess(ExecContextParamsYamlV1.ProcessV1 p1) {
