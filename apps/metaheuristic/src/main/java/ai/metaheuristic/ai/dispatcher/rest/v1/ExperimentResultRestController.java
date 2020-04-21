@@ -41,28 +41,28 @@ public class ExperimentResultRestController {
     private final ExperimentResultService experimentResultService;
     private final ExperimentResultTopLevelService experimentResultTopLevelService;
 
-    @GetMapping("/experiment-result-experiments")
-    public ExperimentResultData.ExperimentResultSimpleExperiments init(@PageableDefault(size = 5) Pageable pageable) {
+    @GetMapping("/experiment-results")
+    public ExperimentResultData.ExperimentResultSimpleList init(@PageableDefault(size = 5) Pageable pageable) {
         return experimentResultService.getExperimentResultExperiments(pageable);
     }
 
-    @GetMapping(value = "/experiment-result-experiment-info/{id}")
+    @GetMapping(value = "/experiment-result-info/{id}")
     public ExperimentResultData.ExperimentInfoExtended info(@PathVariable Long id) {
         return experimentResultTopLevelService.getExperimentInfoExtended(id);
     }
 
-    @PostMapping("/experiment-result-experiment-delete-commit")
+    @PostMapping("/experiment-result-delete-commit")
     public OperationStatusRest deleteCommit(Long id) {
         return experimentResultTopLevelService.experimentResultDeleteCommit(id);
     }
 
-    @GetMapping(value = "/experiment-result-experiment-feature-progress/{experimentResultId}/{experimentId}/{featureId}")
+    @GetMapping(value = "/experiment-result-feature-progress/{experimentResultId}/{experimentId}/{featureId}")
     public ExperimentResultData.ExperimentFeatureExtendedResult getFeatures(
             @PathVariable Long experimentResultId,@PathVariable Long experimentId, @PathVariable Long featureId) {
         return experimentResultTopLevelService.getExperimentFeatureExtended(experimentResultId, experimentId, featureId);
     }
 
-    @PostMapping("/experiment-result-experiment-feature-plot-data-part/{experimentResultId}/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
+    @PostMapping("/experiment-result-feature-plot-data-part/{experimentResultId}/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
     @ResponseBody
     public ExperimentResultData.PlotData getPlotData(
             @PathVariable Long experimentResultId,
@@ -71,17 +71,17 @@ public class ExperimentResultRestController {
         return experimentResultTopLevelService.getPlotData(experimentResultId, experimentId, featureId, params, paramsAxis);
     }
 
-    @PostMapping("/experiment-result-experiment-feature-progress-console-part/{experimentResultId}/{taskId}")
-    public ExperimentResultData.ConsoleResult getTasksConsolePart(@PathVariable(name = "experimentResultId") Long atlasId, @PathVariable(name = "taskId") Long taskId ) {
-        return experimentResultTopLevelService.getTasksConsolePart(atlasId, taskId);
+    @PostMapping("/experiment-result-feature-progress-console-part/{experimentResultId}/{taskId}")
+    public ExperimentResultData.ConsoleResult getTasksConsolePart(@PathVariable(name = "experimentResultId") Long experimentResultId, @PathVariable(name = "taskId") Long taskId ) {
+        return experimentResultTopLevelService.getTasksConsolePart(experimentResultId, taskId);
     }
 
-    @PostMapping("/experiment-result-experiment-feature-progress-part/{experimentResultId}/{experimentId}/{featureId}/{params}/part")
+    @PostMapping("/experiment-result-feature-progress-part/{experimentResultId}/{experimentId}/{featureId}/{params}/part")
     public ExperimentResultData.ExperimentFeatureExtendedResult getFeatureProgressPart(@PathVariable Long experimentResultId, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
         return experimentResultTopLevelService.getFeatureProgressPart(experimentResultId, featureId, params, pageable);
     }
 
-    @PostMapping(value = "/experiment-result-experiment-upload-from-file")
+    @PostMapping(value = "/experiment-result-upload-from-file")
     public OperationStatusRest uploadExperimentResult(final MultipartFile file) {
         return experimentResultTopLevelService.uploadExperiment(file);
     }

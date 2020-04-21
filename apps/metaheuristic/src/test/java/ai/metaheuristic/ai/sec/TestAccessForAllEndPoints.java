@@ -90,29 +90,29 @@ public class TestAccessForAllEndPoints {
             new AccessUrl("/rest/v1/dispatcher/account/account-account-role-commit", AccessMethod.POST)
     };
 
-    private static final AccessUrl[] ATLAS_URLS = new AccessUrl[]{
-            new AccessUrl("/dispatcher/atlas/atlas-experiments", AccessMethod.GET),
-            new AccessUrl("/dispatcher/atlas/atlas-experiments-part", AccessMethod.POST),
-            new AccessUrl("/dispatcher/atlas/atlas-experiment-info/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/atlas/atlas-experiment-delete/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/atlas/atlas-experiment-delete-commit", AccessMethod.POST),
-            new AccessUrl("/dispatcher/atlas/atlas-experiment-upload-from-file", AccessMethod.POST),
-            new AccessUrl("/dispatcher/atlas/atlas-experiment-export/atlas-1.yaml", AccessMethod.GET),
-            new AccessUrl("/dispatcher/atlas/atlas-experiment-export-import/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/atlas/atlas-experiment-feature-progress/1/1/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/atlas/atlas-experiment-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
-            new AccessUrl("/dispatcher/atlas/atlas-experiment-feature-progress-console-part/1/1", AccessMethod.POST),
-            new AccessUrl("/dispatcher/atlas/atlas-experiment-feature-progress-part/1/1/1/1/part", AccessMethod.POST),
+    private static final AccessUrl[] EXPERIMENT_RESULT_URLS = new AccessUrl[]{
+            new AccessUrl("/dispatcher/experiment-result/experiment-results", AccessMethod.GET),
+            new AccessUrl("/dispatcher/experiment-result/experiment-results-part", AccessMethod.POST),
+            new AccessUrl("/dispatcher/experiment-result/experiment-result-info/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/experiment-result/experiment-result-delete/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/experiment-result/experiment-result-delete-commit", AccessMethod.POST),
+            new AccessUrl("/dispatcher/experiment-result/experiment-result-upload-from-file", AccessMethod.POST),
+            new AccessUrl("/dispatcher/experiment-result/experiment-result-export/experiment-result-1.yaml", AccessMethod.GET),
+            new AccessUrl("/dispatcher/experiment-result/experiment-result-export-import/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/experiment-result/experiment-result-feature-progress/1/1/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/experiment-result/experiment-result-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
+            new AccessUrl("/dispatcher/experiment-result/experiment-result-feature-progress-console-part/1/1", AccessMethod.POST),
+            new AccessUrl("/dispatcher/experiment-result/experiment-result-feature-progress-part/1/1/1/1/part", AccessMethod.POST),
     };
 
-    private static final AccessUrl[] ATLAS_REST_URLS = new AccessUrl[]{
-            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiments", AccessMethod.GET),
-            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-info/1", AccessMethod.GET),
-            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-delete-commit", AccessMethod.POST),
-            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-feature-progress/1/1/1", AccessMethod.POST),
-            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
-            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-feature-progress-console-part/1/1", AccessMethod.POST),
-            new AccessUrl("/rest/v1/dispatcher/atlas/atlas-experiment-feature-progress-part/1/1/1/1/part", AccessMethod.POST)
+    private static final AccessUrl[] EXPERIMENT_RESULT_REST_URLS = new AccessUrl[]{
+            new AccessUrl("/rest/v1/dispatcher/experiment-result/experiment-results", AccessMethod.GET),
+            new AccessUrl("/rest/v1/dispatcher/experiment-result/experiment-result-info/1", AccessMethod.GET),
+            new AccessUrl("/rest/v1/dispatcher/experiment-result/experiment-result-delete-commit", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/experiment-result/experiment-result-feature-progress/1/1/1", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/experiment-result/experiment-result-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/experiment-result/experiment-result-feature-progress-console-part/1/1", AccessMethod.POST),
+            new AccessUrl("/rest/v1/dispatcher/experiment-result/experiment-result-feature-progress-part/1/1/1/1/part", AccessMethod.POST)
     };
 
     private static final AccessUrl[] SERVER_REST_URLS = new AccessUrl[]{
@@ -130,8 +130,8 @@ public class TestAccessForAllEndPoints {
     @Test
     public void testAnonymousAccessRestriction() throws Exception {
         checkRestAccessRestriction(SERVER_REST_URLS);
-        checkAccessRestriction(ATLAS_URLS);
-        checkRestAccessRestriction(ATLAS_REST_URLS);
+        checkAccessRestriction(EXPERIMENT_RESULT_URLS);
+        checkRestAccessRestriction(EXPERIMENT_RESULT_REST_URLS);
         checkAccessRestriction(ACCOUNT_URLS);
         checkRestAccessRestriction(ACCOUNT_REST_URLS);
     }

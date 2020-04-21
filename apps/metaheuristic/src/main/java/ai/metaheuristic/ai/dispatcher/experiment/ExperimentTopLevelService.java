@@ -706,7 +706,7 @@ public class ExperimentTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest toAtlas(Long id) {
+    public OperationStatusRest toExperimentResult(Long id) {
 
         Experiment experiment = experimentCache.findById(id);
         if (experiment==null) {
@@ -717,7 +717,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.420 This experiment isn't bound to ExecContext");
         }
-        execContextFSM.toExportingToAtlas(experiment.execContextId);
+        execContextFSM.toExportingToExperimentResult(experiment.execContextId);
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK, "Exporting of experiment was successfully started", "");
     }
 

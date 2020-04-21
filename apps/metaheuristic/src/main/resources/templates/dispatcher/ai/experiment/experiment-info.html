@@ -42,9 +42,9 @@
             <td width="20">&nbsp; </td>
             <td valign="top">
                 <a class="pure-button table-nav-button-fill pure-button-primary" href="#"
-                   th:if="${experimentResult.execContext.execState!=T(ai.metaheuristic.api.EnumsApi.ExecContextState).EXPORTING_TO_ATLAS_WAS_STARTED.code and
-                   experimentResult.execContext.execState!=T(ai.metaheuristic.api.EnumsApi.ExecContextState).EXPORTING_TO_ATLAS.code}"
-                   th:href="${'/dispatcher/ai/experiment/experiment-to-atlas/'+ experiment.id }">Export to Atlas</a>
+                   th:if="${experimentResult.execContext.execState!=T(ai.metaheuristic.api.EnumsApi.ExecContextState).EXPORTING_TO_EXPERIMENT_RESULT_WAS_STARTED.code and
+                   experimentResult.execContext.execState!=T(ai.metaheuristic.api.EnumsApi.ExecContextState).EXPORTING_TO_EXPERIMENT_RESULT.code}"
+                   th:href="${'/dispatcher/ai/experiment/experiment-to-experiment-result/'+ experiment.id }">Export to ExperimentResult</a>
             </td>
             <td width="20">&nbsp; </td>
             <td valign="top">

@@ -241,7 +241,7 @@ public class ExperimentService {
             }
             ExecContextImpl wb = execContextCache.findById(e.execContextId);
             if (wb==null) {
-                log.info("#179.030 Can't calc max values and export to atlas because execContext is null");
+                log.info("#179.030 Can't calc max values and export to ExperimentResult because execContext is null");
                 continue;
             }
             if (wb.state != EnumsApi.ExecContextState.FINISHED.code) {
@@ -336,13 +336,13 @@ public class ExperimentService {
         experimentCache.save(experiment);
     }
 
-    private void setExportedToAtlas(Long experimentId) {
+    private void setExportedToExperimentResult(Long experimentId) {
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment==null) {
             return;
         }
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        epy.processing.exportedToAtlas = true;
+        epy.processing.exportedToExperimentResult = true;
         experiment.updateParams(epy);
         experimentCache.save(experiment);
     }

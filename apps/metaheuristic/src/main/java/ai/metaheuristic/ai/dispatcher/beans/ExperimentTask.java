@@ -42,7 +42,7 @@ public class ExperimentTask implements Serializable {
     public Integer version;
 
     @Column(name = "EXPERIMENT_RESULT_ID")
-    public Long atlasId;
+    public Long experimentResultId;
 
     @Column(name = "TASK_ID")
     public Long taskId;

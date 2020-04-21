@@ -52,7 +52,7 @@ public class ExecContextSchedulerService {
     private final ExecContextService execContextService;
     private final ExecContextRepository execContextRepository;
     private final TaskRepository taskRepository;
-    private final ExperimentResultService atlasService;
+    private final ExperimentResultService experimentResultService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
@@ -62,12 +62,12 @@ public class ExecContextSchedulerService {
             updateExecContextStatus(execContext.id, needReconciliation);
         }
 
-        List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.EXPORTING_TO_ATLAS.code);
+        List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.EXPORTING_TO_EXPERIMENT_RESULT.code);
         for (Long execContextId : execContextIds) {
-            log.info("Start exporting execContext #{} to atlas", execContextId);
+            log.info("Start exporting execContext #{} to ExperimentResult", execContextId);
             OperationStatusRest status;
             try {
-                status = atlasService.storeExperimentToAtlas(execContextId);
+                status = experimentResultService.storeExperimentToExperimentResult(execContextId);
             } catch (Exception e) {
                 execContextFSM.toError(execContextId);
                 continue;
@@ -77,7 +77,7 @@ public class ExecContextSchedulerService {
                 log.info("Exporting of execContext #{} was finished", execContextId);
             } else {
                 execContextFSM.toError(execContextId);
-                log.error("#751.020 Error exporting experiment to atlas, execContextId #{}\n{}", execContextId, status.getErrorMessagesAsStr());
+                log.error("#751.020 Error exporting experiment to ExperimentResult, execContextId #{}\n{}", execContextId, status.getErrorMessagesAsStr());
             }
         }
     }

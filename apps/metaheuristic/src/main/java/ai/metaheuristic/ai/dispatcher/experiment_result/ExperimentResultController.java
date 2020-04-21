@@ -38,59 +38,59 @@ import java.util.ArrayList;
 
 @SuppressWarnings("Duplicates")
 @Controller
-@RequestMapping("/dispatcher/ai/atlas")
+@RequestMapping("/dispatcher/ai/experiment-result")
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class ExperimentResultController {
 
-    private static final String REDIRECT_DISPATCHER_ATLAS_ATLAS_EXPERIMENTS = "redirect:/dispatcher/ai/atlas/atlas-experiments";
-    private final ExperimentResultService atlasService;
-    private final ExperimentResultTopLevelService atlasTopLevelService;
+    private static final String REDIRECT_DISPATCHER_EXPERIMENT_RESULT_EXPERIMENT_RESULTS = "redirect:/dispatcher/ai/experiment-result/experiment-results";
+    private final ExperimentResultService experimentResultService;
+    private final ExperimentResultTopLevelService experimentResultTopLevelService;
 
-    @GetMapping("/atlas-experiments")
+    @GetMapping("/experiment-results")
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
                        @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                        @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
-        ExperimentResultData.ExperimentResultSimpleExperiments atlasExperiments = atlasService.getExperimentResultExperiments(pageable);
-        ControllerUtils.addMessagesToModel(model, atlasExperiments);
-        model.addAttribute("result", atlasExperiments);
-        return "dispatcher/ai/atlas/atlas-experiments";
+        ExperimentResultData.ExperimentResultSimpleList experimentResultExperiments = experimentResultService.getExperimentResultExperiments(pageable);
+        ControllerUtils.addMessagesToModel(model, experimentResultExperiments);
+        model.addAttribute("result", experimentResultExperiments);
+        return "dispatcher/ai/experiment-result/experiment-results";
     }
 
     // for AJAX
-    @PostMapping("/atlas-experiments-part")
+    @PostMapping("/experiment-results-part")
     public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable) {
-        ExperimentResultData.ExperimentResultSimpleExperiments atlasExperiments = atlasService.getExperimentResultExperiments(pageable);
-        model.addAttribute("result", atlasExperiments);
-        return "dispatcher/ai/atlas/atlas-experiments :: table";
+        ExperimentResultData.ExperimentResultSimpleList experimentResults = experimentResultService.getExperimentResultExperiments(pageable);
+        model.addAttribute("result", experimentResults);
+        return "dispatcher/ai/experiment-result/experiment-results :: table";
     }
 
-    @GetMapping(value = "/atlas-experiment-info/{id}")
+    @GetMapping(value = "/experiment-result-info/{id}")
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage) {
-        ExperimentResultData.ExperimentInfoExtended result = atlasTopLevelService.getExperimentInfoExtended(id);
+        ExperimentResultData.ExperimentInfoExtended result = experimentResultTopLevelService.getExperimentInfoExtended(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.getErrorMessagesAsList());
-            return "redirect:/dispatcher/ai/atlas/atlas-experiments";
+            return "redirect:/dispatcher/ai/experiment-result/experiment-results";
         }
 
         if (result.isInfoMessages()) {
             model.addAttribute("infoMessages", result.infoMessages);
         }
 
-        model.addAttribute("atlas", result.experimentResult);
+        model.addAttribute("experimentResult", result.experimentResult);
         model.addAttribute("experiment", result.experiment);
-        model.addAttribute("experimentResult", result.experimentInfo);
-        return "dispatcher/ai/atlas/atlas-experiment-info";
+        model.addAttribute("experimentInfo", result.experimentInfo);
+        return "dispatcher/ai/experiment-result/experiment-result-info";
     }
 
-    @GetMapping("/atlas-experiment-delete/{id}")
+    @GetMapping("/experiment-result-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        ExperimentResultData.ExperimentDataOnly result = atlasTopLevelService.getExperimentDataOnly(id);
+        ExperimentResultData.ExperimentDataOnly result = experimentResultTopLevelService.getExperimentDataOnly(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.getErrorMessagesAsList());
-            return "redirect:/dispatcher/ai/atlas/atlas-experiments";
+            return "redirect:/dispatcher/ai/experiment-result/experiment-results";
         }
 
         if (result.isInfoMessages()) {
@@ -98,58 +98,58 @@ public class ExperimentResultController {
         }
 
         model.addAttribute("experiment", result.experiment);
-        model.addAttribute("atlasId", result.experimentResultId);
-        return "dispatcher/ai/atlas/atlas-experiment-delete";
+        model.addAttribute("experimentResultId", result.experimentResultId);
+        return "dispatcher/ai/experiment-result/experiment-result-delete";
     }
 
-    @PostMapping("/atlas-experiment-delete-commit")
-    public String deleteCommit(Long atlasId, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = atlasTopLevelService.experimentResultDeleteCommit(atlasId);
+    @PostMapping("/experiment-result-delete-commit")
+    public String deleteCommit(Long experimentResultId, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = experimentResultTopLevelService.experimentResultDeleteCommit(experimentResultId);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
-        return REDIRECT_DISPATCHER_ATLAS_ATLAS_EXPERIMENTS;
+        return REDIRECT_DISPATCHER_EXPERIMENT_RESULT_EXPERIMENT_RESULTS;
     }
 
-    @GetMapping(value= "/atlas-experiment-export/atlas-{atlasId}.yaml", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<AbstractResource> downloadProcessingResult(@PathVariable("atlasId") Long atlasId) {
-        ResponseEntity<AbstractResource> res = atlasTopLevelService.exportAtlasToFile(atlasId);
+    @GetMapping(value= "/experiment-result-export/experiment-result-{experimentResultId}.yaml", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<AbstractResource> downloadProcessingResult(@PathVariable("experimentResultId") Long experimentResultId) {
+        ResponseEntity<AbstractResource> res = experimentResultTopLevelService.exportExperimentResultToFile(experimentResultId);
         return res;
     }
 
-    @PostMapping(value = "/atlas-experiment-upload-from-file")
-    public String uploadAtlas(final MultipartFile file, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = atlasTopLevelService.uploadExperiment(file);
+    @PostMapping(value = "/experiment-result-upload-from-file")
+    public String uploadExperimentResult(final MultipartFile file, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = experimentResultTopLevelService.uploadExperiment(file);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
-        return REDIRECT_DISPATCHER_ATLAS_ATLAS_EXPERIMENTS;
+        return REDIRECT_DISPATCHER_EXPERIMENT_RESULT_EXPERIMENT_RESULTS;
     }
 
-    @GetMapping(value= "/atlas-experiment-export/{atlasId}")
-    public String exportExperiment(Model model, @PathVariable("atlasId") Long atlasId) {
-        model.addAttribute("atlasId", atlasId);
-        return "dispatcher/ai/atlas/atlas-experiment-export";
+    @GetMapping(value= "/experiment-result-export/{experimentResultId}")
+    public String exportExperiment(Model model, @PathVariable("experimentResultId") Long experimentResultId) {
+        model.addAttribute("experimentResultId", experimentResultId);
+        return "dispatcher/ai/experiment-result/experiment-result-export";
     }
 
-    @GetMapping(value= "/atlas-experiment-import")
+    @GetMapping(value= "/experiment-result-import")
     public String importExperiment(Model model) {
-        return "dispatcher/ai/atlas/atlas-experiment-import";
+        return "dispatcher/ai/experiment-result/experiment-result-import";
     }
 
-    @GetMapping(value = "/atlas-experiment-feature-progress/{atlasId}/{experimentId}/{featureId}")
+    @GetMapping(value = "/experiment-result-feature-progress/{experimentResultId}/{experimentId}/{featureId}")
     public String getFeatures(
             Model model,
-            @PathVariable Long atlasId,
+            @PathVariable Long experimentResultId,
             @PathVariable Long experimentId,
             @PathVariable Long featureId,
             final RedirectAttributes redirectAttributes) {
 
         ExperimentResultData.ExperimentFeatureExtendedResult experimentProgressResult =
-                atlasTopLevelService.getExperimentFeatureExtended(atlasId, experimentId, featureId);
+                experimentResultTopLevelService.getExperimentFeatureExtended(experimentResultId, experimentId, featureId);
         if (experimentProgressResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", experimentProgressResult.getErrorMessagesAsList());
-            return "redirect:/dispatcher/ai/atlas/atlas-experiment-info/" + atlasId;
+            return "redirect:/dispatcher/ai/experiment-result/experiment-result-info/" + experimentResultId;
         }
         model.addAttribute("metrics", experimentProgressResult.metricsResult);
         model.addAttribute("params", experimentProgressResult.hyperParamResult);
@@ -157,35 +157,35 @@ public class ExperimentResultController {
         model.addAttribute("feature", experimentProgressResult.experimentFeature);
         model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
         model.addAttribute("experimentId", experimentId);
-        model.addAttribute("atlasId", atlasId);
+        model.addAttribute("experimentResultId", experimentResultId);
 
-        return "dispatcher/ai/atlas/atlas-experiment-feature-progress";
+        return "dispatcher/ai/experiment-result/experiment-result-feature-progress";
     }
 
-    @PostMapping("/atlas-experiment-feature-plot-data-part/{atlasId}/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
+    @PostMapping("/experiment-result-feature-plot-data-part/{experimentResultId}/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
     @ResponseBody
     public ExperimentResultData.PlotData getPlotData(
-            @PathVariable Long atlasId,
+            @PathVariable Long experimentResultId,
             @PathVariable Long experimentId, @PathVariable Long featureId,
             @PathVariable String[] params, @PathVariable String[] paramsAxis) {
-        return atlasTopLevelService.getPlotData(atlasId, experimentId, featureId, params, paramsAxis);
+        return experimentResultTopLevelService.getPlotData(experimentResultId, experimentId, featureId, params, paramsAxis);
     }
 
-    @PostMapping("/atlas-experiment-feature-progress-console-part/{atlasId}/{taskId}")
+    @PostMapping("/experiment-result-feature-progress-console-part/{experimentResultId}/{taskId}")
     public String getTasksConsolePart(
             Model model,
-            @PathVariable(name = "atlasId") Long atlasId,
+            @PathVariable(name = "experimentResultId") Long experimentResultId,
             @PathVariable(name = "taskId") Long taskId
     ) {
-        ExperimentResultData.ConsoleResult result = atlasTopLevelService.getTasksConsolePart(atlasId, taskId);
+        ExperimentResultData.ConsoleResult result = experimentResultTopLevelService.getTasksConsolePart(experimentResultId, taskId);
         model.addAttribute("consoleResult", result);
-        return "dispatcher/ai/atlas/atlas-experiment-feature-progress :: fragment-console-table";
+        return "dispatcher/ai/experiment-result/experiment-result-feature-progress :: fragment-console-table";
     }
 
-    @PostMapping("/atlas-experiment-feature-progress-part/{atlasId}/{experimentId}/{featureId}/{params}/part")
-    public String getFeatureProgressPart(Model model, @PathVariable Long atlasId, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
+    @PostMapping("/experiment-result-feature-progress-part/{experimentResultId}/{experimentId}/{featureId}/{params}/part")
+    public String getFeatureProgressPart(Model model, @PathVariable Long experimentResultId, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
         ExperimentResultData.ExperimentFeatureExtendedResult experimentProgressResult =
-                atlasTopLevelService.getFeatureProgressPart(atlasId, featureId, params, pageable);
+                experimentResultTopLevelService.getFeatureProgressPart(experimentResultId, featureId, params, pageable);
 
         model.addAttribute("metrics", experimentProgressResult.metricsResult);
         model.addAttribute("params", experimentProgressResult.hyperParamResult);
@@ -193,9 +193,9 @@ public class ExperimentResultController {
         model.addAttribute("feature", experimentProgressResult.experimentFeature);
         model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
         model.addAttribute("experimentId", experimentId);
-        model.addAttribute("atlasId", atlasId);
+        model.addAttribute("experimentResultId", experimentResultId);
 
-        return "dispatcher/ai/atlas/atlas-experiment-feature-progress :: fragment-table";
+        return "dispatcher/ai/experiment-result/experiment-result-feature-progress :: fragment-table";
     }
 
 

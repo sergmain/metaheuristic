@@ -4,12 +4,12 @@
 >
     <h1 class="widget-header">The experiment info</h1>
 
-    <!--/*@thymesVar id="experimentResult" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.ExperimentInfoResult"*/-->
+    <!--/*@thymesVar id="experimentInfo" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.ExperimentInfoResult"*/-->
     <!--/*@thymesVar id="experiment" type="ai.metaheuristic.ai.dispatcher.beans.Experiment"*/-->
-    <!--/*@thymesVar id="atlas" type="ai.metaheuristic.ai.dispatcher.beans.ExperimentResult"*/-->
+    <!--/*@thymesVar id="experimentResult" type="ai.metaheuristic.ai.dispatcher.beans.ExperimentResult"*/-->
 
     <div align="right">
-        <a class="pure-button pure-button-primary" href="atlas-experiments.html" th:href="${'/dispatcher/ai/atlas/atlas-experiments'}">To list of experiments</a>
+        <a class="pure-button pure-button-primary" href="experiment-result-experiments.html" th:href="${'/dispatcher/ai/experiment-result/experiment-result-experiments'}">To list of experiments</a>
     </div>
 
     <h1 class="widget-header">Progress of experiment</h1>
@@ -24,7 +24,7 @@
                     </thead>
                     <tbody>
                     <tr>
-                        <td th:text="${experimentResult.execContextState}">State</td>
+                        <td th:text="${experimentInfo.execContextState}">State</td>
                     </tr>
                 </table>
             </td>
@@ -124,20 +124,20 @@
             </thead>
 
             <tbody>
-            <tr th:each="f : ${experimentResult.features}" >
+            <tr th:each="f : ${experimentInfo.features}" >
                 <td th:text="${f.id}">Feature Id</td>
                 <td th:text="${f.variables}">Ids</td>
                 <td th:text="${f.execStatusAsString}">Exec status</td>
                 <td th:text="${f.maxValue!=null ? f.maxValue : 0 }">Max value</td>
                 <td><a class="pure-button table-nav-button-fill pure-button-primary"
-                       th:href="${'/dispatcher/ai/atlas/atlas-experiment-feature-progress/'+ atlas.id + '/'+ experiment.id + '/' + f.id}">Info</a></td>
+                       th:href="${'/dispatcher/ai/experiment-result/experiment-result-experiment-feature-progress/'+ experimentResult.id + '/'+ experiment.id + '/' + f.id}">Info</a></td>
             </tr>
             </tbody>
         </table>
         <p>&nbsp;</p>
     </div>
 
-    <a class="pure-button pure-button-primary" href="atlas-experiments.html" th:href="${'/dispatcher/ai/atlas/atlas-experiments'}">To list of experiments</a>
+    <a class="pure-button pure-button-primary" href="experiment-result-experiments.html" th:href="${'/dispatcher/ai/experiment-result/experiment-result-experiments'}">To list of experiments</a>
 
 
 </div>

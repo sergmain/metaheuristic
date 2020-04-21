@@ -62,41 +62,6 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
             "from Batch b where b.companyId=:companyUniqueId")
     List<BatchExecStatus> getBatchExecStatuses(Long companyUniqueId);
 
-/*
-
-    public enum BatchExecState {
-        Error(-1, "Error"),
-        Unknown(0, "None"),
-        Stored(1, "Stored"),
-        Preparing(2, "Preparing"),
-        Processing(3, "Processing"),
-        Finished(4, "Finished"),
-        Archived(5, "Archived") ;
-
-    public enum ExecContextState {
-        ERROR(-2),          // some error in configuration
-        UNKNOWN(-1),        // unknown state
-        NONE(0),            // just created execContext
-        PRODUCING(1),       // producing was just started
-        PRODUCED(2),        // producing was finished
-        STARTED(3),         // started
-        STOPPED(4),         // stopped
-        FINISHED(5),        // finished
-        DOESNT_EXIST(6),    // doesn't exist. this state is needed at processor side to reconcile list of experiments
-        EXPORTING_TO_ATLAS(7),    // execContext is marked as needed to be exported to atlas
-        EXPORTING_TO_ATLAS_WAS_STARTED(8),    // execContext is marked as needed to be exported to atlas and export was started
-        EXPORTED_TO_ATLAS(9);    // execContext was exported to atlas
-
-    if (batch!=null && batch.execState != Enums.BatchExecState.Finished.code &&
-    batch.execState != Enums.BatchExecState.Error.code &&
-    batch.execState != Enums.BatchExecState.Archived.code) {
-        boolean isFinished = false;
-        for (Integer execState : execContextRepository.findExecContextStateByBatchId(batch.id)) {
-            isFinished = true;
-            if (execState != EnumsApi.ExecContextState.ERROR.code && execState != EnumsApi.ExecContextState.FINISHED.code) {
-                break;
-            }
-*/
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates(b.id, w.id, b.execState, w.state) " +
             "from Batch b, ExecContextImpl w " +

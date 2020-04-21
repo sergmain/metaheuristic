@@ -326,9 +326,9 @@ public class ExperimentController {
         return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
 
-    @GetMapping(value = "/experiment-to-atlas/{id}")
-    public String toAtlas(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = experimentTopLevelService.toAtlas(id);
+    @GetMapping(value = "/experiment-to-experiment-result/{id}")
+    public String toExperimentResult(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = experimentTopLevelService.toExperimentResult(id);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }

@@ -44,7 +44,7 @@ It'll be /mh-root in follow text.
 
 1. Change dir to /mh-root/metaheuristic-assets/examples/simple-metrics and run scripts:
     ```
-    curl-upload-simple-metrics-to-atlas
+    curl-upload-simple-metrics-to-experiment-result
     ```
 
 1. Change dir to /mh-root and run command:
@@ -52,10 +52,10 @@ It'll be /mh-root in follow text.
     java -Dspring.profiles.active=quickstart,dispatcher,processor -jar metaheuristic/apps/metaheuristic/target/metaheuristic.jar --mh.processor.default-dispatcher-yaml-file=metaheuristic/docs-dev/cfg/default-cfg/dispatcher.yaml --mh.processor.default-env-yaml-file=metaheuristic/docs-dev/cfg/default-cfg/env.yaml 
     ```
 
-1. Now you can find our experiment data at http://localhost:8080/dispatcher/atlas/atlas-experiments
+1. Now you can find our experiment data at http://localhost:8080/dispatcher/experiment-result/experiment-results
 login - q, password - 123
 
-1. Press 'Details' for experiment info (there should be only one record in atlas)
+1. Press 'Details' for experiment info (there should be only one record in ExperimentResult)
 
 1. Press 'Info' button and on the next page 'Info' button at the bottom of page.
 

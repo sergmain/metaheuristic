@@ -35,20 +35,20 @@ import java.util.Set;
 public interface ExperimentTaskRepository extends CrudRepository<ExperimentTask, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select t.id from ExperimentTask t where t.atlasId=:atlasId ")
-    List<Long> findAllAsTaskSimple(Pageable pageable, Long atlasId);
+    @Query(value="select t.id from ExperimentTask t where t.experimentResultId=:experimentResultId ")
+    List<Long> findAllAsTaskSimple(Pageable pageable, Long experimentResultId);
 
     @Transactional(readOnly = true)
-    @Query("SELECT at FROM ExperimentTask at where at.atlasId=:atlasId and at.taskId in :ids ")
-    List<ExperimentTask> findTasksById(Long atlasId, Collection<Long> ids);
+    @Query("SELECT at FROM ExperimentTask at where at.experimentResultId=:experimentResultId and at.taskId in :ids ")
+    List<ExperimentTask> findTasksById(Long experimentResultId, Collection<Long> ids);
 
     @Transactional(readOnly = true)
-    @Query("SELECT at.id FROM ExperimentTask at where at.atlasId=:atlasId ")
-    Set<Long> findIdsByAtlasId(Long atlasId);
+    @Query("SELECT at.id FROM ExperimentTask at where at.experimentResultId=:experimentResultId ")
+    Set<Long> findIdsByExperimentResultId(Long experimentResultId);
 
     @Nullable
     @Transactional(readOnly = true)
-    ExperimentTask findByAtlasIdAndTaskId(Long atlasId, Long taskId);
+    ExperimentTask findByExperimentResultIdAndTaskId(Long experimentResultId, Long taskId);
 
-    void deleteByAtlasId(Long atlasId);
+    void deleteByExperimentResultId(Long experimentResultId);
 }

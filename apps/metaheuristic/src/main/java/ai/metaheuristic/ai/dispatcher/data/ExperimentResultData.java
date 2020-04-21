@@ -98,7 +98,7 @@ public class ExperimentResultData {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class ExperimentResultSimpleExperiments extends BaseDataClass {
+    public static class ExperimentResultSimpleList extends BaseDataClass {
         public Slice<ExperimentResultSimple> items;
     }
 

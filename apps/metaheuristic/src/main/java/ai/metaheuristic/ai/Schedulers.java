@@ -64,7 +64,7 @@ public class Schedulers {
         private long prevReconciliationTime = 0L;
 
         /**
-         * update status of all execContexts which are in 'started' state. Also, if execContext is finished, atlas will be produced
+         * update status of all execContexts which are in 'started' state. Also, if execContext is finished, ExperimentResult will be produced
          */
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.process-exec-context'), 1, 40, 3)*1000 }")
         public void updateExecContextStatuses() {

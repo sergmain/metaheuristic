@@ -260,14 +260,13 @@ public class BatchService {
                     STOPPED(4),         // stopped
                     FINISHED(5),        // finished
                     DOESNT_EXIST(6),    // doesn't exist. this state is needed at processor side to reconcile list of experiments
-                    EXPORTING_TO_ATLAS(7),    // execContext is marked as needed to be exported to atlas
-                    EXPORTING_TO_ATLAS_WAS_STARTED(8),    // execContext is marked as needed to be exported to atlas and export was started
-                    EXPORTED_TO_ATLAS(9);    // execContext was exported to atlas
+                    EXPORTING_TO_EXPERIMENT_RESULT(7),    // execContext is marked as needed to be exported to ExperimentResult
+                    EXPORTING_TO_EXPERIMENT_RESULT_WAS_STARTED(8),    // execContext is marked as needed to be exported to ExperimentResult and export was started
+                    EXPORTED_TO_EXPERIMENT_RESULT(9);    // execContext was exported to ExperimentResult
 */
 
                 if (execStates.execContextState != EnumsApi.ExecContextState.ERROR.code && execStates.execContextState != EnumsApi.ExecContextState.FINISHED.code) {
                     isFinished = false;
-                    break;
                 }
             }
             if (isFinished) {

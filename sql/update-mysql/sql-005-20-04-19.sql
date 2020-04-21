@@ -13,6 +13,18 @@ drop table mh_atlas;
 
 drop table mh_atlas_task;
 
+CREATE TABLE mh_experiment_result
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    COMPANY_ID      INT UNSIGNED    not null,
+    NAME          VARCHAR(50)   NOT NULL,
+    DESCRIPTION   VARCHAR(250)  NOT NULL,
+    CODE          VARCHAR(50)   NOT NULL,
+    CREATED_ON    bigint not null,
+    EXPERIMENT    LONGTEXT NOT NULL
+);
+
 CREATE TABLE mh_experiment_task
 (
     ID                      INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,

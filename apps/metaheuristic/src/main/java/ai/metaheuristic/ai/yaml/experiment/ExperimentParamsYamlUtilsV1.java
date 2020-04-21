@@ -60,7 +60,7 @@ public class ExperimentParamsYamlUtilsV1
         trg.processing.isAllTaskProduced = src.processing.isAllTaskProduced;
         trg.processing.isFeatureProduced = src.processing.isFeatureProduced;
         trg.processing.maxValueCalculated = false;
-        trg.processing.exportedToAtlas = false;
+        trg.processing.exportedToExperimentResult = false;
         trg.processing.numberOfTask = src.processing.numberOfTask;
 
         trg.processing.features = src.processing.features

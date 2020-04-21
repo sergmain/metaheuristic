@@ -32,12 +32,12 @@ import org.springframework.transaction.annotation.Transactional;
 public interface ExperimentResultRepository extends CrudRepository<ExperimentResult, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.experiment_result.AtlasSimple(" +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultSimple(" +
             "b.id, b.name, b.description, b.createdOn ) from ExperimentResult b order by b.id desc")
     Slice<ExperimentResultSimple> findAllAsSimple(Pageable pageable);
 
     @Nullable
     @Transactional(readOnly = true)
-    @Query(value="select a.id from ExperimentResult a where a.id=:atlasId")
-    Long findIdById(Long atlasId);
+    @Query(value="select a.id from ExperimentResult a where a.id=:experimentResultId")
+    Long findIdById(Long experimentResultId);
 }

@@ -24,7 +24,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "mh_experiment_result")
+@Table(name = "MH_EXPERIMENT_RESULT")
 @Data
 @NoArgsConstructor
 public class ExperimentResult implements Serializable {

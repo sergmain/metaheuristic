@@ -38,7 +38,7 @@ import java.util.Objects;
 @NoArgsConstructor
 public class ExperimentResultParamsYamlWithCache {
 
-    public ExperimentResultParamsYaml atlasParams = null;
+    public ExperimentResultParamsYaml experimentResult = null;
 
     // for caching
     private SourceCodeParamsYaml sourceCodeParamsYaml = null;
@@ -76,7 +76,7 @@ public class ExperimentResultParamsYamlWithCache {
         if (sourceCodeParamsYaml ==null) {
             synchronized (this) {
                 if (sourceCodeParamsYaml ==null) {
-                    SourceCodeStoredParamsYaml scspy = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.sourceCode.sourceCodeParams);
+                    SourceCodeStoredParamsYaml scspy = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.sourceCode.sourceCodeParams);
                     //noinspection UnnecessaryLocalVariable
                     SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
                     sourceCodeParamsYaml = scpy;
@@ -91,7 +91,7 @@ public class ExperimentResultParamsYamlWithCache {
             synchronized (this) {
                 if (experimentParamsYaml==null) {
                     //noinspection UnnecessaryLocalVariable
-                    ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.experiment.experimentParams);
+                    ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.experiment.experimentParams);
                     experimentParamsYaml = epy;
                 }
             }
@@ -105,7 +105,7 @@ public class ExperimentResultParamsYamlWithCache {
             synchronized (this) {
                 if (execContextParamsYaml ==null) {
                     //noinspection UnnecessaryLocalVariable
-                    ExecContextParamsYaml wpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams.execContext.execContextParams);
+                    ExecContextParamsYaml wpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.execContext.execContextParams);
                     execContextParamsYaml = wpy;
                 }
             }
@@ -113,7 +113,7 @@ public class ExperimentResultParamsYamlWithCache {
         return execContextParamsYaml;
     };
 
-    public ExperimentResultParamsYamlWithCache(ExperimentResultParamsYaml atlasParams) {
-        this.atlasParams = atlasParams;
+    public ExperimentResultParamsYamlWithCache(ExperimentResultParamsYaml experimentResult) {
+        this.experimentResult = experimentResult;
     }
 }

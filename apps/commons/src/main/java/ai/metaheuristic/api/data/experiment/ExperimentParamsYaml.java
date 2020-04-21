@@ -100,7 +100,7 @@ public class ExperimentParamsYaml implements BaseParams {
         public boolean isAllTaskProduced = false;
         public boolean isFeatureProduced = false;
         public boolean maxValueCalculated = false;
-        public boolean exportedToAtlas = false;
+        public boolean exportedToExperimentResult = false;
 
         public int numberOfTask = 0;
 

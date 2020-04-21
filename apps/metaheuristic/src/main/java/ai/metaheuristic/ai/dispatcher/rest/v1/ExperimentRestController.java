@@ -172,8 +172,8 @@ public class ExperimentRestController {
         return experimentTopLevelService.getExperimentProcessingStatus(experimentCode);
     }
 
-    @GetMapping(value = "/experiment-to-atlas/{id}")
-    public OperationStatusRest toAtlas(@PathVariable Long id) {
-        return experimentTopLevelService.toAtlas(id);
+    @GetMapping(value = "/experiment-to-experiment-result/{id}")
+    public OperationStatusRest toExperimentResult(@PathVariable Long id) {
+        return experimentTopLevelService.toExperimentResult(id);
     }
 }
