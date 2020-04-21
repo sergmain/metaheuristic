@@ -33,10 +33,10 @@ public class ExecContextsListItem {
     public Long id;
     public long createdOn;
     public boolean valid;
-    public long completedOn;
-    public int execStateCode;
+    public Long completedOn;
+    public int state;
 
     public String getExecState() {
-        return EnumsApi.ExecContextState.from(execStateCode);
+        return EnumsApi.ExecContextState.from(state);
     }
 }

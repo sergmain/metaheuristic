@@ -49,6 +49,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name="CREATED_ON")
     public long createdOn;
 
+    @Nullable
     @Column(name="COMPLETED_ON")
     public Long completedOn;
 

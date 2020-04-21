@@ -2,7 +2,7 @@
      layout:decorate="~{layout-dispatcher}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.exec_context.ExecContextApiData.ExecContextsResult"*/-->
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.exec_context.ExecContextApiData$ExecContextsResult"*/-->
     <script>
         var table = function (html) {
             $('#table').html(html).find('.ajax-elem').each(function () {
@@ -58,19 +58,19 @@
                    i.valid and
                    result.sourceCodeValid
                    }"
-                   th:href="${'/dispatcher/source-code/exec-context-target-state/'+i.sourceCodeId+'/PRODUCING/' + i.id}">Produce</a>
+                   th:href="${'/dispatcher/source-code/exec-context-target-state/'+result.sourceCodeId+'/PRODUCING/' + i.id}">Produce</a>
                 <a class="pure-button pure-button-primary"
                    th:if="${i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).PRODUCED.code or
                    i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STOPPED.code}"
-                   th:href="${'/dispatcher/source-code/exec-context-target-state/'+i.sourceCodeId+'/started/' + i.id}">Start</a>
+                   th:href="${'/dispatcher/source-code/exec-context-target-state/'+result.sourceCodeId+'/started/' + i.id}">Start</a>
                 <a class="pure-button pure-button-primary"
                    th:if="${i.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STARTED.code}"
-                   th:href="${'/dispatcher/source-code/exec-context-target-state/'+i.sourceCodeId+'/stopped/' + i.id}">Stop</a>
+                   th:href="${'/dispatcher/source-code/exec-context-target-state/'+result.sourceCodeId+'/stopped/' + i.id}">Stop</a>
             </td>
             <td><a class="pure-button pure-button-primary"
                    th:if="${not i.valid}"
                    th:href="${'/dispatcher/source-code/exec-context-validate/' + i.id}">Validate</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/source-code/exec-context-delete/'+i.sourceCodeId+'/' + i.id}">Delete</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/source-code/exec-context-delete/'+result.sourceCodeId+'/' + i.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="11">
