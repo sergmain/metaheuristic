@@ -14,30 +14,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.atlas;
+package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
-import ai.metaheuristic.ai.dispatcher.data.AtlasData;
+import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
-import ai.metaheuristic.ai.dispatcher.repositories.AtlasRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.AtlasTaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
-import ai.metaheuristic.ai.yaml.atlas.AtlasTaskParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
-import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.Data;
@@ -57,15 +57,15 @@ import java.util.Collections;
 @Service
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class AtlasService {
+public class ExperimentResultService {
 
     private final Globals globals;
     private final SourceCodeCache sourceCodeCache;
     private final ExperimentCache experimentCache;
     private final ExperimentRepository experimentRepository;
     private final TaskRepository taskRepository;
-    private final AtlasRepository atlasRepository;
-    private final AtlasTaskRepository atlasTaskRepository;
+    private final ExperimentResultRepository atlasRepository;
+    private final ExperimentTaskRepository atlasTaskRepository;
     private final ExecContextCache execContextCache;
     private final ExecContextService execContextService;
     private final ExecContextFSM execContextFSM;
@@ -74,7 +74,7 @@ public class AtlasService {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class StoredToAtlasWithStatus extends BaseDataClass {
-        public AtlasParamsYamlWithCache atlasParamsYamlWithCache;
+        public ExperimentResultParamsYamlWithCache atlasParamsYamlWithCache;
         public Enums.StoringStatus status;
 
         public StoredToAtlasWithStatus(Enums.StoringStatus status, String errorMessage) {
@@ -83,9 +83,9 @@ public class AtlasService {
         }
     }
 
-    public AtlasData.AtlasSimpleExperiments getAtlasExperiments(Pageable pageable) {
+    public ExperimentResultData.ExperimentResultSimpleExperiments getExperimentResultExperiments(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.atlasExperimentRowsLimit, pageable);
-        AtlasData.AtlasSimpleExperiments result = new AtlasData.AtlasSimpleExperiments();
+        ExperimentResultData.ExperimentResultSimpleExperiments result = new ExperimentResultData.ExperimentResultSimpleExperiments();
         result.items = atlasRepository.findAllAsSimple(pageable);
         return result;
     }
@@ -126,9 +126,9 @@ public class AtlasService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment already stored");
         }
 */
-        Atlas a = new Atlas();
+        ExperimentResult a = new ExperimentResult();
         try {
-            a.params = AtlasParamsYamlUtils.BASE_YAML_UTILS.toString(stored.atlasParamsYamlWithCache.atlasParams);
+            a.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(stored.atlasParamsYamlWithCache.atlasParams);
         } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "General error while storing experiment, " + e.toString());
@@ -140,7 +140,7 @@ public class AtlasService {
         a.code = epy.experimentYaml.code;
         a.createdOn = System.currentTimeMillis();
         a.companyId = sourceCode.companyId;
-        final Atlas atlas = atlasRepository.save(a);
+        final ExperimentResult atlas = atlasRepository.save(a);
 
         // store all tasks' results
         stored.atlasParamsYamlWithCache.atlasParams.taskIds
@@ -149,10 +149,10 @@ public class AtlasService {
                     if (t == null) {
                         return;
                     }
-                    AtlasTask at = new AtlasTask();
+                    ExperimentTask at = new ExperimentTask();
                     at.atlasId = atlas.id;
                     at.taskId = t.getId();
-                    AtlasTaskParamsYaml atpy = new AtlasTaskParamsYaml();
+                    ExperimentResultTaskParamsYaml atpy = new ExperimentResultTaskParamsYaml();
                     atpy.assignedOn = t.getAssignedOn();
                     atpy.completed = t.isCompleted();
                     atpy.completedOn = t.getCompletedOn();
@@ -168,7 +168,7 @@ public class AtlasService {
                     }
 //                    atpy.metrics = t.getMetrics();
 
-                    at.params = AtlasTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
+                    at.params = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
                     atlasTaskRepository.save(at);
 
                 });
@@ -179,15 +179,15 @@ public class AtlasService {
     }
 
     public StoredToAtlasWithStatus toExperimentStoredToAtlas(SourceCodeImpl sourceCode, ExecContextImpl execContext, Experiment experiment) {
-        AtlasParamsYaml atlasParamsYaml = new AtlasParamsYaml();
+        ExperimentResultParamsYaml atlasParamsYaml = new ExperimentResultParamsYaml();
         atlasParamsYaml.createdOn = System.currentTimeMillis();
-        atlasParamsYaml.sourceCode = new AtlasParamsYaml.SourceCodeWithParams(sourceCode.id, sourceCode.getParams());
-        atlasParamsYaml.execContext = new AtlasParamsYaml.ExecContextWithParams(execContext.id, execContext.getParams(), EnumsApi.ExecContextState.EXPORTED_TO_ATLAS.code);
-        atlasParamsYaml.experiment = new AtlasParamsYaml.ExperimentWithParams(experiment.id, experiment.getParams());
+        atlasParamsYaml.sourceCode = new ExperimentResultParamsYaml.SourceCodeWithParams(sourceCode.id, sourceCode.getParams());
+        atlasParamsYaml.execContext = new ExperimentResultParamsYaml.ExecContextWithParams(execContext.id, execContext.getParams(), EnumsApi.ExecContextState.EXPORTED_TO_ATLAS.code);
+        atlasParamsYaml.experiment = new ExperimentResultParamsYaml.ExperimentWithParams(experiment.id, experiment.getParams());
         atlasParamsYaml.taskIds = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());
 
         StoredToAtlasWithStatus result = new StoredToAtlasWithStatus();
-        result.atlasParamsYamlWithCache = new AtlasParamsYamlWithCache( atlasParamsYaml );
+        result.atlasParamsYamlWithCache = new ExperimentResultParamsYamlWithCache( atlasParamsYaml );
         result.status = Enums.StoringStatus.OK;
         return result;
     }

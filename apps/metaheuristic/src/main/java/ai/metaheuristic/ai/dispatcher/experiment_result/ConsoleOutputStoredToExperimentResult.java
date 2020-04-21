@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.atlas;
+package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.Data;
@@ -27,7 +27,7 @@ import java.util.Collections;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
-public class ConsoleOutputStoredToAtlas extends BaseDataClass {
+public class ConsoleOutputStoredToExperimentResult extends BaseDataClass {
 
     @Data
     @NoArgsConstructor
@@ -36,11 +36,11 @@ public class ConsoleOutputStoredToAtlas extends BaseDataClass {
         public String console;
     }
 
-    public ConsoleOutputStoredToAtlas(String errorMessage) {
+    public ConsoleOutputStoredToExperimentResult(String errorMessage) {
         this.errorMessages = Collections.singletonList(errorMessage);
     }
 
-    public ConsoleOutputStoredToAtlas(File dumpOfConsoleOutputs) {
+    public ConsoleOutputStoredToExperimentResult(File dumpOfConsoleOutputs) {
         this.dumpOfConsoleOutputs = dumpOfConsoleOutputs;
     }
 

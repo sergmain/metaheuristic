@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.AtlasTask;
+import ai.metaheuristic.ai.dispatcher.beans.ExperimentTask;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -32,23 +32,23 @@ import java.util.Set;
 @Repository
 @Transactional
 @Profile("dispatcher")
-public interface AtlasTaskRepository extends CrudRepository<AtlasTask, Long> {
+public interface ExperimentTaskRepository extends CrudRepository<ExperimentTask, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select t.id from AtlasTask t where t.atlasId=:atlasId ")
+    @Query(value="select t.id from ExperimentTask t where t.atlasId=:atlasId ")
     List<Long> findAllAsTaskSimple(Pageable pageable, Long atlasId);
 
     @Transactional(readOnly = true)
-    @Query("SELECT at FROM AtlasTask at where at.atlasId=:atlasId and at.taskId in :ids ")
-    List<AtlasTask> findTasksById(Long atlasId, Collection<Long> ids);
+    @Query("SELECT at FROM ExperimentTask at where at.atlasId=:atlasId and at.taskId in :ids ")
+    List<ExperimentTask> findTasksById(Long atlasId, Collection<Long> ids);
 
     @Transactional(readOnly = true)
-    @Query("SELECT at.id FROM AtlasTask at where at.atlasId=:atlasId ")
+    @Query("SELECT at.id FROM ExperimentTask at where at.atlasId=:atlasId ")
     Set<Long> findIdsByAtlasId(Long atlasId);
 
     @Nullable
     @Transactional(readOnly = true)
-    AtlasTask findByAtlasIdAndTaskId(Long atlasId, Long taskId);
+    ExperimentTask findByAtlasIdAndTaskId(Long atlasId, Long taskId);
 
     void deleteByAtlasId(Long atlasId);
 }

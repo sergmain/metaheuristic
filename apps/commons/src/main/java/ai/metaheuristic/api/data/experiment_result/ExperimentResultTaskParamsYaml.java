@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,40 +14,42 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.beans;
+package ai.metaheuristic.api.data.experiment_result;
 
+import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.NonNull;
-
-import javax.persistence.*;
-import java.io.Serializable;
+import org.springframework.lang.Nullable;
 
 /**
  * @author Serge
  * Date: 8/3/2019
- * Time: 1:15 AM
+ * Time: 12:57 PM
  */
-@Entity
-@Table(name = "MH_ATLAS_TASK")
+
 @Data
 @NoArgsConstructor
-public class AtlasTask implements Serializable {
-    private static final long serialVersionUID = -1225513309547284431L;
+public class ExperimentResultTaskParamsYaml implements BaseParams {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    public final int version = 1;
 
-    @Version
-    public Integer version;
+    @Override
+    public boolean checkIntegrity() {
+        if (taskId==null) {
+            throw new IllegalArgumentException("(taskId==null)");
+        }
+        return true;
+    }
 
-    @Column(name = "ATLAS_ID")
-    public Long atlasId;
-
-    @Column(name = "TASK_ID")
     public Long taskId;
+    public String taskParams;
+    public int execState;
 
-    @Column(name = "PARAMS")
-    public String params;
+    public Long completedOn;
+    public boolean completed;
+    public Long assignedOn;
+    public @Nullable String typeAsString;
+
+    public String metrics;
+    public String functionExecResults;
 }

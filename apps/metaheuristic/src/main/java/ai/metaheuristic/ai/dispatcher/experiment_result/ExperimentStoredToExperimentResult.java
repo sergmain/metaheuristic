@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.atlas;
+package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -30,23 +30,27 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.Nullable;
 
 import java.util.*;
 
 @Data
 @NoArgsConstructor
-public class ExperimentStoredToAtlas {
+public class ExperimentStoredToExperimentResult {
 
+    @Nullable
     @JsonIgnore
     public ExperimentParamsYaml.ExperimentFeature getFeature(Long featureId) {
         return experiment.getExperimentParamsYaml().processing.features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
     }
 
+    @Nullable
     @JsonIgnore
     public TaskOnShelf getTask(Long taskId) {
         return tasks.stream().filter(o -> Objects.equals(o.id, taskId)).findAny().orElse(null);
     }
 
+    @Nullable
     @JsonIgnore
     public ExperimentParamsYaml.ExperimentTaskFeature getExperimentTaskFeature(Long taskId) {
         return experiment.getExperimentParamsYaml().processing.taskFeatures
@@ -123,7 +127,7 @@ public class ExperimentStoredToAtlas {
     public ExperimentOnShelf experiment;
     public List<TaskOnShelf> tasks = new ArrayList<>();
 
-    public ExperimentStoredToAtlas(SourceCode sourceCode, ExecContext execContext, Experiment experiment, List<Task> tasks) {
+    public ExperimentStoredToExperimentResult(SourceCode sourceCode, ExecContext execContext, Experiment experiment, List<Task> tasks) {
 
         this.sourceCode = new SourceCodeOnShelf(sourceCode);
         this.execContext = new ExecContextOnShelf(execContext);

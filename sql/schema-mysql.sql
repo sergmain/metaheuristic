@@ -220,7 +220,7 @@ CREATE TABLE mh_exec_context
     STATE           smallint not null default 0
 );
 
-CREATE TABLE mh_atlas
+CREATE TABLE mh_experiment_result
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
@@ -232,20 +232,20 @@ CREATE TABLE mh_atlas
     EXPERIMENT    LONGTEXT NOT NULL
 );
 
-CREATE TABLE mh_atlas_task
+CREATE TABLE mh_experiment_task
 (
-    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,
-    ATLAS_ID    NUMERIC(10, 0)   NOT NULL,
-    TASK_ID     NUMERIC(10, 0)   NOT NULL,
-    PARAMS      MEDIUMTEXT not null
+    ID                      INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION                 INT UNSIGNED    NOT NULL,
+    EXPERIMENT_RESULT_ID    NUMERIC(10, 0)   NOT NULL,
+    TASK_ID                 NUMERIC(10, 0)   NOT NULL,
+    PARAMS                  MEDIUMTEXT not null
 );
 
-CREATE INDEX mh_atlas_task_atlas_id_idx
-    ON mh_atlas_task (ATLAS_ID);
+CREATE INDEX mh_experiment_task_experiment_result_id_idx
+    ON mh_experiment_task (EXPERIMENT_RESULT_ID);
 
-CREATE INDEX mh_atlas_task_atlas_id_task_id_idx
-    ON mh_atlas_task (ATLAS_ID, TASK_ID);
+CREATE UNIQUE INDEX mh_experiment_task_experiment_result_id_task_id_idx
+    ON mh_experiment_task (EXPERIMENT_RESULT_ID, TASK_ID);
 
 create table mh_batch
 (

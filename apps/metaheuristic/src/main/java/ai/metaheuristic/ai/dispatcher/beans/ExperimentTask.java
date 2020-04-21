@@ -18,18 +18,21 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
+/**
+ * @author Serge
+ * Date: 8/3/2019
+ * Time: 1:15 AM
+ */
 @Entity
-@Table(name = "MH_ATLAS")
+@Table(name = "mh_experiment_task")
 @Data
 @NoArgsConstructor
-public class Atlas implements Serializable {
-    private static final long serialVersionUID = -1225513309547283331L;
+public class ExperimentTask implements Serializable {
+    private static final long serialVersionUID = -1225513309547284431L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,24 +41,12 @@ public class Atlas implements Serializable {
     @Version
     public Integer version;
 
-    @NotNull
-    @Column(name = "COMPANY_ID")
-    public Long companyId;
+    @Column(name = "EXPERIMENT_RESULT_ID")
+    public Long atlasId;
 
-    // even thought db field is 'experiment'  bean's field will be params
-    @Column(name = "EXPERIMENT")
+    @Column(name = "TASK_ID")
+    public Long taskId;
+
+    @Column(name = "PARAMS")
     public String params;
-
-    @Column(name = "NAME")
-    public String name;
-
-    @Column(name = "DESCRIPTION")
-    public String description;
-
-    @Column(name = "CODE")
-    public String code;
-
-    @Column(name="CREATED_ON")
-    public long createdOn;
-
 }

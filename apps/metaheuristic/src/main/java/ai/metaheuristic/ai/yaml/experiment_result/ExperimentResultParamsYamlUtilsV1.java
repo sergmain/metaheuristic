@@ -14,16 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.atlas;
+package ai.metaheuristic.ai.yaml.experiment_result;
 
-import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
-import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV1;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -31,8 +28,8 @@ import org.yaml.snakeyaml.Yaml;
  * Date: 6/22/2019
  * Time: 11:36 PM
  */
-public class AtlasParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<AtlasParamsYamlV1, AtlasParamsYaml, Void, Void, Void, Void> {
+public class ExperimentResultParamsYamlUtilsV1
+        extends AbstractParamsYamlUtils<ExperimentResultParamsYamlV1, ExperimentResultParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -42,18 +39,18 @@ public class AtlasParamsYamlUtilsV1
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(AtlasParamsYamlV1.class);
+        return YamlUtils.init(ExperimentResultParamsYamlV1.class);
     }
 
     @NonNull
     @Override
-    public AtlasParamsYaml upgradeTo(@NonNull AtlasParamsYamlV1 src, Long ... vars) {
+    public ExperimentResultParamsYaml upgradeTo(@NonNull ExperimentResultParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
-        AtlasParamsYaml trg = new AtlasParamsYaml();
+        ExperimentResultParamsYaml trg = new ExperimentResultParamsYaml();
         trg.createdOn = src.createdOn;
-        trg.sourceCode = new AtlasParamsYaml.SourceCodeWithParams(src.sourceCode.sourceCodeId, src.sourceCode.sourceCodeParams);
-        trg.execContext = new AtlasParamsYaml.ExecContextWithParams(src.execContext.execContextId, src.execContext.execContextParams, src.execContext.execState);
-        trg.experiment = new AtlasParamsYaml.ExperimentWithParams(src.experiment.experimentId, src.experiment.experimentParams);
+        trg.sourceCode = new ExperimentResultParamsYaml.SourceCodeWithParams(src.sourceCode.sourceCodeId, src.sourceCode.sourceCodeParams);
+        trg.execContext = new ExperimentResultParamsYaml.ExecContextWithParams(src.execContext.execContextId, src.execContext.execContextParams, src.execContext.execState);
+        trg.experiment = new ExperimentResultParamsYaml.ExperimentWithParams(src.experiment.experimentId, src.experiment.experimentParams);
         trg.taskIds = src.taskIds;
 
         trg.checkIntegrity();
@@ -77,14 +74,14 @@ public class AtlasParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(AtlasParamsYamlV1 yaml) {
+    public String toString(ExperimentResultParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public AtlasParamsYamlV1 to(String s) {
-        final AtlasParamsYamlV1 p = getYaml().load(s);
+    public ExperimentResultParamsYamlV1 to(String s) {
+        final ExperimentResultParamsYamlV1 p = getYaml().load(s);
         return p;
     }
 

@@ -16,12 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
-import ai.metaheuristic.ai.dispatcher.atlas.AtlasSimple;
-import ai.metaheuristic.ai.dispatcher.beans.Atlas;
+import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultSimple;
+import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
-import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-public class AtlasData {
+public class ExperimentResultData {
 
     public static final PlotData EMPTY_PLOT_DATA = new PlotData();
 
@@ -65,7 +65,7 @@ public class AtlasData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ExperimentInfoExtended extends BaseDataClass {
-        public Atlas atlas;
+        public ExperimentResult experimentResult;
         public ExperimentApiData.ExperimentData experiment;
         public ExperimentInfo experimentInfo;
 
@@ -78,7 +78,7 @@ public class AtlasData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ExperimentDataOnly extends BaseDataClass {
-        public Long atlasId;
+        public Long experimentResultId;
         public ExperimentApiData.ExperimentData experiment;
 
         public ExperimentDataOnly(String errorMessage) {
@@ -90,16 +90,16 @@ public class AtlasData {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class AtlasExperiments extends BaseDataClass {
-        public Slice<Atlas> items;
+    public static class ExperimentResultExperiments extends BaseDataClass {
+        public Slice<ExperimentResult> items;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class AtlasSimpleExperiments extends BaseDataClass {
-        public Slice<AtlasSimple> items;
+    public static class ExperimentResultSimpleExperiments extends BaseDataClass {
+        public Slice<ExperimentResultSimple> items;
     }
 
     @Data
@@ -160,7 +160,7 @@ public class AtlasData {
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class TasksResult extends BaseDataClass {
-        public Slice<AtlasTaskParamsYaml> items;
+        public Slice<ExperimentResultTaskParamsYaml> items;
     }
 
     @Data
@@ -169,7 +169,7 @@ public class AtlasData {
     public static class ExperimentFeatureExtendedResult extends BaseDataClass {
         public MetricsResult metricsResult;
         public HyperParamResult hyperParamResult;
-        public Slice<AtlasTaskParamsYaml> tasks;
+        public Slice<ExperimentResultTaskParamsYaml> tasks;
         public ExperimentApiData.ExperimentFeatureData experimentFeature;
         public ConsoleResult consoleResult;
 

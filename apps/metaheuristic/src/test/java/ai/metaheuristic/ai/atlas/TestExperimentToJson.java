@@ -17,11 +17,11 @@
 package ai.metaheuristic.ai.atlas;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.atlas.AtlasService;
+import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
-import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +42,7 @@ public class TestExperimentToJson extends PreparingSourceCode {
     private ExperimentTopLevelService experimentTopLevelService;
 
     @Autowired
-    private AtlasService atlasService;
+    private ExperimentResultService atlasService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -59,13 +59,13 @@ public class TestExperimentToJson extends PreparingSourceCode {
         assertNotNull(experiment.getId());
 //        assertNotNull(experiment.getExecContextId());
 
-        AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(sourceCode, execContextForTest, experiment);
+        ExperimentResultService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(sourceCode, execContextForTest, experiment);
         assertEquals(Enums.StoringStatus.OK, r.status);
 
-        String yaml = AtlasParamsYamlUtils.BASE_YAML_UTILS.toString(r.atlasParamsYamlWithCache.atlasParams);
+        String yaml = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(r.atlasParamsYamlWithCache.atlasParams);
 
         System.out.println("yaml =\n" + yaml);
-        AtlasParamsYamlWithCache atywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(yaml));
+        ExperimentResultParamsYamlWithCache atywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(yaml));
         System.out.println("atywc = " + atywc);
 
         // TODO 2019-07-13 add here comparisons of r.atlasParamsYamlWithCache.atlasParams and atywc

@@ -2,11 +2,11 @@
      layout:decorate="~{layout-ai}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}"
 >
-    <!--/*@thymesVar id="tasks" type="Slice<ai.metaheuristic.api.data.atlas.AtlasParamsYaml$TaskWithParams>"*/-->
+    <!--/*@thymesVar id="tasks" type="Slice<ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml$TaskWithParams>"*/-->
     <!--/*@thymesVar id="feature" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentFeatureData"*/-->
-    <!--/*@thymesVar id="consoleResult" type="ai.metaheuristic.ai.dispatcher.data.AtlasData$ConsoleResult"*/-->
-    <!--/*@thymesVar id="params" type="ai.metaheuristic.ai.dispatcher.data.AtlasData$HyperParamResult"*/-->
-    <!--/*@thymesVar id="metrics" type="ai.metaheuristic.ai.dispatcher.data.AtlasData$MetricsResult"*/-->
+    <!--/*@thymesVar id="consoleResult" type="ai.metaheuristic.ai.dispatcher.data.ExperimentResultData$ConsoleResult"*/-->
+    <!--/*@thymesVar id="params" type="ai.metaheuristic.ai.dispatcher.data.ExperimentResultData$HyperParamResult"*/-->
+    <!--/*@thymesVar id="metrics" type="ai.metaheuristic.ai.dispatcher.data.ExperimentResultData$MetricsResult"*/-->
     <!--/*@thymesVar id="atlasId" type="java.lang.Long"*/-->
     <!--/*@thymesVar id="experimentId" type="java.lang.Long"*/-->
 

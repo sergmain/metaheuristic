@@ -14,12 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data.atlas;
+package ai.metaheuristic.api.data.experiment_result;
 
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
 
 /**
  * @author Serge
@@ -29,7 +28,7 @@ import org.springframework.lang.Nullable;
 
 @Data
 @NoArgsConstructor
-public class AtlasTaskParamsYaml implements BaseParams {
+public class ExperimentResultTaskParamsYamlV1 implements BaseParams {
 
     public final int version = 1;
 
@@ -48,7 +47,7 @@ public class AtlasTaskParamsYaml implements BaseParams {
     public Long completedOn;
     public boolean completed;
     public Long assignedOn;
-    public @Nullable String typeAsString;
+    public String typeAsString;
 
     public String metrics;
     public String functionExecResults;

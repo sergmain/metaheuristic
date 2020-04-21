@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.atlas.AtlasService;
+import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -52,7 +52,7 @@ public class ExecContextSchedulerService {
     private final ExecContextService execContextService;
     private final ExecContextRepository execContextRepository;
     private final TaskRepository taskRepository;
-    private final AtlasService atlasService;
+    private final ExperimentResultService atlasService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 

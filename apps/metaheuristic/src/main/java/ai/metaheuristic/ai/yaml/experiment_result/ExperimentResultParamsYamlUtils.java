@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.atlas;
+package ai.metaheuristic.ai.yaml.experiment_result;
 
-import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
@@ -26,17 +26,15 @@ import java.util.Map;
  * Date: 6/22/2019
  * Time: 11:36 PM
  */
-public class AtlasTaskParamsYamlUtils {
+public class ExperimentResultParamsYamlUtils {
 
-    private static final AtlasTaskParamsYamlUtilsV1 YAML_UTILS_V_1 = new AtlasTaskParamsYamlUtilsV1();
-    private static final AtlasTaskParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final ExperimentResultParamsYamlUtilsV1 YAML_UTILS_V_1 = new ExperimentResultParamsYamlUtilsV1();
+    private static final ExperimentResultParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    public static final BaseYamlUtils<AtlasTaskParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<ExperimentResultParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1
             ),
             DEFAULT_UTILS
     );
-
-
 }

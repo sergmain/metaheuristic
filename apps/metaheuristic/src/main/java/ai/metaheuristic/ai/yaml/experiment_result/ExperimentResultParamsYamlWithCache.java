@@ -14,14 +14,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.atlas;
+package ai.metaheuristic.ai.yaml.experiment_result;
 
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
-import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -36,9 +36,9 @@ import java.util.Objects;
 
 @Data
 @NoArgsConstructor
-public class AtlasParamsYamlWithCache {
+public class ExperimentResultParamsYamlWithCache {
 
-    public AtlasParamsYaml atlasParams = null;
+    public ExperimentResultParamsYaml atlasParams = null;
 
     // for caching
     private SourceCodeParamsYaml sourceCodeParamsYaml = null;
@@ -113,7 +113,7 @@ public class AtlasParamsYamlWithCache {
         return execContextParamsYaml;
     };
 
-    public AtlasParamsYamlWithCache(AtlasParamsYaml atlasParams) {
+    public ExperimentResultParamsYamlWithCache(ExperimentResultParamsYaml atlasParams) {
         this.atlasParams = atlasParams;
     }
 }

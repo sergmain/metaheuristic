@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.atlas;
+package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.api.dispatcher.Task;
@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 @Service
 @Slf4j
 @Profile("dispatcher")
-public class ConsoleFormAtlasService {
+public class ConsoleFormExperimentResultService {
 
     // TODO 2019-10-02 if at 2019-11-02 there isn't any case for using this code, it has to be deleted
 
@@ -48,16 +48,16 @@ public class ConsoleFormAtlasService {
 
     private final TaskRepository taskRepository;
 
-    public ConsoleFormAtlasService(TaskRepository taskRepository) {
+    public ConsoleFormExperimentResultService(TaskRepository taskRepository) {
         this.taskRepository = taskRepository;
     }
 
     @Transactional
-    public ConsoleOutputStoredToAtlas collectConsoleOutputs(Long execContextId) {
+    public ConsoleOutputStoredToExperimentResult collectConsoleOutputs(Long execContextId) {
 
         File tempDir = DirUtils.createTempDir("store-console-");
         if (tempDir == null) {
-            return new ConsoleOutputStoredToAtlas("#605.10 Can't create temporary directory");
+            return new ConsoleOutputStoredToExperimentResult("#605.10 Can't create temporary directory");
         }
         try {
             File output = File.createTempFile("output-", ".txt", tempDir);
@@ -67,7 +67,7 @@ public class ConsoleFormAtlasService {
                  final PrintWriter pw = new PrintWriter(os, false, StandardCharsets.UTF_8)
             ) {
                 stream.forEach(o -> {
-                    ConsoleOutputStoredToAtlas.TaskOutput taskOutput = new ConsoleOutputStoredToAtlas.TaskOutput();
+                    ConsoleOutputStoredToExperimentResult.TaskOutput taskOutput = new ConsoleOutputStoredToExperimentResult.TaskOutput();
                     taskOutput.taskId = o.getId();
                     taskOutput.console = o.getFunctionExecResults();
                     try {
@@ -81,20 +81,20 @@ public class ConsoleFormAtlasService {
                     }
                 });
             }
-            return new ConsoleOutputStoredToAtlas(output);
+            return new ConsoleOutputStoredToExperimentResult(output);
         }
         catch(BreakFromLambdaException e) {
             String es = "#605.18 Error while dumping of console outputs " + e.getCause().toString();
             log.error(es);
-            return new ConsoleOutputStoredToAtlas(es);
+            return new ConsoleOutputStoredToExperimentResult(es);
         } catch (IOException e) {
             String es = "#605.14 Error while creating dump of console outputs " + e.toString();
             log.error(es);
-            return new ConsoleOutputStoredToAtlas(es);
+            return new ConsoleOutputStoredToExperimentResult(es);
         }
     }
 
-    ConsoleOutputStoredToAtlas.TaskOutput fromJson(String json) throws IOException {
-        return mapper.readValue(json, ConsoleOutputStoredToAtlas.TaskOutput.class);
+    ConsoleOutputStoredToExperimentResult.TaskOutput fromJson(String json) throws IOException {
+        return mapper.readValue(json, ConsoleOutputStoredToExperimentResult.TaskOutput.class);
     }
 }

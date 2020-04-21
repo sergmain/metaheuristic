@@ -14,9 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data.atlas;
+package ai.metaheuristic.api.data.experiment_result;
 
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,14 +28,14 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class AtlasParamsYamlV1 implements BaseParams {
+public class ExperimentResultParamsYaml implements BaseParams {
 
     public final int version = 1;
 
     @Override
     public boolean checkIntegrity() {
         if (sourceCode ==null || execContext ==null || experiment==null || taskIds==null) {
-            throw new IllegalArgumentException("(sourceCode==null || execContext==null || experiment==null || taskIds==null)");
+            throw new CheckIntegrityFailedException("(sourceCode==null || execContext==null || experiment==null || taskIds==null)");
         }
         return true;
     }
@@ -43,7 +44,7 @@ public class AtlasParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class SourceCodeWithParamsV1 {
+    public static class SourceCodeWithParams {
         public Long sourceCodeId;
         public String sourceCodeParams;
     }
@@ -52,7 +53,7 @@ public class AtlasParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class ExperimentWithParamsV1 {
+    public static class ExperimentWithParams {
         public Long experimentId;
         public String experimentParams;
     }
@@ -61,15 +62,15 @@ public class AtlasParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class ExecContextWithParamsV1 {
+    public static class ExecContextWithParams {
         public Long execContextId;
         public String execContextParams;
         public int execState;
     }
 
     public long createdOn;
-    public SourceCodeWithParamsV1 sourceCode;
-    public ExecContextWithParamsV1 execContext;
-    public ExperimentWithParamsV1 experiment;
+    public SourceCodeWithParams sourceCode;
+    public ExecContextWithParams execContext;
+    public ExperimentWithParams experiment;
     public List<Long> taskIds = new ArrayList<>();
 }

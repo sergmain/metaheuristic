@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.atlas;
+package ai.metaheuristic.ai.yaml.experiment_result;
 
-import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
-import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYamlV1;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -29,8 +29,8 @@ import org.yaml.snakeyaml.Yaml;
  * Date: 6/22/2019
  * Time: 11:36 PM
  */
-public class AtlasTaskParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<AtlasTaskParamsYamlV1, AtlasTaskParamsYaml, Void, Void, Void, Void> {
+public class ExperimentResultTaskParamsYamlUtilsV1
+        extends AbstractParamsYamlUtils<ExperimentResultTaskParamsYamlV1, ExperimentResultTaskParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -40,14 +40,14 @@ public class AtlasTaskParamsYamlUtilsV1
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(AtlasTaskParamsYamlV1.class);
+        return YamlUtils.init(ExperimentResultTaskParamsYamlV1.class);
     }
 
     @NonNull
     @Override
-    public AtlasTaskParamsYaml upgradeTo(@NonNull AtlasTaskParamsYamlV1 src, Long ... vars) {
+    public ExperimentResultTaskParamsYaml upgradeTo(@NonNull ExperimentResultTaskParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
-        AtlasTaskParamsYaml trg = new AtlasTaskParamsYaml();
+        ExperimentResultTaskParamsYaml trg = new ExperimentResultTaskParamsYaml();
         BeanUtils.copyProperties(src, trg);
         trg.checkIntegrity();
         return trg;
@@ -70,15 +70,15 @@ public class AtlasTaskParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(AtlasTaskParamsYamlV1 paramsYaml) {
+    public String toString(ExperimentResultTaskParamsYamlV1 paramsYaml) {
         return getYaml().dump(paramsYaml);
     }
 
     @NonNull
     @Override
-    public AtlasTaskParamsYamlV1 to(String s) {
+    public ExperimentResultTaskParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable
-        final AtlasTaskParamsYamlV1 p = getYaml().load(s);
+        final ExperimentResultTaskParamsYamlV1 p = getYaml().load(s);
         return p;
     }
 

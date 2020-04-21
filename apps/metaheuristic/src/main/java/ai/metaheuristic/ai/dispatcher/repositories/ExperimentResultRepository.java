@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.atlas.AtlasSimple;
-import ai.metaheuristic.ai.dispatcher.beans.Atlas;
+import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultSimple;
+import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -29,15 +29,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @Profile("dispatcher")
-public interface AtlasRepository extends CrudRepository<Atlas, Long> {
+public interface ExperimentResultRepository extends CrudRepository<ExperimentResult, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.atlas.AtlasSimple(" +
-            "b.id, b.name, b.description, b.createdOn ) from Atlas b order by b.id desc")
-    Slice<AtlasSimple> findAllAsSimple(Pageable pageable);
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.experiment_result.AtlasSimple(" +
+            "b.id, b.name, b.description, b.createdOn ) from ExperimentResult b order by b.id desc")
+    Slice<ExperimentResultSimple> findAllAsSimple(Pageable pageable);
 
     @Nullable
     @Transactional(readOnly = true)
-    @Query(value="select a.id from Atlas a where a.id=:atlasId")
+    @Query(value="select a.id from ExperimentResult a where a.id=:atlasId")
     Long findIdById(Long atlasId);
 }
