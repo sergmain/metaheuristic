@@ -42,6 +42,9 @@ public class ExperimentApiData {
     public static final PlotData EMPTY_PLOT_DATA = new PlotData();
 */
 
+    /**
+     * !!! DO NOT CHANGE THAT CLASS (HyperParam) UNDER ANY CIRCUMSTANCES !!!
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

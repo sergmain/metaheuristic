@@ -46,22 +46,12 @@ public class ExperimentParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class HyperParamV1 {
-        public String key;
-        public String values;
-        public Integer variants;
-    }
-
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class ExperimentYamlV1 {
         public String name;
         public String description;
         public String code;
 
-        public final List<HyperParamV1> hyperParams = new ArrayList<>();
+        public final List<ExperimentApiData.HyperParam> hyperParams = new ArrayList<>();
 
 /*
         public int seed = 42;

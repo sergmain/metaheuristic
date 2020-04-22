@@ -17,12 +17,10 @@
 package ai.metaheuristic.api.data.experiment;
 
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -51,22 +49,12 @@ public class ExperimentParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class HyperParam {
-        public String key;
-        public String values;
-        public Integer variants;
-    }
-
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class ExperimentYaml {
         public String name;
         public String description;
         public String code;
 
-        public final List<HyperParam> hyperParams = new ArrayList<>();
+        public final List<ExperimentApiData.HyperParam> hyperParams = new ArrayList<>();
 
     /*
         public int seed = 42;

@@ -51,12 +51,8 @@ public class ExperimentParamsYamlUtilsV1
         ExperimentParamsYamlV1 trg = new ExperimentParamsYamlV1();
         trg.createdOn = src.createdOn;
         BeanUtils.copyProperties(src.experimentYaml, trg.experimentYaml, "hyperParams");
-        trg.experimentYaml.hyperParams = src.experimentYaml.hyperParams
-                .stream()
-                .map(o->new ExperimentParamsYamlV1.HyperParamV1(o.key, o.values, o.variants))
-                .collect(Collectors.toList());
+        trg.experimentYaml.hyperParams.addAll(src.experimentYaml.hyperParams);
 
-//        BeanUtils.copyProperties(src.processing, trg.processing, "taskFeatures", "features");
         trg.processing.isAllTaskProduced = src.processing.isAllTaskProduced;
         trg.processing.isFeatureProduced = src.processing.isFeatureProduced;
         trg.processing.maxValueCalculated = false;

@@ -15,63 +15,34 @@
  */
 package ai.metaheuristic.ai.dispatcher.experiment;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
-import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
-import ai.metaheuristic.ai.utils.permutation.Permutation;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.task.TaskApiData;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.task.TaskWIthType;
-import ai.metaheuristic.api.dispatcher.Task;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.EventListener;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
@@ -84,18 +55,10 @@ import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
 @RequiredArgsConstructor
 public class ExperimentService {
 
-    private final Globals globals;
-    private final ApplicationEventMulticaster eventMulticaster;
-
-    private final ParamsSetter paramsSetter;
     private final MetricsMaxValueCollector metricsMaxValueCollector;
-    private final TaskRepository taskRepository;
-    private final TaskPersistencer taskPersistencer;
-    private final FunctionService functionService;
     private final ExecContextCache execContextCache;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
-    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     @Async
     @EventListener
@@ -194,22 +157,23 @@ public class ExperimentService {
         return featureData;
     }
 
-    // TODO 2019-07-13 Need to optimize the set of getHyperParamsAsMap() methods
     public static Map<String, Map<String, Integer>> getHyperParamsAsMap(ExperimentParamsYaml epy) {
         return getHyperParamsAsMap(epy.experimentYaml.hyperParams, true);
     }
 
+/*
     public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment, boolean isFull) {
         return getHyperParamsAsMap(experiment.getExperimentParamsYaml().experimentYaml.hyperParams, isFull);
     }
+*/
 
-    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<HyperParam> experimentHyperParams) {
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentApiData.HyperParam> experimentHyperParams) {
         return getHyperParamsAsMap(experimentHyperParams, true);
     }
 
-    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<HyperParam> experimentHyperParams, boolean isFull) {
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentApiData.HyperParam> experimentHyperParams, boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
-        for (HyperParam hyperParam : experimentHyperParams) {
+        for (ExperimentApiData.HyperParam hyperParam : experimentHyperParams) {
             InlineVariableUtils.NumberOfVariants ofVariants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues() );
             Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);
@@ -930,7 +894,11 @@ public class ExperimentService {
         }
         return EnumsApi.SourceCodeProducingStatus.OK;
     }
-*/
+
+    private String getModelFilename(Task task) {
+        return "task-"+task.getId()+"-"+ Consts.ML_MODEL_BIN;
+    }
+
 
     public @Nullable Function getFunction(Map<String, Function> localCache, String functionCode) {
         Function function = localCache.get(functionCode);
@@ -943,10 +911,6 @@ public class ExperimentService {
         return function;
     }
 
-    private String getModelFilename(Task task) {
-        return "task-"+task.getId()+"-"+ Consts.ML_MODEL_BIN;
-    }
-
     public void produceFeaturePermutations(boolean isPersist, final Experiment experiment, List<String> inputResourceCodes, AtomicInteger total) {
         produceFeaturePermutations(experiment, inputResourceCodes, total);
         if (isPersist) {
@@ -955,7 +919,7 @@ public class ExperimentService {
 
     }
 
-    public static void produceFeaturePermutations(final Experiment experiment, List<String> inputVariables, AtomicInteger total) {
+    private static void produceFeaturePermutations(final Experiment experiment, List<String> inputVariables, AtomicInteger total) {
 //        @Query("SELECT f.checksumIdCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
 //        List<String> getChecksumIdCodesByExperimentId(long experimentId);
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
@@ -989,4 +953,5 @@ public class ExperimentService {
         epy.processing.setFeatureProduced(true);
         experiment.updateParams(epy);
     }
+*/
 }

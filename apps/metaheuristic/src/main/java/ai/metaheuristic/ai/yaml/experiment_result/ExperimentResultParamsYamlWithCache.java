@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -60,7 +61,7 @@ public class ExperimentResultParamsYamlWithCache {
 
     public Map<String, Map<String, Integer>> getHyperParamsAsMap(boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
-        for (ExperimentParamsYaml.HyperParam hyperParam : getExperimentParamsYaml().experimentYaml.getHyperParams()) {
+        for (ExperimentApiData.HyperParam hyperParam : getExperimentParamsYaml().experimentYaml.getHyperParams()) {
             InlineVariableUtils.NumberOfVariants ofVariants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues() );
             Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);

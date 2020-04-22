@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.SourceCode;
@@ -63,7 +64,7 @@ public class ExperimentStoredToExperimentResult {
     @JsonIgnore
     public Map<String, Map<String, Integer>> getHyperParamsAsMap(boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
-        for (ExperimentParamsYaml.HyperParam hyperParam : experiment.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
+        for (ExperimentApiData.HyperParam hyperParam : experiment.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
             InlineVariableUtils.NumberOfVariants ofVariants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues() );
             Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);

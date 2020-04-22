@@ -347,7 +347,7 @@ public class ExperimentResultTopLevelService {
 
 
 
-        for (HyperParam hyperParams : ypywc.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
+        for (ExperimentApiData.HyperParam hyperParams : ypywc.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
             if (StringUtils.isBlank(hyperParams.getValues())) {
                 continue;
             }
@@ -674,7 +674,7 @@ public class ExperimentResultTopLevelService {
         );
 
         ExperimentResultData.HyperParamResult hyperParamResult = new ExperimentResultData.HyperParamResult();
-        for (HyperParam hyperParam : epy.experimentYaml.getHyperParams()) {
+        for (ExperimentApiData.HyperParam hyperParam : epy.experimentYaml.getHyperParams()) {
             InlineVariableUtils.NumberOfVariants variants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues());
             ExperimentResultData.HyperParamList list = new ExperimentResultData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
