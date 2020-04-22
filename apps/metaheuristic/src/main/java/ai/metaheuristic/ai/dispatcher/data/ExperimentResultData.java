@@ -18,13 +18,11 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultSimple;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -57,8 +55,6 @@ public class ExperimentResultData {
     public static class ExperimentInfo {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentApiData.ExperimentFeatureData> features;
-        public ExecContext execContext;
-        public EnumsApi.ExecContextState execContextState;
     }
 
     @Data
@@ -117,8 +113,27 @@ public class ExperimentResultData {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HyperParamElement {
+        String param;
+        boolean isSelected;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HyperParamList {
+        String key;
+        public final List<HyperParamElement> list = new ArrayList<>();
+        public boolean isSelectable() {
+            return list.size()>1;
+        }
+    }
+
+    @Data
     public static class HyperParamResult {
-        public final List<ExperimentApiData.HyperParamList> elements = new ArrayList<>();
+        public final List<HyperParamList> elements = new ArrayList<>();
 
         /**
          * for plotting we need at least 2 InlineVariable to be selected.
@@ -127,7 +142,7 @@ public class ExperimentResultData {
          */
         public boolean useAllHyperParamsInPlot() {
             int count=0;
-            for (ExperimentApiData.HyperParamList element : elements) {
+            for (HyperParamList element : elements) {
                 if (element.list.size()>1) {
                     count++;
                 }
@@ -177,6 +192,5 @@ public class ExperimentResultData {
             addErrorMessage(errorMessage);
         }
     }
-
 
 }

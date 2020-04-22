@@ -49,7 +49,7 @@ public class ExperimentResultParamsYamlUtilsV1
         ExperimentResultParamsYaml trg = new ExperimentResultParamsYaml();
         trg.createdOn = src.createdOn;
         trg.sourceCode = new ExperimentResultParamsYaml.SourceCodeWithParams(src.sourceCode.sourceCodeId, src.sourceCode.sourceCodeParams);
-        trg.execContext = new ExperimentResultParamsYaml.ExecContextWithParams(src.execContext.execContextId, src.execContext.execContextParams, src.execContext.execState);
+        trg.execContext = new ExperimentResultParamsYaml.ExecContextWithParams(src.execContext.execContextId, src.execContext.execContextParams);
         trg.experiment = new ExperimentResultParamsYaml.ExperimentWithParams(src.experiment.experimentId, src.experiment.experimentParams);
         trg.taskIds = src.taskIds;
 

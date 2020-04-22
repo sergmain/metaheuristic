@@ -9,7 +9,7 @@
         </li>
         <li sec:authorize="hasAnyRole('ADMIN', 'DATA')"
             th:attr="class=${#httpServletRequest.requestURI.startsWith('/dispatcher/ai/experiment-result/experiment-results')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="dispatcher/ai/experiment-result/experiment-result-experiments.html" th:href="@{/dispatcher/ai/experiment-result/experiment-result-experiments}">Experiment results</a>
+            <a class="pure-menu-link" href="dispatcher/ai/experiment-result/experiment-results.html" th:href="@{/dispatcher/ai/experiment-result/experiment-results}">Experiment results</a>
         </li>
     </ul>
 </div>

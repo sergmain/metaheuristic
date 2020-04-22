@@ -213,7 +213,6 @@ public abstract class PreparingCore {
             epy.experimentYaml.setCode(TEST_EXPERIMENT_CODE_01);
             epy.experimentYaml.setName("Test experiment.");
             epy.experimentYaml.setDescription("Test experiment. Must be deleted automatically.");
-            epy.experimentYaml.setSeed(42);
             epy.processing.setAllTaskProduced(false);
 
             // set hyper params for experiment

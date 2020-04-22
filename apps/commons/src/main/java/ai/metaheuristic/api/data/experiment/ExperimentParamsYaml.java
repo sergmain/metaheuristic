@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class ExperimentParamsYaml implements BaseParams {
 
+    public final int version=1;
+
     @Override
     public boolean checkIntegrity() {
         if (experimentYaml.code==null || experimentYaml.code.isBlank()) {
@@ -55,6 +57,7 @@ public class ExperimentParamsYaml implements BaseParams {
         public Integer variants;
     }
 
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -63,12 +66,15 @@ public class ExperimentParamsYaml implements BaseParams {
         public String description;
         public String code;
 
+        public final List<HyperParam> hyperParams = new ArrayList<>();
+
+    /*
         public int seed = 42;
-        public @NonNull final List<HyperParam> hyperParams = new ArrayList<>();
 
         public @Nullable String fitFunction;
         public @Nullable String predictFunction;
         public @Nullable String checkFittingFunction;
+*/
     }
 
     @Data
@@ -108,12 +114,11 @@ public class ExperimentParamsYaml implements BaseParams {
         public List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
     }
 
-    public final int version=1;
     public long createdOn;
     public ExperimentYaml experimentYaml = new ExperimentYaml();
     public ExperimentProcessing processing = new ExperimentProcessing();
 
-
+/*
     @JsonIgnore
     public List<String> getFunctionCodes() {
         final List<String> functionCodes = new ArrayList<>();
@@ -130,9 +135,10 @@ public class ExperimentParamsYaml implements BaseParams {
         return functionCodes;
     }
 
+*/
+    @Nullable
     @JsonIgnore
-    public @Nullable ExperimentParamsYaml.ExperimentFeature getFeature(Long featureId) {
-        //noinspection UnnecessaryLocalVariable
+    public ExperimentParamsYaml.ExperimentFeature getFeature(Long featureId) {
         ExperimentParamsYaml.ExperimentFeature feature = processing.features
                 .stream().filter(o -> o.id.equals(featureId)).findFirst().orElse(null);
 
@@ -141,7 +147,6 @@ public class ExperimentParamsYaml implements BaseParams {
 
     @JsonIgnore
     public List<ExperimentParamsYaml.ExperimentTaskFeature> getTaskFeatures(Long featureId) {
-        //noinspection UnnecessaryLocalVariable
         List<ExperimentParamsYaml.ExperimentTaskFeature> taskFeatures = processing.taskFeatures
                 .stream().filter(o -> o.id.equals(featureId)).collect(Collectors.toList());
 
@@ -150,7 +155,6 @@ public class ExperimentParamsYaml implements BaseParams {
 
     @JsonIgnore
     public List<Long> getTaskFeatureIds(Long featureId) {
-        //noinspection UnnecessaryLocalVariable
         List<Long> ids = processing.taskFeatures
                 .stream().filter(o -> o.featureId.equals(featureId)).mapToLong(o->o.taskId).boxed().collect(Collectors.toList());
         return ids;

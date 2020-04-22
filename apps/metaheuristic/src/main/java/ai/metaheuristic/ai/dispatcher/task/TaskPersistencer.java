@@ -91,7 +91,7 @@ public class TaskPersistencer {
                 output.uploaded = true;
                 task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
 
-                boolean allUploaded = tpy.task.outputs.stream().allMatch(o -> o.uploaded);
+                boolean allUploaded = tpy.task.outputs.isEmpty() || tpy.task.outputs.stream().allMatch(o -> o.uploaded);
                 task.setCompleted(allUploaded);
                 task.setCompletedOn(System.currentTimeMillis());
                 task.setResultReceived(allUploaded);

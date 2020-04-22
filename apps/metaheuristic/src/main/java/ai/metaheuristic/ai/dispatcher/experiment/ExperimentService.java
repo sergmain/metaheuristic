@@ -126,11 +126,9 @@ public class ExperimentService {
 
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
         ed.id = e.id;
-        ed.version = e.version;
         ed.code = e.code;
         ed.execContextId = e.execContextId;
         ed.name = params.experimentYaml.name;
-        ed.seed = params.experimentYaml.seed;
         ed.description = params.experimentYaml.description;
         ed.hyperParams.addAll(params.experimentYaml.hyperParams);
         ed.hyperParamsAsMap.putAll(getHyperParamsAsMap(ed.hyperParams));
@@ -149,7 +147,6 @@ public class ExperimentService {
         ed.code = e.code;
         ed.execContextId = e.execContextId;
         ed.name = params.experimentYaml.name;
-        ed.seed = params.experimentYaml.seed;
         ed.description = params.experimentYaml.description;
         ed.createdOn = params.createdOn;
         ed.numberOfTask = params.processing.numberOfTask;
@@ -254,6 +251,41 @@ public class ExperimentService {
         }
     }
 
+    private void updateMaxValueForExperimentFeatures(Long experimentId) {
+        Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
+        if (experiment==null) {
+            return;
+        }
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+
+        List<ExperimentFeature> features = epy.processing.features;
+        log.info("Start calculatingMaxValueOfMetrics");
+        for (ExperimentFeature feature : features) {
+            double value = metricsMaxValueCollector.calcMaxValueForMetrics(epy, feature.getId());
+            log.info("\tFeature #{}, max value: {}", feature.getId(), value);
+            feature.setMaxValue(value);
+        }
+        epy.processing.maxValueCalculated = true;
+        experiment.updateParams(epy);
+        experimentCache.save(experiment);
+    }
+
+    private void resetExperimentByExecContextId(Long execContextId) {
+        Experiment e = experimentRepository.findByExecContextIdForUpdate(execContextId);
+        if (e==null) {
+            return;
+        }
+
+        ExperimentParamsYaml epy = e.getExperimentParamsYaml();
+        epy.processing = new ExperimentProcessing();
+        e.updateParams(epy);
+        e.setExecContextId(null);
+
+        //noinspection UnusedAssignment
+        e = experimentCache.save(e);
+    }
+
+/*
     private static class ParamFilter {
         String key;
         int idx;
@@ -274,105 +306,6 @@ public class ExperimentService {
             }
         }
         return true;
-    }
-
-    public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
-        Experiment experiment= experimentCache.findById(experimentId);
-        if (experiment==null) {
-            return new ExperimentApiData.PlotData();
-        }
-        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-
-        ExperimentFeature feature = epy.processing.features.stream().filter(o->o.id.equals(featureId)).findFirst().orElse(null);
-        if (feature==null) {
-            return new ExperimentApiData.PlotData();
-        }
-
-        ExperimentApiData.PlotData data = findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
-        // TODO 2019-07-23 right now 2D lines plot isn't working. need to investigate
-        //  so it'll be 3D with a fake zero data
-        fixData(data);
-        return data;
-    }
-
-    @SuppressWarnings("Duplicates")
-    private void fixData(ExperimentApiData.PlotData data) {
-        if (data.x.size()==1) {
-            data.x.add("stub");
-            BigDecimal[][] z = new BigDecimal[data.z.length][2];
-            for (int i = 0; i < data.z.length; i++) {
-                z[i][0] = data.z[i][0];
-                z[i][1] = BigDecimal.ZERO;
-            }
-            data.z = z;
-        }
-        else if (data.y.size()==1) {
-            data.y.add("stub");
-            BigDecimal[][] z = new BigDecimal[2][data.z[0].length];
-            for (int i = 0; i < data.z[0].length; i++) {
-                z[0][i] = data.z[0][i];
-                z[1][i] = BigDecimal.ZERO;
-            }
-            data.z = z;
-        }
-    }
-
-    private void updateMaxValueForExperimentFeatures(Long experimentId) {
-        Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
-        if (experiment==null) {
-            return;
-        }
-        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-
-        List<ExperimentFeature> features = epy.processing.features;
-        log.info("Start calculatingMaxValueOfMetrics");
-        for (ExperimentFeature feature : features) {
-            double value = metricsMaxValueCollector.calcMaxValueForMetrics(epy, feature.getId());
-            log.info("\tFeature #{}, max value: {}", feature.getId(), value);
-            feature.setMaxValue(value);
-        }
-        epy.processing.maxValueCalculated = true;
-        experiment.updateParams(epy);
-        experimentCache.save(experiment);
-    }
-
-    private void setExportedToExperimentResult(Long experimentId) {
-        Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
-        if (experiment==null) {
-            return;
-        }
-        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        epy.processing.exportedToExperimentResult = true;
-        experiment.updateParams(epy);
-        experimentCache.save(experiment);
-    }
-
-    public Slice<TaskWIthType> findTasks(Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
-        if (experiment == null || feature == null) {
-            return Page.empty();
-        }
-        else {
-            Slice<TaskWIthType> slice;
-            if (isEmpty(params)) {
-                slice = findPredictTasks(pageable, experiment, feature.getId());
-            } else {
-                List<Task> selected = findTaskWithFilter(experiment, feature.getId(), params);
-                List<Task> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
-                List<TaskWIthType> list = new ArrayList<>();
-                for (Task task : subList) {
-                    list.add(new TaskWIthType(task, EnumsApi.ExperimentTaskType.UNKNOWN.value));
-                }
-                slice = new PageImpl<>(list, pageable, selected.size());
-                for (TaskWIthType taskWIthType : slice) {
-                    experiment.getExperimentParamsYaml().processing.taskFeatures
-                            .stream()
-                            .filter(t -> t.taskId.equals(taskWIthType.task.getId()))
-                            .findFirst()
-                            .ifPresent(etf -> taskWIthType.type = EnumsApi.ExperimentTaskType.from(etf.getTaskType()).value);
-                }
-            }
-            return slice;
-        }
     }
 
     private Slice<TaskWIthType> findPredictTasks(Pageable pageable, Experiment experiment, Long featureId) {
@@ -403,26 +336,61 @@ public class ExperimentService {
             list.add( new TaskWIthType(task, tf!=null ? tf.taskType : EnumsApi.ExperimentTaskType.UNKNOWN.value));
         }
 
-        //noinspection UnnecessaryLocalVariable
         PageImpl<TaskWIthType> page = new PageImpl<>(list, pageable, total);
         return page;
     }
 
-    private ExperimentApiData.PlotData findExperimentTaskForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
-        if (experiment == null || feature == null) {
-            return ExperimentApiData.EMPTY_PLOT_DATA;
-        } else {
-            List<Task> selected;
-            if (isEmpty(params)) {
-                selected = findByIsCompletedIsTrueAndFeatureId(experiment.getExperimentParamsYaml(), feature.id);
-            } else {
-                selected = findTaskWithFilter(experiment, feature.getId(), params);
-            }
-            return collectDataForPlotting(experiment, selected, paramsAxis);
+    public List<Task> findByIsCompletedIsTrueAndFeatureId(ExperimentParamsYaml epy, Long featureId) {
+        List<Long> ids = epy.getTaskFeatureIds(featureId);
+        if (ids.isEmpty()) {
+            return List.of();
         }
+        //noinspection UnnecessaryLocalVariable
+        List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndIds(ids);
+        return tasks;
     }
 
-    @SuppressWarnings("Duplicates")
+    private static Map<String, String> toMap(List<HyperParam> experimentHyperParams) {
+        return experimentHyperParams.stream().collect(Collectors.toMap(HyperParam::getKey, HyperParam::getValues, (a, b) -> b, HashMap::new));
+    }
+
+    private static Map<String, String> toMap(List<HyperParam> experimentHyperParams, int seed) {
+        List<HyperParam> params = new ArrayList<>();
+        HyperParam p1 = new HyperParam();
+        p1.setKey(Consts.SEED);
+        p1.setValues(Integer.toString(seed));
+        params.add(p1);
+
+        for (HyperParam param : experimentHyperParams) {
+            //noinspection UseBulkOperation
+            params.add(param);
+        }
+        return toMap(params);
+    }
+
+    public void bindExperimentToExecContext(Long experimentId, Long execContextId) {
+
+        Experiment e = experimentRepository.findByIdForUpdate(experimentId);
+        if (e==null) {
+            return;
+        }
+
+        ExperimentParamsYaml epy = e.getExperimentParamsYaml();
+        epy.processing = new ExperimentProcessing();
+        e.updateParams(epy);
+        e.setExecContextId(execContextId);
+
+        //noinspection UnusedAssignment
+        e = experimentCache.save(e);
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class ExperimentFunctionItem {
+        public EnumsApi.ExperimentFunction type;
+        public String functionCode;
+    }
+
     private ExperimentApiData.PlotData collectDataForPlotting(Experiment experiment, List<Task> selected, String[] paramsAxis) {
         final ExperimentApiData.PlotData data = new ExperimentApiData.PlotData();
         final List<String> paramCleared = new ArrayList<>();
@@ -490,7 +458,6 @@ public class ExperimentService {
         return data;
     }
 
-    @SuppressWarnings("Duplicates")
     private List<Task> findTaskWithFilter(Experiment experiment, long featureId, String[] params) {
         final Set<String> paramSet = new HashSet<>();
         final Set<String> paramFilterKeys = new HashSet<>();
@@ -633,74 +600,99 @@ public class ExperimentService {
         return result;
     }
 
-    public List<Task> findByIsCompletedIsTrueAndFeatureId(ExperimentParamsYaml epy, Long featureId) {
-        List<Long> ids = epy.getTaskFeatureIds(featureId);
-        if (ids.isEmpty()) {
-            return List.of();
-        }
-        //noinspection UnnecessaryLocalVariable
-        List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndIds(ids);
-        return tasks;
-    }
-
-    private static Map<String, String> toMap(List<HyperParam> experimentHyperParams, int seed) {
-        List<HyperParam> params = new ArrayList<>();
-        HyperParam p1 = new HyperParam();
-        p1.setKey(Consts.SEED);
-        p1.setValues(Integer.toString(seed));
-        params.add(p1);
-
-        for (HyperParam param : experimentHyperParams) {
-            //noinspection UseBulkOperation
-            params.add(param);
-        }
-        return toMap(params);
-    }
-
-    private static Map<String, String> toMap(List<HyperParam> experimentHyperParams) {
-        return experimentHyperParams.stream().collect(Collectors.toMap(HyperParam::getKey, HyperParam::getValues, (a, b) -> b, HashMap::new));
-    }
-
-    private void resetExperimentByExecContextId(Long execContextId) {
-        Experiment e = experimentRepository.findByExecContextIdForUpdate(execContextId);
-        if (e==null) {
+    private void setExportedToExperimentResult(Long experimentId) {
+        Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
+        if (experiment==null) {
             return;
         }
-
-        ExperimentParamsYaml epy = e.getExperimentParamsYaml();
-        epy.processing = new ExperimentProcessing();
-        e.updateParams(epy);
-        e.setExecContextId(null);
-
-        //noinspection UnusedAssignment
-        e = experimentCache.save(e);
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+        epy.processing.exportedToExperimentResult = true;
+        experiment.updateParams(epy);
+        experimentCache.save(experiment);
     }
 
-    public void bindExperimentToExecContext(Long experimentId, Long execContextId) {
+    public Slice<TaskWIthType> findTasks(Pageable pageable, Experiment experiment, @Nullable ExperimentFeature feature, String[] params) {
+        if (feature == null) {
+            return Page.empty();
+        }
+        else {
+            Slice<TaskWIthType> slice;
+            if (isEmpty(params)) {
+                slice = findPredictTasks(pageable, experiment, feature.getId());
+            } else {
+                List<Task> selected = findTaskWithFilter(experiment, feature.getId(), params);
+                List<Task> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
+                List<TaskWIthType> list = new ArrayList<>();
+                for (Task task : subList) {
+                    list.add(new TaskWIthType(task, EnumsApi.ExperimentTaskType.UNKNOWN.value));
+                }
+                slice = new PageImpl<>(list, pageable, selected.size());
+                for (TaskWIthType taskWIthType : slice) {
+                    experiment.getExperimentParamsYaml().processing.taskFeatures
+                            .stream()
+                            .filter(t -> t.taskId.equals(taskWIthType.task.getId()))
+                            .findFirst()
+                            .ifPresent(etf -> taskWIthType.type = EnumsApi.ExperimentTaskType.from(etf.getTaskType()).value);
+                }
+            }
+            return slice;
+        }
+    }
 
-        Experiment e = experimentRepository.findByIdForUpdate(experimentId);
-        if (e==null) {
-            return;
+    public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
+        Experiment experiment= experimentCache.findById(experimentId);
+        if (experiment==null) {
+            return new ExperimentApiData.PlotData();
+        }
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+
+        ExperimentFeature feature = epy.processing.features.stream().filter(o->o.id.equals(featureId)).findFirst().orElse(null);
+        if (feature==null) {
+            return new ExperimentApiData.PlotData();
         }
 
-        ExperimentParamsYaml epy = e.getExperimentParamsYaml();
-        epy.processing = new ExperimentProcessing();
-        e.updateParams(epy);
-        e.setExecContextId(execContextId);
-
-        //noinspection UnusedAssignment
-        e = experimentCache.save(e);
+        ExperimentApiData.PlotData data = findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
+        // TODO 2019-07-23 right now 2D lines plot isn't working. need to investigate
+        //  so it'll be 3D with a fake zero data
+        fixData(data);
+        return data;
     }
 
-    @Data
-    @AllArgsConstructor
-    private static class ExperimentFunctionItem {
-        public EnumsApi.ExperimentFunction type;
-        public String functionCode;
+    private void fixData(ExperimentApiData.PlotData data) {
+        if (data.x.size()==1) {
+            data.x.add("stub");
+            BigDecimal[][] z = new BigDecimal[data.z.length][2];
+            for (int i = 0; i < data.z.length; i++) {
+                z[i][0] = data.z[i][0];
+                z[i][1] = BigDecimal.ZERO;
+            }
+            data.z = z;
+        }
+        else if (data.y.size()==1) {
+            data.y.add("stub");
+            BigDecimal[][] z = new BigDecimal[2][data.z[0].length];
+            for (int i = 0; i < data.z[0].length; i++) {
+                z[0][i] = data.z[0][i];
+                z[1][i] = BigDecimal.ZERO;
+            }
+            data.z = z;
+        }
     }
 
-    // producing of tasks for experiment has been standardized so we don't need special method only for experiment
-/*
+    private ExperimentApiData.PlotData findExperimentTaskForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
+        if (experiment == null || feature == null) {
+            return ExperimentApiData.EMPTY_PLOT_DATA;
+        } else {
+            List<Task> selected;
+            if (isEmpty(params)) {
+                selected = findByIsCompletedIsTrueAndFeatureId(experiment.getExperimentParamsYaml(), feature.id);
+            } else {
+                selected = findTaskWithFilter(experiment, feature.getId(), params);
+            }
+            return collectDataForPlotting(experiment, selected, paramsAxis);
+        }
+    }
+
     public EnumsApi.SourceCodeProducingStatus produceTasks(
             boolean isPersist, SourceCodeParamsYaml sourceCodeParams, Long execContextId, SourceCodeParamsYaml.Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,

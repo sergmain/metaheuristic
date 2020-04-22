@@ -62,6 +62,7 @@ public class ExecContextSchedulerService {
             updateExecContextStatus(execContext.id, needReconciliation);
         }
 
+/*
         List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.EXPORTING_TO_EXPERIMENT_RESULT.code);
         for (Long execContextId : execContextIds) {
             log.info("Start exporting execContext #{} to ExperimentResult", execContextId);
@@ -80,6 +81,7 @@ public class ExecContextSchedulerService {
                 log.error("#751.020 Error exporting experiment to ExperimentResult, execContextId #{}\n{}", execContextId, status.getErrorMessagesAsStr());
             }
         }
+*/
     }
 
     /**

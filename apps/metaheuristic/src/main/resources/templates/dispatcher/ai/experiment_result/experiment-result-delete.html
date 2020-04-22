@@ -26,7 +26,7 @@
         <tr>
             <td>
                 <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${experiment}" th:method="post"
-                      th:action="@{/dispatcher/ai/experiment-result/experiment-result-experiment-delete-commit}"
+                      th:action="@{/dispatcher/ai/experiment-result/experiment-result-delete-commit}"
                       accept-charset="UTF-8"
                       id="experiment-delete-commit"
                       name="f">
@@ -40,7 +40,7 @@
                 &nbsp;
             </td>
             <td>
-                <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/ai/experiment-result/experiment-result-experiments}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
+                <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/dispatcher/ai/experiment-result/experiment-results}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
                     <fieldset>
                         <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                     </fieldset>

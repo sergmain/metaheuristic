@@ -89,7 +89,6 @@ public class ExperimentResultService {
     }
 
     public OperationStatusRest storeExperimentToExperimentResult(Long execContextId) {
-        execContextFSM.toExportingToExperimentResultStarted(execContextId);
         Long experimentId = experimentRepository.findIdByExecContextId(execContextId);
 
         if (experimentId==null ) {
@@ -180,7 +179,7 @@ public class ExperimentResultService {
         ExperimentResultParamsYaml erpy = new ExperimentResultParamsYaml();
         erpy.createdOn = System.currentTimeMillis();
         erpy.sourceCode = new ExperimentResultParamsYaml.SourceCodeWithParams(sourceCode.id, sourceCode.getParams());
-        erpy.execContext = new ExperimentResultParamsYaml.ExecContextWithParams(execContext.id, execContext.getParams(), EnumsApi.ExecContextState.EXPORTED_TO_EXPERIMENT_RESULT.code);
+        erpy.execContext = new ExperimentResultParamsYaml.ExecContextWithParams(execContext.id, execContext.getParams());
         erpy.experiment = new ExperimentResultParamsYaml.ExperimentWithParams(experiment.id, experiment.getParams());
         erpy.taskIds = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());
 

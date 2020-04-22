@@ -7,6 +7,7 @@
         <h1 class="widget-header">Delete Experiment</h1>
 
         <!--/*@thymesVar id="experiment" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentData"*/-->
+        <!--/*@thymesVar id="params" type="java.lang.String"*/-->
         <form class="pure-form pure-form-stacked" th:object="${experiment}">
             <fieldset>
                 <label for="code">Code</label>
@@ -18,8 +19,10 @@
                 <label for="description">Description</label>
                 <pre id="description" th:text="*{description}" ></pre>
 
+<!--
                 <label for="sourceCodeYamlAsStr">Parameters of experiment</label>
                 <pre id="sourceCodeYamlAsStr" th:text="${params}" ></pre>
+-->
             </fieldset>
         </form>
 

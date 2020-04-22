@@ -53,7 +53,7 @@ public class ExperimentParamsYamlUtilsV1
         BeanUtils.copyProperties(src.experimentYaml, trg.experimentYaml, "hyperParams");
         trg.experimentYaml.hyperParams = src.experimentYaml.hyperParams
                 .stream()
-                .map(o->new ExperimentParamsYamlV1.HyperParamV2(o.key, o.values, o.variants))
+                .map(o->new ExperimentParamsYamlV1.HyperParamV1(o.key, o.values, o.variants))
                 .collect(Collectors.toList());
 
 //        BeanUtils.copyProperties(src.processing, trg.processing, "taskFeatures", "features");
@@ -66,7 +66,7 @@ public class ExperimentParamsYamlUtilsV1
         trg.processing.features = src.processing.features
                 .stream()
                 .map(o->{
-                    ExperimentParamsYamlV1.ExperimentFeatureV2 f = new ExperimentParamsYamlV1.ExperimentFeatureV2();
+                    ExperimentParamsYamlV1.ExperimentFeatureV1 f = new ExperimentParamsYamlV1.ExperimentFeatureV1();
                     BeanUtils.copyProperties(o, f);
                     return f;
                 })
@@ -75,7 +75,7 @@ public class ExperimentParamsYamlUtilsV1
         trg.processing.taskFeatures = src.processing.taskFeatures
                 .stream()
                 .map(o->{
-                    ExperimentParamsYamlV1.ExperimentTaskFeatureV2 f = new ExperimentParamsYamlV1.ExperimentTaskFeatureV2();
+                    ExperimentParamsYamlV1.ExperimentTaskFeatureV1 f = new ExperimentParamsYamlV1.ExperimentTaskFeatureV1();
                     BeanUtils.copyProperties(o, f);
                     return f;
                 })

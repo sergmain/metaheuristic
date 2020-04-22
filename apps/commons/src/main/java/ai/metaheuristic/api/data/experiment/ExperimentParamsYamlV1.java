@@ -33,6 +33,8 @@ import java.util.List;
 @NoArgsConstructor
 public class ExperimentParamsYamlV1 implements BaseParams {
 
+    public final int version=1;
+
     @Override
     public boolean checkIntegrity() {
         if (experimentYaml.code==null || experimentYaml.code.isBlank()) {
@@ -44,34 +46,38 @@ public class ExperimentParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class HyperParamV2 {
+    public static class HyperParamV1 {
         public String key;
         public String values;
         public Integer variants;
     }
 
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ExperimentYamlV2 {
+    public static class ExperimentYamlV1 {
         public String name;
         public String description;
         public String code;
 
-        public int seed = 42;
-        public List<HyperParamV2> hyperParams = new ArrayList<>();
+        public final List<HyperParamV1> hyperParams = new ArrayList<>();
 
-        public String fitFunction;
-        public String predictFunction;
-        public String checkFittingFunction;
+/*
+        public int seed = 42;
+
+        public @Nullable String fitFunction;
+        public @Nullable String predictFunction;
+        public @Nullable String checkFittingFunction;
+*/
     }
 
     @Data
     @NoArgsConstructor
-    public static class ExperimentFeatureV2 {
+    public static class ExperimentFeatureV1 {
 
         public Long id;
-        public String resourceCodes;
+        public String variables;
         public String checksumIdCodes;
         public int execStatus;
         public Long experimentId;
@@ -80,7 +86,7 @@ public class ExperimentParamsYamlV1 implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    public static class ExperimentTaskFeatureV2 {
+    public static class ExperimentTaskFeatureV1 {
         public Long id;
         public Long execContextId;
         public Long taskId;
@@ -91,7 +97,7 @@ public class ExperimentParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ExperimentProcessingV2 {
+    public static class ExperimentProcessingV1 {
         public boolean isAllTaskProduced = false;
         public boolean isFeatureProduced = false;
         public boolean maxValueCalculated = false;
@@ -99,13 +105,12 @@ public class ExperimentParamsYamlV1 implements BaseParams {
 
         public int numberOfTask = 0;
 
-        public List<ExperimentFeatureV2> features = new ArrayList<>();
-        public List<ExperimentTaskFeatureV2> taskFeatures = new ArrayList<>();
+        public List<ExperimentFeatureV1> features = new ArrayList<>();
+        public List<ExperimentTaskFeatureV1> taskFeatures = new ArrayList<>();
     }
 
     public long createdOn;
-    public final int version=1;
-    public ExperimentYamlV2 experimentYaml = new ExperimentYamlV2();
-    public ExperimentProcessingV2 processing = new ExperimentProcessingV2();
+    public ExperimentYamlV1 experimentYaml = new ExperimentYamlV1();
+    public ExperimentProcessingV1 processing = new ExperimentProcessingV1();
 
 }

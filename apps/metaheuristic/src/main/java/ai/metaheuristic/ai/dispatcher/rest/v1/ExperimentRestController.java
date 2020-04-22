@@ -31,7 +31,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/rest/v1/dispatcher/experiment")
@@ -57,6 +56,64 @@ public class ExperimentRestController {
         return experimentTopLevelService.getExperimentWithoutProcessing(id);
     }
 
+    @GetMapping(value = "/experiment-edit/{id}")
+    public ExperimentApiData.ExperimentsEditResult edit(@PathVariable Long id) {
+        return experimentTopLevelService.editExperiment(id);
+    }
+
+    @PostMapping("/experiment-add-commit")
+    public OperationStatusRest addFormCommit(@RequestBody ExperimentApiData.ExperimentData experiment) {
+        return experimentTopLevelService.addExperimentCommit(experiment);
+    }
+
+    @PostMapping("/experiment-edit-commit")
+    public OperationStatusRest editFormCommit(@RequestBody ExperimentApiData.SimpleExperiment simpleExperiment) {
+        return experimentTopLevelService.editExperimentCommit(simpleExperiment);
+    }
+
+    @PostMapping("/experiment-delete-commit")
+    public OperationStatusRest deleteCommit(Long id) {
+        return experimentTopLevelService.experimentDeleteCommit(id);
+    }
+
+    @PostMapping("/experiment-clone-commit")
+    public OperationStatusRest experimentCloneCommit(Long id) {
+        return experimentTopLevelService.experimentCloneCommit(id);
+    }
+
+    @PostMapping("/task-rerun/{taskId}")
+    public OperationStatusRest rerunTask(@PathVariable Long taskId) {
+        return execContextService.resetTask(taskId);
+    }
+
+    @PostMapping("/produce-tasks")
+    public OperationStatusRest produceTasks(String experimentCode, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return experimentTopLevelService.produceTasks(experimentCode, context.getCompanyId());
+    }
+
+    @PostMapping("/start-processing-of-tasks")
+    public OperationStatusRest startProcessingOfTasks(String experimentCode, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return experimentTopLevelService.startProcessingOfTasks(experimentCode, context.getCompanyId());
+    }
+
+    @GetMapping("/processing-status/{experimentCode}")
+    public EnumsApi.ExecContextState getExperimentProcessingStatus(@PathVariable String experimentCode) {
+        return experimentTopLevelService.getExperimentProcessingStatus(experimentCode);
+    }
+
+    @GetMapping(value = "/experiment-to-experiment-result/{id}")
+    public OperationStatusRest toExperimentResult(@PathVariable Long id) {
+        return experimentTopLevelService.toExperimentResult(id);
+    }
+
+/*
+    @GetMapping(value = "/experiment-info/{id}")
+    public ExperimentApiData.ExperimentInfoExtendedResult info(@PathVariable Long id) {
+        return experimentTopLevelService.getExperimentInfo(id);
+    }
+
     @PostMapping("/experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
     public @ResponseBody
     ExperimentApiData.PlotData getPlotData(
@@ -78,26 +135,6 @@ public class ExperimentRestController {
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
     public ExperimentApiData.ExperimentFeatureExtendedResult getFeatures(@PathVariable Long experimentId, @PathVariable Long featureId) {
         return experimentTopLevelService.getExperimentFeatureExtended(experimentId, featureId);
-    }
-
-    @GetMapping(value = "/experiment-info/{id}")
-    public ExperimentApiData.ExperimentInfoExtendedResult info(@PathVariable Long id) {
-        return experimentTopLevelService.getExperimentInfo(id);
-    }
-
-    @GetMapping(value = "/experiment-edit/{id}")
-    public ExperimentApiData.ExperimentsEditResult edit(@PathVariable Long id) {
-        return experimentTopLevelService.editExperiment(id);
-    }
-
-    @PostMapping("/experiment-add-commit")
-    public OperationStatusRest addFormCommit(@RequestBody ExperimentApiData.ExperimentData experiment) {
-        return experimentTopLevelService.addExperimentCommit(experiment);
-    }
-
-    @PostMapping("/experiment-edit-commit")
-    public OperationStatusRest editFormCommit(@RequestBody ExperimentApiData.SimpleExperiment simpleExperiment) {
-        return experimentTopLevelService.editExperimentCommit(simpleExperiment);
     }
 
     @PostMapping("/experiment-metadata-add-commit/{id}")
@@ -135,45 +172,10 @@ public class ExperimentRestController {
         return experimentTopLevelService.functionDeleteByTypeCommit(experimentId, functionType);
     }
 
-    @PostMapping("/experiment-delete-commit")
-    public OperationStatusRest deleteCommit(Long id) {
-        return experimentTopLevelService.experimentDeleteCommit(id);
-    }
-
-    @PostMapping("/experiment-clone-commit")
-    public OperationStatusRest experimentCloneCommit(Long id) {
-        return experimentTopLevelService.experimentCloneCommit(id);
-    }
-
-    @PostMapping("/task-rerun/{taskId}")
-    public OperationStatusRest rerunTask(@PathVariable Long taskId) {
-        return execContextService.resetTask(taskId);
-    }
-
     @PostMapping(value = "/experiment-upload-from-file")
     public OperationStatusRest uploadFunction(final MultipartFile file) {
         return experimentTopLevelService.uploadExperiment(file);
     }
+*/
 
-    @PostMapping("/produce-tasks")
-    public OperationStatusRest produceTasks(String experimentCode, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        return experimentTopLevelService.produceTasks(experimentCode, context.getCompanyId());
-    }
-
-    @PostMapping("/start-processing-of-tasks")
-    public OperationStatusRest startProcessingOfTasks(String experimentCode, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        return experimentTopLevelService.startProcessingOfTasks(experimentCode, context.getCompanyId());
-    }
-
-    @GetMapping("/processing-status/{experimentCode}")
-    public EnumsApi.ExecContextState getExperimentProcessingStatus(@PathVariable String experimentCode) {
-        return experimentTopLevelService.getExperimentProcessingStatus(experimentCode);
-    }
-
-    @GetMapping(value = "/experiment-to-experiment-result/{id}")
-    public OperationStatusRest toExperimentResult(@PathVariable Long id) {
-        return experimentTopLevelService.toExperimentResult(id);
-    }
 }

@@ -19,37 +19,28 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
-import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.TaskProgress;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
-import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +59,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -84,11 +74,7 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @RequiredArgsConstructor
 public class ExperimentTopLevelService {
 
-    private final List<String> experimentFunctionTypes = Arrays.asList(CommonConsts.FIT_TYPE, CommonConsts.PREDICT_TYPE, CommonConsts.CHECK_FITTING_TYPE);
-
     private final Globals globals;
-    private final FunctionRepository functionRepository;
-    private final FunctionService functionService;
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
 
@@ -101,11 +87,12 @@ public class ExperimentTopLevelService {
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
-        return new ExperimentApiData.SimpleExperiment(params.experimentYaml.getName(), params.experimentYaml.getDescription(), params.experimentYaml.getCode(), params.experimentYaml.getSeed(), e.getId());
+        return new ExperimentApiData.SimpleExperiment(params.experimentYaml.getName(), params.experimentYaml.getDescription(), params.experimentYaml.getCode(), e.getId());
     }
 
     public static ExperimentApiData.ExperimentResult asExperimentResultShort(Experiment e) {
-        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentDataShort(e), null);
+//        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentDataShort(e), null);
+        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentDataShort(e));
     }
 
     public ExperimentApiData.ExperimentsResult getExperiments(Pageable pageable) {
@@ -133,64 +120,226 @@ public class ExperimentTopLevelService {
 
         // hide the current processing info
         epy.processing = new ExperimentParamsYaml.ExperimentProcessing();
+/*
         String params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
-
         return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment), params);
+*/
+        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment));
     }
 
-    public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
-        return experimentService.getPlotData(experimentId, featureId, params, paramsAxis);
-    }
-
-    public ExperimentApiData.ConsoleResult getTasksConsolePart(Long taskId) {
-        ExperimentApiData.ConsoleResult result = new ExperimentApiData.ConsoleResult();
-        Task task = taskRepository.findById(taskId).orElse(null);
-        if (task!=null) {
-            FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResults());
-            if (functionExec !=null) {
-                final FunctionApiData.SystemExecResult execSystemExecResult = functionExec.getExec();
-                result.items.add(new ExperimentApiData.ConsoleResult.SimpleConsoleOutput(
-                        execSystemExecResult.functionCode, execSystemExecResult.exitCode, execSystemExecResult.isOk, execSystemExecResult.console));
-            }
-            else {
-                log.info("#285.020 functionExec is null");
-            }
-        }
-        return result;
-    }
-
-    public ExperimentApiData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentId, Long featureId, String[] params, Pageable pageable) {
-        Experiment experiment= experimentCache.findById(experimentId);
-        if (experiment==null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("Experiment #"+experimentId+" wasn't found" );
-        }
-        ExecContextImpl execContext = execContextCache.findById(experiment.execContextId);
-        if (execContext==null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("ExecContext #"+experiment.execContextId+" wasn't found" );
-        }
-        ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
-
-        TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
-        tasksResult.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
-
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
-
-        ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
-        result.tasksResult = tasksResult;
-        result.experiment = ExperimentService.asExperimentData(experiment);
-        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature, taskVertices, experiment.getExperimentParamsYaml().processing.taskFeatures);
-        result.consoleResult = new ExperimentApiData.ConsoleResult();
-        return result;
-    }
-
-    public ExperimentApiData.ExperimentFeatureExtendedResult getExperimentFeatureExtended(Long experimentId, Long featureId) {
-        Experiment experiment = experimentCache.findById(experimentId);
+    public ExperimentApiData.ExperimentsEditResult editExperiment(@PathVariable Long id) {
+        final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.030 experiment wasn't found, experimentId: " + experimentId);
+            return new ExperimentApiData.ExperimentsEditResult("#285.100 experiment wasn't found, experimentId: " + id);
         }
-        return experimentService.prepareExperimentFeatures(experiment, featureId);
+/*
+        Iterable<Function> functions = functionRepository.findAll();
+        ExperimentApiData.FunctionResult functionResult = new ExperimentApiData.FunctionResult();
+
+        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+        final List<String> functionCodes = epy.getFunctionCodes();
+        List<Function> experimentFunctions = functionService.getFunctionsForCodes(functionCodes);
+
+        functionResult.functions = experimentFunctions.stream().map(es->
+                new ExperimentApiData.ExperimentFunctionResult(
+                        es.getId(), es.getVersion(), es.getCode(), es.type, experiment.id)).collect(Collectors.toList());
+
+        functionResult.selectOptions = functionService.getSelectOptions(
+                functions,
+                functionResult.functions.stream().map(o -> new FunctionData.FunctionCode(o.getId(), o.getFunctionCode())).collect(Collectors.toList()),
+                (s) -> {
+                    if (!experimentFunctionTypes.contains(s.type) ) {
+                        return true;
+                    }
+                    if (CommonConsts.FIT_TYPE.equals(s.type) && functionService.hasType(experimentFunctions, CommonConsts.FIT_TYPE)) {
+                        return true;
+                    }
+                    else if (CommonConsts.PREDICT_TYPE.equals(s.type) && functionService.hasType(experimentFunctions, CommonConsts.PREDICT_TYPE)) {
+                        return true;
+                    }
+                    else if (CommonConsts.CHECK_FITTING_TYPE.equals(s.type)) {
+                        if (functionService.hasType(experimentFunctions, CommonConsts.CHECK_FITTING_TYPE)) {
+                            return true;
+                        }
+                        for (Function function : experimentFunctions) {
+                            if (CommonConsts.PREDICT_TYPE.equals(function.getType())) {
+                                final Meta meta = MetaUtils.getMeta(function.getFunctionConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
+                                if (MetaUtils.isTrue(meta)) {
+                                    // don't include this Function because 'predict' function doesn't support fitting detection
+                                    return false;
+                                }
+                            }
+                        }
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+
+        functionResult.sortFunctionsByOrder();
+*/
+
+        ExperimentApiData.ExperimentsEditResult result = new ExperimentApiData.ExperimentsEditResult();
+
+/*
+        ExperimentApiData.HyperParamsResult r = new ExperimentApiData.HyperParamsResult();
+        r.items = epy.experimentYaml.getHyperParams().stream().map(ExperimentTopLevelService::asHyperParamData).collect(Collectors.toList());
+        result.hyperParams = r;
+        result.functionResult = functionResult;
+*/
+        result.simpleExperiment = asSimpleExperiment(experiment);
+        return result;
     }
 
+    public OperationStatusRest updateParamsAndSave(Experiment e, ExperimentParamsYaml params, String name, String description) {
+        params.experimentYaml.name = StringUtils.strip(name);
+        params.experimentYaml.code = e.code;
+        params.experimentYaml.description = StringUtils.strip(description);
+        params.createdOn = System.currentTimeMillis();
+
+        e.updateParams(params);
+
+        experimentCache.save(e);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public OperationStatusRest addExperimentCommit(ExperimentApiData.ExperimentData experiment) {
+        Experiment e = new Experiment();
+        e.code = StringUtils.strip(experiment.getCode());
+
+        ExperimentParamsYaml params = new ExperimentParamsYaml();
+        return updateParamsAndSave(e, params, experiment.getName(), experiment.getDescription());
+    }
+
+    public OperationStatusRest editExperimentCommit(ExperimentApiData.SimpleExperiment simpleExperiment) {
+        OperationStatusRest op = validate(simpleExperiment);
+        if (op.status!= EnumsApi.OperationStatus.OK) {
+            return op;
+        }
+
+        Experiment e = experimentRepository.findByIdForUpdate(simpleExperiment.id);
+        if (e == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.110 experiment wasn't found, experimentId: " + simpleExperiment.id);
+        }
+        e.code = StringUtils.strip(simpleExperiment.getCode());
+
+        ExperimentParamsYaml params = e.getExperimentParamsYaml();
+        return updateParamsAndSave(e, params, simpleExperiment.getName(), simpleExperiment.getDescription());
+    }
+
+    private OperationStatusRest validate(ExperimentApiData.SimpleExperiment se) {
+        if (StringUtils.isBlank(se.getName())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.120 Name of experiment is blank.");
+        }
+        if (StringUtils.isBlank(se.getCode())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.130 Code of experiment is blank.");
+        }
+        if (StringUtils.isBlank(se.getDescription())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.140 Description of experiment is blank.");
+        }
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK);
+    }
+
+    public OperationStatusRest toExperimentResult(Long id) {
+
+        Experiment experiment = experimentCache.findById(id);
+        if (experiment==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.410 can't find experiment for id: " + id);
+        }
+
+        if (experiment.execContextId ==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.420 This experiment isn't bound to ExecContext");
+        }
+/*
+        execContextFSM.toExportingToExperimentResult(experiment.execContextId);
+*/
+        return  new OperationStatusRest(EnumsApi.OperationStatus.OK, "Exporting of experiment was successfully started", "");
+    }
+
+    public OperationStatusRest produceTasks(String experimentCode, Long companyUniqueId) {
+        return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.PRODUCING, companyUniqueId);
+    }
+
+    public EnumsApi.ExecContextState getExperimentProcessingStatus(String experimentCode) {
+        if (experimentCode==null || experimentCode.isBlank()) {
+            return EnumsApi.ExecContextState.UNKNOWN;
+        }
+        Experiment experiment = experimentRepository.findByCode(experimentCode);
+        if (experiment==null || experiment.execContextId ==null) {
+            return EnumsApi.ExecContextState.UNKNOWN;
+        }
+        ExecContext ec = execContextCache.findById(experiment.execContextId);
+        if (ec==null) {
+            return EnumsApi.ExecContextState.UNKNOWN;
+        }
+        return EnumsApi.ExecContextState.toState(ec.getState());
+    }
+
+    public OperationStatusRest startProcessingOfTasks(String experimentCode, Long companyUniqueId) {
+        return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.STARTED, companyUniqueId);
+    }
+
+    private OperationStatusRest changeExecStateTo(String experimentCode, EnumsApi.ExecContextState execState, Long companyUniqueId) {
+        if (experimentCode==null || experimentCode.isBlank()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.550 experiment code is blank");
+        }
+        Experiment experiment = experimentRepository.findByCode(experimentCode);
+        if (experiment==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.560 can't find an experiment for code: " + experimentCode);
+        }
+        OperationStatusRest status = execContextService.execContextTargetState(experiment.execContextId, execState, companyUniqueId);
+        if (status.isErrorMessages()) {
+            return status;
+        }
+        return  new OperationStatusRest(EnumsApi.OperationStatus.OK,
+                "State of experiment '"+experimentCode+"' was successfully changed to " + execState, "");
+    }
+
+
+    public OperationStatusRest experimentDeleteCommit(Long id) {
+        Experiment experiment = experimentCache.findById(id);
+        if (experiment == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.260 experiment wasn't found, experimentId: " + id);
+        }
+        experimentCache.deleteById(id);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public OperationStatusRest experimentCloneCommit(Long id) {
+        final Experiment experiment = experimentCache.findById(id);
+        if (experiment == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.270 An experiment wasn't found, experimentId: " + id);
+        }
+        // do not use experiment.getExperimentParamsYaml() because it's  caching ExperimentParamsYaml
+        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
+        epy.processing = new ExperimentParamsYaml.ExperimentProcessing();
+        epy.createdOn = System.currentTimeMillis();
+
+        final Experiment e = new Experiment();
+        String newCode = StrUtils.incCopyNumber(experiment.getCode());
+        int i = 0;
+        while ( experimentRepository.findIdByCode(newCode)!=null  ) {
+            newCode = StrUtils.incCopyNumber(newCode);
+            if (i++>100) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        "#285.273 Can't find a new code for experiment with the code: " + experiment.getCode());
+            }
+        }
+        epy.experimentYaml.code = newCode;
+        e.code = newCode;
+        e.updateParams(epy);
+        experimentCache.save(e);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+/*
     public ExperimentApiData.ExperimentInfoExtendedResult getExperimentInfo(Long experimentId) {
 
         Experiment experiment = experimentCache.findById(experimentId);
@@ -245,63 +394,33 @@ public class ExperimentTopLevelService {
         return result;
     }
 
-    public ExperimentApiData.ExperimentsEditResult editExperiment(@PathVariable Long id) {
-        final Experiment experiment = experimentCache.findById(id);
-        if (experiment == null) {
-            return new ExperimentApiData.ExperimentsEditResult("#285.100 experiment wasn't found, experimentId: " + id);
+    public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
+        return experimentService.getPlotData(experimentId, featureId, params, paramsAxis);
+    }
+
+    public ExperimentApiData.ConsoleResult getTasksConsolePart(Long taskId) {
+        ExperimentApiData.ConsoleResult result = new ExperimentApiData.ConsoleResult();
+        Task task = taskRepository.findById(taskId).orElse(null);
+        if (task!=null) {
+            FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResults());
+            if (functionExec !=null) {
+                final FunctionApiData.SystemExecResult execSystemExecResult = functionExec.getExec();
+                result.items.add(new ExperimentApiData.ConsoleResult.SimpleConsoleOutput(
+                        execSystemExecResult.functionCode, execSystemExecResult.exitCode, execSystemExecResult.isOk, execSystemExecResult.console));
+            }
+            else {
+                log.info("#285.020 functionExec is null");
+            }
         }
-        Iterable<Function> functions = functionRepository.findAll();
-        ExperimentApiData.FunctionResult functionResult = new ExperimentApiData.FunctionResult();
-
-        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        final List<String> functionCodes = epy.getFunctionCodes();
-        List<Function> experimentFunctions = functionService.getFunctionsForCodes(functionCodes);
-
-        functionResult.functions = experimentFunctions.stream().map(es->
-                new ExperimentApiData.ExperimentFunctionResult(
-                        es.getId(), es.getVersion(), es.getCode(), es.type, experiment.id)).collect(Collectors.toList());
-
-        functionResult.selectOptions = functionService.getSelectOptions(
-                functions,
-                functionResult.functions.stream().map(o -> new FunctionData.FunctionCode(o.getId(), o.getFunctionCode())).collect(Collectors.toList()),
-                (s) -> {
-                    if (!experimentFunctionTypes.contains(s.type) ) {
-                        return true;
-                    }
-                    if (CommonConsts.FIT_TYPE.equals(s.type) && functionService.hasType(experimentFunctions, CommonConsts.FIT_TYPE)) {
-                        return true;
-                    }
-                    else if (CommonConsts.PREDICT_TYPE.equals(s.type) && functionService.hasType(experimentFunctions, CommonConsts.PREDICT_TYPE)) {
-                        return true;
-                    }
-                    else if (CommonConsts.CHECK_FITTING_TYPE.equals(s.type)) {
-                        if (functionService.hasType(experimentFunctions, CommonConsts.CHECK_FITTING_TYPE)) {
-                            return true;
-                        }
-                        for (Function function : experimentFunctions) {
-                            if (CommonConsts.PREDICT_TYPE.equals(function.getType())) {
-                                final Meta meta = MetaUtils.getMeta(function.getFunctionConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
-                                if (MetaUtils.isTrue(meta)) {
-                                    // don't include this Function because 'predict' function doesn't support fitting detection
-                                    return false;
-                                }
-                            }
-                        }
-                        return true;
-                    } else {
-                        return false;
-                    }
-                });
-
-        functionResult.sortFunctionsByOrder();
-        ExperimentApiData.ExperimentsEditResult result = new ExperimentApiData.ExperimentsEditResult();
-
-        ExperimentApiData.HyperParamsResult r = new ExperimentApiData.HyperParamsResult();
-        r.items = epy.experimentYaml.getHyperParams().stream().map(ExperimentTopLevelService::asHyperParamData).collect(Collectors.toList());
-        result.hyperParams = r;
-        result.simpleExperiment = asSimpleExperiment(experiment);
-        result.functionResult = functionResult;
         return result;
+    }
+
+    public ExperimentApiData.ExperimentFeatureExtendedResult getExperimentFeatureExtended(Long experimentId, Long featureId) {
+        Experiment experiment = experimentCache.findById(experimentId);
+        if (experiment == null) {
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.030 experiment wasn't found, experimentId: " + experimentId);
+        }
+        return experimentService.prepareExperimentFeatures(experiment, featureId);
     }
 
     private void addCheckFittingFunction(ExperimentParamsYaml epy, List<Function> experimentFunctions) {
@@ -323,58 +442,28 @@ public class ExperimentTopLevelService {
         return new ExperimentApiData.HyperParamData(ehp.getKey(), ehp.getValues(), ehp.getVariants());
     }
 
-    public OperationStatusRest updateParamsAndSave(Experiment e, ExperimentParamsYaml params, String name, String description, int seed) {
-        params.experimentYaml.name = StringUtils.strip(name);
-        params.experimentYaml.code = e.code;
-        params.experimentYaml.description = StringUtils.strip(description);
-        params.experimentYaml.setSeed(seed ==0 ? 1 : seed);
-        params.createdOn = System.currentTimeMillis();
-
-        e.updateParams(params);
-
-        experimentCache.save(e);
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    public OperationStatusRest addExperimentCommit(ExperimentApiData.ExperimentData experiment) {
-        Experiment e = new Experiment();
-        e.code = StringUtils.strip(experiment.getCode());
-
-        ExperimentParamsYaml params = new ExperimentParamsYaml();
-        return updateParamsAndSave(e, params, experiment.getName(), experiment.getDescription(), experiment.getSeed());
-    }
-
-    public OperationStatusRest editExperimentCommit(ExperimentApiData.SimpleExperiment simpleExperiment) {
-        OperationStatusRest op = validate(simpleExperiment);
-        if (op.status!= EnumsApi.OperationStatus.OK) {
-            return op;
+    public ExperimentApiData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentId, Long featureId, String[] params, Pageable pageable) {
+        Experiment experiment= experimentCache.findById(experimentId);
+        if (experiment==null) {
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("Experiment #"+experimentId+" wasn't found" );
         }
+        ExecContextImpl execContext = execContextCache.findById(experiment.execContextId);
+        if (execContext==null) {
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("ExecContext #"+experiment.execContextId+" wasn't found" );
+        }
+        ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
 
-        Experiment e = experimentRepository.findByIdForUpdate(simpleExperiment.id);
-        if (e == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.110 experiment wasn't found, experimentId: " + simpleExperiment.id);
-        }
-        e.code = StringUtils.strip(simpleExperiment.getCode());
+        TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
+        tasksResult.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
-        ExperimentParamsYaml params = e.getExperimentParamsYaml();
-        return updateParamsAndSave(e, params, simpleExperiment.getName(), simpleExperiment.getDescription(), simpleExperiment.getSeed());
-    }
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
-    private OperationStatusRest validate(ExperimentApiData.SimpleExperiment se) {
-        if (StringUtils.isBlank(se.getName())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.120 Name of experiment is blank.");
-        }
-        if (StringUtils.isBlank(se.getCode())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.130 Code of experiment is blank.");
-        }
-        if (StringUtils.isBlank(se.getDescription())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.140 Description of experiment is blank.");
-        }
-        return new OperationStatusRest(EnumsApi.OperationStatus.OK);
+        ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
+        result.tasksResult = tasksResult;
+        result.experiment = ExperimentService.asExperimentData(experiment);
+        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature, taskVertices, experiment.getExperimentParamsYaml().processing.taskFeatures);
+        result.consoleResult = new ExperimentApiData.ConsoleResult();
+        return result;
     }
 
     public OperationStatusRest metadataAddCommit(Long experimentId, String key, String value) {
@@ -584,44 +673,6 @@ public class ExperimentTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest experimentDeleteCommit(Long id) {
-        Experiment experiment = experimentCache.findById(id);
-        if (experiment == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.260 experiment wasn't found, experimentId: " + id);
-        }
-        experimentCache.deleteById(id);
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    public OperationStatusRest experimentCloneCommit(Long id) {
-        final Experiment experiment = experimentCache.findById(id);
-        if (experiment == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.270 An experiment wasn't found, experimentId: " + id);
-        }
-        // do not use experiment.getExperimentParamsYaml() because it's  caching ExperimentParamsYaml
-        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
-        epy.processing = new ExperimentParamsYaml.ExperimentProcessing();
-        epy.createdOn = System.currentTimeMillis();
-
-        final Experiment e = new Experiment();
-        String newCode = StrUtils.incCopyNumber(experiment.getCode());
-        int i = 0;
-        while ( experimentRepository.findIdByCode(newCode)!=null  ) {
-            newCode = StrUtils.incCopyNumber(newCode);
-            if (i++>100) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#285.273 Can't find a new code for experiment with the code: " + experiment.getCode());
-            }
-        }
-        epy.experimentYaml.code = newCode;
-        e.code = newCode;
-        e.updateParams(epy);
-        experimentCache.save(e);
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
     public OperationStatusRest uploadExperiment(MultipartFile file) {
 
         String originFilename = file.getOriginalFilename();
@@ -705,59 +756,6 @@ public class ExperimentTopLevelService {
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
-
-    public OperationStatusRest toExperimentResult(Long id) {
-
-        Experiment experiment = experimentCache.findById(id);
-        if (experiment==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.410 can't find experiment for id: " + id);
-        }
-
-        if (experiment.execContextId ==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.420 This experiment isn't bound to ExecContext");
-        }
-        execContextFSM.toExportingToExperimentResult(experiment.execContextId);
-        return  new OperationStatusRest(EnumsApi.OperationStatus.OK, "Exporting of experiment was successfully started", "");
-    }
-
-    public OperationStatusRest produceTasks(String experimentCode, Long companyUniqueId) {
-        return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.PRODUCING, companyUniqueId);
-    }
-
-    public EnumsApi.ExecContextState getExperimentProcessingStatus(String experimentCode) {
-        if (experimentCode==null || experimentCode.isBlank()) {
-            return EnumsApi.ExecContextState.UNKNOWN;
-        }
-        Experiment experiment = experimentRepository.findByCode(experimentCode);
-        if (experiment==null || experiment.execContextId ==null) {
-            return EnumsApi.ExecContextState.UNKNOWN;
-        }
-        ExecContext ec = execContextCache.findById(experiment.execContextId);
-        if (ec==null) {
-            return EnumsApi.ExecContextState.UNKNOWN;
-        }
-        return EnumsApi.ExecContextState.toState(ec.getState());
-    }
-
-    public OperationStatusRest startProcessingOfTasks(String experimentCode, Long companyUniqueId) {
-        return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.STARTED, companyUniqueId);
-    }
-
-    private OperationStatusRest changeExecStateTo(String experimentCode, EnumsApi.ExecContextState execState, Long companyUniqueId) {
-        if (experimentCode==null || experimentCode.isBlank()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.550 experiment code is blank");
-        }
-        Experiment experiment = experimentRepository.findByCode(experimentCode);
-        if (experiment==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.560 can't find an experiment for code: " + experimentCode);
-        }
-        OperationStatusRest status = execContextService.execContextTargetState(experiment.execContextId, execState, companyUniqueId);
-        if (status.isErrorMessages()) {
-            return status;
-        }
-        return  new OperationStatusRest(EnumsApi.OperationStatus.OK,
-                "State of experiment '"+experimentCode+"' was successfully changed to " + execState, "");
-    }
+*/
 
 }

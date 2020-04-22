@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.experiment_result;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentTask;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
@@ -79,7 +78,6 @@ import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
 import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.ExperimentFeature;
-import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.HyperParam;
 
 @SuppressWarnings("Duplicates")
 @Slf4j
@@ -292,7 +290,6 @@ public class ExperimentResultTopLevelService {
         experiment.code = epy.experimentYaml.code;
         experiment.name = epy.experimentYaml.name;
         experiment.description = epy.experimentYaml.description;
-        experiment.seed = epy.experimentYaml.seed;
         experiment.isAllTaskProduced = epy.processing.isAllTaskProduced;
         experiment.isFeatureProduced = epy.processing.isFeatureProduced;
         experiment.createdOn = epy.createdOn;
@@ -342,7 +339,6 @@ public class ExperimentResultTopLevelService {
         experiment.code = epy.experimentYaml.code;
         experiment.name = epy.experimentYaml.name;
         experiment.description = epy.experimentYaml.description;
-        experiment.seed = epy.experimentYaml.seed;
         experiment.isAllTaskProduced = epy.processing.isAllTaskProduced;
         experiment.isFeatureProduced = epy.processing.isFeatureProduced;
         experiment.createdOn = epy.createdOn;
@@ -365,10 +361,12 @@ public class ExperimentResultTopLevelService {
         }
         result.experimentResult = experimentResult;
 
+/*
         ExecContextImpl execContext = new ExecContextImpl();
         execContext.setParams(ypywc.experimentResult.execContext.execContextParams);
         execContext.id = ypywc.experimentResult.execContext.execContextId;
         execContext.state = ypywc.experimentResult.execContext.execState;
+*/
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         ExperimentResultData.ExperimentInfo experimentInfoResult = new ExperimentResultData.ExperimentInfo();
@@ -376,8 +374,10 @@ public class ExperimentResultTopLevelService {
                 .stream()
                 .map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
 
+/*
         experimentInfoResult.execContext = execContext;
         experimentInfoResult.execContextState = EnumsApi.ExecContextState.toState(execContext.state);
+*/
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;
@@ -676,12 +676,12 @@ public class ExperimentResultTopLevelService {
         ExperimentResultData.HyperParamResult hyperParamResult = new ExperimentResultData.HyperParamResult();
         for (HyperParam hyperParam : epy.experimentYaml.getHyperParams()) {
             InlineVariableUtils.NumberOfVariants variants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues());
-            ExperimentApiData.HyperParamList list = new ExperimentApiData.HyperParamList(hyperParam.getKey());
+            ExperimentResultData.HyperParamList list = new ExperimentResultData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
-                list.getList().add( new ExperimentApiData.HyperParamElement(value, false));
+                list.getList().add( new ExperimentResultData.HyperParamElement(value, false));
             }
             if (list.getList().isEmpty()) {
-                list.getList().add( new ExperimentApiData.HyperParamElement("<Error value>", false));
+                list.getList().add( new ExperimentResultData.HyperParamElement("<Error value>", false));
             }
             hyperParamResult.getElements().add(list);
         }
@@ -719,10 +719,12 @@ public class ExperimentResultTopLevelService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
+/*
         ExecContextImpl execContext = new ExecContextImpl();
         execContext.setParams( ypywc.experimentResult.execContext.execContextParams);
         execContext.id = ypywc.experimentResult.execContext.execContextId;
         execContext.state = ypywc.experimentResult.execContext.execState;
+*/
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         ExperimentResultData.ExperimentFeatureExtendedResult result = new ExperimentResultData.ExperimentFeatureExtendedResult();
@@ -771,10 +773,12 @@ public class ExperimentResultTopLevelService {
 
         ExperimentFeature feature = ypywc.getFeature(featureId);
 
+/*
         ExecContextImpl execContext = new ExecContextImpl();
         execContext.setParams(ypywc.experimentResult.execContext.execContextParams);
         execContext.id = ypywc.experimentResult.execContext.execContextId;
         execContext.state = ypywc.experimentResult.execContext.execState;
+*/
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
         ExperimentResultData.ExperimentFeatureExtendedResult result = new ExperimentResultData.ExperimentFeatureExtendedResult();
@@ -801,7 +805,6 @@ public class ExperimentResultTopLevelService {
                     .orElse(EnumsApi.ExperimentTaskType.UNKNOWN)
                     .toString();
         }
-        //noinspection UnnecessaryLocalVariable
         Slice<ExperimentResultTaskParamsYaml> slice = new PageImpl<>(subList, pageable, selected.size());
         return slice;
     }

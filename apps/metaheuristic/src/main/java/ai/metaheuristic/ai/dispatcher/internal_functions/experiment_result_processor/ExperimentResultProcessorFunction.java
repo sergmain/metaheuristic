@@ -17,10 +17,19 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.experiment_result_processor;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -44,6 +53,12 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
     private final VariableRepository variableRepository;
     private final VariableService variableService;
 
+    private final ExecContextService execContextService;
+    private final ExecContextRepository execContextRepository;
+    private final TaskRepository taskRepository;
+    private final ExperimentResultService experimentResultService;
+    private final ExecContextFSM execContextFSM;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Override
     public String getCode() {
         return Consts.MH_EXPERIMENT_RESULT_PROCESSOR;
@@ -59,7 +74,14 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
             Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration, TaskParamsYaml taskParamsYaml) {
 
-        log.error("not yet !!!");
-        return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
+        try {
+            OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContextId);
+            if (status.status!=EnumsApi.OperationStatus.OK) {
+                return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, status.getErrorMessagesAsStr());
+            }
+            return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
+        } catch (Throwable th) {
+            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, th.getMessage());
+        }
     }
 }

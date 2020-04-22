@@ -276,10 +276,7 @@ public class EnumsApi {
         STARTED(3),         // started
         STOPPED(4),         // stopped
         FINISHED(5),        // finished
-        DOESNT_EXIST(6),    // doesn't exist. this state is needed at processor side to reconcile list of tasks
-        EXPORTING_TO_EXPERIMENT_RESULT(7),    // execContext is marked as needed to be exported to ExperimentResult
-        EXPORTING_TO_EXPERIMENT_RESULT_WAS_STARTED(8),    // execContext is marked as needed to be exported to ExperimentResult and export was started
-        EXPORTED_TO_EXPERIMENT_RESULT(9);    // execContext was exported to ExperimentResult
+        DOESNT_EXIST(6);    // doesn't exist. this state is needed at processor side to reconcile list of tasks
 
         public int code;
 
@@ -308,12 +305,6 @@ public class EnumsApi {
                     return FINISHED;
                 case 6:
                     return DOESNT_EXIST;
-                case 7:
-                    return EXPORTING_TO_EXPERIMENT_RESULT;
-                case 8:
-                    return EXPORTING_TO_EXPERIMENT_RESULT_WAS_STARTED;
-                case 9:
-                    return EXPORTED_TO_EXPERIMENT_RESULT;
                 default:
                     return UNKNOWN;
             }

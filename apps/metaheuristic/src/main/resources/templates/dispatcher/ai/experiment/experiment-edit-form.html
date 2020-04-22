@@ -53,9 +53,10 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New experiment</h1>
 
-        <!--/*@thymesVar id="hyperParams" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.HyperParamsResult"*/-->
-        <!--/*@thymesVar id="simpleExperiment" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.SimpleExperiment"*/-->
-        <!--/*@thymesVar id="functionResult" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$FunctionResult"*/-->
+<!--        < !&#45;&#45;/*@thymesVar id="hyperParams" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$HyperParamsResult"*/&#45;&#45; >-->
+<!--        < !&#45;&#45;/*@thymesVar id="functionResult" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$FunctionResult"*/&#45;&#45; >-->
+
+        <!--/*@thymesVar id="simpleExperiment" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$SimpleExperiment"*/-->
         <form class="pure-form pure-form-stacked" th:object="${simpleExperiment}" method="post" action="#" th:method="POST" th:action="@{/dispatcher/ai/experiment/experiment-edit-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <fieldset>
@@ -72,9 +73,11 @@
                 <textarea name="description" id="description" placeholder="description" cols="100" rows="5" th:field="*{description}" maxlength="250"></textarea>
                 <span class="pure-form-message">This is a required field.</span>
 
+<!--
                 <label for="seed">Seed</label>
                 <input name="seed" id="seed" type="text" placeholder="seed" th:field="*{seed}">
                 <span class="pure-form-message">Default value will be used if not defined. Which is 1.</span>
+-->
 
                 <table>
                     <tr>
@@ -93,6 +96,7 @@
         </form>
         <p>&nbsp;</p>
 
+<!--
         <h1 class="widget-header">Functions</h1>
         <form class="pure-form" action="#" th:method="POST" th:action="${'/dispatcher/ai/experiment/experiment-function-add-commit/'+simpleExperiment.id}" accept-charset="UTF-8"
               th:if="${!functionResult.selectOptions.isEmpty()}">
@@ -120,7 +124,9 @@
             </tr>
             </tbody>
         </table>
+-->
 
+<!--
         <h1 class="widget-header">Metadata</h1>
 
         <span class="pure-form-message">Array of concrete values - [10,27,21]</span>
@@ -172,6 +178,7 @@
             </tbody>
         </table>
         <p>&nbsp;</p>
+-->
 
         <h1 class="widget-header">Back</h1>
         <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/dispatcher/ai/experiment/experiments'}">To list of experiments</a>

@@ -19,18 +19,17 @@ package ai.metaheuristic.api.data.experiment;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
-import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 
-import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -39,7 +38,18 @@ import java.util.*;
  */
 public class ExperimentApiData {
 
+/*
     public static final PlotData EMPTY_PLOT_DATA = new PlotData();
+*/
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HyperParam {
+        public String key;
+        public String values;
+        public Integer variants;
+    }
 
     @Data
     @NoArgsConstructor
@@ -50,15 +60,15 @@ public class ExperimentApiData {
         public String code;
         public String name;
         public String description;
-        public int seed;
         public boolean isAllTaskProduced;
         public boolean isFeatureProduced;
         public long createdOn;
         public int numberOfTask;
-        public final List<ExperimentParamsYaml.HyperParam> hyperParams = new ArrayList<>();
+        public final List<HyperParam> hyperParams = new ArrayList<>();
         public final Map<String, Map<String, Integer>> hyperParamsAsMap = new HashMap<>();
     }
 
+/*
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -67,22 +77,25 @@ public class ExperimentApiData {
         public String values;
         public Integer variants;
     }
+*/
 
+/*
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class HyperParamsResult {
         public List<HyperParamData> items = new ArrayList<>();
     }
+*/
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class ExperimentsEditResult extends BaseDataClass {
-        public HyperParamsResult hyperParams;
+//        public HyperParamsResult hyperParams;
         public ExperimentApiData.SimpleExperiment simpleExperiment;
-        public FunctionResult functionResult;
+//        public FunctionResult functionResult;
 
         public ExperimentsEditResult(String errorMessage) {
             addErrorMessage(errorMessage);
@@ -99,40 +112,6 @@ public class ExperimentApiData {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
-    public static class MetricElement implements BaseMetricElement {
-        public final List<BigDecimal> values = new ArrayList<>();
-        public String params;
-    }
-
-    @Data
-    public static class MetricsResult {
-        public final LinkedHashSet<String> metricNames = new LinkedHashSet<>();
-        public final List<MetricElement> metrics = new ArrayList<>();
-    }
-
-    @Data
-    public static class HyperParamResult {
-        public final List<ExperimentApiData.HyperParamList> elements = new ArrayList<>();
-
-        /**
-         * for plotting we need at least 2 HyperParams to be selected.
-         * in case when there is only one list ov values of params
-         * we will use all HyperParams for axises
-         */
-        public boolean useAllHyperParamsInPlot() {
-            int count=0;
-            for (ExperimentApiData.HyperParamList element : elements) {
-                if (element.list.size()>1) {
-                    count++;
-                }
-            }
-            return count<2;
-        }
-    }
-
-    @Data
-    @NoArgsConstructor
     public static class ExperimentFeatureData {
         public Long id;
         public Integer version;
@@ -144,6 +123,7 @@ public class ExperimentApiData {
         public Double maxValue;
     }
 
+/*
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
@@ -159,24 +139,60 @@ public class ExperimentApiData {
             addErrorMessage(errorMessage);
         }
     }
+*/
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ExperimentResult extends BaseDataClass {
-        public @NonNull ExperimentData experiment;
-        public @Nullable String params;
+        public ExperimentData experiment;
+//        public @Nullable String params;
 
         public ExperimentResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
+        public ExperimentResult(ExperimentData experiment) {
+            this.experiment = experiment;
+//            this.params = params;
+        }
+/*
         public ExperimentResult(@NonNull ExperimentData experiment, @Nullable String params) {
             this.experiment = experiment;
             this.params = params;
         }
+*/
     }
 
+    @Data
+    public static class ExperimentInfoResult {
+        public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
+        public List<ExperimentFeatureData> features;
+        public ExecContext execContext;
+        public EnumsApi.ExecContextState execContextState;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class ExperimentProgressResult {
+        public final long count;
+        public final int execState;
+        public final String execStateAsStr;
+        public final boolean isCompleted;
+        public final boolean isResultReceived;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SimpleExperiment {
+        public String name;
+        public String description;
+        public String code;
+        public long id;
+    }
+
+/*
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
@@ -243,44 +259,44 @@ public class ExperimentApiData {
         public List<String> y = new ArrayList<>();
         public BigDecimal[][] z;
     }
+*/
 
+/*
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class HyperParamElement {
-        String param;
-        boolean isSelected;
+    public static class MetricElement implements BaseMetricElement {
+        public final List<BigDecimal> values = new ArrayList<>();
+        public String params;
     }
 
     @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class HyperParamList {
-        String key;
-        public final List<HyperParamElement> list = new ArrayList<>();
-        public boolean isSelectable() {
-            return list.size()>1;
+    public static class MetricsResult {
+        public final LinkedHashSet<String> metricNames = new LinkedHashSet<>();
+        public final List<MetricElement> metrics = new ArrayList<>();
+    }
+
+    @Data
+    public static class HyperParamResult {
+        public final List<ExperimentApiData.HyperParamList> elements = new ArrayList<>();
+
+//        *
+//         * for plotting we need at least 2 HyperParams to be selected.
+//         * in case when there is only one list ov values of params
+//         * we will use all HyperParams for axises
+        public boolean useAllHyperParamsInPlot() {
+            int count=0;
+            for (ExperimentApiData.HyperParamList element : elements) {
+                if (element.list.size()>1) {
+                    count++;
+                }
+            }
+            return count<2;
         }
     }
+*/
 
-    @Data
-    public static class ExperimentInfoResult {
-        public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
-        public List<ExperimentFeatureData> features;
-        public ExecContext execContext;
-        public EnumsApi.ExecContextState execContextState;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class ExperimentProgressResult {
-        public final long count;
-        public final int execState;
-        public final String execStateAsStr;
-        public final boolean isCompleted;
-        public final boolean isResultReceived;
-    }
-
+/*
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
@@ -293,6 +309,8 @@ public class ExperimentApiData {
             addErrorMessage(errorMessage);
         }
     }
+*/
+/*
 
     @Data
     @NoArgsConstructor
@@ -304,6 +322,7 @@ public class ExperimentApiData {
         public String type;
         public long experimentId;
     }
+
     @Data
     public static class FunctionResult {
         public List<SimpleSelectOption> selectOptions = new ArrayList<>();
@@ -313,15 +332,6 @@ public class ExperimentApiData {
 //            functions.sort(Comparator.comparingInt(ExperimentFunctionResult::getOrder));
         }
     }
+*/
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SimpleExperiment {
-        public String name;
-        public String description;
-        public String code;
-        public int seed;
-        public long id;
-    }
 }

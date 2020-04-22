@@ -65,7 +65,7 @@ public class ExperimentResultParamsYaml implements BaseParams {
     public static class ExecContextWithParams {
         public Long execContextId;
         public String execContextParams;
-        public int execState;
+//        public int execState;
     }
 
     public long createdOn;
