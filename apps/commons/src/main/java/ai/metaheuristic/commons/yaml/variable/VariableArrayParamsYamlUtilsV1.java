@@ -51,7 +51,6 @@ public class VariableArrayParamsYamlUtilsV1
         v1.checkIntegrity();
         VariableArrayParamsYaml t = new VariableArrayParamsYaml();
         v1.array.stream().map(VariableArrayParamsYamlUtilsV1::upInputVariable).collect(Collectors.toCollection(()->t.array));
-        t.inline.putAll(v1.inline);
         t.checkIntegrity();
         return t;
     }

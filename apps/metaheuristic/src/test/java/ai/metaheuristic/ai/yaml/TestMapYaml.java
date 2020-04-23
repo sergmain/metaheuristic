@@ -65,4 +65,31 @@ public class TestMapYaml {
         String str = yaml.dump(m);
         System.out.println(str);
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class MapOfPairs {
+        public final Map<String, String> metas = new HashMap<>();
+    }
+
+    private static final String Y_02 =
+            "metas:\n" +
+            "      RNN: '[LSTM, GRU]'\n" +
+            "      batches: '40'\n" +
+            "      seed: '42'\n" +
+            "      time_steps: '[15,30]'\n";
+
+    @Test
+    public void test_02() {
+        Yaml yaml = YamlUtils.init(MapOfPairs.class);
+        final MapOfPairs m = yaml.load(Y_02);
+
+        System.out.println(m);
+
+        String str = yaml.dump(m);
+        System.out.println(str);
+    }
+
+
+
 }

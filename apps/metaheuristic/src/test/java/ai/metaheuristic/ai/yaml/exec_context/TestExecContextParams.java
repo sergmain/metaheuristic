@@ -14,9 +14,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.workbook;
+package ai.metaheuristic.ai.yaml.exec_context;
 
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Date: 11/12/2019
  * Time: 3:33 PM
  */
-public class TestWorkbookParams {
+public class TestExecContextParams {
 
     @Test
     public void testVersion() {

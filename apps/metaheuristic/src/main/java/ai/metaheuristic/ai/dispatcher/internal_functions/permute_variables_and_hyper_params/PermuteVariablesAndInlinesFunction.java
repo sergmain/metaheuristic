@@ -44,6 +44,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.Data;
@@ -55,6 +56,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.ByteArrayInputStream;
 import java.util.*;
@@ -171,8 +173,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             inlineKey = null;
         }
 
-        final List<InlineVariable> inlineVariables = InlineVariableUtils.getAllInlineVariants(inlines);
-
         List<VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
             VariableHolder holder = new VariableHolder();
@@ -200,7 +200,13 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.output_variable_not_defined,
                     "Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
         }
+        final String inlineVariableName = MetaUtils.getValue(process.metas, "inline-permutation");
+        if (S.b(inlineVariableName)) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.output_variable_not_defined,
+                    "Meta with key 'inline-permutation' wasn't found for process '"+process.processCode+"'");
+        }
         final List<Long> lastIds = new ArrayList<>();
+        final List<InlineVariable> inlineVariables = InlineVariableUtils.getAllInlineVariants(inlines);
         for (int i = 0; i < holders.size(); i++) {
             try {
                 permutation.printCombination(holders, i+1,
@@ -214,14 +220,16 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                     map.put(inlineKey, inlineVariable.params);
 
                                     createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml,
-                                            subProcesses, permutationNumber, taskId, variableName, map, lastIds
+                                            subProcesses, permutationNumber, taskId, variableName, map, lastIds,
+                                            inlineVariableName, inlineVariable.params
                                     );
                                 }
                             }
                             else {
                                 permutationNumber.incrementAndGet();
                                 createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml, subProcesses, permutationNumber, taskId, variableName,
-                                        execContextParamsYaml.variables.inline, lastIds
+                                        execContextParamsYaml.variables.inline, lastIds,
+                                        inlineVariableName, Map.of()
                                 );
                             }
                             return true;
@@ -239,7 +247,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     public void createTasksForSubProcesses(
             List<VariableHolder> permutedVariables, Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
             AtomicInteger permutationNumber, Long parentTaskId, String variableName,
-            Map<String, Map<String, String>> inlines, List<Long> lastIds) {
+            Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted) {
         List<Long> parentTaskIds = List.of(parentTaskId);
         TaskImpl t = null;
         String subProcessContextId = null;
@@ -267,12 +275,21 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
             lastIds.add(t.id);
 
-            VariableArrayParamsYaml vapy = toVariableArrayParamsYaml(permutedVariables);
-            vapy.inline.putAll(inlines);
-            String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
-            byte[] bytes = yaml.getBytes();
-            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-            Variable v = variableService.createInitialized(bais, bytes.length, variableName, null, execContextId, currTaskContextId);
+            {
+                VariableArrayParamsYaml vapy = toVariableArrayParamsYaml(permutedVariables);
+                String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
+                byte[] bytes = yaml.getBytes();
+                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                Variable v = variableService.createInitialized(bais, bytes.length, variableName, null, execContextId, currTaskContextId);
+            }
+            {
+                Yaml yampUtil = YamlUtils.init(Map.class);
+                String yaml = yampUtil.dumpAsMap(inlinePermuted);
+                byte[] bytes = yaml.getBytes();
+                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                Variable v = variableService.createInitialized(bais, bytes.length, inlineVariableName, null, execContextId, currTaskContextId);
+            }
+
         }
     }
 

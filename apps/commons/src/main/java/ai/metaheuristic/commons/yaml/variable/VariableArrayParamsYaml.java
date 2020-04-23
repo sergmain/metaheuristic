@@ -70,5 +70,4 @@ public class VariableArrayParamsYaml implements BaseParams {
     }
 
     public final List<Variable> array = new ArrayList<>();
-    public final Map<String, Map<String, String>> inline = new HashMap<>();
 }
