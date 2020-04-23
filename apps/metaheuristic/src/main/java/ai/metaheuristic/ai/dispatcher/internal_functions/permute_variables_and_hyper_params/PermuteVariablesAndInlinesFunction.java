@@ -54,7 +54,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -87,6 +86,8 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
       value: mh.hyper-params
     - key: permute-inline
       value: true
+    - key: permutation
+      value: var-permutation
 */
     private static final String INLINE_KEY = "inline-key";
     private static final String PERMUTE_INLINE = "permute-inline";
@@ -213,13 +214,15 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                     map.put(inlineKey, inlineVariable.params);
 
                                     createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml,
-                                            subProcesses, permutationNumber, taskId, variableName, map, lastIds);
+                                            subProcesses, permutationNumber, taskId, variableName, map, lastIds
+                                    );
                                 }
                             }
                             else {
                                 permutationNumber.incrementAndGet();
                                 createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml, subProcesses, permutationNumber, taskId, variableName,
-                                        execContextParamsYaml.variables!=null ? execContextParamsYaml.variables.inline : null, lastIds);
+                                        execContextParamsYaml.variables.inline, lastIds
+                                );
                             }
                             return true;
                         }
@@ -235,7 +238,8 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
     public void createTasksForSubProcesses(
             List<VariableHolder> permutedVariables, Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
-            AtomicInteger permutationNumber, Long parentTaskId, String variableName, @Nullable Map<String, Map<String, String>> inlines, List<Long> lastIds) {
+            AtomicInteger permutationNumber, Long parentTaskId, String variableName,
+            Map<String, Map<String, String>> inlines, List<Long> lastIds) {
         List<Long> parentTaskIds = List.of(parentTaskId);
         TaskImpl t = null;
         String subProcessContextId = null;
@@ -260,12 +264,14 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         }
 
         if (subProcessContextId!=null) {
+            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
+            lastIds.add(t.id);
+
             VariableArrayParamsYaml vapy = toVariableArrayParamsYaml(permutedVariables);
+            vapy.inline.putAll(inlines);
             String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
             byte[] bytes = yaml.getBytes();
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-            lastIds.add(t.id);
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
             Variable v = variableService.createInitialized(bais, bytes.length, variableName, null, execContextId, currTaskContextId);
         }
     }

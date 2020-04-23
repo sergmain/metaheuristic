@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
  * Date: 7/6/2019
  * Time: 10:42 PM
  */
-@SuppressWarnings("UnnecessaryLocalVariable")
 @Service
 @Profile("dispatcher")
 @Slf4j
@@ -241,9 +240,7 @@ class ExecContextGraphService {
             changeGraph(execContext, graph -> {
 
                 Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
-                set.forEach( t->{
-                    t.execState = EnumsApi.TaskExecState.NONE;
-                });
+                set.forEach( t-> t.execState = EnumsApi.TaskExecState.NONE);
                 withTaskList.childrenTasks.addAll(set);
             });
             return withTaskList;

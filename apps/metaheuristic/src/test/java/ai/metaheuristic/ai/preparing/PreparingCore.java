@@ -50,7 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.HyperParam;
+import static ai.metaheuristic.api.data.experiment.ExperimentApiData.HyperParam;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
@@ -229,10 +229,6 @@ public abstract class PreparingCore {
             ehp3.setValues("[7, 13]");
 
             epy.experimentYaml.hyperParams.addAll(List.of(ehp1, ehp2, ehp3));
-
-            // set functions for experiment
-            epy.experimentYaml.fitFunction = fitFunction.getCode();
-            epy.experimentYaml.predictFunction = this.predictFunction.getCode();
 
             experiment.updateParams(epy);
 

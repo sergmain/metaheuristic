@@ -26,7 +26,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -68,4 +70,5 @@ public class VariableArrayParamsYaml implements BaseParams {
     }
 
     public final List<Variable> array = new ArrayList<>();
+    public final Map<String, Map<String, String>> inline = new HashMap<>();
 }

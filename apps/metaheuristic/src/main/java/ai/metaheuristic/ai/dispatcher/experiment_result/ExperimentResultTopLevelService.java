@@ -367,12 +367,14 @@ public class ExperimentResultTopLevelService {
         execContext.id = ypywc.experimentResult.execContext.execContextId;
         execContext.state = ypywc.experimentResult.execContext.execState;
 */
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 
+        // TODO change this
         ExperimentResultData.ExperimentInfo experimentInfoResult = new ExperimentResultData.ExperimentInfo();
-        experimentInfoResult.features = ypywc.getExperimentParamsYaml().processing.features
-                .stream()
-                .map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
+        experimentInfoResult.features = List.of();
+//        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+//        experimentInfoResult.features = ypywc.getExperimentParamsYaml().processing.features
+//                .stream()
+//                .map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
 
 /*
         experimentInfoResult.execContext = execContext;
@@ -725,14 +727,16 @@ public class ExperimentResultTopLevelService {
         execContext.id = ypywc.experimentResult.execContext.execContextId;
         execContext.state = ypywc.experimentResult.execContext.execState;
 */
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
-
         ExperimentResultData.ExperimentFeatureExtendedResult result = new ExperimentResultData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
         result.hyperParamResult = hyperParamResult;
         result.tasks = tasks;
-        result.experimentFeature = ExperimentService.asExperimentFeatureData(experimentFeature, taskVertices, epy.processing.taskFeatures);
         result.consoleResult = new ExperimentResultData.ConsoleResult();
+
+        // TODO change this
+        result.experimentFeature = new ExperimentApiData.ExperimentFeatureData();
+//        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+//        result.experimentFeature = ExperimentService.asExperimentFeatureData(experimentFeature, taskVertices, epy.processing.taskFeatures);
 
         return result;
     }
@@ -779,12 +783,15 @@ public class ExperimentResultTopLevelService {
         execContext.id = ypywc.experimentResult.execContext.execContextId;
         execContext.state = ypywc.experimentResult.execContext.execState;
 */
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
-
         ExperimentResultData.ExperimentFeatureExtendedResult result = new ExperimentResultData.ExperimentFeatureExtendedResult();
         result.tasks = feature==null ?  Page.empty() : findTasks(experimentResultId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
-        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature, taskVertices, ypywc.getExperimentParamsYaml().processing.taskFeatures);
         result.consoleResult = new ExperimentResultData.ConsoleResult();
+
+        // TODO change this
+        result.experimentFeature = new ExperimentApiData.ExperimentFeatureData();
+//        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+//        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature, taskVertices, ypywc.getExperimentParamsYaml().processing.taskFeatures);
+
         return result;
     }
 
