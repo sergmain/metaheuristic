@@ -27,15 +27,6 @@ import org.springframework.data.domain.Slice;
 import java.util.List;
 
 public class TaskApiData {
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    public static class TasksResult extends BaseDataClass {
-        public Slice<TaskWIthType> items;
-    }
-
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -43,6 +34,4 @@ public class TaskApiData {
     public static class ListOfTasksResult extends BaseDataClass {
         public List<Task> items;
     }
-
-
 }

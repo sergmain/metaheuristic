@@ -162,16 +162,6 @@ public class EnumsApi {
 
     }
 
-    public enum ProcessType {
-        FILE_PROCESSING(1), EXPERIMENT(2);
-
-        public int value;
-
-        ProcessType(int value) {
-            this.value = value;
-        }
-    }
-
     public enum SourceCodeValidateStatus { OK, NOT_VERIFIED_YET,
         SOURCE_CODE_NOT_FOUND_ERROR,
         EXEC_CONTEXT_NOT_FOUND_ERROR,

@@ -6,6 +6,7 @@ CREATE TABLE mh_source_code
     VERSION         INT UNSIGNED    NOT NULL,
     COMPANY_ID      INT UNSIGNED    not null,
     UID             varchar(50)  NOT NULL,
+    TYPE            VARCHAR(15) not null default 'common',
     CREATED_ON      bigint NOT NULL,
     PARAMS          TEXT not null,
     IS_LOCKED       BOOLEAN not null default false,
