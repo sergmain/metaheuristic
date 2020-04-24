@@ -478,9 +478,8 @@ class ExecContextGraphService {
             Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
 
         Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
-        set.forEach( t->{
-            t.execState = state;
-        });
+        // find and filter mh.finish vertex, which doesn't have any outgoing edges
+        set.stream().filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty()).forEach( tv-> tv.execState = state);
         withTaskList.childrenTasks.addAll(set);
     }
 

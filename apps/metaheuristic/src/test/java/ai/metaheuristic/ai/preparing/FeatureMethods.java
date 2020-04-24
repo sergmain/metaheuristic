@@ -127,7 +127,7 @@ public abstract class FeatureMethods extends PreparingSourceCode {
             SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
             assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
 
-            ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
+            ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
             execContextForTest = result.execContext;
             assertFalse(result.isErrorMessages());
             assertNotNull(execContextForTest);

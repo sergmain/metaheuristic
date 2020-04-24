@@ -62,7 +62,7 @@ public class TestGraph extends PreparingSourceCode {
     @Test
     public void test() {
 
-        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode);
+        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
         execContextForTest = result.execContext;
 
         assertNotNull(execContextForTest);

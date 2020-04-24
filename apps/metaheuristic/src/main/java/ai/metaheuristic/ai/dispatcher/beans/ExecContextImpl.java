@@ -26,6 +26,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Entity
@@ -46,6 +47,8 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "SOURCE_CODE_ID")
     public Long sourceCodeId;
 
+    // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
+    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 

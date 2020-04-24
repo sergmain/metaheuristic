@@ -18,7 +18,10 @@ package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Experiment;
+import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
+import ai.metaheuristic.ai.dispatcher.beans.ExperimentTask;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
@@ -27,7 +30,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
@@ -39,13 +42,16 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -60,7 +66,6 @@ import java.util.Collections;
 public class ExperimentResultService {
 
     private final Globals globals;
-    private final SourceCodeCache sourceCodeCache;
     private final ExperimentCache experimentCache;
     private final ExperimentRepository experimentRepository;
     private final TaskRepository taskRepository;
@@ -90,7 +95,7 @@ public class ExperimentResultService {
         return result;
     }
 
-    public OperationStatusRest storeExperimentToExperimentResult(Long execContextId) {
+    public OperationStatusRest storeExperimentToExperimentResult(Long execContextId, TaskParamsYaml taskParamsYaml) {
         Long experimentId = experimentRepository.findIdByExecContextId(execContextId);
 
         if (experimentId==null ) {
@@ -137,37 +142,46 @@ public class ExperimentResultService {
         a.companyId = execContext.companyId;
         final ExperimentResult experimentResult = experimentResultRepository.save(a);
 
+        String metricsVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "metrics");
+        if (S.b(metricsVariableName)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Meta 'metrics' must be defined and can't be empty");
+        }
+
         // store all tasks' results
-        stored.experimentResultParamsYamlWithCache.experimentResult.taskIds
-                .forEach(id -> {
-                    Task t = taskRepository.findById(id).orElse(null);
-                    if (t == null) {
-                        return;
-                    }
-                    ExperimentTask at = new ExperimentTask();
-                    at.experimentResultId = experimentResult.id;
-                    at.taskId = t.getId();
-                    ExperimentResultTaskParamsYaml atpy = new ExperimentResultTaskParamsYaml();
-                    atpy.assignedOn = t.getAssignedOn();
-                    atpy.completed = t.isCompleted();
-                    atpy.completedOn = t.getCompletedOn();
-                    atpy.execState = t.getExecState();
-                    atpy.taskId = t.getId();
-                    atpy.taskParams = t.getParams();
-                    // typeAsString will be initialized when ExperimentResultTaskParamsYaml will be requested
-                    // see method ai.metaheuristic.ai.dispatcher.rexperiment_result.ExperimentResultTopLevelService.findTasks
-                    atpy.typeAsString = null;
-                    atpy.functionExecResults = t.getFunctionExecResults();
-                    if (true) {
-                        throw new NotImplementedException("Implement storing of metrics");
-                    }
-//                    atpy.metrics = t.getMetrics();
+        for (Long taskId : stored.experimentResultParamsYamlWithCache.experimentResult.taskIds) {
 
-                    at.params = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
-                    experimentTaskRepository.save(at);
+            Task t = taskRepository.findById(taskId).orElse(null);
+            if (t == null) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Task #"+taskId+" wasn't found");
+            }
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
 
-                });
+            ExperimentTask at = new ExperimentTask();
+            at.experimentResultId = experimentResult.id;
+            at.taskId = t.getId();
+            ExperimentResultTaskParamsYaml atpy = new ExperimentResultTaskParamsYaml();
+            atpy.assignedOn = t.getAssignedOn();
+            atpy.completed = t.isCompleted();
+            atpy.completedOn = t.getCompletedOn();
+            atpy.execState = t.getExecState();
+            atpy.taskId = t.getId();
+            atpy.taskParams = t.getParams();
+            // typeAsString will be initialized when ExperimentResultTaskParamsYaml will be requested
+            // see method ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultTopLevelService.findTasks
+            atpy.typeAsString = null;
+            atpy.functionExecResults = t.getFunctionExecResults();
 
+            String taskContextId = tpy.task.taskContextId;
+            SimpleVariableAndStorageUrl simpleVariable = variableService.findVariableInAllInternalContexts(metricsVariableName, taskContextId, execContextId);
+            if (simpleVariable==null) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        S.f("Variable '%s' with taskContext '%s' wasn't found in execContext #%d", metricsVariableName, taskContextId, execContextId));
+            }
+            atpy.metrics = variableService.getVariableDataAsString(simpleVariable.id);
+
+            at.params = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
+            experimentTaskRepository.save(at);
+        }
 
         execContextFSM.toFinished(execContextId);
         return OperationStatusRest.OPERATION_STATUS_OK;

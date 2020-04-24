@@ -88,7 +88,6 @@ public class SourceCodeValidationService {
                     EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR, "#177.080 At least one process must be defined");
         }
 
-        SourceCodeParamsYaml.Process lastProcess = null;
         List<SourceCodeParamsYaml.Process> processes = sourceCodeYaml.getProcesses();
         List<String> processCodes = new ArrayList<>();
         for (int i = 0; i < processes.size(); i++) {
@@ -132,7 +131,6 @@ public class SourceCodeValidationService {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.WRONG_CODE_OF_PROCESS_ERROR, "#177.200 There is process with code mh.finish but function is " + process.function.code);
             }
-            lastProcess = process;
             if (S.b(process.code) || !StrUtils.isCodeOk(process.code)){
                 log.error("#177.210 Error while validating sourceCode {}", sourceCodeYaml);
                 return new SourceCodeApiData.SourceCodeValidationResult(

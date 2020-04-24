@@ -108,6 +108,12 @@ public class ExecContextCreatorService {
         return createExecContext(sourceCode, context.getCompanyId());
     }
 
+    /**
+     *
+     * @param sourceCode SourceCodeImpl
+     * @param companyId Long companyId can be different from sourceCode.companyId
+     * @return ExecContextCreationResult
+     */
     public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
         if (sourceCode==null) {
             return new ExecContextCreationResult("#560.006 source code wasn't found");
@@ -127,10 +133,6 @@ public class ExecContextCreatorService {
         if (ExecContextProcessGraphService.anyError(sourceCodeGraph)) {
             return new ExecContextCreationResult("#560.006 processGraph is broken");
         }
-
-        // TODO 2020-02-24 add this line
-        //  2020-04-19 why?
-        // changeValidStatus(producingResult.execContext.getId(), true);
 
         //noinspection UnnecessaryLocalVariable
         ExecContextImpl execContext = createExecContext(sourceCode, companyId, sourceCodeGraph);

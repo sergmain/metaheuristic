@@ -21,10 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
-import ai.metaheuristic.ai.exceptions.StoreNewFileException;
-import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -34,6 +31,7 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -50,6 +48,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -81,8 +80,9 @@ public class VariableService {
         return v;
     }
 
+    @Nullable
     @Transactional(readOnly = true)
-    public @Nullable SimpleVariableAndStorageUrl findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
+    public SimpleVariableAndStorageUrl findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
         String currTaskContextId = taskContextId;
         while( !S.b(currTaskContextId)) {
             SimpleVariableAndStorageUrl v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);
@@ -102,26 +102,48 @@ public class VariableService {
         return taskContextId.substring(0, taskContextId.lastIndexOf(',')).strip();
     }
 
+    @Nullable
     @Transactional(readOnly = true)
-    public @Nullable Variable getBinaryData(Long id) {
+    public Variable getBinaryData(Long id) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("#087.010 this method intended to be only for test cases");
         }
         return getBinaryData(id, true);
     }
 
-    private @Nullable Variable getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
+    @Nullable
+    private Variable getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
         try {
-            Variable data = variableRepository.findById(id).orElse(null);
-            if (data==null) {
+            Variable v = variableRepository.findById(id).orElse(null);
+            if (v==null) {
                 return null;
             }
             if (isInitBytes) {
-                data.bytes = data.getData().getBytes(1, (int) data.getData().length());
+                Blob blob = v.getData();
+                v.bytes = blob.getBytes(1, (int) blob.length());
             }
-            return data;
-        } catch (SQLException e) {
-            throw new IllegalStateException("#087.020 SQL error", e);
+            return v;
+        } catch (Throwable th) {
+            throw new VariableCommonException("#087.020 Error: " + th.getMessage(), id);
+        }
+    }
+
+    public String getVariableDataAsString(Long variableId) {
+        try {
+            Blob blob = variableRepository.getDataAsStreamById(variableId);
+            if (blob==null) {
+                log.warn("#087.0286 Binary data for variableId {} wasn't found", variableId);
+                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, "#087.028 Variable data wasn't found, variableId: " + variableId);
+            }
+            try (InputStream is = blob.getBinaryStream()) {
+                String s = IOUtils.toString(is, StandardCharsets.UTF_8);
+                return s;
+            }
+        } catch (CommonErrorWithDataException e) {
+            throw e;
+        } catch (Throwable th) {
+            log.error("#087.020", th);
+            throw new VariableCommonException("#087.020 Error: " + th.getMessage(), variableId);
         }
     }
 
@@ -138,7 +160,7 @@ public class VariableService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
-            String es = "#087.050 Error while storing binary data";
+            String es = "#087.050 Error while storing data to file";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -212,12 +234,6 @@ public class VariableService {
                             v.id, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
                             null, false
                     ));
-        }
-    }
-
-    public void createUninitialized(Long execContextId, SourceCodeData.SourceCodeGraph sourceCodeGraph) {
-        if (true) {
-            throw new NotImplementedException("not yet");
         }
     }
 
