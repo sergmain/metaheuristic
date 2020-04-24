@@ -104,13 +104,15 @@ public class TestGraph extends PreparingSourceCode {
         assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
-        // there is only 'BROKEN' exec state
         Set<EnumsApi.TaskExecState> states = execContextGraphTopLevelService.findAll(execContextForTest).stream().map(o -> o.execState).collect(Collectors.toSet());
-        assertEquals(1, states.size());
+        assertEquals(2, states.size());
+        // there are o'BROKEN' state for 1st task and NONE for the last one
         assertTrue(states.contains(EnumsApi.TaskExecState.BROKEN));
+        assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
 
         count = execContextService.getCountUnfinishedTasks(execContextForTest);
-        assertEquals(0, count);
+        // there is one unfinished task which is mh.finish and which must me invoked in any case
+        assertEquals(1, count);
 
 
         setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.NONE);
