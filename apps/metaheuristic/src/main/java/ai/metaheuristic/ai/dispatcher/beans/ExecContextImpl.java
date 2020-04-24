@@ -46,6 +46,9 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "SOURCE_CODE_ID")
     public Long sourceCodeId;
 
+    @Column(name = "COMPANY_ID")
+    public Long companyId;
+
     @Column(name="CREATED_ON")
     public long createdOn;
 

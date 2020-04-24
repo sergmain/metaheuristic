@@ -59,7 +59,7 @@ public class TestExperimentToJson extends PreparingSourceCode {
         assertNotNull(experiment.getId());
 //        assertNotNull(experiment.getExecContextId());
 
-        ExperimentResultService.StoredToExperimentResultWithStatus r = experimentResultService.toExperimentStoredToExperimentResult(sourceCode, execContextForTest, experiment);
+        ExperimentResultService.StoredToExperimentResultWithStatus r = experimentResultService.toExperimentStoredToExperimentResult(execContextForTest, experiment);
         assertEquals(Enums.StoringStatus.OK, r.status);
 
         String yaml = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(r.experimentResultParamsYamlWithCache.experimentResult);

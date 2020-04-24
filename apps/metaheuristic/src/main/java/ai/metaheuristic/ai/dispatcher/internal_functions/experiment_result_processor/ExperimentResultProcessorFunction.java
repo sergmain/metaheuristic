@@ -58,10 +58,6 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
             Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration, TaskParamsYaml taskParamsYaml) {
 
-        if (true) {
-            return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
-        }
-
         try {
             OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContextId);
             if (status.status!=EnumsApi.OperationStatus.OK) {

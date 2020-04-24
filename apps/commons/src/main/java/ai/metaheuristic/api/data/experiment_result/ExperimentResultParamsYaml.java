@@ -34,7 +34,7 @@ public class ExperimentResultParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        if (sourceCode ==null || execContext ==null || experiment==null || taskIds==null) {
+        if (execContext ==null || experiment==null || taskIds==null) {
             throw new CheckIntegrityFailedException("(sourceCode==null || execContext==null || experiment==null || taskIds==null)");
         }
         return true;
@@ -69,7 +69,7 @@ public class ExperimentResultParamsYaml implements BaseParams {
     }
 
     public long createdOn;
-    public SourceCodeWithParams sourceCode;
+//    public SourceCodeWithParams sourceCode;
     public ExecContextWithParams execContext;
     public ExperimentWithParams experiment;
     public List<Long> taskIds = new ArrayList<>();

@@ -70,7 +70,7 @@ public class VariableService {
     private final VariableRepository variableRepository;
     private final Globals globals;
 
-    @SuppressWarnings({"SameParameterValue", "UnnecessaryLocalVariable"})
+    @SuppressWarnings({"SameParameterValue"})
     @Transactional(readOnly = true)
     public @Nullable SimpleVariableAndStorageUrl getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
         ExecContextParamsYaml.Process p = execContext.getExecContextParamsYaml().findProcess(processCode);

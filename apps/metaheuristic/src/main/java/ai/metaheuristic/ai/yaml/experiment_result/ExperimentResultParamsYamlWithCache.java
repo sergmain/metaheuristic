@@ -17,16 +17,13 @@
 package ai.metaheuristic.ai.yaml.experiment_result;
 
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
-import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
-import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
@@ -72,20 +69,6 @@ public class ExperimentResultParamsYamlWithCache {
         }
         return paramByIndex;
     }
-
-    public SourceCodeParamsYaml getSourceCodeParamsYaml() {
-        if (sourceCodeParamsYaml ==null) {
-            synchronized (this) {
-                if (sourceCodeParamsYaml ==null) {
-                    SourceCodeStoredParamsYaml scspy = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.sourceCode.sourceCodeParams);
-                    //noinspection UnnecessaryLocalVariable
-                    SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-                    sourceCodeParamsYaml = scpy;
-                }
-            }
-        }
-        return sourceCodeParamsYaml;
-    };
 
     public ExperimentParamsYaml getExperimentParamsYaml() {
         if (experimentParamsYaml==null) {

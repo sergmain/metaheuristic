@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
@@ -67,6 +68,7 @@ public class ExperimentResultService {
     private final ExperimentTaskRepository experimentTaskRepository;
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
+    private final VariableService variableService;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -92,35 +94,31 @@ public class ExperimentResultService {
         Long experimentId = experimentRepository.findIdByExecContextId(execContextId);
 
         if (experimentId==null ) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Can't find experiment for execContextId #" + execContextId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.020 Can't find experiment for execContextId #" + execContextId);
         }
 
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.02 can't find experiment for id: " + experimentId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.040 can't find experiment for id: " + experimentId);
         }
         ExecContextImpl execContext = execContextCache.findById(experiment.execContextId);
         if (execContext==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.05 can't find execContext for this experiment");
-        }
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
-        if (sourceCode==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.10 can't find sourceCode for this experiment");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.060 can't find execContext for this experiment");
         }
 
-        StoredToExperimentResultWithStatus stored = toExperimentStoredToExperimentResult(sourceCode, execContext, experiment);
+        StoredToExperimentResultWithStatus stored = toExperimentStoredToExperimentResult(execContext, experiment);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.getErrorMessagesAsList());
         }
         if (!execContextId.equals(stored.experimentResultParamsYamlWithCache.experimentResult.execContext.execContextId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment can't be stored, execContextId is different");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.100 Experiment can't be stored, execContextId is different");
         }
         // TODO 2019-07-13 need to re-write this check
 /*
         String poolCode = getPoolCodeForExperiment(execContextId, experimentId);
         List<SimpleVariableAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), execContextId);
         if (!codes.isEmpty()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment already stored");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.120 experiment already stored");
         }
 */
         ExperimentResult a = new ExperimentResult();
@@ -128,7 +126,7 @@ public class ExperimentResultService {
             a.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(stored.experimentResultParamsYamlWithCache.experimentResult);
         } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "General error while storing experiment, " + e.toString());
+                    "#604.140 General error while storing experiment, " + e.toString());
         }
         ExperimentParamsYaml epy = stored.experimentResultParamsYamlWithCache.getExperimentParamsYaml();
 
@@ -136,7 +134,7 @@ public class ExperimentResultService {
         a.description = epy.experimentYaml.description;
         a.code = epy.experimentYaml.code;
         a.createdOn = System.currentTimeMillis();
-        a.companyId = sourceCode.companyId;
+        a.companyId = execContext.companyId;
         final ExperimentResult experimentResult = experimentResultRepository.save(a);
 
         // store all tasks' results
@@ -175,10 +173,10 @@ public class ExperimentResultService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(SourceCodeImpl sourceCode, ExecContextImpl execContext, Experiment experiment) {
+    public StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextImpl execContext, Experiment experiment) {
         ExperimentResultParamsYaml erpy = new ExperimentResultParamsYaml();
         erpy.createdOn = System.currentTimeMillis();
-        erpy.sourceCode = new ExperimentResultParamsYaml.SourceCodeWithParams(sourceCode.id, sourceCode.getParams());
+//        erpy.sourceCode = new ExperimentResultParamsYaml.SourceCodeWithParams(sourceCode.id, sourceCode.getParams());
         erpy.execContext = new ExperimentResultParamsYaml.ExecContextWithParams(execContext.id, execContext.getParams());
         erpy.experiment = new ExperimentResultParamsYaml.ExperimentWithParams(experiment.id, experiment.getParams());
         erpy.taskIds = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());

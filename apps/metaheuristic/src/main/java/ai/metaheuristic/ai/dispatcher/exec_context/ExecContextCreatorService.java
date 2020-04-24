@@ -91,7 +91,7 @@ public class ExecContextCreatorService {
             return new ExecContextCreationResult("#560.072 Error creating execContext: " +
                     "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.getCompanyId());
         }
-        return createExecContext(sourceCode);
+        return createExecContext(sourceCode, context.getCompanyId());
     }
 
     public ExecContextCreationResult createExecContext(String sourceCodeUid, DispatcherContext context) {
@@ -105,10 +105,10 @@ public class ExecContextCreatorService {
             return new ExecContextCreationResult("#560.072 Error creating execContext: " +
                     "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.getCompanyId());
         }
-        return createExecContext(sourceCode);
+        return createExecContext(sourceCode, context.getCompanyId());
     }
 
-    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode) {
+    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
         if (sourceCode==null) {
             return new ExecContextCreationResult("#560.006 source code wasn't found");
         }
@@ -133,14 +133,16 @@ public class ExecContextCreatorService {
         // changeValidStatus(producingResult.execContext.getId(), true);
 
         //noinspection UnnecessaryLocalVariable
-        ExecContextImpl execContext = createExecContext(sourceCode, sourceCodeGraph);
+        ExecContextImpl execContext = createExecContext(sourceCode, companyId, sourceCodeGraph);
         ecr.execContext = execContext;
         return ecr;
     }
 
-    private @NonNull ExecContextImpl createExecContext(SourceCodeImpl sourceCode, SourceCodeData.SourceCodeGraph sourceCodeGraph) {
+    @NonNull
+    private ExecContextImpl createExecContext(SourceCodeImpl sourceCode, Long companyId, SourceCodeData.SourceCodeGraph sourceCodeGraph) {
 
         ExecContextImpl ec = new ExecContextImpl();
+        ec.companyId = companyId;
         ec.setSourceCodeId(sourceCode.id);
         ec.setCreatedOn(System.currentTimeMillis());
         ec.setState(EnumsApi.ExecContextState.NONE.code);
