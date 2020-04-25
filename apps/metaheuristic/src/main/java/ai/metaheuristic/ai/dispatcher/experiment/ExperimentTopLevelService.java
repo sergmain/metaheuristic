@@ -17,35 +17,24 @@
 package ai.metaheuristic.ai.dispatcher.experiment;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
-import ai.metaheuristic.ai.dispatcher.beans.TaskProgress;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
-import ai.metaheuristic.api.dispatcher.Task;
-import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
-import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
@@ -53,19 +42,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static ai.metaheuristic.ai.Consts.YAML_EXT;
-import static ai.metaheuristic.ai.Consts.YML_EXT;
 
 @SuppressWarnings("WeakerAccess")
 @Service
@@ -80,6 +60,8 @@ public class ExperimentTopLevelService {
     private final ExperimentCache experimentCache;
     private final ExperimentRepository experimentRepository;
     private final ExecContextService execContextService;
+    private final ExecContextCreatorService execContextCreatorService;
+    private final SourceCodeRepository sourceCodeRepository;
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
@@ -104,6 +86,15 @@ public class ExperimentTopLevelService {
 
         result.items = new PageImpl<>(experimentResults, pageable, experimentResults.size() + (experimentIds.hasNext() ? 1 : 0) );
         return result;
+    }
+
+    public OperationStatusRest changeExecContextState(String state, Long experimentId, DispatcherContext context) {
+        Experiment e = experimentCache.findById(experimentId);
+        if (e==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.007 experiment wasn't found, experimentId: " + experimentId);
+        }
+        OperationStatusRest operationStatusRest = execContextService.changeExecContextState(state, experimentId, context);
+        return operationStatusRest;
     }
 
     public ExperimentApiData.ExperimentResult getExperimentWithoutProcessing(Long experimentId) {
@@ -198,12 +189,23 @@ public class ExperimentTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest addExperimentCommit(ExperimentApiData.ExperimentData experiment) {
+    public OperationStatusRest addExperimentCommit(String sourceCodeUid, String name, String code, String description, DispatcherContext context) {
+        SourceCodeImpl sc = sourceCodeRepository.findByUid(sourceCodeUid);
+        if (sc==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.110 SourceCode wasn't found, sourceCodeUid: " + sourceCodeUid);
+        }
+        ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorService.createExecContext(sourceCodeUid, context);
+        if (execContextResultRest.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, execContextResultRest.getErrorMessagesAsList());
+        }
+
         Experiment e = new Experiment();
-        e.code = StringUtils.strip(experiment.getCode());
+        e.code = StringUtils.strip(code);
+        e.execContextId = execContextResultRest.execContext.id;
 
         ExperimentParamsYaml params = new ExperimentParamsYaml();
-        return updateParamsAndSave(e, params, experiment.getName(), experiment.getDescription());
+        return updateParamsAndSave(e, params, name, description);
     }
 
     public OperationStatusRest editExperimentCommit(ExperimentApiData.SimpleExperiment simpleExperiment) {

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
@@ -38,7 +39,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
@@ -62,7 +62,7 @@ public class ExperimentController {
     private final ExecContextService execContextService;
     private final ExecContextCache execContextCache;
     private final ExperimentCache experimentCache;
-    private final SourceCodeTopLevelService sourceCodeTopLevelService;
+    private final DispatcherParamsService dispatcherParamsService;
     private final UserContextService userContextService;
 
     @GetMapping("/experiments")
@@ -84,7 +84,8 @@ public class ExperimentController {
     }
 
     @GetMapping(value = "/experiment-add")
-    public String add(@ModelAttribute("experiment") ExperimentApiData.ExperimentData experiment) {
+    public String add(Model model) {
+        model.addAttribute("sourceCodeUids", dispatcherParamsService.getExperiments());
         return "dispatcher/ai/experiment/experiment-add-form";
     }
 
@@ -100,25 +101,28 @@ public class ExperimentController {
         return "dispatcher/ai/experiment/experiment-edit-form";
     }
 
-    @GetMapping("/exec-context-target-state/{experimentId}/{state}/{id}")
-    public String execContextTargetExecState(@PathVariable Long experimentId, @PathVariable String state,
-                                          @PathVariable Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
+    @GetMapping("/exec-context-target-state/{experimentId}/{state}")
+    public String execContextTargetExecState(
+            @PathVariable Long experimentId, @PathVariable String state, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        OperationStatusRest operationStatusRest = sourceCodeTopLevelService.changeExecContextState(state, id, context);
+        OperationStatusRest operationStatusRest = experimentTopLevelService.changeExecContextState(state, experimentId, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
-        return "redirect:/dispatcher/ai/experiment/experiment-info/" + experimentId;
+        return "redirect:/dispatcher/ai/experiment/experiments/" + experimentId;
     }
 
 
     @PostMapping("/experiment-add-form-commit")
-    public String addFormCommit(ExperimentApiData.ExperimentData experiment, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = experimentTopLevelService.addExperimentCommit(experiment);
+    public String addFormCommit(
+            String sourceCodeUid, String name, String code, String description,
+            final RedirectAttributes redirectAttributes, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        OperationStatusRest status = experimentTopLevelService.addExperimentCommit(sourceCodeUid, name, code, description, context);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
-            return "dispatcher/experiment/experiment-add-form";
+            return "dispatcher/ai/experiment/experiment-add-form";
         }
         return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
@@ -154,9 +158,9 @@ public class ExperimentController {
             return REDIRECT_DISPATCHER_EXPERIMENTS;
         }
         if (experiment.execContextId !=null) {
-            ExecContext wb = execContextCache.findById(experiment.execContextId);
-            if (wb != null) {
-                OperationStatusRest operationStatusRest = sourceCodeTopLevelService.deleteExecContextById(experiment.execContextId, context);
+            ExecContext ex = execContextCache.findById(experiment.execContextId);
+            if (ex != null) {
+                OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context);
                 if (operationStatusRest.isErrorMessages()) {
                     redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
                     return REDIRECT_DISPATCHER_EXPERIMENTS;

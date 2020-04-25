@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -51,7 +50,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ExecContextRestController {
 
-    private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextService execContextService;
     private final ExecContextCreatorService execContextCreatorService;
@@ -115,7 +113,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest execContextDeleteCommit(Long sourceCodeId, Long execContextId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeTopLevelService.deleteExecContextById(execContextId, context);
+        return execContextService.deleteExecContextById(execContextId, context);
     }
 
     @GetMapping("/exec-context-target-state/{sourceCodeId}/{state}/{id}")
@@ -124,7 +122,7 @@ public class ExecContextRestController {
             @SuppressWarnings("unused") @PathVariable Long sourceCodeId, @PathVariable String state,
             @PathVariable Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeTopLevelService.changeExecContextState(state, id, context);
+        return execContextService.changeExecContextState(state, id, context);
     }
 
 }

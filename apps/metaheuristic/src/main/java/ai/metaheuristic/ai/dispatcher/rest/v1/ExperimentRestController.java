@@ -62,8 +62,9 @@ public class ExperimentRestController {
     }
 
     @PostMapping("/experiment-add-commit")
-    public OperationStatusRest addFormCommit(@RequestBody ExperimentApiData.ExperimentData experiment) {
-        return experimentTopLevelService.addExperimentCommit(experiment);
+    public OperationStatusRest addFormCommit(String sourceCodeUid, String name, String code, String description, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return experimentTopLevelService.addExperimentCommit(sourceCodeUid, name, code, description, context);
     }
 
     @PostMapping("/experiment-edit-commit")

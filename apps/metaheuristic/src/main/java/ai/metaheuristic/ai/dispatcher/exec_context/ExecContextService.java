@@ -90,7 +90,7 @@ public class ExecContextService {
     private final ExecContextFSM execContextFSM;
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     public OperationStatusRest resetBrokenTasks(Long execContextId) {
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
@@ -115,7 +115,7 @@ public class ExecContextService {
 
         if (execContext.state !=execState.code) {
             execContextFSM.toState(execContext.id, execState);
-            applicationEventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, true));
+            eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, true));
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -363,7 +363,7 @@ public class ExecContextService {
                     task.setResultResourceScheduledOn(0);
                     taskRepository.save(task);
 
-                    applicationEventPublisher.publishEvent(new TaskWithInternalContextEvent(task.getId()));
+                    eventPublisher.publishEvent(new TaskWithInternalContextEvent(task.getId()));
                     continue;
                 }
 
@@ -514,7 +514,7 @@ public class ExecContextService {
     }
 
     public void deleteExecContext(Long execContextId, Long companyUniqueId) {
-        applicationEventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExecContextEvent(execContextId));
+        eventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExecContextEvent(execContextId));
         variableService.deleteByExecContextId(execContextId);
         ExecContext execContext = execContextCache.findById(execContextId);
         if (execContext != null) {
@@ -523,7 +523,7 @@ public class ExecContextService {
             if (ids.size()==1) {
                 if (ids.get(0).equals(execContextId)) {
                     if (execContext.getSourceCodeId() != null) {
-                        applicationEventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, false));
+                        eventPublisher.publishEvent(new DispatcherInternalEvent.SourceCodeLockingEvent(execContext.getSourceCodeId(), companyUniqueId, false));
                     }
                 }
                 else {
@@ -536,4 +536,41 @@ public class ExecContextService {
             execContextCache.deleteById(execContextId);
         }
     }
+
+    public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
+        EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.from(state.toUpperCase());
+        if (execState== EnumsApi.ExecContextState.UNKNOWN) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
+        }
+        OperationStatusRest status = checkExecContext(execContextId, context);
+        if (status != null) {
+            return status;
+        }
+        status = execContextTargetState(execContextId, execState, context.getCompanyId());
+        return status;
+    }
+
+    public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
+        OperationStatusRest status = checkExecContext(execContextId, context);
+        if (status != null) {
+            return status;
+        }
+        eventPublisher.publishEvent( new DispatcherInternalEvent.ExecContextDeletionEvent(this, execContextId) );
+        deleteExecContext(execContextId, context.getCompanyId());
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    private @Nullable OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
+        if (execContextId==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 execContextId is null");
+        }
+        ExecContext wb = execContextCache.findById(execContextId);
+        if (wb==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
+        }
+        return null;
+    }
+
+
 }

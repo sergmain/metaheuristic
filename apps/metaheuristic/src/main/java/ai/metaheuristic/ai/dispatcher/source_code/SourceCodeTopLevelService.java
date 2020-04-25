@@ -19,11 +19,7 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -32,7 +28,6 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -42,11 +37,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -73,10 +66,6 @@ public class SourceCodeTopLevelService {
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
     private final SourceCodeValidationService sourceCodeValidationService;
-    private final ExecContextService execContextService;
-    private final ApplicationEventPublisher publisher;
-    private final ExecContextCache execContextCache;
-    private final SourceCodeSelectorService sourceCodeSelectorService;
     private final DispatcherParamsService dispatcherParamsService;
 
     public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, DispatcherContext context) {
@@ -324,48 +313,6 @@ public class SourceCodeTopLevelService {
         finally {
             DirUtils.deleteAsync(tempDir);
         }
-    }
-
-    // ========= ExecContext specific =============
-
-    public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
-        EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.from(state.toUpperCase());
-        if (execState== EnumsApi.ExecContextState.UNKNOWN) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
-        }
-        OperationStatusRest status = checkExecContext(execContextId, context);
-        if (status != null) {
-            return status;
-        }
-        status = execContextService.execContextTargetState(execContextId, execState, context.getCompanyId());
-        return status;
-    }
-
-    public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
-        OperationStatusRest status = checkExecContext(execContextId, context);
-        if (status != null) {
-            return status;
-        }
-        publisher.publishEvent( new DispatcherInternalEvent.ExecContextDeletionEvent(this, execContextId) );
-        execContextService.deleteExecContext(execContextId, context.getCompanyId());
-
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    private @Nullable OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
-        if (execContextId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 execContextId is null");
-        }
-        ExecContext wb = execContextCache.findById(execContextId);
-        if (wb==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );
-        }
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(wb.getSourceCodeId(), context.getCompanyId());
-        if (sourceCodesForCompany.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.405 SourceCode wasn't found, " +
-                    "companyId: "+context.getCompanyId()+", sourceCodeId: " + wb.getSourceCodeId()+", execContextId: " + wb.getId()+", error msg: " + sourceCodesForCompany.getErrorMessagesAsStr() );
-        }
-        return null;
     }
 
 }

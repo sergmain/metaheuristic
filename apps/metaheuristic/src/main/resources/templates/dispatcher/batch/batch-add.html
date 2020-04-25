@@ -13,7 +13,7 @@
             <fieldset>
 
                 <label for="sourceCodeId">List of source codes</label>
-                <select  id="sourceCodeId" class="pure-input-medium" th:name="sourceCodeId">
+                <select id="sourceCodeId" class="pure-input-medium" th:name="sourceCodeId">
                     <option th:each="o : ${result.items}" th:value="${o.id}" th:text="${o.uid} "></option>
                 </select>
                 <span class="pure-form-message">This is a required field.</span>
