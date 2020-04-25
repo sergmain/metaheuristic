@@ -41,6 +41,7 @@
         <tr>
             <th>Id</th>
             <th>UID of sourceCode</th>
+            <th>Type</th>
             <th>Created on</th>
             <th>Is valid?</th>
             <th>Is locked?</th>
@@ -51,6 +52,7 @@
         <tr th:each="f : ${result.items}">
             <td th:text="${f.id}">#Id</td>
             <td th:text="${f.uid}">UID of sourceCode</td>
+            <td th:text="${result.getType(f.uid)}">UID of sourceCode</td>
             <td th:text="${#dates.format(f.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
             <td th:text="${f.valid}">Is valid?</td>
             <td th:text="${f.locked}">Is locked?</td>
@@ -65,7 +67,7 @@
             <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/source-code/exec-contexts/' + f.id}">Exec contexts</a></td>
         </tr>
         <tr>
-            <td th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated} ? 9 : 6">
+            <td th:colspan="${result.assetMode!=T(ai.metaheuristic.api.EnumsApi.DispatcherAssetMode).replicated} ? 10 : 7">
                 <div>
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">

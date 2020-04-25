@@ -174,8 +174,7 @@ public class SourceCodeValidationService {
             sourceCodeValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
         else {
-            // we don't need to know is this sourceCode for experiment or not. Just unregister this sourceCode because it's broken
-            dispatcherParamsService.unregisterExperiment(sourceCode.uid);
+            dispatcherParamsService.unregisterSourceCode(sourceCode.uid);
             final String es = "#177.260 Validation error: " + sourceCodeValidation.status.status+", sourceCode UID: " + sourceCode.uid;
             log.error(es);
             sourceCodeValidation.addErrorMessage(es);

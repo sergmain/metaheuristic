@@ -62,6 +62,26 @@ public class SourceCodeApiData {
     public static class SourceCodesResult extends BaseDataClass {
         public Slice<SourceCode> items;
         public EnumsApi.DispatcherAssetMode assetMode;
+        public List<String> experiments;
+        public List<String> batches;
+
+        public boolean isExperiment(String uid) {
+            return experiments.contains(uid);
+        }
+
+        public boolean isBatch(String uid) {
+            return batches.contains(uid);
+        }
+
+        public EnumsApi.SourceCodeType getType(String uid) {
+            if (isBatch(uid)) {
+                return EnumsApi.SourceCodeType.batch;
+            }
+            else if (isExperiment(uid)) {
+                return EnumsApi.SourceCodeType.experiment;
+            }
+            return EnumsApi.SourceCodeType.common;
+        }
     }
 
     @Data

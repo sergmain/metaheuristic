@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -113,10 +114,13 @@ public class ReplicationSourceCodeService {
             return;
         }
 
+        // this inspection is suspended because in this case we need to create new record from existing one
+        //noinspection ConstantConditions
         sourceCodeAsset.sourceCode.id=null;
         sourceCodeCache.save(sourceCodeAsset.sourceCode);
     }
 
+    @Nullable
     private ReplicationData.SourceCodeAsset getSourceCodeAsset(String sourceCodeUid) {
         ReplicationData.SourceCodeAsset sourceCodeAsset = requestSourceCodeAsset(sourceCodeUid);
         if (sourceCodeAsset.isErrorMessages()) {

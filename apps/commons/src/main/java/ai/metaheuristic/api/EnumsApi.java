@@ -16,13 +16,14 @@
 
 package ai.metaheuristic.api;
 
-import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import lombok.ToString;
 
 public class EnumsApi {
 
     public enum SourceCodeLang { yaml }
+
+    public enum SourceCodeType { common, experiment, batch }
 
     public enum SourceCodeSubProcessLogic { and, or, sequential}
 
@@ -56,31 +57,6 @@ public class EnumsApi {
         }
     }
 
-    public enum ExperimentFunction {
-        FIT(CommonConsts.FIT_TYPE),
-        PREDICT(CommonConsts.PREDICT_TYPE),
-        CHECK_FITTING(CommonConsts.CHECK_FITTING_TYPE);
-
-        public String code;
-
-        ExperimentFunction(String code) {
-            this.code = code;
-        }
-
-        public static ExperimentFunction to(String code) {
-            switch (code) {
-                case CommonConsts.FIT_TYPE:
-                    return FIT;
-                case CommonConsts.PREDICT_TYPE:
-                    return PREDICT;
-                case CommonConsts.CHECK_FITTING_TYPE:
-                    return CHECK_FITTING;
-                default:
-                    throw new IllegalStateException("Unknown code: " + code);
-            }
-        }
-    }
-    
     public enum OS { unknown, any, windows, linux, macos }
 
     @ToString

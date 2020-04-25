@@ -126,7 +126,6 @@ public class ExecContextCreatorService {
 
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
         AtomicLong contextId = new AtomicLong();
-        ExecContextCreationResult ecr = new ExecContextCreationResult();
         SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
                 EnumsApi.SourceCodeLang.yaml, scspy.source, () -> "" + contextId.incrementAndGet());
 
@@ -134,8 +133,8 @@ public class ExecContextCreatorService {
             return new ExecContextCreationResult("#560.006 processGraph is broken");
         }
 
-        //noinspection UnnecessaryLocalVariable
         ExecContextImpl execContext = createExecContext(sourceCode, companyId, sourceCodeGraph);
+        ExecContextCreationResult ecr = new ExecContextCreationResult();
         ecr.execContext = execContext;
         return ecr;
     }

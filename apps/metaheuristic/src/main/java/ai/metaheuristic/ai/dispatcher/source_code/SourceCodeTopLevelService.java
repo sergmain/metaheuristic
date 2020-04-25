@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
@@ -76,6 +77,7 @@ public class SourceCodeTopLevelService {
     private final ApplicationEventPublisher publisher;
     private final ExecContextCache execContextCache;
     private final SourceCodeSelectorService sourceCodeSelectorService;
+    private final DispatcherParamsService dispatcherParamsService;
 
     public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, DispatcherContext context) {
         pageable = ControllerUtils.fixPageSize(globals.sourceCodeRowsLimit, pageable);
@@ -105,14 +107,15 @@ public class SourceCodeTopLevelService {
         List<SourceCode> sourceCodes = activeSourceCodes.stream()
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize())
-//                .peek(o-> o.setParams(""))
                 .collect(Collectors.toList());
 
-        SourceCodeApiData.SourceCodesResult sourceCodesResultRest = new SourceCodeApiData.SourceCodesResult();
-        sourceCodesResultRest.items = new PageImpl<>(sourceCodes, pageable, count.get());
-        sourceCodesResultRest.assetMode = globals.assetMode;
+        SourceCodeApiData.SourceCodesResult sourceCodesResult = new SourceCodeApiData.SourceCodesResult();
+        sourceCodesResult.items = new PageImpl<>(sourceCodes, pageable, count.get());
+        sourceCodesResult.assetMode = globals.assetMode;
+        sourceCodesResult.batches = dispatcherParamsService.getBatches();
+        sourceCodesResult.experiments = dispatcherParamsService.getExperiments();
 
-        return sourceCodesResultRest;
+        return sourceCodesResult;
     }
 
     public SourceCodeApiData.SourceCodeResult getSourceCode(Long sourceCodeId, DispatcherContext context) {
@@ -177,12 +180,13 @@ public class SourceCodeTopLevelService {
         scspy.source = sourceCodeYamlAsStr;
         scspy.lang = EnumsApi.SourceCodeLang.yaml;
         scspy.internalParams.updatedOn = System.currentTimeMillis();
-
         sourceCode.updateParams(scspy);
 
         sourceCode.companyId = context.getCompanyId();
         sourceCode.createdOn = System.currentTimeMillis();
         sourceCode.uid = ppy.source.uid;
+
+
         sourceCode = sourceCodeCache.save(sourceCode);
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);

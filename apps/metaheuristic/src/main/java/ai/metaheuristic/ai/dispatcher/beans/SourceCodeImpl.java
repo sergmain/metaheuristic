@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -43,7 +44,6 @@ public class SourceCodeImpl implements Serializable, SourceCode {
     @Version
     public Integer version;
 
-    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 

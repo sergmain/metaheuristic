@@ -196,7 +196,6 @@ CREATE TABLE MH_SOURCE_CODE (
   VERSION       NUMERIC(5, 0)  NOT NULL,
   COMPANY_ID    NUMERIC(10, 0) NOT NULL,
   UID           varchar(50)  NOT NULL,
-  TYPE          VARCHAR(15) not null default 'common',
   CREATED_ON    bigint NOT NULL,
   PARAMS        TEXT not null,
   IS_LOCKED     BOOLEAN not null default false,

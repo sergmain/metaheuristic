@@ -50,6 +50,8 @@ public class DispatcherParamsService {
     private final DispatcherParamsRepository dispatcherParamsRepository;
 
     public void registerSourceCode(SourceCodeImpl sourceCode) {
+        unregisterSourceCode(sourceCode.uid);
+
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
         SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
 
@@ -101,8 +103,21 @@ public class DispatcherParamsService {
         });
     }
 
+    public void unregisterSourceCode(String uid) {
+        if (getExperiments().contains(uid)) {
+            unregisterExperiment(uid);
+        }
+        else if(getBatches().contains(uid)) {
+            unregisterBatch(uid);
+        }
+    }
+
     public void unregisterExperiment(String uid) {
         updateParams((dpy) -> dpy.experiments.remove(uid));
+    }
+
+    public void unregisterBatch(String uid) {
+        updateParams((dpy) -> dpy.batches.remove(uid));
     }
 
     private void registerBatch(String uid) {
@@ -112,10 +127,6 @@ public class DispatcherParamsService {
             }
             dpy.batches.add(uid);
         });
-    }
-
-    public void unregisterBatch(String uid) {
-        updateParams((dpy) -> dpy.batches.remove(uid));
     }
 
     private void updateParams(Consumer<DispatcherParamsYaml> consumer) {
@@ -135,7 +146,7 @@ public class DispatcherParamsService {
 
     public List<String> getBatches() {
         find();
-        return Objects.requireNonNull(dispatcherParamsYaml).experiments;
+        return Objects.requireNonNull(dispatcherParamsYaml).batches;
     }
 
     @Nullable
@@ -151,10 +162,13 @@ public class DispatcherParamsService {
         if (S.b(dispatcher.params)) {
             throw new IllegalStateException("(S.b(dispatcher.params))");
         }
+/*
+        // todo 2020-04-24 this isn't working. need better solution to reduce number of db interaction
         if (dispatcherCacheValue!=null && dispatcher.params.equals(dispatcherCacheValue.params)) {
             log.info("Dispatcher params is the same. Won't be saved  to db");
             return;
         }
+*/
         try {
             dispatcherCacheValue = dispatcherParamsRepository.save(dispatcher);
             dispatcherParamsYaml = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(dispatcherCacheValue.params);
@@ -165,7 +179,7 @@ public class DispatcherParamsService {
         }
     }
 
-    private Dispatcher find() {
+    private synchronized Dispatcher find() {
         if (dispatcherCacheValue==null) {
             dispatcherCacheValue = dispatcherParamsRepository.findByCode(Consts.DISPATCHERS_CACHE);
             if (dispatcherCacheValue==null) {
