@@ -68,6 +68,8 @@ source:
           value: mh.hyper-params
         - key: permute-inline
           value: true
+        - key: inline-permutation
+          value: inline-permutation
       subProcesses:
         logic: sequential
         processes:
@@ -78,6 +80,7 @@ source:
               context: external
             inputs:
               - name: dataset-processing-output
+              - name: inline-permutation
               - name: feature-item
                 array: true
             outputs:

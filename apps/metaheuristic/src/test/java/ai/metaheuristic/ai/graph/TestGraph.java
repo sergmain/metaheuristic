@@ -112,7 +112,7 @@ public class TestGraph extends PreparingSourceCode {
 
         count = execContextService.getCountUnfinishedTasks(execContextForTest);
         // there is one unfinished task which is mh.finish and which must me invoked in any case
-        assertEquals(1, count);
+        assertEquals(2, count);
 
 
         setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.NONE);
