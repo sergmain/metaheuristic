@@ -132,18 +132,6 @@ public class Schedulers {
             artifactCleanerAtDispatcher.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.timeout.exteriment-finisher'), 5, 300, 10)*1000 }")
-        public void experimentFinisher() {
-            if (globals.isUnitTesting) {
-                return;
-            }
-            if (!globals.dispatcherEnabled) {
-                return;
-            }
-            log.info("Invoking experimentService.experimentFinisher()");
-            experimentService.experimentFinisher();
-        }
-
         @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
         public void garbageCollectionAtDispatcher() {
             if (globals.isUnitTesting) {

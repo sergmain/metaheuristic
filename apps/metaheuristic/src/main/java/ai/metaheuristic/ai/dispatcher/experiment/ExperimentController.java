@@ -101,7 +101,7 @@ public class ExperimentController {
         return "dispatcher/ai/experiment/experiment-edit-form";
     }
 
-    @GetMapping("/exec-context-target-state/{experimentId}/{state}")
+    @GetMapping("/experiment-target-state/{state}/{experimentId}")
     public String execContextTargetExecState(
             @PathVariable Long experimentId, @PathVariable String state, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
@@ -110,9 +110,8 @@ public class ExperimentController {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
-        return "redirect:/dispatcher/ai/experiment/experiments/" + experimentId;
+        return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
-
 
     @PostMapping("/experiment-add-form-commit")
     public String addFormCommit(

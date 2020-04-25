@@ -55,7 +55,6 @@ import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
 @RequiredArgsConstructor
 public class ExperimentService {
 
-    private final MetricsMaxValueCollector metricsMaxValueCollector;
     private final ExecContextCache execContextCache;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
@@ -101,11 +100,18 @@ public class ExperimentService {
         return ed;
     }
 
-    public static ExperimentApiData.ExperimentData asExperimentDataShort(Experiment e) {
+    @Nullable
+    public ExperimentApiData.ExperimentData asExperimentDataShort(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
+        ExecContextImpl ec = execContextCache.findById(e.execContextId);
+        if (ec==null) {
+            log.warn("ExecContext wasn't found for id #"+e.execContextId);
+            return null;
+        }
 
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
         ed.id = e.id;
+        ed.state = ec.state;
         ed.version = e.version;
         ed.code = e.code;
         ed.execContextId = e.execContextId;
@@ -183,53 +189,6 @@ public class ExperimentService {
             }
         }
         return paramByIndex;
-    }
-
-    public void experimentFinisher() {
-
-        List<Long> experimentIds = experimentRepository.findAllIds();
-        for (Long experimentId : experimentIds) {
-            Experiment e = experimentCache.findById(experimentId);
-            if (e==null) {
-                log.warn("#179.010 Experiment wasn't found for id: {}", experimentId);
-                continue;
-            }
-            if (e.execContextId ==null) {
-                log.warn("#179.020 This shouldn't be happened");
-                continue;
-            }
-            ExecContextImpl wb = execContextCache.findById(e.execContextId);
-            if (wb==null) {
-                log.info("#179.030 Can't calc max values and export to ExperimentResult because execContext is null");
-                continue;
-            }
-            if (wb.state != EnumsApi.ExecContextState.FINISHED.code) {
-                continue;
-            }
-            ExperimentParamsYaml epy = e.getExperimentParamsYaml();
-            if (!epy.processing.maxValueCalculated) {
-                updateMaxValueForExperimentFeatures(e.id);
-            }
-        }
-    }
-
-    private void updateMaxValueForExperimentFeatures(Long experimentId) {
-        Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
-        if (experiment==null) {
-            return;
-        }
-        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-
-        List<ExperimentFeature> features = epy.processing.features;
-        log.info("Start calculatingMaxValueOfMetrics");
-        for (ExperimentFeature feature : features) {
-            double value = metricsMaxValueCollector.calcMaxValueForMetrics(epy, feature.getId());
-            log.info("\tFeature #{}, max value: {}", feature.getId(), value);
-            feature.setMaxValue(value);
-        }
-        epy.processing.maxValueCalculated = true;
-        experiment.updateParams(epy);
-        experimentCache.save(experiment);
     }
 
     private void resetExperimentByExecContextId(Long execContextId) {

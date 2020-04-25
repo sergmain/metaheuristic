@@ -65,6 +65,11 @@ public class ExperimentApiData {
         public int numberOfTask;
         public final List<HyperParam> hyperParams = new ArrayList<>();
         public final Map<String, Map<String, Integer>> hyperParamsAsMap = new HashMap<>();
+
+        public int state;
+        public String getExecState() {
+            return EnumsApi.ExecContextState.from(state);
+        }
     }
 
     @Data

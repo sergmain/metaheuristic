@@ -59,6 +59,7 @@ public class ExperimentTopLevelService {
 
     private final ExperimentCache experimentCache;
     private final ExperimentRepository experimentRepository;
+    private final ExperimentService experimentService;
     private final ExecContextService execContextService;
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeRepository sourceCodeRepository;
@@ -66,10 +67,6 @@ public class ExperimentTopLevelService {
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
         return new ExperimentApiData.SimpleExperiment(params.experimentYaml.getName(), params.experimentYaml.getDescription(), params.experimentYaml.getCode(), e.getId());
-    }
-
-    public static ExperimentApiData.ExperimentResult asExperimentResultShort(Experiment e) {
-        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentDataShort(e));
     }
 
     public ExperimentApiData.ExperimentsResult getExperiments(Pageable pageable) {
@@ -80,8 +77,8 @@ public class ExperimentTopLevelService {
         List<ExperimentApiData.ExperimentResult> experimentResults =
                 experimentIds.stream()
                         .map(experimentCache::findById)
-                        .filter(Objects::nonNull)
-                        .map(ExperimentTopLevelService::asExperimentResultShort)
+                        .filter(Objects::nonNull).map(experimentService::asExperimentDataShort)
+                        .filter(Objects::nonNull).map(ExperimentApiData.ExperimentResult::new)
                         .collect(Collectors.toList());
 
         result.items = new PageImpl<>(experimentResults, pageable, experimentResults.size() + (experimentIds.hasNext() ? 1 : 0) );
@@ -93,7 +90,7 @@ public class ExperimentTopLevelService {
         if (e==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.007 experiment wasn't found, experimentId: " + experimentId);
         }
-        OperationStatusRest operationStatusRest = execContextService.changeExecContextState(state, experimentId, context);
+        OperationStatusRest operationStatusRest = execContextService.changeExecContextState(state, e.execContextId, context);
         return operationStatusRest;
     }
 

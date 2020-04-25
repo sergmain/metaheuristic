@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
+import ai.metaheuristic.ai.dispatcher.experiment.MetricsMaxValueCollector;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
@@ -58,6 +59,7 @@ import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -74,6 +76,7 @@ public class ExperimentResultService {
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
     private final VariableService variableService;
+    private final MetricsMaxValueCollector metricsMaxValueCollector;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -147,6 +150,13 @@ public class ExperimentResultService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Meta 'metrics' must be defined and can't be empty");
         }
 
+/*
+        ExperimentParamsYaml epy = e.getExperimentParamsYaml();
+        if (!epy.processing.maxValueCalculated) {
+            updateMaxValueForExperimentFeatures(e.id);
+        }
+*/
+
         // store all tasks' results
         for (Long taskId : stored.experimentResultParamsYamlWithCache.experimentResult.taskIds) {
 
@@ -185,6 +195,26 @@ public class ExperimentResultService {
 
         execContextFSM.toFinished(execContextId);
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+
+    public void updateMaxValueForExperimentFeatures(Long experimentId) {
+        Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
+        if (experiment==null) {
+            return;
+        }
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+
+        List<ExperimentParamsYaml.ExperimentFeature> features = epy.processing.features;
+        log.info("Start calculatingMaxValueOfMetrics");
+        for (ExperimentParamsYaml.ExperimentFeature feature : features) {
+            double value = metricsMaxValueCollector.calcMaxValueForMetrics(epy, feature.getId());
+            log.info("\tFeature #{}, max value: {}", feature.getId(), value);
+            feature.setMaxValue(value);
+        }
+        epy.processing.maxValueCalculated = true;
+        experiment.updateParams(epy);
+        experimentCache.save(experiment);
     }
 
     public StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextImpl execContext, Experiment experiment) {
