@@ -5,7 +5,7 @@
     <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.exec_context.ExecContextApiData$ExecContextsResult"*/-->
     <script>
         var table = function (html) {
-            $('#table').html(html).find('.ajax-elem').each(function () {
+            $('#table').html(html).filter($("#table" )).find('.ajax-elem').each(function () {
                 $(this).click(function () {
                     $.post($(this).attr('href'), table);
                     return false;
@@ -28,11 +28,13 @@
     <h1 class="widget-header">Exec contexts</h1>
 
     <a class="pure-button pure-button-primary" href="exec-context-add.html"
+       th:if="${result.sourceCodeType==T(ai.metaheuristic.api.EnumsApi.SourceCodeType).common}"
        th:href="${'/dispatcher/source-code/exec-context-add/' + result.sourceCodeId}">Add new exec context</a>
     <p></p>
 
     <p th:text="${'Source code UID: ' + result.sourceCodeUid}"></p>
     <p th:text="${'Source code is valid: ' + result.sourceCodeValid}"></p>
+    <p th:text="${'Source code type: ' + result.sourceCodeValid}"></p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>

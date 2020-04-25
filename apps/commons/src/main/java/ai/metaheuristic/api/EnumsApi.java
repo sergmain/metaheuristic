@@ -23,7 +23,7 @@ public class EnumsApi {
 
     public enum SourceCodeLang { yaml }
 
-    public enum SourceCodeType { common, experiment, batch }
+    public enum SourceCodeType { not_exist, common, experiment, batch }
 
     public enum SourceCodeSubProcessLogic { and, or, sequential}
 

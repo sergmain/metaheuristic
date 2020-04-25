@@ -65,11 +65,11 @@ public class SourceCodeApiData {
         public List<String> experiments;
         public List<String> batches;
 
-        public boolean isExperiment(String uid) {
+        private boolean isExperiment(String uid) {
             return experiments.contains(uid);
         }
 
-        public boolean isBatch(String uid) {
+        private boolean isBatch(String uid) {
             return batches.contains(uid);
         }
 

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -46,6 +47,7 @@ public class ExecContextTopLevelService {
     private final ExecContextCache execContextCache;
     private final ExecContextService execContextService;
     private final SourceCodeCache sourceCodeCache;
+    private final DispatcherParamsService dispatcherParamsService;
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = execContextService.getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
@@ -54,12 +56,24 @@ public class ExecContextTopLevelService {
         if (sc!=null) {
             result.sourceCodeUid=sc.uid;
             result.sourceCodeValid=sc.valid;
+            result.sourceCodeType = getType(sc.uid);
         }
         else {
             result.sourceCodeUid = "SourceCode was deleted";
             result.sourceCodeValid = false;
+            result.sourceCodeType = EnumsApi.SourceCodeType.not_exist;
         }
         return result;
+    }
+
+    private EnumsApi.SourceCodeType getType(String uid) {
+        if (dispatcherParamsService.getBatches().contains(uid)) {
+            return EnumsApi.SourceCodeType.batch;
+        }
+        else if (dispatcherParamsService.getExperiments().contains(uid)) {
+            return EnumsApi.SourceCodeType.experiment;
+        }
+        return EnumsApi.SourceCodeType.common;
     }
 
     public ExecContextForDeletion getExecContextExtendedForDeletion(Long execContextId, DispatcherContext context) {

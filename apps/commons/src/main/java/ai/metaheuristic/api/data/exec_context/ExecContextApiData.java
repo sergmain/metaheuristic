@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.data.exec_context;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -34,6 +35,7 @@ public class ExecContextApiData {
         public Long sourceCodeId;
         public String sourceCodeUid;
         public boolean sourceCodeValid;
+        public EnumsApi.SourceCodeType sourceCodeType;
         public Slice<ExecContextsListItem> instances;
     }
 }
