@@ -293,11 +293,6 @@ public class ExperimentTopLevelService {
 
 
     public OperationStatusRest experimentDeleteCommit(Long id) {
-        Experiment experiment = experimentCache.findById(id);
-        if (experiment == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.260 experiment wasn't found, experimentId: " + id);
-        }
         experimentCache.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

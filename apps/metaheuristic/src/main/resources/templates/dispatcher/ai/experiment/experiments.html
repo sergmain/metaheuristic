@@ -46,6 +46,8 @@
                     <div th:text="${'Desc: ' + r.experiment.description}">Description</div>
                 </td>
                 <td rowspan="2">
+                    <div th:text="${r.experiment.execState}">ExecContext state</div>
+                    <div>
                     <a class="pure-button pure-button-primary"
                        th:if="${r.experiment.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).NONE.code}"
                        th:href="${'/dispatcher/ai/experiment/experiment-target-state/producing/' + r.experiment.id}">Produce</a>
@@ -56,6 +58,7 @@
                     <a class="pure-button pure-button-primary"
                        th:if="${r.experiment.state==T(ai.metaheuristic.api.EnumsApi.ExecContextState).STARTED.code}"
                        th:href="${'/dispatcher/ai/experiment/experiment-target-state/stopped/' + r.experiment.id}">Stop</a>
+                    </div>
                 </td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/experiment/experiment-edit/' + r.experiment.id}">Edit</a></td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/dispatcher/ai/experiment/experiment-delete/' + r.experiment.id}">Delete</a></td>
