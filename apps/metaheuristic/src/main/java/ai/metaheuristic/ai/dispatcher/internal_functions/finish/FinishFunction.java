@@ -57,7 +57,7 @@ public class FinishFunction implements InternalFunction {
             Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
 
-        log.info("054.010 Set task #" + taskId+" as 'finished'");
+        log.info("054.010 Mark task #" + taskId+" as 'finished'");
         execContextFSM.toFinished(execContextId);
         return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }

@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.variable;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
@@ -50,11 +49,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
@@ -71,21 +68,22 @@ public class VariableService {
 
     @SuppressWarnings({"SameParameterValue"})
     @Transactional(readOnly = true)
-    public @Nullable SimpleVariableAndStorageUrl getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
+    public @Nullable
+    SimpleVariable getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
         ExecContextParamsYaml.Process p = execContext.getExecContextParamsYaml().findProcess(processCode);
         if (p==null) {
             return null;
         }
-        SimpleVariableAndStorageUrl v = findVariableInAllInternalContexts(variable, p.internalContextId, execContext.id);
+        SimpleVariable v = findVariableInAllInternalContexts(variable, p.internalContextId, execContext.id);
         return v;
     }
 
     @Nullable
     @Transactional(readOnly = true)
-    public SimpleVariableAndStorageUrl findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
+    public SimpleVariable findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
         String currTaskContextId = taskContextId;
         while( !S.b(currTaskContextId)) {
-            SimpleVariableAndStorageUrl v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);
+            SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);
             if (v!=null) {
                 return v;
             }
@@ -171,19 +169,11 @@ public class VariableService {
     }
 
     @Transactional(readOnly = true)
-    public List<SimpleVariableAndStorageUrl> getIdInVariables(List<String> variables, Long execContextId) {
-        if (variables.isEmpty()) {
+    public List<SimpleVariable> getSimpleVariablesInExecContext(Long execContextId, String ... variables) {
+        if (variables==null || variables.length==0) {
             return List.of();
         }
-        return variableRepository.getIdAndStorageUrlInVarsForExecContext(variables, execContextId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<SimpleVariableAndStorageUrl> getIdInVariables(Set<String> variables) {
-        if (variables.isEmpty()) {
-            return List.of();
-        }
-        return variableRepository.getIdAndStorageUrlInVars(variables);
+        return variableRepository.getIdAndStorageUrlInVarsForExecContext(execContextId, variables);
     }
 
     public void deleteByVariable(String variable) {
@@ -217,7 +207,7 @@ public class VariableService {
 
     public void initOutputVariables(TaskParamsYaml taskParams, ExecContextImpl execContext, ExecContextParamsYaml.Process p) {
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
-            SimpleVariableAndStorageUrl sv = getVariableAsSimple(variable.name, p.processCode, execContext);
+            SimpleVariable sv = getVariableAsSimple(variable.name, p.processCode, execContext);
             if (sv!=null) {
                 continue;
             }

@@ -23,24 +23,13 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class SimpleVariableAndStorageUrl {
+public class SimpleVariable {
     public final Long id;
     public final String variable;
     public final String storageUrl;
     public final String originalFilename;
     public final boolean inited;
     public final String taskContextId;
-
-/*
-    public SimpleVariableAndStorageUrl(Long id, String variable, String storageUrl, String originalFilename, boolean inited, String taskContextId) {
-        this.id = id;
-        this.variable = variable;
-        this.storageUrl = storageUrl;
-        this.originalFilename = originalFilename;
-        this.inited = inited;
-        this.taskContextId = taskContextId;
-    }
-*/
 
     public DataStorageParams getParams() {
         return DataStorageParamsUtils.to(storageUrl);

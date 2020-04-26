@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -48,22 +48,21 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
             "select d.id from mh_variable d where d.EXEC_CONTEXT_ID is not null and d.EXEC_CONTEXT_ID not in (select z.id from mh_exec_context z)")
     List<Long> findAllOrphanExecContextData();
 
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(" +
-            "b.id, b.name, b.params, b.filename, b.inited, b.taskContextId ) " +
-            "from Variable b where b.name in :vars and " +
-            "b.execContextId=:execContextId")
-    List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVarsForExecContext(List<String> vars, Long execContextId);
+    @Transactional(readOnly = true)
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
+            "from Variable v where v.name in :vars and v.execContextId=:execContextId")
+    List<SimpleVariable> getIdAndStorageUrlInVarsForExecContext(Long execContextId, List<String> vars);
+
+    @Transactional(readOnly = true)
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
+            "from Variable v where v.execContextId=:execContextId and v.name in (:names)")
+    List<SimpleVariable> getIdAndStorageUrlInVarsForExecContext(Long execContextId, String[] names);
 
     @Nullable
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
             "from Variable v where v.name=:name and v.taskContextId=:taskContextId and v.execContextId=:execContextId")
-    SimpleVariableAndStorageUrl findByNameAndTaskContextIdAndExecContextId(String name, String taskContextId, Long execContextId);
-
-    @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
-            "from Variable v where v.execContextId=:execContextId and v.name in (:names)")
-    List<SimpleVariableAndStorageUrl> findByExecContextIdAndNames(Long execContextId, String[] names);
+    SimpleVariable findByNameAndTaskContextIdAndExecContextId(String name, String taskContextId, Long execContextId);
 
     @Nullable
     @Transactional(readOnly = true)
@@ -75,10 +74,10 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
             "where b.execContextId in :ids ")
     List<Object[]> getFilenamesForBatchIds(Collection<Long> ids);
 
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl(" +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(" +
             "b.id, b.name, b.params, b.filename, b.inited, b.taskContextId) " +
             "from Variable b where b.name in :vars")
-    List<SimpleVariableAndStorageUrl> getIdAndStorageUrlInVars(Set<String> vars);
+    List<SimpleVariable> getIdAndStorageUrlInVars(Set<String> vars);
 
     List<Variable> findAllByName(String variableName);
 

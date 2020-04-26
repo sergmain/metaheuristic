@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelServi
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -156,7 +156,7 @@ public class TaskProducingService {
                         S.f("(S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
-            SimpleVariableAndStorageUrl variable = variableService.findVariableInAllInternalContexts(v.name, contextId, execContextId);
+            SimpleVariable variable = variableService.findVariableInAllInternalContexts(v.name, contextId, execContextId);
             if (variable==null) {
                 throw new IllegalStateException(
                         S.f("(variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",

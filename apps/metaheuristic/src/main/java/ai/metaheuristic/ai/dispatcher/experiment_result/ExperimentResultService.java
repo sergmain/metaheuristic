@@ -18,20 +18,16 @@ package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Experiment;
-import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
-import ai.metaheuristic.ai.dispatcher.beans.ExperimentTask;
+import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.experiment.MetricsMaxValueCollector;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
@@ -44,7 +40,6 @@ import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -60,6 +55,8 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -74,7 +71,6 @@ public class ExperimentResultService {
     private final ExperimentResultRepository experimentResultRepository;
     private final ExperimentTaskRepository experimentTaskRepository;
     private final ExecContextCache execContextCache;
-    private final ExecContextFSM execContextFSM;
     private final VariableService variableService;
     private final MetricsMaxValueCollector metricsMaxValueCollector;
 
@@ -124,11 +120,24 @@ public class ExperimentResultService {
         // TODO 2019-07-13 need to re-write this check
 /*
         String poolCode = getPoolCodeForExperiment(execContextId, experimentId);
-        List<SimpleVariableAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), execContextId);
+        List<SimpleVariable> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), execContextId);
         if (!codes.isEmpty()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.120 experiment already stored");
         }
 */
+        String metricsVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "metrics");
+        if (S.b(metricsVariableName)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Meta 'metrics' must be defined and can't be empty");
+        }
+
+        List<SimpleVariable> simpleVariables = variableService.getSimpleVariablesInExecContext(execContextId, metricsVariableName);
+        Set<String> taskContextIds = simpleVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
+
+        // fix list of task ids with id of tasks which are ml only
+        stored.experimentResultParamsYamlWithCache.experimentResult.taskIds.clear();
+        simpleVariables.stream().map(v->v.id).collect(Collectors.toCollection(()->stored.experimentResultParamsYamlWithCache.experimentResult.taskIds));
+
+
         ExperimentResult a = new ExperimentResult();
         try {
             a.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(stored.experimentResultParamsYamlWithCache.experimentResult);
@@ -145,11 +154,6 @@ public class ExperimentResultService {
         a.companyId = execContext.companyId;
         final ExperimentResult experimentResult = experimentResultRepository.save(a);
 
-        String metricsVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "metrics");
-        if (S.b(metricsVariableName)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Meta 'metrics' must be defined and can't be empty");
-        }
-
 /*
         ExperimentParamsYaml epy = e.getExperimentParamsYaml();
         if (!epy.processing.maxValueCalculated) {
@@ -157,14 +161,19 @@ public class ExperimentResultService {
         }
 */
 
-        // store all tasks' results
+        // store all tasks' results which are the tasks for fitting/predicting only
         for (Long taskId : stored.experimentResultParamsYamlWithCache.experimentResult.taskIds) {
 
-            Task t = taskRepository.findById(taskId).orElse(null);
+            TaskImpl t = taskRepository.findById(taskId).orElse(null);
             if (t == null) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Task #"+taskId+" wasn't found");
             }
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
+            String taskContextId = tpy.task.taskContextId;
+            if (!taskContextIds.contains(taskContextId)) {
+                log.info(S.f("Skip task %s with taskContextId #%s", t.id, taskContextId));
+                continue;
+            }
 
             ExperimentTask at = new ExperimentTask();
             at.experimentResultId = experimentResult.id;
@@ -181,19 +190,23 @@ public class ExperimentResultService {
             atpy.typeAsString = null;
             atpy.functionExecResults = t.getFunctionExecResults();
 
-            String taskContextId = tpy.task.taskContextId;
-            SimpleVariableAndStorageUrl simpleVariable = variableService.findVariableInAllInternalContexts(metricsVariableName, taskContextId, execContextId);
-            if (simpleVariable==null) {
+//            SimpleVariable simpleVariable = variableService.findVariableInAllInternalContexts(metricsVariableName, taskContextId, execContextId);
+            List<SimpleVariable> svs = simpleVariables.stream().filter(v->v.taskContextId.equals(taskContextId)).collect(Collectors.toList());
+            if (svs.isEmpty()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         S.f("Variable '%s' with taskContext '%s' wasn't found in execContext #%d", metricsVariableName, taskContextId, execContextId));
             }
-            atpy.metrics = variableService.getVariableDataAsString(simpleVariable.id);
+            if (svs.size()>1) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        S.f("Too many variables '%s' with taskContext '%s' in execContext #%d, actual count is ",
+                                metricsVariableName, taskContextId, execContextId, svs.size()));
+            }
+            atpy.metrics = variableService.getVariableDataAsString(svs.get(0).id);
 
             at.params = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
             experimentTaskRepository.save(at);
         }
 
-        execContextFSM.toFinished(execContextId);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -220,7 +233,6 @@ public class ExperimentResultService {
     public StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextImpl execContext, Experiment experiment) {
         ExperimentResultParamsYaml erpy = new ExperimentResultParamsYaml();
         erpy.createdOn = System.currentTimeMillis();
-//        erpy.sourceCode = new ExperimentResultParamsYaml.SourceCodeWithParams(sourceCode.id, sourceCode.getParams());
         erpy.execContext = new ExperimentResultParamsYaml.ExecContextWithParams(execContext.id, execContext.getParams());
         erpy.experiment = new ExperimentResultParamsYaml.ExperimentWithParams(experiment.id, experiment.getParams());
         erpy.taskIds = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());

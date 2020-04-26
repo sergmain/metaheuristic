@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -94,7 +94,7 @@ public class AggregateInternalContextFunction implements InternalFunction {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
                     "Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode);
         }
-        List<SimpleVariableAndStorageUrl> list = variableRepository.findByExecContextIdAndNames(execContextId, names);
+        List<SimpleVariable> list = variableRepository.getIdAndStorageUrlInVarsForExecContext(execContextId, names);
 
         File tempDir = DirUtils.createTempDir("mh-aggregate-internal-context-");
         if (tempDir==null) {

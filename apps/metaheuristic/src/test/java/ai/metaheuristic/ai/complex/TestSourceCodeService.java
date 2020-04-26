@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -335,7 +335,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
 
-        SimpleVariableAndStorageUrl v = variableService.getVariableAsSimple(
+        SimpleVariable v = variableService.getVariableAsSimple(
                 variableName, processCode, execContextForTest);
 
         assertNotNull(v);
@@ -358,7 +358,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     private void storeOutputVariableWithTaskContextId(String variableName, String variableData, String taskContextId, String processCode) {
 
-        SimpleVariableAndStorageUrl v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextForTest.id);
+        SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextForTest.id);
 
         assertNotNull(v);
         assertFalse(v.inited);

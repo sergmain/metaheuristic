@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.ContextUtils;
@@ -96,7 +96,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
     @Data
     public static class VariableHolder {
-        public SimpleVariableAndStorageUrl variable;
+        public SimpleVariable variable;
         public GlobalVariable globalVariable;
 
         public String getName() {
@@ -177,7 +177,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         for (String name : names) {
             VariableHolder holder = new VariableHolder();
             holders.add(holder);
-            SimpleVariableAndStorageUrl v = variableRepository.findByNameAndTaskContextIdAndExecContextId(name, taskContextId, execContextId);
+            SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(name, taskContextId, execContextId);
             if (v!=null) {
                 holder.variable = v;
             }

@@ -16,20 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariableAndStorageUrl;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -60,7 +51,7 @@ public class TaskData {
         public final Map<String, String> mappingCodeToOriginalFilename = new HashMap<>();
         public EnumsApi.TaskProducingStatus status = EnumsApi.TaskProducingStatus.OK;
 
-        public ResourcePools(List<SimpleVariableAndStorageUrl> initialInputResourceCodes) {
+        public ResourcePools(List<SimpleVariable> initialInputResourceCodes) {
 
             if (initialInputResourceCodes==null || initialInputResourceCodes.isEmpty()) {
                 status = EnumsApi.TaskProducingStatus.INPUT_VARIABLE_DOESNT_EXIST_ERROR;
