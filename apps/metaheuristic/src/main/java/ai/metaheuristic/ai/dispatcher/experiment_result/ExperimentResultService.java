@@ -53,6 +53,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -133,11 +134,6 @@ public class ExperimentResultService {
         List<SimpleVariable> simpleVariables = variableService.getSimpleVariablesInExecContext(execContextId, metricsVariableName);
         Set<String> taskContextIds = simpleVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
 
-        // fix list of task ids with id of tasks which are ml only
-        stored.experimentResultParamsYamlWithCache.experimentResult.taskIds.clear();
-        simpleVariables.stream().map(v->v.id).collect(Collectors.toCollection(()->stored.experimentResultParamsYamlWithCache.experimentResult.taskIds));
-
-
         ExperimentResult a = new ExperimentResult();
         try {
             a.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(stored.experimentResultParamsYamlWithCache.experimentResult);
@@ -161,6 +157,7 @@ public class ExperimentResultService {
         }
 */
 
+        List<Long> taskIds = new ArrayList<>();
         // store all tasks' results which are the tasks for fitting/predicting only
         for (Long taskId : stored.experimentResultParamsYamlWithCache.experimentResult.taskIds) {
 
@@ -174,6 +171,7 @@ public class ExperimentResultService {
                 log.info(S.f("Skip task %s with taskContextId #%s", t.id, taskContextId));
                 continue;
             }
+            taskIds.add(t.id);
 
             ExperimentTask at = new ExperimentTask();
             at.experimentResultId = experimentResult.id;
@@ -207,9 +205,16 @@ public class ExperimentResultService {
             experimentTaskRepository.save(at);
         }
 
+        updateTaskIds(experimentResult, stored.experimentResultParamsYamlWithCache.experimentResult, taskIds);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
+    private void updateTaskIds(ExperimentResult experimentResult, ExperimentResultParamsYaml experimentResultParamsYaml, List<Long> taskIds) {
+        // fix list of task ids with id of tasks which are ml only
+        experimentResultParamsYaml.taskIds = taskIds;
+        experimentResult.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(experimentResultParamsYaml);
+        experimentResultRepository.save(experimentResult);
+    }
 
     public void updateMaxValueForExperimentFeatures(Long experimentId) {
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
