@@ -451,7 +451,7 @@ public class ExperimentResultTopLevelService {
 
     private ExperimentResultData.PlotData findExperimentTaskForPlot(
             Long experimentResultId, ExperimentResultParamsYamlWithCache apywc, ExperimentFeature feature, String[] params, String[] paramsAxis) {
-        if (apywc.experimentResult.experiment == null || apywc.getExperimentParamsYaml().processing.features == null ) {
+        if (apywc.experimentResult.experiment == null || apywc.getExperimentParamsYaml().processing.features.isEmpty() ) {
             return ExperimentResultData.EMPTY_PLOT_DATA;
         } else {
             List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, apywc, feature, params);
@@ -783,7 +783,7 @@ public class ExperimentResultTopLevelService {
         result.tasks = feature==null ?  Page.empty() : findTasks(experimentResultId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
         result.consoleResult = new ExperimentResultData.ConsoleResult();
 
-        // TODO change this
+        // TODO 2020.04.23 change this assigment ot actual one (with next 2 lines)
         result.experimentFeature = new ExperimentApiData.ExperimentFeatureData();
 //        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 //        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature, taskVertices, ypywc.getExperimentParamsYaml().processing.taskFeatures);

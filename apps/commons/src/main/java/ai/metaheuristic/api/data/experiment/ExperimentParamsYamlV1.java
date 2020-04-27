@@ -78,14 +78,14 @@ public class ExperimentParamsYamlV1 implements BaseParams {
         public int numberOfTask = 0;
 
         public final List<ExperimentApiData.HyperParam> hyperParams = new ArrayList<>();
-        public List<ExperimentFeatureV1> features = new ArrayList<>();
-        public List<ExperimentTaskFeatureV1> taskFeatures = new ArrayList<>();
+        public final List<ExperimentFeatureV1> features = new ArrayList<>();
+        public final List<ExperimentTaskFeatureV1> taskFeatures = new ArrayList<>();
     }
 
     public long createdOn;
     public String name;
     public String description;
     public String code;
-    public ExperimentProcessingV1 processing = new ExperimentProcessingV1();
+    public final ExperimentProcessingV1 processing = new ExperimentProcessingV1();
 
 }

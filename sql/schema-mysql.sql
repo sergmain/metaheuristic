@@ -159,6 +159,9 @@ CREATE TABLE mh_experiment
     PARAMS          MEDIUMTEXT not null
 );
 
+CREATE UNIQUE INDEX mh_experiment_exec_context_id_unq_idx
+  ON mh_experiment (EXEC_CONTEXT_ID);
+
 CREATE UNIQUE INDEX mh_experiment_code_unq_idx
   ON mh_experiment (CODE);
 

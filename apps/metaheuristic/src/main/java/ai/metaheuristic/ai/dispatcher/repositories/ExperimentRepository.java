@@ -60,11 +60,6 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
     @Query(value="select e.id from Experiment e where e.execContextId=:execContextId")
     Long findIdByExecContextId(long execContextId);
 
-    @Nullable
-    @Transactional
-    @Query(value="select e from Experiment e where e.execContextId=:execContextId")
-    Experiment findByExecContextIdForUpdate(Long execContextId);
-
     @NonNull
     @Override
     @Transactional(readOnly = true)

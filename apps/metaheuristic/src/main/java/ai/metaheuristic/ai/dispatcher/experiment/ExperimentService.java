@@ -62,7 +62,7 @@ public class ExperimentService {
     @Async
     @EventListener
     public void handleAsync(DispatcherInternalEvent.DeleteExecContextEvent event) {
-        resetExperimentByExecContextId(event.execContextId);
+        deleteExperiment(event.execContextId);
     }
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
@@ -191,18 +191,11 @@ public class ExperimentService {
         return paramByIndex;
     }
 
-    private void resetExperimentByExecContextId(Long execContextId) {
-        Experiment e = experimentRepository.findByExecContextIdForUpdate(execContextId);
-        if (e==null) {
+    private void deleteExperiment(Long execContextId) {
+        Long id = experimentRepository.findIdByExecContextId(execContextId);
+        if (id==null) {
             return;
         }
-
-        ExperimentParamsYaml epy = e.getExperimentParamsYaml();
-        epy.processing = new ExperimentProcessing();
-        e.updateParams(epy);
-        e.setExecContextId(null);
-
-        //noinspection UnusedAssignment
-        e = experimentCache.save(e);
+        experimentCache.deleteById(id);
     }
 }

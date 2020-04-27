@@ -39,3 +39,6 @@ CREATE INDEX mh_experiment_task_experiment_result_id_idx
 
 CREATE UNIQUE INDEX mh_experiment_task_experiment_result_id_task_id_idx
     ON mh_experiment_task (EXPERIMENT_RESULT_ID, TASK_ID);
+
+CREATE UNIQUE INDEX mh_experiment_exec_context_id_unq_idx
+    ON mh_experiment (EXEC_CONTEXT_ID);

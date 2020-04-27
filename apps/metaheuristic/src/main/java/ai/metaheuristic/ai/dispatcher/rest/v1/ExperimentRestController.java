@@ -78,8 +78,9 @@ public class ExperimentRestController {
     }
 
     @PostMapping("/experiment-clone-commit")
-    public OperationStatusRest experimentCloneCommit(Long id) {
-        return experimentTopLevelService.experimentCloneCommit(id);
+    public OperationStatusRest experimentCloneCommit(Long id, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return experimentTopLevelService.experimentCloneCommit(id, context);
     }
 
     @PostMapping("/task-rerun/{taskId}")

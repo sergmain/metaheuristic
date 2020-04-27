@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -26,7 +27,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
@@ -99,14 +99,6 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentApiData.ExperimentResult("#285.010 experiment wasn't found, experimentId: " + experimentId );
         }
-        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
-
-        // hide the current processing info
-        epy.processing = new ExperimentParamsYaml.ExperimentProcessing();
-/*
-        String params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
-        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment), params);
-*/
         return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment));
     }
 
@@ -297,31 +289,30 @@ public class ExperimentTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest experimentCloneCommit(Long id) {
-        final Experiment experiment = experimentCache.findById(id);
-        if (experiment == null) {
+    public OperationStatusRest experimentCloneCommit(Long id, DispatcherContext context) {
+        final Experiment e = experimentCache.findById(id);
+        if (e == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.270 An experiment wasn't found, experimentId: " + id);
         }
-        // do not use experiment.getExperimentParamsYaml() because it's  caching ExperimentParamsYaml
-        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
-        epy.processing = new ExperimentParamsYaml.ExperimentProcessing();
-        epy.createdOn = System.currentTimeMillis();
+        ExecContextImpl ec = execContextCache.findById(e.execContextId);
+        if (ec==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.290 An associated execContext for experimentId #" + id +" wasn't found");
+        }
+        String sourceCodeUid = ec.getExecContextParamsYaml().sourceCodeUid;
 
-        final Experiment e = new Experiment();
-        String newCode = StrUtils.incCopyNumber(experiment.getCode());
+        String newCode = StrUtils.incCopyNumber(e.getCode());
         int i = 0;
         while ( experimentRepository.findIdByCode(newCode)!=null  ) {
             newCode = StrUtils.incCopyNumber(newCode);
             if (i++>100) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#285.273 Can't find a new code for experiment with the code: " + experiment.getCode());
+                        "#285.273 Can't find a new code for experiment with the code: " + e.getCode());
             }
         }
-        epy.code = newCode;
-        e.code = newCode;
-        e.updateParams(epy);
-        experimentCache.save(e);
-        return OperationStatusRest.OPERATION_STATUS_OK;
+
+        OperationStatusRest status = addExperimentCommit(sourceCodeUid, e.getExperimentParamsYaml().name, newCode, e.getExperimentParamsYaml().description, context);
+        return status;
     }
 }

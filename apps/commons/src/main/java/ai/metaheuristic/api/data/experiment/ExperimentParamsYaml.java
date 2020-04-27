@@ -90,7 +90,7 @@ public class ExperimentParamsYaml implements BaseParams {
     public String description;
     public String code;
 
-    public ExperimentProcessing processing = new ExperimentProcessing();
+    public final ExperimentProcessing processing = new ExperimentProcessing();
 
     @Nullable
     @JsonIgnore

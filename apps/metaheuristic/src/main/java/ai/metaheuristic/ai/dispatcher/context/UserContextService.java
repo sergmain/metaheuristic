@@ -57,7 +57,6 @@ public class UserContextService {
         if (company==null) {
             throw new BadExecutionContextException("company not found not found for user: " + account.username);
         }
-        //noinspection UnnecessaryLocalVariable
         DispatcherContext context = new DispatcherContext(account, company);
         return context;
     }
