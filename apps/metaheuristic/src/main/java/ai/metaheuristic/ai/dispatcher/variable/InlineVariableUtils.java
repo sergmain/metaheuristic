@@ -16,6 +16,11 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
+import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -30,6 +35,33 @@ public class InlineVariableUtils {
 
     private static final String RANGE = "range";
     private static final NumberOfVariants ZERO_VARIANT = new NumberOfVariants(true, null, 0);
+    /*
+            - key: inline-key
+              value: mh.hyper-params
+            - key: permute-inline
+              value: true
+            - key: permutation
+              value: var-permutation
+        */
+        private static final String INLINE_KEY = "inline-key";
+    public static final String PERMUTE_INLINE = "permute-inline";
+
+    public static InlineVariableData.InlineVariableItem getInlineVariableItem(
+            ExecContextParamsYaml.VariableDeclaration variableDeclaration, final List<Meta> metas) {
+
+            Map<String, String> inlines = null;
+            final String inlineKey;
+            if (MetaUtils.isTrue(metas, PERMUTE_INLINE)) {
+                inlineKey = MetaUtils.getValue(metas, INLINE_KEY);
+                if (!S.b(inlineKey)) {
+                    inlines = variableDeclaration.inline.get(inlineKey);
+                }
+            }
+            else  {
+                inlineKey = null;
+            }
+            return new InlineVariableData.InlineVariableItem(inlines, inlineKey);
+        }
 
     @Data
     @AllArgsConstructor

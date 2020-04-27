@@ -14,29 +14,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.experiment;
+package ai.metaheuristic.ai.dispatcher.data;
 
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.util.Map;
 
 /**
  * @author Serge
- * Date: 6/22/2019
- * Time: 11:36 PM
+ * Date: 4/26/2020
+ * Time: 6:18 PM
  */
-public class ExperimentParamsYamlUtils {
+public class InlineVariableData {
 
-    private static final ExperimentParamsYamlUtilsV1 YAML_UTILS_V_1 = new ExperimentParamsYamlUtilsV1();
-    private static final ExperimentParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
-
-    public static final BaseYamlUtils<ExperimentParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
-            Map.of(
-                    1, YAML_UTILS_V_1
-            ),
-            DEFAULT_UTILS
-    );
-
-
+    @Data
+    @AllArgsConstructor
+    public static class InlineVariableItem {
+        public final Map<String, String> inlines;
+        public final String inlineKey;
+    }
 }

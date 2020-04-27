@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
@@ -83,17 +84,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
-/*
-    - key: inline-key
-      value: mh.hyper-params
-    - key: permute-inline
-      value: true
-    - key: permutation
-      value: var-permutation
-*/
-    private static final String INLINE_KEY = "inline-key";
-    private static final String PERMUTE_INLINE = "permute-inline";
-
     @Data
     public static class VariableHolder {
         public SimpleVariable variable;
@@ -153,24 +143,16 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         }
         String[] names = StringUtils.split(variableNames, ", ");
 
-        boolean permuteInlines = MetaUtils.isTrue(taskParamsYaml.task.metas, PERMUTE_INLINE);
+        boolean permuteInlines = MetaUtils.isTrue(taskParamsYaml.task.metas, InlineVariableUtils.PERMUTE_INLINE);
 
-        Map<String, String> inlines = null;
-        final String inlineKey;
-        if (MetaUtils.isTrue(taskParamsYaml.task.metas, PERMUTE_INLINE)) {
-            inlineKey = MetaUtils.getValue(taskParamsYaml.task.metas, INLINE_KEY);
-            if (S.b(inlineKey)) {
-                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                        "Meta 'inline-key' wasn't found or empty.");
-            }
-            inlines = variableDeclaration.inline.get(inlineKey);
-            if (inlines==null || inlines.isEmpty()) {
-                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.inline_not_found,
-                        "Inline variable '"+inlineKey+"' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
-            }
+        InlineVariableData.InlineVariableItem item = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
+        if (S.b(item.inlineKey)) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
+                    "Meta 'inline-key' wasn't found or empty.");
         }
-        else  {
-            inlineKey = null;
+        if (item.inlines == null || item.inlines.isEmpty()) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.inline_not_found,
+                    "Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
         }
 
         List<VariableHolder> holders = new ArrayList<>();
@@ -206,7 +188,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                     "Meta with key 'inline-permutation' wasn't found for process '"+process.processCode+"'");
         }
         final List<Long> lastIds = new ArrayList<>();
-        final List<InlineVariable> inlineVariables = InlineVariableUtils.getAllInlineVariants(inlines);
+        final List<InlineVariable> inlineVariables = InlineVariableUtils.getAllInlineVariants(item.inlines);
         for (int i = 0; i < holders.size(); i++) {
             try {
                 permutation.printCombination(holders, i+1,
@@ -216,8 +198,8 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                 for (InlineVariable inlineVariable : inlineVariables) {
                                     permutationNumber.incrementAndGet();
                                     Map<String, Map<String, String>> map = new HashMap<>(variableDeclaration.inline);
-                                    map.remove(inlineKey);
-                                    map.put(inlineKey, inlineVariable.params);
+                                    map.remove(item.inlineKey);
+                                    map.put(item.inlineKey, inlineVariable.params);
 
                                     createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml,
                                             subProcesses, permutationNumber, taskId, variableName, map, lastIds,

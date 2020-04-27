@@ -4,8 +4,8 @@
 >
     <h1 class="widget-header">The experiment info</h1>
 
-    <!--/*@thymesVar id="experimentInfo" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentInfoResult"*/-->
-    <!--/*@thymesVar id="experiment" type="ai.metaheuristic.ai.dispatcher.beans.Experiment"*/-->
+    <!--/*@thymesVar id="experimentInfo" type="ai.metaheuristic.ai.dispatcher.data.ExperimentResultData$ExperimentInfo"*/-->
+    <!--/*@thymesVar id="experiment" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentData"*/-->
     <!--/*@thymesVar id="experimentResult" type="ai.metaheuristic.ai.dispatcher.beans.ExperimentResult"*/-->
 
     <div align="right">
@@ -21,7 +21,6 @@
             <tr><td>Created on</td><td th:text="${#dates.formatISO(experiment.createdOn)}">CreatedOn</td></tr>
             <tr><td>Name</td><td th:text="${experiment.name}">name</td></tr>
             <tr><td>Description</td><td th:text="${experiment.description}">desc</td></tr>
-            <tr><td>Seed</td><td th:text="${experiment.seed}">seed</td></tr>
             <tr><td>Number of tasks</td><td th:text="${experiment.getNumberOfTask()}">Number of tasks</td></tr>
             </tbody>
         </table>

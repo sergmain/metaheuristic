@@ -58,7 +58,7 @@ public class ExperimentResultParamsYamlWithCache {
 
     public Map<String, Map<String, Integer>> getHyperParamsAsMap(boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
-        for (ExperimentApiData.HyperParam hyperParam : getExperimentParamsYaml().experimentYaml.getHyperParams()) {
+        for (ExperimentApiData.HyperParam hyperParam : getExperimentParamsYaml().processing.hyperParams) {
             InlineVariableUtils.NumberOfVariants ofVariants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues() );
             Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);

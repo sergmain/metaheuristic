@@ -66,7 +66,7 @@ public class ExperimentTopLevelService {
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
-        return new ExperimentApiData.SimpleExperiment(params.experimentYaml.getName(), params.experimentYaml.getDescription(), params.experimentYaml.getCode(), e.getId());
+        return new ExperimentApiData.SimpleExperiment(params.name, params.description, params.code, e.getId());
     }
 
     public ExperimentApiData.ExperimentsResult getExperiments(Pageable pageable) {
@@ -175,9 +175,9 @@ public class ExperimentTopLevelService {
     }
 
     public OperationStatusRest updateParamsAndSave(Experiment e, ExperimentParamsYaml params, String name, String description) {
-        params.experimentYaml.name = StringUtils.strip(name);
-        params.experimentYaml.code = e.code;
-        params.experimentYaml.description = StringUtils.strip(description);
+        params.name = StringUtils.strip(name);
+        params.code = e.code;
+        params.description = StringUtils.strip(description);
         params.createdOn = System.currentTimeMillis();
 
         e.updateParams(params);
@@ -318,7 +318,7 @@ public class ExperimentTopLevelService {
                         "#285.273 Can't find a new code for experiment with the code: " + experiment.getCode());
             }
         }
-        epy.experimentYaml.code = newCode;
+        epy.code = newCode;
         e.code = newCode;
         e.updateParams(epy);
         experimentCache.save(e);

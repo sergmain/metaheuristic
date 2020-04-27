@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
+import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.experiment.MetricsMaxValueCollector;
@@ -27,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -36,6 +39,7 @@ import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYaml
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
@@ -75,6 +79,9 @@ public class ExperimentResultService {
     private final VariableService variableService;
     private final MetricsMaxValueCollector metricsMaxValueCollector;
 
+    private static final String INLINE_KEY = "inline-key";
+    private static final String PERMUTE_INLINE = "permute-inline";
+
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
@@ -95,7 +102,7 @@ public class ExperimentResultService {
         return result;
     }
 
-    public OperationStatusRest storeExperimentToExperimentResult(Long execContextId, TaskParamsYaml taskParamsYaml) {
+    public OperationStatusRest storeExperimentToExperimentResult(Long execContextId, TaskParamsYaml taskParamsYaml, ExecContextParamsYaml.VariableDeclaration variableDeclaration) {
         Long experimentId = experimentRepository.findIdByExecContextId(execContextId);
 
         if (experimentId==null ) {
@@ -131,6 +138,16 @@ public class ExperimentResultService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Meta 'metrics' must be defined and can't be empty");
         }
 
+        InlineVariableData.InlineVariableItem item = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
+        if (S.b(item.inlineKey)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "Meta 'inline-key' wasn't found or empty.");
+        }
+        if (item.inlines == null || item.inlines.isEmpty()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
+        }
+
         List<SimpleVariable> simpleVariables = variableService.getSimpleVariablesInExecContext(execContextId, metricsVariableName);
         Set<String> taskContextIds = simpleVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
 
@@ -143,9 +160,9 @@ public class ExperimentResultService {
         }
         ExperimentParamsYaml epy = stored.experimentResultParamsYamlWithCache.getExperimentParamsYaml();
 
-        a.name = epy.experimentYaml.name;
-        a.description = epy.experimentYaml.description;
-        a.code = epy.experimentYaml.code;
+        a.name = epy.name;
+        a.description = epy.description;
+        a.code = epy.code;
         a.createdOn = System.currentTimeMillis();
         a.companyId = execContext.companyId;
         final ExperimentResult experimentResult = experimentResultRepository.save(a);

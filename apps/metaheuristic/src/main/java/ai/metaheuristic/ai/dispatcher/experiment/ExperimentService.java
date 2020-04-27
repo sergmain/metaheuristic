@@ -90,9 +90,9 @@ public class ExperimentService {
         ed.id = e.id;
         ed.code = e.code;
         ed.execContextId = e.execContextId;
-        ed.name = params.experimentYaml.name;
-        ed.description = params.experimentYaml.description;
-        ed.hyperParams.addAll(params.experimentYaml.hyperParams);
+        ed.name = params.name;
+        ed.description = params.description;
+        ed.hyperParams.addAll(params.processing.hyperParams);
         ed.hyperParamsAsMap.putAll(getHyperParamsAsMap(ed.hyperParams));
         ed.createdOn = params.createdOn;
         ed.numberOfTask = params.processing.numberOfTask;
@@ -115,8 +115,8 @@ public class ExperimentService {
         ed.version = e.version;
         ed.code = e.code;
         ed.execContextId = e.execContextId;
-        ed.name = params.experimentYaml.name;
-        ed.description = params.experimentYaml.description;
+        ed.name = params.name;
+        ed.description = params.description;
         ed.createdOn = params.createdOn;
         ed.numberOfTask = params.processing.numberOfTask;
 
@@ -164,7 +164,7 @@ public class ExperimentService {
     }
 
     public static Map<String, Map<String, Integer>> getHyperParamsAsMap(ExperimentParamsYaml epy) {
-        return getHyperParamsAsMap(epy.experimentYaml.hyperParams, true);
+        return getHyperParamsAsMap(epy.processing.hyperParams, true);
     }
 
 //    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment, boolean isFull) {

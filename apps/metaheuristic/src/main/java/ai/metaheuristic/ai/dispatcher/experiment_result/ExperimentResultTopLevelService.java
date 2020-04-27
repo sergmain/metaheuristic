@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentTask;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
@@ -285,14 +284,14 @@ public class ExperimentResultTopLevelService {
         experiment.execContextId = ypywc.experimentResult.execContext.execContextId;
 
         ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
-        experiment.code = epy.experimentYaml.code;
-        experiment.name = epy.experimentYaml.name;
-        experiment.description = epy.experimentYaml.description;
+        experiment.code = epy.code;
+        experiment.name = epy.name;
+        experiment.description = epy.description;
         experiment.isAllTaskProduced = epy.processing.isAllTaskProduced;
         experiment.isFeatureProduced = epy.processing.isFeatureProduced;
         experiment.createdOn = epy.createdOn;
         experiment.numberOfTask = epy.processing.numberOfTask;
-        experiment.hyperParams.addAll(epy.experimentYaml.hyperParams);
+        experiment.hyperParams.addAll(epy.processing.hyperParams);
 
         ExperimentResultData.ExperimentDataOnly result = new ExperimentResultData.ExperimentDataOnly();
         if (experiment.getExecContextId() == null) {
@@ -334,18 +333,17 @@ public class ExperimentResultTopLevelService {
         experiment.execContextId = ypywc.experimentResult.execContext.execContextId;
 
         ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
-        experiment.code = epy.experimentYaml.code;
-        experiment.name = epy.experimentYaml.name;
-        experiment.description = epy.experimentYaml.description;
+        experiment.code = epy.code;
+        experiment.name = epy.name;
+        experiment.description = epy.description;
         experiment.isAllTaskProduced = epy.processing.isAllTaskProduced;
         experiment.isFeatureProduced = epy.processing.isFeatureProduced;
         experiment.createdOn = epy.createdOn;
         experiment.numberOfTask = epy.processing.numberOfTask;
-        experiment.hyperParams.addAll(epy.experimentYaml.hyperParams);
+        experiment.hyperParams.addAll(epy.processing.hyperParams);
 
 
-
-        for (ExperimentApiData.HyperParam hyperParams : ypywc.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
+        for (ExperimentApiData.HyperParam hyperParams : ypywc.getExperimentParamsYaml().processing.hyperParams) {
             if (StringUtils.isBlank(hyperParams.getValues())) {
                 continue;
             }
@@ -674,7 +672,7 @@ public class ExperimentResultTopLevelService {
         );
 
         ExperimentResultData.HyperParamResult hyperParamResult = new ExperimentResultData.HyperParamResult();
-        for (ExperimentApiData.HyperParam hyperParam : epy.experimentYaml.getHyperParams()) {
+        for (ExperimentApiData.HyperParam hyperParam : epy.processing.hyperParams) {
             InlineVariableUtils.NumberOfVariants variants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues());
             ExperimentResultData.HyperParamList list = new ExperimentResultData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {

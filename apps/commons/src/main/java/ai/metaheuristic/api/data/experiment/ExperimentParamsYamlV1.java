@@ -17,6 +17,7 @@
 package ai.metaheuristic.api.data.experiment;
 
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,29 +38,10 @@ public class ExperimentParamsYamlV1 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        if (experimentYaml.code==null || experimentYaml.code.isBlank()) {
-            throw new IllegalArgumentException("(experimentYaml.code==null || experimentYaml.code.isBlank()) ");
+        if (S.b(code)) {
+            throw new IllegalArgumentException("(experiment.code==null || experiment.code.isBlank()) ");
         }
         return true;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ExperimentYamlV1 {
-        public String name;
-        public String description;
-        public String code;
-
-        public final List<ExperimentApiData.HyperParam> hyperParams = new ArrayList<>();
-
-/*
-        public int seed = 42;
-
-        public @Nullable String fitFunction;
-        public @Nullable String predictFunction;
-        public @Nullable String checkFittingFunction;
-*/
     }
 
     @Data
@@ -95,12 +77,15 @@ public class ExperimentParamsYamlV1 implements BaseParams {
 
         public int numberOfTask = 0;
 
+        public final List<ExperimentApiData.HyperParam> hyperParams = new ArrayList<>();
         public List<ExperimentFeatureV1> features = new ArrayList<>();
         public List<ExperimentTaskFeatureV1> taskFeatures = new ArrayList<>();
     }
 
     public long createdOn;
-    public ExperimentYamlV1 experimentYaml = new ExperimentYamlV1();
+    public String name;
+    public String description;
+    public String code;
     public ExperimentProcessingV1 processing = new ExperimentProcessingV1();
 
 }

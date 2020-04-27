@@ -44,15 +44,6 @@ public class ExperimentResultParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class SourceCodeWithParams {
-        public Long sourceCodeId;
-        public String sourceCodeParams;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @ToString
     public static class ExperimentWithParams {
         public Long experimentId;
         public String experimentParams;
@@ -65,12 +56,10 @@ public class ExperimentResultParamsYaml implements BaseParams {
     public static class ExecContextWithParams {
         public Long execContextId;
         public String execContextParams;
-//        public int execState;
     }
 
     public long createdOn;
-//    public SourceCodeWithParams sourceCode;
-    public ExecContextWithParams execContext;
     public ExperimentWithParams experiment;
+    public ExecContextWithParams execContext;
     public List<Long> taskIds = new ArrayList<>();
 }
