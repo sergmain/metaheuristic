@@ -47,7 +47,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import static ai.metaheuristic.api.data.experiment.ExperimentApiData.HyperParam;
@@ -213,7 +212,6 @@ public abstract class PreparingCore {
             epy.setCode(TEST_EXPERIMENT_CODE_01);
             epy.setName("Test experiment.");
             epy.setDescription("Test experiment. Must be deleted automatically.");
-            epy.processing.setAllTaskProduced(false);
 
             // set hyper params for experiment
             HyperParam ehp1 = new HyperParam();
@@ -227,8 +225,6 @@ public abstract class PreparingCore {
             HyperParam ehp3 = new HyperParam();
             ehp3.setKey("aaa");
             ehp3.setValues("[7, 13]");
-
-            epy.processing.hyperParams.addAll(List.of(ehp1, ehp2, ehp3));
 
             experiment.updateParams(epy);
 

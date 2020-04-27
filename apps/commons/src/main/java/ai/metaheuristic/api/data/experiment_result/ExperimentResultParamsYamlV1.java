@@ -45,8 +45,7 @@ public class ExperimentResultParamsYamlV1 implements BaseParams {
     public static class ExperimentFeatureV1 {
 
         public Long id;
-        public String variables;
-        public String checksumIdCodes;
+        public List<String> variables;
         public int execStatus;
         public Long experimentId;
         public Double maxValue;

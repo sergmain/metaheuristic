@@ -27,9 +27,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Serge
@@ -53,6 +51,7 @@ public class ExperimentApiData {
     @Data
     @NoArgsConstructor
     public static class ExperimentData {
+        public Long id;
         public Integer version;
         public Long execContextId;
         public String code;

@@ -46,10 +46,10 @@ public class ExperimentResultParamsYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ExperimentFeature {
         public Long id;
-        public String variables;
-        public String checksumIdCodes;
+        public List<String> variables;
         public int execStatus;
         public Long experimentId;
         public Double maxValue;
@@ -57,6 +57,7 @@ public class ExperimentResultParamsYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ExperimentTaskFeature {
         public Long id;
         public Long execContextId;

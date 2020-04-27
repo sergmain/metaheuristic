@@ -81,7 +81,6 @@ public class ExperimentResultParamsYamlUtilsV1
         ExperimentResultParamsYaml.ExperimentFeature ef = new ExperimentResultParamsYaml.ExperimentFeature();
         ef.id = src.id;
         ef.variables = src.variables;
-        ef.checksumIdCodes = src.checksumIdCodes;
         ef.execStatus = src.execStatus;
         ef.experimentId = src.experimentId;
         ef.maxValue = src.maxValue;

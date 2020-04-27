@@ -33,7 +33,7 @@ public interface ExperimentResultRepository extends CrudRepository<ExperimentRes
 
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultSimple(" +
-            "b.id, b.name, b.description, b.createdOn ) from ExperimentResult b order by b.id desc")
+            "b.id, b.name, b.code, b.description, b.createdOn ) from ExperimentResult b order by b.id desc")
     Slice<ExperimentResultSimple> findAllAsSimple(Pageable pageable);
 
     @Nullable

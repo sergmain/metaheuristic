@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
@@ -40,9 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.math.BigDecimal;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -86,6 +83,7 @@ public class ExperimentService {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
 
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
+        ed.id = e.id;
         ed.code = e.code;
         ed.execContextId = e.execContextId;
         ed.name = params.name;
@@ -106,6 +104,7 @@ public class ExperimentService {
         }
 
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
+        ed.id = e.id;
         ed.state = ec.state;
         ed.version = e.version;
         ed.code = e.code;

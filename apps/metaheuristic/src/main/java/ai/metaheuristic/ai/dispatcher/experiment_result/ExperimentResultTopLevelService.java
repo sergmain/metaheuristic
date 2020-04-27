@@ -35,7 +35,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultApiData;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
@@ -76,7 +75,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
-import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.*;
+import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.ExperimentFeature;
+import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.ExperimentTaskFeature;
 
 @SuppressWarnings("Duplicates")
 @Slf4j
@@ -166,15 +166,15 @@ public class ExperimentResultTopLevelService {
 
             ExperimentResultParamsYaml apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(params);
             int count = 0;
-            for (Long taskId : apy.taskIds) {
+            for (ExperimentTaskFeature taskFeature : apy.taskFeatures) {
                 if (++count%100==0) {
-                    log.info("#422.045 Current number of imported task: {} of total {}", count, apy.taskIds.size());
+                    log.info("#422.045 Current number of imported task: {} of total {}", count, apy.taskFeatures.size());
                 }
-                File taskFile = new File(tasksDir, S.f(TASK_YAML_FILE, taskId));
+                File taskFile = new File(tasksDir, S.f(TASK_YAML_FILE, taskFeature));
 
                 ExperimentTask at = new ExperimentTask();
                 at.experimentResultId = experimentResult.id;
-                at.taskId = taskId;
+                at.taskId = taskFeature.taskId;
                 at.params = FileUtils.readFileToString(taskFile, StandardCharsets.UTF_8);
                 experimentTaskRepository.save(at);
             }
@@ -223,9 +223,9 @@ public class ExperimentResultTopLevelService {
         Set<Long> experimentTaskIds = experimentTaskRepository.findIdsByExperimentResultId(experimentResultId);
 
         ExperimentResultParamsYaml apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params);
-        if (experimentTaskIds.size()!=apy.taskIds.size()) {
+        if (experimentTaskIds.size()!=apy.taskFeatures.size()) {
             log.warn("numbers of tasks in params of stored experiment and in db are different, " +
-                    "experimentTaskIds.size: {}, apy.taskIds.size: {}", experimentTaskIds.size(), apy.taskIds.size());
+                    "experimentTaskIds.size: {}, apy.taskIds.size: {}", experimentTaskIds.size(), apy.taskFeatures.size());
         }
 
         int count = 0;
@@ -632,10 +632,11 @@ public class ExperimentResultTopLevelService {
                 .filter(taskFeature -> taskFeature.featureId.equals(experimentFeature.id))
                 .collect(Collectors.toMap(o -> o.taskId, o -> o.taskType));
 
-        List<Long> taskWIthTypes = ypywc.experimentResult.taskIds.stream()
-                .filter(taskToTaskType::containsKey)
-                .sorted(Long::compareTo)
+        List<Long> taskWIthTypes = ypywc.experimentResult.taskFeatures.stream()
+                .filter(key -> taskToTaskType.containsKey(key.taskId))
+                .sorted(Comparator.comparingLong(anotherLong -> anotherLong.taskId))
                 .limit(Consts.PAGE_REQUEST_10_REC.getPageSize() + 1)
+                .map(o->o.taskId)
                 .collect(Collectors.toList());
 
         Slice<ExperimentResultTaskParamsYaml> tasks = new SliceImpl<>(

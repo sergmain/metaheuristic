@@ -92,6 +92,8 @@ public class ExperimentResultData {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class ExperimentResultSimpleResult extends BaseDataClass {
         public ExperimentResultSimple experimentResult;
