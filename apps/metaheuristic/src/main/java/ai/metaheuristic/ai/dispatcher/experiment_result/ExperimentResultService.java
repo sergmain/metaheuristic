@@ -57,13 +57,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.*;
+import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.ExecContextWithParams;
+import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.ExperimentFeature;
 
 @Slf4j
 @Service
@@ -160,11 +158,11 @@ public class ExperimentResultService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#604.140 General error while storing experiment, " + e.toString());
         }
-        ExperimentParamsYaml epy = stored.experimentResultParamsYamlWithCache.getExperimentParamsYaml();
+        ExperimentResultParamsYaml erpy = stored.experimentResultParamsYamlWithCache.experimentResult;
 
-        a.name = epy.name;
-        a.description = epy.description;
-        a.code = epy.code;
+        a.name = erpy.name;
+        a.description = erpy.description;
+        a.code = erpy.code;
         a.createdOn = System.currentTimeMillis();
         a.companyId = execContext.companyId;
         final ExperimentResult experimentResult = experimentResultRepository.save(a);
@@ -228,6 +226,31 @@ public class ExperimentResultService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
+
+//    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment, boolean isFull) {
+//        return getHyperParamsAsMap(experiment.getExperimentParamsYaml().experimentYaml.hyperParams, isFull);
+//    }
+
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentApiData.HyperParam> hyperParams) {
+        return getHyperParamsAsMap(hyperParams, true);
+    }
+
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentApiData.HyperParam> hyperParams, boolean isFull) {
+        final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
+        for (ExperimentApiData.HyperParam hyperParam : hyperParams) {
+            InlineVariableUtils.NumberOfVariants ofVariants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues() );
+            Map<String, Integer> map = new LinkedHashMap<>();
+            paramByIndex.put(hyperParam.getKey(), map);
+            for (int i = 0; i <ofVariants.values.size(); i++) {
+                String value = ofVariants.values.get(i);
+
+
+                map.put(isFull ? hyperParam.getKey()+'-'+value : value , i);
+            }
+        }
+        return paramByIndex;
+    }
+
     private void updateData(ExperimentResult experimentResult, ExperimentResultParamsYaml experimentResultParamsYaml,
                             InlineVariableData.InlineVariableItem item) {
 
@@ -238,30 +261,36 @@ public class ExperimentResultService {
     }
 
     public void updateMaxValueForExperimentFeatures(Long experimentId) {
-        ExperimentResult experiment = experimentResultRepository.findById(experimentId).orElse(null);
-        if (experiment==null) {
+        ExperimentResult er = experimentResultRepository.findById(experimentId).orElse(null);
+        if (er==null) {
             return;
         }
-        ExperimentResultParamsYaml epy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experiment.params);
+        ExperimentResultParamsYaml erpy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(er.params);
 
-        List<ExperimentFeature> features = epy.features;
+        List<ExperimentFeature> features = erpy.features;
         log.info("Start calculatingMaxValueOfMetrics");
         for (ExperimentFeature feature : features) {
-            double value = metricsMaxValueCollector.calcMaxValueForMetrics(epy, feature.getId());
+            double value = metricsMaxValueCollector.calcMaxValueForMetrics(erpy, feature.getId());
             log.info("\tFeature #{}, max value: {}", feature.getId(), value);
             feature.setMaxValue(value);
         }
-        epy.maxValueCalculated = true;
-        experiment.updateParams(epy);
-        experimentResultRepository.save(experiment);
+        erpy.maxValueCalculated = true;
+        er.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(erpy);
+        experimentResultRepository.save(er);
     }
 
     public StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextImpl execContext, Experiment experiment) {
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+
         ExperimentResultParamsYaml erpy = new ExperimentResultParamsYaml();
         erpy.createdOn = System.currentTimeMillis();
         erpy.execContext = new ExecContextWithParams(execContext.id, execContext.getParams());
-        erpy.experiment = new ExperimentWithParams(experiment.id, experiment.getParams());
-        erpy.taskIds = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());
+        erpy.code = experiment.code;
+        erpy.name = epy.code;
+        erpy.description = epy.description;
+        erpy.createdOn = epy.createdOn;
+
+//        erpy.taskIds = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());
 
         StoredToExperimentResultWithStatus result = new StoredToExperimentResultWithStatus();
         result.experimentResultParamsYamlWithCache = new ExperimentResultParamsYamlWithCache( erpy );

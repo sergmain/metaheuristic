@@ -429,7 +429,7 @@ public class ExperimentResultTopLevelService {
 
     private ExperimentResultData.PlotData findExperimentTaskForPlot(
             Long experimentResultId, ExperimentResultParamsYamlWithCache apywc, ExperimentFeature feature, String[] params, String[] paramsAxis) {
-        if (apywc.experimentResult.experiment == null || apywc.getExperimentParamsYaml().processing.features.isEmpty() ) {
+        if (apywc.experimentResult.features.isEmpty() ) {
             return ExperimentResultData.EMPTY_PLOT_DATA;
         } else {
             List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, apywc, feature, params);
@@ -439,7 +439,7 @@ public class ExperimentResultTopLevelService {
 
     private List<ExperimentResultTaskParamsYaml> getTasksForFeatureIdAndParams(
             Long experimentResultId, ExperimentResultParamsYamlWithCache estb1, ExperimentFeature feature, String[] params) {
-        final Map<Long, Integer> taskToTaskType = estb1.getExperimentParamsYaml().processing.taskFeatures
+        final Map<Long, Integer> taskToTaskType = estb1.experimentResult.taskFeatures
                 .stream()
                 .filter(taskFeature -> taskFeature.featureId.equals(feature.getId()))
                 .collect(Collectors.toMap(o -> o.taskId, o -> o.taskType));
@@ -457,7 +457,7 @@ public class ExperimentResultTopLevelService {
                 .collect(Collectors.toList());
 
         if (!isEmpty(params)) {
-            selected = filterTasks(estb1.getExperimentParamsYaml(), params, selected);
+            selected = filterTasks(estb1.experimentResult, params, selected);
         }
         return selected;
     }
@@ -530,7 +530,7 @@ public class ExperimentResultTopLevelService {
     }
 
 
-    private List<ExperimentResultTaskParamsYaml> filterTasks(ExperimentParamsYaml epy, String[] params, List<ExperimentResultTaskParamsYaml> tasks) {
+    private List<ExperimentResultTaskParamsYaml> filterTasks(ExperimentResultParamsYaml epy, String[] params, List<ExperimentResultTaskParamsYaml> tasks) {
         final Set<String> paramSet = new HashSet<>();
         final Set<String> paramFilterKeys = new HashSet<>();
         for (String param : params) {
@@ -540,7 +540,7 @@ public class ExperimentResultTopLevelService {
             paramSet.add(param);
             paramFilterKeys.add(ParamFilter.of(param).key);
         }
-        final Map<String, Map<String, Integer>> paramByIndex = ExperimentService.getHyperParamsAsMap(epy);
+        final Map<String, Map<String, Integer>> paramByIndex = ExperimentResultService.getHyperParamsAsMap(epy.hyperParams);
 
         List<ExperimentResultTaskParamsYaml> selected = new ArrayList<>();
         for (ExperimentResultTaskParamsYaml task : tasks) {
@@ -579,10 +579,6 @@ public class ExperimentResultTopLevelService {
             }
         }
         return selected;
-    }
-
-    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(ExperimentParamsYaml epy) {
-        return getHyperParamsAsMap(epy.processing.hyperParams, true);
     }
 
     private boolean isInclude(boolean[] isOk ) {
@@ -631,8 +627,7 @@ public class ExperimentResultTopLevelService {
     private ExperimentResultData.ExperimentFeatureExtendedResult prepareExperimentFeatures(
             Long experimentResultId, ExperimentResultParamsYamlWithCache ypywc, final ExperimentFeature experimentFeature) {
 
-        ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
-        final Map<Long, Integer> taskToTaskType = epy.processing.taskFeatures
+        final Map<Long, Integer> taskToTaskType = ypywc.experimentResult.taskFeatures
                 .stream()
                 .filter(taskFeature -> taskFeature.featureId.equals(experimentFeature.id))
                 .collect(Collectors.toMap(o -> o.taskId, o -> o.taskType));
@@ -655,7 +650,7 @@ public class ExperimentResultTopLevelService {
         );
 
         ExperimentResultData.HyperParamResult hyperParamResult = new ExperimentResultData.HyperParamResult();
-        for (ExperimentApiData.HyperParam hyperParam : epy.processing.hyperParams) {
+        for (ExperimentApiData.HyperParam hyperParam : ypywc.experimentResult.hyperParams) {
             InlineVariableUtils.NumberOfVariants variants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues());
             ExperimentResultData.HyperParamList list = new ExperimentResultData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
@@ -712,7 +707,7 @@ public class ExperimentResultTopLevelService {
         result.tasks = tasks;
         result.consoleResult = new ExperimentResultData.ConsoleResult();
 
-        // TODO change this
+        // TODO 2020.04.23 change this assigment ot actual one (with next 2 lines)
         result.experimentFeature = new ExperimentApiData.ExperimentFeatureData();
 //        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
 //        result.experimentFeature = ExperimentService.asExperimentFeatureData(experimentFeature, taskVertices, epy.processing.taskFeatures);
@@ -781,10 +776,8 @@ public class ExperimentResultTopLevelService {
         List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, estb, feature, params);
         List<ExperimentResultTaskParamsYaml> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
 
-        ExperimentParamsYaml epy = estb.getExperimentParamsYaml();
-
         for (ExperimentResultTaskParamsYaml atpy : subList) {
-            atpy.typeAsString = epy.processing.taskFeatures.stream()
+            atpy.typeAsString = estb.experimentResult.taskFeatures.stream()
                     .filter(tf->tf.taskId.equals(atpy.taskId))
                     .map(tf->EnumsApi.ExperimentTaskType.from(tf.taskType))
                     .findFirst()

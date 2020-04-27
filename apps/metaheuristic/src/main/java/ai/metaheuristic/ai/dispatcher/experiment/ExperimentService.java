@@ -106,7 +106,6 @@ public class ExperimentService {
         }
 
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
-        ed.id = e.id;
         ed.state = ec.state;
         ed.version = e.version;
         ed.code = e.code;
@@ -157,30 +156,6 @@ public class ExperimentService {
         }
         featureData.execStatusAsString = execStatus.info;
         return featureData;
-    }
-
-//    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment, boolean isFull) {
-//        return getHyperParamsAsMap(experiment.getExperimentParamsYaml().experimentYaml.hyperParams, isFull);
-//    }
-
-    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentApiData.HyperParam> experimentHyperParams) {
-        return getHyperParamsAsMap(experimentHyperParams, true);
-    }
-
-    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentApiData.HyperParam> experimentHyperParams, boolean isFull) {
-        final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
-        for (ExperimentApiData.HyperParam hyperParam : experimentHyperParams) {
-            InlineVariableUtils.NumberOfVariants ofVariants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues() );
-            Map<String, Integer> map = new LinkedHashMap<>();
-            paramByIndex.put(hyperParam.getKey(), map);
-            for (int i = 0; i <ofVariants.values.size(); i++) {
-                String value = ofVariants.values.get(i);
-
-
-                map.put(isFull ? hyperParam.getKey()+'-'+value : value , i);
-            }
-        }
-        return paramByIndex;
     }
 
     private void deleteExperiment(Long execContextId) {

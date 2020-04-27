@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultSimple;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultApiData;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
@@ -62,7 +63,7 @@ public class ExperimentResultData {
     @NoArgsConstructor
     public static class ExperimentInfoExtended extends BaseDataClass {
         public ExperimentResult experimentResult;
-        public ExperimentApiData.ExperimentData experiment;
+        public ExperimentResultApiData.ExperimentResultData experiment;
         public ExperimentInfo experimentInfo;
 
         public ExperimentInfoExtended(String errorMessage) {
