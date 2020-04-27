@@ -18,12 +18,10 @@ package ai.metaheuristic.ai.yaml.experiment_result;
 
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
@@ -39,18 +37,17 @@ public class ExperimentResultParamsYamlWithCache {
     public ExperimentResultParamsYaml experimentResult = null;
 
     // for caching
-    private SourceCodeParamsYaml sourceCodeParamsYaml = null;
     private ExperimentParamsYaml experimentParamsYaml = null;
     private ExecContextParamsYaml execContextParamsYaml = null;
 
     @Nullable
-    public ExperimentParamsYaml.ExperimentFeature getFeature(Long featureId) {
-        return getExperimentParamsYaml().processing.features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
+    public ExperimentResultParamsYaml.ExperimentFeature getFeature(Long featureId) {
+        return experimentResult.features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
     }
 
     @Nullable
-    public ExperimentParamsYaml.ExperimentTaskFeature getExperimentTaskFeature(Long taskId) {
-        return getExperimentParamsYaml().processing.taskFeatures
+    public ExperimentResultParamsYaml.ExperimentTaskFeature getExperimentTaskFeature(Long taskId) {
+        return experimentResult.taskFeatures
                 .stream()
                 .filter(o -> o.taskId.equals(taskId))
                 .findFirst().orElse(null);
@@ -58,7 +55,7 @@ public class ExperimentResultParamsYamlWithCache {
 
     public Map<String, Map<String, Integer>> getHyperParamsAsMap(boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
-        for (ExperimentApiData.HyperParam hyperParam : getExperimentParamsYaml().processing.hyperParams) {
+        for (ExperimentApiData.HyperParam hyperParam : experimentResult.hyperParams) {
             InlineVariableUtils.NumberOfVariants ofVariants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues() );
             Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);
@@ -69,20 +66,6 @@ public class ExperimentResultParamsYamlWithCache {
         }
         return paramByIndex;
     }
-
-    public ExperimentParamsYaml getExperimentParamsYaml() {
-        if (experimentParamsYaml==null) {
-            synchronized (this) {
-                if (experimentParamsYaml==null) {
-                    //noinspection UnnecessaryLocalVariable
-                    ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.experiment.experimentParams);
-                    experimentParamsYaml = epy;
-                }
-            }
-        }
-        return experimentParamsYaml;
-    };
-
 
     public ExecContextParamsYaml getExecContextParamsYaml() {
         if (execContextParamsYaml ==null) {

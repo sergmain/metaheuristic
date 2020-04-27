@@ -18,12 +18,8 @@ package ai.metaheuristic.api.data.experiment;
 
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.commons.S;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Serge
@@ -44,48 +40,9 @@ public class ExperimentParamsYamlV1 implements BaseParams {
         return true;
     }
 
-    @Data
-    @NoArgsConstructor
-    public static class ExperimentFeatureV1 {
-
-        public Long id;
-        public String variables;
-        public String checksumIdCodes;
-        public int execStatus;
-        public Long experimentId;
-        public Double maxValue;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class ExperimentTaskFeatureV1 {
-        public Long id;
-        public Long execContextId;
-        public Long taskId;
-        public Long featureId;
-        public int taskType;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ExperimentProcessingV1 {
-        public boolean isAllTaskProduced = false;
-        public boolean isFeatureProduced = false;
-        public boolean maxValueCalculated = false;
-        public boolean exportedToExperimentResult = false;
-
-        public int numberOfTask = 0;
-
-        public final List<ExperimentApiData.HyperParam> hyperParams = new ArrayList<>();
-        public final List<ExperimentFeatureV1> features = new ArrayList<>();
-        public final List<ExperimentTaskFeatureV1> taskFeatures = new ArrayList<>();
-    }
-
     public long createdOn;
     public String name;
     public String description;
     public String code;
-    public final ExperimentProcessingV1 processing = new ExperimentProcessingV1();
 
 }

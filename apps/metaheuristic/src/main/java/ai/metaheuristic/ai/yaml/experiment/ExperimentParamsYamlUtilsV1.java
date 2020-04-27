@@ -20,11 +20,8 @@ import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
-
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -54,31 +51,6 @@ public class ExperimentParamsYamlUtilsV1
         trg.code=src.code;
         trg.name=src.name;
         trg.description=src.description;
-
-        trg.processing.isAllTaskProduced = src.processing.isAllTaskProduced;
-        trg.processing.isFeatureProduced = src.processing.isFeatureProduced;
-        trg.processing.maxValueCalculated = src.processing.maxValueCalculated;
-        trg.processing.exportedToExperimentResult = src.processing.exportedToExperimentResult;
-        trg.processing.numberOfTask = src.processing.numberOfTask;
-        trg.processing.hyperParams.addAll(src.processing.hyperParams);
-
-        src.processing.features
-                .stream()
-                .map(o->{
-                    ExperimentParamsYaml.ExperimentFeature f = new ExperimentParamsYaml.ExperimentFeature();
-                    BeanUtils.copyProperties(o, f);
-                    return f;
-                })
-                .collect(Collectors.toCollection(()->trg.processing.features));
-
-        src.processing.taskFeatures
-                .stream()
-                .map(o->{
-                    ExperimentParamsYaml.ExperimentTaskFeature f = new ExperimentParamsYaml.ExperimentTaskFeature();
-                    BeanUtils.copyProperties(o, f);
-                    return f;
-                })
-                .collect(Collectors.toCollection(()->trg.processing.taskFeatures));
 
         trg.checkIntegrity();
         return trg;

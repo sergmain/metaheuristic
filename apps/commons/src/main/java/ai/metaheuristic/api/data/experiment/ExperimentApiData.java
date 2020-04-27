@@ -59,12 +59,8 @@ public class ExperimentApiData {
         public String code;
         public String name;
         public String description;
-        public boolean isAllTaskProduced;
-        public boolean isFeatureProduced;
         public long createdOn;
         public int numberOfTask;
-        public final List<HyperParam> hyperParams = new ArrayList<>();
-        public final Map<String, Map<String, Integer>> hyperParamsAsMap = new HashMap<>();
 
         public int state;
         public String getExecState() {
@@ -77,7 +73,7 @@ public class ExperimentApiData {
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class ExperimentsEditResult extends BaseDataClass {
-        public ExperimentApiData.SimpleExperiment simpleExperiment;
+        public SimpleExperiment simpleExperiment;
 
         public ExperimentsEditResult(String errorMessage) {
             addErrorMessage(errorMessage);

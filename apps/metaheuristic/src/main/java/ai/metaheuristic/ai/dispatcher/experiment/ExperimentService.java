@@ -27,6 +27,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -44,8 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
 
 @SuppressWarnings("DuplicatedCode")
 @Service
@@ -92,10 +91,8 @@ public class ExperimentService {
         ed.execContextId = e.execContextId;
         ed.name = params.name;
         ed.description = params.description;
-        ed.hyperParams.addAll(params.processing.hyperParams);
-        ed.hyperParamsAsMap.putAll(getHyperParamsAsMap(ed.hyperParams));
         ed.createdOn = params.createdOn;
-        ed.numberOfTask = params.processing.numberOfTask;
+        ed.numberOfTask = 0;
 
         return ed;
     }
@@ -118,15 +115,15 @@ public class ExperimentService {
         ed.name = params.name;
         ed.description = params.description;
         ed.createdOn = params.createdOn;
-        ed.numberOfTask = params.processing.numberOfTask;
+        ed.numberOfTask = 0;
 
         return ed;
     }
 
     public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(
-            @Nullable ExperimentFeature experimentFeature,
+            @Nullable ExperimentResultParamsYaml.ExperimentFeature experimentFeature,
             List<ExecContextData.TaskVertex> taskVertices,
-            List<ExperimentTaskFeature> taskFeatures) {
+            List<ExperimentResultParamsYaml.ExperimentTaskFeature> taskFeatures) {
 
         final ExperimentApiData.ExperimentFeatureData featureData = new ExperimentApiData.ExperimentFeatureData();
 
@@ -138,7 +135,7 @@ public class ExperimentService {
 
         BeanUtils.copyProperties(experimentFeature, featureData);
 
-        List<ExperimentTaskFeature> etfs = taskFeatures.stream().filter(tf->tf.featureId.equals(featureData.id)).collect(Collectors.toList());
+        List<ExperimentResultParamsYaml.ExperimentTaskFeature> etfs = taskFeatures.stream().filter(tf->tf.featureId.equals(featureData.id)).collect(Collectors.toList());
 
         Set<EnumsApi.TaskExecState> statuses = taskVertices
                 .stream()
@@ -161,10 +158,6 @@ public class ExperimentService {
         }
         featureData.execStatusAsString = execStatus.info;
         return featureData;
-    }
-
-    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(ExperimentParamsYaml epy) {
-        return getHyperParamsAsMap(epy.processing.hyperParams, true);
     }
 
 //    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment, boolean isFull) {

@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
@@ -39,6 +40,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
@@ -221,11 +223,17 @@ public class ExperimentResultService {
             experimentTaskRepository.save(at);
         }
 
-        updateTaskIds(experimentResult, stored.experimentResultParamsYamlWithCache.experimentResult, taskIds);
+        updateData(experimentResult, stored.experimentResultParamsYamlWithCache.experimentResult, taskIds, item);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private void updateTaskIds(ExperimentResult experimentResult, ExperimentResultParamsYaml experimentResultParamsYaml, List<Long> taskIds) {
+    private void updateData(ExperimentResult experimentResult, ExperimentResultParamsYaml experimentResultParamsYaml,
+                            List<Long> taskIds, InlineVariableData.InlineVariableItem item) {
+
+        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experimentResultParamsYaml.experiment.experimentParams);
+        item.inlines.entrySet().stream().map(e->new ExperimentApiData.HyperParam()).collect(Collectors.toCollection(()->epy.processing.hyperParams));
+        experimentResultParamsYaml.experiment.experimentParams = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(experimentResultParamsYaml);
+
         // fix list of task ids with id of tasks which are ml only
         experimentResultParamsYaml.taskIds = taskIds;
         experimentResult.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(experimentResultParamsYaml);

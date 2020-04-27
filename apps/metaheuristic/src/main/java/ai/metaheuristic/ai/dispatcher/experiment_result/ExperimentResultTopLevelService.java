@@ -602,6 +602,10 @@ public class ExperimentResultTopLevelService {
         return selected;
     }
 
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(ExperimentParamsYaml epy) {
+        return getHyperParamsAsMap(epy.processing.hyperParams, true);
+    }
+
     private boolean isInclude(boolean[] isOk ) {
         for (boolean b : isOk) {
             if (!b) {
