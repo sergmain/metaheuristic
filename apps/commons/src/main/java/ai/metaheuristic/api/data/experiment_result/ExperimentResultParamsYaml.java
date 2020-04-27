@@ -47,7 +47,6 @@ public class ExperimentResultParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     public static class ExperimentFeature {
-
         public Long id;
         public String variables;
         public String checksumIdCodes;

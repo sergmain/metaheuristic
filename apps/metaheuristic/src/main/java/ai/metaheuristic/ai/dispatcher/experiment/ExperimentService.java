@@ -86,7 +86,6 @@ public class ExperimentService {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
 
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
-        ed.id = e.id;
         ed.code = e.code;
         ed.execContextId = e.execContextId;
         ed.name = params.name;

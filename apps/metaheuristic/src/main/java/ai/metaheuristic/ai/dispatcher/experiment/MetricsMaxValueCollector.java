@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.experiment;
 
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
@@ -34,7 +34,7 @@ public class MetricsMaxValueCollector {
 
     private final TaskRepository taskRepository;
 
-    public double calcMaxValueForMetrics(ExperimentParamsYaml epy, Long featureId) {
+    public double calcMaxValueForMetrics(ExperimentResultParamsYaml epy, Long featureId) {
         List<Long> ids = epy.getTaskFeatureIds(featureId);
         if (ids.isEmpty()) {
             return 0.0;

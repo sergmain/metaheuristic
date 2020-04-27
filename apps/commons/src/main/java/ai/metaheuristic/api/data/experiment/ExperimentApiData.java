@@ -53,7 +53,6 @@ public class ExperimentApiData {
     @Data
     @NoArgsConstructor
     public static class ExperimentData {
-        public Long id;
         public Integer version;
         public Long execContextId;
         public String code;

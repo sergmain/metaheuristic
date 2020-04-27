@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,7 +36,6 @@ public class ExperimentResultParamsYamlWithCache {
     public ExperimentResultParamsYaml experimentResult = null;
 
     // for caching
-    private ExperimentParamsYaml experimentParamsYaml = null;
     private ExecContextParamsYaml execContextParamsYaml = null;
 
     @Nullable

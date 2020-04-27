@@ -87,7 +87,7 @@ public class ExperimentResultController {
 
     @GetMapping("/experiment-result-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        ExperimentResultData.ExperimentDataOnly result = experimentResultTopLevelService.getExperimentDataOnly(id);
+        ExperimentResultData.ExperimentResultSimpleResult result = experimentResultTopLevelService.getExperimentResultData(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.getErrorMessagesAsList());
             return "redirect:/dispatcher/ai/experiment-result/experiment-results";
@@ -97,8 +97,8 @@ public class ExperimentResultController {
             model.addAttribute("infoMessages", result.infoMessages);
         }
 
-        model.addAttribute("experiment", result.experiment);
-        model.addAttribute("experimentResultId", result.experimentResultId);
+        model.addAttribute("experiment", result.experimentResult);
+        model.addAttribute("experimentResultId", id);
         return "dispatcher/ai/experiment-result/experiment-result-delete";
     }
 

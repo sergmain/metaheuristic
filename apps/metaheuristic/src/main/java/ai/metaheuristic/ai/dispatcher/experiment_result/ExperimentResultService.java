@@ -32,7 +32,6 @@ import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
@@ -63,6 +62,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.*;
 
 @Slf4j
 @Service
@@ -223,47 +224,43 @@ public class ExperimentResultService {
             experimentTaskRepository.save(at);
         }
 
-        updateData(experimentResult, stored.experimentResultParamsYamlWithCache.experimentResult, taskIds, item);
+        updateData(experimentResult, stored.experimentResultParamsYamlWithCache.experimentResult, item);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     private void updateData(ExperimentResult experimentResult, ExperimentResultParamsYaml experimentResultParamsYaml,
-                            List<Long> taskIds, InlineVariableData.InlineVariableItem item) {
+                            InlineVariableData.InlineVariableItem item) {
 
-        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experimentResultParamsYaml.experiment.experimentParams);
-        item.inlines.entrySet().stream().map(e->new ExperimentApiData.HyperParam()).collect(Collectors.toCollection(()->epy.processing.hyperParams));
-        experimentResultParamsYaml.experiment.experimentParams = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(experimentResultParamsYaml);
+        item.inlines.entrySet().stream().map(e->new ExperimentApiData.HyperParam()).collect(Collectors.toCollection(()->experimentResultParamsYaml.hyperParams));
 
-        // fix list of task ids with id of tasks which are ml only
-        experimentResultParamsYaml.taskIds = taskIds;
         experimentResult.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(experimentResultParamsYaml);
         experimentResultRepository.save(experimentResult);
     }
 
     public void updateMaxValueForExperimentFeatures(Long experimentId) {
-        Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
+        ExperimentResult experiment = experimentResultRepository.findById(experimentId).orElse(null);
         if (experiment==null) {
             return;
         }
-        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+        ExperimentResultParamsYaml epy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experiment.params);
 
-        List<ExperimentParamsYaml.ExperimentFeature> features = epy.processing.features;
+        List<ExperimentFeature> features = epy.features;
         log.info("Start calculatingMaxValueOfMetrics");
-        for (ExperimentParamsYaml.ExperimentFeature feature : features) {
+        for (ExperimentFeature feature : features) {
             double value = metricsMaxValueCollector.calcMaxValueForMetrics(epy, feature.getId());
             log.info("\tFeature #{}, max value: {}", feature.getId(), value);
             feature.setMaxValue(value);
         }
-        epy.processing.maxValueCalculated = true;
+        epy.maxValueCalculated = true;
         experiment.updateParams(epy);
-        experimentCache.save(experiment);
+        experimentResultRepository.save(experiment);
     }
 
     public StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextImpl execContext, Experiment experiment) {
         ExperimentResultParamsYaml erpy = new ExperimentResultParamsYaml();
         erpy.createdOn = System.currentTimeMillis();
-        erpy.execContext = new ExperimentResultParamsYaml.ExecContextWithParams(execContext.id, execContext.getParams());
-        erpy.experiment = new ExperimentResultParamsYaml.ExperimentWithParams(experiment.id, experiment.getParams());
+        erpy.execContext = new ExecContextWithParams(execContext.id, execContext.getParams());
+        erpy.experiment = new ExperimentWithParams(experiment.id, experiment.getParams());
         erpy.taskIds = taskRepository.findAllTaskIdsByExecContextId(execContext.getId());
 
         StoredToExperimentResultWithStatus result = new StoredToExperimentResultWithStatus();

@@ -17,6 +17,7 @@
 package ai.metaheuristic.api.data.experiment_result;
 
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,28 +34,32 @@ public class ExperimentResultParamsYamlV1 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
-        if (execContext ==null || experiment==null || taskIds==null) {
-            throw new IllegalArgumentException("(sourceCode==null || execContext==null || experiment==null || taskIds==null)");
+        if (execContext ==null) {
+            throw new IllegalArgumentException("(execContext==null)");
         }
         return true;
     }
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
-    @ToString
-    public static class SourceCodeWithParamsV1 {
-        public Long sourceCodeId;
-        public String sourceCodeParams;
+    public static class ExperimentFeatureV1 {
+
+        public Long id;
+        public String variables;
+        public String checksumIdCodes;
+        public int execStatus;
+        public Long experimentId;
+        public Double maxValue;
     }
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
-    @ToString
-    public static class ExperimentWithParamsV1 {
-        public Long experimentId;
-        public String experimentParams;
+    public static class ExperimentTaskFeatureV1 {
+        public Long id;
+        public Long execContextId;
+        public Long taskId;
+        public Long featureId;
+        public int taskType;
     }
 
     @Data
@@ -64,12 +69,20 @@ public class ExperimentResultParamsYamlV1 implements BaseParams {
     public static class ExecContextWithParamsV1 {
         public Long execContextId;
         public String execContextParams;
-//        public int execState;
     }
 
     public long createdOn;
-//    public SourceCodeWithParamsV1 sourceCode;
+    public String name;
+    public String description;
+    public String code;
+
     public ExecContextWithParamsV1 execContext;
-    public ExperimentWithParamsV1 experiment;
-    public List<Long> taskIds = new ArrayList<>();
+    public boolean maxValueCalculated = false;
+
+    public int numberOfTask = 0;
+
+    public final List<ExperimentApiData.HyperParam> hyperParams = new ArrayList<>();
+    public final List<ExperimentFeatureV1> features = new ArrayList<>();
+    public final List<ExperimentTaskFeatureV1> taskFeatures = new ArrayList<>();
+
 }

@@ -23,6 +23,8 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.stream.Collectors;
+
 /**
  * @author Serge
  * Date: 6/22/2019
@@ -48,12 +50,43 @@ public class ExperimentResultParamsYamlUtilsV1
         src.checkIntegrity();
         ExperimentResultParamsYaml trg = new ExperimentResultParamsYaml();
         trg.createdOn = src.createdOn;
+        trg.code = src.code;
+        trg.name = src.name;
+        trg.description = src.description;
+        trg.maxValueCalculated = src.maxValueCalculated;
+        trg.numberOfTask = src.numberOfTask;
+
         trg.execContext = new ExperimentResultParamsYaml.ExecContextWithParams(src.execContext.execContextId, src.execContext.execContextParams);
-        trg.experiment = new ExperimentResultParamsYaml.ExperimentWithParams(src.experiment.experimentId, src.experiment.experimentParams);
-        trg.taskIds = src.taskIds;
+        trg.hyperParams.addAll(src.hyperParams);
+        src.features.stream().map(this::toFeature).collect(Collectors.toCollection(()->trg.features));
+        src.taskFeatures.stream().map(this::toTaskFeature).collect(Collectors.toCollection(()->trg.taskFeatures));
 
         trg.checkIntegrity();
         return trg;
+    }
+
+    private ExperimentResultParamsYaml.ExperimentTaskFeature toTaskFeature(ExperimentResultParamsYamlV1.ExperimentTaskFeatureV1 src) {
+        ExperimentResultParamsYaml.ExperimentTaskFeature etf = new ExperimentResultParamsYaml.ExperimentTaskFeature();
+
+        etf.id = src.id;
+        etf.execContextId = src.execContextId;
+        etf.taskId = src.taskId;
+        etf.featureId = src.featureId;
+        etf.taskType = src.taskType;
+
+        return etf;
+    }
+
+    private ExperimentResultParamsYaml.ExperimentFeature toFeature(ExperimentResultParamsYamlV1.ExperimentFeatureV1 src) {
+        ExperimentResultParamsYaml.ExperimentFeature ef = new ExperimentResultParamsYaml.ExperimentFeature();
+        ef.id = src.id;
+        ef.variables = src.variables;
+        ef.checksumIdCodes = src.checksumIdCodes;
+        ef.execStatus = src.execStatus;
+        ef.experimentId = src.experimentId;
+        ef.maxValue = src.maxValue;
+
+        return ef;
     }
 
     @NonNull

@@ -26,6 +26,7 @@ import lombok.NoArgsConstructor;
 public class ExperimentResultSimple {
     public Long id;
     public String name;
+    public String code;
     public String description;
     public long createdOn;
 }
