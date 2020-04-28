@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
@@ -58,6 +59,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -222,10 +224,7 @@ public class ExperimentResultService {
             // 2020-04-27 calculate an actual max value from MetricValues mvs
             Double maxValue = 0.0;
 
-            ExperimentFeature feature = new ExperimentFeature(
-                    featureId.getAndIncrement(), vapy.array.stream().map(v -> v.name).collect(Collectors.toList()),
-                    EnumsApi.ExecContextState.FINISHED.code, experimentId, maxValue);
-            features.add(feature);
+            ExperimentFeature feature = findOrCreate(features, experimentId, featureId, vapy, maxValue);
             taskFeatures.add(new ExperimentTaskFeature(
                     taskFeatureId.getAndIncrement(), execContextId, t.id, feature.id, EnumsApi.ExperimentTaskType.UNKNOWN.value
             ));
@@ -257,6 +256,20 @@ public class ExperimentResultService {
 
         updateData(experimentResult, stored.experimentResultParamsYamlWithCache.experimentResult, item, features, taskFeatures);
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public static ExperimentFeature findOrCreate(List<ExperimentFeature> features, Long experimentId, AtomicLong featureId, VariableArrayParamsYaml vapy, Double maxValue) {
+        List<String> variables = vapy.array.stream().map(v -> v.name).collect(Collectors.toList());
+        for (ExperimentFeature feature : features) {
+            if (CollectionUtils.isEquals(feature.variables, variables)) {
+                return feature;
+            }
+        }
+        ExperimentFeature experimentFeature = new ExperimentFeature(
+                featureId.getAndIncrement(), variables, EnumsApi.ExecContextState.FINISHED.code, experimentId, maxValue);
+
+        features.add(experimentFeature);
+        return experimentFeature;
     }
 
 

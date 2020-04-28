@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.experiment_result;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
@@ -35,6 +36,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 /**
  * @author Serge
  * Date: 4/27/2020
@@ -47,6 +50,9 @@ public class TransferExperimentResult {
 
     @Autowired
     public ExperimentResultService experimentResultService;
+
+    @Autowired
+    public ExecContextCache execContextCache;
 
     @Test
     public void test() {
@@ -89,7 +95,8 @@ public class TransferExperimentResult {
                 "optimizer", "[rmsprop]"
         ));
 
-        Long execContextId = 1019L;
+        Long execContextId = 1020L;
+        assertNotNull(execContextCache.findById(execContextId));
 
         OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContextId, taskParamsYaml, variableDeclaration);
         System.out.println("status: " + status);

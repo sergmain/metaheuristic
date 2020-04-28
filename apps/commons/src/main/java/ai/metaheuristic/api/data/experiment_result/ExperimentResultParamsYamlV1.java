@@ -43,7 +43,6 @@ public class ExperimentResultParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     public static class ExperimentFeatureV1 {
-
         public Long id;
         public List<String> variables;
         public int execStatus;

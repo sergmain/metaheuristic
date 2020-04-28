@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -39,4 +40,15 @@ public class CollectionUtils {
         return codes;
     }
 
+    public static boolean isEquals(List<String> l1, List<String> l2) {
+        if (l1.size()!=l2.size()) {
+            return false;
+        }
+        for (String s : l1) {
+            if (!l2.contains(s)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
