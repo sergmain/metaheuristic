@@ -34,6 +34,7 @@ public class ExperimentResultApiData {
     @Data
     @NoArgsConstructor
     public static class ExperimentResultData {
+        public Long id;
         public Integer version;
         public Long execContextId;
         public String code;

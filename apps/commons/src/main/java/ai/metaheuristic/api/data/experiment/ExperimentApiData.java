@@ -91,7 +91,7 @@ public class ExperimentApiData {
     public static class ExperimentFeatureData {
         public Long id;
         public Integer version;
-        public String variables;
+        public final List<String> variables = new ArrayList<>();
         public String checksumIdCodes;
         public int execStatus;
         public String execStatusAsString;

@@ -224,7 +224,7 @@ public class ExperimentResultService {
             Double maxValue = 0.0;
 
             ExperimentFeature feature = new ExperimentFeature(
-                    featureId.getAndIncrement(), vapy.array.stream().map(v -> v.realName).collect(Collectors.toList()),
+                    featureId.getAndIncrement(), vapy.array.stream().map(v -> v.name).collect(Collectors.toList()),
                     EnumsApi.ExecContextState.FINISHED.code, experimentId, maxValue);
             features.add(feature);
             taskFeatures.add(new ExperimentTaskFeature(
@@ -283,7 +283,9 @@ public class ExperimentResultService {
     private void updateData(ExperimentResult experimentResult, ExperimentResultParamsYaml experimentResultParamsYaml,
                             InlineVariableData.InlineVariableItem item, List<ExperimentFeature> features, List<ExperimentTaskFeature> taskFeatures) {
 
-        item.inlines.entrySet().stream().map(e->new ExperimentApiData.HyperParam()).collect(Collectors.toCollection(()->experimentResultParamsYaml.hyperParams));
+        item.inlines.entrySet().stream()
+                .map(e-> new ExperimentApiData.HyperParam(e.getKey(), e.getValue(), InlineVariableUtils.getNumberOfVariants(e.getValue()).count))
+                .collect(Collectors.toCollection(()->experimentResultParamsYaml.hyperParams));
         experimentResultParamsYaml.features.addAll(features);
         experimentResultParamsYaml.taskFeatures.addAll(taskFeatures);
 

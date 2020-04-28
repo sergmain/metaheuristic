@@ -17,9 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentTask;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
@@ -52,6 +56,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
@@ -60,6 +65,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -92,6 +98,7 @@ public class ExperimentResultTopLevelService {
 
     private final ExperimentResultRepository experimentResultRepository;
     private final ExperimentTaskRepository experimentTaskRepository;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     private static class ParamFilter {
         String key;
@@ -311,8 +318,8 @@ public class ExperimentResultTopLevelService {
         }
 
         ExperimentResultApiData.ExperimentResultData experiment = new ExperimentResultApiData.ExperimentResultData();
+        experiment.id = experimentResult.id;
         experiment.execContextId = ypywc.experimentResult.execContext.execContextId;
-
         experiment.code = ypywc.experimentResult.code;
         experiment.name = ypywc.experimentResult.name;
         experiment.description = ypywc.experimentResult.description;
@@ -335,25 +342,17 @@ public class ExperimentResultTopLevelService {
         }
         result.experimentResult = experimentResult;
 
-/*
         ExecContextImpl execContext = new ExecContextImpl();
         execContext.setParams(ypywc.experimentResult.execContext.execContextParams);
         execContext.id = ypywc.experimentResult.execContext.execContextId;
-        execContext.state = ypywc.experimentResult.execContext.execState;
-*/
+        execContext.state = EnumsApi.ExecContextState.FINISHED.code;
 
-        // TODO change this to ....
         ExperimentResultData.ExperimentInfo experimentInfoResult = new ExperimentResultData.ExperimentInfo();
         experimentInfoResult.features = List.of();
-//        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
-//        experimentInfoResult.features = ypywc.getExperimentParamsYaml().processing.features
-//                .stream()
-//                .map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
-
-/*
-        experimentInfoResult.execContext = execContext;
-        experimentInfoResult.execContextState = EnumsApi.ExecContextState.toState(execContext.state);
-*/
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+        experimentInfoResult.features = ypywc.experimentResult.features
+                .stream()
+                .map(e -> asExperimentFeatureData(e, taskVertices, ypywc.experimentResult.taskFeatures)).collect(Collectors.toList());
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;
@@ -403,6 +402,47 @@ public class ExperimentResultTopLevelService {
         //  so it'll be 3D with a fake zero data
         fixData(data);
         return data;
+    }
+
+    public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(
+            @Nullable ExperimentResultParamsYaml.ExperimentFeature experimentFeature,
+            List<ExecContextData.TaskVertex> taskVertices,
+            List<ExperimentResultParamsYaml.ExperimentTaskFeature> taskFeatures) {
+
+        final ExperimentApiData.ExperimentFeatureData featureData = new ExperimentApiData.ExperimentFeatureData();
+
+        if (experimentFeature==null) {
+            featureData.execStatus = Enums.FeatureExecStatus.finished_with_errors.code;
+            featureData.execStatusAsString = Enums.FeatureExecStatus.finished_with_errors.info;
+            return featureData;
+        }
+
+        BeanUtils.copyProperties(experimentFeature, featureData, "variables");
+        featureData.variables.addAll(experimentFeature.variables);
+
+        List<ExperimentResultParamsYaml.ExperimentTaskFeature> etfs = taskFeatures.stream().filter(tf->tf.featureId.equals(featureData.id)).collect(Collectors.toList());
+
+        Set<EnumsApi.TaskExecState> statuses = taskVertices
+                .stream()
+                .filter(t -> etfs
+                        .stream()
+                        .filter(etf-> etf.taskId.equals(t.taskId))
+                        .findFirst()
+                        .orElse(null) !=null ).map(o->o.execState)
+                .collect(Collectors.toSet());
+
+        Enums.FeatureExecStatus execStatus = statuses.isEmpty() ? Enums.FeatureExecStatus.empty : Enums.FeatureExecStatus.unknown;
+        if (statuses.contains(EnumsApi.TaskExecState.OK)) {
+            execStatus = Enums.FeatureExecStatus.finished;
+        }
+        if (statuses.contains(EnumsApi.TaskExecState.ERROR)|| statuses.contains(EnumsApi.TaskExecState.BROKEN)) {
+            execStatus = Enums.FeatureExecStatus.finished_with_errors;
+        }
+        if (statuses.contains(EnumsApi.TaskExecState.NONE) || statuses.contains(EnumsApi.TaskExecState.IN_PROGRESS)) {
+            execStatus = Enums.FeatureExecStatus.processing;
+        }
+        featureData.execStatusAsString = execStatus.info;
+        return featureData;
     }
 
     @SuppressWarnings("Duplicates")

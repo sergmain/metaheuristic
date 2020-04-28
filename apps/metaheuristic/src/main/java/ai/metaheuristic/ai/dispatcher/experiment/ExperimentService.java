@@ -15,22 +15,17 @@
  */
 package ai.metaheuristic.ai.dispatcher.experiment;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherInternalEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
@@ -39,9 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("DuplicatedCode")
 @Service
@@ -115,46 +107,6 @@ public class ExperimentService {
         ed.numberOfTask = 0;
 
         return ed;
-    }
-
-    public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(
-            @Nullable ExperimentResultParamsYaml.ExperimentFeature experimentFeature,
-            List<ExecContextData.TaskVertex> taskVertices,
-            List<ExperimentResultParamsYaml.ExperimentTaskFeature> taskFeatures) {
-
-        final ExperimentApiData.ExperimentFeatureData featureData = new ExperimentApiData.ExperimentFeatureData();
-
-        if (experimentFeature==null) {
-            featureData.execStatus = Enums.FeatureExecStatus.finished_with_errors.code;
-            featureData.execStatusAsString = Enums.FeatureExecStatus.finished_with_errors.info;
-            return featureData;
-        }
-
-        BeanUtils.copyProperties(experimentFeature, featureData);
-
-        List<ExperimentResultParamsYaml.ExperimentTaskFeature> etfs = taskFeatures.stream().filter(tf->tf.featureId.equals(featureData.id)).collect(Collectors.toList());
-
-        Set<EnumsApi.TaskExecState> statuses = taskVertices
-                .stream()
-                .filter(t -> etfs
-                        .stream()
-                        .filter(etf-> etf.taskId.equals(t.taskId))
-                        .findFirst()
-                        .orElse(null) !=null ).map(o->o.execState)
-                .collect(Collectors.toSet());
-
-        Enums.FeatureExecStatus execStatus = statuses.isEmpty() ? Enums.FeatureExecStatus.empty : Enums.FeatureExecStatus.unknown;
-        if (statuses.contains(EnumsApi.TaskExecState.OK)) {
-            execStatus = Enums.FeatureExecStatus.finished;
-        }
-        if (statuses.contains(EnumsApi.TaskExecState.ERROR)|| statuses.contains(EnumsApi.TaskExecState.BROKEN)) {
-            execStatus = Enums.FeatureExecStatus.finished_with_errors;
-        }
-        if (statuses.contains(EnumsApi.TaskExecState.NONE) || statuses.contains(EnumsApi.TaskExecState.IN_PROGRESS)) {
-            execStatus = Enums.FeatureExecStatus.processing;
-        }
-        featureData.execStatusAsString = execStatus.info;
-        return featureData;
     }
 
     private void deleteExperiment(Long execContextId) {
