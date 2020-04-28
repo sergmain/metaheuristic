@@ -498,7 +498,7 @@ public class ExperimentResultTopLevelService {
         return selected;
     }
 
-    private ExperimentResultData.PlotData collectDataForPlotting(ExperimentResultParamsYamlWithCache estb, List<ExperimentResultTaskParamsYaml> selected, String[] paramsAxis) {
+    private static ExperimentResultData.PlotData collectDataForPlotting(ExperimentResultParamsYamlWithCache estb, List<ExperimentResultTaskParamsYaml> selected, String[] paramsAxis) {
         final ExperimentResultData.PlotData data = new ExperimentResultData.PlotData();
         final List<String> paramCleared = new ArrayList<>();
         for (String param : paramsAxis) {
@@ -558,7 +558,7 @@ public class ExperimentResultTopLevelService {
     }
 
 
-    private List<ExperimentResultTaskParamsYaml> filterTasks(ExperimentResultParamsYaml epy, String[] params, List<ExperimentResultTaskParamsYaml> tasks) {
+    private static List<ExperimentResultTaskParamsYaml> filterTasks(ExperimentResultParamsYaml epy, String[] params, List<ExperimentResultTaskParamsYaml> tasks) {
         final Set<String> paramSet = new HashSet<>();
         final Set<String> paramFilterKeys = new HashSet<>();
         for (String param : params) {
@@ -609,7 +609,7 @@ public class ExperimentResultTopLevelService {
         return selected;
     }
 
-    private boolean isInclude(boolean[] isOk ) {
+    private static boolean isInclude(boolean[] isOk ) {
         for (boolean b : isOk) {
             if (!b) {
                 return false;
@@ -618,7 +618,7 @@ public class ExperimentResultTopLevelService {
         return true;
     }
 
-    private boolean isEmpty(String[] params) {
+    private static boolean isEmpty(String[] params) {
         for (String param : params) {
             if (StringUtils.isNotBlank(param)) {
                 return false;
