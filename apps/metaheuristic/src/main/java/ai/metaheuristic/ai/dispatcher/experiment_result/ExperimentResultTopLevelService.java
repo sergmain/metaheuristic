@@ -444,7 +444,7 @@ public class ExperimentResultTopLevelService {
     @SuppressWarnings("Duplicates")
     private void fixData(ExperimentResultData.PlotData data) {
         if (data.x.size()==1) {
-            data.x.add("stub");
+            data.x.add("stub-x");
             BigDecimal[][] z = new BigDecimal[data.z.length][2];
             for (int i = 0; i < data.z.length; i++) {
                 z[i][0] = data.z[i][0];
@@ -452,8 +452,8 @@ public class ExperimentResultTopLevelService {
             }
             data.z = z;
         }
-        else if (data.y.size()==1) {
-            data.y.add("stub");
+        if (data.y.size()==1) {
+            data.y.add("stub-y");
             BigDecimal[][] z = new BigDecimal[2][data.z[0].length];
             for (int i = 0; i < data.z[0].length; i++) {
                 z[0][i] = data.z[0][i];
