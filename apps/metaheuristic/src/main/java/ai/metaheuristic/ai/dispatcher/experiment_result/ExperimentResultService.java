@@ -84,9 +84,6 @@ public class ExperimentResultService {
     private final VariableService variableService;
     private final MetricsMaxValueCollector metricsMaxValueCollector;
 
-    private static final String INLINE_KEY = "inline-key";
-    private static final String PERMUTE_INLINE = "permute-inline";
-
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
@@ -221,6 +218,8 @@ public class ExperimentResultService {
 
             String metrics = variableService.getVariableDataAsString(metricsVs.get(0).id);
             MetricValues mvs = MetricsUtils.getMetricValues(metrics);
+
+            // 2020-04-27 calculate an actual max value from MetricValues mvs
             Double maxValue = 0.0;
 
             ExperimentFeature feature = new ExperimentFeature(
@@ -242,7 +241,12 @@ public class ExperimentResultService {
             // see method ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultTopLevelService.findTasks
             atpy.typeAsString = null;
             atpy.functionExecResults = t.getFunctionExecResults();
-            atpy.metrics = metrics;
+            atpy.metrics.values.putAll(mvs.values);
+            atpy.metrics.status = EnumsApi.MetricsStatus.Ok;
+
+            // 2020-04-27 add a support of under/over-fitting checker
+            atpy.fitting = EnumsApi.Fitting.NORMAL;
+
 
             ExperimentTask at = new ExperimentTask();
             at.experimentResultId = experimentResult.id;

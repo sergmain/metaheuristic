@@ -47,8 +47,14 @@ public class ExperimentResultTaskParamsYamlUtilsV1
     @Override
     public ExperimentResultTaskParamsYaml upgradeTo(@NonNull ExperimentResultTaskParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
+
         ExperimentResultTaskParamsYaml trg = new ExperimentResultTaskParamsYaml();
         BeanUtils.copyProperties(src, trg);
+
+        trg.metrics.error = src.metrics.error;
+        trg.metrics.status = src.metrics.status;
+        trg.metrics.values.putAll(src.metrics.values);
+
         trg.checkIntegrity();
         return trg;
     }
@@ -77,7 +83,6 @@ public class ExperimentResultTaskParamsYamlUtilsV1
     @NonNull
     @Override
     public ExperimentResultTaskParamsYamlV1 to(String s) {
-        //noinspection UnnecessaryLocalVariable
         final ExperimentResultTaskParamsYamlV1 p = getYaml().load(s);
         return p;
     }

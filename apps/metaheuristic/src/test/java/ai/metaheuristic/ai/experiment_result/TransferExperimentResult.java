@@ -51,7 +51,6 @@ public class TransferExperimentResult {
     @Test
     public void test() {
 
-        Long execContextId = 1L;
         TaskParamsYaml taskParamsYaml = new TaskParamsYaml();
 
 //        - key: feature-item
@@ -89,6 +88,8 @@ public class TransferExperimentResult {
                 "epoch", "[relu]",
                 "optimizer", "[rmsprop]"
         ));
+
+        Long execContextId = 1019L;
 
         OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContextId, taskParamsYaml, variableDeclaration);
         System.out.println("status: " + status);

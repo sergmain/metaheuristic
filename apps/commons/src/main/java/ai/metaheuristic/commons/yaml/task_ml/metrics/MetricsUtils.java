@@ -17,7 +17,6 @@ package ai.metaheuristic.commons.yaml.task_ml.metrics;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
 
@@ -26,8 +25,6 @@ import java.io.InputStream;
 
 @Slf4j
 public class MetricsUtils {
-
-    public static final Metrics EMPTY_METRICS = new Metrics(EnumsApi.MetricsStatus.NotFound, null, null);
 
     private static Yaml getYaml() {
         return YamlUtils.init(Metrics.class);
@@ -58,19 +55,11 @@ public class MetricsUtils {
         if (metrics==null || metrics.getStatus()!= EnumsApi.MetricsStatus.Ok) {
             return new MetricValues();
         }
-        //noinspection UnnecessaryLocalVariable
         MetricValues metricValues = getMetricValues(metrics.metrics);
         return metricValues;
     }
 
     public static MetricValues getMetricValues(String metrics) {
         return (MetricValues) YamlUtils.to(metrics, getValueYaml());
-    }
-
-    public static MetricValues getValues(TaskMachineLearningYaml.Metrics metrics) {
-        if (metrics==null || metrics.metrics==null || metrics.getStatus()!= EnumsApi.MetricsStatus.Ok) {
-            return new MetricValues();
-        }
-        return getValueYaml().load(metrics.metrics);
     }
 }

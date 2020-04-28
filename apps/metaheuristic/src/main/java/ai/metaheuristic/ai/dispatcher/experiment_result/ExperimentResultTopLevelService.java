@@ -48,10 +48,6 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYaml;
-import ai.metaheuristic.commons.yaml.task_ml.TaskMachineLearningYamlUtils;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
-import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -541,16 +537,8 @@ public class ExperimentResultTopLevelService {
         String metricKey = null;
         for (ExperimentResultTaskParamsYaml task : selected) {
 
-            if (S.b((task.metrics))) {
-                continue;
-            }
-            TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to(task.metrics);
-            MetricValues metricValues = MetricsUtils.getValues( tmly.metrics );
-            if (metricValues==null) {
-                continue;
-            }
             if (metricKey==null) {
-                for (Map.Entry<String, BigDecimal> entry : metricValues.values.entrySet()) {
+                for (Map.Entry<String, BigDecimal> entry : task.metrics.values.entrySet()) {
                     metricKey = entry.getKey();
                     break;
                 }
@@ -563,7 +551,7 @@ public class ExperimentResultTopLevelService {
                 idxX = mapX.get(taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(0)));
                 idxY = mapY.get(taskParamYaml.task.inline.get(ConstsApi.MH_HYPER_PARAMS).get(paramCleared.get(1)));
             }
-            data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
+            data.z[idxY][idxX] = data.z[idxY][idxX].add(task.metrics.values.get(metricKey));
         }
 
         return data;
@@ -709,18 +697,10 @@ public class ExperimentResultTopLevelService {
         tasks.stream()
                 .filter(o->taskToTaskType.containsKey(o.taskId) && o.execState > 1)
                 .forEach( o-> {
-                    if (S.b((o.metrics))) {
-                        return;
-                    }
-                    TaskMachineLearningYaml tmly = TaskMachineLearningYamlUtils.BASE_YAML_UTILS.to(o.metrics);
-                    MetricValues metricValues = MetricsUtils.getValues( tmly.metrics );
-                    if (metricValues==null) {
-                        return;
-                    }
-                    for (Map.Entry<String, BigDecimal> entry : metricValues.values.entrySet()) {
+                    for (Map.Entry<String, BigDecimal> entry : o.metrics.values.entrySet()) {
                         metricsResult.metricNames.add(entry.getKey());
                     }
-                    values.add(metricValues.values);
+                    values.add(o.metrics.values);
 
                 });
 
@@ -736,22 +716,19 @@ public class ExperimentResultTopLevelService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
-/*
         ExecContextImpl execContext = new ExecContextImpl();
         execContext.setParams( ypywc.experimentResult.execContext.execContextParams);
         execContext.id = ypywc.experimentResult.execContext.execContextId;
-        execContext.state = ypywc.experimentResult.execContext.execState;
-*/
+        execContext.state = EnumsApi.ExecContextState.FINISHED.code;
+
         ExperimentResultData.ExperimentFeatureExtendedResult result = new ExperimentResultData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
         result.hyperParamResult = hyperParamResult;
         result.tasks = tasks;
         result.consoleResult = new ExperimentResultData.ConsoleResult();
 
-        // TODO 2020.04.23 change this assigment ot actual one (with next 2 lines)
-        result.experimentFeature = new ExperimentApiData.ExperimentFeatureData();
-//        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
-//        result.experimentFeature = ExperimentService.asExperimentFeatureData(experimentFeature, taskVertices, epy.processing.taskFeatures);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+        result.experimentFeature = asExperimentFeatureData(experimentFeature, taskVertices, ypywc.experimentResult.taskFeatures);
 
         return result;
     }
@@ -792,20 +769,17 @@ public class ExperimentResultTopLevelService {
 
         ExperimentFeature feature = ypywc.getFeature(featureId);
 
-/*
         ExecContextImpl execContext = new ExecContextImpl();
         execContext.setParams(ypywc.experimentResult.execContext.execContextParams);
         execContext.id = ypywc.experimentResult.execContext.execContextId;
-        execContext.state = ypywc.experimentResult.execContext.execState;
-*/
+        execContext.state = EnumsApi.ExecContextState.FINISHED.code;
+
         ExperimentResultData.ExperimentFeatureExtendedResult result = new ExperimentResultData.ExperimentFeatureExtendedResult();
         result.tasks = feature==null ?  Page.empty() : findTasks(experimentResultId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
         result.consoleResult = new ExperimentResultData.ConsoleResult();
 
-        // TODO 2020.04.23 change this assigment ot actual one (with next 2 lines)
-        result.experimentFeature = new ExperimentApiData.ExperimentFeatureData();
-//        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
-//        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature, taskVertices, ypywc.getExperimentParamsYaml().processing.taskFeatures);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+        result.experimentFeature = asExperimentFeatureData(feature, taskVertices, ypywc.experimentResult.taskFeatures);
 
         return result;
     }
