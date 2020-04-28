@@ -73,6 +73,7 @@ public class ExperimentResultParamsYamlUtilsV1
         etf.taskId = src.taskId;
         etf.featureId = src.featureId;
         etf.taskType = src.taskType;
+        etf.metrics = new ExperimentResultParamsYaml.MetricValues(src.metrics.values);
 
         return etf;
     }
@@ -83,7 +84,7 @@ public class ExperimentResultParamsYamlUtilsV1
         ef.variables = src.variables;
         ef.execStatus = src.execStatus;
         ef.experimentId = src.experimentId;
-        ef.maxValue = src.maxValue;
+        ef.maxValues.putAll(src.maxValues);
 
         return ef;
     }

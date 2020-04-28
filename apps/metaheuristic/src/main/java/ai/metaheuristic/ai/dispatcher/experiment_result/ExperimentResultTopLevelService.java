@@ -415,6 +415,7 @@ public class ExperimentResultTopLevelService {
 
         BeanUtils.copyProperties(experimentFeature, featureData, "variables");
         featureData.variables.addAll(experimentFeature.variables);
+        featureData.maxValues = experimentFeature.maxValues;
 
         List<ExperimentResultParamsYaml.ExperimentTaskFeature> etfs = taskFeatures.stream().filter(tf->tf.featureId.equals(featureData.id)).collect(Collectors.toList());
 

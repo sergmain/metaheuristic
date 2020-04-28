@@ -96,7 +96,7 @@
                 <th width="50">Id</th>
                 <th width="400">Set of features</th>
                 <th width="100">Exec status</th>
-                <th width="100">Max value</th>
+                <th width="100">Max values</th>
                 <th width="100"></th>
             </tr>
             </thead>
@@ -106,7 +106,11 @@
                 <td th:text="${f.id}">Feature Id</td>
                 <td th:text="${f.variables}">Ids</td>
                 <td th:text="${f.execStatusAsString}">Exec status</td>
-                <td th:text="${f.maxValue!=null ? f.maxValue : 0 }">Max value</td>
+                <td>
+                    <div th:remove="tag" th:each="mv : ${f.maxValues}">
+                        <div th:text="${mv.getKey()+' - '+mv.getValue()}">Max value</div>
+                    </div>
+                </td>
                 <td><a class="pure-button table-nav-button-fill pure-button-primary"
                        th:href="${'/dispatcher/ai/experiment-result/experiment-result-feature-progress/'+ experimentResult.id + '/'+ experiment.id + '/' + f.id}">Info</a></td>
             </tr>

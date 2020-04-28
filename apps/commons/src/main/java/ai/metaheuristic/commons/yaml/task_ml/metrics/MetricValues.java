@@ -22,5 +22,6 @@ import java.util.LinkedHashMap;
 
 @Data
 public class MetricValues {
+    // key - name of metric, value - value of metric
     public LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
 }

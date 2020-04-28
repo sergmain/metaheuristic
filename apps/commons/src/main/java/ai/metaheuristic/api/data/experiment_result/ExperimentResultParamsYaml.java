@@ -26,8 +26,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.springframework.lang.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Data
@@ -45,6 +45,14 @@ public class ExperimentResultParamsYaml implements BaseParams {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MetricValues {
+        // key - name of metric, value - value of metric
+        public LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
+    }
+
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ExperimentFeature {
@@ -52,7 +60,7 @@ public class ExperimentResultParamsYaml implements BaseParams {
         public List<String> variables;
         public int execStatus;
         public Long experimentId;
-        public Double maxValue;
+        public final Map<String, Double> maxValues = new HashMap<>();
     }
 
     @Data
@@ -64,6 +72,7 @@ public class ExperimentResultParamsYaml implements BaseParams {
         public Long taskId;
         public Long featureId;
         public int taskType;
+        public MetricValues metrics;
     }
 
     @Data

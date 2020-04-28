@@ -23,8 +23,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.*;
 
 @Data
 @NoArgsConstructor
@@ -41,13 +41,21 @@ public class ExperimentResultParamsYamlV1 implements BaseParams {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MetricValuesV1 {
+        // key - name of metric, value - value of metric
+        public LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
+    }
+
+    @Data
     @NoArgsConstructor
     public static class ExperimentFeatureV1 {
         public Long id;
         public List<String> variables;
         public int execStatus;
         public Long experimentId;
-        public Double maxValue;
+        public final Map<String, Double> maxValues = new HashMap<>();
     }
 
     @Data
@@ -58,6 +66,7 @@ public class ExperimentResultParamsYamlV1 implements BaseParams {
         public Long taskId;
         public Long featureId;
         public int taskType;
+        public MetricValuesV1 metrics;
     }
 
     @Data

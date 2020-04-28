@@ -28,6 +28,7 @@ import org.springframework.data.domain.Slice;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -96,7 +97,7 @@ public class ExperimentApiData {
         public int execStatus;
         public String execStatusAsString;
         public Long experimentId;
-        public Double maxValue;
+        public Map<String, Double> maxValues;
     }
 
     @Data

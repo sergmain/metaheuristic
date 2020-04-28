@@ -16,11 +16,8 @@
 
 package ai.metaheuristic.ai.experiment_result;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -32,8 +29,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -58,7 +53,6 @@ public class TransferExperimentResult {
     public void test() {
 
         TaskParamsYaml taskParamsYaml = new TaskParamsYaml();
-
 //        - key: feature-item
 //          value: var-feature-item
 //        - key: inline-permutation

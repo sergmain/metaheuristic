@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
-import ai.metaheuristic.ai.dispatcher.experiment.MetricsMaxValueCollector;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
@@ -59,10 +58,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -84,7 +83,6 @@ public class ExperimentResultService {
     private final ExperimentTaskRepository experimentTaskRepository;
     private final ExecContextCache execContextCache;
     private final VariableService variableService;
-    private final MetricsMaxValueCollector metricsMaxValueCollector;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -221,12 +219,10 @@ public class ExperimentResultService {
             String metrics = variableService.getVariableDataAsString(metricsVs.get(0).id);
             MetricValues mvs = MetricsUtils.getMetricValues(metrics);
 
-            // 2020-04-27 calculate an actual max value from MetricValues mvs
-            Double maxValue = 0.0;
-
-            ExperimentFeature feature = findOrCreate(features, experimentId, featureId, vapy, maxValue);
+            ExperimentFeature feature = findOrCreate(features, experimentId, featureId, vapy);
             taskFeatures.add(new ExperimentTaskFeature(
-                    taskFeatureId.getAndIncrement(), execContextId, t.id, feature.id, EnumsApi.ExperimentTaskType.UNKNOWN.value
+                    taskFeatureId.getAndIncrement(), execContextId, t.id, feature.id, EnumsApi.ExperimentTaskType.UNKNOWN.value,
+                    new ExperimentResultParamsYaml.MetricValues(mvs.values)
             ));
 
             ExperimentResultTaskParamsYaml atpy = new ExperimentResultTaskParamsYaml();
@@ -258,15 +254,16 @@ public class ExperimentResultService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public static ExperimentFeature findOrCreate(List<ExperimentFeature> features, Long experimentId, AtomicLong featureId, VariableArrayParamsYaml vapy, Double maxValue) {
+    public static ExperimentFeature findOrCreate(List<ExperimentFeature> features, Long experimentId, AtomicLong featureId, VariableArrayParamsYaml vapy) {
         List<String> variables = vapy.array.stream().map(v -> v.name).collect(Collectors.toList());
         for (ExperimentFeature feature : features) {
             if (CollectionUtils.isEquals(feature.variables, variables)) {
                 return feature;
             }
         }
+        // actual value of maxValue will be calculated later
         ExperimentFeature experimentFeature = new ExperimentFeature(
-                featureId.getAndIncrement(), variables, EnumsApi.ExecContextState.FINISHED.code, experimentId, maxValue);
+                featureId.getAndIncrement(), variables, EnumsApi.ExecContextState.FINISHED.code, experimentId);
 
         features.add(experimentFeature);
         return experimentFeature;
@@ -306,27 +303,25 @@ public class ExperimentResultService {
         experimentResultParamsYaml.features.addAll(features);
         experimentResultParamsYaml.taskFeatures.addAll(taskFeatures);
 
+        updateMaxValueForExperimentResult(experimentResultParamsYaml);
+
         experimentResult.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(experimentResultParamsYaml);
         experimentResultRepository.save(experimentResult);
     }
 
-    public void updateMaxValueForExperimentFeatures(Long experimentId) {
-        ExperimentResult er = experimentResultRepository.findById(experimentId).orElse(null);
-        if (er==null) {
-            return;
-        }
-        ExperimentResultParamsYaml erpy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(er.params);
-
-        List<ExperimentFeature> features = erpy.features;
+    private static void updateMaxValueForExperimentResult(ExperimentResultParamsYaml erpy) {
         log.info("Start calculatingMaxValueOfMetrics");
-        for (ExperimentFeature feature : features) {
-            double value = metricsMaxValueCollector.calcMaxValueForMetrics(erpy, feature.getId());
-            log.info("\tFeature #{}, max value: {}", feature.getId(), value);
-            feature.setMaxValue(value);
+        for (ExperimentFeature feature : erpy.features) {
+            erpy.taskFeatures.stream().filter(o->o.featureId.equals(feature.id)).forEach(o-> updateMax(feature, o.metrics));
         }
         erpy.maxValueCalculated = true;
-        er.params = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.toString(erpy);
-        experimentResultRepository.save(er);
+    }
+
+    private static void updateMax(ExperimentFeature feature, ExperimentResultParamsYaml.MetricValues metrics) {
+        for (Map.Entry<String, BigDecimal> entry : metrics.values.entrySet()) {
+            feature.maxValues.put(entry.getKey(),
+                    Math.max(feature.maxValues.computeIfAbsent(entry.getKey(), o -> 0.0), entry.getValue().doubleValue()));
+        }
     }
 
     public StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextImpl execContext, Experiment experiment) {
