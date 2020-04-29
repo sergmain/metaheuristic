@@ -27,6 +27,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -97,7 +98,7 @@ public class ExperimentApiData {
         public int execStatus;
         public String execStatusAsString;
         public Long experimentId;
-        public Map<String, Double> maxValues;
+        public LinkedHashMap<String, Double> maxValues;
     }
 
     @Data

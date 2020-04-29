@@ -59,7 +59,7 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
             ExecContextParamsYaml.VariableDeclaration variableDeclaration, TaskParamsYaml taskParamsYaml) {
 
         try {
-            OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContextId, taskParamsYaml, variableDeclaration);
+            OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContextId, taskParamsYaml);
             if (status.status!=EnumsApi.OperationStatus.OK) {
                 return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, status.getErrorMessagesAsStr());
             }

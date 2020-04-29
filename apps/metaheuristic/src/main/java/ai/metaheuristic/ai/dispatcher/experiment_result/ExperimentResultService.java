@@ -104,7 +104,7 @@ public class ExperimentResultService {
         return result;
     }
 
-    public OperationStatusRest storeExperimentToExperimentResult(Long execContextId, TaskParamsYaml taskParamsYaml, ExecContextParamsYaml.VariableDeclaration variableDeclaration) {
+    public OperationStatusRest storeExperimentToExperimentResult(Long execContextId, TaskParamsYaml taskParamsYaml) {
         Long experimentId = experimentRepository.findIdByExecContextId(execContextId);
 
         if (experimentId==null ) {
@@ -136,6 +136,9 @@ public class ExperimentResultService {
         if (S.b(featureVariableName)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Meta 'feature-item' must be defined and can't be empty");
         }
+
+        ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
+        ExecContextParamsYaml.VariableDeclaration variableDeclaration = execContextParamsYaml.variables;
 
         InlineVariableData.InlineVariableItem item = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
         if (S.b(item.inlineKey)) {

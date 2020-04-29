@@ -113,7 +113,7 @@ public class ExperimentResultData {
 
     @Data
     public static class MetricsResult {
-        public final LinkedHashSet<String> metricNames = new LinkedHashSet<>();
+        public final List<String> metricNames = new ArrayList<>();
         public final List<MetricElement> metrics = new ArrayList<>();
     }
 

@@ -61,6 +61,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -74,6 +75,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
@@ -679,6 +681,51 @@ public class ExperimentResultTopLevelService {
                 taskWIthTypes.size()>10
         );
 
+        ExecContextImpl execContext = new ExecContextImpl();
+        execContext.setParams( ypywc.experimentResult.execContext.execContextParams);
+        execContext.id = ypywc.experimentResult.execContext.execContextId;
+        execContext.state = EnumsApi.ExecContextState.FINISHED.code;
+
+        ExperimentResultData.ExperimentFeatureExtendedResult result = new ExperimentResultData.ExperimentFeatureExtendedResult();
+        result.metricsResult = getMetricsResult(experimentFeature, ypywc.experimentResult.taskFeatures, taskToTaskType);
+        result.hyperParamResult = getHyperParamResult(ypywc);
+        result.tasks = tasks;
+        result.consoleResult = new ExperimentResultData.ConsoleResult();
+
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+        result.experimentFeature = asExperimentFeatureData(experimentFeature, taskVertices, ypywc.experimentResult.taskFeatures);
+
+        return result;
+    }
+
+    @NonNull
+    private ExperimentResultData.MetricsResult getMetricsResult(ExperimentFeature feature, List<ExperimentTaskFeature> taskFeatures, Map<Long, Integer> taskToTaskType) {
+        final ExperimentResultData.MetricsResult metricsResult = new ExperimentResultData.MetricsResult();
+
+        metricsResult.metricNames.addAll(getMetricsNames(feature));
+
+        taskFeatures.stream()
+                .filter(o -> taskToTaskType.containsKey(o.taskId))
+                .map(o -> {
+                    ExperimentResultData.MetricElement element = new ExperimentResultData.MetricElement();
+                    for (String metricName : metricsResult.metricNames) {
+                        element.values.add(o.metrics.values.get(metricName));
+                    }
+                    return element;
+                })
+                .sorted(ExperimentService::compareMetricElement)
+                .collect(Collectors.toCollection(()->metricsResult.metrics));
+
+//        metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
+        return metricsResult;
+    }
+
+    public static List<String> getMetricsNames(ExperimentFeature feature) {
+        //noinspection SimplifyStreamApiCallChains
+        return feature.maxValues.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
+    }
+
+    private static ExperimentResultData.HyperParamResult getHyperParamResult(ExperimentResultParamsYamlWithCache ypywc) {
         ExperimentResultData.HyperParamResult hyperParamResult = new ExperimentResultData.HyperParamResult();
         for (ExperimentApiData.HyperParam hyperParam : ypywc.experimentResult.hyperParams) {
             InlineVariableUtils.NumberOfVariants variants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues());
@@ -691,47 +738,7 @@ public class ExperimentResultTopLevelService {
             }
             hyperParamResult.getElements().add(list);
         }
-
-        final ExperimentResultData.MetricsResult metricsResult = new ExperimentResultData.MetricsResult();
-        final List<Map<String, BigDecimal>> values = new ArrayList<>();
-
-        tasks.stream()
-                .filter(o->taskToTaskType.containsKey(o.taskId) && o.execState > 1)
-                .forEach( o-> {
-                    for (Map.Entry<String, BigDecimal> entry : o.metrics.values.entrySet()) {
-                        metricsResult.metricNames.add(entry.getKey());
-                    }
-                    values.add(o.metrics.values);
-
-                });
-
-        List<ExperimentResultData.MetricElement> elements = new ArrayList<>();
-        for (Map<String, BigDecimal> value : values) {
-            ExperimentResultData.MetricElement element = new ExperimentResultData.MetricElement();
-            for (String metricName : metricsResult.metricNames) {
-                element.values.add(value.get(metricName));
-            }
-            elements.add(element);
-        }
-        elements.sort(ExperimentService::compareMetricElement);
-
-        metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
-
-        ExecContextImpl execContext = new ExecContextImpl();
-        execContext.setParams( ypywc.experimentResult.execContext.execContextParams);
-        execContext.id = ypywc.experimentResult.execContext.execContextId;
-        execContext.state = EnumsApi.ExecContextState.FINISHED.code;
-
-        ExperimentResultData.ExperimentFeatureExtendedResult result = new ExperimentResultData.ExperimentFeatureExtendedResult();
-        result.metricsResult = metricsResult;
-        result.hyperParamResult = hyperParamResult;
-        result.tasks = tasks;
-        result.consoleResult = new ExperimentResultData.ConsoleResult();
-
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
-        result.experimentFeature = asExperimentFeatureData(experimentFeature, taskVertices, ypywc.experimentResult.taskFeatures);
-
-        return result;
+        return hyperParamResult;
     }
 
     public ExperimentResultData.ConsoleResult getTasksConsolePart(Long experimentResultId, Long taskId) {

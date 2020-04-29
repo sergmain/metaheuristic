@@ -60,7 +60,7 @@ public class ExperimentResultParamsYaml implements BaseParams {
         public List<String> variables;
         public int execStatus;
         public Long experimentId;
-        public final Map<String, Double> maxValues = new HashMap<>();
+        public final LinkedHashMap<String, Double> maxValues = new LinkedHashMap<>();
     }
 
     @Data

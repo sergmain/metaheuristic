@@ -72,27 +72,10 @@ public class TransferExperimentResult {
         taskParamsYaml.task.metas.add(new Meta("inline-key", "mh.hyper-params", null));
         taskParamsYaml.task.metas.add(new Meta("permute-inline", "true", null));
 
-        ExecContextParamsYaml.VariableDeclaration variableDeclaration = new ExecContextParamsYaml.VariableDeclaration();
-//        seed: '42'
-//        batch_size: '[20]'
-//        time_steps: '[30]'
-//        RNN: '[GRU]'
-//        epoch: '10'
-//        activation: '[relu]'
-//        optimizer: '[rmsprop]'
-        variableDeclaration.inline.put("mh.hyper-params", Map.of(
-                "seed", "42",
-                "batch_size", "[20]",
-                "time_steps", "[30]",
-                "RNN", "[GRU]",
-                "epoch", "[relu]",
-                "optimizer", "[rmsprop]"
-        ));
-
         Long execContextId = 1020L;
         assertNotNull(execContextCache.findById(execContextId));
 
-        OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContextId, taskParamsYaml, variableDeclaration);
+        OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContextId, taskParamsYaml);
         System.out.println("status: " + status);
 
     }
