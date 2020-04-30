@@ -17,12 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentTask;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
@@ -38,8 +36,6 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultApiData;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -75,10 +71,14 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
+import static ai.metaheuristic.ai.Enums.FeatureExecStatus;
+import static ai.metaheuristic.ai.dispatcher.data.ExperimentResultData.*;
+import static ai.metaheuristic.api.data.experiment.ExperimentApiData.ExperimentFeatureData;
+import static ai.metaheuristic.api.data.experiment.ExperimentApiData.HyperParam;
+import static ai.metaheuristic.api.data.experiment_result.ExperimentResultApiData.ExperimentResultData;
 import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.ExperimentFeature;
 import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml.ExperimentTaskFeature;
 
@@ -260,11 +260,11 @@ public class ExperimentResultTopLevelService {
         return new ResponseEntity<>(new FileSystemResource(zipFile.toPath()), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
     }
 
-    public ExperimentResultData.ExperimentResultSimpleResult getExperimentResultData(Long experimentResultId) {
+    public ExperimentResultSimpleResult getExperimentResultData(Long experimentResultId) {
 
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new ExperimentResultData.ExperimentResultSimpleResult("#422.120 experiment wasn't found in experimentResult, experimentResultId: " + experimentResultId);
+            return new ExperimentResultSimpleResult("#422.120 experiment wasn't found in experimentResult, experimentResultId: " + experimentResultId);
         }
 
         ExperimentResultParamsYamlWithCache ypywc;
@@ -273,16 +273,16 @@ public class ExperimentResultTopLevelService {
         } catch (YAMLException e) {
             String es = "#422.130 Can't parse an experimentResult, error: " + e.toString();
             log.error(es, e);
-            return new ExperimentResultData.ExperimentResultSimpleResult(es);
+            return new ExperimentResultSimpleResult(es);
         }
         if (ypywc.experimentResult.execContext == null) {
-            return new ExperimentResultData.ExperimentResultSimpleResult("#422.150 experiment has broken ref to execContext, experimentId: " + experimentResultId);
+            return new ExperimentResultSimpleResult("#422.150 experiment has broken ref to execContext, experimentId: " + experimentResultId);
         }
         if (ypywc.experimentResult.execContext.execContextId ==null ) {
-            return new ExperimentResultData.ExperimentResultSimpleResult("#422.160 experiment wasn't startet yet, experimentId: " + experimentResultId);
+            return new ExperimentResultSimpleResult("#422.160 experiment wasn't startet yet, experimentId: " + experimentResultId);
         }
 
-        ExperimentResultData.ExperimentResultSimpleResult result = new ExperimentResultData.ExperimentResultSimpleResult();
+        ExperimentResultSimpleResult result = new ExperimentResultSimpleResult();
         result.experimentResult = new ExperimentResultSimple();
         result.experimentResult.code = ypywc.experimentResult.code;
         result.experimentResult.name = ypywc.experimentResult.name;
@@ -293,11 +293,11 @@ public class ExperimentResultTopLevelService {
         return result;
     }
 
-    public ExperimentResultData.ExperimentInfoExtended getExperimentInfoExtended(Long experimentResultId) {
+    public ExperimentInfoExtended getExperimentInfoExtended(Long experimentResultId) {
 
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new ExperimentResultData.ExperimentInfoExtended("#422.170 experiment wasn't found in experimentResult, experimentResultId: " + experimentResultId);
+            return new ExperimentInfoExtended("#422.170 experiment wasn't found in experimentResult, experimentResultId: " + experimentResultId);
         }
 
         ExperimentResultParamsYamlWithCache ypywc;
@@ -306,16 +306,16 @@ public class ExperimentResultTopLevelService {
         } catch (YAMLException e) {
             String es = "#422.180 Can't parse an experimentResult, error: " + e.toString();
             log.error(es, e);
-            return new ExperimentResultData.ExperimentInfoExtended(es);
+            return new ExperimentInfoExtended(es);
         }
         if (ypywc.experimentResult.execContext == null) {
-            return new ExperimentResultData.ExperimentInfoExtended("#422.200 experiment has broken ref to execContext, experimentId: " + experimentResultId);
+            return new ExperimentInfoExtended("#422.200 experiment has broken ref to execContext, experimentId: " + experimentResultId);
         }
         if (ypywc.experimentResult.execContext.execContextId ==null ) {
-            return new ExperimentResultData.ExperimentInfoExtended("#422.210 experiment wasn't startet yet, experimentId: " + experimentResultId);
+            return new ExperimentInfoExtended("#422.210 experiment wasn't startet yet, experimentId: " + experimentResultId);
         }
 
-        ExperimentResultApiData.ExperimentResultData experiment = new ExperimentResultApiData.ExperimentResultData();
+        ExperimentResultData experiment = new ExperimentResultData();
         experiment.id = experimentResult.id;
         experiment.execContextId = ypywc.experimentResult.execContext.execContextId;
         experiment.code = ypywc.experimentResult.code;
@@ -326,7 +326,7 @@ public class ExperimentResultTopLevelService {
         experiment.hyperParams.addAll(ypywc.experimentResult.hyperParams);
 
 
-        for (ExperimentApiData.HyperParam hyperParams : ypywc.experimentResult.hyperParams) {
+        for (HyperParam hyperParams : ypywc.experimentResult.hyperParams) {
             if (StringUtils.isBlank(hyperParams.getValues())) {
                 continue;
             }
@@ -334,7 +334,7 @@ public class ExperimentResultTopLevelService {
             hyperParams.setVariants(variants.status ? variants.count : 0);
         }
 
-        ExperimentResultData.ExperimentInfoExtended result = new ExperimentResultData.ExperimentInfoExtended();
+        ExperimentInfoExtended result = new ExperimentInfoExtended();
         if (experiment.getExecContextId() == null) {
             result.addInfoMessage("Launch is disabled, dataset isn't assigned");
         }
@@ -345,7 +345,7 @@ public class ExperimentResultTopLevelService {
         execContext.id = ypywc.experimentResult.execContext.execContextId;
         execContext.state = EnumsApi.ExecContextState.FINISHED.code;
 
-        ExperimentResultData.ExperimentInfo experimentInfoResult = new ExperimentResultData.ExperimentInfo();
+        ExperimentInfo experimentInfoResult = new ExperimentInfo();
         experimentInfoResult.features = List.of();
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
         experimentInfoResult.features = ypywc.experimentResult.features
@@ -377,10 +377,10 @@ public class ExperimentResultTopLevelService {
     }
 
 
-    public ExperimentResultData.PlotData getPlotData(Long experimentResultId, Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
+    public PlotData getPlotData(Long experimentResultId, Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new ExperimentResultData.PlotData("#422.230 experiment wasn't found in ExperimentResult, id: " + experimentResultId);
+            return new PlotData("#422.230 experiment wasn't found in ExperimentResult, id: " + experimentResultId);
         }
 
         ExperimentResultParamsYamlWithCache ypywc;
@@ -389,29 +389,29 @@ public class ExperimentResultTopLevelService {
         } catch (YAMLException e) {
             String es = "#422.240 Can't parse an experimentResult, error: " + e.toString();
             log.error(es, e);
-            return new ExperimentResultData.PlotData(es);
+            return new PlotData(es);
         }
         ExperimentFeature feature = ypywc.getFeature(featureId);
         if (feature==null) {
-            return ExperimentResultData.EMPTY_PLOT_DATA;
+            return EMPTY_PLOT_DATA;
         }
-        ExperimentResultData.PlotData data = findExperimentTaskForPlot(experimentResultId, ypywc, feature, params, paramsAxis);
+        PlotData data = findExperimentTaskForPlot(experimentResultId, ypywc, feature, params, paramsAxis);
         // TODO 2019-07-23 right now 2D lines plot isn't working. need to investigate
         //  so it'll be 3D with a fake zero data
         fixData(data);
         return data;
     }
 
-    public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(
+    public static ExperimentFeatureData asExperimentFeatureData(
             @Nullable ExperimentResultParamsYaml.ExperimentFeature experimentFeature,
             List<ExecContextData.TaskVertex> taskVertices,
             List<ExperimentResultParamsYaml.ExperimentTaskFeature> taskFeatures) {
 
-        final ExperimentApiData.ExperimentFeatureData featureData = new ExperimentApiData.ExperimentFeatureData();
+        final ExperimentFeatureData featureData = new ExperimentFeatureData();
 
         if (experimentFeature==null) {
-            featureData.execStatus = Enums.FeatureExecStatus.finished_with_errors.code;
-            featureData.execStatusAsString = Enums.FeatureExecStatus.finished_with_errors.info;
+            featureData.execStatus = FeatureExecStatus.finished_with_errors.code;
+            featureData.execStatusAsString = FeatureExecStatus.finished_with_errors.info;
             return featureData;
         }
 
@@ -430,22 +430,22 @@ public class ExperimentResultTopLevelService {
                         .orElse(null) !=null ).map(o->o.execState)
                 .collect(Collectors.toSet());
 
-        Enums.FeatureExecStatus execStatus = statuses.isEmpty() ? Enums.FeatureExecStatus.empty : Enums.FeatureExecStatus.unknown;
+        FeatureExecStatus execStatus = statuses.isEmpty() ? FeatureExecStatus.empty : FeatureExecStatus.unknown;
         if (statuses.contains(EnumsApi.TaskExecState.OK)) {
-            execStatus = Enums.FeatureExecStatus.finished;
+            execStatus = FeatureExecStatus.finished;
         }
         if (statuses.contains(EnumsApi.TaskExecState.ERROR)|| statuses.contains(EnumsApi.TaskExecState.BROKEN)) {
-            execStatus = Enums.FeatureExecStatus.finished_with_errors;
+            execStatus = FeatureExecStatus.finished_with_errors;
         }
         if (statuses.contains(EnumsApi.TaskExecState.NONE) || statuses.contains(EnumsApi.TaskExecState.IN_PROGRESS)) {
-            execStatus = Enums.FeatureExecStatus.processing;
+            execStatus = FeatureExecStatus.processing;
         }
         featureData.execStatusAsString = execStatus.info;
         return featureData;
     }
 
     @SuppressWarnings("Duplicates")
-    private void fixData(ExperimentResultData.PlotData data) {
+    private void fixData(PlotData data) {
         if (data.x.size()==1) {
             data.x.add("stub-x");
             BigDecimal[][] z = new BigDecimal[data.z.length][2];
@@ -466,10 +466,10 @@ public class ExperimentResultTopLevelService {
         }
     }
 
-    private ExperimentResultData.PlotData findExperimentTaskForPlot(
+    private PlotData findExperimentTaskForPlot(
             Long experimentResultId, ExperimentResultParamsYamlWithCache apywc, ExperimentFeature feature, String[] params, String[] paramsAxis) {
         if (apywc.experimentResult.features.isEmpty() ) {
-            return ExperimentResultData.EMPTY_PLOT_DATA;
+            return EMPTY_PLOT_DATA;
         } else {
             List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, apywc, feature, params);
             return collectDataForPlotting(apywc, selected, paramsAxis);
@@ -501,8 +501,8 @@ public class ExperimentResultTopLevelService {
         return selected;
     }
 
-    private static ExperimentResultData.PlotData collectDataForPlotting(ExperimentResultParamsYamlWithCache estb, List<ExperimentResultTaskParamsYaml> selected, String[] paramsAxis) {
-        final ExperimentResultData.PlotData data = new ExperimentResultData.PlotData();
+    private static PlotData collectDataForPlotting(ExperimentResultParamsYamlWithCache estb, List<ExperimentResultTaskParamsYaml> selected, String[] paramsAxis) {
+        final PlotData data = new PlotData();
         final List<String> paramCleared = new ArrayList<>();
         for (String param : paramsAxis) {
             if (StringUtils.isBlank(param)) {
@@ -630,10 +630,10 @@ public class ExperimentResultTopLevelService {
         return true;
     }
 
-    public ExperimentResultData.ExperimentFeatureExtendedResult getExperimentFeatureExtended(long experimentResultId, Long experimentId, Long featureId) {
+    public ExperimentFeatureExtendedResult getExperimentFeatureExtended(long experimentResultId, Long experimentId, Long featureId) {
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new ExperimentResultData.ExperimentFeatureExtendedResult("#422.260 experiment wasn't found in experimentResult, id: " + experimentResultId);
+            return new ExperimentFeatureExtendedResult("#422.260 experiment wasn't found in experimentResult, id: " + experimentResultId);
         }
 
         ExperimentResultParamsYamlWithCache ypywc;
@@ -642,20 +642,20 @@ public class ExperimentResultTopLevelService {
         } catch (YAMLException e) {
             final String es = "#422.270 Can't extract experiment from experimentResult, error: " + e.toString();
             log.error(es, e);
-            return new ExperimentResultData.ExperimentFeatureExtendedResult(es);
+            return new ExperimentFeatureExtendedResult(es);
         }
 
         ExperimentFeature experimentFeature = ypywc.getFeature(featureId);
         if (experimentFeature == null) {
-            return new ExperimentResultData.ExperimentFeatureExtendedResult("#422.280 feature wasn't found, experimentFeatureId: " + featureId);
+            return new ExperimentFeatureExtendedResult("#422.280 feature wasn't found, experimentFeatureId: " + featureId);
         }
 
-        ExperimentResultData.ExperimentFeatureExtendedResult result = prepareExperimentFeatures(experimentResultId, ypywc, experimentFeature);
+        ExperimentFeatureExtendedResult result = prepareExperimentFeatures(experimentResultId, ypywc, experimentFeature);
         return result;
     }
 
     // TODO 2019-09-11 need to add unit-test
-    private ExperimentResultData.ExperimentFeatureExtendedResult prepareExperimentFeatures(
+    private ExperimentFeatureExtendedResult prepareExperimentFeatures(
             Long experimentResultId, ExperimentResultParamsYamlWithCache ypywc, final ExperimentFeature experimentFeature) {
 
         final Map<Long, Integer> taskToTaskType = ypywc.experimentResult.taskFeatures
@@ -686,11 +686,11 @@ public class ExperimentResultTopLevelService {
         execContext.id = ypywc.experimentResult.execContext.execContextId;
         execContext.state = EnumsApi.ExecContextState.FINISHED.code;
 
-        ExperimentResultData.ExperimentFeatureExtendedResult result = new ExperimentResultData.ExperimentFeatureExtendedResult();
+        ExperimentFeatureExtendedResult result = new ExperimentFeatureExtendedResult();
         result.metricsResult = getMetricsResult(experimentFeature, ypywc.experimentResult.taskFeatures, taskToTaskType);
         result.hyperParamResult = getHyperParamResult(ypywc);
         result.tasks = tasks;
-        result.consoleResult = new ExperimentResultData.ConsoleResult();
+        result.consoleResult = new ConsoleResult();
 
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
         result.experimentFeature = asExperimentFeatureData(experimentFeature, taskVertices, ypywc.experimentResult.taskFeatures);
@@ -699,15 +699,15 @@ public class ExperimentResultTopLevelService {
     }
 
     @NonNull
-    private ExperimentResultData.MetricsResult getMetricsResult(ExperimentFeature feature, List<ExperimentTaskFeature> taskFeatures, Map<Long, Integer> taskToTaskType) {
-        final ExperimentResultData.MetricsResult metricsResult = new ExperimentResultData.MetricsResult();
+    private MetricsResult getMetricsResult(ExperimentFeature feature, List<ExperimentTaskFeature> taskFeatures, Map<Long, Integer> taskToTaskType) {
+        final MetricsResult metricsResult = new MetricsResult();
 
         metricsResult.metricNames.addAll(getMetricsNames(feature));
 
         taskFeatures.stream()
                 .filter(o -> taskToTaskType.containsKey(o.taskId))
                 .map(o -> {
-                    ExperimentResultData.MetricElement element = new ExperimentResultData.MetricElement();
+                    MetricElement element = new MetricElement();
                     for (String metricName : metricsResult.metricNames) {
                         element.values.add(o.metrics.values.get(metricName));
                     }
@@ -716,7 +716,6 @@ public class ExperimentResultTopLevelService {
                 .sorted(ExperimentService::compareMetricElement)
                 .collect(Collectors.toCollection(()->metricsResult.metrics));
 
-//        metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
         return metricsResult;
     }
 
@@ -725,45 +724,45 @@ public class ExperimentResultTopLevelService {
         return feature.maxValues.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
     }
 
-    private static ExperimentResultData.HyperParamResult getHyperParamResult(ExperimentResultParamsYamlWithCache ypywc) {
-        ExperimentResultData.HyperParamResult hyperParamResult = new ExperimentResultData.HyperParamResult();
-        for (ExperimentApiData.HyperParam hyperParam : ypywc.experimentResult.hyperParams) {
+    private static HyperParamResult getHyperParamResult(ExperimentResultParamsYamlWithCache ypywc) {
+        HyperParamResult hyperParamResult = new HyperParamResult();
+        for (HyperParam hyperParam : ypywc.experimentResult.hyperParams) {
             InlineVariableUtils.NumberOfVariants variants = InlineVariableUtils.getNumberOfVariants(hyperParam.getValues());
-            ExperimentResultData.HyperParamList list = new ExperimentResultData.HyperParamList(hyperParam.getKey());
+            HyperParamList list = new HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
-                list.getList().add( new ExperimentResultData.HyperParamElement(value, false));
+                list.getList().add( new HyperParamElement(value, false));
             }
             if (list.getList().isEmpty()) {
-                list.getList().add( new ExperimentResultData.HyperParamElement("<Error value>", false));
+                list.getList().add( new HyperParamElement("<Error value>", false));
             }
             hyperParamResult.getElements().add(list);
         }
         return hyperParamResult;
     }
 
-    public ExperimentResultData.ConsoleResult getTasksConsolePart(Long experimentResultId, Long taskId) {
+    public ConsoleResult getTasksConsolePart(Long experimentResultId, Long taskId) {
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new ExperimentResultData.ConsoleResult("#422.300 experiment wasn't found in experimentResult, id: " + experimentResultId);
+            return new ConsoleResult("#422.300 experiment wasn't found in experimentResult, id: " + experimentResultId);
         }
 
         ExperimentTask task = experimentTaskRepository.findByExperimentResultIdAndTaskId(experimentResultId, taskId);
         if (task==null ) {
-            return new ExperimentResultData.ConsoleResult("#422.310 Can't find a console output");
+            return new ConsoleResult("#422.310 Can't find a console output");
         }
         ExperimentResultTaskParamsYaml atpy = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(atpy.functionExecResults);
         if (functionExec ==null ) {
-            return new ExperimentResultData.ConsoleResult("#422.313 Can't find a console output");
+            return new ConsoleResult("#422.313 Can't find a console output");
         }
-        return new ExperimentResultData.ConsoleResult(functionExec.exec.exitCode, functionExec.exec.isOk, functionExec.exec.console);
+        return new ConsoleResult(functionExec.exec.exitCode, functionExec.exec.isOk, functionExec.exec.console);
     }
 
-    public ExperimentResultData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentResultId, Long featureId, String[] params, Pageable pageable) {
+    public ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentResultId, Long featureId, String[] params, Pageable pageable) {
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new ExperimentResultData.ExperimentFeatureExtendedResult("#422.320 experiment wasn't found in ExperimentResult, id: " + experimentResultId);
+            return new ExperimentFeatureExtendedResult("#422.320 experiment wasn't found in ExperimentResult, id: " + experimentResultId);
         }
 
         ExperimentResultParamsYamlWithCache ypywc;
@@ -772,7 +771,7 @@ public class ExperimentResultTopLevelService {
         } catch (YAMLException e) {
             final String es = "#422.330 Can't extract experiment from experimentResult, error: " + e.toString();
             log.error(es, e);
-            return new ExperimentResultData.ExperimentFeatureExtendedResult(es);
+            return new ExperimentFeatureExtendedResult(es);
         }
 
         ExperimentFeature feature = ypywc.getFeature(featureId);
@@ -782,9 +781,9 @@ public class ExperimentResultTopLevelService {
         execContext.id = ypywc.experimentResult.execContext.execContextId;
         execContext.state = EnumsApi.ExecContextState.FINISHED.code;
 
-        ExperimentResultData.ExperimentFeatureExtendedResult result = new ExperimentResultData.ExperimentFeatureExtendedResult();
+        ExperimentFeatureExtendedResult result = new ExperimentFeatureExtendedResult();
         result.tasks = feature==null ?  Page.empty() : findTasks(experimentResultId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
-        result.consoleResult = new ExperimentResultData.ConsoleResult();
+        result.consoleResult = new ConsoleResult();
 
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
         result.experimentFeature = asExperimentFeatureData(feature, taskVertices, ypywc.experimentResult.taskFeatures);
