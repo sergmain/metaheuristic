@@ -1,3 +1,5 @@
+rename table mh_snippet to mh_function;
+
 CREATE TABLE mh_function_data
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,

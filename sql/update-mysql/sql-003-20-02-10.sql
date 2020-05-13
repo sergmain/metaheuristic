@@ -15,7 +15,7 @@ CREATE TABLE mh_source_code
 CREATE UNIQUE INDEX mh_source_code_uid_unq_idx
     ON mh_source_code (UID);
 
-drop table mh_exec_context;
+drop table mh_workbook;
 
 CREATE TABLE mh_exec_context
 (

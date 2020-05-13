@@ -43,7 +43,7 @@ insert into mh_company
 VALUES
 (1, 0, 1, 'master company', '');
 
-# !!! this insert must be executed after creating 'master company'
+# !!! this insert must be executed after creating 'master company' immediately
 insert mh_gen_ids
 (SEQUENCE_NAME, SEQUENCE_NEXT_VALUE)
 select 'mh_ids', max(UNIQUE_ID) from mh_company;
