@@ -15,6 +15,7 @@
  */
 package aiai.ai.metaheuristic.commons.yaml;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
@@ -22,6 +23,9 @@ import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestFunctionConfig {
 
@@ -35,13 +39,27 @@ public class TestFunctionConfig {
         config.type = CommonConsts.FIT_TYPE;
         config.file = "fit-model.py";
 
-        config.checksumMap = Checksum.fromJson("{\"checksums\":{\"SHA256\":\"6b168e87112aceaea0bc514e48b123db1528052c8c784702b1c50acd37aa89cb\"}}").checksums;
-        config.checksumMap.putAll( Checksum.fromJson("{\"checksums\":{\"MD5\":\"6b168e87112aceaea0bc514e48b123db1528052c8c784702b1c50acd37aa89cb\"}}").checksums);
+        config.checksumMap = Checksum.fromJson("{\"checksums\":{\"SHA256\":\"<some value #1>\"}}").checksums;
+        config.checksumMap.putAll( Checksum.fromJson("{\"checksums\":{\"MD5\":\"<some value #2>\"}}").checksums);
 
         scs.functions.add(config);
 
         String yaml = FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(scs);
         System.out.println(yaml);
+
+        FunctionConfigListYaml fcy = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(yaml);
+
+        assertNotNull(fcy);
+        assertNotNull(fcy.functions);
+        assertEquals(1, fcy.functions.size());
+
+        FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(0);
+        assertNotNull(fc);
+        assertNotNull(fc.getChecksumMap());
+        assertNotNull(fc.getChecksumMap().get(EnumsApi.Type.SHA256));
+        assertNotNull(fc.getChecksumMap().get(EnumsApi.Type.MD5));
+        assertEquals("<some value #1>", fc.getChecksumMap().get(EnumsApi.Type.SHA256));
+        assertEquals("<some value #2>", fc.getChecksumMap().get(EnumsApi.Type.MD5));
     }
 
 }

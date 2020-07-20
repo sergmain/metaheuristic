@@ -1,0 +1,5 @@
+functions:
+  - code: fileless-function:1.0
+    type: fileless
+    sourcing: processor
+    env: type-cmd

@@ -15,21 +15,29 @@ source:
       subProcesses:
         logic: and
         processes:
-          - code: process-item
-            name: process-item
+          - code: fileless
+            name: fileless
             function:
-              code: process-item:1.0
+              code: fileless-function:1.0
             inputs:
               - name: batch-item
             outputs:
               - name: processed-file
-    - code: mh.aggregate
-      name: mh.aggregate
+    - code: mh.batch-result-processor
+      name: baatch result processor
       function:
-        code: mh.aggregate
+        code: mh.batch-result-processor
         context: internal
-      inputs:
-        - name: processed-file
-      outputs:
-        - name: batch-result
+      metas:
+        - key: batch-item
+          value: batch-item
+#    - code: mh.aggregate
+#      name: mh.aggregate
+#      function:
+#        code: mh.aggregate
+#        context: internal
+#      inputs:
+#        - name: processed-file
+#      outputs:
+#        - name: batch-result
 version: 1

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

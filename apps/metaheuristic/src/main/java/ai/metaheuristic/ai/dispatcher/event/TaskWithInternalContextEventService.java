@@ -37,7 +37,6 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -59,7 +58,6 @@ public class TaskWithInternalContextEventService {
     private final InternalFunctionProcessor internalFunctionProcessor;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    private final ApplicationEventPublisher applicationEventPublisher;
     private final VariableService variableService;
 
     // this code is only for testing
@@ -141,6 +139,7 @@ public class TaskWithInternalContextEventService {
                         }
                     });
                     for (TaskParamsYaml.OutputVariable output : taskParamsYaml.task.outputs) {
+                        //noinspection unused
                         Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(event.taskId, output.id);
                     }
                     return null;

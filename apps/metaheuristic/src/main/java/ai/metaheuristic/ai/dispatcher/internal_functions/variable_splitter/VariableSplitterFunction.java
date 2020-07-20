@@ -75,6 +75,7 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
  * Date: 1/17/2020
  * Time: 9:36 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -113,17 +114,17 @@ public class VariableSplitterFunction implements InternalFunction {
             throw new IllegalStateException("Too many input codes");
         }
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
+
+        // check the presence of variable
         if (inputVariable.context== EnumsApi.VariableContext.local) {
-            Variable bd = variableRepository.findById(inputVariable.id).orElse(null);
-            if (bd == null) {
-                throw new IllegalStateException("Variable not found for code " + inputVariable);
-            }
+            Variable bd = variableRepository
+                    .findById(inputVariable.id)
+                    .orElseThrow(()-> new IllegalStateException("Variable not found for code " + inputVariable));
         }
         else {
-            GlobalVariable gv = globalVariableRepository.findById(inputVariable.id).orElse(null);
-            if (gv == null) {
-                throw new IllegalStateException("GlobalVariable not found for code " + inputVariable);
-            }
+            GlobalVariable gv = globalVariableRepository
+                    .findById(inputVariable.id)
+                    .orElseThrow(()->new IllegalStateException("GlobalVariable not found for code " + inputVariable));
         }
 
         String originFilename = inputVariable.realName;
