@@ -39,7 +39,7 @@ public class TaskParamsUtils {
             trg.info = new TaskParamsYaml.FunctionInfo(src.info.signed, src.info.length);
         }
         if (src.metas!=null) {
-            trg.metas.putAll(src.metas);
+            trg.metas.addAll(src.metas);
         }
         trg.params = src.params;
         trg.skipParams = src.skipParams;

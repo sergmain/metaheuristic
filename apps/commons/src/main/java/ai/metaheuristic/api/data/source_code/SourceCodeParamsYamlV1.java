@@ -18,14 +18,12 @@ package ai.metaheuristic.api.data.source_code;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
-import ai.metaheuristic.commons.utils.MetaUtils;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -121,7 +119,7 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public Long timeoutBeforeTerminate;
         public final List<VariableV1> inputs = new ArrayList<>();
         public final List<VariableV1> outputs = new ArrayList<>();
-        public Map<String, String> metas = new HashMap<>();
+        public List<MutablePair<String, String>> metas = new ArrayList<>();
         public @Nullable SubProcessesV1 subProcesses;
     }
 
@@ -148,7 +146,7 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public List<ProcessV1> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
-        public Map<String, String> metas;
+        public List<MutablePair<String, String>> metas;
         public AccessControlV1 ac;
     }
 

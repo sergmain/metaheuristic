@@ -63,7 +63,7 @@ public class FunctionConfigListYamlUtilsV1
                 snTrg.info = new FunctionConfigListYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
             }
             if (snSrc.metas!=null) {
-                snTrg.metas = new HashMap<>(snSrc.metas);
+                snTrg.metas = new ArrayList<>(snSrc.metas);
             }
             return  snTrg;
         }).collect(Collectors.toList());

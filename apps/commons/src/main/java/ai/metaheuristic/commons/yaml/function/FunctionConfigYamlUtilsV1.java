@@ -57,9 +57,9 @@ public class FunctionConfigYamlUtilsV1
         if (src.checksumMap!=null) {
             trg.checksumMap.putAll(src.checksumMap);
         }
-        trg.metas = new HashMap<>();
+        trg.metas = new ArrayList<>();
         if (src.metas!=null) {
-            trg.metas.putAll(src.metas);
+            trg.metas.addAll(src.metas);
         }
         if (src.info!=null) {
             trg.info = new FunctionConfigYaml.FunctionInfo(src.info.signed, src.info.length);
@@ -95,7 +95,6 @@ public class FunctionConfigYamlUtilsV1
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        //noinspection UnnecessaryLocalVariable
         final FunctionConfigYamlV1 p = getYaml().load(yaml);
         return p;
     }

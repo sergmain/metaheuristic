@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.utils;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
@@ -36,7 +37,7 @@ public class TestFunctionUtils {
     @Test
     public void testMetas() {
         final FunctionConfigYaml function = new FunctionConfigYaml();
-        Objects.requireNonNull(function.metas).put("key1", "value1");
+        Objects.requireNonNull(function.metas).add(new MutablePair<>("key1", "value1"));
 
         Meta m;
         m = MetaUtils.getMeta(function.metas, "key1");

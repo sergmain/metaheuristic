@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.text.matcher.StringMatcherFactory;
 import org.springframework.lang.Nullable;
 
@@ -46,7 +47,7 @@ public class InlineVariableUtils {
     public static final String PERMUTE_INLINE = "permute-inline";
 
     public static InlineVariableData.InlineVariableItem getInlineVariableItem(
-            ExecContextParamsYaml.VariableDeclaration variableDeclaration, final Map<String, String> metas) {
+            ExecContextParamsYaml.VariableDeclaration variableDeclaration, final List<MutablePair<String, String>> metas) {
 
             Map<String, String> inlines = null;
             final String inlineKey;

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,12 +62,12 @@ public class TransferExperimentResult {
 //          value: mh.hyper-params
 //        - key: permute-inline
 //          value: true
-        taskParamsYaml.task.metas.put("feature-item", "var-feature-item");
-        taskParamsYaml.task.metas.put("inline-permutation", "var-inline-permutation");
-        taskParamsYaml.task.metas.put("metrics", "var-metrics");
-        taskParamsYaml.task.metas.put("predicted", "var-predicted");
-        taskParamsYaml.task.metas.put("inline-key", "mh.hyper-params");
-        taskParamsYaml.task.metas.put("permute-inline", "true");
+        taskParamsYaml.task.metas.add(new MutablePair<>("feature-item", "var-feature-item"));
+        taskParamsYaml.task.metas.add(new MutablePair<>("inline-permutation", "var-inline-permutation"));
+        taskParamsYaml.task.metas.add(new MutablePair<>("metrics", "var-metrics"));
+        taskParamsYaml.task.metas.add(new MutablePair<>("predicted", "var-predicted"));
+        taskParamsYaml.task.metas.add(new MutablePair<>("inline-key", "mh.hyper-params"));
+        taskParamsYaml.task.metas.add(new MutablePair<>("permute-inline", "true"));
 
         Long execContextId = 1020L;
         assertNotNull(execContextCache.findById(execContextId));

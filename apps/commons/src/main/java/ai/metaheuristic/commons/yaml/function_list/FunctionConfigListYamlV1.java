@@ -19,7 +19,9 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.*;
+import org.apache.commons.lang3.tuple.MutablePair;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +49,7 @@ public class FunctionConfigListYamlV1 implements BaseParams {
         public long length;
     }
 
+    @SuppressWarnings("DuplicatedCode")
     @Data
     @ToString
     @NoArgsConstructor
@@ -61,7 +64,7 @@ public class FunctionConfigListYamlV1 implements BaseParams {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
             if (this.metas != null) {
-                clone.metas = new HashMap<>(this.metas);
+                clone.metas = new ArrayList<>(this.metas);
             }
             return clone;
         }
@@ -85,6 +88,6 @@ public class FunctionConfigListYamlV1 implements BaseParams {
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
-        public Map<String, String> metas = new HashMap<>();
+        public List<MutablePair<String, String>> metas = new ArrayList<>();
     }
 }

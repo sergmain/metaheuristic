@@ -24,6 +24,7 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.lang.Nullable;
 
@@ -43,9 +44,9 @@ public class FunctionCoreUtils {
         if (snSrc.checksumMap!=null) {
             snTrg.checksumMap.putAll(snSrc.checksumMap);
         }
-        snTrg.metas = new HashMap<>();
+        snTrg.metas = new ArrayList<>();
         if (snSrc.metas!=null) {
-            snTrg.metas.putAll(snSrc.metas);
+            snTrg.metas.addAll(snSrc.metas);
         }
 
         snTrg.info = new FunctionConfigYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
@@ -87,7 +88,7 @@ public class FunctionCoreUtils {
     }
 
 
-    public static List<EnumsApi.OS> getSupportedOS(@Nullable Map<String, String> metas) {
+    public static List<EnumsApi.OS> getSupportedOS(@Nullable List<MutablePair<String, String>> metas) {
         final Meta meta = MetaUtils.getMeta(metas, ConstsApi.META_MH_FUNCTION_SUPPORTED_OS);
         if (meta != null && meta.value!=null && !meta.value.isBlank()) {
             try {
@@ -107,7 +108,7 @@ public class FunctionCoreUtils {
         return List.of();
     }
 
-    public static int getTaskParamsVersion(Map<String, String> metas) {
+    public static int getTaskParamsVersion(List<MutablePair<String, String>> metas) {
         final Meta meta = MetaUtils.getMeta(metas, ConstsApi.META_MH_TASK_PARAMS_VERSION);
         return (meta!=null) ? Integer.parseInt(meta.value) : 1;
     }

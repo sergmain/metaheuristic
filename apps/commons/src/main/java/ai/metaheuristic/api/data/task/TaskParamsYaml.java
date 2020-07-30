@@ -23,6 +23,7 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -131,7 +132,7 @@ public class TaskParamsYaml implements BaseParams {
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
-            clone.metas.putAll(this.metas);
+            clone.metas.addAll(this.metas);
             return clone;
         }
 
@@ -156,7 +157,7 @@ public class TaskParamsYaml implements BaseParams {
         public @Nullable String checksum;
         public @Nullable GitInfo git;
         public boolean skipParams = false;
-        public final Map<String, String> metas = new HashMap<>();
+        public final List<MutablePair<String, String>> metas = new ArrayList<>();
     }
 
     @Data
@@ -175,7 +176,7 @@ public class TaskParamsYaml implements BaseParams {
         public @Nullable Map<String, Map<String, String>> inline;
         public @NonNull final List<InputVariable> inputs = new ArrayList<>();
         public @NonNull final List<OutputVariable> outputs = new ArrayList<>();
-        public final Map<String, String> metas = new HashMap<>();
+        public final List<MutablePair<String, String>> metas = new ArrayList<>();
 
         /**
          * Timeout before terminate a process with function

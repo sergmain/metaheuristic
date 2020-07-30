@@ -47,6 +47,7 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -255,7 +256,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         sc.info = new FunctionConfigYaml.FunctionInfo(false, 1000);
 //  metas:
 //  - mh.task-params-version: '5'
-        Objects.requireNonNull(sc.metas).put(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5");
+        Objects.requireNonNull(sc.metas).add(new MutablePair<>(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5"));
         Function s = new Function();
         Long functionId = functionRepository.findIdByCode(functionCode);
         if (functionId!=null) {
