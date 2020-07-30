@@ -19,7 +19,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.*;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -88,7 +87,7 @@ public class FunctionConfigListYaml implements BaseParams {
         public @Nullable String checksum;
         public GitInfo git;
         public boolean skipParams = false;
-        public List<MutablePair<String, String>> metas = new ArrayList<>();
+        public List<Map<String, String>> metas = new ArrayList<>();
     }
 
 }

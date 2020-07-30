@@ -23,7 +23,6 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -172,7 +171,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
-        public List<MutablePair<String, String>> metas = new ArrayList<>();
+        public List<Map<String, String>> metas = new ArrayList<>();
     }
 
     @Data
@@ -191,7 +190,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         public Map<String, Map<String, String>> inline;
         public final List<InputVariableV1> inputs = new ArrayList<>();
         public final List<OutputVariableV1> outputs = new ArrayList<>();
-        public final List<MutablePair<String, String>> metas = new ArrayList<>();
+        public final List<Map<String, String>> metas = new ArrayList<>();
 
         /**
          * Timeout before terminate a process with function

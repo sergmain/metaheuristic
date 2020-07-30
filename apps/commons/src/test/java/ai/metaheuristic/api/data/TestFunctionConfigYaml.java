@@ -23,9 +23,9 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtilsV1;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlV1;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,7 +46,7 @@ public class TestFunctionConfigYaml {
 
         // to be sure that values were copied
         Objects.requireNonNull(sc.checksumMap).put(EnumsApi.Type.SHA256WithSignature, "321qwe");
-        Objects.requireNonNull(sc.metas).add(new MutablePair<>("key2", "value2"));
+        Objects.requireNonNull(sc.metas).add(Map.of("key2", "value2"));
 
         assertEquals(sc2.code, "sc.code");
         assertEquals(sc2.type, "sc.type");
@@ -97,7 +97,7 @@ public class TestFunctionConfigYaml {
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;
         assertNotNull(sc.metas);
-        sc.metas.add(new MutablePair<>("key1", "value1"));
+        sc.metas.add(Map.of("key1", "value1"));
         return sc;
     }
 
@@ -115,13 +115,13 @@ public class TestFunctionConfigYaml {
         sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;
-        Objects.requireNonNull(sc.metas).add(new MutablePair<>("key1", "value1"));
+        Objects.requireNonNull(sc.metas).add(Map.of("key1", "value1"));
 
         FunctionConfigYaml sc1 = sc.clone();
 
         // to be sure that values were copied, we'll change original checksumMap
         sc.checksumMap.put(EnumsApi.Type.SHA256WithSignature, "321qwe");
-        sc.metas.add(new MutablePair<>("key2", "value2"));
+        sc.metas.add(Map.of("key2", "value2"));
 
         checkLatest(sc1);
     }

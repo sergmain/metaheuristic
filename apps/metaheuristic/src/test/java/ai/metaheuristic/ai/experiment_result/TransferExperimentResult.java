@@ -20,13 +20,15 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import org.apache.commons.lang3.tuple.MutablePair;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -50,24 +52,18 @@ public class TransferExperimentResult {
     public void test() {
 
         TaskParamsYaml taskParamsYaml = new TaskParamsYaml();
-//        - key: feature-item
-//          value: var-feature-item
-//        - key: inline-permutation
-//          value: var-inline-permutation
-//        - key: metrics
-//          value: var-metrics
-//        - key: predicted
-//          value: var-predicted
-//        - key: inline-key
-//          value: mh.hyper-params
-//        - key: permute-inline
-//          value: true
-        taskParamsYaml.task.metas.add(new MutablePair<>("feature-item", "var-feature-item"));
-        taskParamsYaml.task.metas.add(new MutablePair<>("inline-permutation", "var-inline-permutation"));
-        taskParamsYaml.task.metas.add(new MutablePair<>("metrics", "var-metrics"));
-        taskParamsYaml.task.metas.add(new MutablePair<>("predicted", "var-predicted"));
-        taskParamsYaml.task.metas.add(new MutablePair<>("inline-key", "mh.hyper-params"));
-        taskParamsYaml.task.metas.add(new MutablePair<>("permute-inline", "true"));
+//        - feature-item: var-feature-item
+//        - inline-permutation: var-inline-permutation
+//        - metrics: var-metrics
+//        - predicted: var-predicted
+//        - inline-key: mh.hyper-params
+//        - permute-inline: true
+        taskParamsYaml.task.metas.add(Map.of("feature-item", "var-feature-item"));
+        taskParamsYaml.task.metas.add(Map.of("inline-permutation", "var-inline-permutation"));
+        taskParamsYaml.task.metas.add(Map.of("metrics", "var-metrics"));
+        taskParamsYaml.task.metas.add(Map.of("predicted", "var-predicted"));
+        taskParamsYaml.task.metas.add(Map.of("inline-key", "mh.hyper-params"));
+        taskParamsYaml.task.metas.add(Map.of("permute-inline", "true"));
 
         Long execContextId = 1020L;
         assertNotNull(execContextCache.findById(execContextId));

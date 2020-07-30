@@ -18,11 +18,11 @@ package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.data.Meta;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -40,7 +40,7 @@ public class MetaUtils {
         return !isTrue(m);
     }
 
-    public static boolean isTrue(@Nullable List<MutablePair<String, String>> metas, String... keys) {
+    public static boolean isTrue(@Nullable List<Map<String, String>> metas, String... keys) {
         return isTrue(getMeta(metas, keys));
     }
 
@@ -50,7 +50,7 @@ public class MetaUtils {
     }
 */
 
-    public static boolean isFalse(@Nullable List<MutablePair<String, String>> metas, String... keys) {
+    public static boolean isFalse(@Nullable List<Map<String, String>> metas, String... keys) {
         return isFalse(getMeta(metas, keys));
     }
 
@@ -67,7 +67,7 @@ public class MetaUtils {
     }
 */
 
-    public static @Nullable String getValue(@Nullable List<MutablePair<String, String>> metas, String... keys) {
+    public static @Nullable String getValue(@Nullable List<Map<String, String>> metas, String... keys) {
         Meta m = getMeta(metas, keys);
         return m!=null ? m.getValue() : null;
     }
@@ -91,17 +91,19 @@ public class MetaUtils {
     }
 */
 
-    public static @Nullable Meta getMeta(@Nullable List<MutablePair<String, String>> metas, @NonNull String... keys) {
+    public static @Nullable Meta getMeta(@Nullable List<Map<String, String>> metas, @NonNull String... keys) {
         if (metas==null) {
             return null;
         }
         if (keys.length==0) {
             return null;
         }
-        for (MutablePair<String, String> meta : metas) {
+        for (Map<String, String> meta : metas) {
             for (String key : keys) {
-                if (meta.getKey().equals(key)) {
-                    return new Meta(key, meta.getValue(), null);
+                // because the map is created from yaml actual Class of value could be Boolean
+                Object o = meta.get(key);
+                if (o!=null) {
+                    return new Meta(key, o.toString(), null);
                 }
             }
         }

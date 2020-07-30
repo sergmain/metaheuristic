@@ -27,7 +27,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -121,7 +120,7 @@ public class ExecContextParamsYaml implements BaseParams {
         public Long timeoutBeforeTerminate;
         public @NonNull final List<Variable> inputs = new ArrayList<>();
         public @NonNull final List<Variable> outputs = new ArrayList<>();
-        public @NonNull List<MutablePair<String, String>> metas = new ArrayList<>();
+        public @NonNull List<Map<String, String>> metas = new ArrayList<>();
 
         public Process(@NonNull String processName, @NonNull String processCode, @NonNull String internalContextId, @NonNull FunctionDefinition function) {
             this.processName = processName;

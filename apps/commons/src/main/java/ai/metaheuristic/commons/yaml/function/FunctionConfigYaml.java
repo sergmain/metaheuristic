@@ -21,7 +21,6 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -93,6 +92,6 @@ public class FunctionConfigYaml implements Cloneable, BaseParams {
     public String checksum;
     public @Nullable GitInfo git;
     public boolean skipParams = false;
-    public @Nullable List<MutablePair<String, String>> metas = new ArrayList<>();
+    public @Nullable List<Map<String, String>> metas = new ArrayList<>();
 
 }

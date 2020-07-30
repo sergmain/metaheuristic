@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import org.apache.commons.lang3.tuple.MutablePair;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,6 +27,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml.SourceCodeYaml;
@@ -44,9 +45,9 @@ public class TestProcess {
         p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode("some-function:1.0");
 
         p.metas.addAll(
-                List.of(new MutablePair<>("assembled-raw", "assembled-raw"),
-                        new MutablePair<>("dataset", "dataset-processing"),
-                        new MutablePair<>("feature", "feature"))
+                List.of(Map.of("assembled-raw", "assembled-raw"),
+                        Map.of("dataset", "dataset-processing"),
+                        Map.of("feature", "feature"))
         );
         SourceCodeParamsYaml sourceCodeParamsYaml = new SourceCodeParamsYaml();
         SourceCodeYaml sourceCodeYaml = new SourceCodeParamsYaml.SourceCodeYaml();

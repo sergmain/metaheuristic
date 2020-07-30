@@ -23,7 +23,6 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -119,7 +118,7 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public Long timeoutBeforeTerminate;
         public final List<VariableV1> inputs = new ArrayList<>();
         public final List<VariableV1> outputs = new ArrayList<>();
-        public List<MutablePair<String, String>> metas = new ArrayList<>();
+        public List<Map<String, String>> metas = new ArrayList<>();
         public @Nullable SubProcessesV1 subProcesses;
     }
 
@@ -146,7 +145,7 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public List<ProcessV1> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
-        public List<MutablePair<String, String>> metas;
+        public List<Map<String, String>> metas;
         public AccessControlV1 ac;
     }
 

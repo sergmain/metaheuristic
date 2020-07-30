@@ -27,7 +27,6 @@ import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -140,7 +139,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public Long timeoutBeforeTerminate;
         public final List<Variable> inputs = new ArrayList<>();
         public final List<Variable> outputs = new ArrayList<>();
-        public List<MutablePair<String, String>> metas = new ArrayList<>();
+        public List<Map<String, String>> metas = new ArrayList<>();
         public @Nullable SubProcesses subProcesses;
 
         @JsonIgnore
@@ -172,7 +171,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
-        public List<MutablePair<String, String>> metas;
+        public List<Map<String, String>> metas;
         public AccessControl ac;
 
         @JsonIgnore

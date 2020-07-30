@@ -16,19 +16,16 @@
 
 package ai.metaheuristic.ai.yaml.pair;
 
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -44,12 +41,12 @@ public class TestPaitYaml {
     @NoArgsConstructor
     public static class WithPair {
         public String name;
-        public List<MutablePair<String, String>> metas = new ArrayList<>();
+        public List<Map<String, String>> metas = new ArrayList<>();
     }
 
     @Test
     public void test() {
-        WithPair withPair = new WithPair("aaa", List.of(new MutablePair<>("key", "value")));
+        WithPair withPair = new WithPair("aaa", List.of(Map.of("key", "value")));
 
         Yaml yaml = YamlUtils.init(WithPair.class);
 

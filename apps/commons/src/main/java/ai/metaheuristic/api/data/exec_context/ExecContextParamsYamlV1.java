@@ -24,7 +24,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -115,7 +114,7 @@ public class ExecContextParamsYamlV1 implements BaseParams {
         public Long timeoutBeforeTerminate;
         public final List<VariableV1> inputs = new ArrayList<>();
         public final List<VariableV1> outputs = new ArrayList<>();
-        public final List<MutablePair<String, String>> metas = new ArrayList<>();
+        public final List<Map<String, String>> metas = new ArrayList<>();
     }
 
     public boolean clean;
