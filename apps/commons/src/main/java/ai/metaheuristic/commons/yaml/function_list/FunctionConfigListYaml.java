@@ -64,10 +64,7 @@ public class FunctionConfigListYaml implements BaseParams {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
             if (this.metas != null) {
-                clone.metas = new ArrayList<>();
-                for (Meta meta : this.metas) {
-                    clone.metas.add(new Meta(meta.key, meta.value, meta.ext));
-                }
+                clone.metas = new HashMap<>(this.metas);
             }
             return clone;
         }
@@ -91,7 +88,7 @@ public class FunctionConfigListYaml implements BaseParams {
         public @Nullable String checksum;
         public GitInfo git;
         public boolean skipParams = false;
-        public List<Meta> metas = new ArrayList<>();
+        public Map<String, String> metas = new HashMap<>();
     }
 
 }

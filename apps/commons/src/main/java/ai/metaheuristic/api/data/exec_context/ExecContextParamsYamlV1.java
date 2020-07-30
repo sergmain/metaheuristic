@@ -115,7 +115,7 @@ public class ExecContextParamsYamlV1 implements BaseParams {
         public Long timeoutBeforeTerminate;
         public final List<VariableV1> inputs = new ArrayList<>();
         public final List<VariableV1> outputs = new ArrayList<>();
-        public final List<Meta> metas = new ArrayList<>();
+        public final Map<String, String> metas = new HashMap<>();
     }
 
     public boolean clean;

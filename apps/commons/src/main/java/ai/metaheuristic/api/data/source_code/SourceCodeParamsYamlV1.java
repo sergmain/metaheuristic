@@ -121,14 +121,8 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public Long timeoutBeforeTerminate;
         public final List<VariableV1> inputs = new ArrayList<>();
         public final List<VariableV1> outputs = new ArrayList<>();
-        public List<Meta> metas = new ArrayList<>();
+        public Map<String, String> metas = new HashMap<>();
         public @Nullable SubProcessesV1 subProcesses;
-
-        @JsonIgnore
-        @Nullable
-        public Meta getMeta(String key) {
-            return MetaUtils.getMeta(metas, key);
-        }
     }
 
     @Data
@@ -154,22 +148,8 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public List<ProcessV1> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
-        public List<Meta> metas;
+        public Map<String, String> metas;
         public AccessControlV1 ac;
-
-        @JsonIgnore
-        @Nullable
-        public Meta getMeta(String key) {
-            if (metas == null) {
-                return null;
-            }
-            for (Meta meta : metas) {
-                if (meta.key.equals(key)) {
-                    return meta;
-                }
-            }
-            return null;
-        }
     }
 
     public SourceCodeV1 source = new SourceCodeV1();

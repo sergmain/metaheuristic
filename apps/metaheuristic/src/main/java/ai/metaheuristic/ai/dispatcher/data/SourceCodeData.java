@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.dispatcher.SourceCode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -38,10 +38,13 @@ public class SourceCodeData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class SourceCodesForCompany extends BaseDataClass {
         // it must be full name of class, i.e. with packages
         // todo 2020-02-24 why?
-        public List<ai.metaheuristic.api.dispatcher.SourceCode> items;
+//        public List<ai.metaheuristic.api.dispatcher.SourceCode> items;
+        public List<SourceCode> items;
     }
 
     @Data

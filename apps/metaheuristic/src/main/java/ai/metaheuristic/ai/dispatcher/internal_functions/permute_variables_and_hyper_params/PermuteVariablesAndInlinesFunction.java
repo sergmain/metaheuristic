@@ -31,24 +31,17 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
-import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.*;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
-import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -83,16 +76,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     private final TaskProducingCoreService taskProducingCoreService;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
-
-    @Data
-    public static class VariableHolder {
-        public SimpleVariable variable;
-        public GlobalVariable globalVariable;
-
-        public String getName() {
-            return globalVariable!=null ? globalVariable.name : variable.variable;
-        }
-    }
 
     @Override
     public String getCode() {
@@ -137,6 +120,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
         List<ExecContextData.ProcessVertex> subProcesses = ExecContextProcessGraphService.findSubProcesses(processGraph, process.processCode);
 
+        // variableNames contains a list of variables for permutation
         String variableNames = MetaUtils.getValue(taskParamsYaml.task.metas, "variables");
         if (S.b(variableNames)) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "Meta 'variable' must be defined and can't be empty");
@@ -155,18 +139,16 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                     "Inline variable '" + item.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
         }
 
-        List<VariableHolder> holders = new ArrayList<>();
+        List<VariableUtils.VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
-            VariableHolder holder = new VariableHolder();
-            holders.add(holder);
             SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(name, taskContextId, execContextId);
             if (v!=null) {
-                holder.variable = v;
+                holders.add(new VariableUtils.VariableHolder(v));
             }
             else {
                 GlobalVariable gv = globalVariableRepository.findIdByName(name);
                 if (gv!=null) {
-                    holder.globalVariable = gv;
+                    holders.add(new VariableUtils.VariableHolder(gv));
                 }
                 else {
                     return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
@@ -175,7 +157,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             }
         }
 
-        final Permutation<VariableHolder> permutation = new Permutation<>();
+        final Permutation<VariableUtils.VariableHolder> permutation = new Permutation<>();
         AtomicInteger permutationNumber = new AtomicInteger(0);
         final String variableName = MetaUtils.getValue(process.metas, "output-variable");
         if (S.b(variableName)) {
@@ -193,12 +175,11 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             try {
                 permutation.printCombination(holders, i+1,
                         permutedVariables -> {
-                            log.info(permutedVariables.stream().map(VariableHolder::getName).collect(Collectors.joining(", ")));
+                            log.info(permutedVariables.stream().map(VariableUtils.VariableHolder::getName).collect(Collectors.joining(", ")));
                             if (permuteInlines) {
                                 for (InlineVariable inlineVariable : inlineVariables) {
                                     permutationNumber.incrementAndGet();
                                     Map<String, Map<String, String>> map = new HashMap<>(variableDeclaration.inline);
-                                    map.remove(item.inlineKey);
                                     map.put(item.inlineKey, inlineVariable.params);
 
                                     createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml,
@@ -219,15 +200,29 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 );
             } catch (BreakFromLambdaException e) {
                 log.error(e.getMessage());
-                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found, e.getMessage());
+                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage());
             }
         }
         execContextGraphTopLevelService.createEdges(execContextId, lastIds, descendants);
         return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 
+    /**
+     *
+     * @param permutedVariables
+     * @param execContextId
+     * @param execContextParamsYaml
+     * @param subProcesses
+     * @param permutationNumber
+     * @param parentTaskId
+     * @param variableName
+     * @param inlines
+     * @param lastIds
+     * @param inlineVariableName
+     * @param inlinePermuted
+     */
     public void createTasksForSubProcesses(
-            List<VariableHolder> permutedVariables, Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
+            List<VariableUtils.VariableHolder> permutedVariables, Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
             AtomicInteger permutationNumber, Long parentTaskId, String variableName,
             Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted) {
         List<Long> parentTaskIds = List.of(parentTaskId);
@@ -236,7 +231,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         for (ExecContextData.ProcessVertex subProcess : subProcesses) {
             final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
             if (p==null) {
-                throw new BreakFromLambdaException("Process '"+subProcess.process+"' wasn't found");
+                throw new BreakFromLambdaException("Process '" + subProcess.process + "' wasn't found");
             }
             String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
             t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
@@ -258,7 +253,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             lastIds.add(t.id);
 
             {
-                VariableArrayParamsYaml vapy = toVariableArrayParamsYaml(permutedVariables);
+                VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(permutedVariables);
                 String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
                 byte[] bytes = yaml.getBytes();
                 ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
@@ -273,37 +268,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             }
 
         }
-    }
-
-    private VariableArrayParamsYaml toVariableArrayParamsYaml(List<VariableHolder> permutedVariables) {
-        VariableArrayParamsYaml vapy = new VariableArrayParamsYaml();
-        for (VariableHolder pv : permutedVariables) {
-            VariableArrayParamsYaml.Variable v = new VariableArrayParamsYaml.Variable();
-            if (pv.globalVariable!=null) {
-                v.id = pv.globalVariable.id;
-                v.name = pv.globalVariable.name;
-
-                DataStorageParams dsp = DataStorageParamsUtils.to(pv.globalVariable.params);
-                v.sourcing = dsp.sourcing;
-                v.git = dsp.git;
-                v.disk = dsp.disk;
-                v.realName = pv.globalVariable.filename;
-                v.type = EnumsApi.DataType.global_variable;
-            }
-            else {
-                v.id = pv.variable.id;
-                v.name = pv.variable.variable;
-
-                DataStorageParams dsp = pv.variable.getParams();
-                v.sourcing = dsp.sourcing;
-                v.git = dsp.git;
-                v.disk = dsp.disk;
-                v.realName = pv.variable.originalFilename;
-                v.type = EnumsApi.DataType.variable;
-            }
-            vapy.array.add(v);
-        }
-        return vapy;
     }
 
 }

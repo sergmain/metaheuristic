@@ -58,18 +58,12 @@ source:
         code: mh.permute-variables-and-inlines
         context: internal
       metas:
-        - key: mh.output-is-dynamic
-          value: true
-        - key: variables
-          value: feature-output-1, feature-output-2
-        - key: output-variable
-          value: feature-item
-        - key: inline-key
-          value: mh.hyper-params
-        - key: permute-inline
-          value: true
-        - key: inline-permutation
-          value: inline-permutation
+        - mh.output-is-dynamic: true
+        - variables: feature-output-1, feature-output-2
+        - inline-key: mh.hyper-params
+        - permute-inline: true
+        - output-variable: feature-item
+        - inline-permutation: inline-permutation
       subProcesses:
         logic: sequential
         processes:
@@ -104,8 +98,7 @@ source:
         code: mh.aggregate-internal-context
         context: internal
       metas:
-        - key: variables
-          value: metrics, predicted
+        - variables: metrics, predicted
       outputs:
         - name: final-result
 version: 1

@@ -18,9 +18,7 @@ package ai.metaheuristic.ai.experiment_result;
 
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,8 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -65,12 +61,12 @@ public class TransferExperimentResult {
 //          value: mh.hyper-params
 //        - key: permute-inline
 //          value: true
-        taskParamsYaml.task.metas.add(new Meta("feature-item", "var-feature-item", null));
-        taskParamsYaml.task.metas.add(new Meta("inline-permutation", "var-inline-permutation", null));
-        taskParamsYaml.task.metas.add(new Meta("metrics", "var-metrics", null));
-        taskParamsYaml.task.metas.add(new Meta("predicted", "var-predicted", null));
-        taskParamsYaml.task.metas.add(new Meta("inline-key", "mh.hyper-params", null));
-        taskParamsYaml.task.metas.add(new Meta("permute-inline", "true", null));
+        taskParamsYaml.task.metas.put("feature-item", "var-feature-item");
+        taskParamsYaml.task.metas.put("inline-permutation", "var-inline-permutation");
+        taskParamsYaml.task.metas.put("metrics", "var-metrics");
+        taskParamsYaml.task.metas.put("predicted", "var-predicted");
+        taskParamsYaml.task.metas.put("inline-key", "mh.hyper-params");
+        taskParamsYaml.task.metas.put("permute-inline", "true");
 
         Long execContextId = 1020L;
         assertNotNull(execContextCache.findById(execContextId));

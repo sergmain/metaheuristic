@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -28,7 +27,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.Arrays;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -49,10 +48,10 @@ public class TestProcessMeta {
             p.outputs.add(new SourceCodeParamsYaml.Variable("model"));
             p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode(Consts.MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
-            p.metas = Arrays.asList(
-                    new Meta("assembled-raw", "assembled-raw", null),
-                    new Meta("dataset", "dataset-processing", null),
-                    new Meta("feature", "feature", null)
+            p.metas = Map.of(
+                    "assembled-raw", "assembled-raw",
+                    "dataset", "dataset-processing",
+                    "feature", "feature"
             );
 
             sourceCodeYaml.processes.add(p);

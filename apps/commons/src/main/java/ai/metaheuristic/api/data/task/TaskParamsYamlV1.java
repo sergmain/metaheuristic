@@ -18,7 +18,6 @@ package ai.metaheuristic.api.data.task;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
@@ -148,10 +147,7 @@ public class TaskParamsYamlV1 implements BaseParams {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
             if (this.metas != null) {
-                clone.metas = new ArrayList<>();
-                for (Meta meta : this.metas) {
-                    clone.metas.add(new Meta(meta.key, meta.value, meta.ext));
-                }
+                clone.metas = new HashMap<>(this.metas);
             }
             return clone;
         }
@@ -175,7 +171,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
-        public List<Meta> metas = new ArrayList<>();
+        public Map<String, String> metas = new HashMap<>();
     }
 
     @Data
@@ -194,7 +190,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         public Map<String, Map<String, String>> inline;
         public final List<InputVariableV1> inputs = new ArrayList<>();
         public final List<OutputVariableV1> outputs = new ArrayList<>();
-        public final List<Meta> metas = new ArrayList<>();
+        public final Map<String, String> metas = new HashMap<>();
 
         /**
          * Timeout before terminate a process with function

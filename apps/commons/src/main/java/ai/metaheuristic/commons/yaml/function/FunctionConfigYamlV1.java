@@ -18,15 +18,12 @@ package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
 import org.springframework.lang.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,7 +55,7 @@ public class FunctionConfigYamlV1 implements Cloneable, BaseParams {
             clone.checksumMap = new HashMap<>(this.checksumMap);
         }
         if (this.metas!=null) {
-            clone.metas = new ArrayList<>(this.metas);
+            clone.metas = new HashMap<>(this.metas);
         }
         return clone;
     }
@@ -93,6 +90,6 @@ public class FunctionConfigYamlV1 implements Cloneable, BaseParams {
     public String checksum;
     public @Nullable GitInfo git;
     public boolean skipParams = false;
-    public @Nullable List<Meta> metas = new ArrayList<>();
+    public @Nullable Map<String, String> metas = new HashMap<>();
 
 }

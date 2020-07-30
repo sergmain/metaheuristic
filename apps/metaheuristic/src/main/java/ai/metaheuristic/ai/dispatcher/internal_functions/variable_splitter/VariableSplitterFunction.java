@@ -20,30 +20,31 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
-import ai.metaheuristic.ai.dispatcher.beans.Ids;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.exceptions.BatchConfigYamlException;
-import ai.metaheuristic.ai.exceptions.BatchProcessingException;
-import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
-import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
+import ai.metaheuristic.ai.exceptions.*;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
+import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -55,16 +56,14 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
@@ -94,7 +93,8 @@ public class VariableSplitterFunction implements InternalFunction {
     private final ExecContextCache execContextCache;
     private final IdsRepository idsRepository;
     private final GlobalVariableRepository globalVariableRepository;
-
+    private final TaskProducingCoreService taskProducingCoreService;
+    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     @Override
     public String getCode() {
@@ -147,7 +147,8 @@ public class VariableSplitterFunction implements InternalFunction {
 
             if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
                 log.debug("Start unzipping archive");
-                Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
+//                Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
+                Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir);
                 log.debug("Start loading file data to db");
                 loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, mapping);
             }
@@ -184,9 +185,6 @@ public class VariableSplitterFunction implements InternalFunction {
             throw new IllegalStateException("#995.202 execContext wasn't found, execContextId: " + execContextId);
         }
 
-        if (true) {
-            throw new NotImplementedException("need to use real internalContextId");
-        }
         final AtomicBoolean isEmpty = new AtomicBoolean(true);
         Files.list(srcDir.toPath())
                 .filter(o -> {
@@ -221,6 +219,70 @@ public class VariableSplitterFunction implements InternalFunction {
                     }
                 });
     }
+
+    /**
+     *
+     * @param permutedVariables
+     * @param execContextId
+     * @param execContextParamsYaml
+     * @param subProcesses
+     * @param permutationNumber
+     * @param parentTaskId
+     * @param variableName
+     * @param inlines
+     * @param lastIds
+     * @param inlineVariableName
+     * @param inlinePermuted
+     */
+    public void createTasksForSubProcesses(
+            List<VariableUtils.VariableHolder> permutedVariables, Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
+            AtomicInteger permutationNumber, Long parentTaskId, String variableName,
+            Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted) {
+        List<Long> parentTaskIds = List.of(parentTaskId);
+        TaskImpl t = null;
+        String subProcessContextId = null;
+        for (ExecContextData.ProcessVertex subProcess : subProcesses) {
+            final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
+            if (p==null) {
+                throw new BreakFromLambdaException("Process '" + subProcess.process + "' wasn't found");
+            }
+            String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
+            t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
+            if (t==null) {
+                throw new BreakFromLambdaException("Creation of task failed");
+            }
+            List<Long> currTaskIds = List.of(t.getId());
+            execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, currTaskIds);
+            parentTaskIds = currTaskIds;
+            // all subProcesses must have the same processContextId
+            if (subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {
+                throw new BreakFromLambdaException("Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
+            }
+            subProcessContextId = subProcess.processContextId;
+        }
+
+        if (subProcessContextId!=null) {
+            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
+            lastIds.add(t.id);
+
+            {
+                VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(permutedVariables);
+                String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
+                byte[] bytes = yaml.getBytes();
+                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                Variable v = variableService.createInitialized(bais, bytes.length, variableName, null, execContextId, currTaskContextId);
+            }
+            {
+                Yaml yampUtil = YamlUtils.init(Map.class);
+                String yaml = yampUtil.dumpAsMap(inlinePermuted);
+                byte[] bytes = yaml.getBytes();
+                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                Variable v = variableService.createInitialized(bais, bytes.length, inlineVariableName, null, execContextId, currTaskContextId);
+            }
+
+        }
+    }
+
 
     private void createAndProcessTask(SourceCodeImpl sourceCode, ExecContext ec, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile, String contextId) {
 
@@ -297,7 +359,6 @@ public class VariableSplitterFunction implements InternalFunction {
         }
 */
     }
-
 
     public static File getMainDocumentFileFromConfig(File srcDir, Map<String, String> mapping) throws IOException {
         File configFile = new File(srcDir, CONFIG_FILE);

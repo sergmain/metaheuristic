@@ -37,7 +37,6 @@ import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtilsV1;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -255,9 +254,8 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
         sc.info = new FunctionConfigYaml.FunctionInfo(false, 1000);
 //  metas:
-//  - key: mh.task-params-version
-//    value: '5'
-        Objects.requireNonNull(sc.metas).add(new Meta(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5", null));
+//  - mh.task-params-version: '5'
+        Objects.requireNonNull(sc.metas).put(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5");
         Function s = new Function();
         Long functionId = functionRepository.findIdByCode(functionCode);
         if (functionId!=null) {

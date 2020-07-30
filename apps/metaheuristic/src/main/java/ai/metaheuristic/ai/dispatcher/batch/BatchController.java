@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
@@ -47,6 +48,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("DuplicatedCode")
 @Controller
@@ -63,6 +66,7 @@ public class BatchController {
     private final UserContextService userContextService;
     private final SourceCodeService sourceCodeService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
+    private final DispatcherParamsService dispatcherParamsService;
 
     @GetMapping("/index")
     public String index() {
@@ -100,6 +104,9 @@ public class BatchController {
     public String batchAdd(Model model, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeSelectorService.getAvailableSourceCodesForCompany(context);
+        List<String> uids = dispatcherParamsService.getBatches();
+        sourceCodes = new SourceCodeData.SourceCodesForCompany(
+                sourceCodes.items.stream().filter(o->uids.contains(o.getUid())).collect(Collectors.toList()));
         ControllerUtils.addMessagesToModel(model, sourceCodes);
         model.addAttribute("result", sourceCodes);
         return "dispatcher/batch/batch-add";

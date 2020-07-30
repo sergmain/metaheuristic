@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -47,7 +46,7 @@ public class InlineVariableUtils {
     public static final String PERMUTE_INLINE = "permute-inline";
 
     public static InlineVariableData.InlineVariableItem getInlineVariableItem(
-            ExecContextParamsYaml.VariableDeclaration variableDeclaration, final List<Meta> metas) {
+            ExecContextParamsYaml.VariableDeclaration variableDeclaration, final Map<String, String> metas) {
 
             Map<String, String> inlines = null;
             final String inlineKey;

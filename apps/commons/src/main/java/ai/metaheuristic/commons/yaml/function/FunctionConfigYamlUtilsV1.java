@@ -57,9 +57,9 @@ public class FunctionConfigYamlUtilsV1
         if (src.checksumMap!=null) {
             trg.checksumMap.putAll(src.checksumMap);
         }
-        trg.metas = new ArrayList<>();
+        trg.metas = new HashMap<>();
         if (src.metas!=null) {
-            trg.metas.addAll(src.metas);
+            trg.metas.putAll(src.metas);
         }
         if (src.info!=null) {
             trg.info = new FunctionConfigYaml.FunctionInfo(src.info.signed, src.info.length);

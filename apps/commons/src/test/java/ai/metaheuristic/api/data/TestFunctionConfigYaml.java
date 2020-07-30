@@ -44,7 +44,7 @@ public class TestFunctionConfigYaml {
 
         // to be sure that values were copied
         Objects.requireNonNull(sc.checksumMap).put(EnumsApi.Type.SHA256WithSignature, "321qwe");
-        Objects.requireNonNull(sc.metas).add(new Meta("key2", "value2", "ext2" ));
+        Objects.requireNonNull(sc.metas).put("key2", "value2");
 
         assertEquals(sc2.code, "sc.code");
         assertEquals(sc2.type, "sc.type");
@@ -66,8 +66,7 @@ public class TestFunctionConfigYaml {
         assertTrue(sc2.skipParams);
         assertNotNull(sc2.metas);
         assertEquals(1, sc2.metas.size());
-        assertEquals("key1", sc2.metas.get(0).getKey());
-        assertEquals("value1", sc2.metas.get(0).getValue());
+        assertEquals("value1", sc2.metas.get("key1"));
     }
 
     @Test
@@ -94,7 +93,7 @@ public class TestFunctionConfigYaml {
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;
         assertNotNull(sc.metas);
-        sc.metas.add(new Meta("key1", "value1", "ext1" ));
+        sc.metas.put("key1", "value1");
         return sc;
     }
 
@@ -112,13 +111,13 @@ public class TestFunctionConfigYaml {
         sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;
-        Objects.requireNonNull(sc.metas).add((new Meta("key1", "value1", "ext1" )));
+        Objects.requireNonNull(sc.metas).put("key1", "value1");
 
         FunctionConfigYaml sc1 = sc.clone();
 
         // to be sure that values were copied, we'll change original checksumMap
         sc.checksumMap.put(EnumsApi.Type.SHA256WithSignature, "321qwe");
-        sc.metas.add(new Meta("key2", "value2", "ext2" ));
+        sc.metas.put("key2", "value2");
 
         checkLatest(sc1);
     }
@@ -145,8 +144,7 @@ public class TestFunctionConfigYaml {
         assertTrue(sc.skipParams);
         assertNotNull(sc.metas);
         assertEquals(1, sc.metas.size());
-        assertEquals("key1", sc.metas.get(0).getKey());
-        assertEquals("value1", sc.metas.get(0).getValue());
+        assertEquals("value1", sc.metas.get("key1"));
     }
 
     @Test

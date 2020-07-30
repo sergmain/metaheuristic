@@ -11,7 +11,7 @@ source:
       inputs:
         - name: input-data
       outputs:
-        - name: batch-item
+        - name: batch-items
       subProcesses:
         logic: and
         processes:
@@ -20,7 +20,7 @@ source:
             function:
               code: process-item:1.0
             inputs:
-              - name: batch-item
+              - name: batch-items
             outputs:
               - name: processed-file
     - code: mh.aggregate

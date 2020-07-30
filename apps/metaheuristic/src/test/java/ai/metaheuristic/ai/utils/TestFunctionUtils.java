@@ -21,6 +21,8 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -34,7 +36,7 @@ public class TestFunctionUtils {
     @Test
     public void testMetas() {
         final FunctionConfigYaml function = new FunctionConfigYaml();
-        function.metas.add(new Meta("key1", "value1", null));
+        Objects.requireNonNull(function.metas).put("key1", "value1");
 
         Meta m;
         m = MetaUtils.getMeta(function.metas, "key1");

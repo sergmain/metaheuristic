@@ -56,7 +56,7 @@ public class TaskProducingCoreService {
         taskParams.task.taskContextId = taskContextId;
         taskParams.task.processCode = process.processCode;
         taskParams.task.context = process.function.context;
-        taskParams.task.metas.addAll(process.metas);
+        taskParams.task.metas.putAll(process.metas);
         taskParams.task.inline = inlines;
 
         // inputs and outputs will be initialized at the time of task selection

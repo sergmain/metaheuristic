@@ -17,11 +17,9 @@ package ai.metaheuristic.commons.yaml.function_list;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,10 +61,7 @@ public class FunctionConfigListYamlV1 implements BaseParams {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
             if (this.metas != null) {
-                clone.metas = new ArrayList<>();
-                for (Meta meta : this.metas) {
-                    clone.metas.add(new Meta(meta.key, meta.value, meta.ext));
-                }
+                clone.metas = new HashMap<>(this.metas);
             }
             return clone;
         }
@@ -90,6 +85,6 @@ public class FunctionConfigListYamlV1 implements BaseParams {
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
-        public List<Meta> metas = new ArrayList<>();
+        public Map<String, String> metas = new HashMap<>();
     }
 }

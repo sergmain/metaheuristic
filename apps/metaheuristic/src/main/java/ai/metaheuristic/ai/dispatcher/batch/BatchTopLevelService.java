@@ -126,12 +126,13 @@ public class BatchTopLevelService {
     }
 
     public BatchData.BatchesResult getBatches(Pageable pageable, DispatcherContext context, boolean includeDeleted, boolean filterBatches) {
-        return getBatches(pageable, context.getCompanyId(), context.account, includeDeleted, context.account != null && filterBatches);
+        return getBatches(pageable, context.getCompanyId(), context.account, includeDeleted, filterBatches);
     }
 
-    public BatchData.BatchesResult getBatches(Pageable pageable, Long companyUniqueId, Account account, boolean includeDeleted, boolean filterBatches) {
+    public BatchData.BatchesResult getBatches(Pageable pageable, Long companyUniqueId, @Nullable Account account, boolean includeDeleted, boolean filterBatches) {
         if (filterBatches && account==null) {
-            throw new IllegalStateException("(filterBatches && account==null)");
+            log.warn("(filterBatches && account==null)");
+            return new BatchData.BatchesResult();
         }
         pageable = ControllerUtils.fixPageSize(20, pageable);
         Page<Long> batchIds;
@@ -164,7 +165,7 @@ public class BatchTopLevelService {
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
-            return new BatchData.UploadingStatus("#995.040 name of uploaded file is null or blank");
+            return new BatchData.UploadingStatus("#995.040 name of uploaded file is blank");
         }
         // fix for the case when browser sends full path, ie Edge
         final String originFilename = new File(tempFilename.toLowerCase()).getName();
@@ -304,10 +305,12 @@ public class BatchTopLevelService {
         return new BatchData.Status(batchId, status.getStatus(), status.ok);
     }
 
+    @Nullable
     public CleanerInfo getBatchProcessingResult(Long batchId, DispatcherContext context, boolean includeDeleted) throws IOException {
         return getBatchProcessingResult(batchId, context.getCompanyId(), includeDeleted);
     }
 
+    @Nullable
     public CleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
         Batch batch = batchCache.findById(batchId);
         if (batch == null || !batch.companyId.equals(companyUniqueId) ||

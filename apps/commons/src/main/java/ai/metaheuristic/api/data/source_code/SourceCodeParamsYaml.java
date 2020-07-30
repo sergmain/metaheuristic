@@ -139,7 +139,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public Long timeoutBeforeTerminate;
         public final List<Variable> inputs = new ArrayList<>();
         public final List<Variable> outputs = new ArrayList<>();
-        public List<Meta> metas = new ArrayList<>();
+        public Map<String, String> metas = new HashMap<>();
         public @Nullable SubProcesses subProcesses;
 
         @JsonIgnore
@@ -171,21 +171,13 @@ public class SourceCodeParamsYaml implements BaseParams {
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
-        public List<Meta> metas;
+        public Map<String, String> metas;
         public AccessControl ac;
 
         @JsonIgnore
         @Nullable
         public Meta getMeta(String key) {
-            if (metas==null) {
-                return null;
-            }
-            for (Meta meta : metas) {
-                if (meta.key.equals(key)) {
-                    return meta;
-                }
-            }
-            return null;
+            return MetaUtils.getMeta(metas, key);
         }
     }
 

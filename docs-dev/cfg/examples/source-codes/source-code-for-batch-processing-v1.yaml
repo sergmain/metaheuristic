@@ -29,8 +29,7 @@ source:
         code: mh.batch-result-processor
         context: internal
       metas:
-        - key: batch-item
-          value: batch-item
+        - batch-item: batch-item
 #    - code: mh.aggregate
 #      name: mh.aggregate
 #      function:

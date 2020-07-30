@@ -22,6 +22,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -39,6 +40,10 @@ public class MetaUtils {
         return !isTrue(m);
     }
 
+    public static boolean isTrue(@Nullable Map<String, String> metas, String... keys) {
+        return isTrue(getMeta(metas, keys));
+    }
+
     public static boolean isTrue(@Nullable List<Meta> metas, String... keys) {
         return isTrue(getMeta(metas, keys));
     }
@@ -48,6 +53,11 @@ public class MetaUtils {
     }
 
     public static @Nullable String getValue(@Nullable List<Meta> metas, String... keys) {
+        Meta m = getMeta(metas, keys);
+        return m!=null ? m.getValue() : null;
+    }
+
+    public static @Nullable String getValue(@Nullable Map<String, String> metas, String... keys) {
         Meta m = getMeta(metas, keys);
         return m!=null ? m.getValue() : null;
     }
@@ -63,6 +73,23 @@ public class MetaUtils {
             for (String key : keys) {
                 if (meta.key.equals(key)) {
                     return meta;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static @Nullable Meta getMeta(@Nullable Map<String, String> metas, @NonNull String... keys) {
+        if (metas==null) {
+            return null;
+        }
+        if (keys.length==0) {
+            return null;
+        }
+        for (Map.Entry<String, String> meta : metas.entrySet()) {
+            for (String key : keys) {
+                if (meta.getKey().equals(key)) {
+                    return new Meta(key, meta.getValue(), null);
                 }
             }
         }

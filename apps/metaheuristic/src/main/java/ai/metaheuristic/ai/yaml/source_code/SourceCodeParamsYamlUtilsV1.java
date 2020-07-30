@@ -24,7 +24,6 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 /**
@@ -52,7 +51,7 @@ public class SourceCodeParamsYamlUtilsV1
         SourceCodeParamsYaml p = new SourceCodeParamsYaml();
         p.source = new SourceCodeParamsYaml.SourceCodeYaml();
         if (v1.source.metas!=null){
-            p.source.metas = new ArrayList<>(v1.source.metas);
+            p.source.metas = v1.source.metas;
         }
         if (v1.source.variables!=null) {
             p.source.variables = new SourceCodeParamsYaml.VariableDefinition(v1.source.variables.globals, v1.source.variables.startInputAs);

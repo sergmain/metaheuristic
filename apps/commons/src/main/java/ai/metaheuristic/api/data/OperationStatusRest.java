@@ -20,6 +20,7 @@ import ai.metaheuristic.commons.S;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -52,7 +53,7 @@ public class OperationStatusRest extends BaseDataClass {
         this.errorMessages = Collections.singletonList(errorMessage);
     }
 
-    public OperationStatusRest(EnumsApi.OperationStatus status, String infoMessage, String errorMessage) {
+    public OperationStatusRest(EnumsApi.OperationStatus status, String infoMessage, @Nullable String errorMessage) {
         this.status = status;
         if (infoMessage!=null) {
             this.infoMessages = List.of(infoMessage);

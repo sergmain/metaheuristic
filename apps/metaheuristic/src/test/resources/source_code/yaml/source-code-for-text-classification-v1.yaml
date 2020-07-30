@@ -33,10 +33,7 @@ source:
         code: mh.experiment-result-processor
         context: internal
       metas:
-        - key: permutation
-          value: var-permutation
-        - key: metrics
-          value: var-metrics
-        - key: predicted
-          value: var-predicted
+        - permutation: var-permutation
+        - metrics: var-metrics
+        - predicted: var-predicted
 version: 1

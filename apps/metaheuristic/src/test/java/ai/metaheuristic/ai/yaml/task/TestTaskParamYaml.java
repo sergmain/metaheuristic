@@ -24,7 +24,6 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -103,7 +102,7 @@ public class TestTaskParamYaml {
                 null,
                 null,
                 false,
-                List.of()
+                Map.of()
         )));
 
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);

@@ -19,7 +19,6 @@ package ai.metaheuristic.api.data.exec_context;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
@@ -121,7 +120,7 @@ public class ExecContextParamsYaml implements BaseParams {
         public Long timeoutBeforeTerminate;
         public @NonNull final List<Variable> inputs = new ArrayList<>();
         public @NonNull final List<Variable> outputs = new ArrayList<>();
-        public @NonNull List<Meta> metas = new ArrayList<>();
+        public @NonNull Map<String, String> metas = new HashMap<>();
 
         public Process(@NonNull String processName, @NonNull String processCode, @NonNull String internalContextId, @NonNull FunctionDefinition function) {
             this.processName = processName;

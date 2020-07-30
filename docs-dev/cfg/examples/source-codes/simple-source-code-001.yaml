@@ -7,5 +7,4 @@ processes:
     type: FILE_PROCESSING
     parallelExec: false
 metas:
-  - key: result-file-extension
-    value: .bin
+  - result-file-extension: .bin

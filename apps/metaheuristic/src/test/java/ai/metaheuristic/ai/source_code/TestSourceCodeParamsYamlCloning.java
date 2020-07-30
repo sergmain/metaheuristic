@@ -17,13 +17,13 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Serge
@@ -51,7 +51,7 @@ public class TestSourceCodeParamsYamlCloning {
         p.timeoutBeforeTerminate = 120L;
 
         p.outputs.add( new SourceCodeParamsYaml.Variable("output-code"));
-        p.metas.add(new Meta("key", "value", "ext"));
+        p.metas.put("key", "value");
 
         SourceCodeParamsYaml.Process p1 = p.clone();
 
@@ -83,9 +83,6 @@ public class TestSourceCodeParamsYamlCloning {
 
         assertNotNull(p.metas);
         assertEquals(1, p1.metas.size());
-        assertEquals("key", p1.metas.get(0).key);
-        assertEquals("value", p1.metas.get(0).value);
-        assertEquals("ext", p1.metas.get(0).ext);
-
+        assertEquals("value", p1.metas.get("key"));
     }
 }
