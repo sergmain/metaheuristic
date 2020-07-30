@@ -280,9 +280,11 @@ public class VariableService {
 
     @Transactional(readOnly = true)
     public List<String> findFilenameByBatchId(Long batchId, Long execContextId) {
+/*
         if (true) {
             throw new NotImplementedException("Need to re-write");
         }
+*/
         return variableRepository.findFilenameByVariableAndExecContextId(batchId.toString(), execContextId);
     }
 
@@ -291,9 +293,11 @@ public class VariableService {
         if (batchIds.isEmpty()) {
             return List.of();
         }
+/*
         if (true) {
             throw new NotImplementedException("Need to re-write");
         }
+*/
         return variableRepository.getFilenamesForBatchIds(batchIds);
     }
 

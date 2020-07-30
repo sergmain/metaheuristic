@@ -16,16 +16,10 @@
 
 package ai.metaheuristic.ai.yaml.batch;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.data.BaseParams;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.beans.Transient;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Serge
@@ -35,7 +29,7 @@ import java.util.Map;
 @Data
 public class BatchParamsYaml implements BaseParams {
 
-    public final int version=2;
+    public final int version=1;
 
     @Override
     public boolean checkIntegrity() {

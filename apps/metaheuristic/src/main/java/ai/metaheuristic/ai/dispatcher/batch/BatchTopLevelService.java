@@ -108,7 +108,6 @@ public class BatchTopLevelService {
 
     @SuppressWarnings("unused")
     public BatchData.ExecStatuses getBatchExecStatuses(DispatcherContext context) {
-        //noinspection UnnecessaryLocalVariable
         BatchData.ExecStatuses execStatuses = new BatchData.ExecStatuses(batchRepository.getBatchExecStatuses(context.getCompanyId()));
         return execStatuses;
     }
