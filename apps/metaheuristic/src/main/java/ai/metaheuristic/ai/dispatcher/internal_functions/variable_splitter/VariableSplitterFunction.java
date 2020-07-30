@@ -24,46 +24,52 @@ import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
-import ai.metaheuristic.ai.exceptions.*;
+import ai.metaheuristic.ai.exceptions.BatchProcessingException;
+import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
+import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
+import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
-import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.Yaml;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
@@ -80,11 +86,6 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class VariableSplitterFunction implements InternalFunction {
-
-    private static final String ATTACHMENTS_POOL_CODE = "attachments";
-    private static final Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml", ".yml");
-    private static final String CONFIG_FILE = "config.yaml";
-    private static final List<String> EXCLUDE_FROM_MAPPING = List.of("config.yaml", "config.yml");
 
     private final Globals globals;
     private final SourceCodeCache sourceCodeCache;
@@ -110,26 +111,30 @@ public class VariableSplitterFunction implements InternalFunction {
             Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
 
+        if (taskParamsYaml.task.inputs.isEmpty()) {
+            throw new IllegalStateException("Input variable wasn't specified");
+        }
         if (taskParamsYaml.task.inputs.size()>1) {
-            throw new IllegalStateException("Too many input codes");
+            throw new IllegalStateException("Too many input variables");
         }
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
-
+        String originFilename;
         // check the presence of variable
         if (inputVariable.context== EnumsApi.VariableContext.local) {
-            Variable bd = variableRepository
+            Variable v = variableRepository
                     .findById(inputVariable.id)
                     .orElseThrow(()-> new IllegalStateException("Variable not found for code " + inputVariable));
+            originFilename = v.filename;
         }
         else {
             GlobalVariable gv = globalVariableRepository
                     .findById(inputVariable.id)
                     .orElseThrow(()->new IllegalStateException("GlobalVariable not found for code " + inputVariable));
+            originFilename = gv.filename;
         }
 
-        String originFilename = inputVariable.realName;
         if (S.b(originFilename)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, "variable.filename is blank");
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.input_variable_isnt_file, "variable.filename is blank");
         }
 
         String ext = StrUtils.getExtension(originFilename);
@@ -147,14 +152,13 @@ public class VariableSplitterFunction implements InternalFunction {
 
             if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
                 log.debug("Start unzipping archive");
-//                Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir);
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, mapping);
+                loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, mapping, taskParamsYaml, taskId);
             }
             else {
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, Map.of(dataFile.getName(), originFilename));
+                loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, taskId);
             }
         }
         catch(Throwable th) {
@@ -174,30 +178,41 @@ public class VariableSplitterFunction implements InternalFunction {
         return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 
-    public void loadFilesFromDirAfterZip(Long sourceCodeId, Long execContextId, String internalContextId, File srcDir, final Map<String, String> mapping) throws IOException {
+    public void loadFilesFromDirAfterZip(
+            Long sourceCodeId, Long execContextId, String taskContextId, File srcDir,
+            final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) throws IOException {
 
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode==null) {
             throw new IllegalStateException("#995.200 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
         }
-        ExecContext wb = execContextCache.findById(execContextId);
-        if (wb==null) {
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec==null) {
             throw new IllegalStateException("#995.202 execContext wasn't found, execContextId: " + execContextId);
         }
+        ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
 
-        final AtomicBoolean isEmpty = new AtomicBoolean(true);
+        final ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
+        if (process==null) {
+            throw new BreakFromLambdaException("Process '"+taskParamsYaml.task.processCode+"'not found");
+        }
+
+        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
+        List<ExecContextData.ProcessVertex> subProcesses = ExecContextProcessGraphService.findSubProcesses(processGraph, process.processCode);
+
+        final String variableName = MetaUtils.getValue(process.metas, "output-variable");
+        if (S.b(variableName)) {
+            throw new BreakFromLambdaException("Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
+        }
+
+        final List<Long> lastIds = new ArrayList<>();
+        AtomicInteger permutationNumber = new AtomicInteger(0);
         Files.list(srcDir.toPath())
-                .filter(o -> {
-                    File f = o.toFile();
-                    return !EXCLUDE_EXT.contains(StrUtils.getExtension(f.getName()));
-                })
                 .forEach( dataFilePath ->  {
-                    isEmpty.set(false);
                     File file = dataFilePath.toFile();
-                    String ctxId = internalContextId+"," + idsRepository.save(new Ids()).id;
+                    permutationNumber.incrementAndGet();
                     try {
                         if (file.isDirectory()) {
-                            final File mainDocFile = getMainDocumentFileFromConfig(file, mapping);
                             final Stream<BatchTopLevelService.FileWithMapping> files = Files.list(dataFilePath)
                                     .filter(o -> o.toFile().isFile())
                                     .map(f -> {
@@ -205,10 +220,16 @@ public class VariableSplitterFunction implements InternalFunction {
                                         final String actualFileName = mapping.get(currFileName);
                                         return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
                                     });
-                            createAndProcessTask(sourceCode, wb, files, mainDocFile, ctxId);
+                            createTasksForSubProcesses(files, execContextId, execContextParamsYaml, subProcesses, permutationNumber, taskId, variableName,
+                                    execContextParamsYaml.variables.inline, lastIds
+                            );
                         } else {
                             String actualFileName = mapping.get(file.getName());
-                            createAndProcessTask(sourceCode, wb, Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), file, ctxId);
+                            createTasksForSubProcesses(
+                                    Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)),
+                                    execContextId, execContextParamsYaml, subProcesses, permutationNumber, taskId, variableName,
+                                    execContextParamsYaml.variables.inline, lastIds
+                            );
                         }
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;
@@ -222,22 +243,22 @@ public class VariableSplitterFunction implements InternalFunction {
 
     /**
      *
-     * @param permutedVariables
+     * @param files
      * @param execContextId
      * @param execContextParamsYaml
      * @param subProcesses
      * @param permutationNumber
      * @param parentTaskId
-     * @param variableName
+     * @param outputVariableName
      * @param inlines
      * @param lastIds
-     * @param inlineVariableName
-     * @param inlinePermuted
      */
     public void createTasksForSubProcesses(
-            List<VariableUtils.VariableHolder> permutedVariables, Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
-            AtomicInteger permutationNumber, Long parentTaskId, String variableName,
-            Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted) {
+            Stream<BatchTopLevelService.FileWithMapping> files, Long execContextId, ExecContextParamsYaml execContextParamsYaml,
+            List<ExecContextData.ProcessVertex> subProcesses,
+            AtomicInteger permutationNumber, Long parentTaskId, String outputVariableName,
+            Map<String, Map<String, String>> inlines, List<Long> lastIds) {
+
         List<Long> parentTaskIds = List.of(parentTaskId);
         TaskImpl t = null;
         String subProcessContextId = null;
@@ -265,157 +286,30 @@ public class VariableSplitterFunction implements InternalFunction {
             String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
             lastIds.add(t.id);
 
-            {
-                VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(permutedVariables);
-                String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
-                byte[] bytes = yaml.getBytes();
-                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-                Variable v = variableService.createInitialized(bais, bytes.length, variableName, null, execContextId, currTaskContextId);
-            }
-            {
-                Yaml yampUtil = YamlUtils.init(Map.class);
-                String yaml = yampUtil.dumpAsMap(inlinePermuted);
-                byte[] bytes = yaml.getBytes();
-                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-                Variable v = variableService.createInitialized(bais, bytes.length, inlineVariableName, null, execContextId, currTaskContextId);
-            }
+            List<VariableUtils.VariableHolder> variableHolders = files
+                    .map(f-> {
+                        String variableName = S.f("mh.array-element-%s", UUID.randomUUID().toString());
 
+                        Variable v;
+                        try {
+                            try( FileInputStream fis = new FileInputStream(f.file)) {
+                                v = variableService.createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
+                            }
+                        } catch (IOException e) {
+                            throw new BreakFromLambdaException(e);
+                        }
+                        SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId);
+                        return new VariableUtils.VariableHolder(sv);
+                    })
+                    .collect(Collectors.toList());
+
+            VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(variableHolders);
+            String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
+            byte[] bytes = yaml.getBytes();
+            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+            Variable v = variableService.createInitialized(bais, bytes.length, outputVariableName, null, execContextId, currTaskContextId);
+
+            int i=0;
         }
     }
-
-
-    private void createAndProcessTask(SourceCodeImpl sourceCode, ExecContext ec, Stream<BatchTopLevelService.FileWithMapping> dataFiles, File mainDocFile, String contextId) {
-
-        // TODO this method need to be re-written completely
-        if (true) {
-            throw new NotImplementedException("Need to re-write and use names of variables from function config");
-        }
-
-/*
-        long nanoTime = System.nanoTime();
-        List<String> attachments = new ArrayList<>();
-        String mainPoolCode = String.format("%d-%s-%d", ec.getId(), Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
-        String attachPoolCode = String.format("%d-%s-%d", ec.getId(), ATTACHMENTS_POOL_CODE, nanoTime);
-        final AtomicBoolean isMainDocPresent = new AtomicBoolean(false);
-        AtomicReference<String> mainDocFilename = new AtomicReference<>();
-        dataFiles.forEach( fileWithMapping -> {
-            String originFilename = fileWithMapping.originName!=null ? fileWithMapping.originName : fileWithMapping.file.getName();
-            if (EXCLUDE_EXT.contains(StrUtils.getExtension(originFilename))) {
-                return;
-            }
-            String variable;
-            if (fileWithMapping.file.equals(mainDocFile)) {
-                variable = mainPoolCode;
-                isMainDocPresent.set(true);
-                mainDocFilename.set(fileWithMapping.originName);
-            }
-            else {
-                variable = attachPoolCode;
-                if (true) {
-                    throw new NotImplementedException("Need to re-write and use names of variables from function config");
-                }
-//                attachments.add(code);
-            }
-
-            variableService.storeInitialResource(fileWithMapping.file, variable, originFilename, ec.getId(), contextId);
-        });
-
-        if (!isMainDocPresent.get()) {
-            throw new BatchResourceProcessingException("#995.180 main document wasn't found");
-        }
-
-        SourceCodeApiData.TaskProducingResultComplex countTasks = execContextService.produceTasks(false, sourceCode, ec.getId());
-        if (countTasks.sourceCodeProducingStatus != EnumsApi.SourceCodeProducingStatus.OK) {
-            execContextService.changeValidStatus(ec.getId(), false);
-            throw new BatchResourceProcessingException("#995.220 validation of sourceCode was failed, status: " + countTasks.sourceCodeValidateStatus);
-        }
-
-        if (globals.maxTasksPerExecContext < countTasks.numberOfTasks) {
-            execContextService.changeValidStatus(ec.getId(), false);
-            throw new BatchResourceProcessingException(
-                    "#995.220 number of tasks for this execContext exceeded the allowed maximum number. ExecContext was created but its status is 'not valid'. " +
-                            "Allowed maximum number of tasks: " + globals.maxTasksPerExecContext +", tasks in this execContext: " + countTasks.numberOfTasks);
-        }
-        execContextService.changeValidStatus(ec.getId(), true);
-
-        // start producing new tasks
-        OperationStatusRest operationStatus = execContextService.execContextTargetExecState(ec.getId(), EnumsApi.ExecContextState.PRODUCING);
-
-        if (operationStatus.isErrorMessages()) {
-            throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
-        }
-        if (true) {
-            throw new NotImplementedException("not yet");
-        }
-        // TODO 2020-02-05 at this point we have to create new tasks
-        //  do we need to invoke produceTasks() ?
-        execContextService.produceTasks(true, sourceCode, ec.getId());
-//        sourceCodeService.createAllTasks();
-
-        operationStatus = execContextService.execContextTargetExecState(ec.getId(), EnumsApi.ExecContextState.STARTED);
-
-        if (operationStatus.isErrorMessages()) {
-            throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
-        }
-*/
-    }
-
-    public static File getMainDocumentFileFromConfig(File srcDir, Map<String, String> mapping) throws IOException {
-        File configFile = new File(srcDir, CONFIG_FILE);
-        if (!configFile.exists()) {
-            throw new BatchResourceProcessingException("#995.140 config.yaml file wasn't found in path " + srcDir.getPath());
-        }
-
-        if (!configFile.isFile()) {
-            throw new BatchResourceProcessingException("#995.150 config.yaml must be a file, not a directory");
-        }
-        String mainDocumentTemp = getMainDocument(configFile);
-
-        Map.Entry<String, String> entry =
-                mapping.entrySet()
-                        .stream()
-                        .filter(e -> e.getValue().equals(srcDir.getName() + '/' + mainDocumentTemp))
-                        .findFirst().orElse(null);
-
-        String mainDocument = entry!=null ? new File(entry.getKey()).getName() : mainDocumentTemp;
-
-        final File mainDocFile = new File(srcDir, mainDocument);
-        if (!mainDocFile.exists()) {
-            throw new BatchResourceProcessingException("#995.170 main document file "+mainDocument+" wasn't found in path " + srcDir.getPath());
-        }
-        return mainDocFile;
-    }
-
-    private static String getMainDocument(File configFile) throws IOException {
-        try (InputStream is = new FileInputStream(configFile)) {
-            return getMainDocument(is);
-        }
-    }
-
-    public static String getMainDocument(InputStream is) {
-        String s;
-        try {
-            s = IOUtils.toString(is, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new BatchConfigYamlException("#995.153 Can't read config.yaml file, bad content, Error: " + e.getMessage());
-        }
-        if (!s.contains("mainDocument:")) {
-            throw new BatchConfigYamlException("#995.154 Wrong format of config.yaml file, mainDocument field wasn't found");
-        }
-
-        // let's try to fix customer's error
-        if (s.charAt("mainDocument:".length())!=' ') {
-            s = s.replace("mainDocument:", "mainDocument: ");
-        }
-
-        Yaml yaml = new Yaml();
-        Map<String, Object> config = yaml.load(s);
-        String mainDocumentTemp = config.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH).toString();
-        if (StringUtils.isBlank(mainDocumentTemp)) {
-            throw new BatchResourceProcessingException("#995.160 config.yaml must contain non-empty field '" + Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH + "' ");
-        }
-        return mainDocumentTemp;
-    }
-
-
 }

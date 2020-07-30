@@ -39,7 +39,7 @@ public class ConstsApi {
     public static final String META_MH_RESULT_FILE_EXTENSION = "mh.result-file-extension";
 
 
-    // === function' metas
+    // === functions' metas
 
     //
     public static final String META_MH_FUNCTION_PARAMS_AS_FILE_META = "mh.function-params-as-file";
@@ -53,7 +53,11 @@ public class ConstsApi {
 
     public static final String META_MH_FUNCTION_SUPPORTED_OS = "mh.function-supported-os";
 
-    public static final String META_MH_OUTPUT_IS_DYNAMIC = "mh.output-is-dynamic";
+    // === functions' specific metas
+
+    public static final String META_MH_OUTPUT_IS_DYNAMIC = "output-is-dynamic";
+
+    // ===
 
     public static final String EMPTY_GRAPH = "strict digraph G { }";
 

@@ -16,21 +16,6 @@
 
 package ai.metaheuristic.ai.batch;
 
-import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
-import ai.metaheuristic.ai.dispatcher.internal_functions.variable_splitter.VariableSplitterFunction;
-import ai.metaheuristic.api.ConstsApi;
-import ai.metaheuristic.commons.utils.DirUtils;
-import org.apache.commons.io.FileUtils;
-
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-
 /**
  * @author Serge
  * Date: 11/19/2019
@@ -38,50 +23,5 @@ import java.util.Map;
  */
 public class TestBatchConfigYamlFile {
 
-    @Test
-    public void testParsing() throws IOException {
 
-        try (InputStream is = TestBatchConfigYamlFile.class.getResourceAsStream("/yaml/batch/bad-config.yaml")) {
-            VariableSplitterFunction.getMainDocument(is);
-        }
-    }
-
-    @Test
-    public void testDirContent_01() throws IOException {
-        File dir=null;
-        try {
-            dir = DirUtils.createTempDir("batch-config-test-");
-            File artifact = new File(dir, ConstsApi.ARTIFACTS_DIR);
-            FileUtils.write(new File(artifact, "aaa.xml"), "aaa", StandardCharsets.UTF_8);
-            FileUtils.write(new File(artifact, "bbb.xml"), "bbb", StandardCharsets.UTF_8);
-            FileUtils.write(new File(artifact, "config.yaml"), "mainDocument: ccc.xml", StandardCharsets.UTF_8);
-
-            assertThrows(BatchResourceProcessingException.class, ()->VariableSplitterFunction.getMainDocumentFileFromConfig(artifact, Map.of()));
-        }
-        finally {
-            if (dir!=null) {
-                FileUtils.deleteDirectory(dir);
-            }
-        }
-    }
-
-    @Test
-    public void testDirContent_02() throws IOException {
-        File dir=null;
-        try {
-            dir = DirUtils.createTempDir("batch-config-test-");
-            File artifact = new File(dir, ConstsApi.ARTIFACTS_DIR);
-            FileUtils.write(new File(artifact, "aaa1.xml"), "aaa", StandardCharsets.UTF_8);
-            FileUtils.write(new File(artifact, "bbb1.xml"), "bbb", StandardCharsets.UTF_8);
-            FileUtils.write(new File(artifact, "config.yaml"), "mainDocument: aaa.xml", StandardCharsets.UTF_8);
-
-//            thrown.expect(BatchResourceProcessingException.class);
-            File f = VariableSplitterFunction.getMainDocumentFileFromConfig(artifact, Map.of("artifacts/aaa1.xml", "artifacts/aaa.xml", "artifacts/bbb1.xml", "artifacts/bbb.xml"));
-        }
-        finally {
-            if (dir!=null) {
-                FileUtils.deleteDirectory(dir);
-            }
-        }
-    }
 }

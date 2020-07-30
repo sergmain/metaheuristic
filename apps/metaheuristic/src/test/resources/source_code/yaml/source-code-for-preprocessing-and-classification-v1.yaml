@@ -52,14 +52,16 @@ source:
               - name: feature-processing_matrix
     - code: mh.permute-variables-and-hyper-params
       name: permute variables and hyper params
-      metas:
-        - key: variables
-          value: feature-processing_matrix, feature-processing_cluster_size_1
       function:
         code: mh.permute-variables-and-hyper-params
         context: internal
-      outputs:
-        - name: feature-per-task
+      metas:
+        - output-is-dynamic: true
+        - variables: feature-processing_matrix, feature-processing_cluster_size_1
+        - inline-key: mh.hyper-params
+        - permute-inline: true
+        - output-variable: feature-per-task
+        - inline-permutation: var-inline-permutation
       subProcesses:
         logic: sequential
         processes:

@@ -10,19 +10,29 @@ source:
         context: internal
       inputs:
         - name: input-data
-      outputs:
-        - name: batch-items
+      metas:
+        - output-is-dynamic: true
+        - output-variable: var-batch-item
       subProcesses:
         logic: and
         processes:
-          - code: process-item
-            name: process-item
+          - code: fileless
+            name: fileless
             function:
-              code: process-item:1.0
+              code: fileless-function:1.0
             inputs:
-              - name: batch-items
+              - name: batch-item
             outputs:
               - name: processed-file
+    - code: mh.batch-result-processor
+      name: baatch result processor
+      function:
+        code: mh.batch-result-processor
+        context: internal
+      outputs:
+        - name: batch-result
+      metas:
+        - batch-item: batch-item
     - code: mh.aggregate
       name: mh.aggregate
       function:

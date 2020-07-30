@@ -57,14 +57,14 @@ public class Variable implements Serializable {
      */
     @Nullable
     @Column(name = "EXEC_CONTEXT_ID")
-    private Long execContextId;
+    public Long execContextId;
 
     @Nullable
     @Column(name = "TASK_CONTEXT_ID")
-    private String taskContextId;
+    public String taskContextId;
 
     @Column(name = "UPLOAD_TS")
-    private Timestamp uploadTs;
+    public Timestamp uploadTs;
 
     @Column(name = "DATA")
     @Lob
