@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -89,6 +90,7 @@ public class ExecContextService {
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextFSM execContextFSM;
     private final TaskProducingService taskProducingService;
+    private final TaskProducingCoreService taskProducingCoreService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -247,7 +249,7 @@ public class ExecContextService {
         // except globals and startInputAs
         // but we need to initialize descriptor of input variable
         p.inputs.stream()
-                .map(v -> taskProducingService.toInputVariable(v, taskParams.task.taskContextId, execContextId))
+                .map(v -> taskProducingCoreService.toInputVariable(v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
         variableService.initOutputVariables(taskParams, execContext, p);

@@ -60,8 +60,8 @@ public class TaskWithInternalContextEventService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final VariableService variableService;
 
-    // this code is only for testing
     private static Long lastTaskId=null;
+    // this code is only for testing
     public static boolean taskFinished(Long id) {
         return id.equals(lastTaskId);
     }
@@ -81,7 +81,7 @@ public class TaskWithInternalContextEventService {
                         return null;
                     }
                     if (task.execState==EnumsApi.TaskExecState.OK.value || task.execState==EnumsApi.TaskExecState.BROKEN.value || task.execState==EnumsApi.TaskExecState.ERROR.value) {
-                        log.error("#707.015  Task #"+event.taskId+" already was finished");
+                        log.error("#707.015 Task #"+event.taskId+" already was finished");
                         return null;
                     }
                     task = taskPersistencer.toInProgressSimpleLambda(event.taskId, task);

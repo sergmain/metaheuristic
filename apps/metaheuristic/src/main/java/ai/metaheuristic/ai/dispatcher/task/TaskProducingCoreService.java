@@ -16,9 +16,14 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -31,6 +36,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -43,6 +49,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class TaskProducingCoreService {
 
+    private final VariableService variableService;
+    private final GlobalVariableRepository globalVariableRepository;
     private final TaskRepository taskRepository;
     private final FunctionService functionService;
 
@@ -70,7 +78,7 @@ public class TaskProducingCoreService {
         else {
             TaskParamsYaml.FunctionConfig fConfig = functionService.getFunctionConfig(process.function);
             if (fConfig == null) {
-                log.error("#171.010 Function '{}' wasn't found", process.function.code);
+                log.error("#171.020 Function '{}' wasn't found", process.function.code);
                 return null;
             }
             taskParams.task.function = fConfig;
@@ -98,4 +106,38 @@ public class TaskProducingCoreService {
         return task;
     }
 
+    public TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
+        TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
+        if (v.context== EnumsApi.VariableContext.local || v.context== EnumsApi.VariableContext.array) {
+            String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableService.getParentContext(taskContextId) : taskContextId;
+            if (S.b(contextId)) {
+                throw new TaskCreationException(
+                        S.f("#171.040 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                                v.name, v.context, taskContextId, execContextId));
+            }
+            SimpleVariable variable = variableService.findVariableInAllInternalContexts(v.name, contextId, execContextId);
+            if (variable==null) {
+                throw new TaskCreationException(
+                        S.f("#171.060 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                                v.name, v.context, taskContextId, execContextId));
+            }
+            iv.id = variable.id;
+            iv.realName = variable.originalFilename;
+        }
+        else {
+            GlobalVariable variable = globalVariableRepository.findIdByName(v.name);
+            if (variable==null) {
+                throw new TaskCreationException(
+                        S.f("#171.080 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                                v.name, v.context, taskContextId, execContextId));
+            }
+            iv.id = variable.id;
+        }
+        iv.context = v.context;
+        iv.name = v.name;
+        iv.sourcing = v.sourcing;
+        iv.disk = v.disk;
+        iv.git = v.git;
+        return iv;
+    }
 }

@@ -3,7 +3,7 @@ source:
   uid: SourceCode for experiment
   variables:
     globals:
-      - test-variable
+      - global-test-variable
     inline:
       mh.hyper-params:
         seed: '42'
@@ -16,7 +16,7 @@ source:
       function:
         code: function-01:1.1
       inputs:
-        - name: test-variable
+        - name: global-test-variable
       outputs:
         - name: assembled-raw-output
     - code: dataset-processing
@@ -58,7 +58,7 @@ source:
         code: mh.permute-variables-and-inlines
         context: internal
       metas:
-        - mh.output-is-dynamic: true
+        - output-is-dynamic: true
         - variables: feature-output-1, feature-output-2
         - inline-key: mh.hyper-params
         - permute-inline: true

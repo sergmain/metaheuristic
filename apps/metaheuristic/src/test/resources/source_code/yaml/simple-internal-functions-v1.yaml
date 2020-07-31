@@ -2,7 +2,7 @@ source:
   uid: simple-internal-functions-v1
   variables:
     globals:
-      - global-for-simple-test
+      - global-test-variable
   processes:
     - code: mh.variable-splitter
       name: mh.variable-splitter
@@ -10,7 +10,7 @@ source:
         code: mh.variable-splitter
         context: internal
       inputs:
-        - name: global-for-simple-test
+        - name: global-test-variable
       outputs:
         - name: splitted-element
       subProcesses:

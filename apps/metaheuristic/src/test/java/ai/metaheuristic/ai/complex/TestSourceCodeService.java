@@ -129,7 +129,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         execContextFSM.toStarted(execContextForTest);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
 
-        GlobalVariable gv = globalVariableRepository.findIdByName("test-variable");
+        GlobalVariable gv = globalVariableRepository.findIdByName("global-test-variable");
         assertNotNull(gv);
 
         assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
@@ -415,7 +415,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertEquals("LSTM", taskParamsYaml.task.inline.get("mh.hyper-params").get("RNN"));
 
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
-        assertEquals("test-variable", inputVariable.name);
+        assertEquals("global-test-variable", inputVariable.name);
         assertEquals(EnumsApi.VariableContext.global, inputVariable.context);
         assertEquals(testGlobalVariable.id, inputVariable.id);
 

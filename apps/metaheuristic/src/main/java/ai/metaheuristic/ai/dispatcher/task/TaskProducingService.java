@@ -17,17 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
-import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +36,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-import static ai.metaheuristic.api.EnumsApi.*;
+import static ai.metaheuristic.api.EnumsApi.FunctionExecContext;
+import static ai.metaheuristic.api.EnumsApi.TaskProducingStatus;
 
 @Service
 @Slf4j
@@ -48,9 +45,7 @@ import static ai.metaheuristic.api.EnumsApi.*;
 @RequiredArgsConstructor
 public class TaskProducingService {
 
-    private final VariableService variableService;
     private final TaskProducingCoreService taskProducingCoreService;
-    private final GlobalVariableRepository globalVariableRepository;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionProcessor internalFunctionProcessor;
 
@@ -63,18 +58,18 @@ public class TaskProducingService {
             String processCode = processVertex.process;
             ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(processCode);
             if (p == null) {
-                // mh.finish can be not defined in sourceCode
+                // mh.finish can be omitted in sourceCode
                 if (processCode.equals(Consts.MH_FINISH_FUNCTION)) {
                     p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, "1",
                             Consts.MH_FINISH_FUNCTION_INSTANCE);
                 }
                 else {
-                    return new TaskData.ProduceTaskResult(TaskProducingStatus.PROCESS_NOT_FOUND_ERROR, "Process '"+processCode+"' wasn't found");
+                    return new TaskData.ProduceTaskResult(TaskProducingStatus.PROCESS_NOT_FOUND_ERROR, "#375.020 Process '"+processCode+"' wasn't found");
                 }
             }
             if (internalFunctionProcessor.isRegistered(p.function.code) && p.function.context!= FunctionExecContext.internal) {
                 return new TaskData.ProduceTaskResult(TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR,
-                        "Process '"+processCode+"' must be internal");
+                        "#375.040 Process '"+processCode+"' must be internal");
             }
             Set<ExecContextData.ProcessVertex> ancestors = ExecContextProcessGraphService.findAncestors(processGraph, processVertex);
             ExecContextParamsYaml.Process internalFuncProcess = checkForInternalFunctions(execContextParamsYaml, ancestors, p);
@@ -106,7 +101,7 @@ public class TaskProducingService {
         for (ExecContextData.ProcessVertex ancestor : ancestors) {
             ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(ancestor.process);
             if (p==null) {
-                log.warn("Unusual state, need to investigate");
+                log.warn("#375.060 Unusual state, need to investigate");
                 continue;
             }
             if (!currProcess.internalContextId.startsWith(p.internalContextId)) {
@@ -132,54 +127,27 @@ public class TaskProducingService {
 
         if (isPersist) {
             // for external Functions internalContextId==process.internalContextId
-            Task t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
-                    execContextParamsYaml.variables!=null ? execContextParamsYaml.variables.inline : null);
-            if (t == null) {
+            try {
+                Task t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
+                        execContextParamsYaml.variables.inline);
+                if (t == null) {
+                    result.status = TaskProducingStatus.TASK_PRODUCING_ERROR;
+                    result.error = "#375.080 Unknown reason of error while task creation";
+                    return result;
+                }
+                result.taskId = t.getId();
+                execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, List.of(t.getId()));
+            } catch (TaskCreationException e) {
                 result.status = TaskProducingStatus.TASK_PRODUCING_ERROR;
-                result.error = "Unknown reason of error while task creation";
+                result.error = "#375.100 task creation error " + e.getMessage();
+                log.error(result.error);
                 return result;
             }
-            result.taskId = t.getId();
-            execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, List.of(t.getId()));
         }
         result.numberOfTasks=1;
         result.status = TaskProducingStatus.OK;
         return result;
     }
 
-    public TaskParamsYaml.InputVariable toInputVariable(ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
-        TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
-        if (v.context== VariableContext.local || v.context== VariableContext.array) {
-            String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableService.getParentContext(taskContextId) : taskContextId;
-            if (S.b(contextId)) {
-                throw new IllegalStateException(
-                        S.f("(S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
-                                v.name, v.context, taskContextId, execContextId));
-            }
-            SimpleVariable variable = variableService.findVariableInAllInternalContexts(v.name, contextId, execContextId);
-            if (variable==null) {
-                throw new IllegalStateException(
-                        S.f("(variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
-                                v.name, v.context, taskContextId, execContextId));
-            }
-            iv.id = variable.id;
-            iv.realName = variable.originalFilename;
-        }
-        else {
-            GlobalVariable variable = globalVariableRepository.findIdByName(v.name);
-            if (variable==null) {
-                throw new IllegalStateException(
-                        S.f("(variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
-                                v.name, v.context, taskContextId, execContextId));
-            }
-            iv.id = variable.id;
-        }
-        iv.context = v.context;
-        iv.name = v.name;
-        iv.sourcing = v.sourcing;
-        iv.disk = v.disk;
-        iv.git = v.git;
-        return iv;
-    }
 
 }

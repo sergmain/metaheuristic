@@ -149,8 +149,12 @@ public class SouthbridgeService {
         if (variable ==null) {
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable for variableId "+variableId+" wasn't found" );
         }
-//        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable)));
-//        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(variable.getParams());
+
+        // TODO 2020-07-31 should this code be deleted?
+/*
+        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable)));
+        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(variable.getParams());
+*/
 
         File tempDir=null;
         try {
@@ -308,7 +312,6 @@ public class SouthbridgeService {
     public String processRequest(String data, String remoteAddress) {
         ProcessorCommParamsYaml scpy = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
         DispatcherCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy);
-        //noinspection UnnecessaryLocalVariable
         String yaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.toString(lcpy);
         return yaml;
     }

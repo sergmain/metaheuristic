@@ -133,7 +133,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         return getSourceCodeV1();
     }
 
-    public static final String TEST_GLOBAL_VARIABLE = "test-variable";
+    public static final String GLOBAL_TEST_VARIABLE = "global-test-variable";
 
     @BeforeEach
     public void beforePreparingSourceCode() {
@@ -187,16 +187,16 @@ public abstract class PreparingSourceCode extends PreparingCore {
         byte[] bytes = "A resource for input pool".getBytes();
 
         try {
-            globalVariableService.deleteByVariable(TEST_GLOBAL_VARIABLE);
+            globalVariableService.deleteByVariable(GLOBAL_TEST_VARIABLE);
         } catch (Throwable th) {
             log.error("error preparing variables", th);
         }
 
-        testGlobalVariable = globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, TEST_GLOBAL_VARIABLE,"file-01.txt");
+        testGlobalVariable = globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, GLOBAL_TEST_VARIABLE,"file-01.txt");
 
         execContextYaml = new ExecContextParamsYaml();
         execContextYaml.variables.globals = new ArrayList<>();
-        execContextYaml.variables.globals.add(TEST_GLOBAL_VARIABLE);
+        execContextYaml.variables.globals.add(GLOBAL_TEST_VARIABLE);
     }
 
     private void cleanUp() {
@@ -240,7 +240,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         }
 
         try {
-            globalVariableService.deleteByVariable(TEST_GLOBAL_VARIABLE);
+            globalVariableService.deleteByVariable(GLOBAL_TEST_VARIABLE);
         } catch (Throwable th) {
             log.error("error", th);
         }
@@ -308,7 +308,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
             }
         }
         try {
-            globalVariableService.deleteByVariable(TEST_GLOBAL_VARIABLE);
+            globalVariableService.deleteByVariable(GLOBAL_TEST_VARIABLE);
         } catch (Throwable th) {
             log.error("error", th);
         }

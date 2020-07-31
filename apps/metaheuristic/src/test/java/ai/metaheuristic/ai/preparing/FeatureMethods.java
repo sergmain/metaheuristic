@@ -90,7 +90,6 @@ public abstract class FeatureMethods extends PreparingSourceCode {
         if (states==null) {
             return list.size();
         }
-        //noinspection UnnecessaryLocalVariable
         long count = list.stream().filter(o->states.contains(EnumsApi.ExecContextState.toState((Integer)o[1]))).count();
         return count;
     }
@@ -117,7 +116,6 @@ public abstract class FeatureMethods extends PreparingSourceCode {
         assertNotNull(d0.getReAssignedProcessorId().sessionId);
         assertEquals(processorIdAsStr, d0.getReAssignedProcessorId().reAssignedProcessorId);
 
-        //noinspection UnnecessaryLocalVariable
         String sessionId = d0.getReAssignedProcessorId().sessionId;
         return sessionId;
     }
