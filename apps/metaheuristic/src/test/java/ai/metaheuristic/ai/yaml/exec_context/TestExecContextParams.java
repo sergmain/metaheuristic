@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.yaml.exec_context;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Serge
@@ -31,5 +31,28 @@ public class TestExecContextParams {
     @Test
     public void testVersion() {
         assertEquals( new ExecContextParamsYaml().version, ExecContextParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+    }
+
+    @Test
+    public void testMarshaling() {
+        ExecContextParamsYaml expy = new ExecContextParamsYaml();
+
+        ExecContextParamsYaml.FunctionDefinition fd1 = new ExecContextParamsYaml.FunctionDefinition("function#1");
+        ExecContextParamsYaml.Process p1 = new ExecContextParamsYaml.Process("process #1", "process #1", "1", fd1);
+
+        ExecContextParamsYaml.FunctionDefinition fd2 = new ExecContextParamsYaml.FunctionDefinition("function#2");
+        ExecContextParamsYaml.Process p2 = new ExecContextParamsYaml.Process("process #2", "process #2", "1", fd2);
+
+        expy.processes.add(p1);
+        expy.processes.add(p2);
+
+        ExecContextParamsYaml.Process p = expy.findProcess("process#3");
+        assertNull(p);
+
+        String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy);
+
+        System.out.println(s);
+        assertFalse(s.contains("processMap"));
+
     }
 }

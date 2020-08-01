@@ -20,18 +20,18 @@ source:
             function:
               code: fileless-function:1.0
             inputs:
-              - name: batch-item
+              - name: var-batch-item
             outputs:
               - name: processed-file
     - code: mh.batch-result-processor
-      name: baatch result processor
+      name: batch result processor
       function:
         code: mh.batch-result-processor
         context: internal
       outputs:
         - name: batch-result
       metas:
-        - batch-item: batch-item
+        - batch-item: var-batch-item
     - code: mh.aggregate
       name: mh.aggregate
       function:

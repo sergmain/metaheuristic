@@ -143,8 +143,13 @@ public class ExecContextParamsYaml implements BaseParams {
     @NonNull
     public String processesGraph = ConstsApi.EMPTY_GRAPH;
 
-    @JsonIgnore
     private HashMap<String, Process> processMap = null;
+
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    private HashMap<String, Process> getProcessMap() {
+        return processMap;
+    }
 
     @JsonIgnore
     public @Nullable Process findProcess(String processCode) {
