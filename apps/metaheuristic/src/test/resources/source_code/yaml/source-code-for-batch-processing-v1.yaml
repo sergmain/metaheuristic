@@ -8,9 +8,8 @@ source:
       function:
         code: mh.variable-splitter
         context: internal
-      inputs:
-        - name: input-data
       metas:
+        - variable-for-splitting: input-data
         - output-is-dynamic: true
         - output-variable: var-batch-item
       subProcesses:

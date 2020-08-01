@@ -58,7 +58,7 @@ public class TransferExperimentResult {
 //        - predicted: var-predicted
 //        - inline-key: mh.hyper-params
 //        - permute-inline: true
-        taskParamsYaml.task.metas.add(Map.of("feature-item", "var-feature-item"));
+        taskParamsYaml.task.metas.add(Map.of("variables-for-permutation", "var-feature-item"));
         taskParamsYaml.task.metas.add(Map.of("inline-permutation", "var-inline-permutation"));
         taskParamsYaml.task.metas.add(Map.of("metrics", "var-metrics"));
         taskParamsYaml.task.metas.add(Map.of("predicted", "var-predicted"));

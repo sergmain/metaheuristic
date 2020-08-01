@@ -119,9 +119,9 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         List<ExecContextData.ProcessVertex> subProcesses = ExecContextProcessGraphService.findSubProcesses(processGraph, process.processCode);
 
         // variableNames contains a list of variables for permutation
-        String variableNames = MetaUtils.getValue(taskParamsYaml.task.metas, "variables");
+        String variableNames = MetaUtils.getValue(taskParamsYaml.task.metas, "variables-for-permutation");
         if (S.b(variableNames)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "Meta 'variable' must be defined and can't be empty");
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "Meta 'variables-for-permutation' must be defined and can't be empty");
         }
         String[] names = StringUtils.split(variableNames, ", ");
 

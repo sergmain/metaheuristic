@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
-import ai.metaheuristic.ai.dispatcher.beans.Ids;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
@@ -35,9 +34,9 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
-import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -227,7 +226,8 @@ public class BatchTopLevelService {
             variableService.createInitialized(
                     file.getInputStream(), file.getSize(), startInputAs,
                     originFilename, creationResult.execContext.getId(),
-                    ""+idsRepository.save(new Ids()).id
+//                    ""+idsRepository.save(new Ids()).id
+                    "1"
             );
 
             b = new Batch(sourceCodeId, creationResult.execContext.getId(), Enums.BatchExecState.Stored,

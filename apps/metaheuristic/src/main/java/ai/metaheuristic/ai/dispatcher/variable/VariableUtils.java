@@ -78,5 +78,9 @@ public class VariableUtils {
         public String getName() {
             return globalVariable!=null ? globalVariable.name : variable.variable;
         }
+
+        public String getFilename() {
+            return globalVariable!=null ? globalVariable.filename : variable.originalFilename;
+        }
     }
 }

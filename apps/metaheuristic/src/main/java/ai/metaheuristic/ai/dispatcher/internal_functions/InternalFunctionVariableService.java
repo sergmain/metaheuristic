@@ -46,6 +46,11 @@ public class InternalFunctionVariableService {
     private final GlobalVariableRepository globalVariableRepository;
 
     @Nullable
+    public InternalFunctionData.InternalFunctionProcessingResult discoverVariables(Long execContextId, String taskContextId, String name, List<VariableUtils.VariableHolder> holders) {
+        return discoverVariables(execContextId, taskContextId, new String[]{name}, holders);
+    }
+
+    @Nullable
     public InternalFunctionData.InternalFunctionProcessingResult discoverVariables(Long execContextId, String taskContextId, String[] names, List<VariableUtils.VariableHolder> holders) {
         for (String name : names) {
             SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(name, taskContextId, execContextId);

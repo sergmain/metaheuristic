@@ -385,7 +385,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         Task task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
         assertNotNull(task);
 
-        // the calling of this method will produce warning "#705.340 can't assign any new task to the processor" which is correct behaviour
+        // the calling of this method may produce warning "#705.340 can't assign any new task to the processor" which is correct behaviour
         DispatcherCommParamsYaml.AssignedTask simpleTask2 =
                 execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
         assertNull(simpleTask2);

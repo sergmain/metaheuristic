@@ -59,7 +59,7 @@ source:
         context: internal
       metas:
         - output-is-dynamic: true
-        - variables: feature-output-1, feature-output-2
+        - variables-for-permutation: feature-output-1, feature-output-2
         - inline-key: mh.hyper-params
         - permute-inline: true
         - output-variable: feature-item

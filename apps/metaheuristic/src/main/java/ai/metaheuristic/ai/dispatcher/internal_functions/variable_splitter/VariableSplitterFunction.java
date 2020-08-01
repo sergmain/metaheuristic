@@ -20,12 +20,16 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -39,7 +43,6 @@ import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.utils.ContextUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -96,6 +99,7 @@ public class VariableSplitterFunction implements InternalFunction {
     private final GlobalVariableRepository globalVariableRepository;
     private final TaskProducingCoreService taskProducingCoreService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    private final InternalFunctionVariableService internalFunctionVariableService;
 
     @Override
     public String getCode() {
@@ -111,6 +115,7 @@ public class VariableSplitterFunction implements InternalFunction {
             Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
 
+/*
         if (taskParamsYaml.task.inputs.isEmpty()) {
             throw new IllegalStateException("Input variable wasn't specified");
         }
@@ -118,21 +123,22 @@ public class VariableSplitterFunction implements InternalFunction {
             throw new IllegalStateException("Too many input variables");
         }
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
-        String originFilename;
-        // check the presence of variable
-        if (inputVariable.context== EnumsApi.VariableContext.local) {
-            Variable v = variableRepository
-                    .findById(inputVariable.id)
-                    .orElseThrow(()-> new IllegalStateException("Variable not found for code " + inputVariable));
-            originFilename = v.filename;
-        }
-        else {
-            GlobalVariable gv = globalVariableRepository
-                    .findById(inputVariable.id)
-                    .orElseThrow(()->new IllegalStateException("GlobalVariable not found for code " + inputVariable));
-            originFilename = gv.filename;
+*/
+        String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
+        if (S.b(inputVariableName)) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "Meta 'variable-for-splitting' wasn't found");
         }
 
+        List<VariableUtils.VariableHolder> holders = new ArrayList<>();
+        InternalFunctionProcessingResult result = internalFunctionVariableService.discoverVariables(execContextId, taskContextId, inputVariableName, holders);
+        if (result != null) {
+            return result;
+        }
+        if (holders.size()>1) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "Too many variables");
+        }
+
+        String originFilename = holders.get(0).getFilename();
         if (S.b(originFilename)) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.input_variable_isnt_file, "variable.filename is blank");
         }
