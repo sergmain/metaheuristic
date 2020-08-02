@@ -97,6 +97,7 @@ public class TaskParamsYaml implements BaseParams {
 
         // name of file if this variable was uploaded from file
         // for global variable is always null
+        // TODO 2020-08-01 real name of file is stored in db, actually. why is it null?
         public @Nullable String realName;
     }
 

@@ -3,10 +3,10 @@ source:
   variables:
     startInputAs: input-data
   processes:
-    - code: mh.variable-splitter
-      name: mh.variable-splitter
+    - code: mh.batch-splitter
+      name: mh.batch-splitter
       function:
-        code: mh.variable-splitter
+        code: mh.batch-splitter
         context: internal
       metas:
         - variable-for-splitting: input-data
@@ -21,6 +21,7 @@ source:
               code: fileless-function:1.0
             inputs:
               - name: var-batch-item
+                array: true
             outputs:
               - name: processed-file
     - code: mh.batch-result-processor

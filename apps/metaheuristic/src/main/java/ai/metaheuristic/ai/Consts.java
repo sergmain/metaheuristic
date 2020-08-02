@@ -18,7 +18,6 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageRequest;
@@ -27,7 +26,6 @@ import org.springframework.http.MediaType;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("DeprecatedIsStillUsed")
@@ -113,13 +111,13 @@ public class Consts {
     public static final String RESULT_ZIP = "result.zip";
     public static final Long ID_1 = 1L;
 
-    public static final String MH_VARIABLE_SPLITTER_FUNCTION = "mh.variable-splitter";
+    public static final String MH_BATCH_SPLITTER_FUNCTION = "mh.batch-splitter";
     public static final String MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION = "mh.permute-variables-and-inlines";
     public static final String MH_AGGREGATE_FUNCTION = "mh.aggregate";
     public static final String MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION = "mh.aggregate-internal-context";
     public static final String MH_EXPERIMENT_RESULT_PROCESSOR = "mh.experiment-result-processor";
-    public static final String MH_BATCH_RESULT_PROCESSOR = "mh.batch-result-processor";
     public static final String MH_FINISH_FUNCTION = "mh.finish";
+    public static final String MH_BATCH_RESULT_PROCESSOR_FUNCTION = "mh.batch-result-processor";
 
     public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 

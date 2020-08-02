@@ -225,9 +225,7 @@ public class BatchTopLevelService {
             }
             variableService.createInitialized(
                     file.getInputStream(), file.getSize(), startInputAs,
-                    originFilename, creationResult.execContext.getId(),
-//                    ""+idsRepository.save(new Ids()).id
-                    "1"
+                    originFilename, creationResult.execContext.getId(),"1"
             );
 
             b = new Batch(sourceCodeId, creationResult.execContext.getId(), Enums.BatchExecState.Stored,
@@ -248,7 +246,7 @@ public class BatchTopLevelService {
                 return new BatchData.UploadingStatus("#995.080 can't find batch with id " + b.id);
             }
 
-            log.info("The file {} was successfully stored to disk", originFilename);
+            log.info("The file {} was successfully stored for processing", originFilename);
 
             //noinspection unused
             int i=0;

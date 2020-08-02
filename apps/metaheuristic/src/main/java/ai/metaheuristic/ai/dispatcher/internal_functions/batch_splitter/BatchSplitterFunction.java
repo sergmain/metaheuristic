@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.internal_functions.variable_splitter;
+package ai.metaheuristic.ai.dispatcher.internal_functions.batch_splitter;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
@@ -88,7 +88,7 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class VariableSplitterFunction implements InternalFunction {
+public class BatchSplitterFunction implements InternalFunction {
 
     private final Globals globals;
     private final SourceCodeCache sourceCodeCache;
@@ -103,12 +103,12 @@ public class VariableSplitterFunction implements InternalFunction {
 
     @Override
     public String getCode() {
-        return Consts.MH_VARIABLE_SPLITTER_FUNCTION;
+        return Consts.MH_BATCH_SPLITTER_FUNCTION;
     }
 
     @Override
     public String getName() {
-        return Consts.MH_VARIABLE_SPLITTER_FUNCTION;
+        return Consts.MH_BATCH_SPLITTER_FUNCTION;
     }
 
     public InternalFunctionProcessingResult process(
@@ -124,9 +124,9 @@ public class VariableSplitterFunction implements InternalFunction {
         }
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
 */
-        String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
+        String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "input-batch");
         if (S.b(inputVariableName)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "Meta 'variable-for-splitting' wasn't found");
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "Meta 'input-batch' wasn't found");
         }
 
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();

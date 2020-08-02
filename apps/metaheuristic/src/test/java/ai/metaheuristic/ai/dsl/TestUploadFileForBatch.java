@@ -70,7 +70,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
             p.name = "Process mh.variable-splitter";
             p.code = "process-mh.variable-splitter";
 
-            p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(Consts.MH_VARIABLE_SPLITTER_FUNCTION, EnumsApi.FunctionExecContext.internal);
+            p.function = new SourceCodeParamsYamlV1.FunctionDefForSourceCodeV1(Consts.MH_BATCH_SPLITTER_FUNCTION, EnumsApi.FunctionExecContext.internal);
             p.outputs.add( new SourceCodeParamsYamlV1.VariableV1(EnumsApi.DataSourcing.dispatcher,"batch-array"));
 
             planParamsYaml.source.processes.add(p);

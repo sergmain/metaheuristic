@@ -45,12 +45,12 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
     @Override
     public String getCode() {
-        return Consts.MH_BATCH_RESULT_PROCESSOR;
+        return Consts.MH_BATCH_RESULT_PROCESSOR_FUNCTION;
     }
 
     @Override
     public String getName() {
-        return Consts.MH_BATCH_RESULT_PROCESSOR;
+        return Consts.MH_BATCH_RESULT_PROCESSOR_FUNCTION;
     }
 
     @Override
