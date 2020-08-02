@@ -56,7 +56,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
@@ -67,14 +66,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static ai.metaheuristic.ai.Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
@@ -165,17 +162,17 @@ public class BatchSplitterFunction implements InternalFunction {
                 log.debug("Start unzipping archive");
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir);
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, mapping, taskParamsYaml, taskId);
+                return loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, mapping, taskParamsYaml, taskId);
             }
             else {
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, taskId);
+                return loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, taskId);
             }
         }
         catch(Throwable th) {
             final String es = "#995.110 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
-            ExceptionUtils.rethrow(th);
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
         }
         finally {
             try {
@@ -186,26 +183,33 @@ public class BatchSplitterFunction implements InternalFunction {
                 log.warn("Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());
             }
         }
-        return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 
-    public void loadFilesFromDirAfterZip(
+    public InternalFunctionProcessingResult loadFilesFromDirAfterZip(
             Long sourceCodeId, Long execContextId, String taskContextId, File srcDir,
             final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) throws IOException {
 
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode==null) {
-            throw new IllegalStateException("#995.200 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
+                    "#995.200 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
         }
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec==null) {
             throw new IllegalStateException("#995.202 execContext wasn't found, execContextId: " + execContextId);
         }
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(ec, taskId);
+        if (descendants.isEmpty()) {
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
+                    "Graph for ExecContext #"+execContextId+" is broken");
+        }
+
         ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
 
         final ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
-            throw new BreakFromLambdaException("Process '"+taskParamsYaml.task.processCode+"'not found");
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
+                    "Process '"+taskParamsYaml.task.processCode+"'not found");
         }
 
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
@@ -213,7 +217,8 @@ public class BatchSplitterFunction implements InternalFunction {
 
         final String variableName = MetaUtils.getValue(process.metas, "output-variable");
         if (S.b(variableName)) {
-            throw new BreakFromLambdaException("Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
+                    "Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
         }
 
         final List<Long> lastIds = new ArrayList<>();
@@ -250,6 +255,8 @@ public class BatchSplitterFunction implements InternalFunction {
                         throw new BatchResourceProcessingException(es);
                     }
                 });
+        execContextGraphTopLevelService.createEdges(execContextId, lastIds, descendants);
+        return INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 
     /**
@@ -299,7 +306,7 @@ public class BatchSplitterFunction implements InternalFunction {
 
             List<VariableUtils.VariableHolder> variableHolders = files
                     .map(f-> {
-                        String variableName = S.f("mh.array-element-%s", UUID.randomUUID().toString());
+                        String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
 
                         Variable v;
                         try {
