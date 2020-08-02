@@ -138,7 +138,8 @@ public class BatchSplitterFunction implements InternalFunction {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "Too many variables");
         }
 
-        String originFilename = holders.get(0).getFilename();
+        VariableUtils.VariableHolder variableHolder = holders.get(0);
+        String originFilename = variableHolder.getFilename();
         if (S.b(originFilename)) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.input_variable_isnt_file, "variable.filename is blank");
         }
@@ -155,6 +156,10 @@ public class BatchSplitterFunction implements InternalFunction {
             }
 
             final File dataFile = File.createTempFile("uploaded-file-", ext, tempDir);
+            internalFunctionVariableService.storeToFile(variableHolder, dataFile);
+            if (dataFile.length()==0) {
+                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "Empty files aren't supported");
+            }
 
             if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
                 log.debug("Start unzipping archive");

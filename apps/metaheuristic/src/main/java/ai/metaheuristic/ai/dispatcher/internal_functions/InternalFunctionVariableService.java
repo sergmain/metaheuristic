@@ -22,14 +22,18 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Serge
@@ -43,7 +47,18 @@ import java.util.List;
 public class InternalFunctionVariableService {
 
     private final VariableRepository variableRepository;
+    private final VariableService variableService;
     private final GlobalVariableRepository globalVariableRepository;
+    private final GlobalVariableService globalVariableService;
+
+    public void storeToFile(VariableUtils.VariableHolder holder, File file) {
+        if (holder.variable!=null) {
+            variableService.storeToFile(Objects.requireNonNull(holder.variable).id, file);
+        }
+        else {
+            globalVariableService.storeToFile(Objects.requireNonNull(holder.globalVariable).id, file);
+        }
+    }
 
     @Nullable
     public InternalFunctionData.InternalFunctionProcessingResult discoverVariables(Long execContextId, String taskContextId, String name, List<VariableUtils.VariableHolder> holders) {

@@ -190,6 +190,10 @@ public class BatchTopLevelService {
         }
         dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, dispatcherContext.getCompanyId(), originFilename, file.getSize(), null, null, dispatcherContext );
 
+        if (file.getSize()==0) {
+            return new BatchData.UploadingStatus("#995.040 Empty files aren't supported");
+        }
+
         // TODO 2019-07-06 Do we need to validate the sourceCode here in case that there is another check?
         //  2019-10-28 it's working so left it as is until an issue with this will be found
         // validate the sourceCode

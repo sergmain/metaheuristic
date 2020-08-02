@@ -22,8 +22,10 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import lombok.Data;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Serge
@@ -47,14 +49,15 @@ public class VariableUtils {
                 v.type = EnumsApi.DataType.global_variable;
             }
             else {
-                v.id = pv.variable.id;
-                v.name = pv.variable.variable;
+                SimpleVariable variable = Objects.requireNonNull(pv.variable);
+                v.id = variable.id;
+                v.name = variable.variable;
 
-                DataStorageParams dsp = pv.variable.getParams();
+                DataStorageParams dsp = variable.getParams();
                 v.sourcing = dsp.sourcing;
                 v.git = dsp.git;
                 v.disk = dsp.disk;
-                v.realName = pv.variable.originalFilename;
+                v.realName = variable.originalFilename;
                 v.type = EnumsApi.DataType.variable;
             }
             vapy.array.add(v);
@@ -64,23 +67,26 @@ public class VariableUtils {
 
     @Data
     public static class VariableHolder {
+        @Nullable
         public SimpleVariable variable;
+
+        @Nullable
         public GlobalVariable globalVariable;
 
-        public VariableHolder(GlobalVariable globalVariable) {
+        public VariableHolder(@Nullable GlobalVariable globalVariable) {
             this.globalVariable = globalVariable;
         }
 
-        public VariableHolder(SimpleVariable variable) {
+        public VariableHolder(@Nullable SimpleVariable variable) {
             this.variable = variable;
         }
 
         public String getName() {
-            return globalVariable!=null ? globalVariable.name : variable.variable;
+            return globalVariable!=null ? globalVariable.name : Objects.requireNonNull(variable).variable;
         }
 
         public String getFilename() {
-            return globalVariable!=null ? globalVariable.filename : variable.originalFilename;
+            return globalVariable!=null ? globalVariable.filename : Objects.requireNonNull(variable).originalFilename;
         }
     }
 }
