@@ -261,6 +261,7 @@ public class BatchTopLevelService {
             }
 
             log.info("The file {} was successfully stored for processing", originFilename);
+            batchService.changeStateToProcessing(batch.id);
 
             //noinspection unused
             int i=0;
