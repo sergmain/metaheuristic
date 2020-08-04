@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
@@ -100,6 +101,7 @@ public class BatchTopLevelService {
     private final ExecContextService execContextService;
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
+    private final SourceCodeService sourceCodeService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -261,10 +263,23 @@ public class BatchTopLevelService {
             }
 
             log.info("The file {} was successfully stored for processing", originFilename);
-            batchService.changeStateToProcessing(batch.id);
-
             //noinspection unused
             int i=0;
+            // start producing new tasks
+            OperationStatusRest operationStatus = execContextService.execContextTargetState(
+                    creationResult.execContext.getId(), EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
+
+            if (operationStatus.isErrorMessages()) {
+                throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
+            }
+            sourceCodeService.createAllTasks();
+            operationStatus = execContextService.execContextTargetState(creationResult.execContext.getId(), EnumsApi.ExecContextState.STARTED, dispatcherContext.getCompanyId());
+
+            if (operationStatus.isErrorMessages()) {
+                throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
+            }
+
+            batchService.changeStateToProcessing(batch.id);
 
             BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, creationResult.execContext.getId());
             return uploadingStatus;
