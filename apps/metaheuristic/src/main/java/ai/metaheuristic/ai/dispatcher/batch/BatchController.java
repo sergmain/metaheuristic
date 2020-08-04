@@ -115,7 +115,7 @@ public class BatchController {
     @GetMapping("/batch-delete/{batchId}")
     public String processResourceDelete(Model model, @PathVariable Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        BatchData.BatchExecInfo batchExecInfo = batchTopLevelService.getBatchExecInfo(batchId);
+        BatchData.BatchExecInfo batchExecInfo = batchTopLevelService.getBatchExecInfo(context, batchId);
         if (batchExecInfo==null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Batch #"+batchId+" wasn't found");
             return REDIRECT_BATCH_BATCHES;

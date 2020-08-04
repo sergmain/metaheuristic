@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
@@ -75,7 +74,8 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static ai.metaheuristic.ai.Consts.*;
+import static ai.metaheuristic.ai.Consts.XML_EXT;
+import static ai.metaheuristic.ai.Consts.ZIP_EXT;
 
 /**
  * @author Serge
@@ -99,7 +99,6 @@ public class BatchTopLevelService {
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextService execContextService;
     private final ExecContextCreatorService execContextCreatorService;
-    private final IdsRepository idsRepository;
     private final SourceCodeSelectorService sourceCodeSelectorService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
@@ -160,12 +159,15 @@ public class BatchTopLevelService {
     }
 
     @Nullable
-    public BatchData.BatchExecInfo getBatchExecInfo(Long batchId) {
+    public BatchData.BatchExecInfo getBatchExecInfo(DispatcherContext context, Long batchId) {
         List<BatchData.BatchExecInfo> items = batchService.getBatchExecInfos(List.of(batchId));
         if (items.isEmpty()) {
             return null;
         }
-        return items.get(0);
+        BatchData.BatchExecInfo batchExecInfo = items.get(0);
+
+        Batch b = batchExecInfo.batch;
+        return b.companyId.equals(context.getCompanyId()) && b.accountId.equals(context.account.id) && !b.deleted ? batchExecInfo : null;
     }
 
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
