@@ -16,7 +16,6 @@
 package ai.metaheuristic.apps.simple_snippet;
 
 import ai.metaheuristic.api.ConstsApi;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -69,14 +68,14 @@ public class SimpleApp implements CommandLineRunner {
 
         List<String> inputFiles = params.task.inputs
                 .stream()
-                .map(o->o.name)
+                .map(o->o.id.toString())
                 .collect(Collectors.toList());
         System.out.println("input files: " + inputFiles);
 
         String outputFilename = params.task.outputs
                 .stream()
-                .filter(o->o.name.equals("result"))
-                .map(o->o.name)
+                .filter(o->o.name.equals("processed-file"))
+                .map(o->o.id.toString())
                 .findFirst()
                 .orElseThrow();
 
