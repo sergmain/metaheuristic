@@ -46,7 +46,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.api.dispatcher.Task;
@@ -72,7 +71,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -275,9 +273,14 @@ public class BatchService {
         }
     }
 
-    List<BatchData.ProcessResourceItem> getBatches(Page<Long> batchIds) {
-        List<BatchData.ProcessResourceItem> items = new ArrayList<>();
-        List<Object[]> batchInfos = variableService.getFilenamesForBatchIds(batchIds.getContent());
+    public List<BatchData.BatchExecInfo> getBatches(Page<Long> pageWithBatchIds) {
+        List<Long> batchIds = pageWithBatchIds.getContent();
+        return getBatchExecInfos(batchIds);
+    }
+
+    public List<BatchData.BatchExecInfo> getBatchExecInfos(List<Long> batchIds) {
+        List<BatchData.BatchExecInfo> items = new ArrayList<>();
+        List<Object[]> batchInfos = variableService.getFilenamesForBatchIds(batchIds);
         for (Long batchId : batchIds) {
             Batch batch = batchCache.findById(batchId);
             String uid = SOURCE_CODE_NOT_FOUND;
@@ -295,7 +298,7 @@ public class BatchService {
                 String filename = batchInfos.stream().filter(o->o[0].equals(batchId)).map(o->(String)o[1]).findFirst().orElse("[unknown]");
 //                Account account = accountCache.findByUsername()
                 BatchParamsYaml bpy = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.params);
-                items.add(new BatchData.ProcessResourceItem(
+                items.add(new BatchData.BatchExecInfo(
                         batch, uid, execStateStr, batch.execState, ok, filename,
                         S.b(bpy.username) ? "accountId #"+batch.accountId : bpy.username ));
             }

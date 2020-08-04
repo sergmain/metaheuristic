@@ -62,7 +62,7 @@ public final class BatchData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProcessResourceItem {
+    public static class BatchExecInfo {
         public Batch batch;
         public String sourceCodeUid;
         public String execStateStr;
@@ -93,7 +93,7 @@ public final class BatchData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class BatchesResult extends BaseDataClass {
-        public Page<ProcessResourceItem> batches;
+        public Page<BatchExecInfo> batches;
         public EnumsApi.DispatcherAssetMode assetMode;
     }
 

@@ -153,11 +153,20 @@ public class BatchTopLevelService {
 
         long total = batchIds.getTotalElements();
 
-        List<BatchData.ProcessResourceItem> items = batchService.getBatches(batchIds);
+        List<BatchData.BatchExecInfo> items = batchService.getBatches(batchIds);
         BatchData.BatchesResult result = new BatchData.BatchesResult();
         result.batches = new PageImpl<>(items, pageable, total);
 
         return result;
+    }
+
+    @Nullable
+    public BatchData.BatchExecInfo getBatchExecInfo(Long batchId) {
+        List<BatchData.BatchExecInfo> items = batchService.getBatchExecInfos(List.of(batchId));
+        if (items.isEmpty()) {
+            return null;
+        }
+        return items.get(0);
     }
 
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {

@@ -292,11 +292,6 @@ public class VariableService {
         if (batchIds.isEmpty()) {
             return List.of();
         }
-/*
-        if (true) {
-            throw new NotImplementedException("Need to re-write");
-        }
-*/
         return variableRepository.getFilenamesForBatchIds(batchIds);
     }
 

@@ -115,6 +115,16 @@ public class BatchController {
     @GetMapping("/batch-delete/{batchId}")
     public String processResourceDelete(Model model, @PathVariable Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
+        BatchData.BatchExecInfo batchExecInfo = batchTopLevelService.getBatchExecInfo(batchId);
+        if (batchExecInfo==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Batch #"+batchId+" wasn't found");
+            return REDIRECT_BATCH_BATCHES;
+        }
+
+        model.addAttribute("result", batchExecInfo);
+
+/*
+        batchTopLevelService.getBatchExecInfos(List.of(batchId));
         BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context, false);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
@@ -123,6 +133,7 @@ public class BatchController {
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.console);
         model.addAttribute("isOk", status.ok);
+*/
         return "dispatcher/batch/batch-delete";
     }
 
