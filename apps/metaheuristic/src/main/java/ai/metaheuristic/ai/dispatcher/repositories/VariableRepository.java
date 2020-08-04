@@ -29,7 +29,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Blob;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -69,24 +68,13 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Query(value="select v.id from Variable v where v.name=:name and v.execContextId=:execContextId")
     List<Long> findIdByNameAndExecContextId(String name, Long execContextId);
 
-    @Transactional(readOnly = true)
-    @Query(value="select b.execContextId, b.filename from Variable b " +
-            "where b.execContextId in :ids ")
-    List<Object[]> getFilenamesForBatchIds(Collection<Long> ids);
-
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(" +
             "b.id, b.name, b.params, b.filename, b.inited, b.taskContextId) " +
             "from Variable b where b.name in :vars")
     List<SimpleVariable> getIdAndStorageUrlInVars(Set<String> vars);
 
-    List<Variable> findAllByName(String variableName);
-
-    @Nullable
-    @Query(value="select b.filename from Variable b where b.name=:var")
-    String findFilenameByVar(String var);
-
     @Query(value="select b.filename from Variable b where b.name=:variable and b.execContextId=:execContextId ")
-    List<String> findFilenameByVariableAndExecContextId(String variable, Long execContextId);
+    List<String> findFilenameByVariableAndExecContextId(Long execContextId, String variable);
 
     @NonNull
     @Transactional(readOnly = true)

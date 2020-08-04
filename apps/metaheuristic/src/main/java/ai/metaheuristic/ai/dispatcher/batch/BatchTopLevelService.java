@@ -75,8 +75,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static ai.metaheuristic.ai.Consts.XML_EXT;
-import static ai.metaheuristic.ai.Consts.ZIP_EXT;
+import static ai.metaheuristic.ai.Consts.*;
 
 /**
  * @author Serge
@@ -369,7 +368,10 @@ public class BatchTopLevelService {
         File resultDir = DirUtils.createTempDir("prepare-origin-file-");
         resource.toClean.add(resultDir);
 
-        String originFilename = batchService.getUploadedFilename(batchId, batch.execContextId);
+        String originFilename = batchService.findUploadedFilenameForBatchId(batchId, null);
+        if (S.b(originFilename)) {
+            return null;
+        }
         File tempFile = File.createTempFile("batch-origin-file-", ".bin", resultDir);
 
         try {

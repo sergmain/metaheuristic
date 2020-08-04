@@ -19,40 +19,40 @@ package ai.metaheuristic.ai.dispatcher.batch;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.api.dispatcher.Task;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -65,6 +65,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
@@ -280,7 +281,6 @@ public class BatchService {
 
     public List<BatchData.BatchExecInfo> getBatchExecInfos(List<Long> batchIds) {
         List<BatchData.BatchExecInfo> items = new ArrayList<>();
-        List<Object[]> batchInfos = variableService.getFilenamesForBatchIds(batchIds);
         for (Long batchId : batchIds) {
             Batch batch = batchCache.findById(batchId);
             String uid = SOURCE_CODE_NOT_FOUND;
@@ -295,8 +295,8 @@ public class BatchService {
                     }
                 }
                 String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
-                String filename = batchInfos.stream().filter(o->o[0].equals(batchId)).map(o->(String)o[1]).findFirst().orElse("[unknown]");
-//                Account account = accountCache.findByUsername()
+
+                String filename = findUploadedFilenameForBatchId(batchId, Consts.UNKNOWN_FILENAME_IN_BATCH);
                 BatchParamsYaml bpy = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.params);
                 items.add(new BatchData.BatchExecInfo(
                         batch, uid, execStateStr, batch.execState, ok, filename,
@@ -424,7 +424,7 @@ public class BatchService {
     public BatchStatusProcessor prepareStatusAndData(Batch batch, BiFunction<PrepareZipData, File, Boolean> prepareZip, @Nullable File zipDir) {
         Long batchId = batch.id;
         final BatchStatusProcessor bs = new BatchStatusProcessor();
-        bs.originArchiveName = getUploadedFilename(batchId, batch.execContextId);
+        bs.originArchiveName = getUploadedFilename(batchId);
 
         Long execContextId = batch.execContextId;
         if (execContextId==null) {
@@ -459,8 +459,9 @@ public class BatchService {
         }
 
         // lets find the actual name of target file
-//        String mainDocumentPoolCode = getMainDocumentPoolCode(wb);
         String mainDocumentPoolCode = "";
+        String mainDocument = "";
+/*
         final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode, execContextId);
         if (fullMainDocument == null) {
             String msg = "#990.270 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
@@ -470,6 +471,7 @@ public class BatchService {
             return false;
         }
         final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getSourceCodeId());
+*/
 
         List<ExecContextData.TaskVertex> taskVertices;
         try {
@@ -561,23 +563,39 @@ public class BatchService {
         return true;
     }
 
-    @Nullable
-    private String getMainDocumentFilenameForPoolCode(String mainDocumentPoolCode, Long execContextId) {
-        final List<String> filename = variableService.getFilenameByVariableAndExecContextId(mainDocumentPoolCode, execContextId);
-        if (filename==null || filename.isEmpty() || StringUtils.isBlank(filename.get(0))) {
-            log.error("#990.390 Filename is blank for poolCode: {}, execContextId: {}", mainDocumentPoolCode, execContextId);
-            return null;
-        }
-        return filename.get(0);
-    }
-
-    public String getUploadedFilename(Long batchId, Long execContextId) {
-        final List<String> filename = variableService.findFilenameByBatchId(batchId, execContextId);
-        if (filename==null || filename.isEmpty() || S.b(filename.get(0))) {
+    public String getUploadedFilename(Long batchId) {
+        String filename = findUploadedFilenameForBatchId(batchId, "result.zip");
+        if (S.b(filename)) {
             log.error("#990.392 Filename is blank for batchId: {}, will be used default name - result.zip", batchId);
             return Consts.RESULT_ZIP;
         }
-        return filename.get(0);
+        return filename;
+    }
+
+    @Nullable
+    @Transactional(readOnly = true)
+    public String findUploadedFilenameForBatchId(Long batchId, @Nullable String defaultName) {
+        Batch batch = batchCache.findById(batchId);
+        if (batch==null) {
+            return defaultName;
+        }
+        ExecContextImpl ec = execContextCache.findById(batch.execContextId);
+        if (ec == null) {
+            return defaultName;
+        }
+        ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
+        String startInputVariableName = ecpy.variables.startInputAs;
+        if (S.b(startInputVariableName)) {
+            return defaultName;
+        }
+        List<String> filenames = variableService.getFilenameByVariableAndExecContextId(batch.execContextId, startInputVariableName);
+        if (filenames.isEmpty()) {
+            return defaultName;
+        }
+        if (filenames.size()>1) {
+            log.warn("something wrong, too many startInputAs variables: " + filenames);
+        }
+        return filenames.get(0);
     }
 
     @SuppressWarnings("deprecation")

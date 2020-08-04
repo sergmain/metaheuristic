@@ -122,4 +122,5 @@ public class Consts {
     public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
     public static final InternalFunctionData.InternalFunctionProcessingResult INTERNAL_FUNCTION_PROCESSING_RESULT_OK = new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
+    public static final String UNKNOWN_FILENAME_IN_BATCH = "[unknown]";
 }

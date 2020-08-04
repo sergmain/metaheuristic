@@ -273,26 +273,8 @@ public class VariableService {
     }
 
     @Transactional(readOnly = true)
-    public List<String> getFilenameByVariableAndExecContextId(String variable, Long execContextId) {
-        return variableRepository.findFilenameByVariableAndExecContextId(variable, execContextId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<String> findFilenameByBatchId(Long batchId, Long execContextId) {
-/*
-        if (true) {
-            throw new NotImplementedException("Need to re-write");
-        }
-*/
-        return variableRepository.findFilenameByVariableAndExecContextId(batchId.toString(), execContextId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Object[]> getFilenamesForBatchIds(List<Long> batchIds) {
-        if (batchIds.isEmpty()) {
-            return List.of();
-        }
-        return variableRepository.getFilenamesForBatchIds(batchIds);
+    public List<String> getFilenameByVariableAndExecContextId(Long execContextId, String variable) {
+        return variableRepository.findFilenameByVariableAndExecContextId(execContextId, variable);
     }
 
     public Variable createInitializedFromFile(File tempFile, String variable, String filename, Long execContextId, String internalContextId) {
