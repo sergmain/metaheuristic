@@ -122,18 +122,6 @@ public class BatchController {
         }
 
         model.addAttribute("result", batchExecInfo);
-
-/*
-        batchTopLevelService.getBatchExecInfos(List.of(batchId));
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context, false);
-        if (status.isErrorMessages()) {
-            redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
-            return REDIRECT_BATCH_BATCHES;
-        }
-        model.addAttribute("batchId", batchId);
-        model.addAttribute("console", status.console);
-        model.addAttribute("isOk", status.ok);
-*/
         return "dispatcher/batch/batch-delete";
     }
 

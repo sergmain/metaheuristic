@@ -64,7 +64,7 @@
                 <div class="no-wrap">File name</div>
             </th>
             <th>Exec state</th>
-            <th colspan="3">&nbsp;</th>
+            <th colspan="1">&nbsp;</th>
         </tr>
         </thead>
 
@@ -83,16 +83,16 @@
                 <div th:text="${r.uploadedFileName}" class="no-wrap">File name</div>
             </td>
             <td th:text="${r.execStateStr}">Exec state as string</td>
-            <td><a class="pure-button pure-button-primary"
-                   th:href="${'/dispatcher/batch/batch-delete/' + r.batch.id}">Delete</a></td>
-
-            <td>
-                <a class="pure-button pure-button-primary"
+            <td class="no-wrap"><a class="pure-button pure-button-primary"
+                   th:href="${'/dispatcher/batch/batch-delete/' + r.batch.id}">Delete</a>
+                &nbsp;
+                <a th:if="${r.finished()}" class="pure-button pure-button-primary"
                    target="_blank"
-                   th:href="${'/dispatcher/batch/batch-download-result/' + r.batch.id + '/result.zip'}">Download result</a></td>
-
-            <td><a class="pure-button pure-button-primary"
-                   th:href="${'/dispatcher/batch/batch-status/' + r.batch.id}">Status</a></td>
+                   th:href="${'/dispatcher/batch/batch-download-result/' + r.batch.id + '/result.zip'}">Download result</a>
+                &nbsp;
+                <a th:if="${r.finished()}" class="pure-button pure-button-primary"
+                   th:href="${'/dispatcher/batch/batch-status/' + r.batch.id}">Status</a>
+            </td>
         </tr>
         <tr>
             <td colspan="9">

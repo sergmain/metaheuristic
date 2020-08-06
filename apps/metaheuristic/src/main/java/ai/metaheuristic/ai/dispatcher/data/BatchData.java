@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchExecStatus;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.api.EnumsApi;
@@ -70,6 +71,10 @@ public final class BatchData {
         public boolean ok;
         public String uploadedFileName;
         public String username;
+
+        public boolean finished() {
+            return execState==Enums.BatchExecState.Finished.code ||  execState==Enums.BatchExecState.Error.code || execState==Enums.BatchExecState.Archived.code;
+        }
     }
 
     @Data
