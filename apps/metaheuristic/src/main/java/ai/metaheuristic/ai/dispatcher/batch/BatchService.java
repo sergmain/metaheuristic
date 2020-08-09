@@ -141,9 +141,7 @@ public class BatchService {
                     log.warn("#990.050 batch wasn't found {}", batchId);
                     return;
                 }
-                if (b.execState != Enums.BatchExecState.Processing.code
-                        && b.execState != Enums.BatchExecState.Finished.code
-                ) {
+                if (b.execState != Enums.BatchExecState.Processing.code && b.execState != Enums.BatchExecState.Finished.code) {
                     throw new IllegalStateException("#990.060 Can't change state to Finished, " +
                             "current state: " + Enums.BatchExecState.toState(b.execState));
                 }
@@ -154,13 +152,7 @@ public class BatchService {
                 batchCache.save(b);
             }
             finally {
-                try {
-                    updateBatchStatusWithoutSync(batchId);
-                } catch (Throwable th) {
-                    log.warn("#990.065 error while updating the status of batch #" + batchId, th);
-                    // TODO 2019-12-15 this isn't good solution but need more info about behaviour with this error
-                }
-                dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_FINISHED, null, null, null, batchId, null, null );
+                dispatcherEventService.publishEventBatchFinished(batchId);
             }
         });
     }

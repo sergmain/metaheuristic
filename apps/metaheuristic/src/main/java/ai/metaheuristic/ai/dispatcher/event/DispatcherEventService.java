@@ -65,6 +65,8 @@ import static ai.metaheuristic.commons.CommonConsts.EVENT_DATE_TIME_FORMATTER;
 @Profile("dispatcher")
 public class DispatcherEventService {
 
+    private static final int PAGE_SIZE = 1000;
+
     private final Globals globals;
     private final DispatcherEventRepository dispatcherEventRepository;
     private final CompanyRepository companyRepository;
@@ -133,7 +135,9 @@ public class DispatcherEventService {
         return createdOn.getYear() * 100 + createdOn.getMonthValue();
     }
 
-    private static final int PAGE_SIZE = 1000;
+    public void publishEventBatchFinished(Long batchId) {
+        publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_FINISHED, null, null, null, batchId, null, null );
+    }
 
     public static class ListOfEvents {
         public List<String> events;
