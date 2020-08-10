@@ -23,30 +23,21 @@ import ai.metaheuristic.ai.dispatcher.batch.data.BatchAndExecContextStates;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.S;
@@ -58,9 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,10 +80,7 @@ public class BatchService {
     private final BatchSyncService batchSyncService;
     private final ExecContextCache execContextCache;
     private final VariableService variableService;
-    private final TaskRepository taskRepository;
-    private final ProcessorCache processorCache;
     private final DispatcherEventService dispatcherEventService;
-    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
     public Batch changeStateToPreparing(Long batchId) {
         return batchSyncService.getWithSync(batchId, (b)-> {
@@ -157,37 +143,6 @@ public class BatchService {
         });
     }
 
-    @SuppressWarnings("unused")
-    public Batch changeStateToError(Long batchId, String error) {
-        return batchSyncService.getWithSync(batchId, (b) -> {
-            try {
-                if (b == null) {
-                    log.warn("#990.070 batch not found in db, batchId: #{}", batchId);
-                    return null;
-                }
-                b.setExecState(Enums.BatchExecState.Error.code);
-
-                BatchParamsYaml batchParams = BatchParamsYamlUtils.BASE_YAML_UTILS.to(b.params);
-                if (batchParams == null) {
-                    batchParams = new BatchParamsYaml();
-                }
-                if (batchParams.batchStatus==null) {
-                    batchParams.batchStatus = new BatchParamsYaml.BatchStatus();
-                }
-                BatchStatusProcessor batchStatusProcessor = new BatchStatusProcessor();
-                batchStatusProcessor.getGeneralStatus().add(error);
-                initBatchStatus(batchStatusProcessor);
-                batchParams.batchStatus.status = batchStatusProcessor.status;
-                b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(batchParams);
-
-                b = batchCache.save(b);
-                return b;
-            }
-            finally {
-                dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
-            }
-        });
-    }
 
 /*
     private static String getMainDocumentPoolCode(ExecContextImpl execContext) {
@@ -227,6 +182,7 @@ public class BatchService {
 
                 if (execStates.execContextState != EnumsApi.ExecContextState.ERROR.code && execStates.execContextState != EnumsApi.ExecContextState.FINISHED.code) {
                     isFinished = false;
+                    break;
                 }
             }
             if (isFinished) {
@@ -267,45 +223,6 @@ public class BatchService {
         return items;
     }
 
-    // TODO 2019-10-13 change synchronization to use BatchSyncService
-    public BatchParamsYaml.BatchStatus updateStatus(Batch batch) {
-        return batchSyncService.getWithSync(batch.id, (b)-> {
-            try {
-                return updateStatusInternal(b);
-            }
-            catch(NeedRetryAfterCacheCleanException e) {
-                log.warn("#990.097 NeedRetryAfterCacheCleanException was caught");
-            }
-            try {
-                return updateStatusInternal(b);
-            }
-            catch(NeedRetryAfterCacheCleanException e) {
-                final BatchStatusProcessor statusProcessor = new BatchStatusProcessor().addGeneralStatus("#990.100 Can't update batch status, Try later");
-                return new BatchParamsYaml.BatchStatus(initBatchStatus(statusProcessor).status);
-            }
-        });
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private BatchParamsYaml.BatchStatus updateStatusInternal(Batch batch)  {
-        Long batchId = batch.id;
-        try {
-            if (!S.b(batch.getParams()) &&
-                    (batch.execState == Enums.BatchExecState.Finished.code || batch.execState == Enums.BatchExecState.Error.code)) {
-                BatchParamsYaml batchParams = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.getParams());
-                return batchParams.batchStatus;
-            }
-            return updateBatchStatusWithoutSync(batchId);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#990.120 Error updating batch, new: {}, curr: {}", batch, batchRepository.findById(batchId).orElse(null));
-            log.error("#990.121 Error updating batch", e);
-            batchCache.evictById(batchId);
-            // because this error is somehow related to processorCache, let's invalidate it
-            processorCache.clearCache();
-            throw new NeedRetryAfterCacheCleanException();
-        }
-    }
-
     @Data
     @AllArgsConstructor
     public static class PrepareZipData {
@@ -316,8 +233,6 @@ public class BatchService {
         public Long batchId;
         public Long execContextId;
     }
-
-
 
     public String getUploadedFilename(Long batchId) {
         String filename = findUploadedFilenameForBatchId(batchId, "result.zip");
@@ -353,26 +268,4 @@ public class BatchService {
         }
         return filenames.get(0);
     }
-
-    @SuppressWarnings("deprecation")
-    private String getActualExtension(Long sourceCodeId) {
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        if (sourceCode == null) {
-            return (StringUtils.isNotBlank(globals.defaultResultFileExtension)
-                    ? globals.defaultResultFileExtension
-                    : ".bin");
-        }
-
-        SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-        final Meta meta = MetaUtils.getMeta(scpy.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
-
-        return meta != null && StringUtils.isNotBlank(meta.getValue())
-                ? meta.getValue()
-                :
-                (StringUtils.isNotBlank(globals.defaultResultFileExtension)
-                        ? globals.defaultResultFileExtension
-                        : ".bin");
-    }
-
 }

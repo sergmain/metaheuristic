@@ -46,6 +46,7 @@ import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -168,6 +169,16 @@ public class BatchSplitterFunction implements InternalFunction {
                 log.debug("Start loading file data to db");
                 return loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, Map.of(dataFile.getName(), originFilename), taskParamsYaml, taskId);
             }
+        }
+        catch(UnzipArchiveException e) {
+            final String es = "#995.100 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
+            log.error(es, e);
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
+        }
+        catch(BatchProcessingException e) {
+            final String es = "#995.105 General error of processing batch.\nError: " + e.getMessage();
+            log.error(es, e);
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(Throwable th) {
             final String es = "#995.110 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();

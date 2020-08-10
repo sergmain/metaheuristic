@@ -18,13 +18,12 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -45,6 +44,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * @author Serge
@@ -62,7 +62,6 @@ public class BatchRestController {
 
     private final BatchTopLevelService batchTopLevelService;
     private final UserContextService userContextService;
-    private final SourceCodeService sourceCodeService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
 
     @GetMapping("/batches")
@@ -95,7 +94,7 @@ public class BatchRestController {
 
     @GetMapping("/batch-delete/{batchId}")
     public BatchData.Status processResourceDelete(@PathVariable Long batchId, Authentication authentication) {
-        return batchTopLevelService.getProcessingResourceStatus(batchId, userContextService.getContext(authentication), false);
+        return batchTopLevelService.getProcessingResourceStatus(batchId, userContextService.getContext(authentication).getCompanyId(), false);
     }
 
     @PostMapping("/batch-delete-commit")
@@ -107,14 +106,14 @@ public class BatchRestController {
     public OperationStatusRest uploadFile(final MultipartFile file, Long sourceCodeId, Authentication authentication) {
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, userContextService.getContext(authentication));
         if (uploadingStatus.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, uploadingStatus.getErrorMessages());
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, Objects.requireNonNull(uploadingStatus.getErrorMessages()));
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @GetMapping(value= "/batch-status/{batchId}" )
     public BatchData.Status getProcessingResourceStatus(@PathVariable("batchId") Long batchId, Authentication authentication) {
-        return batchTopLevelService.getProcessingResourceStatus(batchId, userContextService.getContext(authentication), false);
+        return batchTopLevelService.getProcessingResourceStatus(batchId, userContextService.getContext(authentication).getCompanyId(), false);
     }
 
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -124,7 +123,10 @@ public class BatchRestController {
         DispatcherContext context = userContextService.getContext(authentication);
         final ResponseEntity<AbstractResource> entity;
         try {
-            CleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context, false);
+            CleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context.getCompanyId(), false);
+            if (resource==null) {
+                return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+            }
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (CommonErrorWithDataException e) {

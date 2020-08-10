@@ -149,7 +149,7 @@ public class BatchController {
     public String getProcessingResourceStatus(
             Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context, false);
+        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context.getCompanyId(), false);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
             return REDIRECT_BATCH_BATCHES;
@@ -167,7 +167,7 @@ public class BatchController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            CleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context, false);
+            CleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context.getCompanyId(), false);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }

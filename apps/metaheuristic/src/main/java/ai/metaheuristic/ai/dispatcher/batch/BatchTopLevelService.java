@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -28,34 +28,37 @@ import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
-import ai.metaheuristic.commons.utils.ZipUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -64,13 +67,13 @@ import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -83,6 +86,7 @@ import static ai.metaheuristic.ai.Consts.ZIP_EXT;
  * Date: 6/13/2019
  * Time: 11:52 PM
  */
+@SuppressWarnings({"DuplicatedCode", "SpellCheckingInspection"})
 @Slf4j
 @Profile("dispatcher")
 @Service
@@ -92,6 +96,8 @@ public class BatchTopLevelService {
     private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[/\\\\A-Za-z0-9._-]*$";
     private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
 
+    private final Globals globals;
+    private final SourceCodeCache sourceCodeCache;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final VariableService variableService;
     private final BatchRepository batchRepository;
@@ -216,20 +222,6 @@ public class BatchTopLevelService {
 
         Batch b;
         try {
-            // TODO 2020-02-24 lets save the file directly, without intermediate file
-/*
-            // tempDir will be deleted in processing thread
-            File tempDir = DirUtils.createTempDir("batch-file-upload-");
-            if (tempDir==null || tempDir.isFile()) {
-                return new BatchData.UploadingStatus("#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
-            }
-            final File dataFile = File.createTempFile("uploaded-file-", ext, tempDir);
-            log.debug("Start storing an uploaded file to disk");
-            try(OutputStream os = new FileOutputStream(dataFile)) {
-                IOUtils.copy(file.getInputStream(), os, 32000);
-            }
-*/
-
             ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorService.createExecContext(sourceCodeId, dispatcherContext);
             if (creationResult.isErrorMessages()) {
                 throw new BatchResourceProcessingException("#995.075 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
@@ -321,26 +313,90 @@ public class BatchTopLevelService {
     }
 
     public BatchData.Status getProcessingResourceStatus(Long batchId, Long companyUniqueId, boolean includeDeleted) {
-        Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(companyUniqueId) ||
-                (!includeDeleted && batch.deleted)) {
-            final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
+        try {
+            CleanerInfo cleanerInfo = getBatchProcessingResultInternal(batchId, companyUniqueId, includeDeleted, "batch-status");
+            if (cleanerInfo==null) {
+                final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
+                log.warn(es);
+                return new BatchData.Status(es);
+            }
+            AbstractResource body = cleanerInfo.entity.getBody();
+            if (body==null) {
+                final String es = "#995.280 Batch wasn't found, batchId: " + batchId;
+                log.warn(es);
+                return new BatchData.Status(es);
+            }
+
+            String status = IOUtils.toString(body.getInputStream(), StandardCharsets.UTF_8);
+            return new BatchData.Status(batchId, status, true);
+        } catch (IOException e) {
+            final String es = "#995.290 System error: " + batchId;
             log.warn(es);
             return new BatchData.Status(es);
         }
-        BatchParamsYaml.BatchStatus status = batchService.updateStatus(batch);
-        return new BatchData.Status(batchId, status.getStatus(), status.ok);
-    }
-
-    @Nullable
-    public CleanerInfo getBatchProcessingResult(Long batchId, DispatcherContext context, boolean includeDeleted) throws IOException {
-        return getBatchProcessingResult(batchId, context.getCompanyId(), includeDeleted);
     }
 
     @Nullable
     public CleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
+        return getBatchProcessingResultInternal(batchId, companyUniqueId, includeDeleted, "batch-result");
+    }
+
+    @Nullable
+    private CleanerInfo getBatchProcessingResultInternal(Long batchId, Long companyUniqueId, boolean includeDeleted, String variableName) throws IOException {
+        return getVariable(batchId, companyUniqueId, includeDeleted, (scpy)-> {
+            String resultBatchVariable = MetaUtils.getValue(scpy.source.metas, variableName);
+            if (S.b(resultBatchVariable)) {
+                final String es = "#995.300 meta 'batch-result' wasn't found, metas: " + scpy.source.metas;
+                log.warn(es);
+                return null;
+            }
+            return resultBatchVariable;
+        }, (execContextId, scpy) -> {
+            SimpleVariable inputVariable = variableService.getVariableAsSimple(execContextId, scpy.source.variables.startInputAs);
+            if (inputVariable==null) {
+                final String es = "#995.340 Can't find a start input variable '"+scpy.source.variables.startInputAs+"'";
+                log.warn(es);
+                return null;
+
+            }
+            String filename = StrUtils.getName(inputVariable.originalFilename) + getActualExtension(scpy);
+            return filename;
+        });
+    }
+
+    private String getActualExtension(SourceCodeParamsYaml scpy) {
+        final String ext = MetaUtils.getValue(scpy.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
+
+        return S.b(ext)
+                ? (StringUtils.isNotBlank(globals.defaultResultFileExtension) ? globals.defaultResultFileExtension : ".bin")
+                : ext;
+    }
+
+    @Nullable
+    public CleanerInfo getBatchOriginFile(Long batchId) throws IOException {
+        return getVariable(batchId, null, true, (scpy)-> {
+            String variableName = scpy.source.variables.startInputAs;
+            if (S.b(variableName)) {
+                final String es = "#995.300 a start input variable '" + scpy.source.variables.startInputAs +"' wasn't found";
+                log.warn(es);
+                return null;
+            }
+            return variableName;
+        }, (execContextId, scpy) -> {
+            String originFilename = batchService.findUploadedFilenameForBatchId(batchId, null);
+            if (S.b(originFilename)) {
+                return null;
+            }
+            return originFilename;
+        });
+    }
+
+    @Nullable
+    private CleanerInfo getVariable(
+            Long batchId, @Nullable Long companyUniqueId, boolean includeDeleted,
+            Function<SourceCodeParamsYaml, String> variableSelector, BiFunction<Long, SourceCodeParamsYaml, String> outputFilenameFunction) throws IOException {
         Batch batch = batchCache.findById(batchId);
-        if (batch == null || !batch.companyId.equals(companyUniqueId) ||
+        if (batch == null || (companyUniqueId!=null && !batch.companyId.equals(companyUniqueId)) ||
                 (!includeDeleted && batch.deleted)) {
             final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
@@ -355,15 +411,32 @@ public class BatchTopLevelService {
         //noinspection ResultOfMethodCallIgnored
         zipDir.mkdir();
 
-        BatchStatusProcessor status = batchService.prepareStatusAndData(batch, this::prepareZip, zipDir);
+        SourceCodeImpl sc = sourceCodeCache.findById(batch.sourceCodeId);
+        if (sc==null) {
+            final String es = "#995.280 SourceCode wasn't found, sourceCodeId: " + batch.sourceCodeId;
+            log.warn(es);
+            return null;
+        }
+        SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+        String resultBatchVariable = variableSelector.apply(scpy);
 
-        File statusFile = new File(zipDir, "status.txt");
-        FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);
+        SimpleVariable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
+        if (variable==null) {
+            final String es = "#995.320 Can't find variable '"+resultBatchVariable+"'";
+            log.warn(es);
+            return null;
+        }
+
+        String filename = outputFilenameFunction.apply(batch.execContextId, scpy);
+        if (S.b(filename)) {
+            final String es = "#995.340 Can't find filename for file";
+            log.warn(es);
+            return null;
+        }
+
         File zipFile = new File(resultDir, Consts.RESULT_ZIP);
-        ZipUtils.createZip(zipDir, zipFile, status.renameTo);
-
-
-        String filename = StrUtils.getName(status.originArchiveName) + Consts.ZIP_EXT;
+        variableService.storeToFile(variable.id, zipFile);
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
@@ -373,95 +446,5 @@ public class BatchTopLevelService {
         resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
         return resource;
     }
-
-    public @Nullable CleanerInfo getBatchOriginFile(Long batchId) throws IOException {
-        Batch batch = batchCache.findById(batchId);
-        if (batch == null) {
-            final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
-            log.warn(es);
-            return null;
-        }
-        CleanerInfo resource = new CleanerInfo();
-
-        File resultDir = DirUtils.createTempDir("prepare-origin-file-");
-        resource.toClean.add(resultDir);
-
-        String originFilename = batchService.findUploadedFilenameForBatchId(batchId, null);
-        if (S.b(originFilename)) {
-            return null;
-        }
-        File tempFile = File.createTempFile("batch-origin-file-", ".bin", resultDir);
-
-        try {
-            if (true) {
-                throw new NotImplementedException("need to re-write with using execContextId and find the first vatiable in execContext");
-            }
-            // todo 1L is fictional number, need to change to actual value
-            Long variableId = 1L;
-            variableService.storeToFile(variableId, tempFile);
-        } catch (CommonErrorWithDataException e) {
-            String msg = "#990.375 Error store data to temp file, data doesn't exist in db, batchId " + batchId +
-                    ", file: " + tempFile.getPath();
-            log.error(msg);
-            return null;
-        }
-
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        httpHeaders.setContentDisposition(ContentDisposition.parse("filename*=UTF-8''" + URLEncoder.encode(originFilename, StandardCharsets.UTF_8.toString())));
-        resource.entity = new ResponseEntity<>(new FileSystemResource(tempFile), RestUtils.getHeader(httpHeaders, tempFile.length()), HttpStatus.OK);
-        return resource;
-    }
-
-    // todo 2020-02-25 this method has to be re-written completely
-    private boolean prepareZip(BatchService.PrepareZipData prepareZipData, File zipDir ) {
-        if (true) {
-            throw new NotImplementedException("Previous version was using list of exec contexts and in this method " +
-                    "data was prepared only for one task (there was one task for one execContext)." +
-                    "Not we have only one execContext with a number of tasks. So need to re-write to use taskId or something like that.");
-        }
-        final TaskParamsYaml taskParamYaml;
-        try {
-            taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(prepareZipData.task.getParams());
-        } catch (YAMLException e) {
-            prepareZipData.bs.getErrorStatus().add(
-                    "#990.350 " + prepareZipData.mainDocument + ", " +
-                            "Task has broken data in params, status: " + EnumsApi.TaskExecState.from(prepareZipData.task.getExecState()) +
-                            ", batchId:" + prepareZipData.batchId +
-                            ", execContextId: " + prepareZipData.execContextId + ", " +
-                            "taskId: " + prepareZipData.task.getId(), '\n');
-            return false;
-        }
-
-        File tempFile;
-        try {
-            tempFile = File.createTempFile("doc-", ".xml", zipDir);
-        } catch (IOException e) {
-            String msg = "#990.370 Error create a temp file in "+zipDir.getAbsolutePath();
-            log.error(msg);
-            prepareZipData.bs.getGeneralStatus().add(msg,'\n');
-            return false;
-        }
-
-        // all documents are sorted in zip folder
-        prepareZipData.bs.renameTo.put("zip/" + tempFile.getName(), "zip/" + prepareZipData.mainDocument);
-
-
-        // TODO 2020-01-30 need to re-write
-/*
-        try {
-            variableService.storeToFile(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), tempFile);
-        } catch (CommonErrorWithDataException e) {
-            String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " +
-                    taskParamYaml.taskYaml.outputResourceIds.values().iterator().next() +
-                    ", file: " + tempFile.getPath();
-            log.error(msg);
-            prepareZipData.bs.getGeneralStatus().add(msg,'\n');
-            return false;
-        }
-*/
-        return true;
-    }
-
 
 }

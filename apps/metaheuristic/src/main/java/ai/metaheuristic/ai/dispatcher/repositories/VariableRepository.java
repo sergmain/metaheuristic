@@ -50,7 +50,7 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
             "from Variable v where v.name in :vars and v.execContextId=:execContextId")
-    List<SimpleVariable> getIdAndStorageUrlInVarsForExecContext(Long execContextId, List<String> vars);
+    List<SimpleVariable> findByExecContextIdAndNames(Long execContextId, List<String> vars);
 
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
@@ -63,7 +63,6 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
             "from Variable v where v.name=:name and v.taskContextId=:taskContextId and v.execContextId=:execContextId")
     SimpleVariable findByNameAndTaskContextIdAndExecContextId(String name, String taskContextId, Long execContextId);
 
-    @Nullable
     @Transactional(readOnly = true)
     @Query(value="select v.id from Variable v where v.name=:name and v.execContextId=:execContextId")
     List<Long> findIdByNameAndExecContextId(String name, Long execContextId);

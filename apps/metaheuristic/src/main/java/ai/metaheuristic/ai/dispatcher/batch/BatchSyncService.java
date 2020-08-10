@@ -35,6 +35,7 @@ import java.util.function.Supplier;
  * Date: 10/18/2019
  * Time: 03:28 PM
  */
+@SuppressWarnings("unused")
 @Service
 @RequiredArgsConstructor
 @Profile("dispatcher")
@@ -45,8 +46,7 @@ public class BatchSyncService {
     private static final ConcurrentHashMap<Long, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
-    @SuppressWarnings("Duplicates")
-    void getWithSyncVoid(Long batchId, Consumer<Batch> function) {
+    public void getWithSyncVoid(Long batchId, Consumer<Batch> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();
@@ -77,9 +77,8 @@ public class BatchSyncService {
         }
     }
 
-    @SuppressWarnings("Duplicates")
     @NonNull
-    <T> T getWithSync(Long batchId, Function<Batch, T> function) {
+    public <T> T getWithSync(Long batchId, Function<Batch, T> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();
@@ -108,9 +107,8 @@ public class BatchSyncService {
         }
     }
 
-    @SuppressWarnings("Duplicates")
     @Nullable
-    <T> T getWithSyncNullable(Long batchId, Function<Batch, T> function) {
+    public <T> T getWithSyncNullable(Long batchId, Function<Batch, T> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();
@@ -139,9 +137,8 @@ public class BatchSyncService {
         }
     }
 
-    @SuppressWarnings("Duplicates")
     @NonNull
-    <T> T getWithSyncReadOnly(@NonNull Batch batch, Supplier<T> function) {
+    public <T> T getWithSyncReadOnly(@NonNull Batch batch, Supplier<T> function) {
         final AtomicInteger obj;
         try {
             writeLock.lock();

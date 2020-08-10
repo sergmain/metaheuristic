@@ -67,8 +67,23 @@ public class VariableService {
 
     @SuppressWarnings({"SameParameterValue"})
     @Transactional(readOnly = true)
-    public @Nullable
-    SimpleVariable getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
+    @Nullable
+    public SimpleVariable getVariableAsSimple(Long execContextId, String variable) {
+        List<SimpleVariable> vars = variableRepository.findByExecContextIdAndNames(execContextId, List.of(variable));
+
+        if (vars.isEmpty()) {
+            return null;
+        }
+        if (vars.size()>1) {
+            throw new SourceCodeException("Too many variable '"+variable+"', actual count: " + vars.size());
+        }
+        return vars.get(0);
+    }
+
+    @SuppressWarnings({"SameParameterValue"})
+    @Transactional(readOnly = true)
+    @Nullable
+    public SimpleVariable getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
         ExecContextParamsYaml.Process p = execContext.getExecContextParamsYaml().findProcess(processCode);
         if (p==null) {
             return null;

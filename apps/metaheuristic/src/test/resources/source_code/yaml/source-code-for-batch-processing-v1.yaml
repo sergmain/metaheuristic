@@ -2,6 +2,9 @@ source:
   uid: source-code-for-batch-processing-1:0
   variables:
     startInputAs: input-data
+  metas:
+    batch-result: var-batch-result
+    batch-status: var-batch-status
   processes:
     - code: mh.batch-splitter
       name: mh.batch-splitter
@@ -30,16 +33,8 @@ source:
         code: mh.batch-result-processor
         context: internal
       outputs:
-        - name: batch-result
+        - name: var-batch-result
+        - name: var-batch-status
       metas:
         - batch-item: var-batch-item
-    - code: mh.aggregate
-      name: mh.aggregate
-      function:
-        code: mh.aggregate
-        context: internal
-      inputs:
-        - name: processed-file
-      outputs:
-        - name: batch-result
 version: 1

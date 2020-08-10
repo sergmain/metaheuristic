@@ -17,15 +17,19 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.batch.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
+import ai.metaheuristic.ai.dispatcher.batch.BatchSyncService;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
@@ -33,6 +37,8 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -44,11 +50,18 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
+import ai.metaheuristic.commons.utils.ZipUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.*;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -56,6 +69,9 @@ import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -78,10 +94,12 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private final BatchService batchService;
     private final BatchRepository batchRepository;
     private final BatchCache batchCache;
+    private final BatchSyncService batchSyncService;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService  execContextGraphTopLevelService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
+    private final DispatcherEventService dispatcherEventService;
 
     @Override
     public String getCode() {
@@ -98,8 +116,131 @@ public class BatchResultProcessorFunction implements InternalFunction {
             Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration, TaskParamsYaml taskParamsYaml) {
 
-
         throw new NotImplementedException("not yet");
+    }
+
+    @SuppressWarnings("unused")
+    public Batch changeStateToError(Long batchId, String error) {
+        return batchSyncService.getWithSync(batchId, (b) -> {
+            try {
+                if (b == null) {
+                    log.warn("#990.070 batch not found in db, batchId: #{}", batchId);
+                    return null;
+                }
+                b.setExecState(Enums.BatchExecState.Error.code);
+
+                BatchParamsYaml batchParams = BatchParamsYamlUtils.BASE_YAML_UTILS.to(b.params);
+                if (batchParams == null) {
+                    batchParams = new BatchParamsYaml();
+                }
+                if (batchParams.batchStatus==null) {
+                    batchParams.batchStatus = new BatchParamsYaml.BatchStatus();
+                }
+                BatchStatusProcessor batchStatusProcessor = new BatchStatusProcessor();
+                batchStatusProcessor.getGeneralStatus().add(error);
+                initBatchStatus(batchStatusProcessor);
+                batchParams.batchStatus.status = batchStatusProcessor.status;
+                b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(batchParams);
+
+                b = batchCache.save(b);
+                return b;
+            }
+            finally {
+                dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
+            }
+        });
+    }
+
+    @Nullable
+    public CleanerInfo getBatchProcessingResult(Long batchId, DispatcherContext context, boolean includeDeleted) throws IOException {
+        return getBatchProcessingResult(batchId, context.getCompanyId(), includeDeleted);
+    }
+
+    @Nullable
+    public CleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) throws IOException {
+        Batch batch = batchCache.findById(batchId);
+        if (batch == null || !batch.companyId.equals(companyUniqueId) ||
+                (!includeDeleted && batch.deleted)) {
+            final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
+            log.warn(es);
+            return null;
+        }
+        CleanerInfo resource = new CleanerInfo();
+
+        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
+        resource.toClean.add(resultDir);
+
+        File zipDir = new File(resultDir, "zip");
+        //noinspection ResultOfMethodCallIgnored
+        zipDir.mkdir();
+
+        BatchStatusProcessor status = prepareStatusAndData(batch, this::prepareZip, zipDir);
+
+        File statusFile = new File(zipDir, "status.txt");
+        FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);
+        File zipFile = new File(resultDir, Consts.RESULT_ZIP);
+        ZipUtils.createZip(zipDir, zipFile, status.renameTo);
+
+
+        String filename = StrUtils.getName(status.originArchiveName) + Consts.ZIP_EXT;
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
+        httpHeaders.setContentDisposition(ContentDisposition.parse(
+                "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
+        resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
+        return resource;
+    }
+
+    // todo 2020-02-25 this method has to be re-written completely
+    private boolean prepareZip(BatchService.PrepareZipData prepareZipData, File zipDir ) {
+        if (true) {
+            throw new NotImplementedException("Previous version was using list of exec contexts and in this method " +
+                    "data was prepared only for one task (there was one task for one execContext)." +
+                    "Not we have only one execContext with a number of tasks. So need to re-write to use taskId or something like that.");
+        }
+        final TaskParamsYaml taskParamYaml;
+        try {
+            taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(prepareZipData.task.getParams());
+        } catch (YAMLException e) {
+            prepareZipData.bs.getErrorStatus().add(
+                    "#990.350 " + prepareZipData.mainDocument + ", " +
+                            "Task has broken data in params, status: " + EnumsApi.TaskExecState.from(prepareZipData.task.getExecState()) +
+                            ", batchId:" + prepareZipData.batchId +
+                            ", execContextId: " + prepareZipData.execContextId + ", " +
+                            "taskId: " + prepareZipData.task.getId(), '\n');
+            return false;
+        }
+
+        File tempFile;
+        try {
+            tempFile = File.createTempFile("doc-", ".xml", zipDir);
+        } catch (IOException e) {
+            String msg = "#990.370 Error create a temp file in "+zipDir.getAbsolutePath();
+            log.error(msg);
+            prepareZipData.bs.getGeneralStatus().add(msg,'\n');
+            return false;
+        }
+
+        // all documents are sorted in zip folder
+        prepareZipData.bs.renameTo.put("zip/" + tempFile.getName(), "zip/" + prepareZipData.mainDocument);
+
+
+        // TODO 2020-01-30 need to re-write
+/*
+        try {
+            variableService.storeToFile(taskParamYaml.taskYaml.outputResourceIds.values().iterator().next(), tempFile);
+        } catch (CommonErrorWithDataException e) {
+            String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " +
+                    taskParamYaml.taskYaml.outputResourceIds.values().iterator().next() +
+                    ", file: " + tempFile.getPath();
+            log.error(msg);
+            prepareZipData.bs.getGeneralStatus().add(msg,'\n');
+            return false;
+        }
+*/
+        return true;
     }
 
     /**
