@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
@@ -55,6 +56,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class SourceCodeSelectorService {
 
+    private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
     private final CompanyCache companyCache;
 
@@ -120,12 +122,17 @@ public class SourceCodeSelectorService {
             }
 
             if (!groups.isEmpty()) {
-                List<SourceCode> commonSourceCodes = sourceCodeRepository.findAllAsSourceCode(Consts.ID_1).stream().filter(sourceCodeFilter::apply).filter(o -> {
+                List<SourceCodeImpl> commonSourceCodes = sourceCodeRepository.findAllAsSourceCode(Consts.ID_1).stream().filter(sourceCodeFilter::apply).filter(o -> {
                     if (!o.isValid()) {
                         return false;
                     }
                     try {
-                        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
+                        SourceCodeImpl sc = sourceCodeCache.findById(o.id);
+                        if (sc==null) {
+                            return false;
+                        }
+                        SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
+                        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
                         if (ppy.source.ac!=null) {
                             String[] arr = StringUtils.split(ppy.source.ac.groups, ',');
                             return Stream.of(arr).map(String::strip).anyMatch(groups::contains);

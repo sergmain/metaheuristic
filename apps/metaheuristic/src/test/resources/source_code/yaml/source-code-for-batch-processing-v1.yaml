@@ -3,8 +3,8 @@ source:
   variables:
     startInputAs: input-data
   metas:
-    batch-result: var-batch-result
-    batch-status: var-batch-status
+    - batch-result: var-batch-result
+    - batch-status: var-batch-status
   processes:
     - code: mh.batch-splitter
       name: mh.batch-splitter

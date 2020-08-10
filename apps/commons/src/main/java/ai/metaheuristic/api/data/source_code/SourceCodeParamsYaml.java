@@ -171,7 +171,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
-        public List<Map<String, String>> metas;
+        public List<Map<String, String>> metas = new ArrayList<>();;
         public AccessControl ac;
 
         @JsonIgnore

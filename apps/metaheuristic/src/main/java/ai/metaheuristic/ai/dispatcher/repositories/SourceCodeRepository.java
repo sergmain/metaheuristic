@@ -38,7 +38,7 @@ public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Lon
 
     @Transactional(readOnly = true)
     @Query(value="select p from SourceCodeImpl p where p.companyId=:companyUniqueId")
-    List<SourceCode> findAllAsSourceCode(Long companyUniqueId);
+    List<SourceCodeImpl> findAllAsSourceCode(Long companyUniqueId);
 
     @Transactional(readOnly = true)
     @Query(value="select p from SourceCodeImpl p where p.companyId=:companyUniqueId order by p.id desc ")

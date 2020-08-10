@@ -64,19 +64,19 @@
                 <div th:text="${r.uploadedFileName}" class="no-wrap">File name</div>
             </td>
             <td th:text="${r.execStateStr}">Exec state as string</td>
-            <td><a sec:authorize="hasAnyRole('MASTER_OPERATOR')" th:if='${r.batch.deleted}' class="pure-button pure-button-primary"
-                   th:href="${'/dispatcher/company/batch/company-batch-delete/'+companyUniqueId + '/' + r.batch.id}">Delete</a></td>
-
             <td>
+                <a sec:authorize="hasAnyRole('MASTER_OPERATOR')" th:if='${r.batch.deleted and r.finished()}' class="pure-button pure-button-primary"
+                   th:href="${'/dispatcher/company/batch/company-batch-delete/'+companyUniqueId + '/' + r.batch.id}">Delete</a>
+                &nbsp;
+                <a th:if="${r.finished()}" class="pure-button pure-button-primary" target="_blank"
+                   th:href="${'/dispatcher/company/batch/company-batch-download-result/'+companyUniqueId + '/' + r.batch.id + '/result.zip'}">Download result</a>
+                &nbsp;
+                <a th:if="${r.finished()}" class="pure-button pure-button-primary"
+                   th:href="${'/dispatcher/company/batch/company-batch-status/'+companyUniqueId + '/' + r.batch.id}">Status</a>
+                &nbsp;
                 <a class="pure-button pure-button-primary"
-                   target="_blank"
-                   th:href="${'/dispatcher/company/batch/company-batch-download-result/'+companyUniqueId + '/' + r.batch.id + '/result.zip'}">Download result</a></td>
-
-            <td><a class="pure-button pure-button-primary"
-                   th:href="${'/dispatcher/company/batch/company-batch-status/'+companyUniqueId + '/' + r.batch.id}">Status</a></td>
-
-            <td><a class="pure-button pure-button-primary"
-                   th:href="${'/dispatcher/company/batch/company-batch-download-origin-file/'+companyUniqueId + '/' + r.batch.id + '/origin-file.zip'}">Download origin file</a></td>
+                   th:href="${'/dispatcher/company/batch/company-batch-download-origin-file/'+companyUniqueId + '/' + r.batch.id + '/origin-file.zip'}">Download origin file</a>
+            </td>
         </tr>
         <tr>
             <td colspan="10">

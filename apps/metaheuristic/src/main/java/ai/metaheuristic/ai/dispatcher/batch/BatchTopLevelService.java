@@ -308,10 +308,6 @@ public class BatchTopLevelService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
     }
 
-    public BatchData.Status getProcessingResourceStatus(Long batchId, DispatcherContext context, boolean includeDeleted) {
-        return getProcessingResourceStatus(batchId, context.getCompanyId(), includeDeleted);
-    }
-
     public BatchData.Status getProcessingResourceStatus(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         try {
             CleanerInfo cleanerInfo = getBatchProcessingResultInternal(batchId, companyUniqueId, includeDeleted, "batch-status");

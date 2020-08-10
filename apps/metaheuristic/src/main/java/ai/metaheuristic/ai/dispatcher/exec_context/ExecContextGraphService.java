@@ -351,7 +351,7 @@ class ExecContextGraphService {
                     return List.of(startVertex);
                 }
 
-                log.debug("\tthere isn't any task which doesn't have ancestors");
+                log.debug("\tthere isn't any task with state NONE and which doesn't have ancestors");
 
                 // get all non-processed tasks
                 Iterator<ExecContextData.TaskVertex> iterator = new BreadthFirstIterator<>(graph, (ExecContextData.TaskVertex)null);
