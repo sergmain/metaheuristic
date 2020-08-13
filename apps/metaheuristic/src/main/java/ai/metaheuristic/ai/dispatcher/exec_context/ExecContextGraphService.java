@@ -201,7 +201,7 @@ class ExecContextGraphService {
             status.status = OperationStatusRest.OPERATION_STATUS_OK;
         }
         catch (Throwable th) {
-            log.error("Error while updating graph", th);
+            log.error("#916.020 Error while updating graph", th);
             status.status = new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
         return status;
@@ -216,7 +216,7 @@ class ExecContextGraphService {
                     .count());
         }
         catch (Throwable th) {
-            log.error("#915.010 Error", th);
+            log.error("#916.040 Error", th);
             return 0L;
         }
     }
@@ -230,7 +230,7 @@ class ExecContextGraphService {
                     .collect(Collectors.toList()));
         }
         catch (Throwable th) {
-            log.error("#915.010 Error", th);
+            log.error("#916.060 Error", th);
             return List.of();
         }
     }
@@ -262,13 +262,14 @@ class ExecContextGraphService {
                             .collect(Collectors.toList());
                     return vertices;
                 } catch (Throwable th) {
-                    log.error("#915.019 error", th);
-                    throw new RuntimeException("Error", th);
+                    String es = "#916.080 error";
+                    log.error(es, th);
+                    throw new RuntimeException(es, th);
                 }
             });
         }
         catch (Throwable th) {
-            log.error("#915.020 Error", th);
+            log.error("#916.100 Error", th);
             // TODO 2020.03.09 need to implement better handling of Throwable
             return List.of();
         }
@@ -279,7 +280,7 @@ class ExecContextGraphService {
             return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDescendantsInternal(graph, taskId));
         }
         catch (Throwable th) {
-            log.error("#915.022 Error", th);
+            log.error("#916.120 Error", th);
             // TODO 2020.03.09 need to implement better handling of Throwable
             return Set.of();
         }
@@ -311,7 +312,7 @@ class ExecContextGraphService {
             return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDirectDescendantsInternal(graph, taskId));
         }
         catch (Throwable th) {
-            log.error("#915.022 Error", th);
+            log.error("#916.140 Error", th);
             // TODO 2020.03.09 need to implement better handling of Throwable
             return Set.of();
         }
@@ -399,7 +400,7 @@ class ExecContextGraphService {
             });
         }
         catch (Throwable th) {
-            log.error("#915.030 Error", th);
+            log.error("#916.160 Error", th);
             // TODO 2020.03.09 need to implement better handling of Throwable
             return List.of();
         }
@@ -414,7 +415,7 @@ class ExecContextGraphService {
             });
         }
         catch (Throwable th) {
-            log.error("#915.030 Error", th);
+            log.error("#916.180 Error", th);
             // TODO 2020.03.09 need to implement better handling of Throwable
             return List.of();
         }
@@ -439,7 +440,7 @@ class ExecContextGraphService {
             });
         }
         catch (Throwable th) {
-            log.error("#915.030 Error", th);
+            log.error("#916.200 Error", th);
             // TODO 2020.03.09 need to implement better handling of Throwable
             return List.of();
         }
@@ -457,7 +458,7 @@ class ExecContextGraphService {
             });
         }
         catch (Throwable th) {
-            log.error("#915.040 Error", th);
+            log.error("#916.220 Error", th);
             return null;
         }
     }
@@ -469,7 +470,7 @@ class ExecContextGraphService {
             return withTaskList;
         }
         catch (Throwable th) {
-            log.error("#915.050 Error", th);
+            log.error("#916.240 Error", th);
             return new ExecContextOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
         }
     }
@@ -479,7 +480,7 @@ class ExecContextGraphService {
             Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
 
         Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
-        // find and filter mh.finish vertex, which doesn't have any outgoing edges
+        // find and filter a 'mh.finish' vertex, which doesn't have any outgoing edges
         set.stream().filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty()).forEach( tv-> tv.execState = state);
         withTaskList.childrenTasks.addAll(set);
     }
@@ -501,7 +502,7 @@ class ExecContextGraphService {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         catch (Throwable th) {
-            log.error("Error while adding task to graph", th);
+            log.error("#916.260 Error while adding task to graph", th);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
     }

@@ -42,6 +42,9 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * @author Serge
  * Date: 3/15/2020
@@ -117,9 +120,12 @@ public class TaskWithInternalContextEventService {
                             execContext, event.taskId, p.internalContextId, taskParamsYaml);
 
                     if (result.processing != Enums.InternalFunctionProcessing.ok) {
-                        log.error("#707.050 error type: {}, message: {}", result.processing, result.error);
+                        log.error("#707.050 error type: {}, message: {}\n\tsourceCodeId: {}, ececContextId: {}", result.processing, result.error, execContext.sourceCodeId, execContext.id);
                         taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10001,
                                 "#707.060 Task #" + event.taskId + " was finished with status '" + result.processing + "', text of error: " + result.error);
+
+                        ExecContextOperationStatusWithTaskList s =
+                                execContextGraphTopLevelService.updateTaskExecStates(task.execContextId, new ConcurrentHashMap<>(Map.of(task.id, EnumsApi.TaskExecState.BROKEN.value)));
 
                         //noinspection unused
                         ExecContextOperationStatusWithTaskList status =

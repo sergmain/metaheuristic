@@ -16,16 +16,16 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -109,15 +109,28 @@ public class ExecContextSchedulerService {
         }
     }
 
+    @Data
+    public static class TaskState {
+        public Long taskId;
+        public Integer execState;
+        public long updatedOn;
+
+        public TaskState(Object[] o) {
+            this.taskId = (Long) o[0];
+            this.execState = (Integer) o[1];
+            Long longObj = (Long) o[2];
+            this.updatedOn = longObj!=null ? longObj : 0;
+        }
+    }
+
     public void reconcileStates(Long execContextId) {
         List<Object[]> list = taskRepository.findAllExecStateByExecContextId(execContextId);
 
         // Reconcile states in db and in graph
-        Map<Long, Integer> states = new HashMap<>(list.size()+1);
+        Map<Long, TaskState> states = new HashMap<>(list.size()+1);
         for (Object[] o : list) {
-            Long taskId = (Long) o[0];
-            Integer execState = (Integer) o[1];
-            states.put(taskId, execState);
+            TaskState taskState = new TaskState(o);
+            states.put(taskState.taskId, taskState);
         }
 
         ConcurrentHashMap<Long, Integer> taskStates = new ConcurrentHashMap<>();
@@ -125,15 +138,15 @@ public class ExecContextSchedulerService {
 
         List<ExecContextData.TaskVertex> vertices = execContextService.findAllVertices(execContextId);
         vertices.stream().parallel().forEach(tv -> {
-            Integer state = states.get(tv.taskId);
-            if (state==null) {
+            TaskState taskState = states.get(tv.taskId);
+            if (taskState==null) {
                 isNullState.set(true);
             }
-            else if (tv.execState.value!=state) {
+            else if (System.currentTimeMillis()-taskState.updatedOn>5_000 && tv.execState.value!=taskState.execState) {
                 log.info("#751.040 Found different states for task #"+tv.taskId+", " +
-                        "db: "+ EnumsApi.TaskExecState.from(state)+", " +
+                        "db: "+ EnumsApi.TaskExecState.from(taskState.execState)+", " +
                         "graph: "+tv.execState);
-                taskStates.put(tv.taskId, state);
+                taskStates.put(tv.taskId, taskState.execState);
             }
         });
 
@@ -149,7 +162,7 @@ public class ExecContextSchedulerService {
         // fix IN_PROCESSING state
         // find and reset all hanging up tasks
         states.entrySet().stream()
-                .filter(e-> EnumsApi.TaskExecState.IN_PROGRESS.value==e.getValue())
+                .filter(e-> EnumsApi.TaskExecState.IN_PROGRESS.value==e.getValue().execState)
                 .forEach(e->{
                     Long taskId = e.getKey();
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);

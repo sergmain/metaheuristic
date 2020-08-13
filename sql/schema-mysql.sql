@@ -170,10 +170,11 @@ CREATE TABLE mh_task
     ID                          INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION                     INT UNSIGNED    NOT NULL,
     PARAMS                      MEDIUMTEXT not null,
-    PROCESSOR_ID                  NUMERIC(10, 0),
+    PROCESSOR_ID                NUMERIC(10, 0),
     ASSIGNED_ON                 bigint,
-    IS_COMPLETED                tinyint(1) not null default 0,
+    UPDATED_ON                  bigint,
     COMPLETED_ON                bigint,
+    IS_COMPLETED                tinyint(1) not null default 0,
     FUNCTION_EXEC_RESULTS       MEDIUMTEXT,
     EXEC_CONTEXT_ID             NUMERIC(10, 0)   NOT NULL,
     EXEC_STATE                  tinyint(1) not null default 0,
@@ -276,7 +277,7 @@ CREATE TABLE mh_event
     -- company_id can be null
     COMPANY_ID      INT UNSIGNED,
     CREATED_ON      BIGINT UNSIGNED NOT NULL,
-    PERIOD          INT UNSIGNED    not null ,
+    PERIOD          INT UNSIGNED    not null,
     EVENT           VARCHAR(50)     not null,
     PARAMS          MEDIUMTEXT      not null
 );

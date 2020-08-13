@@ -15,6 +15,7 @@ source:
         - variable-for-splitting: input-data
         - output-is-dynamic: true
         - output-variable: var-batch-item
+#      error-scope: process
       subProcesses:
         logic: and
         processes:

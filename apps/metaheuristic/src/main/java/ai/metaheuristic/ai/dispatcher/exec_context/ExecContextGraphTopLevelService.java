@@ -82,23 +82,11 @@ public class ExecContextGraphTopLevelService {
         });
     }
 
-    private ExecContextOperationStatusWithTaskList updateTaskExecStateWithoutSync(ExecContextImpl execContext, Long taskId, int execState) {
-        if (execContext==null) {
-            // this execContext was deleted
-            return new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-        }
-        taskPersistencer.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
-        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState);
-        taskPersistencer.updateTasksStateInDb(status);
-        return status;
-    }
-
     public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(Long execContextId, Long taskId) {
         return execContextSyncService.getWithSync(execContextId, (execContext) -> execContextGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(execContext, taskId));
     }
 
     public OperationStatusRest addNewTasksToGraph(Long execContextId, List<Long> parentTaskIds, List<Long> taskIds) {
-        //noinspection UnnecessaryLocalVariable
         final OperationStatusRest withSync = execContextSyncService.getWithSync(execContextId,
                 (execContext) -> execContextGraphService.addNewTasksToGraph(execContext, parentTaskIds, taskIds));
         return withSync;
@@ -124,4 +112,16 @@ public class ExecContextGraphTopLevelService {
                 (execContext) -> execContextGraphService.createEdges(execContext, lastIds, descendants));
 
     }
+
+    private ExecContextOperationStatusWithTaskList updateTaskExecStateWithoutSync(ExecContextImpl execContext, Long taskId, int execState) {
+        if (execContext==null) {
+            // this execContext was deleted
+            return new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+        }
+        taskPersistencer.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
+        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState);
+        taskPersistencer.updateTasksStateInDb(status);
+        return status;
+    }
+
 }

@@ -29,8 +29,17 @@ import java.io.Serializable;
 @Data
 @ToString(exclude = {"params"} )
 @NoArgsConstructor
+@EntityListeners(value=TaskImpl.LastUpdateListener.class)
 public class TaskImpl implements Serializable, Task {
     private static final long serialVersionUID = 268796211406267810L;
+
+    public static class LastUpdateListener {
+        @PreUpdate
+        @PrePersist
+        public void setLastUpdate(TaskImpl o) {
+            o.setUpdatedOn( System.currentTimeMillis() );
+        }
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,6 +59,9 @@ public class TaskImpl implements Serializable, Task {
 
     @Column(name = "ASSIGNED_ON")
     public Long assignedOn;
+
+    @Column(name = "UPDATED_ON")
+    public Long updatedOn;
 
     @Column(name = "COMPLETED_ON")
     public Long completedOn;

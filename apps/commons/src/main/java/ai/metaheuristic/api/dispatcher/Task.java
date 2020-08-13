@@ -65,4 +65,8 @@ public interface Task {
     void setResultReceived(boolean resultReceived);
 
     void setResultResourceScheduledOn(long resultResourceScheduledOn);
+
+    Long getUpdatedOn();
+
+    void setUpdatedOn(Long updatedOn);
 }

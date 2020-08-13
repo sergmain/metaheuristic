@@ -70,7 +70,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Object[]> findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(Long processorId);
 
     @Transactional(readOnly = true)
-    @Query(value="select t.id, t.execState from TaskImpl t where t.execContextId=:execContextId")
+    @Query(value="select t.id, t.execState, t.updatedOn from TaskImpl t where t.execContextId=:execContextId")
     List<Object[]> findAllExecStateByExecContextId(Long execContextId);
 
     @Transactional
