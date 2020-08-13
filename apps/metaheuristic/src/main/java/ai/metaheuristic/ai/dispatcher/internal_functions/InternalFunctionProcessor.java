@@ -64,6 +64,12 @@ public class InternalFunctionProcessor {
         }
 
         ExecContextParamsYaml expy = execContext.getExecContextParamsYaml();
-        return internalFunction.process(execContext.sourceCodeId, execContext.id, taskId, internalContextId, expy.variables, taskParamsYaml);
+        try {
+            return internalFunction.process(execContext.sourceCodeId, execContext.id, taskId, internalContextId, expy.variables, taskParamsYaml);
+        } catch (Throwable th) {
+            String es = "#977.020 system error while processing internal function '" + internalFunction.getCode() + "', error: " + th.getMessage();
+            log.error(es, th);
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
+        }
     }
 }

@@ -123,9 +123,9 @@ public class BatchSplitterFunction implements InternalFunction {
         TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
 */
         // variable-for-splitting
-        String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "input-batch");
+        String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
         if (S.b(inputVariableName)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "Meta 'input-batch' wasn't found");
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "Meta 'variable-for-splitting' wasn't found");
         }
 
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
