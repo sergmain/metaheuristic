@@ -50,28 +50,28 @@ public class ExecContextGraphTopLevelService {
 
     // read-only operations with graph
     public @NonNull List<ExecContextData.TaskVertex> findAll(@NonNull ExecContextImpl execContext) {
-        List<ExecContextData.TaskVertex> vertexList = execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findAll(execContext));
+        List<ExecContextData.TaskVertex> vertexList = execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findAll(execContext));
         return vertexList;
     }
 
     public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
-        return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findLeafs(execContext));
+        return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findLeafs(execContext));
     }
 
     public Set<ExecContextData.TaskVertex> findDescendants(ExecContextImpl execContext, Long taskId) {
-        return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findDescendants(execContext, taskId));
+        return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findDescendants(execContext, taskId));
     }
 
     public Set<ExecContextData.TaskVertex> findDirectDescendants(ExecContextImpl execContext, Long taskId) {
-        return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findDirectDescendants(execContext, taskId));
+        return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findDirectDescendants(execContext, taskId));
     }
 
     public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
-        return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findAllForAssigning(execContext));
+        return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findAllForAssigning(execContext));
     }
 
     public List<ExecContextData.TaskVertex> findAllBroken(ExecContextImpl execContext) {
-        return execContextSyncService.getWithSyncReadOnly(execContext, () -> execContextGraphService.findAllBroken(execContext));
+        return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findAllBroken(execContext));
     }
 
     // write operations with graph

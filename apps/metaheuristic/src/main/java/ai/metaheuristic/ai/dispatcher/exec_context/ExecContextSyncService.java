@@ -16,16 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -41,13 +40,15 @@ import java.util.function.Supplier;
 @Slf4j
 public class ExecContextSyncService {
 
-    private final @NonNull ExecContextRepository execContextRepository;
+    private final ExecContextRepository execContextRepository;
 
-    private static final ConcurrentHashMap<Long, ReentrantReadWriteLock.WriteLock> syncMap = new ConcurrentHashMap<>(100);
+//    private static final ConcurrentHashMap<Long, ReentrantReadWriteLock.WriteLock> syncMap = new ConcurrentHashMap<>(100);
 
-    @NonNull
-    <T> T getWithSync(@NonNull Long execContextId, @NonNull Function<ExecContextImpl, @lombok.NonNull T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = syncMap.computeIfAbsent(execContextId, o -> new ReentrantReadWriteLock().writeLock());
+    private static final CommonSync commonSync = new CommonSync();
+
+    <T> T getWithSync(Long execContextId, Function<ExecContextImpl, T> function) {
+//        final ReentrantReadWriteLock.WriteLock lock = syncMap.computeIfAbsent(execContextId, o -> new ReentrantReadWriteLock().writeLock());
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(execContextId);
         try {
             lock.lock();
 //            log.info("#010.010 ENTER SYNC, execContextId: {}, counter: {}", execContextId, lock);
@@ -60,8 +61,9 @@ public class ExecContextSyncService {
     }
 
     @Nullable
-    <T> T getWithSyncNullable(@NonNull Long execContextId, Function<ExecContextImpl, T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = syncMap.computeIfAbsent(execContextId, o -> new ReentrantReadWriteLock().writeLock());
+    <T> T getWithSyncNullable(Long execContextId, Function<ExecContextImpl, T> function) {
+//        final ReentrantReadWriteLock.WriteLock lock = syncMap.computeIfAbsent(execContextId, o -> new ReentrantReadWriteLock().writeLock());
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(execContextId);
         try {
             lock.lock();
 //            log.info("#010.030 ENTER SYNC, execContextId: {}, counter: {}", execContextId, lock);
@@ -73,9 +75,9 @@ public class ExecContextSyncService {
         }
     }
 
-    @NonNull
-    <T> T getWithSyncReadOnly(@NonNull ExecContextImpl execContext, @NonNull Supplier<T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = syncMap.computeIfAbsent(execContext.id, o -> new ReentrantReadWriteLock().writeLock());
+    <T> T getWithSyncReadOnly(Long execContextId, Supplier<T> function) {
+//        final ReentrantReadWriteLock.WriteLock lock = syncMap.computeIfAbsent(execContext.id, o -> new ReentrantReadWriteLock().writeLock());
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(execContextId);
         try {
             lock.lock();
 //            log.info("#010.050 ENTER SYNC, execContextId: {}, counter: {}", execContext.id, lock);
