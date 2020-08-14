@@ -300,7 +300,7 @@ public class BatchSplitterFunction implements InternalFunction {
             }
 
             if (process.logic!=EnumsApi.SourceCodeSubProcessLogic.sequential) {
-                throw new BreakFromLambdaException("#995.340 only 'sequential' logic is supported");
+                throw new BreakFromLambdaException("#995.340 only the 'sequential' logic is supported");
             }
             // all subProcesses must have the same processContextId
             if (subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {

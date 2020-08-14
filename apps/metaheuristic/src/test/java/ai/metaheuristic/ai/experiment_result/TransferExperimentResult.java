@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,8 +49,13 @@ public class TransferExperimentResult {
     @Autowired
     public ExecContextCache execContextCache;
 
+    /**
+     * this method is't test actually and is used for transfer an actual result of experiment
+     */
     @Test
+    @Disabled
     public void test() {
+
 
         TaskParamsYaml taskParamsYaml = new TaskParamsYaml();
 //        - feature-item: var-feature-item
