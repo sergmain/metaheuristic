@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.commons.utils;
 
+import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -23,6 +24,7 @@ import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -52,7 +54,7 @@ public class DirUtils {
         if (!currDir.exists()) {
             boolean isOk = currDir.mkdirs();
             if (!isOk) {
-                log.error("Can't make all directories for path: {}", currDir.getAbsolutePath());
+                log.error("#017.020 can't make all directories for path: {}", currDir.getAbsolutePath());
                 return null;
             }
         }
@@ -69,8 +71,13 @@ public class DirUtils {
             if (newTempDir.exists()) {
                 continue;
             }
-            newTempDir.mkdirs();
-            return newTempDir;
+            try {
+                Files.createDirectories(newTempDir.toPath());
+//                newTempDir.mkdirs();
+                return newTempDir;
+            } catch (IOException e) {
+                log.error(S.f("#017.040 Can't create temporary dir %s, attempt #%d, error: %s", newTempDir.getAbsolutePath(), i, e.getMessage()));
+            }
         }
         return null;
     }

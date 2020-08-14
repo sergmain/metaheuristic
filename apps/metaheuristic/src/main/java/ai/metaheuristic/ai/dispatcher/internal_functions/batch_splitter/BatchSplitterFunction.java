@@ -56,7 +56,6 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
@@ -146,9 +145,8 @@ public class BatchSplitterFunction implements InternalFunction {
 
         String ext = StrUtils.getExtension(originFilename);
 
-        File tempDir=null;
+        File tempDir=DirUtils.createTempDir("batch-file-upload-");;
         try {
-            tempDir = DirUtils.createTempDir("batch-file-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 String es = "#995.080 can't create temporary directory in " + System.getProperty("java.io.tmpdir");
                 log.error(es);
@@ -189,8 +187,9 @@ public class BatchSplitterFunction implements InternalFunction {
         }
         finally {
             try {
-                if (tempDir!=null) {
-                    FileUtils.deleteDirectory(tempDir);
+                if (tempDir!=null && tempDir.exists()) {
+//                    FileUtils.deleteDirectory(tempDir);
+                    Files.deleteIfExists(tempDir.toPath());
                 }
             } catch (IOException e) {
                 log.warn("#995.180 Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());

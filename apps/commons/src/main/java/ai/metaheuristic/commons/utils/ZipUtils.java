@@ -25,6 +25,7 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Function;
 
@@ -194,9 +195,12 @@ public class ZipUtils {
 
                     File newDir = new File(zipDestinationFolder, name);
                     log.debug("'\t\t\tcreate dirs in {}", newDir.getAbsolutePath());
+                    Files.createDirectories(newDir.toPath());
+/*
                     if (!newDir.mkdirs()) {
                         throw new RuntimeException("Creation of target dir was failed, target dir: " + zipDestinationFolder+", entity: " + name);
                     }
+*/
                 }
                 else {
                     String resultName;
@@ -205,7 +209,10 @@ public class ZipUtils {
                         final File parentFile = f.getParentFile();
                         if (parentFile !=null) {
                             File trgDir = new File(zipDestinationFolder, parentFile.getPath());
-                            trgDir.mkdirs();
+
+                            Files.createDirectories(trgDir.toPath());
+//                            trgDir.mkdirs();
+
                             File d = File.createTempFile("doc-", ".bin", trgDir);
                             resultName = new File(parentFile, d.getName()).getPath();
                         }
@@ -220,10 +227,12 @@ public class ZipUtils {
                     }
                     File destinationFile = createTargetFile(zipDestinationFolder, resultName);
                     if (!destinationFile.getParentFile().exists()) {
-                        destinationFile.getParentFile().mkdirs();
+                        Files.createDirectories(destinationFile.getParentFile().toPath());
                     }
                     log.debug("'\t\t\tcopy content of zip entry to file {}", destinationFile.getAbsolutePath());
-                    FileUtils.copyInputStreamToFile(zipFile.getInputStream(zipEntry), destinationFile);
+                    try (InputStream inputStream = zipFile.getInputStream(zipEntry)) {
+                        FileUtils.copyInputStreamToFile(inputStream, destinationFile);
+                    }
                 }
             }
             return mapping;

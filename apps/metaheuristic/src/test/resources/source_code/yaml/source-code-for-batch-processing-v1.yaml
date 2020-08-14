@@ -17,7 +17,7 @@ source:
         - output-variable: var-batch-item
 #      error-scope: process
       subProcesses:
-        logic: and
+        logic: sequential
         processes:
           - code: mh.nop-1
             name: nop 1

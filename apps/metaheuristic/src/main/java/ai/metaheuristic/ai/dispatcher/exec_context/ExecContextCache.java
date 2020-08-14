@@ -50,7 +50,12 @@ public class ExecContextCache {
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
     public @NonNull ExecContextImpl save(@NonNull ExecContextImpl execContext) {
         log.debug("#461.010 save execContext, id: #{}, execContext: {}", execContext.id, execContext);
-        return execContextRepository.save(execContext);
+        //noinspection CaughtExceptionImmediatelyRethrown
+        try {
+            return execContextRepository.save(execContext);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw e;
+        }
     }
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")

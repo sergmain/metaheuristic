@@ -21,22 +21,21 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * @author Serge
  * Date: 7/27/2019
  * Time: 8:26 PM
  */
-@SuppressWarnings("Duplicates")
+@SuppressWarnings({"Duplicates", "SynchronizationOnLocalVariableOrMethodParameter"})
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -45,10 +44,9 @@ public class TaskSyncService {
 
     private final TaskRepository taskRepository;
 
-    private static final ConcurrentHashMap<Long, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
+    private static final Map<Long, AtomicInteger> syncMap = new HashMap<>(100);
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
-    @SuppressWarnings("Duplicates")
     public @Nullable <T> T getWithSync(Long taskId, Function<TaskImpl, T> function) {
         final AtomicInteger obj;
         try {
@@ -57,7 +55,6 @@ public class TaskSyncService {
         } finally {
             writeLock.unlock();
         }
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             obj.incrementAndGet();
             try {
