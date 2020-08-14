@@ -43,6 +43,7 @@ import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.utils.ContextUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -125,7 +126,7 @@ public class BatchSplitterFunction implements InternalFunction {
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
         if (S.b(inputVariableName)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "Meta 'variable-for-splitting' wasn't found");
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#995.020 Meta 'variable-for-splitting' wasn't found");
         }
 
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
@@ -134,13 +135,13 @@ public class BatchSplitterFunction implements InternalFunction {
             return result;
         }
         if (holders.size()>1) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "Too many variables");
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#995.040 Too many variables");
         }
 
         VariableUtils.VariableHolder variableHolder = holders.get(0);
         String originFilename = variableHolder.getFilename();
         if (S.b(originFilename)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.input_variable_isnt_file, "variable.filename is blank");
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.input_variable_isnt_file, "#995.060 variable.filename is blank");
         }
 
         String ext = StrUtils.getExtension(originFilename);
@@ -149,7 +150,7 @@ public class BatchSplitterFunction implements InternalFunction {
         try {
             tempDir = DirUtils.createTempDir("batch-file-upload-");
             if (tempDir==null || tempDir.isFile()) {
-                String es = "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir");
+                String es = "#995.080 can't create temporary directory in " + System.getProperty("java.io.tmpdir");
                 log.error(es);
                 return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
             }
@@ -157,7 +158,7 @@ public class BatchSplitterFunction implements InternalFunction {
             final File dataFile = File.createTempFile("uploaded-file-", ext, tempDir);
             internalFunctionVariableService.storeToFile(variableHolder, dataFile);
             if (dataFile.length()==0) {
-                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "Empty files aren't supported");
+                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#995.100 Empty files aren't supported");
             }
 
             if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
@@ -172,17 +173,17 @@ public class BatchSplitterFunction implements InternalFunction {
             }
         }
         catch(UnzipArchiveException e) {
-            final String es = "#995.100 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
+            final String es = "#995.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
             log.error(es, e);
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(BatchProcessingException e) {
-            final String es = "#995.105 General error of processing batch.\nError: " + e.getMessage();
+            final String es = "#995.140 General error of processing batch.\nError: " + e.getMessage();
             log.error(es, e);
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(Throwable th) {
-            final String es = "#995.110 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
+            final String es = "#995.160 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
         }
@@ -192,7 +193,7 @@ public class BatchSplitterFunction implements InternalFunction {
                     FileUtils.deleteDirectory(tempDir);
                 }
             } catch (IOException e) {
-                log.warn("Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());
+                log.warn("#995.180 Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());
             }
         }
     }
@@ -208,12 +209,12 @@ public class BatchSplitterFunction implements InternalFunction {
         }
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec==null) {
-            throw new IllegalStateException("#995.202 execContext wasn't found, execContextId: " + execContextId);
+            throw new IllegalStateException("#995.220 execContext wasn't found, execContextId: " + execContextId);
         }
         Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(ec, taskId);
         if (descendants.isEmpty()) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                    "Graph for ExecContext #"+execContextId+" is broken");
+                    "#995.240 Graph for ExecContext #"+execContextId+" is broken");
         }
 
         ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
@@ -221,7 +222,7 @@ public class BatchSplitterFunction implements InternalFunction {
         final ExecContextParamsYaml.Process process = execContextParamsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
-                    "Process '"+taskParamsYaml.task.processCode+"'not found");
+                    "#995.260 Process '"+taskParamsYaml.task.processCode+"'not found");
         }
 
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
@@ -230,15 +231,15 @@ public class BatchSplitterFunction implements InternalFunction {
         final String variableName = MetaUtils.getValue(process.metas, "output-variable");
         if (S.b(variableName)) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
-                    "Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
+                    "#995.280 Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
         }
 
         final List<Long> lastIds = new ArrayList<>();
-        AtomicInteger permutationNumber = new AtomicInteger(0);
+        AtomicInteger currTaskNumber = new AtomicInteger(0);
         Files.list(srcDir.toPath())
                 .forEach( dataFilePath ->  {
                     File file = dataFilePath.toFile();
-                    permutationNumber.incrementAndGet();
+                    currTaskNumber.incrementAndGet();
                     try {
                         if (file.isDirectory()) {
                             final Stream<BatchTopLevelService.FileWithMapping> files = Files.list(dataFilePath)
@@ -248,21 +249,21 @@ public class BatchSplitterFunction implements InternalFunction {
                                         final String actualFileName = mapping.get(currFileName);
                                         return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
                                     });
-                            createTasksForSubProcesses(files, execContextId, execContextParamsYaml, subProcesses, permutationNumber, taskId, variableName,
-                                    execContextParamsYaml.variables.inline, lastIds
+                            createTasksForSubProcesses(files, execContextId, execContextParamsYaml, subProcesses, currTaskNumber, taskId, variableName,
+                                    execContextParamsYaml.variables.inline, lastIds, process
                             );
                         } else {
                             String actualFileName = mapping.get(file.getName());
                             createTasksForSubProcesses(
                                     Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)),
-                                    execContextId, execContextParamsYaml, subProcesses, permutationNumber, taskId, variableName,
-                                    execContextParamsYaml.variables.inline, lastIds
+                                    execContextId, execContextParamsYaml, subProcesses, currTaskNumber, taskId, variableName,
+                                    execContextParamsYaml.variables.inline, lastIds, process
                             );
                         }
                     } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                         throw e;
                     } catch (Throwable th) {
-                        String es = "#995.130 An error while saving data to file, " + th.toString();
+                        String es = "#995.300 An error while saving data to file, " + th.toString();
                         log.error(es, th);
                         throw new BatchResourceProcessingException(es);
                     }
@@ -272,22 +273,22 @@ public class BatchSplitterFunction implements InternalFunction {
     }
 
     /**
-     *
      * @param files
      * @param execContextId
      * @param execContextParamsYaml
      * @param subProcesses
-     * @param permutationNumber
+     * @param currTaskNumber
      * @param parentTaskId
      * @param outputVariableName
      * @param inlines
      * @param lastIds
+     * @param process
      */
     public void createTasksForSubProcesses(
             Stream<BatchTopLevelService.FileWithMapping> files, Long execContextId, ExecContextParamsYaml execContextParamsYaml,
             List<ExecContextData.ProcessVertex> subProcesses,
-            AtomicInteger permutationNumber, Long parentTaskId, String outputVariableName,
-            Map<String, Map<String, String>> inlines, List<Long> lastIds) {
+            AtomicInteger currTaskNumber, Long parentTaskId, String outputVariableName,
+            Map<String, Map<String, String>> inlines, List<Long> lastIds, ExecContextParamsYaml.Process process) {
 
         List<Long> parentTaskIds = List.of(parentTaskId);
         TaskImpl t = null;
@@ -295,25 +296,30 @@ public class BatchSplitterFunction implements InternalFunction {
         for (ExecContextData.ProcessVertex subProcess : subProcesses) {
             final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
             if (p==null) {
-                throw new BreakFromLambdaException("Process '" + subProcess.process + "' wasn't found");
+                throw new BreakFromLambdaException("#995.320 Process '" + subProcess.process + "' wasn't found");
             }
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
+
+            if (process.logic!=EnumsApi.SourceCodeSubProcessLogic.sequential) {
+                throw new BreakFromLambdaException("#995.340 only 'sequential' logic is supported");
+            }
+            // all subProcesses must have the same processContextId
+            if (subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {
+                throw new BreakFromLambdaException("#995.360 Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
+            }
+
+            String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(currTaskNumber.get()));
             t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
             if (t==null) {
-                throw new BreakFromLambdaException("Creation of task failed");
+                throw new BreakFromLambdaException("#995.380 Creation of task failed");
             }
             List<Long> currTaskIds = List.of(t.getId());
             execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, currTaskIds);
             parentTaskIds = currTaskIds;
-            // all subProcesses must have the same processContextId
-            if (subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {
-                throw new BreakFromLambdaException("Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
-            }
             subProcessContextId = subProcess.processContextId;
         }
 
         if (subProcessContextId!=null) {
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(permutationNumber.get()));
+            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
             lastIds.add(t.id);
 
             List<VariableUtils.VariableHolder> variableHolders = files

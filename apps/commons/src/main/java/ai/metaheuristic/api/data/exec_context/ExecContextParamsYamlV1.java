@@ -106,6 +106,9 @@ public class ExecContextParamsYamlV1 implements BaseParams {
         @Nullable
         public List<FunctionDefinitionV1> postFunctions;
 
+        @Nullable
+        public EnumsApi.SourceCodeSubProcessLogic logic;
+
         /**
          * Timeout before terminating a process with function
          * value in seconds

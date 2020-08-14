@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.source_code.graph;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.api.EnumsApi;
 import org.apache.commons.io.IOUtils;
@@ -56,7 +57,7 @@ public class TestSourceCodeGraphLanguageYaml {
         AtomicLong currId = new AtomicLong();
 
         // value of internalContextId doesn't matter in this case
-        ExecContextData.ProcessVertex vertexAssembly = SourceCodeGraphLanguageYaml.getVertex(ids, currId, "assembly-raw-file", "1");
+        ExecContextData.ProcessVertex vertexAssembly = SourceCodeGraphLanguageYaml.getVertex(ids, currId, "assembly-raw-file", Consts.TOP_LEVEL_CONTEXT_ID);
         assertEquals(8, findDescendants(graph, vertexAssembly).size());
         assertEquals(1, findLeafs(graph).size());
 

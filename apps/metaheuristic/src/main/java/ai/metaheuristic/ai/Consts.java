@@ -111,6 +111,7 @@ public class Consts {
     public static final String RESULT_ZIP = "result.zip";
     public static final Long ID_1 = 1L;
 
+    public static final String MH_NOP_FUNCTION = "mh.nop";
     public static final String MH_BATCH_SPLITTER_FUNCTION = "mh.batch-splitter";
     public static final String MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION = "mh.permute-variables-and-inlines";
     public static final String MH_AGGREGATE_FUNCTION = "mh.aggregate";
@@ -123,4 +124,5 @@ public class Consts {
 
     public static final InternalFunctionData.InternalFunctionProcessingResult INTERNAL_FUNCTION_PROCESSING_RESULT_OK = new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     public static final String UNKNOWN_FILENAME_IN_BATCH = "[unknown]";
+    public static final String TOP_LEVEL_CONTEXT_ID = "1";
 }

@@ -19,6 +19,11 @@ source:
       subProcesses:
         logic: and
         processes:
+          - code: mh.nop-1
+            name: nop 1
+            function:
+              code: mh.nop
+              context: internal
           - code: fileless
             name: fileless
             function:
@@ -28,6 +33,11 @@ source:
                 array: true
             outputs:
               - name: processed-file
+          - code: mh.nop-2
+            name: nop 2
+            function:
+              code: mh.nop
+              context: internal
     - code: mh.batch-result-processor
       name: batch result processor
       function:

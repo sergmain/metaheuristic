@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.repo;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import org.junit.jupiter.api.AfterEach;
@@ -53,7 +54,7 @@ public class TestBinaryDataRepository {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        d1 = variableService.createInitialized(inputStream, bytes.length, "test-01","test-file.bin", 10L, "1");
+        d1 = variableService.createInitialized(inputStream, bytes.length, "test-01","test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID);
 
         Timestamp ts = d1.getUploadTs();
 

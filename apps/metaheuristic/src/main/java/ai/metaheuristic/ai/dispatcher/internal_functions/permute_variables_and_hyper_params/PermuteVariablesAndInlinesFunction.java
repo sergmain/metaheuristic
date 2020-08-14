@@ -36,6 +36,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -170,7 +171,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
                                     createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml,
                                             subProcesses, permutationNumber, taskId, variableName, map, lastIds,
-                                            inlineVariableName, inlineVariable.params
+                                            inlineVariableName, inlineVariable.params, process
                                     );
                                 }
                             }
@@ -179,7 +180,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                                 createTasksForSubProcesses(permutedVariables, execContextId, execContextParamsYaml, subProcesses,
                                         permutationNumber, taskId, variableName,
                                         execContextParamsYaml.variables.inline, lastIds,
-                                        inlineVariableName, Map.of()
+                                        inlineVariableName, Map.of(), process
                                 );
                             }
                             return true;
@@ -195,8 +196,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     }
 
     /**
-     *
-     * @param permutedVariables
+     *  @param permutedVariables
      * @param execContextId
      * @param execContextParamsYaml
      * @param subProcesses
@@ -207,11 +207,12 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
      * @param lastIds
      * @param inlineVariableName
      * @param inlinePermuted
+     * @param process
      */
     public void createTasksForSubProcesses(
             List<VariableUtils.VariableHolder> permutedVariables, Long execContextId, ExecContextParamsYaml execContextParamsYaml, List<ExecContextData.ProcessVertex> subProcesses,
             AtomicInteger permutationNumber, Long parentTaskId, String variableName,
-            Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted) {
+            Map<String, Map<String, String>> inlines, List<Long> lastIds, String inlineVariableName, Map<String, String> inlinePermuted, ExecContextParamsYaml.Process process) {
         List<Long> parentTaskIds = List.of(parentTaskId);
         TaskImpl t = null;
         String subProcessContextId = null;
@@ -220,6 +221,11 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             if (p==null) {
                 throw new BreakFromLambdaException("Process '" + subProcess.process + "' wasn't found");
             }
+            // all subProcesses must have the same processContextId, if logic for subProcesses is sequential
+            if (process.logic== EnumsApi.SourceCodeSubProcessLogic.sequential && subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {
+                throw new BreakFromLambdaException("Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
+            }
+
             String currTaskContextId = ContextUtils.getTaskContextId(subProcess.processContextId, Integer.toString(permutationNumber.get()));
             t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, p, currTaskContextId, inlines);
             if (t==null) {
@@ -228,10 +234,6 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             List<Long> currTaskIds = List.of(t.getId());
             execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, currTaskIds);
             parentTaskIds = currTaskIds;
-            // all subProcesses must have the same processContextId
-            if (subProcessContextId!=null && !subProcessContextId.equals(subProcess.processContextId)) {
-                throw new BreakFromLambdaException("Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
-            }
             subProcessContextId = subProcess.processContextId;
         }
 

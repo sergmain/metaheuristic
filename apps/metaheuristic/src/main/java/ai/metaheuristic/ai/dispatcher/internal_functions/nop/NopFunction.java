@@ -14,15 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.internal_functions.finish;
+package ai.metaheuristic.ai.dispatcher.internal_functions.nop;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -32,25 +30,22 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 
 /**
  * @author Serge
- * Date: 3/13/2020
- * Time: 11:13 PM
+ * Date: 8/13/2020
  */
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class FinishFunction implements InternalFunction {
-
-    private final ExecContextFSM execContextFSM;
+public class NopFunction implements InternalFunction {
 
     @Override
     public String getCode() {
-        return Consts.MH_FINISH_FUNCTION;
+        return Consts.MH_NOP_FUNCTION;
     }
 
     @Override
     public String getName() {
-        return Consts.MH_FINISH_FUNCTION;
+        return Consts.MH_NOP_FUNCTION;
     }
 
     @Override
@@ -58,8 +53,7 @@ public class FinishFunction implements InternalFunction {
             Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml) {
 
-        log.info(S.f("#054.010 Mark task #%s with internal function %s as 'OK'", taskId, Consts.MH_FINISH_FUNCTION));
-        execContextFSM.toFinished(execContextId);
+        log.debug("#055.020 Nop function was invoked");
         return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }
 }

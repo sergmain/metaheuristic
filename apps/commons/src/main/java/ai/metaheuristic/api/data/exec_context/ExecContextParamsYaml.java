@@ -95,6 +95,9 @@ public class ExecContextParamsYaml implements BaseParams {
         }
     }
 
+    /**
+     * after adding new field, add new mapping in ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageYaml#toProcessForExecCode
+     */
     @Data
     @EqualsAndHashCode(of = {"processCode"})
     @NoArgsConstructor
@@ -111,6 +114,9 @@ public class ExecContextParamsYaml implements BaseParams {
         public List<FunctionDefinition> preFunctions;
         @Nullable
         public List<FunctionDefinition> postFunctions;
+
+        @Nullable
+        public EnumsApi.SourceCodeSubProcessLogic logic;
 
         /**
          * Timeout before terminating a process with function

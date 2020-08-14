@@ -60,7 +60,7 @@ public class TaskProducingService {
             if (p == null) {
                 // mh.finish can be omitted in sourceCode
                 if (processCode.equals(Consts.MH_FINISH_FUNCTION)) {
-                    p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, "1",
+                    p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, Consts.TOP_LEVEL_CONTEXT_ID,
                             Consts.MH_FINISH_FUNCTION_INSTANCE);
                 }
                 else {

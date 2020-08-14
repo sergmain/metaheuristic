@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.exec_context;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.junit.jupiter.api.Test;
 
@@ -38,10 +39,10 @@ public class TestExecContextParams {
         ExecContextParamsYaml expy = new ExecContextParamsYaml();
 
         ExecContextParamsYaml.FunctionDefinition fd1 = new ExecContextParamsYaml.FunctionDefinition("function#1");
-        ExecContextParamsYaml.Process p1 = new ExecContextParamsYaml.Process("process #1", "process #1", "1", fd1);
+        ExecContextParamsYaml.Process p1 = new ExecContextParamsYaml.Process("process #1", "process #1", Consts.TOP_LEVEL_CONTEXT_ID, fd1);
 
         ExecContextParamsYaml.FunctionDefinition fd2 = new ExecContextParamsYaml.FunctionDefinition("function#2");
-        ExecContextParamsYaml.Process p2 = new ExecContextParamsYaml.Process("process #2", "process #2", "1", fd2);
+        ExecContextParamsYaml.Process p2 = new ExecContextParamsYaml.Process("process #2", "process #2", Consts.TOP_LEVEL_CONTEXT_ID, fd2);
 
         expy.processes.add(p1);
         expy.processes.add(p2);
