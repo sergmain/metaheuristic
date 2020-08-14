@@ -24,7 +24,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -35,6 +36,7 @@ import java.util.function.Supplier;
  * Date: 8/11/2019
  * Time: 10:56 AM
  */
+@SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter", "DuplicatedCode"})
 @Service
 @RequiredArgsConstructor
 @Profile("dispatcher")
@@ -42,10 +44,9 @@ public class ExecContextSyncService {
 
     private final @NonNull ExecContextRepository execContextRepository;
 
-    private static final ConcurrentHashMap<Long, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
+    private static final Map<Long, AtomicInteger> syncMap = new HashMap<>(100);
     private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
 
-    @SuppressWarnings("Duplicates")
     @NonNull
     <T> T getWithSync(@NonNull Long execContextId, @NonNull Function<ExecContextImpl, @lombok.NonNull T> function) {
         final AtomicInteger obj;
@@ -55,7 +56,6 @@ public class ExecContextSyncService {
         } finally {
             writeLock.unlock();
         }
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             obj.incrementAndGet();
             try {
@@ -75,7 +75,6 @@ public class ExecContextSyncService {
         }
     }
 
-    @SuppressWarnings("Duplicates")
     @Nullable
     <T> T getWithSyncNullable(@NonNull Long execContextId, Function<ExecContextImpl, T> function) {
         final AtomicInteger obj;
@@ -85,7 +84,6 @@ public class ExecContextSyncService {
         } finally {
             writeLock.unlock();
         }
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             obj.incrementAndGet();
             try {
@@ -105,7 +103,6 @@ public class ExecContextSyncService {
         }
     }
 
-    @SuppressWarnings("Duplicates")
     @NonNull
     <T> T getWithSyncReadOnly(@NonNull ExecContextImpl execContext, @NonNull Supplier<T> function) {
         final AtomicInteger obj;
@@ -115,7 +112,6 @@ public class ExecContextSyncService {
         } finally {
             writeLock.unlock();
         }
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             obj.incrementAndGet();
             try {
