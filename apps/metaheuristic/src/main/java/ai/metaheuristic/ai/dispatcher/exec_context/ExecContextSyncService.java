@@ -41,49 +41,37 @@ import java.util.function.Supplier;
 public class ExecContextSyncService {
 
     private final ExecContextRepository execContextRepository;
-
-//    private static final ConcurrentHashMap<Long, ReentrantReadWriteLock.WriteLock> syncMap = new ConcurrentHashMap<>(100);
-
     private static final CommonSync commonSync = new CommonSync();
 
     <T> T getWithSync(Long execContextId, Function<ExecContextImpl, T> function) {
-//        final ReentrantReadWriteLock.WriteLock lock = syncMap.computeIfAbsent(execContextId, o -> new ReentrantReadWriteLock().writeLock());
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(execContextId);
         try {
             lock.lock();
-//            log.info("#010.010 ENTER SYNC, execContextId: {}, counter: {}", execContextId, lock);
             ExecContextImpl execContext = execContextRepository.findByIdForUpdate(execContextId);
             return function.apply(execContext);
         } finally {
-//            log.info("#010.020 LEAVE SYNC, execContextId: {}, counter: {}", execContextId, lock);
             lock.unlock();
         }
     }
 
     @Nullable
     <T> T getWithSyncNullable(Long execContextId, Function<ExecContextImpl, T> function) {
-//        final ReentrantReadWriteLock.WriteLock lock = syncMap.computeIfAbsent(execContextId, o -> new ReentrantReadWriteLock().writeLock());
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(execContextId);
         try {
             lock.lock();
-//            log.info("#010.030 ENTER SYNC, execContextId: {}, counter: {}", execContextId, lock);
             ExecContextImpl execContext = execContextRepository.findByIdForUpdate(execContextId);
             return execContext == null ? null : function.apply(execContext);
         } finally {
-//            log.info("#010.040 LEAVE SYNC, execContextId: {}, counter: {}", execContextId, lock);
             lock.unlock();
         }
     }
 
     <T> T getWithSyncReadOnly(Long execContextId, Supplier<T> function) {
-//        final ReentrantReadWriteLock.WriteLock lock = syncMap.computeIfAbsent(execContext.id, o -> new ReentrantReadWriteLock().writeLock());
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(execContextId);
         try {
             lock.lock();
-//            log.info("#010.050 ENTER SYNC, execContextId: {}, counter: {}", execContext.id, lock);
             return function.get();
         } finally {
-//            log.info("#010.060 LEAVE SYNC, execContextId: {}, counter: {}", execContext.id, lock);
             lock.unlock();
         }
     }
