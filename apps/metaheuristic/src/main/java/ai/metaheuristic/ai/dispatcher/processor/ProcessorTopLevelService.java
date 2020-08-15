@@ -18,11 +18,12 @@ package ai.metaheuristic.ai.dispatcher.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -46,8 +47,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -141,74 +142,71 @@ public class ProcessorTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private static final ConcurrentHashMap<Long, Object> syncMap = new ConcurrentHashMap<>(50, 0.75f, 10);
+    private static final CommonSync<Long> commonSync = new CommonSync<>();
 
     public void storeProcessorStatuses(@Nullable String processorIdAsStr, ProcessorCommParamsYaml.ReportProcessorStatus status, ProcessorCommParamsYaml.FunctionDownloadStatus functionDownloadStatus) {
         if (S.b(processorIdAsStr)) {
             return;
         }
         final Long processorId = Long.valueOf(processorIdAsStr);
-        final Object obj = syncMap.computeIfAbsent(processorId, o -> new Object());
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(processorId);
         log.debug("Before entering in sync block, storeProcessorStatus()");
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                final Processor processor = processorRepository.findByIdForUpdate(processorId);
-                if (processor == null) {
-                    // we throw ISE cos all checks have to be made early
-                    throw new IllegalStateException("Processor wasn't found for processorId: " + processorId);
-                }
-                ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
-                boolean isUpdated = false;
-                if (isProcessorStatusDifferent(ss, status)) {
-                    ss.env = status.env;
-                    ss.gitStatusInfo = status.gitStatusInfo;
-                    ss.schedule = status.schedule;
+        try {
+            lock.lock();
+            final Processor processor = processorRepository.findByIdForUpdate(processorId);
+            if (processor == null) {
+                // we throw ISE cos all checks have to be made early
+                throw new IllegalStateException("Processor wasn't found for processorId: " + processorId);
+            }
+            ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
+            boolean isUpdated = false;
+            if (isProcessorStatusDifferent(ss, status)) {
+                ss.env = status.env;
+                ss.gitStatusInfo = status.gitStatusInfo;
+                ss.schedule = status.schedule;
 
-                    // Do not include updating of sessionId
-                    // ss.sessionId = command.status.sessionId;
+                // Do not include updating of sessionId
+                // ss.sessionId = command.status.sessionId;
 
-                    // Do not include updating of sessionCreatedOn!
-                    // ss.sessionCreatedOn = command.status.sessionCreatedOn;
+                // Do not include updating of sessionCreatedOn!
+                // ss.sessionCreatedOn = command.status.sessionCreatedOn;
 
-                    ss.ip = status.ip;
-                    ss.host = status.host;
-                    ss.errors = status.errors;
-                    ss.logDownloadable = status.logDownloadable;
-                    ss.taskParamsVersion = status.taskParamsVersion;
-                    ss.os = (status.os == null ? EnumsApi.OS.unknown : status.os);
+                ss.ip = status.ip;
+                ss.host = status.host;
+                ss.errors = status.errors;
+                ss.logDownloadable = status.logDownloadable;
+                ss.taskParamsVersion = status.taskParamsVersion;
+                ss.os = (status.os == null ? EnumsApi.OS.unknown : status.os);
 
-                    processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-                    processor.updatedOn = System.currentTimeMillis();
-                    isUpdated = true;
-                }
-                if (isProcessorFunctionDownloadStatusDifferent(ss, functionDownloadStatus)) {
-                    ss.downloadStatuses = functionDownloadStatus.statuses.stream()
-                            .map(o->new ProcessorStatusYaml.DownloadStatus(o.functionState, o.functionCode))
-                            .collect(Collectors.toList());
-                    processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
-                    processor.updatedOn = System.currentTimeMillis();
-                    isUpdated = true;
-                }
-                if (isUpdated) {
-                    try {
-                        log.debug("Save new processor status, processor: {}", processor);
-                        processorCache.save(processor);
-                    } catch (ObjectOptimisticLockingFailureException e) {
-                        log.warn("#807.105 ObjectOptimisticLockingFailureException was encountered\n" +
-                                "new processor:\n{}\n" +
-                                "db processor\n{}", processor, processorRepository.findById(processorId).orElse(null));
+                processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
+                processor.updatedOn = System.currentTimeMillis();
+                isUpdated = true;
+            }
+            if (isProcessorFunctionDownloadStatusDifferent(ss, functionDownloadStatus)) {
+                ss.downloadStatuses = functionDownloadStatus.statuses.stream()
+                        .map(o->new ProcessorStatusYaml.DownloadStatus(o.functionState, o.functionCode))
+                        .collect(Collectors.toList());
+                processor.status = ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(ss);
+                processor.updatedOn = System.currentTimeMillis();
+                isUpdated = true;
+            }
+            if (isUpdated) {
+                try {
+                    log.debug("Save new processor status, processor: {}", processor);
+                    processorCache.save(processor);
+                } catch (ObjectOptimisticLockingFailureException e) {
+                    log.warn("#807.105 ObjectOptimisticLockingFailureException was encountered\n" +
+                            "new processor:\n{}\n" +
+                            "db processor\n{}", processor, processorRepository.findById(processorId).orElse(null));
 
-                        processorCache.clearCache();
-                    }
-                }
-                else {
-                    log.debug("Processor status is equal to the status stored in db");
+                    processorCache.clearCache();
                 }
             }
-            finally {
-                syncMap.remove(processorId);
+            else {
+                log.debug("Processor status is equal to the status stored in db");
             }
+        } finally {
+            lock.unlock();
         }
         log.debug("After leaving sync block");
     }

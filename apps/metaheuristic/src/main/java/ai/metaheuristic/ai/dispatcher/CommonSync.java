@@ -19,9 +19,9 @@ package ai.metaheuristic.ai.dispatcher;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -30,7 +30,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Date: 8/14/2020
  * Time: 3:24 PM
  */
-public class CommonSync {
+public class CommonSync<T> {
 
     private static final long TEN_MINUTES_TO_MILLS = TimeUnit.MINUTES.toMillis(10);
     private static final long ONE_HOUR_TO_MILLS = TimeUnit.HOURS.toMillis(1);
@@ -47,13 +47,13 @@ public class CommonSync {
     }
 
     private long lastCheckMills = 0L;
-    private final ConcurrentHashMap<Long, TimedLock> syncMap = new ConcurrentHashMap<>(100);
+    private final Map<T, TimedLock> map = new HashMap<>(100);
 
-    public synchronized ReentrantReadWriteLock.WriteLock getLock(Long id) {
+    public synchronized ReentrantReadWriteLock.WriteLock getLock(T id) {
         if (System.currentTimeMillis() - lastCheckMills > TEN_MINUTES_TO_MILLS) {
             lastCheckMills = System.currentTimeMillis();
-            List<Long> ids = new ArrayList<>();
-            for (Map.Entry<Long, TimedLock> entry : syncMap.entrySet()) {
+            List<T> ids = new ArrayList<>();
+            for (Map.Entry<T, TimedLock> entry : map.entrySet()) {
                 if (id.equals(entry.getKey())) {
                     entry.getValue().mills = System.currentTimeMillis();
                     continue;
@@ -62,12 +62,12 @@ public class CommonSync {
                     ids.add(entry.getKey());
                 }
             }
-            for (Long idForRemoving : ids) {
-                syncMap.remove(idForRemoving);
+            for (T idForRemoving : ids) {
+                map.remove(idForRemoving);
             }
         }
 
-        final TimedLock timedLock = syncMap.computeIfAbsent(id, o -> new TimedLock(new ReentrantReadWriteLock().writeLock()));
+        final TimedLock timedLock = map.computeIfAbsent(id, o -> new TimedLock(new ReentrantReadWriteLock().writeLock()));
         timedLock.mills = System.currentTimeMillis();
         return timedLock.lock;
     }

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.southbridge;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
@@ -67,9 +68,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -98,35 +97,16 @@ public class SouthbridgeService {
     private final ProcessorRepository processorRepository;
     private final TaskPersistencer taskPersistencer;
 
-    private static final ConcurrentHashMap<String, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
-    private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
+    private static final CommonSync<String> commonSync = new CommonSync<>();
 
-    @SuppressWarnings("Duplicates")
     private static <T> T getWithSync(final EnumsApi.DataType binaryType, final String code, Supplier<T> function) {
         final String key = "--" + binaryType + "--" + code;
-        final AtomicInteger obj;
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(key);
         try {
-            writeLock.lock();
-            obj = syncMap.computeIfAbsent(key, o -> new AtomicInteger());
+            lock.lock();
+            return function.get();
         } finally {
-            writeLock.unlock();
-        }
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            obj.incrementAndGet();
-            try {
-                return function.get();
-            } finally {
-                try {
-                    writeLock.lock();
-                    if (obj.get() == 1) {
-                        syncMap.remove(key);
-                    }
-                    obj.decrementAndGet();
-                } finally {
-                    writeLock.unlock();
-                }
-            }
+            lock.unlock();
         }
     }
 

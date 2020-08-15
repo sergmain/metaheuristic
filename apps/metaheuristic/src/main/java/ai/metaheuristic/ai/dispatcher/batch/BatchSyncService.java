@@ -16,15 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.batch;
 
+import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -42,126 +40,52 @@ import java.util.function.Supplier;
 public class BatchSyncService {
 
     private final BatchRepository batchRepository;
-
-    private static final ConcurrentHashMap<Long, AtomicInteger> syncMap = new ConcurrentHashMap<>(100, 0.75f, 10);
-    private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
+    private static final CommonSync<Long> commonSync = new CommonSync<>();
 
     public void getWithSyncVoid(Long batchId, Consumer<Batch> function) {
-        final AtomicInteger obj;
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(batchId);
         try {
-            writeLock.lock();
-            obj = syncMap.computeIfAbsent(batchId, o -> new AtomicInteger());
-        } finally {
-            writeLock.unlock();
-        }
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            obj.incrementAndGet();
-            try {
+            lock.lock();
 //                Batch batch = batchRepository.findByIdForUpdate(batchId, execContext.account.companyId);
-                Batch batch = batchRepository.findByIdForUpdate(batchId);
-                if (batch!=null) {
-                    function.accept(batch);
-                }
-            } finally {
-                try {
-                    writeLock.lock();
-                    if (obj.get() == 1) {
-                        syncMap.remove(batchId);
-                    }
-                    obj.decrementAndGet();
-                } finally {
-                    writeLock.unlock();
-                }
+            Batch batch = batchRepository.findByIdForUpdate(batchId);
+            if (batch!=null) {
+                function.accept(batch);
             }
+        } finally {
+            lock.unlock();
         }
     }
 
-    @NonNull
     public <T> T getWithSync(Long batchId, Function<Batch, T> function) {
-        final AtomicInteger obj;
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(batchId);
         try {
-            writeLock.lock();
-            obj = syncMap.computeIfAbsent(batchId, o -> new AtomicInteger());
+            lock.lock();
+            Batch batch = batchRepository.findByIdForUpdate(batchId);
+            return function.apply(batch);
         } finally {
-            writeLock.unlock();
-        }
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            obj.incrementAndGet();
-            try {
-//                Batch batch = batchRepository.findByIdForUpdate(batchId, execContext.account.companyId);
-                Batch batch = batchRepository.findByIdForUpdate(batchId);
-                return function.apply(batch);
-            } finally {
-                try {
-                    writeLock.lock();
-                    if (obj.get() == 1) {
-                        syncMap.remove(batchId);
-                    }
-                    obj.decrementAndGet();
-                } finally {
-                    writeLock.unlock();
-                }
-            }
+            lock.unlock();
         }
     }
 
     @Nullable
     public <T> T getWithSyncNullable(Long batchId, Function<Batch, T> function) {
-        final AtomicInteger obj;
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(batchId);
         try {
-            writeLock.lock();
-            obj = syncMap.computeIfAbsent(batchId, o -> new AtomicInteger());
+            lock.lock();
+            Batch batch = batchRepository.findByIdForUpdate(batchId);
+            return batch == null ? null : function.apply(batch);
         } finally {
-            writeLock.unlock();
-        }
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            obj.incrementAndGet();
-            try {
-//                Batch batch = batchRepository.findByIdForUpdate(batchId, execContext.account.companyId);
-                Batch batch = batchRepository.findByIdForUpdate(batchId);
-                return batch == null ? null : function.apply(batch);
-            } finally {
-                try {
-                    writeLock.lock();
-                    if (obj.get() == 1) {
-                        syncMap.remove(batchId);
-                    }
-                    obj.decrementAndGet();
-                } finally {
-                    writeLock.unlock();
-                }
-            }
+            lock.unlock();
         }
     }
 
-    @NonNull
-    public <T> T getWithSyncReadOnly(@NonNull Batch batch, Supplier<T> function) {
-        final AtomicInteger obj;
+    public <T> T getWithSyncReadOnly(Long batchId, Supplier<T> function) {
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(batchId);
         try {
-            writeLock.lock();
-            obj = syncMap.computeIfAbsent(batch.id, o -> new AtomicInteger());
+            lock.lock();
+            return function.get();
         } finally {
-            writeLock.unlock();
-        }
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            obj.incrementAndGet();
-            try {
-                return function.get();
-            } finally {
-                try {
-                    writeLock.lock();
-                    if (obj.get() == 1) {
-                        syncMap.remove(batch.id);
-                    }
-                    obj.decrementAndGet();
-                } finally {
-                    writeLock.unlock();
-                }
-            }
+            lock.unlock();
         }
     }
 }

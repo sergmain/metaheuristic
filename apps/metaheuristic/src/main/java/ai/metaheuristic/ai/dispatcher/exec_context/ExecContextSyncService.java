@@ -41,7 +41,7 @@ import java.util.function.Supplier;
 public class ExecContextSyncService {
 
     private final ExecContextRepository execContextRepository;
-    private static final CommonSync commonSync = new CommonSync();
+    private static final CommonSync<Long> commonSync = new CommonSync<>();
 
     <T> T getWithSync(Long execContextId, Function<ExecContextImpl, T> function) {
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(execContextId);

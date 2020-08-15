@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,6 @@ import java.util.function.Function;
  * Date: 7/27/2019
  * Time: 8:26 PM
  */
-@SuppressWarnings({"Duplicates", "SynchronizationOnLocalVariableOrMethodParameter"})
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -43,38 +43,20 @@ import java.util.function.Function;
 public class TaskSyncService {
 
     private final TaskRepository taskRepository;
-
-    private static final Map<Long, AtomicInteger> syncMap = new HashMap<>(100);
-    private static final ReentrantReadWriteLock.WriteLock writeLock = new ReentrantReadWriteLock().writeLock();
+    private static final CommonSync<Long> commonSync = new CommonSync<>();
 
     public @Nullable <T> T getWithSync(Long taskId, Function<TaskImpl, T> function) {
-        final AtomicInteger obj;
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(taskId);
         try {
-            writeLock.lock();
-            obj = syncMap.computeIfAbsent(taskId, o -> new AtomicInteger());
-        } finally {
-            writeLock.unlock();
-        }
-        synchronized (obj) {
-            obj.incrementAndGet();
-            try {
-                TaskImpl task = taskRepository.findByIdForUpdate(taskId);
-                if (task==null) {
-                    log.warn("#306.010 Can't find Task for Id: {}", taskId);
-                    return null;
-                }
-                return function.apply(task);
-            } finally {
-                try {
-                    writeLock.lock();
-                    if (obj.get() == 1) {
-                        syncMap.remove(taskId);
-                    }
-                    obj.decrementAndGet();
-                } finally {
-                    writeLock.unlock();
-                }
+            lock.lock();
+            TaskImpl task = taskRepository.findByIdForUpdate(taskId);
+            if (task==null) {
+                log.warn("#306.010 Can't find Task for Id: {}", taskId);
+                return null;
             }
+            return function.apply(task);
+        } finally {
+            lock.unlock();
         }
     }
 }
