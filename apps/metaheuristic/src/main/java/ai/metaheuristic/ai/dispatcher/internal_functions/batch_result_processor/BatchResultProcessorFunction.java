@@ -343,7 +343,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getSourceCodeId());
 */
 
-        List<ExecContextData.TaskVertex> taskVertices;
+        List<ExecContextData.TaskVertex_140> taskVertices;
         try {
             taskVertices = execContextGraphTopLevelService.findLeafs(wb);
         } catch (ObjectOptimisticLockingFailureException e) {

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.graph;
 
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
@@ -85,16 +86,16 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         count = execContextService.getCountUnfinishedTasks(execContextForTest);
         assertEquals(9, count);
 
-        List<TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
+        List<ExecContextData.TaskVertex_140> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
         assertEquals(6, leafs.size());
-        assertTrue(leafs.contains(new TaskVertex(311L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex(312L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex(313L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(311L, 311L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(312L, 312L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(313L, 313L, EnumsApi.TaskExecState.NONE)));
 
-        assertTrue(leafs.contains(new TaskVertex(321L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex(322L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex(323L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(321L, 321L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(322L, 322L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(323L, 323L, EnumsApi.TaskExecState.NONE)));
 
 /*
         // value of id field doesn't matter because isn't included in "@EqualsAndHashCode"
@@ -117,7 +118,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(1, states.size());
         assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
 
-        List<TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
+        List<ExecContextData.TaskVertex_140> vertices = execContextGraphTopLevelService.findAllForAssigning(
                 Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
 
         assertEquals(1, vertices.size());

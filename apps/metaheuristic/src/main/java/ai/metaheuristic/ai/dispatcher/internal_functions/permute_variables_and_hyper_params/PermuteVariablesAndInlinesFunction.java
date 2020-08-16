@@ -103,7 +103,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.exec_context_not_found,
                     "ExecContext not found for id #"+execContextId);
         }
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContext, taskId);
+        Set<ExecContextData.TaskVertex_140> descendants = execContextGraphTopLevelService.findDescendants(execContext, taskId);
         if (descendants.isEmpty()) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
                     "Graph for ExecContext #"+execContextId+" is broken");

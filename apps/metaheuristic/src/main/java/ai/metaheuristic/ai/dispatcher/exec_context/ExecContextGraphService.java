@@ -247,7 +247,9 @@ class ExecContextGraphService {
 
                 Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
                 set.forEach( t-> t.execState = EnumsApi.TaskExecState.NONE);
-                withTaskList.childrenTasks.addAll(set);
+
+                // TODO for prod (Set) must be deleted
+                withTaskList.childrenTasks.addAll((Set)set);
             });
             return withTaskList;
         }
@@ -256,7 +258,7 @@ class ExecContextGraphService {
         }
     }
 
-    public @NonNull List<ExecContextData.TaskVertex> findLeafs(@NonNull ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
         try {
             return readOnlyGraphListOfTaskVertex(execContext, graph -> {
 
@@ -538,7 +540,9 @@ class ExecContextGraphService {
         Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
         // find and filter a 'mh.finish' vertex, which doesn't have any outgoing edges
         set.stream().filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty()).forEach( tv-> tv.execState = state);
-        withTaskList.childrenTasks.addAll(set);
+
+        // TODO for prod (Set) must be deleted
+        withTaskList.childrenTasks.addAll((Set)set);
     }
 
     public OperationStatusRest addNewTasksToGraph(ExecContextImpl execContext, List<Long> parentTaskIds, List<Long> taskIds) {

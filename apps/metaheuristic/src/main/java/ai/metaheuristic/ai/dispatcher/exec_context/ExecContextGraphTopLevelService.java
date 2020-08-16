@@ -42,35 +42,35 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class ExecContextGraphTopLevelService {
 
-    private final @NonNull ExecContextGraphService execContextGraphService;
-    private final @NonNull ExecContextSyncService execContextSyncService;
-    private final @NonNull TaskPersistencer taskPersistencer;
+    private final ExecContextGraphService_140 execContextGraphService;
+    private final ExecContextSyncService execContextSyncService;
+    private final TaskPersistencer taskPersistencer;
 
     // section 'execContext graph methods'
 
     // read-only operations with graph
-    public @NonNull List<ExecContextData.TaskVertex> findAll(@NonNull ExecContextImpl execContext) {
-        List<ExecContextData.TaskVertex> vertexList = execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findAll(execContext));
+    public List<ExecContextData.TaskVertex_140> findAll(ExecContextImpl execContext) {
+        List<ExecContextData.TaskVertex_140> vertexList = execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findAll(execContext));
         return vertexList;
     }
 
-    public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex_140> findLeafs(ExecContextImpl execContext) {
         return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findLeafs(execContext));
     }
 
-    public Set<ExecContextData.TaskVertex> findDescendants(ExecContextImpl execContext, Long taskId) {
+    public Set<ExecContextData.TaskVertex_140> findDescendants(ExecContextImpl execContext, Long taskId) {
         return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findDescendants(execContext, taskId));
     }
 
-    public Set<ExecContextData.TaskVertex> findDirectDescendants(ExecContextImpl execContext, Long taskId) {
+    public Set<ExecContextData.TaskVertex_140> findDirectDescendants(ExecContextImpl execContext, Long taskId) {
         return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findDirectDescendants(execContext, taskId));
     }
 
-    public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex_140> findAllForAssigning(ExecContextImpl execContext) {
         return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findAllForAssigning(execContext));
     }
 
-    public List<ExecContextData.TaskVertex> findAllBroken(ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex_140> findAllBroken(ExecContextImpl execContext) {
         return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findAllBroken(execContext));
     }
 
@@ -107,10 +107,9 @@ public class ExecContextGraphTopLevelService {
         });
     }
 
-    public void createEdges(Long execContextId, List<Long> lastIds, Set<ExecContextData.TaskVertex> descendants) {
+    public void createEdges(Long execContextId, List<Long> lastIds, Set<ExecContextData.TaskVertex_140> descendants) {
         execContextSyncService.getWithSyncNullable(execContextId,
                 (execContext) -> execContextGraphService.createEdges(execContext, lastIds, descendants));
-
     }
 
     private ExecContextOperationStatusWithTaskList updateTaskExecStateWithoutSync(ExecContextImpl execContext, Long taskId, int execState) {

@@ -61,7 +61,7 @@ class ExecContextGraphService_140 {
     private static final String TASK_ID_ATTR = "task_id";
     private static final String EXEC_STATE_ATTR = "exec_state";
 
-    private final @NonNull ExecContextCache execContextCache;
+    private final ExecContextCache execContextCache;
 
     private void changeGraph(ExecContextImpl execContext, Consumer<DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge>> callable) {
         ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
@@ -100,8 +100,8 @@ class ExecContextGraphService_140 {
     }
 
     private List<ExecContextData.TaskVertex_140> readOnlyGraphListOfTaskVertex(
-            @NonNull ExecContextImpl execContext,
-            @NonNull Function<DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge>, @lombok.NonNull List<ExecContextData.TaskVertex_140>> callable) {
+            ExecContextImpl execContext,
+            Function<DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge>, List<ExecContextData.TaskVertex_140>> callable) {
         DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> graph = prepareGraph(execContext);
         return callable.apply(graph);
     }
@@ -284,7 +284,7 @@ class ExecContextGraphService_140 {
         }
     }
 
-    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(ExecContextImpl execContext, Long taskId) {
+/*    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(ExecContextImpl execContext, Long taskId) {
         try {
             final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
             changeGraph(execContext, graph -> {
@@ -303,9 +303,25 @@ class ExecContextGraphService_140 {
         catch (Throwable th) {
             return new ExecContextOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
         }
+    }*/
+
+    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(ExecContextImpl execContext, Long taskId) {
+        try {
+            final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+            changeGraph(execContext, graph -> {
+
+                Set<ExecContextData.TaskVertex_140> set = findDescendantsInternal(graph, taskId);
+                set.forEach( t-> t.execState = EnumsApi.TaskExecState.NONE);
+                withTaskList.childrenTasks.addAll(set);
+            });
+            return withTaskList;
+        }
+        catch (Throwable th) {
+            return new ExecContextOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
+        }
     }
 
-    public @NonNull List<ExecContextData.TaskVertex_140> findLeafs(@NonNull ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex_140> findLeafs(ExecContextImpl execContext) {
         try {
             return readOnlyGraphListOfTaskVertex(execContext, graph -> {
 
@@ -328,6 +344,30 @@ class ExecContextGraphService_140 {
         }
     }
 
+    public Set<ExecContextData.TaskVertex_140> findDirectDescendants(ExecContextImpl execContext, Long taskId) {
+        try {
+            return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDirectDescendantsInternal(graph, taskId));
+        }
+        catch (Throwable th) {
+            log.error("#916.140 Error", th);
+            // TODO 2020.03.09 need to implement better handling of Throwable
+            return Set.of();
+        }
+    }
+
+    private Set<ExecContextData.TaskVertex_140> findDirectDescendantsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> graph, Long taskId) {
+        ExecContextData.TaskVertex_140 vertex = graph.vertexSet()
+                .stream()
+                .filter(o -> taskId.equals(o.taskId))
+                .findFirst().orElse(null);
+        if (vertex==null) {
+            return Set.of();
+        }
+
+        Set<ExecContextData.TaskVertex_140> descendants = graph.outgoingEdgesOf(vertex).stream().map(graph::getEdgeTarget).collect(Collectors.toSet());
+        return descendants;
+    }
+
     public Set<ExecContextData.TaskVertex_140> findDescendants(ExecContextImpl execContext, Long taskId) {
         try {
             return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDescendantsInternal(graph, taskId));
@@ -348,18 +388,6 @@ class ExecContextGraphService_140 {
             return Set.of();
         }
 
-/*
-        Iterator<ExecContextData.TaskVertex_140> iterator = new BreadthFirstIterator<>(graph, vertex);
-        Set<ExecContextData.TaskVertex_140> descendants = new HashSet<>();
-
-        // Do not add start vertex to result.
-        if (iterator.hasNext()) {
-            iterator.next();
-        }
-
-        iterator.forEachRemaining(descendants::add);
-        return descendants;
-*/
         Set<ExecContextData.TaskVertex_140> descendants = graph.getDescendants(vertex);
         return descendants;
     }
@@ -471,6 +499,7 @@ class ExecContextGraphService_140 {
         }
     }
 
+/*
     private void setStateForAllChildrenTasksInternal(
             DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> graph,
             Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
@@ -483,6 +512,17 @@ class ExecContextGraphService_140 {
             throw new IllegalStateException("need to be re-written");
         }
         withTaskList.childrenTasks.addAll((Set)set);
+    }
+*/
+
+    private void setStateForAllChildrenTasksInternal(
+            DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> graph,
+            Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
+
+        Set<ExecContextData.TaskVertex_140> set = findDescendantsInternal(graph, taskId);
+        // find and filter a 'mh.finish' vertex, which doesn't have any outgoing edges
+        set.stream().filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty()).forEach( tv-> tv.execState = state);
+        withTaskList.childrenTasks.addAll(set);
     }
 
     public OperationStatusRest addNewTasksToGraph(ExecContextImpl execContext, List<Long> parentTaskIds, List<Long> taskIds) {
@@ -508,4 +548,65 @@ class ExecContextGraphService_140 {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
     }
+
+    @Nullable
+    public Void createEdges(ExecContextImpl execContext, List<Long> lastIds, Set<ExecContextData.TaskVertex_140> descendants) {
+        changeGraph(execContext, graph ->
+                graph.vertexSet().stream()
+                        .filter(o -> lastIds.contains(o.taskId))
+                        .forEach(parentV-> descendants.forEach(trgV -> graph.addEdge(parentV, trgV)))
+        );
+        return null;
+    }
+
+    public List<List<ExecContextData.TaskVertex_140>> graphAsListOfLIst(ExecContextImpl execContext) {
+        try {
+            DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> graph = prepareGraph(execContext);
+            List<List<ExecContextData.TaskVertex_140>> list = new ArrayList<>();
+
+            // get head of graph
+            List<ExecContextData.TaskVertex_140> vertices = graph.vertexSet()
+                    .stream()
+                    .filter(o -> graph.getAncestors(o).isEmpty())
+                    .collect(Collectors.toList());
+
+            while (!vertices.isEmpty()) {
+                list.add(vertices);
+
+                List<ExecContextData.TaskVertex_140> nextLine = new ArrayList<>();
+                for (ExecContextData.TaskVertex_140 vertex : vertices) {
+                    Set<ExecContextData.TaskVertex_140> descendants = graph.getDescendants(vertex);
+                    nextLine.addAll(descendants);
+                }
+                vertices = nextLine;
+            }
+            return list;
+
+        }
+        catch (Throwable th) {
+            log.error("#916.120 Error", th);
+            // TODO 2020.03.09 need to implement better handling of Throwable
+            return List.of();
+        }
+    }
+
+    public Set<ExecContextData.TaskVertex_140> findDirectAncestors(ExecContextImpl execContext, ExecContextData.TaskVertex_140 vertex) {
+        if (vertex==null) {
+            return Set.of();
+        }
+        try {
+            return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDirectAncestorsInternal(graph, vertex));
+        }
+        catch (Throwable th) {
+            log.error("#916.145 Error", th);
+            // TODO 2020.03.09 need to implement better handling of Throwable
+            return Set.of();
+        }
+    }
+
+    private Set<ExecContextData.TaskVertex_140> findDirectAncestorsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> graph, ExecContextData.TaskVertex_140 vertex) {
+        Set<ExecContextData.TaskVertex_140> ancestors = graph.incomingEdgesOf(vertex).stream().map(graph::getEdgeSource).collect(Collectors.toSet());
+        return ancestors;
+    }
+
 }

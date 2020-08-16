@@ -53,7 +53,7 @@ public class ExecContextTopLevelService {
 
     private final ExecContextCache execContextCache;
     private final ExecContextService execContextService;
-    private final ExecContextGraphService execContextGraphService;
+    private final ExecContextGraphService_140 execContextGraphService;
     private final SourceCodeCache sourceCodeCache;
     private final DispatcherParamsService dispatcherParamsService;
     private final TaskService taskService;
@@ -138,12 +138,12 @@ public class ExecContextTopLevelService {
             finishIsLast = true;
         }
 
-        List<List<ExecContextData.TaskVertex>> vertices = execContextGraphService.graphAsListOfLIst(ec);
+        List<List<ExecContextData.TaskVertex_140>> vertices = execContextGraphService.graphAsListOfLIst(ec);
 
         // find all processes which is just before mh.finish
-        List<ExecContextData.TaskVertex> leafs = execContextGraphService.findLeafs(ec);
-        Set<ExecContextData.TaskVertex> beforeFinishVertices = new HashSet<>();
-        for (ExecContextData.TaskVertex leaf : leafs) {
+        List<ExecContextData.TaskVertex_140> leafs = execContextGraphService.findLeafs(ec);
+        Set<ExecContextData.TaskVertex_140> beforeFinishVertices = new HashSet<>();
+        for (ExecContextData.TaskVertex_140 leaf : leafs) {
             beforeFinishVertices.addAll(execContextGraphService.findDirectAncestors(ec, leaf));
         }
         Set<Long> beforeFinishIds = beforeFinishVertices.stream().map(o->o.taskId).collect(Collectors.toSet());
@@ -151,11 +151,11 @@ public class ExecContextTopLevelService {
 
         Set<String> beforeProcesses = new HashSet<>();
 
-        for (List<ExecContextData.TaskVertex> vertex : vertices) {
+        for (List<ExecContextData.TaskVertex_140> vertex : vertices) {
             for (int i = 0; i < r.header.length; i++) {
                 TaskData.SimpleTaskInfo simpleTaskInfo = null;
                 List<TaskData.SimpleTaskInfo> simpleTaskInfos = map.get(r.header[i]);
-                for (ExecContextData.TaskVertex taskVertex : vertex) {
+                for (ExecContextData.TaskVertex_140 taskVertex : vertex) {
                     for (TaskData.SimpleTaskInfo info : simpleTaskInfos) {
                         if (info.taskId.equals(taskVertex.taskId)) {
                             simpleTaskInfo = info;

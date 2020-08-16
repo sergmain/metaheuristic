@@ -76,19 +76,19 @@ public class TestGraphEdges extends PreparingSourceCode {
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
-        List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
+        List<ExecContextData.TaskVertex_140> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
         assertEquals(3, leafs.size());
         // value of id field doesn't matter because isn't included in "@EqualsAndHashCode"
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(21L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(22L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(23L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(21L, 21L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(22L, 22L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(23L, 23L, EnumsApi.TaskExecState.NONE)));
 
         osr = execContextGraphTopLevelService.addNewTasksToGraph( execContextForTest.id,List.of(21L), List.of(311L, 312L, 313L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
-        Set<ExecContextData.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 1L);
+        Set<ExecContextData.TaskVertex_140> descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 1L);
         assertEquals(6, descendands.size());
 
         descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 21L);
