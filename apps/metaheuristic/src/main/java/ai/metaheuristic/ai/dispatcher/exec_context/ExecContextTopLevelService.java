@@ -153,14 +153,12 @@ public class ExecContextTopLevelService {
 
         for (List<ExecContextData.TaskVertex> vertex : vertices) {
             for (int i = 0; i < r.header.length; i++) {
-                ExecContextData.TaskVertex v = null;
                 TaskData.SimpleTaskInfo simpleTaskInfo = null;
                 List<TaskData.SimpleTaskInfo> simpleTaskInfos = map.get(r.header[i]);
                 for (ExecContextData.TaskVertex taskVertex : vertex) {
                     for (TaskData.SimpleTaskInfo info : simpleTaskInfos) {
                         if (info.taskId.equals(taskVertex.taskId)) {
                             simpleTaskInfo = info;
-                            v = taskVertex;
                             break;
                         }
                     }
