@@ -71,9 +71,13 @@ class ExecContextGraphService {
         } finally {
             ComponentNameProvider<ExecContextData.TaskVertex> vertexIdProvider = v -> v.taskId.toString();
             ComponentAttributeProvider<ExecContextData.TaskVertex> vertexAttributeProvider = v -> {
+                return Map.of(TASK_EXEC_STATE_ATTR, DefaultAttribute.createAttribute(v.execState.toString()));
+                // todo 2020-08-14 delete the follow commented code after 2020-08-21 if everything is ok
+/*
                 Map<String, Attribute> m = new HashMap<>();
                 m.put(TASK_EXEC_STATE_ATTR, DefaultAttribute.createAttribute(v.execState.toString()));
                 return m;
+*/
             };
 
             DOTExporter<ExecContextData.TaskVertex, DefaultEdge> exporter = new DOTExporter<>(vertexIdProvider, null, null, vertexAttributeProvider, null);
@@ -87,33 +91,34 @@ class ExecContextGraphService {
     }
 
     private List<ExecContextData.TaskVertex> readOnlyGraphListOfTaskVertex(
-            @NonNull ExecContextImpl execContext,
-            @NonNull Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, @lombok.NonNull List<ExecContextData.TaskVertex>> callable) throws ImportException {
+            ExecContextImpl execContext,
+            Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, List<ExecContextData.TaskVertex>> callable) throws ImportException {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
         return callable.apply(graph);
     }
 
-    private @NonNull Set<ExecContextData.TaskVertex> readOnlyGraphSetOfTaskVertex(
-            @NonNull ExecContextImpl execContext,
-            @NonNull Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Set<ExecContextData.TaskVertex>> callable) throws ImportException {
+    private Set<ExecContextData.TaskVertex> readOnlyGraphSetOfTaskVertex(
+            ExecContextImpl execContext,
+            Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Set<ExecContextData.TaskVertex>> callable) throws ImportException {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
         Set<ExecContextData.TaskVertex> apply = callable.apply(graph);
         return apply!=null ? apply : Set.of();
     }
 
-    private @Nullable ExecContextData.TaskVertex readOnlyGraphTaskVertex(
-            @NonNull ExecContextImpl execContext,
-            @NonNull Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextData.TaskVertex> callable) throws ImportException {
+    @Nullable
+    private ExecContextData.TaskVertex readOnlyGraphTaskVertex(
+            ExecContextImpl execContext,
+            Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextData.TaskVertex> callable) throws ImportException {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
         return callable.apply(graph);
     }
 
-    private long readOnlyGraphLong(@NonNull ExecContextImpl execContext, @NonNull Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, @lombok.NonNull Long> callable) throws ImportException {
+    private long readOnlyGraphLong(ExecContextImpl execContext, Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Long> callable) throws ImportException {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
         return callable.apply(graph);
     }
 
-    private @NonNull DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> prepareGraph(@NonNull ExecContextImpl execContext) throws ImportException {
+    private DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> prepareGraph(ExecContextImpl execContext) throws ImportException {
         ExecContextParamsYaml wpy = execContext.getExecContextParamsYaml();
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = new DirectedAcyclicGraph<>(DefaultEdge.class);
         if (S.b(wpy.graph)) {
@@ -171,7 +176,7 @@ class ExecContextGraphService {
             });
         }
         catch (Throwable th) {
-            log.error("Error updaing graph", th);
+            log.error("#916.010 Error updating graph", th);
             status.status = new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
         return status;
@@ -283,6 +288,37 @@ class ExecContextGraphService {
             log.error("#916.120 Error", th);
             // TODO 2020.03.09 need to implement better handling of Throwable
             return Set.of();
+        }
+    }
+
+    public List<List<ExecContextData.TaskVertex>> graphAsListOfLIst(ExecContextImpl execContext) {
+        try {
+            DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
+            List<List<ExecContextData.TaskVertex>> list = new ArrayList<>();
+
+            // get head of graph
+            List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
+                    .stream()
+                    .filter(o -> graph.getAncestors(o).isEmpty())
+                    .collect(Collectors.toList());
+
+            while (!vertices.isEmpty()) {
+                list.add(vertices);
+
+                List<ExecContextData.TaskVertex> nextLine = new ArrayList<>();
+                for (ExecContextData.TaskVertex vertex : vertices) {
+                    Set<ExecContextData.TaskVertex> descendants = graph.getDescendants(vertex);
+                    nextLine.addAll(descendants);
+                }
+                vertices = nextLine;
+            }
+            return list;
+
+        }
+        catch (Throwable th) {
+            log.error("#916.120 Error", th);
+            // TODO 2020.03.09 need to implement better handling of Throwable
+            return List.of();
         }
     }
 
@@ -432,7 +468,7 @@ class ExecContextGraphService {
         return true;
     }
 
-    public @NonNull List<ExecContextData.TaskVertex> findAll(@NonNull ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex> findAll(ExecContextImpl execContext) {
         try {
             return readOnlyGraphListOfTaskVertex(execContext, graph -> {
                 List<ExecContextData.TaskVertex> vertices = new ArrayList<>(graph.vertexSet());
@@ -446,7 +482,8 @@ class ExecContextGraphService {
         }
     }
 
-    public @Nullable ExecContextData.TaskVertex findVertex(@NonNull ExecContextImpl execContext, @NonNull Long taskId) {
+    @Nullable
+    public ExecContextData.TaskVertex findVertex(ExecContextImpl execContext, Long taskId) {
         try {
             return readOnlyGraphTaskVertex(execContext, graph -> {
                 ExecContextData.TaskVertex vertex = graph.vertexSet()

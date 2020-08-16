@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.dispatcher.experiment_result;
 
-import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
-import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -62,9 +62,9 @@ public class ConsoleFormExperimentResultService {
         try {
             File output = File.createTempFile("output-", ".txt", tempDir);
 
-            try (Stream<Task> stream = taskRepository.findAllByExecContextIdAsStream(execContextId);
-                 final OutputStream os = new FileOutputStream(output);
-                 final PrintWriter pw = new PrintWriter(os, false, StandardCharsets.UTF_8)
+            try (final OutputStream os = new FileOutputStream(output);
+                 final PrintWriter pw = new PrintWriter(os, false, StandardCharsets.UTF_8);
+                 Stream<TaskImpl> stream = taskRepository.findAllByExecContextIdAsStream(execContextId)
             ) {
                 stream.forEach(o -> {
                     ConsoleOutputStoredToExperimentResult.TaskOutput taskOutput = new ConsoleOutputStoredToExperimentResult.TaskOutput();

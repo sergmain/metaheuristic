@@ -50,7 +50,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
     @Transactional
     @Query(value="select t from TaskImpl t where t.execContextId=:execContextId")
-    Stream<Task> findAllByExecContextIdAsStream(Long execContextId);
+    Stream<TaskImpl> findAllByExecContextIdAsStream(Long execContextId);
 
     @Transactional(readOnly = true)
     @Query(value="select t.id, t.execContextId from TaskImpl t")

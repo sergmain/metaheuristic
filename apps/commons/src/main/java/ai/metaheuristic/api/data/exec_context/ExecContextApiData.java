@@ -18,9 +18,11 @@ package ai.metaheuristic.api.data.exec_context;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import org.springframework.data.domain.Slice;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Serge
@@ -38,4 +40,45 @@ public class ExecContextApiData {
         public EnumsApi.SourceCodeType sourceCodeType;
         public Slice<ExecContextsListItem> instances;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class StateCell {
+        public boolean empty = true;
+        public Long taskId;
+        public String state;
+        public String context;
+
+        public StateCell(Long taskId, String state, String context) {
+            this.empty = false;
+            this.taskId = taskId;
+            this.state = state;
+            this.context = context;
+        }
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class LineHeader {
+        public String process;
+        public String functionCode;
+    }
+
+    @Data
+    public static class LineWithState {
+        public LineHeader lineHeader;
+        public StateCell[] cells;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class ExecContextStateResult extends BaseDataClass {
+        public Long sourceCodeId;
+        public String sourceCodeUid;
+        public boolean sourceCodeValid;
+        public EnumsApi.SourceCodeType sourceCodeType;
+        public String[] header;
+        public LineWithState[] lines;
+    }
+
 }

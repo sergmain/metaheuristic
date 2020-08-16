@@ -49,8 +49,8 @@ public class ExecContextData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TaskVertex {
-        public @NonNull Long taskId;
-        public @NonNull EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
+        public Long taskId;
+        public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
     }
 
     @Data

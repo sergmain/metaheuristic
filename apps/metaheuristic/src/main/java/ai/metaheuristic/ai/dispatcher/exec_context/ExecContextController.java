@@ -74,6 +74,15 @@ public class ExecContextController {
         return "dispatcher/source-code/exec-contexts :: table";
     }
 
+    @GetMapping("/exec-context-state/{sourceCodeId}/{execContextId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
+    public String execContextsState(Model model, @PathVariable Long sourceCodeId,  @PathVariable Long execContextId,
+                                    @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        model.addAttribute("result", execContextTopLevelService.getExecContextState(sourceCodeId, execContextId,  context));
+        return "dispatcher/source-code/exec-context-state";
+    }
+
     @GetMapping(value = "/exec-context-add/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String execContextAdd(@ModelAttribute("result") SourceCodeApiData.SourceCodeResult result,
