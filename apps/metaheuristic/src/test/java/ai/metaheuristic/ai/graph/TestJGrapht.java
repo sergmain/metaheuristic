@@ -18,13 +18,16 @@ package ai.metaheuristic.ai.graph;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
+import org.jgrapht.nio.dot.DOTImporter;
 import org.jgrapht.util.SupplierUtil;
 import org.junit.jupiter.api.Test;
 
+import java.io.StringReader;
+import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,7 +40,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestJGrapht {
 
     @Data
-    @EqualsAndHashCode(of = "itemId")
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Item {
@@ -47,6 +49,21 @@ public class TestJGrapht {
 
         public Item(long id) {
             this.id = id;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Item item = (Item) o;
+
+            return itemId.equals(item.itemId);
+        }
+
+        @Override
+        public int hashCode() {
+            return itemId.hashCode();
         }
     }
 
@@ -58,7 +75,18 @@ public class TestJGrapht {
         AtomicLong id = new AtomicLong();
         graph.setVertexSupplier(()->new Item(id.incrementAndGet()));
 
-        final Item v1001 = graph.addVertex();
+        Item v1001 = new Item();
+        final WeakReference<Item> v1001Ref = new WeakReference<>(v1001);
+        assertThrows(java.lang.NullPointerException.class, ()-> {
+            Item v1001Temp = graph.addVertex();
+            Item item = v1001Ref.get();
+            assertNotNull(item);
+            item.id = v1001Temp.id;
+            item.itemId = v1001Temp.itemId;
+            item.code = v1001Temp.code;
+        });
+
+/*
         assertNotNull(v1001.id);
         v1001.itemId = 1001L;
         v1001.code = "code-1001";
@@ -82,7 +110,9 @@ public class TestJGrapht {
         assertNotNull(item);
         assertEquals(v1002.id, item.id);
 
-        assertThrows(IllegalArgumentException.class, ()->graph.addEdge(v1001, v1002));
+//        assertThrows(IllegalArgumentException.class, ()->graph.addEdge(v1001, v1002));
+        graph.addEdge(v1001, v1002);
+*/
     }
 
     @Test
@@ -111,6 +141,30 @@ public class TestJGrapht {
         assertEquals(v1002.id, item.id);
 
         graph.addEdge(v1001, v1002);
+    }
+
+    @Test
+    public void testImport() {
+        String input="strict digraph G {\n" +
+                "  <assembly-raw-file>;\n" +
+                "  <dataset-processing>;\n" +
+                "  <feature-processing-1>;\n" +
+                "  <feature-processing-2>;\n" +
+                "  <mh.permute-variables-and-hyper-params>;\n" +
+                "  <mh.finish>;\n" +
+                "  <assembly-raw-file> -> <dataset-processing>;\n" +
+                "  <dataset-processing> -> <feature-processing-1>;\n" +
+                "  <dataset-processing> -> <feature-processing-2>;\n" +
+                "  <dataset-processing> -> <mh.permute-variables-and-hyper-params>;\n" +
+                "  <feature-processing-1> -> <mh.permute-variables-and-hyper-params>;\n" +
+                "  <feature-processing-2> -> <mh.permute-variables-and-hyper-params>;\n" +
+                "  <mh.permute-variables-and-hyper-params> -> <mh.finish>;\n" +
+                "}";
+        Graph<String, DefaultEdge> graph = new DirectedAcyclicGraph<>(DefaultEdge.class);
+        DOTImporter<String, DefaultEdge> importer = new DOTImporter<>();
+        importer.setVertexFactory(id->id);
+        importer.importGraph(graph, new StringReader(input));
+        System.out.println(graph);
     }
 
 }

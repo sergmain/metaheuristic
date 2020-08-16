@@ -35,7 +35,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -96,18 +95,6 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(321L, 321L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(322L, 322L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(323L, 323L, EnumsApi.TaskExecState.NONE)));
-
-/*
-        // value of id field doesn't matter because isn't included in "@EqualsAndHashCode"
-        assertTrue(leafs.contains(new TaskVertex(1L, 311L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex(1L, 312L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex(1L, 313L, EnumsApi.TaskExecState.NONE)));
-
-        assertTrue(leafs.contains(new TaskVertex(1L, 321L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex(1L, 322L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex(1L, 323L, EnumsApi.TaskExecState.NONE)));
-
-*/
 
         Set<EnumsApi.TaskExecState> states;
         execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(execContextForTest.id,1L);

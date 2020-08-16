@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.graph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex_140;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
@@ -38,7 +39,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -60,6 +60,12 @@ public class TestGraph extends PreparingSourceCode {
         return getSourceParamsYamlAsString_Simple();
     }
 
+    /**
+     * this test will produce warnings in log such:
+     *      #306.010 Can't find Task for Id: 1
+     *
+     *  this is a normal situation
+     */
     @Test
     public void test() {
 
@@ -84,17 +90,11 @@ public class TestGraph extends PreparingSourceCode {
         count = execContextService.getCountUnfinishedTasks(execContextForTest);
         assertEquals(3, count);
 
-        List<ExecContextData.TaskVertex_140> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
+        List<TaskVertex_140> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
         assertEquals(2, leafs.size());
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(2L, 2L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(3L, 3L, EnumsApi.TaskExecState.NONE)));
-
-/*
-        // value of id field doesn't matter because isn't included in "@EqualsAndHashCode"
-        assertTrue(leafs.contains(new TaskVertex(1L, 2L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex(1L, 3L, EnumsApi.TaskExecState.NONE)));
-*/
+        assertTrue(leafs.contains(new TaskVertex_140(2L, "2L", EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new TaskVertex_140(3L, "3L", EnumsApi.TaskExecState.NONE)));
 
         setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.BROKEN);
         setExecState(execContextForTest, 2L, EnumsApi.TaskExecState.NONE);

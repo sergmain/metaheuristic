@@ -79,7 +79,7 @@ public class TestGraphEdges extends PreparingSourceCode {
         List<ExecContextData.TaskVertex_140> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
         assertEquals(3, leafs.size());
-        // value of id field doesn't matter because isn't included in "@EqualsAndHashCode"
+
         assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(21L, 21L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(22L, 22L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new ExecContextData.TaskVertex_140(23L, 23L, EnumsApi.TaskExecState.NONE)));

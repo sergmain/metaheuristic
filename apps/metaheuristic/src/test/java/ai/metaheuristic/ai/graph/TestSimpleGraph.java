@@ -23,15 +23,16 @@ import org.jgrapht.alg.interfaces.StrongConnectivityAlgorithm;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
-import org.jgrapht.io.ComponentNameProvider;
-import org.jgrapht.io.DOTExporter;
-import org.jgrapht.io.ExportException;
-import org.jgrapht.io.GraphExporter;
+import org.jgrapht.nio.Attribute;
+import org.jgrapht.nio.DefaultAttribute;
+import org.jgrapht.nio.dot.DOTExporter;
 import org.junit.jupiter.api.Test;
 
 import java.io.StringWriter;
-import java.io.Writer;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author Serge
@@ -41,7 +42,7 @@ import java.util.List;
 public class TestSimpleGraph {
 
     @Test
-    public void test() throws ExportException {
+    public void test() {
 
         // constructs a directed graph with the specified vertices and edges
         DirectedAcyclicGraph<String, DefaultEdge> directedGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
@@ -94,24 +95,30 @@ public class TestSimpleGraph {
         System.out.println(cPaths.getPath("i"));
 
 
-        // use helper classes to define how vertices should be rendered,
-        // adhering to the DOT language restrictions
-        ComponentNameProvider<String> vertexIdProvider = v -> v;
-        ComponentNameProvider<String> vertexLabelProvider = v -> v;
-
-        GraphExporter<String, DefaultEdge> exporter =
-                new DOTExporter<>(vertexIdProvider, vertexLabelProvider, null);
-        outputGraph(directedGraph, exporter);
-        outputGraph(new DirectedAcyclicGraph<>(DefaultEdge.class), exporter);
+        outputGraph(asString(directedGraph));
+        outputGraph(asString(new DirectedAcyclicGraph<>(DefaultEdge.class)));
 
     }
 
-    public void outputGraph(DirectedAcyclicGraph<String, DefaultEdge> directedGraph, GraphExporter<String, DefaultEdge> exporter) throws ExportException {
-        Writer writer = new StringWriter();
-        exporter.exportGraph(directedGraph, writer);
-        final String export = writer.toString();
-        System.out.println("len: " + export.length());
-        System.out.println(export);
+    private void outputGraph(String graphAsStr) {
+        System.out.println("len: " + graphAsStr.length());
+        System.out.println(graphAsStr);
         System.out.println("\n\n\n");
+    }
+
+    private static String asString(DirectedAcyclicGraph<String, DefaultEdge> graph) {
+        Function<String, String> vertexIdProvider = v -> v;
+        Function<String, Map<String, Attribute>> vertexAttributeProvider = v -> {
+            Map<String, Attribute> m = new HashMap<>();
+            m.put("attr", DefaultAttribute.createAttribute(v));
+            return m;
+        };
+
+        DOTExporter<String, DefaultEdge> exporter = new DOTExporter<>(vertexIdProvider);
+        exporter.setVertexAttributeProvider(vertexAttributeProvider);
+
+        StringWriter writer = new StringWriter();
+        exporter.exportGraph(graph, writer);
+        return writer.toString();
     }
 }

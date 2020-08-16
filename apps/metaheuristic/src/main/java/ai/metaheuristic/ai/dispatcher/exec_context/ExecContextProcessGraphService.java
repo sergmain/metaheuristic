@@ -27,7 +27,6 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.DefaultAttribute;
-import org.jgrapht.nio.GraphImporter;
 import org.jgrapht.nio.dot.DOTExporter;
 import org.jgrapht.nio.dot.DOTImporter;
 import org.jgrapht.util.SupplierUtil;
@@ -37,7 +36,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +115,7 @@ public class ExecContextProcessGraphService {
                     // do nothing
                     break;
                 default:
-                    log.error("Unknown attribute in vertex: " + vertex.getSecond()+", attr value: " + attribute.getValue());
+                    log.error("Unknown attribute in process graph, attr: " + vertex.getSecond()+", attr value: " + attribute.getValue());
             }
         }));
 

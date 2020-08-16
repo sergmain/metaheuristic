@@ -41,7 +41,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -58,7 +57,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 class ExecContextGraphService_140 {
 
-    private static final String TASK_ID_ATTR = "task_id";
+//    private static final String TASK_ID_ATTR = "task_id";
+    private static final String TASK_ID_STR_ATTR = "task_id_str";
     private static final String EXEC_STATE_ATTR = "exec_state";
 
     private final ExecContextCache execContextCache;
@@ -82,11 +82,11 @@ class ExecContextGraphService_140 {
         }
     }
 
-    private static String asString(DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> graph) {
-        Function<ExecContextData.TaskVertex_140, String> vertexIdProvider = v -> v.id.toString();
+    public static String asString(DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> graph) {
+        Function<ExecContextData.TaskVertex_140, String> vertexIdProvider = v -> v.taskId.toString();
         Function<ExecContextData.TaskVertex_140, Map<String, Attribute>> vertexAttributeProvider = v -> {
             Map<String, Attribute> m = new HashMap<>();
-            m.put(TASK_ID_ATTR, DefaultAttribute.createAttribute(v.taskId.toString()));
+            m.put(TASK_ID_STR_ATTR, DefaultAttribute.createAttribute(v.taskId.toString()));
             m.put(EXEC_STATE_ATTR, DefaultAttribute.createAttribute(v.execState.toString()));
             return m;
         };
@@ -126,7 +126,7 @@ class ExecContextGraphService_140 {
         return callable.apply(graph);
     }
 
-    private @NonNull DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> prepareGraph(@NonNull ExecContextImpl execContext) {
+    private DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> prepareGraph(ExecContextImpl execContext) {
         return importProcessGraph(execContext.getExecContextParamsYaml());
 /*
         ExecContextParamsYaml wpy = execContext.getExecContextParamsYaml();
@@ -144,24 +144,25 @@ class ExecContextGraphService_140 {
     public static DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> importProcessGraph(ExecContextParamsYaml wpy) {
         DirectedAcyclicGraph<ExecContextData.TaskVertex_140, DefaultEdge> graph = new DirectedAcyclicGraph<>(
                 ExecContextData.TaskVertex_140::new, SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
-        AtomicLong id = new AtomicLong();
-        graph.setVertexSupplier(()->new ExecContextData.TaskVertex_140(id.incrementAndGet()));
+//        AtomicLong id = new AtomicLong();
+//        graph.setVertexSupplier(()->new ExecContextData.TaskVertex_140(id.incrementAndGet()));
 
         // https://stackoverflow.com/questions/60461351/import-graph-with-1-4-0
         DOTImporter<ExecContextData.TaskVertex_140, DefaultEdge> importer = new DOTImporter<>();
+        importer.setVertexFactory(id->new ExecContextData.TaskVertex_140(Long.parseLong(id)));
         importer.addVertexAttributeConsumer(((vertex, attribute) -> {
             switch(vertex.getSecond()) {
                 case EXEC_STATE_ATTR:
                     vertex.getFirst().execState = EnumsApi.TaskExecState.valueOf(attribute.getValue());
                     break;
-                case TASK_ID_ATTR:
-                    vertex.getFirst().taskId = Long.valueOf(attribute.getValue());
+                case TASK_ID_STR_ATTR:
+                    vertex.getFirst().taskIdStr = attribute.getValue();
                     break;
                 case "ID":
                     // do nothing
                     break;
                 default:
-                    log.error("Unknown attribute in vertex: " + vertex.getSecond()+", attr value: " + attribute.getValue());
+                    log.error("Unknown attribute in task graph, attr: " + vertex.getSecond()+", attr value: " + attribute.getValue());
             }
         }));
 
@@ -534,11 +535,15 @@ class ExecContextGraphService_140 {
                         .collect(Collectors.toList());;
 
                 taskIds.forEach(taskId -> {
-                    final ExecContextData.TaskVertex_140 v = graph.addVertex();
+                    final ExecContextData.TaskVertex_140 v = new ExecContextData.TaskVertex_140(taskId);
+/*
                     v.taskId = taskId;
                     v.execState = EnumsApi.TaskExecState.NONE;
+*/
+                    graph.addVertex(v);
 //                    final ExecContextData.TaskVertex_140 v = new ExecContextData.TaskVertex_140(taskId, EnumsApi.TaskExecState.NONE);
                     vertices.forEach(parentV -> graph.addEdge(parentV, v) );
+                    int i = 0;
                 });
             });
             return OperationStatusRest.OPERATION_STATUS_OK;

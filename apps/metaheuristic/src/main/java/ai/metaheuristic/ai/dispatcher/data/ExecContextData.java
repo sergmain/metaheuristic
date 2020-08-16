@@ -22,7 +22,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.NonNull;
 
 /**
  * @author Serge
@@ -43,27 +42,28 @@ public class ExecContextData {
         public Task task;
     }
 
-
-    @Data
-    @EqualsAndHashCode(of = "taskId")
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class TaskVertex {
-        public Long taskId;
-        public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
-    }
-
     @Data
     @EqualsAndHashCode(of = "taskId")
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TaskVertex_140 {
-        public Long id;
+//        public Long id;
         public Long taskId;
+        public String taskIdStr;
         public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
 
-        public TaskVertex_140(Long id) {
-            this.id = id;
+        public TaskVertex_140(Long taskId) {
+            this.taskId = taskId;
+            this.taskIdStr = taskId.toString();
+        }
+
+        public TaskVertex_140(Long taskId, Long taskIdLong, EnumsApi.TaskExecState execState) {
+            if (!taskId.equals(taskIdLong)) {
+                throw new IllegalStateException("(!taskId.equals(taskIdLong))");
+            }
+            this.taskId = taskId;
+            this.taskIdStr = taskIdLong.toString();
+            this.execState = execState;
         }
     }
 
