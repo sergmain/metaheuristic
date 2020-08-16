@@ -367,6 +367,25 @@ class ExecContextGraphService {
         return descendants;
     }
 
+    public Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextImpl execContext, ExecContextData.TaskVertex vertex) {
+        if (vertex==null) {
+            return Set.of();
+        }
+        try {
+            return readOnlyGraphSetOfTaskVertex(execContext, graph -> findDirectAncestorsInternal(graph, vertex));
+        }
+        catch (Throwable th) {
+            log.error("#916.145 Error", th);
+            // TODO 2020.03.09 need to implement better handling of Throwable
+            return Set.of();
+        }
+    }
+
+    private Set<ExecContextData.TaskVertex> findDirectAncestorsInternal(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextData.TaskVertex vertex) {
+        Set<ExecContextData.TaskVertex> ancestors = graph.incomingEdgesOf(vertex).stream().map(graph::getEdgeSource).collect(Collectors.toSet());
+        return ancestors;
+    }
+
     public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
         try {
             return readOnlyGraphListOfTaskVertex(execContext, graph -> {

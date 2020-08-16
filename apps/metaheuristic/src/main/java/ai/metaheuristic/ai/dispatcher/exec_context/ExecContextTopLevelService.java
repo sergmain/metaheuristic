@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -35,6 +36,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.data.source_code.SourceCodeApiData.ExecContextForDeletion;
 
@@ -128,8 +130,27 @@ public class ExecContextTopLevelService {
                 line.cells[i] = new ExecContextApiData.StateCell();
             }
         }
+        // mh.finish is the last always
+        // but process can be named differently
+        boolean finishIsLast = false;
+        if (processes.contains(Consts.MH_FINISH_FUNCTION)) {
+            r.lines[r.lines.length - 1].lineHeader = new ExecContextApiData.LineHeader(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION);
+            finishIsLast = true;
+        }
 
         List<List<ExecContextData.TaskVertex>> vertices = execContextGraphService.graphAsListOfLIst(ec);
+
+        // find all processes which is just before mh.finish
+        List<ExecContextData.TaskVertex> leafs = execContextGraphService.findLeafs(ec);
+        Set<ExecContextData.TaskVertex> beforeFinishVertices = new HashSet<>();
+        for (ExecContextData.TaskVertex leaf : leafs) {
+            beforeFinishVertices.addAll(execContextGraphService.findDirectAncestors(ec, leaf));
+        }
+        Set<Long> beforeFinishIds = beforeFinishVertices.stream().map(o->o.taskId).collect(Collectors.toSet());
+
+
+        Set<String> beforeProcesses = new HashSet<>();
+
         for (List<ExecContextData.TaskVertex> vertex : vertices) {
             for (int i = 0; i < r.header.length; i++) {
                 ExecContextData.TaskVertex v = null;
@@ -152,6 +173,22 @@ public class ExecContextTopLevelService {
                 }
                 int j = findRow(r.lines, new ExecContextApiData.LineHeader(simpleTaskInfo.process, simpleTaskInfo.functionCode));
                 r.lines[j].cells[i] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, simpleTaskInfo.state, simpleTaskInfo.context);
+                if (beforeFinishIds.contains(simpleTaskInfo.taskId)) {
+                    beforeProcesses.add(simpleTaskInfo.process);
+                }
+            }
+        }
+
+        int idx = 0;
+        int shift = finishIsLast ? 1 : 0;
+        for (String process : beforeProcesses) {
+            for (int i = 0; i < r.lines.length - beforeProcesses.size() - shift ; i++) {
+                if (r.lines[i].lineHeader.process.equals(process)) {
+                    ExecContextApiData.LineWithState l = r.lines[i];
+                    r.lines[i] = r.lines[r.lines.length - beforeProcesses.size() - shift + idx];
+                    r.lines[r.lines.length - beforeProcesses.size() - shift + idx] = l;
+                    idx++;
+                }
             }
         }
 
