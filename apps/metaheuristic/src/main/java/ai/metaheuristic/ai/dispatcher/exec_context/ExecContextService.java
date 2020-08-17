@@ -85,7 +85,7 @@ public class ExecContextService {
     private final TaskPersistencer taskPersistencer;
     private final ProcessorCache processorCache;
     private final ExecContextCache execContextCache;
-    private final ExecContextGraphService_140 execContextGraphService;
+    private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextFSM execContextFSM;
@@ -99,11 +99,11 @@ public class ExecContextService {
         if (execContext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.020 Can't find execContext with id #"+execContextId);
         }
-        List<ExecContextData.TaskVertex_140> vertices = execContextGraphTopLevelService.findAllBroken(execContext);
+        List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllBroken(execContext);
         if (vertices==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#705.040 Can't find execContext with id #"+execContextId);
         }
-        for (ExecContextData.TaskVertex_140 vertex : vertices) {
+        for (ExecContextData.TaskVertex vertex : vertices) {
             resetTask(vertex.taskId);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -168,11 +168,11 @@ public class ExecContextService {
         return execContextSyncService.getWithSync(execContextId, execContextGraphService::getCountUnfinishedTasks);
     }
 
-    public List<ExecContextData.TaskVertex_140> getUnfinishedTaskVertices(Long execContextId) {
+    public List<ExecContextData.TaskVertex> getUnfinishedTaskVertices(Long execContextId) {
         return execContextSyncService.getWithSync(execContextId, execContextGraphService::getUnfinishedTaskVertices);
     }
 
-    public List<ExecContextData.TaskVertex_140> findAllVertices(Long execContextId) {
+    public List<ExecContextData.TaskVertex> findAllVertices(Long execContextId) {
         return execContextSyncService.getWithSync(execContextId, execContextGraphService::findAll);
     }
 
@@ -310,7 +310,7 @@ public class ExecContextService {
 
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
-    public static List<Long> getIdsForSearch(List<ExecContextData.TaskVertex_140> vertices, int page, int pageSize) {
+    public static List<Long> getIdsForSearch(List<ExecContextData.TaskVertex> vertices, int page, int pageSize) {
         final int fromIndex = page * pageSize;
         if (vertices.size()<=fromIndex) {
             return List.of();
@@ -331,7 +331,7 @@ public class ExecContextService {
         if (execContext==null) {
             return null;
         }
-        final List<ExecContextData.TaskVertex_140> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext);
+        final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(execContext);
         if (vertices.isEmpty()) {
             return null;
         }
@@ -463,7 +463,7 @@ public class ExecContextService {
         return false;
     }
 
-    private List<TaskImpl> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex_140> vertices, int page) {
+    private List<TaskImpl> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex> vertices, int page) {
         final List<Long> idsForSearch = getIdsForSearch(vertices, page, 20);
         if (idsForSearch.isEmpty()) {
             return List.of();

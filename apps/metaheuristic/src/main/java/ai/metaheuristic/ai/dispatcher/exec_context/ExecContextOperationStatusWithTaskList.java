@@ -35,7 +35,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ExecContextOperationStatusWithTaskList {
     public OperationStatusRest status;
-    public List<ExecContextData.TaskVertex_140> childrenTasks = new ArrayList<>();
+    public List<ExecContextData.TaskVertex> childrenTasks = new ArrayList<>();
 
     public ExecContextOperationStatusWithTaskList(OperationStatusRest status) {
         this.status = status;

@@ -34,17 +34,17 @@ public class TestPagerForTaskVertex {
 
     @Test
     public void test() {
-        List<ExecContextData.TaskVertex_140> vertices = List.of(
-                new ExecContextData.TaskVertex_140(1L, 1L, NONE),
-                new ExecContextData.TaskVertex_140(2L, 2L, NONE),
-                new ExecContextData.TaskVertex_140(3L, 3L, NONE),
-                new ExecContextData.TaskVertex_140(4L, 4L, NONE),
-                new ExecContextData.TaskVertex_140(5L, 5L, NONE),
-                new ExecContextData.TaskVertex_140(6L, 6L, NONE),
-                new ExecContextData.TaskVertex_140(7L, 7L, NONE),
-                new ExecContextData.TaskVertex_140(8L, 8L, NONE),
-                new ExecContextData.TaskVertex_140(9L, 9L, NONE),
-                new ExecContextData.TaskVertex_140(10L,10L, NONE)
+        List<ExecContextData.TaskVertex> vertices = List.of(
+                new ExecContextData.TaskVertex(1L, 1L, NONE),
+                new ExecContextData.TaskVertex(2L, 2L, NONE),
+                new ExecContextData.TaskVertex(3L, 3L, NONE),
+                new ExecContextData.TaskVertex(4L, 4L, NONE),
+                new ExecContextData.TaskVertex(5L, 5L, NONE),
+                new ExecContextData.TaskVertex(6L, 6L, NONE),
+                new ExecContextData.TaskVertex(7L, 7L, NONE),
+                new ExecContextData.TaskVertex(8L, 8L, NONE),
+                new ExecContextData.TaskVertex(9L, 9L, NONE),
+                new ExecContextData.TaskVertex(10L,10L, NONE)
         );
 /*
         List<ExecContextData.TaskVertex> vertices = List.of(

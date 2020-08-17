@@ -46,18 +46,17 @@ public class ExecContextData {
     @EqualsAndHashCode(of = "taskId")
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class TaskVertex_140 {
-//        public Long id;
+    public static class TaskVertex {
         public Long taskId;
         public String taskIdStr;
         public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
 
-        public TaskVertex_140(Long taskId) {
+        public TaskVertex(Long taskId) {
             this.taskId = taskId;
             this.taskIdStr = taskId.toString();
         }
 
-        public TaskVertex_140(Long taskId, Long taskIdLong, EnumsApi.TaskExecState execState) {
+        public TaskVertex(Long taskId, Long taskIdLong, EnumsApi.TaskExecState execState) {
             if (!taskId.equals(taskIdLong)) {
                 throw new IllegalStateException("(!taskId.equals(taskIdLong))");
             }

@@ -18,8 +18,7 @@ package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex_140;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
@@ -90,11 +89,11 @@ public class TestGraph extends PreparingSourceCode {
         count = execContextService.getCountUnfinishedTasks(execContextForTest);
         assertEquals(3, count);
 
-        List<TaskVertex_140> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
+        List<TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
         assertEquals(2, leafs.size());
-        assertTrue(leafs.contains(new TaskVertex_140(2L, "2L", EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex_140(3L, "3L", EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new TaskVertex(2L, "2L", EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new TaskVertex(3L, "3L", EnumsApi.TaskExecState.NONE)));
 
         setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.BROKEN);
         setExecState(execContextForTest, 2L, EnumsApi.TaskExecState.NONE);

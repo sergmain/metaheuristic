@@ -136,7 +136,7 @@ public class ExecContextSchedulerService {
         ConcurrentHashMap<Long, Integer> taskStates = new ConcurrentHashMap<>();
         AtomicBoolean isNullState = new AtomicBoolean(false);
 
-        List<ExecContextData.TaskVertex_140> vertices = execContextService.findAllVertices(execContextId);
+        List<ExecContextData.TaskVertex> vertices = execContextService.findAllVertices(execContextId);
         vertices.stream().parallel().forEach(tv -> {
             TaskState taskState = states.get(tv.taskId);
             if (taskState==null) {

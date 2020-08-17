@@ -142,11 +142,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
         //   processCode: feature-processing-2, function code: function-04:1.1
         step_CommonProcessing();
 
-        List<ExecContextData.TaskVertex_140> taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+        List<ExecContextData.TaskVertex> taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
         assertEquals(3, taskVertices.size());
         TaskImpl finishTask = null, permuteTask = null, aggregateTask = null;
 
-        for (ExecContextData.TaskVertex_140 taskVertex : taskVertices) {
+        for (ExecContextData.TaskVertex taskVertex : taskVertices) {
             TaskImpl tempTask = taskRepository.findById(taskVertex.taskId).orElse(null);
             assertNotNull(tempTask);
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
@@ -204,7 +204,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // and 1 'mh.finish' task
         assertEquals(14, taskVertices.size());
 
-        Set<ExecContextData.TaskVertex_140> descendants = execContextGraphTopLevelService.findDescendants(execContextForTest, permuteTask.id);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContextForTest, permuteTask.id);
         assertEquals(14, descendants.size());
 
         descendants = execContextGraphTopLevelService.findDirectDescendants(execContextForTest, permuteTask.id);
@@ -449,10 +449,10 @@ public class TestSourceCodeService extends PreparingSourceCode {
     private void verifyGraphIntegrity() {
 
         List<TaskImpl> tasks = taskRepository.findByExecContextIdAsList(execContextForTest.id);
-        List<ExecContextData.TaskVertex_140> taskVertices = execContextService.findAllVertices(execContextForTest.id);
+        List<ExecContextData.TaskVertex> taskVertices = execContextService.findAllVertices(execContextForTest.id);
         assertEquals(tasks.size(), taskVertices.size());
 
-        for (ExecContextData.TaskVertex_140 taskVertex : taskVertices) {
+        for (ExecContextData.TaskVertex taskVertex : taskVertices) {
             Task t = tasks.stream().filter(o->o.id.equals(taskVertex.taskId)).findAny().orElse(null);
             assertNotNull(t, "task with id #"+ taskVertex.taskId+" wasn't found");
             assertEquals(t.getExecState(), taskVertex.execState.value, "task has a different states in db and graph, " +

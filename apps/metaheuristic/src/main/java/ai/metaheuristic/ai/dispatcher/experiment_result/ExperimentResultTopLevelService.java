@@ -347,7 +347,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentInfo experimentInfoResult = new ExperimentInfo();
         experimentInfoResult.features = List.of();
-        List<ExecContextData.TaskVertex_140> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
         experimentInfoResult.features = ypywc.experimentResult.features
                 .stream()
                 .map(e -> asExperimentFeatureData(e, taskVertices, ypywc.experimentResult.taskFeatures)).collect(Collectors.toList());
@@ -404,7 +404,7 @@ public class ExperimentResultTopLevelService {
 
     public static ExperimentFeatureData asExperimentFeatureData(
             @Nullable ExperimentResultParamsYaml.ExperimentFeature experimentFeature,
-            List<ExecContextData.TaskVertex_140> taskVertices,
+            List<ExecContextData.TaskVertex> taskVertices,
             List<ExperimentResultParamsYaml.ExperimentTaskFeature> taskFeatures) {
 
         final ExperimentFeatureData featureData = new ExperimentFeatureData();
@@ -692,7 +692,7 @@ public class ExperimentResultTopLevelService {
         result.tasks = tasks;
         result.consoleResult = new ConsoleResult();
 
-        List<ExecContextData.TaskVertex_140> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
         result.experimentFeature = asExperimentFeatureData(experimentFeature, taskVertices, ypywc.experimentResult.taskFeatures);
 
         return result;
@@ -785,7 +785,7 @@ public class ExperimentResultTopLevelService {
         result.tasks = feature==null ?  Page.empty() : findTasks(experimentResultId, ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
         result.consoleResult = new ConsoleResult();
 
-        List<ExecContextData.TaskVertex_140> taskVertices = execContextGraphTopLevelService.findAll(execContext);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContext);
         result.experimentFeature = asExperimentFeatureData(feature, taskVertices, ypywc.experimentResult.taskFeatures);
 
         return result;
