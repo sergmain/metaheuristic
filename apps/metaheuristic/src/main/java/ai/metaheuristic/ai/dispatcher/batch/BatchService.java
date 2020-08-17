@@ -202,7 +202,7 @@ public class BatchService {
             Batch batch = batchCache.findById(batchId);
             String uid = SOURCE_CODE_NOT_FOUND;
             if (batch!=null) {
-                SourceCode sourceCode = sourceCodeCache.findById(batch.getSourceCodeId());
+                SourceCodeImpl sourceCode = sourceCodeCache.findById(batch.getSourceCodeId());
                 boolean ok = true;
                 if (sourceCode != null) {
                     uid = sourceCode.getUid();
@@ -213,7 +213,7 @@ public class BatchService {
                 }
                 String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
 
-                String filename = findUploadedFilenameForBatchId(batchId, Consts.UNKNOWN_FILENAME_IN_BATCH);
+                String filename = findUploadedFilenameForBatchId(batch.execContextId, Consts.UNKNOWN_FILENAME_IN_BATCH);
                 BatchParamsYaml bpy = BatchParamsYamlUtils.BASE_YAML_UTILS.to(batch.params);
                 items.add(new BatchData.BatchExecInfo(
                         batch, uid, execStateStr, batch.execState, ok, filename,
@@ -230,38 +230,28 @@ public class BatchService {
         public Task task;
         public File zipDir;
         public String mainDocument;
-        public Long batchId;
         public Long execContextId;
     }
 
-    public String getUploadedFilename(Long batchId) {
-        String filename = findUploadedFilenameForBatchId(batchId, "result.zip");
-        if (S.b(filename)) {
-            log.error("#990.392 Filename is blank for batchId: {}, will be used default name - result.zip", batchId);
-            return Consts.RESULT_ZIP;
-        }
+    public String getUploadedFilename(Long execContextId) {
+        String filename = findUploadedFilenameForBatchId(execContextId, Consts.RESULT_ZIP);
         return filename;
     }
 
-    @Nullable
-    @Transactional(readOnly = true)
-    public String findUploadedFilenameForBatchId(Long batchId, @Nullable String defaultName) {
-        Batch batch = batchCache.findById(batchId);
-        if (batch==null) {
-            return defaultName;
-        }
-        ExecContextImpl ec = execContextCache.findById(batch.execContextId);
+    public String findUploadedFilenameForBatchId(Long execContextId, @Nullable String defaultName) {
+        String defName = S.b(defaultName) ? Consts.RESULT_ZIP : defaultName;
+        ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec == null) {
-            return defaultName;
+            return defName;
         }
         ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
         String startInputVariableName = ecpy.variables.startInputAs;
         if (S.b(startInputVariableName)) {
-            return defaultName;
+            return defName;
         }
-        List<String> filenames = variableService.getFilenameByVariableAndExecContextId(batch.execContextId, startInputVariableName);
+        List<String> filenames = variableService.getFilenameByVariableAndExecContextId(execContextId, startInputVariableName);
         if (filenames.isEmpty()) {
-            return defaultName;
+            return defName;
         }
         if (filenames.size()>1) {
             log.warn("something wrong, too many startInputAs variables: " + filenames);

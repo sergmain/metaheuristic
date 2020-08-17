@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.batch.data;
 
-import ai.metaheuristic.ai.Consts;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -35,7 +34,7 @@ import java.util.Map;
 public class BatchStatusProcessor {
 
     public final Map<String, String> renameTo = new HashMap<>();
-    public String originArchiveName = Consts.RESULT_ZIP;
+
     // must be public for yaml's marshalling
     public boolean ok = false;
 

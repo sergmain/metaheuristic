@@ -184,7 +184,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#995.040 name of uploaded file is blank");
         }
         // fix for the case when browser sends full path, ie Edge
-        final String originFilename = new File(tempFilename.toLowerCase()).getName();
+        final String originFilename = new File(tempFilename).getName();
 
         String ext = StrUtils.getExtension(originFilename);
         if (ext==null) {
@@ -378,13 +378,7 @@ public class BatchTopLevelService {
                 return null;
             }
             return variableName;
-        }, (execContextId, scpy) -> {
-            String originFilename = batchService.findUploadedFilenameForBatchId(batchId, null);
-            if (S.b(originFilename)) {
-                return null;
-            }
-            return originFilename;
-        });
+        }, (execContextId, scpy) -> batchService.findUploadedFilenameForBatchId(batchId, "origin-file.zip"));
     }
 
     @Nullable
