@@ -132,13 +132,13 @@ public class PackageFunction implements CommandLineRunner {
             if (functionConfig.sourcing== EnumsApi.FunctionSourcing.processor ||
                     functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
                 String s = FunctionCoreUtils.getDataForChecksumWhenGitSourcing(functionConfig);
-                sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(s.getBytes()));
+                sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(s.getBytes()));
             }
             else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
                 final File snippetFile = new File(targetDir, functionConfig.file);
                 FileUtils.copyFile(new File(functionConfig.file), snippetFile);
                 try (FileInputStream fis = new FileInputStream(snippetFile)) {
-                    sum = Checksum.getChecksum(EnumsApi.Type.SHA256, fis);
+                    sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);
                 }
                 functionConfig.info.length = snippetFile.length();
             }
@@ -149,11 +149,11 @@ public class PackageFunction implements CommandLineRunner {
             functionConfig.checksumMap = new HashMap<>();
             if (privateKey!=null) {
                 String signature = SecUtils.getSignature(sum, privateKey);
-                functionConfig.checksumMap.put(EnumsApi.Type.SHA256WithSignature, sum + SecUtils.SIGNATURE_DELIMITER + signature);
+                functionConfig.checksumMap.put(EnumsApi.HashAlgo.SHA256WithSignature, sum + SecUtils.SIGNATURE_DELIMITER + signature);
                 functionConfig.info.signed = true;
             }
             else {
-                functionConfig.checksumMap.put(EnumsApi.Type.SHA256, sum);
+                functionConfig.checksumMap.put(EnumsApi.HashAlgo.SHA256, sum);
                 functionConfig.info.signed = false;
             }
         }

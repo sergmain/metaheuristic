@@ -106,6 +106,8 @@ public class ExecContextService {
         for (ExecContextData.TaskVertex vertex : vertices) {
             resetTask(vertex.taskId);
         }
+        // todo 2020-08-16 need to decide what to do with tasks with status 'SKIPPED'
+
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

@@ -410,6 +410,9 @@ public class BatchResultProcessorFunction implements InternalFunction {
                 return true;
             case OK:
                 break;
+            case SKIPPED:
+                // todo 2020-08-16 need to decide what to do here
+                break;
         }
 
         if (wb.getState() != EnumsApi.ExecContextState.FINISHED.code) {

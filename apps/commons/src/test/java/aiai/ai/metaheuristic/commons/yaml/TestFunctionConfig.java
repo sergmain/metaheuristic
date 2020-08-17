@@ -56,10 +56,10 @@ public class TestFunctionConfig {
         FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(0);
         assertNotNull(fc);
         assertNotNull(fc.getChecksumMap());
-        assertNotNull(fc.getChecksumMap().get(EnumsApi.Type.SHA256));
-        assertNotNull(fc.getChecksumMap().get(EnumsApi.Type.MD5));
-        assertEquals("<some value #1>", fc.getChecksumMap().get(EnumsApi.Type.SHA256));
-        assertEquals("<some value #2>", fc.getChecksumMap().get(EnumsApi.Type.MD5));
+        assertNotNull(fc.getChecksumMap().get(EnumsApi.HashAlgo.SHA256));
+        assertNotNull(fc.getChecksumMap().get(EnumsApi.HashAlgo.MD5));
+        assertEquals("<some value #1>", fc.getChecksumMap().get(EnumsApi.HashAlgo.SHA256));
+        assertEquals("<some value #2>", fc.getChecksumMap().get(EnumsApi.HashAlgo.MD5));
     }
 
 }

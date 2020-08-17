@@ -292,7 +292,7 @@ public class EnumsApi {
         }
     }
 
-    public enum TaskExecState { NONE(0), IN_PROGRESS(1), ERROR(2), OK(3), BROKEN(4);
+    public enum TaskExecState { NONE(0), IN_PROGRESS(1), ERROR(2), OK(3), BROKEN(4), SKIPPED(5);
 
         public final int value;
         TaskExecState(int value) {
@@ -311,18 +311,29 @@ public class EnumsApi {
                     return OK;
                 case 4:
                     return BROKEN;
+                case 5:
+                    return SKIPPED;
                 default:
                     throw new IllegalStateException("Unknown type : " + type);
             }
         }
+
+        public static boolean isFinishedState(int state) {
+            return isFinishedState(from(state));
+        }
+
+        public static boolean isFinishedState(TaskExecState state) {
+            return state==EnumsApi.TaskExecState.OK || state==EnumsApi.TaskExecState.BROKEN ||
+                    state==EnumsApi.TaskExecState.ERROR || state==EnumsApi.TaskExecState.SKIPPED;
+        }
     }
 
-    public enum Type {
+    public enum HashAlgo {
         MD5(false), SHA256(false), SHA256WithSignature(true);
 
         public boolean isSign;
 
-        Type(boolean isSign) {
+        HashAlgo(boolean isSign) {
             this.isSign = isSign;
         }
 

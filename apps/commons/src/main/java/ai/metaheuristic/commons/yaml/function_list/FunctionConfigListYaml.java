@@ -82,7 +82,7 @@ public class FunctionConfigListYaml implements BaseParams {
         public String params;
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
-        public Map<EnumsApi.Type, String> checksumMap;
+        public Map<EnumsApi.HashAlgo, String> checksumMap;
         public FunctionInfo info = new FunctionInfo();
         public @Nullable String checksum;
         public GitInfo git;

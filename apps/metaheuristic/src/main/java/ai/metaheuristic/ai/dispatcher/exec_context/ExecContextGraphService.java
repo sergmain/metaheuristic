@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 class ExecContextGraphService {
 
     private static final String TASK_ID_STR_ATTR = "task_id_str";
-    private static final String EXEC_STATE_ATTR = "exec_state";
+    private static final String TASK_EXEC_STATE_ATTR = "task_exec_state";
 
     private final ExecContextCache execContextCache;
 
@@ -79,7 +79,7 @@ class ExecContextGraphService {
         Function<ExecContextData.TaskVertex, Map<String, Attribute>> vertexAttributeProvider = v -> {
             Map<String, Attribute> m = new HashMap<>();
             m.put(TASK_ID_STR_ATTR, DefaultAttribute.createAttribute(v.taskIdStr));
-            m.put(EXEC_STATE_ATTR, DefaultAttribute.createAttribute(v.execState.toString()));
+            m.put(TASK_EXEC_STATE_ATTR, DefaultAttribute.createAttribute(v.execState.toString()));
             return m;
         };
 
@@ -133,7 +133,7 @@ class ExecContextGraphService {
         importer.setVertexFactory(id->new ExecContextData.TaskVertex(Long.parseLong(id)));
         importer.addVertexAttributeConsumer(((vertex, attribute) -> {
             switch(vertex.getSecond()) {
-                case EXEC_STATE_ATTR:
+                case TASK_EXEC_STATE_ATTR:
                     vertex.getFirst().execState = EnumsApi.TaskExecState.valueOf(attribute.getValue());
                     break;
                 case TASK_ID_STR_ATTR:
@@ -173,6 +173,9 @@ class ExecContextGraphService {
                     else if (taskVertex.execState == EnumsApi.TaskExecState.OK) {
                         setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new ExecContextOperationStatusWithTaskList(), EnumsApi.TaskExecState.NONE);
                     }
+                    else if (taskVertex.execState == EnumsApi.TaskExecState.SKIPPED) {
+                        // todo 2020-08-16 need to decide what to do here
+                    }
                 });
             });
         }
@@ -201,6 +204,9 @@ class ExecContextGraphService {
                     }
                     else if (tv.execState==EnumsApi.TaskExecState.OK) {
                         setStateForAllChildrenTasksInternal(graph, tv.taskId, status, EnumsApi.TaskExecState.NONE);
+                    }
+                    else if (tv.execState == EnumsApi.TaskExecState.SKIPPED) {
+                        // todo 2020-08-16 need to decide what to do here
                     }
                 }
             });
@@ -396,7 +402,7 @@ class ExecContextGraphService {
                     graph.vertexSet().forEach(o->log.debug("\t\ttask #{}, state {}", o.taskId, o.execState));
                 }
 
-                // if this is newly created graph then return only start vertex of graph
+                // if this is newly created graph then return only the start vertex of graph
                 ExecContextData.TaskVertex startVertex = graph.vertexSet().stream()
                         .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.incomingEdgesOf(v).isEmpty())
                         .findFirst()

@@ -39,12 +39,12 @@ public class Checksum {
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
-    public static String getChecksum(EnumsApi.Type type, String data)  {
+    public static String getChecksum(EnumsApi.HashAlgo type, String data)  {
         return getChecksum(type, IOUtils.toInputStream(data, Charsets.UTF_8));
     }
 
     @SneakyThrows
-    public static String getChecksum(EnumsApi.Type type, InputStream inputStream) {
+    public static String getChecksum(EnumsApi.HashAlgo type, InputStream inputStream) {
         switch (type) {
             case MD5:
                 return DigestUtils.md5Hex(inputStream);
@@ -57,12 +57,12 @@ public class Checksum {
         }
     }
 
-    public Map<EnumsApi.Type, String> checksums = new HashMap<>();
+    public Map<EnumsApi.HashAlgo, String> checksums = new HashMap<>();
 
     public Checksum() {
     }
 
-    public Checksum(EnumsApi.Type type, String checksum) {
+    public Checksum(EnumsApi.HashAlgo type, String checksum) {
         this.checksums.put(type, checksum);
     }
 

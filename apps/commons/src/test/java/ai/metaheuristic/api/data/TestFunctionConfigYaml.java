@@ -45,7 +45,7 @@ public class TestFunctionConfigYaml {
         System.out.println(FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc2));
 
         // to be sure that values were copied
-        Objects.requireNonNull(sc.checksumMap).put(EnumsApi.Type.SHA256WithSignature, "321qwe");
+        Objects.requireNonNull(sc.checksumMap).put(EnumsApi.HashAlgo.SHA256WithSignature, "321qwe");
         Objects.requireNonNull(sc.metas).add(Map.of("key2", "value2"));
 
         assertEquals(sc2.code, "sc.code");
@@ -56,7 +56,7 @@ public class TestFunctionConfigYaml {
         assertEquals(sc2.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc2.checksumMap);
         assertEquals(1, sc2.checksumMap.size());
-        assertNotNull(sc2.checksumMap.get(EnumsApi.Type.SHA256));
+        assertNotNull(sc2.checksumMap.get(EnumsApi.HashAlgo.SHA256));
         assertNotNull(sc2.info);
         assertEquals(sc2.info.length, 42);
         assertTrue(sc2.info.signed);
@@ -91,7 +91,7 @@ public class TestFunctionConfigYaml {
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         assertNotNull(sc.checksumMap);
-        sc.checksumMap.put(EnumsApi.Type.SHA256, "qwe321");
+        sc.checksumMap.put(EnumsApi.HashAlgo.SHA256, "qwe321");
         sc.info = new FunctionConfigYamlV1.FunctionInfoV1(true, 42);
         sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
@@ -110,7 +110,7 @@ public class TestFunctionConfigYaml {
         sc.params = "sc.params";
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        Objects.requireNonNull(sc.checksumMap).put(EnumsApi.Type.SHA256, "qwe321");
+        Objects.requireNonNull(sc.checksumMap).put(EnumsApi.HashAlgo.SHA256, "qwe321");
         sc.info = new FunctionConfigYaml.FunctionInfo(true, 42);
         sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
@@ -120,7 +120,7 @@ public class TestFunctionConfigYaml {
         FunctionConfigYaml sc1 = sc.clone();
 
         // to be sure that values were copied, we'll change original checksumMap
-        sc.checksumMap.put(EnumsApi.Type.SHA256WithSignature, "321qwe");
+        sc.checksumMap.put(EnumsApi.HashAlgo.SHA256WithSignature, "321qwe");
         sc.metas.add(Map.of("key2", "value2"));
 
         checkLatest(sc1);
@@ -135,8 +135,8 @@ public class TestFunctionConfigYaml {
         assertEquals(sc.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc.checksumMap);
         assertEquals(1, sc.checksumMap.size());
-        assertNotNull(sc.checksumMap.get(EnumsApi.Type.SHA256));
-        assertNull(sc.checksumMap.get(EnumsApi.Type.SHA256WithSignature));
+        assertNotNull(sc.checksumMap.get(EnumsApi.HashAlgo.SHA256));
+        assertNull(sc.checksumMap.get(EnumsApi.HashAlgo.SHA256WithSignature));
         assertNotNull(sc.info);
         assertEquals(sc.info.length, 42);
         assertTrue(sc.info.signed);

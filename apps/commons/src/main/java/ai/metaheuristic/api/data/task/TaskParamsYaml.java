@@ -155,7 +155,7 @@ public class TaskParamsYaml implements BaseParams {
         public @NonNull String params;
         public @NonNull String env;
         public @NonNull EnumsApi.FunctionSourcing sourcing;
-        public @Nullable Map<EnumsApi.Type, String> checksumMap;
+        public @Nullable Map<EnumsApi.HashAlgo, String> checksumMap;
         public @NonNull FunctionInfo info = new FunctionInfo();
         public @Nullable String checksum;
         public @Nullable GitInfo git;

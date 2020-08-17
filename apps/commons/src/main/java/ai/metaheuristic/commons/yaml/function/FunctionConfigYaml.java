@@ -87,7 +87,7 @@ public class FunctionConfigYaml implements Cloneable, BaseParams {
     public String params;
     public String env;
     public EnumsApi.FunctionSourcing sourcing;
-    public @Nullable Map<EnumsApi.Type, String> checksumMap = new HashMap<>();
+    public @Nullable Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
     public @Nullable FunctionInfo info = null;
     public String checksum;
     public @Nullable GitInfo git;

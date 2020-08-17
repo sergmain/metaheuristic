@@ -67,7 +67,7 @@ public class VerifySignature {
 
         PublicKey publicKey = SecUtils.getPublicKey(pubKey06);
         Checksum checksum = new Checksum();
-        checksum.checksums.put(EnumsApi.Type.SHA256WithSignature, checksumAndSignatureStr);
+        checksum.checksums.put(EnumsApi.HashAlgo.SHA256WithSignature, checksumAndSignatureStr);
         CheckSumAndSignatureStatus status;
         try (FileInputStream fis = new FileInputStream(new File(args[0]))) {
             status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "info:", fis, true, publicKey);

@@ -41,9 +41,9 @@ public class ChecksumWithSignatureUtils {
 
     public static CheckSumAndSignatureStatus verifyChecksumAndSignature(@NonNull Checksum checksum, String infoPrefix, InputStream fis, boolean isVerifySignature, PublicKey publicKey ) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
-        for (Map.Entry<EnumsApi.Type, String> entry : checksum.checksums.entrySet()) {
+        for (Map.Entry<EnumsApi.HashAlgo, String> entry : checksum.checksums.entrySet()) {
             String sum, entrySum;
-            if (entry.getKey()==EnumsApi.Type.SHA256WithSignature) {
+            if (entry.getKey()== EnumsApi.HashAlgo.SHA256WithSignature) {
                 ChecksumWithSignature checksumWithSignature = parse(entry.getValue());
                 entrySum = checksumWithSignature.checksum;
 
@@ -55,7 +55,7 @@ public class ChecksumWithSignatureUtils {
                     }
                     log.info("{}, signature is Ok", infoPrefix);
                 }
-                sum = Checksum.getChecksum(EnumsApi.Type.SHA256, fis);
+                sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);
             }
             else {
                 if (isVerifySignature) {

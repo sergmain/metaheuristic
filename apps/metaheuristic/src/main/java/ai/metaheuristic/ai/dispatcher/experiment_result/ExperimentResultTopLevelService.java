@@ -440,6 +440,7 @@ public class ExperimentResultTopLevelService {
         if (statuses.contains(EnumsApi.TaskExecState.NONE) || statuses.contains(EnumsApi.TaskExecState.IN_PROGRESS)) {
             execStatus = FeatureExecStatus.processing;
         }
+        // todo 202-08-16 do we need to handle a 'SKIPPED' status here?
         featureData.execStatusAsString = execStatus.info;
         return featureData;
     }

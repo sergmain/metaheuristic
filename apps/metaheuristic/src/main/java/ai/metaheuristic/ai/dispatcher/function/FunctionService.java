@@ -221,14 +221,14 @@ public class FunctionService {
                                 continue;
                             }
                             try (InputStream inputStream = new FileInputStream(file)) {
-                                sum = Checksum.getChecksum(EnumsApi.Type.SHA256, inputStream);
+                                sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, inputStream);
                             }
                             functionConfig.info.length = file.length();
                             break;
                         case processor:
                         case git:
                             String s = FunctionCoreUtils.getDataForChecksumWhenGitSourcing(functionConfig);
-                            sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(s.getBytes()));
+                            sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(s.getBytes()));
                             break;
                     }
                 }
@@ -292,7 +292,7 @@ public class FunctionService {
             checksum.checksums.putAll(functionConfig.checksumMap);
             functionConfig.checksum = checksum.toJson();
             boolean isSigned = false;
-            for (Map.Entry<EnumsApi.Type, String> entry : functionConfig.checksumMap.entrySet()) {
+            for (Map.Entry<EnumsApi.HashAlgo, String> entry : functionConfig.checksumMap.entrySet()) {
                 if (entry.getKey().isSign) {
                     isSigned = true;
                     break;
@@ -301,7 +301,7 @@ public class FunctionService {
             functionConfig.info.setSigned(isSigned);
         } else {
             // set the new checksum
-            functionConfig.checksum = new Checksum(EnumsApi.Type.SHA256, sum).toJson();
+            functionConfig.checksum = new Checksum(EnumsApi.HashAlgo.SHA256, sum).toJson();
             functionConfig.info.setSigned(false);
         }
     }

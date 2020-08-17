@@ -83,7 +83,7 @@ public class TaskWithInternalContextEventService {
                         log.error("#707.012 Task #"+event.taskId+" already in progress. mustn't happened. it's, actually, illegal state");
                         return null;
                     }
-                    if (task.execState==EnumsApi.TaskExecState.OK.value || task.execState==EnumsApi.TaskExecState.BROKEN.value || task.execState==EnumsApi.TaskExecState.ERROR.value) {
+                    if (EnumsApi.TaskExecState.isFinishedState(task.execState)) {
                         log.error("#707.015 Task #"+event.taskId+" already was finished");
                         return null;
                     }

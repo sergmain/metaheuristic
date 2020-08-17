@@ -141,7 +141,6 @@ public class TaskPersistencer {
             String es = "#307.045 Task #" + result.taskId + " has empty execResult";
             log.info(es);
             functionExec = new FunctionApiData.FunctionExec();
-//            functionExec.generalExec = new FunctionApiData.SystemExecResult("<unknown>", false, -996, es);
         }
         FunctionApiData.SystemExecResult systemExecResult = functionExec.generalExec!=null ? functionExec.generalExec : functionExec.exec;
         if (!systemExecResult.isOk) {
@@ -218,12 +217,27 @@ public class TaskPersistencer {
     }
 
     @Nullable
+    public TaskImpl toSkippedSimple(Long taskId) {
+        return taskSyncService.getWithSync(taskId, (task) -> toSkippedSimpleLambda(taskId, task));
+    }
+
+    @Nullable
     public TaskImpl toInProgressSimpleLambda(Long taskId, TaskImpl task) {
         if (task==null) {
             log.warn("#307.100 Can't find Task for Id: {}", taskId);
             return null;
         }
         task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
+        return taskRepository.save(task);
+    }
+
+    @Nullable
+    public TaskImpl toSkippedSimpleLambda(Long taskId, TaskImpl task) {
+        if (task==null) {
+            log.warn("#307.100 Can't find Task for Id: {}", taskId);
+            return null;
+        }
+        task.setExecState(EnumsApi.TaskExecState.SKIPPED.value);
         return taskRepository.save(task);
     }
 
@@ -271,6 +285,9 @@ public class TaskPersistencer {
                 break;
             case IN_PROGRESS:
                 toInProgressSimple(taskId);
+                break;
+            case SKIPPED:
+                toSkippedSimple(taskId);
                 break;
             default:
                 throw new IllegalStateException("Right now it must be initialized somewhere else. state: " + state);
