@@ -68,6 +68,7 @@ public class TaskProducingCoreService {
         taskParams.task.inline = inlines;
 
         // inputs and outputs will be initialized at the time of task selection
+        // task selection is here: ???
 
         if (taskParams.task.context== EnumsApi.FunctionExecContext.internal) {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(

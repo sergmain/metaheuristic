@@ -22,6 +22,7 @@ import ai.metaheuristic.api.data.Meta;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
 
@@ -47,6 +48,8 @@ public class SourceCodeStoredParamsYamlV1 implements BaseParams {
         public boolean archived;
         public boolean published;
         public long updatedOn;
+
+        @Nullable
         public List<Meta> metas;
     }
 

@@ -23,7 +23,6 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -104,16 +103,17 @@ public class TaskParamsYamlV1 implements BaseParams {
         // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
         // for context==VariableContext.local the table is MH_VARIABLE
         // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
-        public @NonNull Long id;
-        public @NonNull EnumsApi.VariableContext context;
+        public Long id;
+        public EnumsApi.VariableContext context;
 
-        public @NonNull String name;
-        public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public String name;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
 
         // name of file if this variable was uploaded from file
         public @Nullable String realName;
+        public @Nullable String type;
     }
 
     @Data
@@ -123,10 +123,10 @@ public class TaskParamsYamlV1 implements BaseParams {
         // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
         // for context==VariableContext.local the table is MH_VARIABLE
         // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
-        public @NonNull Long id;
-        public @NonNull EnumsApi.VariableContext context;
-        public @NonNull String name;
-        public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public Long id;
+        public EnumsApi.VariableContext context;
+        public String name;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
 
@@ -134,6 +134,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         public @Nullable String realName;
 
         public boolean uploaded;
+        public @Nullable String type;
     }
 
     @Data
@@ -181,14 +182,14 @@ public class TaskParamsYamlV1 implements BaseParams {
     @NoArgsConstructor
     public static class TaskYamlV1 {
         public Long execContextId;
-        public @NonNull String taskContextId;
+        public String taskContextId;
         public String processCode;
-        @NonNull public FunctionConfigV1 function;
-        @NonNull public final List<FunctionConfigV1> preFunctions = new ArrayList<>();
-        @NonNull public final List<FunctionConfigV1> postFunctions = new ArrayList<>();
+        public FunctionConfigV1 function;
+        public final List<FunctionConfigV1> preFunctions = new ArrayList<>();
+        public final List<FunctionConfigV1> postFunctions = new ArrayList<>();
 
         public boolean clean = false;
-        @NonNull public EnumsApi.FunctionExecContext context;
+        public EnumsApi.FunctionExecContext context;
 
         public Map<String, Map<String, String>> inline;
         public final List<InputVariableV1> inputs = new ArrayList<>();

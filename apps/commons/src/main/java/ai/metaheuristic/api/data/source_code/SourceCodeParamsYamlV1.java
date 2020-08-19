@@ -81,6 +81,7 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public String name;
         public Boolean parentContext;
         public boolean array = false;
+        public String type;
 
         public VariableV1(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;

@@ -96,6 +96,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public String name;
         public Boolean parentContext;
         public boolean array = false;
+        public String type;
 
         public Variable(String name) {
             this.name = name;

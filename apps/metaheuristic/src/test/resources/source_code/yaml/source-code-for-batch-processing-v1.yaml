@@ -24,23 +24,41 @@ source:
             function:
               code: mh.nop
               context: internal
-          - code: fileless
-            name: fileless
+          - code: fileless-1
+            name: fileless 1
             function:
               code: fileless-function:1.0
             inputs:
               - name: var-batch-item
                 array: true
             outputs:
-              - name: var-processed-file
-              - name: var-processing-status
-              - name: var-item-mapping
-            metas:
-              - batch-item-result: var-batch-result
-              - batch-item-status: var-processing-status
-              - batch-item-mapping: var-item-mapping
+              - name: var-processed-file-1
+                type: batch-item-processed-file
+              - name: var-processing-status-1
+                type: batch-item-processing-status
+              - name: var-item-mapping-1
+                type: batch-item-mapping
           - code: mh.nop-2
             name: nop 2
+            function:
+              code: mh.nop
+              context: internal
+          - code: fileless-2
+            name: fileless 2
+            function:
+              code: fileless-function:1.0
+            inputs:
+              - name: var-batch-item
+                array: true
+            outputs:
+              - name: var-processed-file-2
+                type: batch-item-processed-file
+              - name: var-processing-status-2
+                type: batch-item-processing-status
+              - name: var-item-mapping-2
+                type: batch-item-mapping
+          - code: mh.nop-3
+            name: nop 3
             function:
               code: mh.nop
               context: internal
@@ -51,10 +69,7 @@ source:
         context: internal
       outputs:
         - name: var-batch-result
+          type: batch-result
         - name: var-batch-status
-      metas:
-        - batch-items: var-processed-file, var-processing-status
-        - batch-result: var-batch-result
-        - batch-status: var-batch-status
-        - batch-item-mappings: var-item-mapping, var-item-mapping
+          type: batch-status
 version: 1

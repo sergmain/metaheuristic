@@ -99,6 +99,8 @@ public class TaskParamsYaml implements BaseParams {
         // TODO 2020-08-01 real name of file is stored in db, actually.
         //  why is it null for global variable?
         public @Nullable String realName;
+
+        public @Nullable String type;
     }
 
     @Data
@@ -120,6 +122,7 @@ public class TaskParamsYaml implements BaseParams {
         public @Nullable String realName;
 
         public boolean uploaded;
+        public @Nullable String type;
     }
 
     @Data

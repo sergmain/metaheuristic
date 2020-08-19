@@ -77,6 +77,7 @@ public class TaskParamsYamlUtilsV1
         v.disk = v1.disk;
         v.git = v1.git;
         v.realName = v1.realName;
+        v.type = v1.type;
         return v;
     }
 
@@ -90,6 +91,7 @@ public class TaskParamsYamlUtilsV1
         v.git = v1.git;
         v.realName = v1.realName;
         v.uploaded = v1.uploaded;
+        v.type = v1.type;
         return v;
     }
 
