@@ -34,6 +34,11 @@ source:
             outputs:
               - name: var-processed-file
               - name: var-processing-status
+              - name: var-item-mapping
+            metas:
+              - batch-item-result: var-batch-result
+              - batch-item-status: var-processing-status
+              - batch-item-mapping: var-item-mapping
           - code: mh.nop-2
             name: nop 2
             function:
@@ -48,7 +53,8 @@ source:
         - name: var-batch-result
         - name: var-batch-status
       metas:
-        - batch-items: var-processed-file, processing-status
+        - batch-items: var-processed-file, var-processing-status
         - batch-result: var-batch-result
         - batch-status: var-batch-status
+        - batch-item-mappings: var-item-mapping, var-item-mapping
 version: 1

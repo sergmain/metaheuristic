@@ -51,6 +51,7 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
@@ -301,5 +302,9 @@ public class VariableService {
             log.error("Error", e);
             throw new StoreNewFileException("#087.080 Error while storing", e, tempFile.getPath(), filename);
         }
+    }
+
+    public Set<String> findAllByExecContextIdAndVariableNames(Long execContextId, Set<String> vars) {
+        return variableRepository.findAllByExecContextIdAndVariableNames(execContextId, vars);
     }
 }

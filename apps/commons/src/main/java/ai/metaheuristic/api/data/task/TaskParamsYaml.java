@@ -23,7 +23,6 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -87,17 +86,18 @@ public class TaskParamsYaml implements BaseParams {
         // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
         // for context==VariableContext.local the table is MH_VARIABLE
         // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
-        public @NonNull Long id;
-        public @NonNull EnumsApi.VariableContext context;
+        public Long id;
+        public EnumsApi.VariableContext context;
 
-        public @NonNull String name;
-        public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public String name;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
 
         // name of file if this variable was uploaded from file
         // for global variable is always null
-        // TODO 2020-08-01 real name of file is stored in db, actually. why is it null?
+        // TODO 2020-08-01 real name of file is stored in db, actually.
+        //  why is it null for global variable?
         public @Nullable String realName;
     }
 
@@ -108,10 +108,10 @@ public class TaskParamsYaml implements BaseParams {
         // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
         // for context==VariableContext.local the table is MH_VARIABLE
         // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
-        public @NonNull Long id;
-        public @NonNull EnumsApi.VariableContext context;
-        public @NonNull String name;
-        public @NonNull EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        public Long id;
+        public EnumsApi.VariableContext context;
+        public String name;
+        public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
 
@@ -142,8 +142,8 @@ public class TaskParamsYaml implements BaseParams {
         /**
          * code of function, i.e. simple-app:1.0
          */
-        public @NonNull String code;
-        public @NonNull String type;
+        public String code;
+        public String type;
 
         // Nullable for internal context, NonNull for external
         public @Nullable String file;
@@ -152,11 +152,11 @@ public class TaskParamsYaml implements BaseParams {
          * <p>
          * this isn't a holder for yaml-based config
          */
-        public @NonNull String params;
-        public @NonNull String env;
-        public @NonNull EnumsApi.FunctionSourcing sourcing;
+        public String params;
+        public String env;
+        public EnumsApi.FunctionSourcing sourcing;
         public @Nullable Map<EnumsApi.HashAlgo, String> checksumMap;
-        public @NonNull FunctionInfo info = new FunctionInfo();
+        public FunctionInfo info = new FunctionInfo();
         public @Nullable String checksum;
         public @Nullable GitInfo git;
         public boolean skipParams = false;
@@ -166,19 +166,19 @@ public class TaskParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     public static class TaskYaml {
-        public @NonNull Long execContextId;
-        public @NonNull String taskContextId;
-        public @NonNull String processCode;
-        public @NonNull FunctionConfig function;
-        public @NonNull final List<FunctionConfig> preFunctions = new ArrayList<>();
-        public @NonNull final List<FunctionConfig> postFunctions = new ArrayList<>();
+        public Long execContextId;
+        public String taskContextId;
+        public String processCode;
+        public FunctionConfig function;
+        public final List<FunctionConfig> preFunctions = new ArrayList<>();
+        public final List<FunctionConfig> postFunctions = new ArrayList<>();
 
         public boolean clean = false;
-        public @NonNull EnumsApi.FunctionExecContext context;
+        public EnumsApi.FunctionExecContext context;
 
         public @Nullable Map<String, Map<String, String>> inline;
-        public @NonNull final List<InputVariable> inputs = new ArrayList<>();
-        public @NonNull final List<OutputVariable> outputs = new ArrayList<>();
+        public final List<InputVariable> inputs = new ArrayList<>();
+        public final List<OutputVariable> outputs = new ArrayList<>();
         public final List<Map<String, String>> metas = new ArrayList<>();
 
         /**
@@ -192,6 +192,6 @@ public class TaskParamsYaml implements BaseParams {
         public String workingPath;
     }
 
-    public @NonNull TaskYaml task = new TaskYaml();
+    public TaskYaml task = new TaskYaml();
 
 }

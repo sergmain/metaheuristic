@@ -43,6 +43,10 @@ import java.util.Set;
 public interface VariableRepository extends CrudRepository<Variable, Long> {
 
     @Transactional(readOnly = true)
+    @Query("SELECT v FROM Variable v where v.execContextId=:execContextId and v.name in (:names)")
+    Set<String> findAllByExecContextIdAndVariableNames(Long execContextId, Set<String> names);
+
+    @Transactional(readOnly = true)
     @Query(nativeQuery = true, value =
             "select d.id from mh_variable d where d.EXEC_CONTEXT_ID is not null and d.EXEC_CONTEXT_ID not in (select z.id from mh_exec_context z)")
     List<Long> findAllOrphanExecContextData();
