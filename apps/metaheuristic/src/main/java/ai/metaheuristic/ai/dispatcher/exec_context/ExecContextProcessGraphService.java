@@ -165,11 +165,16 @@ public class ExecContextProcessGraphService {
         if (startVertex==null) {
             return List.of();
         }
+        List<String> ctxs = processGraph.outgoingEdgesOf(startVertex).stream()
+                .map(processGraph::getEdgeTarget)
+                .filter(o->!o.processContextId.equals(startVertex.processContextId) && o.processContextId.startsWith(startVertex.processContextId))
+                .map(o->o.processContextId)
+                .collect(Collectors.toList());
         TopologicalOrderIterator<ExecContextData.ProcessVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(processGraph);
 
         List<ExecContextData.ProcessVertex> vertices = new ArrayList<>();
         iterator.forEachRemaining(o->{
-            if (!o.processContextId.equals(startVertex.processContextId) && o.processContextId.startsWith(startVertex.processContextId) ) {
+            if (ctxs.contains(o.processContextId)) {
                 vertices.add(o);
             }
         });

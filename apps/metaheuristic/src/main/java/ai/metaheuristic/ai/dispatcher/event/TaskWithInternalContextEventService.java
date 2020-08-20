@@ -133,7 +133,7 @@ public class TaskWithInternalContextEventService {
                         return null;
                     }
                     else {
-                        taskPersistencer.setResultReceivedForInternalFunction(lastTaskId);
+                        taskPersistencer.setResultReceivedForInternalFunction(event.taskId);
                     }
 
                     ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
