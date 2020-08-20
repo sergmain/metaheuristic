@@ -18,11 +18,11 @@ package ai.metaheuristic.api.data.exec_context;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Serge
@@ -55,13 +55,6 @@ public class ExecContextApiData {
             this.state = state;
             this.context = context;
         }
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class LineHeader {
-        public String context;
-//        public String functionCode;
     }
 
     @Data

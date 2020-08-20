@@ -28,7 +28,10 @@
             </td>
             <div th:remove="tag" th:each="c : ${l.cells}">
                 <td th:if="${c.empty}" th:text="${''}">Empty cell</td>
-                <td th:if="${!c.empty}" th:text="${c.state}">Cell with value</td>
+                <td th:if="${!c.empty}">
+                    <div th:text="${c.state}" class="no-wrap">State</div>
+                    <div th:text="${c.taskId}" class="no-wrap">TaskId</div>
+                </td>
             </div>
         </tr>
         </tbody>

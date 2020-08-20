@@ -16,10 +16,25 @@
 
 package ai.metaheuristic.apps.simple_snippet;
 
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
+import org.apache.commons.io.IOUtils;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 /**
  * @author Serge
  * Date: 6/18/2019
  * Time: 9:21 PM
  */
 public class TestTaskParams {
+
+    @Test
+    public void test() throws IOException {
+        String s = IOUtils.resourceToString("/task-params.yaml", StandardCharsets.UTF_8);
+        TaskFileParamsYaml params = TaskFileParamsYamlUtils.BASE_YAML_UTILS.to(s);
+
+    }
 }

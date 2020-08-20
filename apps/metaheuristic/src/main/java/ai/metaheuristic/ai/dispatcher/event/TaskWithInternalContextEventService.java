@@ -132,6 +132,9 @@ public class TaskWithInternalContextEventService {
                                 execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.execContextId, task.id);
                         return null;
                     }
+                    else {
+                        taskPersistencer.setResultReceivedForInternalFunction(lastTaskId);
+                    }
 
                     ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
                     r.taskId = event.taskId;
@@ -144,10 +147,6 @@ public class TaskWithInternalContextEventService {
                             execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState());
                         }
                     });
-                    for (TaskParamsYaml.OutputVariable output : taskParamsYaml.task.outputs) {
-                        //noinspection unused
-                        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(event.taskId, output.id);
-                    }
                     return null;
                 } catch (CommonErrorWithDataException th) {
                     String es = "#707.067 Task #" + event.taskId + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
