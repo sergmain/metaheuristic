@@ -56,6 +56,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
@@ -338,9 +339,12 @@ public class BatchTopLevelService {
     }
 
     @Nullable
-    private CleanerInfo getBatchProcessingResultInternal(Long batchId, Long companyUniqueId, boolean includeDeleted, String variableName) throws IOException {
+    private CleanerInfo getBatchProcessingResultInternal(Long batchId, Long companyUniqueId, boolean includeDeleted, String variableType) throws IOException {
         return getVariable(batchId, companyUniqueId, includeDeleted, (scpy)-> {
-            String resultBatchVariable = MetaUtils.getValue(scpy.source.metas, variableName);
+            if (true) {
+                throw new NotImplementedException("Need change to use variableType instead of meta");
+            }
+            String resultBatchVariable = MetaUtils.getValue(scpy.source.metas, variableType);
             if (S.b(resultBatchVariable)) {
                 final String es = "#995.300 meta 'batch-result' wasn't found, metas: " + scpy.source.metas;
                 log.warn(es);
