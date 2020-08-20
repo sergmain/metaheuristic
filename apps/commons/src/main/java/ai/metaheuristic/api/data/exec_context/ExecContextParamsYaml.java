@@ -59,18 +59,20 @@ public class ExecContextParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Variable {
-        public @NonNull String name;
+        public String name;
         public EnumsApi.VariableContext context;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public GitInfo git;
         public DiskInfo disk;
         public Boolean parentContext;
+        @Nullable
+        public String type;
 
-        public Variable(@NonNull String name) {
+        public Variable(String name) {
             this.name = name;
         }
 
-        public Variable(@NonNull EnumsApi.DataSourcing sourcing, @NonNull String name) {
+        public Variable(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;
             this.name = name;
         }
@@ -80,16 +82,16 @@ public class ExecContextParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class FunctionDefinition implements SimpleFunctionDefinition {
-        public @NonNull String code;
+        public String code;
         @Nullable
         public String params;
-        public @NonNull EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
+        public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
 
-        public FunctionDefinition(@NonNull String code) {
+        public FunctionDefinition(String code) {
             this.code = code;
         }
 
-        public FunctionDefinition(@NonNull String code, @NonNull EnumsApi.FunctionExecContext context) {
+        public FunctionDefinition(String code, EnumsApi.FunctionExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -104,12 +106,12 @@ public class ExecContextParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class Process {
 
-        public @NonNull String processName;
-        public @NonNull String processCode;
+        public String processName;
+        public String processCode;
 
         public String internalContextId;
 
-        public @NonNull FunctionDefinition function;
+        public FunctionDefinition function;
         @Nullable
         public List<FunctionDefinition> preFunctions;
         @Nullable
@@ -124,11 +126,11 @@ public class ExecContextParamsYaml implements BaseParams {
          * null or 0 mean the infinite execution
          */
         public Long timeoutBeforeTerminate;
-        public @NonNull final List<Variable> inputs = new ArrayList<>();
-        public @NonNull final List<Variable> outputs = new ArrayList<>();
-        public @NonNull List<Map<String, String>> metas = new ArrayList<>();
+        public final List<Variable> inputs = new ArrayList<>();
+        public final List<Variable> outputs = new ArrayList<>();
+        public List<Map<String, String>> metas = new ArrayList<>();
 
-        public Process(@NonNull String processName, @NonNull String processCode, @NonNull String internalContextId, @NonNull FunctionDefinition function) {
+        public Process(String processName, String processCode, String internalContextId, FunctionDefinition function) {
             this.processName = processName;
             this.processCode = processCode;
             this.internalContextId = internalContextId;
@@ -142,11 +144,9 @@ public class ExecContextParamsYaml implements BaseParams {
     public final VariableDeclaration variables = new VariableDeclaration();
 
     // this is a graph of processes for runtime phase
-    @NonNull
     public String graph = ConstsApi.EMPTY_GRAPH;
 
     // this graph is for creating tasks dynamically
-    @NonNull
     public String processesGraph = ConstsApi.EMPTY_GRAPH;
 
     private HashMap<String, Process> processMap = null;

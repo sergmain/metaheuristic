@@ -265,16 +265,6 @@ public class ProcessorTaskService {
             if (task.isDelivered() && task.isReported() ) {
                 continue;
             }
-
-            // metrics will be sent as a normal variable
-/*
-            ProcessorCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult ml = null;
-            Meta predictedData = MetaUtils.getMeta(task.metas, Consts.META_PREDICTED_DATA);
-            if (task.getMetrics()!=null || predictedData!=null) {
-                ml = new ProcessorCommParamsYaml.ReportTaskProcessingResult.MachineLearningTaskResult(
-                        task.getMetrics(), predictedData.getValue(), EnumsApi.Fitting.of(MetaUtils.getValue(task.metas, Consts.META_FITTED)));
-            }
-*/
             final ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
                     new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getFunctionExecResult());
             processingResult.results.add(result);

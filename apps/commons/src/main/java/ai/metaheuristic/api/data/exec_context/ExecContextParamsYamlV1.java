@@ -60,6 +60,8 @@ public class ExecContextParamsYamlV1 implements BaseParams {
         public GitInfo git;
         public DiskInfo disk;
         public Boolean parentContext;
+        @Nullable
+        public String type;
 
         public VariableV1(String name) {
             this.name = name;

@@ -70,11 +70,6 @@ public class DispatcherCommandProcessor {
         lcpy.resendTaskOutputs = checkForMissingOutputResources(scpy);
         processProcessorTaskStatus(scpy);
         processResendTaskOutputResourceResult(scpy);
-
-        // todo 2020-04-05 the next line was commented out because it looks like double call
-        //  if everything will be ok, then delete this
-//        processProcessorTaskStatus(scpy);
-
         lcpy.reportResultDelivering = processReportTaskProcessingResult(scpy);
         processReportProcessorStatus(scpy);
         lcpy.assignedTask = processRequestTask(scpy);

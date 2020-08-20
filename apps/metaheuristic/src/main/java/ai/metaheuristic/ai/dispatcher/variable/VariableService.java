@@ -237,7 +237,7 @@ public class VariableService {
             taskParams.task.outputs.add(
                     new TaskParamsYaml.OutputVariable(
                             v.id, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
-                            null, false, null
+                            null, false, variable.type
                     ));
         }
     }

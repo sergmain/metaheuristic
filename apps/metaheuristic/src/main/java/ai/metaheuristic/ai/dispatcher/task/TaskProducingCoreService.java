@@ -36,7 +36,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -68,7 +67,8 @@ public class TaskProducingCoreService {
         taskParams.task.inline = inlines;
 
         // inputs and outputs will be initialized at the time of task selection
-        // task selection is here: ???
+        // task selection is here:
+        //      ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService.prepareVariables
 
         if (taskParams.task.context== EnumsApi.FunctionExecContext.internal) {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(
@@ -139,6 +139,7 @@ public class TaskProducingCoreService {
         iv.sourcing = v.sourcing;
         iv.disk = v.disk;
         iv.git = v.git;
+        iv.type = v.type;
         return iv;
     }
 }
