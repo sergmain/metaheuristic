@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -32,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -93,12 +93,6 @@ public class ExecContextTopLevelService {
         result.sourceCodeId = sourceCodeId;
         initInfoAboutSourceCode(sourceCodeId, result);
 
-        ExecContextApiData.ExecContextStateResult r = new ExecContextApiData.ExecContextStateResult();
-        r.sourceCodeId = sourceCodeId;
-        r.sourceCodeType = result.sourceCodeType;
-        r.sourceCodeUid = result.sourceCodeUid;
-        r.sourceCodeValid = result.sourceCodeValid;
-
         List<TaskData.SimpleTaskInfo> infos = taskService.getSimpleTaskInfos(execContextId);
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec==null) {
@@ -106,6 +100,22 @@ public class ExecContextTopLevelService {
             resultWithError.addErrorMessage("Can't find execContext for Id "+ execContextId);
             return resultWithError;
         }
+        List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ec.getExecContextParamsYaml());
+        ExecContextApiData.ExecContextStateResult r = getExecContextStateResult(
+                sourceCodeId, infos, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid);
+        return r;
+    }
+
+    @NonNull
+    public static ExecContextApiData.ExecContextStateResult getExecContextStateResult(
+            Long sourceCodeId, List<TaskData.SimpleTaskInfo> infos,
+            List<String> processCodes, EnumsApi.SourceCodeType sourceCodeType, String sourceCodeUid, boolean sourceCodeValid) {
+
+        ExecContextApiData.ExecContextStateResult r = new ExecContextApiData.ExecContextStateResult();
+        r.sourceCodeId = sourceCodeId;
+        r.sourceCodeType = sourceCodeType;
+        r.sourceCodeUid = sourceCodeUid;
+        r.sourceCodeValid = sourceCodeValid;
 
         Set<String> contexts = new HashSet<>();
         Map<String, List<TaskData.SimpleTaskInfo>> map = new HashMap<>();
@@ -113,8 +123,6 @@ public class ExecContextTopLevelService {
             contexts.add(info.context);
             map.computeIfAbsent(info.context, (o)->new ArrayList<>()).add(info);
         }
-        List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ec.getExecContextParamsYaml());
-
         r.header = processCodes.stream().map(o->new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
         r.lines = new ExecContextApiData.LineWithState[contexts.size()];
 
@@ -132,19 +140,13 @@ public class ExecContextTopLevelService {
             r.lines[i].context = sortedContexts.get(i);
         }
 
-        List<List<ExecContextData.TaskVertex>> vertices = execContextGraphService.graphAsListOfLIst(ec);
-        for (List<ExecContextData.TaskVertex> vertex : vertices) {
+        for (TaskData.SimpleTaskInfo taskInfo : infos) {
             for (int i = 0; i < r.lines.length; i++) {
                 TaskData.SimpleTaskInfo simpleTaskInfo = null;
-                List<TaskData.SimpleTaskInfo> simpleTaskInfos = map.get(r.lines[i].context);
-                for (ExecContextData.TaskVertex taskVertex : vertex) {
-                    for (TaskData.SimpleTaskInfo info : simpleTaskInfos) {
-                        if (info.taskId.equals(taskVertex.taskId)) {
-                            simpleTaskInfo = info;
-                            break;
-                        }
-                    }
-                    if (simpleTaskInfo!=null) {
+                List<TaskData.SimpleTaskInfo> tasksInContext = map.get(r.lines[i].context);
+                for (TaskData.SimpleTaskInfo contextTaskInfo : tasksInContext) {
+                    if (contextTaskInfo.taskId.equals(taskInfo.taskId)) {
+                        simpleTaskInfo = contextTaskInfo;
                         break;
                     }
                 }
@@ -158,7 +160,7 @@ public class ExecContextTopLevelService {
         return r;
     }
 
-    private int findCol(ExecContextApiData.ColumnHeader[] headers, String process) {
+    private static int findCol(ExecContextApiData.ColumnHeader[] headers, String process) {
         int idx = -1;
         for (int i = 0; i < headers.length; i++) {
             if (headers[i].process==null) {

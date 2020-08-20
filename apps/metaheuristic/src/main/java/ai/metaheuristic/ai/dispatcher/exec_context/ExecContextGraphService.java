@@ -492,7 +492,7 @@ class ExecContextGraphService {
         return true;
     }
 
-    public @NonNull List<ExecContextData.TaskVertex> findAll(@NonNull ExecContextImpl execContext) {
+    public List<ExecContextData.TaskVertex> findAll(ExecContextImpl execContext) {
         try {
             return readOnlyGraphListOfTaskVertex(execContext, graph -> {
                 List<ExecContextData.TaskVertex> vertices = new ArrayList<>(graph.vertexSet());
