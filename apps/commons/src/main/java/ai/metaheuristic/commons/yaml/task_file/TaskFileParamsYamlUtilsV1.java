@@ -65,11 +65,12 @@ public class TaskFileParamsYamlUtilsV1
         TaskFileParamsYaml.InputVariable v = new TaskFileParamsYaml.InputVariable();
         v.id = v1.id;
         v.name = v1.name;
-        v.type = v1.type;
+        v.dataType = v1.dataType;
         v.sourcing = v1.sourcing;
         v.git = v1.git;
         v.disk = v1.disk;
         v.realName = v1.realName;
+        v.type = v1.type;
         return v;
     }
 
@@ -77,11 +78,12 @@ public class TaskFileParamsYamlUtilsV1
         TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
         v.id = v1.id;
         v.name = v1.name;
-        v.dataType = v1.type;
+        v.dataType = v1.dataType;
         v.sourcing = v1.sourcing;
         v.git = v1.git;
         v.disk = v1.disk;
         v.realName = v1.realName;
+        v.type = v1.type;
         return v;
     }
 
@@ -112,7 +114,6 @@ public class TaskFileParamsYamlUtilsV1
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        //noinspection UnnecessaryLocalVariable
         final TaskFileParamsYamlV1 p = getYaml().load(yaml);
         return p;
     }

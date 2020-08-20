@@ -60,13 +60,20 @@ public class ExecContextApiData {
     @Data
     @AllArgsConstructor
     public static class LineHeader {
+        public String context;
+//        public String functionCode;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class ColumnHeader {
         public String process;
         public String functionCode;
     }
 
     @Data
     public static class LineWithState {
-        public LineHeader lineHeader;
+        public String context;
         public StateCell[] cells;
     }
 
@@ -77,7 +84,7 @@ public class ExecContextApiData {
         public String sourceCodeUid;
         public boolean sourceCodeValid;
         public EnumsApi.SourceCodeType sourceCodeType;
-        public String[] header;
+        public ColumnHeader[] header;
         public LineWithState[] lines;
     }
 

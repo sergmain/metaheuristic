@@ -14,15 +14,17 @@
         <tr>
             <th>&nbsp;</th>
             <div th:remove="tag" th:each="h : ${result.header}">
-                <th th:text="${h}">header cell</th>
+                <td>
+                    <div th:text="${h.process}" class="no-wrap">Process</div>
+                    <div th:text="${h.functionCode}" class="no-wrap">Function code</div>
+                </td>
             </div>
         <tr>
         </thead>
         <tbody>
         <tr th:each="l : ${result.lines}">
             <td>
-                <div th:text="${l.lineHeader.process}" class="no-wrap">Process</div>
-                <div th:text="${l.lineHeader.functionCode}" class="no-wrap">Function code</div>
+                <div th:text="${l.context}" class="no-wrap">Context</div>
             </td>
             <div th:remove="tag" th:each="c : ${l.cells}">
                 <td th:if="${c.empty}" th:text="${''}">Empty cell</td>

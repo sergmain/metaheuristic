@@ -35,6 +35,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.data.source_code.SourceCodeApiData.ExecContextForDeletion;
 
@@ -107,16 +108,17 @@ public class ExecContextTopLevelService {
         }
 
         Set<String> contexts = new HashSet<>();
-        Set<String> processes = new HashSet<>();
         Map<String, List<TaskData.SimpleTaskInfo>> map = new HashMap<>();
         for (TaskData.SimpleTaskInfo info : infos) {
             contexts.add(info.context);
-            processes.add(info.process);
-
             map.computeIfAbsent(info.context, (o)->new ArrayList<>()).add(info);
         }
-        r.header = contexts.stream().sorted(String::compareTo).toArray(String[]::new);
-        r.lines = new ExecContextApiData.LineWithState[processes.size()];
+        List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ec.getExecContextParamsYaml());
+
+        r.header = processCodes.stream().map(o->new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
+        r.lines = new ExecContextApiData.LineWithState[contexts.size()];
+
+        List<String> sortedContexts = contexts.stream().sorted(String::compareTo).collect(Collectors.toList());
         for (int i = 0; i < r.lines.length; i++) {
             r.lines[i] = new ExecContextApiData.LineWithState();
         }
@@ -126,22 +128,15 @@ public class ExecContextTopLevelService {
                 line.cells[i] = new ExecContextApiData.StateCell();
             }
         }
-        List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ec.getExecContextParamsYaml());
-        if (r.lines.length!=processCodes.size()) {
-            log.warn("Different values, r.lines.length: {}, processCodes.size(): {}", r.lines.length,processCodes.size());
-        }
-        else {
-            for (int i = 0; i < r.lines.length; i++) {
-                String code = processCodes.get(i);
-                r.lines[i].lineHeader = new ExecContextApiData.LineHeader(code, code);
-            }
+        for (int i = 0; i < r.lines.length; i++) {
+            r.lines[i].context = sortedContexts.get(i);
         }
 
         List<List<ExecContextData.TaskVertex>> vertices = execContextGraphService.graphAsListOfLIst(ec);
         for (List<ExecContextData.TaskVertex> vertex : vertices) {
-            for (int i = 0; i < r.header.length; i++) {
+            for (int i = 0; i < r.lines.length; i++) {
                 TaskData.SimpleTaskInfo simpleTaskInfo = null;
-                List<TaskData.SimpleTaskInfo> simpleTaskInfos = map.get(r.header[i]);
+                List<TaskData.SimpleTaskInfo> simpleTaskInfos = map.get(r.lines[i].context);
                 for (ExecContextData.TaskVertex taskVertex : vertex) {
                     for (TaskData.SimpleTaskInfo info : simpleTaskInfos) {
                         if (info.taskId.equals(taskVertex.taskId)) {
@@ -156,30 +151,30 @@ public class ExecContextTopLevelService {
                 if (simpleTaskInfo==null) {
                     continue;
                 }
-                int j = findRow(r.lines, new ExecContextApiData.LineHeader(simpleTaskInfo.process, simpleTaskInfo.functionCode));
-                r.lines[j].cells[i] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, simpleTaskInfo.state, simpleTaskInfo.context);
+                int j = findCol(r.header, simpleTaskInfo.process);
+                r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, simpleTaskInfo.state, simpleTaskInfo.context);
             }
         }
         return r;
     }
 
-    private int findRow(ExecContextApiData.LineWithState[] lines, ExecContextApiData.LineHeader lineHeader) {
+    private int findCol(ExecContextApiData.ColumnHeader[] headers, String process) {
         int idx = -1;
-        for (int i = 0; i < lines.length; i++) {
-            if (lines[i].lineHeader==null) {
+        for (int i = 0; i < headers.length; i++) {
+            if (headers[i].process==null) {
                 if (idx==-1) {
                     idx = i;
                 }
                 continue;
             }
-            if (lineHeader.process.equals(lines[i].lineHeader.process)) {
+            if (process.equals(headers[i].process)) {
                 return i;
             }
         }
         if (idx==-1) {
             throw new IllegalStateException("(idx==-1)");
         }
-        lines[idx].lineHeader = lineHeader;
+        headers[idx].process = process;
         return idx;
     }
 
