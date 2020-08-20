@@ -25,11 +25,13 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -97,6 +99,28 @@ public class SourceCodeService {
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 
         return result;
+    }
+
+    public static List<SourceCodeParamsYaml.Variable> findVariableByType(SourceCodeParamsYaml scpy, String type) {
+        List<SourceCodeParamsYaml.Variable> list = new ArrayList<>();
+        for (SourceCodeParamsYaml.Process process : scpy.source.processes) {
+            findVariableByType(process, type, list);
+        }
+        return list;
+
+    }
+
+    private static void findVariableByType(SourceCodeParamsYaml.Process process, String type, List<SourceCodeParamsYaml.Variable> list) {
+        for (SourceCodeParamsYaml.Variable output : process.outputs) {
+            if (output.type.equals(type)) {
+                list.add(output);
+            }
+        }
+        if (process.subProcesses!=null) {
+            for (SourceCodeParamsYaml.Process p : process.subProcesses.processes) {
+                findVariableByType(p, type, list);
+            }
+        }
     }
 
 }

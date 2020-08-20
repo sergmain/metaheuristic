@@ -1,10 +1,7 @@
 source:
-  uid: source-code-for-batch-processing-1:1
+  uid: source-code-for-batch-processing-1:2
   variables:
     startInputAs: input-data
-  metas:
-    - batch-result: var-batch-result
-    - batch-status: var-batch-status
   processes:
     - code: mh.batch-splitter
       name: mh.batch-splitter
