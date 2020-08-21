@@ -132,7 +132,6 @@ public class DispatcherVariableProvider implements VariableProvider {
         return assetFiles;
     }
 
-    @NonNull
     private List<VariableArrayParamsYaml.Variable> getVariablesForArray(AssetFile assetFile) throws IOException {
         List<VariableArrayParamsYaml.Variable> variables = new ArrayList<>();
         if (assetFile.isContent && !assetFile.isError) {

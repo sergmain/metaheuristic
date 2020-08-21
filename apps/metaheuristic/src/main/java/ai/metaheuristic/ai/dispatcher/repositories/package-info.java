@@ -1,0 +1,4 @@
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.ai.dispatcher.repositories;
+
+import javax.annotation.ParametersAreNonnullByDefault;

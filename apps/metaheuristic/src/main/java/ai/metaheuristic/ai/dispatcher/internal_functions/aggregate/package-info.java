@@ -1,0 +1,4 @@
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.ai.dispatcher.internal_functions.aggregate;
+
+import javax.annotation.ParametersAreNonnullByDefault;

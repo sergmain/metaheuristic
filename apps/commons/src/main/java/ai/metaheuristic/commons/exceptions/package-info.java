@@ -1,0 +1,4 @@
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.commons.exceptions;
+
+import javax.annotation.ParametersAreNonnullByDefault;

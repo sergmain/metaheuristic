@@ -1,0 +1,4 @@
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.commons.yaml.task_extended_result;
+
+import javax.annotation.ParametersAreNonnullByDefault;

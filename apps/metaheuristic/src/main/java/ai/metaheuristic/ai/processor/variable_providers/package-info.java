@@ -1,0 +1,4 @@
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.ai.processor.variable_providers;
+
+import javax.annotation.ParametersAreNonnullByDefault;

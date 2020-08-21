@@ -76,7 +76,6 @@ public class YamlUtils {
             constructor.addTypeDescription(customTypeDescription);
         }
 
-        //noinspection UnnecessaryLocalVariable
         Yaml yaml = new Yaml(constructor, representer, options);
         return yaml;
     }
