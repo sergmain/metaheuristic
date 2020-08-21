@@ -117,7 +117,6 @@ public class ProcessorTopLevelService {
         if (processor==null) {
             return new ProcessorData.ProcessorResult("Processor wasn't found for id #"+ id);
         }
-        //noinspection UnnecessaryLocalVariable
         ProcessorData.ProcessorResult r = new ProcessorData.ProcessorResult(processor);
         return r;
     }
@@ -128,7 +127,6 @@ public class ProcessorTopLevelService {
             return new ProcessorData.ProcessorResult("#807.05 processor wasn't found, processorId: " + processor.getId());
         }
         s.description = processor.description;
-        //noinspection UnnecessaryLocalVariable
         ProcessorData.ProcessorResult r = new ProcessorData.ProcessorResult(processorCache.save(s));
         return r;
     }

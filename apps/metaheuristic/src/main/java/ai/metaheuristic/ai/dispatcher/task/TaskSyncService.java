@@ -43,9 +43,6 @@ public class TaskSyncService {
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
     public @Nullable <T> T getWithSync(Long taskId, Function<TaskImpl, T> function) {
-        if (taskId==null) {
-            throw new NullPointerException();
-        }
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(taskId);
         try {
             lock.lock();

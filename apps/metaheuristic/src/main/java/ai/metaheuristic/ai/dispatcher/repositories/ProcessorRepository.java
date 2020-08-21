@@ -24,6 +24,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,8 +43,9 @@ public interface ProcessorRepository extends CrudRepository<Processor, Long> {
 
     @NonNull
     @Transactional(readOnly = true)
-    Optional<Processor> findById(@NonNull Long id);
+    Optional<Processor> findById(Long id);
 
+    @Nullable
     @Query(value="select s from Processor s where s.id=:id")
     Processor findByIdForUpdate(Long id);
 
