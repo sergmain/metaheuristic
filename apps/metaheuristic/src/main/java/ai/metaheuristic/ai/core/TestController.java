@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.core;
 
+import ai.metaheuristic.commons.CommonConsts;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
@@ -27,8 +28,6 @@ import org.springframework.web.bind.annotation.*;
  * Time: 3:34 PM
  */
 public class TestController {
-
-    public static final String TEST_MSG = "ИИИ, 日本語, natürlich";
 
     @Controller
     @Profile("dispatcher")
@@ -54,7 +53,7 @@ public class TestController {
     }
 
     private static String getString(@RequestParam(name = "text", required = false, defaultValue = "") String text) {
-        return TEST_MSG + "\n" + StringUtils.substring(text, 0, 20);
+        return CommonConsts.MULTI_LANG_STRING + "\n" + StringUtils.substring(text, 0, 20);
     }
 
 }

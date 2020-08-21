@@ -26,16 +26,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ai.metaheuristic</groupId>
-    <artifactId>package-function</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
-
-    <name>package-function</name>
-    <description>Package function, signing is optional</description>
+    <artifactId>simple-batch-app</artifactId>
+    <version>1.1-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
     </properties>
@@ -46,20 +43,28 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
         <dependency>
-            <groupId>ai.metaheuristic</groupId>
-            <artifactId>mh-commons</artifactId>
-            <version>4.1.1</version>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.6</version>
-            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>ai.metaheuristic</groupId>
+            <artifactId>mh-commons</artifactId>
+            <version>4.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
-        <finalName>package-function</finalName>
+        <finalName>simple-batch-app</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -69,19 +74,30 @@
                     <compilerArgument>-parameters</compilerArgument>
                     <release>11</release>
                     <encoding>${project.build.sourceEncoding}</encoding>
+                    <showDeprecation>true</showDeprecation>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>ai.metaheuristic.apps.package_function.PackageFunction</mainClass>
+                    <mainClass>ai.metaheuristic.apps.simple_batch_app.SimpleBatchApp</mainClass>
                 </configuration>
             </plugin>
         </plugins>
     </build>
 
     <repositories>
+<!--
+        <repository>
+            <id>spring-snapshots</id>
+            <name>Spring Snapshots</name>
+            <url>https://repo.spring.io/snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+-->
         <repository>
             <id>spring-milestones</id>
             <name>Spring Milestones</name>
@@ -93,6 +109,16 @@
     </repositories>
 
     <pluginRepositories>
+<!--
+        <pluginRepository>
+            <id>spring-snapshots</id>
+            <name>Spring Snapshots</name>
+            <url>https://repo.spring.io/snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+-->
         <pluginRepository>
             <id>spring-milestones</id>
             <name>Spring Milestones</name>

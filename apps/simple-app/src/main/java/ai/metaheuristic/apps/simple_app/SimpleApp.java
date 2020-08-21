@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2020  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,9 +13,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.apps.simple_snippet;
+package ai.metaheuristic.apps.simple_app;
 
 import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +56,7 @@ public class SimpleApp implements CommandLineRunner {
         System.out.println("Timeout ended.");
 
         if (args.length>1 ) {
-            String message = "Just for test an error reporting. ИИИ, 日本語, natürlich";
+            String message = "Just for test an error reporting. "+ CommonConsts.MULTI_LANG_STRING;
             log.error(message);
             throw new RuntimeException(message);
         }

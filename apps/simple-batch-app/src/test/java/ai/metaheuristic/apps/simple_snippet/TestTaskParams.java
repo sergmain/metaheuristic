@@ -14,17 +14,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons;
+package ai.metaheuristic.apps.simple_app;
 
-import java.time.format.DateTimeFormatter;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
+import org.apache.commons.io.IOUtils;
+import org.junit.Test;
 
-public class CommonConsts {
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
-    public static final String FIT_TYPE = "fit";
-    public static final String PREDICT_TYPE = "predict";
-    public static final String CHECK_FITTING_TYPE = "check-fitting";
+/**
+ * @author Serge
+ * Date: 6/18/2019
+ * Time: 9:21 PM
+ */
+public class TestTaskParams {
 
-    public static final String REST_V1_URL = "/rest/v1";
-    public final static DateTimeFormatter EVENT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-    public static final String MULTI_LANG_STRING = "ИИИ, 日本語, natürlich";
+    @Test
+    public void test() throws IOException {
+        String s = IOUtils.resourceToString("/task-params.yaml", StandardCharsets.UTF_8);
+        TaskFileParamsYaml params = TaskFileParamsYamlUtils.BASE_YAML_UTILS.to(s);
+
+    }
 }

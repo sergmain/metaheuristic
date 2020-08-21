@@ -59,7 +59,7 @@ public class VariableArrayParamsYamlUtilsV1
         VariableArrayParamsYaml.Variable v = new VariableArrayParamsYaml.Variable();
         v.id = v1.id;
         v.name = v1.name;
-        v.type = v1.type;
+        v.dataType = v1.dataType;
         v.sourcing = v1.sourcing;
         v.git = v1.git;
         v.disk = v1.disk;

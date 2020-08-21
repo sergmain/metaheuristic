@@ -422,7 +422,7 @@ public class TaskProcessor {
 
     private static TaskFileParamsYaml.InputVariable  upInputVariable(TaskParamsYaml.InputVariable v1) {
         TaskFileParamsYaml.InputVariable  v = new TaskFileParamsYaml.InputVariable();
-        v.id = v1.id;
+        v.id = v1.id.toString();
         v.dataType = toType(v1.context);
         v.name = v1.name;
         v.disk = v1.disk;
@@ -435,7 +435,7 @@ public class TaskProcessor {
 
     private static TaskFileParamsYaml.OutputVariable upOutputVariable(TaskParamsYaml.OutputVariable v1) {
         TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
-        v.id = v1.id;
+        v.id = v1.id.toString();
         v.name = v1.name;
         v.dataType = toType(v1.context);
         v.disk = v1.disk;

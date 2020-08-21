@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.rest;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.core.TestController;
 import ai.metaheuristic.ai.processor.DispatcherRequestor;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.ai.utils.JsonUtils;
@@ -25,6 +24,7 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
+import ai.metaheuristic.commons.CommonConsts;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -95,7 +95,7 @@ public class TestRest {
         String s = response.getBody();
         assertNotNull(s);
         System.out.println("s = " + s);
-        assertEquals(TestController.TEST_MSG, s.split("\n")[0]);
+        assertEquals(CommonConsts.MULTI_LANG_STRING, s.split("\n")[0]);
         assertEquals(MSG_TEXT.substring(0,20), s.split("\n")[1]);
     }
 
@@ -120,7 +120,7 @@ public class TestRest {
         String s = response.getBody();
         assertNotNull(s);
         System.out.println("s = " + s);
-        assertEquals(TestController.TEST_MSG, s.split("\n")[0]);
+        assertEquals(CommonConsts.MULTI_LANG_STRING, s.split("\n")[0]);
         assertEquals(MSG_TEXT.substring(0,20), s.split("\n")[1]);
     }
 

@@ -68,7 +68,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>ai.metaheuristic.apps.simple_snippet.GenerateKeys</mainClass>
+                    <mainClass>ai.metaheuristic.apps.gen_keys.GenerateKeys</mainClass>
                 </configuration>
             </plugin>
         </plugins>

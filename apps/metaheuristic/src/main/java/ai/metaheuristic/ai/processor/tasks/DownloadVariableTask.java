@@ -26,7 +26,7 @@ import java.io.File;
 @Data
 @EqualsAndHashCode(of = {"variableId", "context"}, callSuper = false)
 public class DownloadVariableTask extends ProcessorRestTask {
-    public final Long variableId;
+    public final String variableId;
     public final EnumsApi.VariableContext context;
     public final long taskId;
     public final File targetDir;
@@ -36,6 +36,12 @@ public class DownloadVariableTask extends ProcessorRestTask {
 
     public DownloadVariableTask(
             Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
+                                DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId) {
+        this(variableId.toString(), context, taskId, targetDir, chunkSize, dispatcher, processorId);
+    }
+
+    public DownloadVariableTask(
+            String variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
                                 DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId) {
         this.variableId = variableId;
         this.context = context;

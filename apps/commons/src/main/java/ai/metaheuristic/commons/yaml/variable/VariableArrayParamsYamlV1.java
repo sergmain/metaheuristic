@@ -26,9 +26,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Serge
@@ -50,7 +48,7 @@ public class VariableArrayParamsYamlV1  implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class VariableV1 {
-        public Long id;
+        public String id;
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         @Nullable
@@ -60,9 +58,9 @@ public class VariableArrayParamsYamlV1  implements BaseParams {
         public DiskInfo disk;
 
         public @Nullable String realName;
-        public EnumsApi.DataType type;
+        public EnumsApi.DataType dataType;
 
-        public VariableV1(Long id, String name, EnumsApi.DataSourcing sourcing) {
+        public VariableV1(String id, String name, EnumsApi.DataSourcing sourcing) {
             this.id = id;
             this.name = name;
             this.sourcing = sourcing;

@@ -50,7 +50,7 @@ public class VariableArrayParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Variable {
-        public Long id;
+        public String id;
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         @Nullable
@@ -60,9 +60,9 @@ public class VariableArrayParamsYaml implements BaseParams {
         public DiskInfo disk;
 
         public @Nullable String realName;
-        public EnumsApi.DataType type;
+        public EnumsApi.DataType dataType;
 
-        public Variable(Long id, String name, EnumsApi.DataSourcing sourcing) {
+        public Variable(String id, String name, EnumsApi.DataSourcing sourcing) {
             this.id = id;
             this.name = name;
             this.sourcing = sourcing;

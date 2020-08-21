@@ -54,7 +54,7 @@ public class TaskFileParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class InputVariable {
-        public Long id;
+        public String id;
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public @Nullable GitInfo git;
@@ -65,6 +65,10 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable String type;
 
         public InputVariable(Long id, String name, EnumsApi.DataSourcing sourcing) {
+            this(id.toString(), name, sourcing);
+        }
+
+        public InputVariable(String id, String name, EnumsApi.DataSourcing sourcing) {
             this.id = id;
             this.name = name;
             this.sourcing = sourcing;
@@ -75,7 +79,7 @@ public class TaskFileParamsYaml implements BaseParams {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class OutputVariable {
-        public Long id;
+        public String id;
         public String name;
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public @Nullable GitInfo git;
@@ -85,6 +89,10 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable String type;
 
         public OutputVariable(Long id, String name, EnumsApi.DataSourcing sourcing) {
+            this(id.toString(), name, sourcing);
+        }
+
+        public OutputVariable(String id, String name, EnumsApi.DataSourcing sourcing) {
             this.id = id;
             this.name = name;
             this.sourcing = sourcing;

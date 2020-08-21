@@ -126,7 +126,7 @@ public class DispatcherVariableProvider implements VariableProvider {
         List<VariableArrayParamsYaml.Variable> variables = getVariablesForArray(assetFile);
 
         for (VariableArrayParamsYaml.Variable v : variables) {
-            AssetFile af = AssetUtils.prepareFileForVariable(taskDir, v.id.toString(), null, v.type);
+            AssetFile af = AssetUtils.prepareFileForVariable(taskDir, v.id, null, v.dataType);
             assetFiles.add(af);
         }
         return assetFiles;

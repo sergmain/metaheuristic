@@ -38,7 +38,7 @@ public class VariableUtils {
         for (VariableHolder pv : permutedVariables) {
             VariableArrayParamsYaml.Variable v = new VariableArrayParamsYaml.Variable();
             if (pv.globalVariable!=null) {
-                v.id = pv.globalVariable.id;
+                v.id = pv.globalVariable.id.toString();
                 v.name = pv.globalVariable.name;
 
                 DataStorageParams dsp = DataStorageParamsUtils.to(pv.globalVariable.params);
@@ -46,11 +46,11 @@ public class VariableUtils {
                 v.git = dsp.git;
                 v.disk = dsp.disk;
                 v.realName = pv.globalVariable.filename;
-                v.type = EnumsApi.DataType.global_variable;
+                v.dataType = EnumsApi.DataType.global_variable;
             }
             else {
                 SimpleVariable variable = Objects.requireNonNull(pv.variable);
-                v.id = variable.id;
+                v.id = variable.id.toString();
                 v.name = variable.variable;
 
                 DataStorageParams dsp = variable.getParams();
@@ -58,7 +58,7 @@ public class VariableUtils {
                 v.git = dsp.git;
                 v.disk = dsp.disk;
                 v.realName = variable.originalFilename;
-                v.type = EnumsApi.DataType.variable;
+                v.dataType = EnumsApi.DataType.variable;
             }
             vapy.array.add(v);
         }
