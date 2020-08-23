@@ -125,7 +125,7 @@ public class TaskWithInternalContextEventService {
                                 execContextGraphTopLevelService.updateTaskExecStates(task.execContextId, new ConcurrentHashMap<>(Map.of(task.id, EnumsApi.TaskExecState.BROKEN.value)));
 
                         ExecContextOperationStatusWithTaskList status =
-                                execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.execContextId, task.id);
+                                execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsSkipped(task.execContextId, taskParamsYaml.task.taskContextId, task.id);
                         return null;
                     }
                     else {

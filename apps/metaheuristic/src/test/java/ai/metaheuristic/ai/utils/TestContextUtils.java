@@ -16,21 +16,26 @@
 
 package ai.metaheuristic.ai.utils;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 /**
  * @author Serge
- * Date: 4/7/2020
- * Time: 6:01 PM
+ * Date: 8/22/2020
+ * Time: 6:33 PM
  */
-public class ContextUtils {
+public class TestContextUtils {
 
-    public static final String CONTEXT_SEPARATOR = "###";
+    @Test
+    public void testCreateContext() {
 
-    public static String getTaskContextId(String processContextId, String subContext) {
-        return processContextId + CONTEXT_SEPARATOR + subContext;
     }
 
-    public static String getWithoutSubContext(String taskContextId) {
-        int idx = taskContextId.indexOf(CONTEXT_SEPARATOR);
-        return idx==-1 ?  taskContextId : taskContextId.substring(idx + CONTEXT_SEPARATOR.length());
+    @Test
+    public void testGetWithoutSubContext() {
+        assertEquals("123", ContextUtils.getWithoutSubContext("123"));
+        assertEquals("123", ContextUtils.getWithoutSubContext("123###1"));
     }
 }

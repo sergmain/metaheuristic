@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -541,7 +542,7 @@ class ExecContextGraphService {
     public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsSkipped(ExecContextImpl execContext, String taskContextId, Long taskId) {
         try {
             final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-            changeGraph(execContext, graph -> setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.BROKEN));
+            changeGraph(execContext, graph -> setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.SKIPPED, taskContextId));
             return withTaskList;
         }
         catch (Throwable th) {
@@ -553,10 +554,22 @@ class ExecContextGraphService {
     private void setStateForAllChildrenTasksInternal(
             DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph,
             Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
+        setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, state, null);
+    }
+
+    private void setStateForAllChildrenTasksInternal(
+            DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph,
+            Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state, @Nullable String taskContextId) {
 
         Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
         // find and filter a 'mh.finish' vertex, which doesn't have any outgoing edges
-        set.stream().filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty()).forEach( tv-> tv.execState = state);
+
+        String context = taskContextId!=null ? ContextUtils.getWithoutSubContext(taskContextId) : null;
+
+        //noinspection SimplifiableConditionalExpression
+        set.stream()
+                .filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty() && (context==null ? true : tv.taskContextId.startsWith(context)))
+                .forEach( tv-> tv.execState = state);
         withTaskList.childrenTasks.addAll(set);
     }
 

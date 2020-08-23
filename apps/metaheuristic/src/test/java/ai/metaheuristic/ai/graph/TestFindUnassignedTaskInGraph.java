@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,7 +65,8 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
         assertNotNull(execContextForTest);
 
-        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id, List.of(), List.of(1L));
+        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,
+                List.of(), List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
@@ -73,11 +75,18 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(1, count);
 
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(1L), List.of(21L, 22L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(1L),
+                List.of(new TaskApiData.TaskWithContext(21L, "123###1"), new TaskApiData.TaskWithContext(22L, "123###1")));
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(21L), List.of(311L, 312L, 313L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(21L),
+                List.of(new TaskApiData.TaskWithContext(311L, "123###1"),
+                        new TaskApiData.TaskWithContext(312L, "123###1"),
+                        new TaskApiData.TaskWithContext(313L, "123###1")));
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(22L), List.of(321L, 322L, 323L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(22L),
+                List.of(new TaskApiData.TaskWithContext(321L, "123###1"),
+                        new TaskApiData.TaskWithContext(322L, "123###1"),
+                        new TaskApiData.TaskWithContext(323L, "123###1")));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
@@ -88,13 +97,13 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
         assertEquals(6, leafs.size());
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(311L, 311L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(312L, 312L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(313L, 313L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex(311L, 311L, EnumsApi.TaskExecState.NONE, "123###1")));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex(312L, 312L, EnumsApi.TaskExecState.NONE, "123###1")));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex(313L, 313L, EnumsApi.TaskExecState.NONE, "123###1")));
 
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(321L, 321L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(322L, 322L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(323L, 323L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex(321L, 321L, EnumsApi.TaskExecState.NONE, "123###1")));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex(322L, 322L, EnumsApi.TaskExecState.NONE, "123###1")));
+        assertTrue(leafs.contains(new ExecContextData.TaskVertex(323L, 323L, EnumsApi.TaskExecState.NONE, "123###1")));
 
         Set<EnumsApi.TaskExecState> states;
         execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(execContextForTest.id,1L);

@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWit
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -73,7 +74,8 @@ public class TestGraph extends PreparingSourceCode {
 
         assertNotNull(execContextForTest);
 
-        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id, List.of(), List.of(1L));
+        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id, List.of(),
+                List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
@@ -82,7 +84,8 @@ public class TestGraph extends PreparingSourceCode {
         assertEquals(1, count);
 
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id, List.of(1L), List.of(2L, 3L));
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id, List.of(1L),
+                List.of(new TaskApiData.TaskWithContext(2L, "123###1"), new TaskApiData.TaskWithContext(3L, "123###1")));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
@@ -92,8 +95,8 @@ public class TestGraph extends PreparingSourceCode {
         List<TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
         assertEquals(2, leafs.size());
-        assertTrue(leafs.contains(new TaskVertex(2L, "2L", EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex(3L, "3L", EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new TaskVertex(2L, "2L", EnumsApi.TaskExecState.NONE, "123###1")));
+        assertTrue(leafs.contains(new TaskVertex(3L, "3L", EnumsApi.TaskExecState.NONE, "123###1")));
 
         setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.BROKEN);
         setExecState(execContextForTest, 2L, EnumsApi.TaskExecState.NONE);
