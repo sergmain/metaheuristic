@@ -433,7 +433,7 @@ class ExecContextGraphService {
                 iterator.forEachRemaining(v -> {
                     if (v.execState==EnumsApi.TaskExecState.NONE) {
                         // remove all tasks which have non-processed tasks as direct parent
-                        if (isParentFullyProcessedWithoutErrors(graph, v)) {
+                        if (isParentFullyProcessed(graph, v)) {
                             vertices.add(v);
                         }
                     }
@@ -492,11 +492,11 @@ class ExecContextGraphService {
         }
     }
 
-    private boolean isParentFullyProcessedWithoutErrors(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextData.TaskVertex vertex) {
-        // todo 2020-03-15 actually, we don't need to get all ancestors, we need only direct.
-        //  So it can be done just with edges
+    private boolean isParentFullyProcessed(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, ExecContextData.TaskVertex vertex) {
+        // we don't need to get all ancestors, we need only direct.
+        // So it can be done just with edges
         for (ExecContextData.TaskVertex ancestor : graph.getAncestors(vertex)) {
-            if (ancestor.execState!=EnumsApi.TaskExecState.OK) {
+            if (ancestor.execState==EnumsApi.TaskExecState.NONE || ancestor.execState==EnumsApi.TaskExecState.IN_PROGRESS) {
                 return false;
             }
         }
