@@ -483,7 +483,10 @@ public class ExecContextService {
             taskPersistencer.storeExecResult(result, t -> {
                 if (t!=null) {
                     TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
-                    execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), tpy.task.taskContextId);
+                    ExecContextOperationStatusWithTaskList status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), tpy.task.taskContextId);
+                    for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
+                        taskPersistencer.changeTaskState(childrenTask.taskId, childrenTask.execState);
+                    }
                 }
             });
         }

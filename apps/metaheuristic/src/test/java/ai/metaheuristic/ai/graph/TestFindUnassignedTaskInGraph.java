@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.graph;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -121,9 +122,9 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertEquals(Long.valueOf(1L), vertices.get(0).taskId);
 
-        OperationStatusRest status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,1L, EnumsApi.TaskExecState.OK.value, "123###1");
+        ExecContextOperationStatusWithTaskList status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,1L, EnumsApi.TaskExecState.OK.value, "123###1");
 
-        assertEquals(EnumsApi.OperationStatus.OK, status.status);
+        assertEquals(EnumsApi.OperationStatus.OK, status.status.status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         vertices = execContextGraphTopLevelService.findAllForAssigning(

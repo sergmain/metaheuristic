@@ -77,10 +77,10 @@ public class ExecContextGraphTopLevelService {
     }
 
     // write operations with graph
-    public OperationStatusRest updateTaskExecStateByExecContextId(Long execContextId, Long taskId, int execState, @Nullable String taskContextId) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecStateByExecContextId(Long execContextId, Long taskId, int execState, @Nullable String taskContextId) {
         return execContextSyncService.getWithSync(execContextId, execContext -> {
             final ExecContextOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(execContext, taskId, execState, taskContextId);
-            return status.status;
+            return status;
         });
     }
 

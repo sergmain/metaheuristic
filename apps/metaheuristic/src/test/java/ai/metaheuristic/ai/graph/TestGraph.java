@@ -109,7 +109,7 @@ public class TestGraph extends PreparingSourceCode {
 
         Set<EnumsApi.TaskExecState> states = execContextGraphTopLevelService.findAll(execContextForTest).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(2, states.size());
-        // there are o'ERROR' state for 1st task and NONE for the last one
+        // there are 'ERROR' state for 1st task and NONE for the last one
         assertTrue(states.contains(EnumsApi.TaskExecState.ERROR));
         assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
 

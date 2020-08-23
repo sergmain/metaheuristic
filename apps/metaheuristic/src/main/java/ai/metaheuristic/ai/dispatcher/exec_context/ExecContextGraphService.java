@@ -181,7 +181,7 @@ class ExecContextGraphService {
                         EnumsApi.TaskExecState toState = (taskVertex.execState == EnumsApi.TaskExecState.ERROR)
                                 ? EnumsApi.TaskExecState.SKIPPED
                                 : EnumsApi.TaskExecState.NONE;
-                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new ExecContextOperationStatusWithTaskList(), toState, tpy.task.taskContextId);
+                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, status, toState, tpy.task.taskContextId);
                     }
                     else if (taskVertex.execState == EnumsApi.TaskExecState.SKIPPED) {
                         // todo 2020-08-16 need to decide what to do here
@@ -211,8 +211,7 @@ class ExecContextGraphService {
                 if (tv!=null) {
                     tv.execState = EnumsApi.TaskExecState.from(execState);
                     if (tv.execState==EnumsApi.TaskExecState.ERROR) {
-                        final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-                        setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.SKIPPED, taskContextId);
+                        setStateForAllChildrenTasksInternal(graph, taskId, status, EnumsApi.TaskExecState.SKIPPED, taskContextId);
                     }
                     else if (tv.execState==EnumsApi.TaskExecState.OK) {
                         setStateForAllChildrenTasksInternal(graph, tv.taskId, status, EnumsApi.TaskExecState.NONE);
