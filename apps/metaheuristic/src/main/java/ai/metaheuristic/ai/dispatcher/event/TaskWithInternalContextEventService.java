@@ -124,7 +124,7 @@ public class TaskWithInternalContextEventService {
                                 "#707.060 Task #" + event.taskId + " was finished with status '" + result.processing + "', text of error: " + result.error);
 
                         ExecContextOperationStatusWithTaskList s = execContextGraphTopLevelService.updateTaskExecStates(
-                                task.execContextId, Map.of(task.id, new TaskData.TaskState(task.id, TaskExecState.ERROR.value, 0L, taskParamsYaml.task.taskContextId)));
+                                task.execContextId, Map.of(task.id, new TaskData.TaskState(task.id, TaskExecState.ERROR.value, 0L, task.params)));
 
                         ExecContextOperationStatusWithTaskList status =
                                 execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsSkipped(task.execContextId, taskParamsYaml.task.taskContextId, task.id);

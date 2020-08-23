@@ -1,5 +1,5 @@
 source:
-  uid: source-code-for-batch-processing-1:2
+  uid: source-code-for-batch-processing-1:3
   variables:
     startInputAs: input-data
   processes:
@@ -21,10 +21,10 @@ source:
             function:
               code: mh.nop
               context: internal
-          - code: fileless-1
-            name: fileless 1
+          - code: batch-1
+            name: batch 1
             function:
-              code: fileless-function:1.0
+              code: batch-function:1.0
             inputs:
               - name: var-batch-item
                 array: true
@@ -40,20 +40,6 @@ source:
             function:
               code: mh.nop
               context: internal
-          - code: fileless-2
-            name: fileless 2
-            function:
-              code: fileless-function:1.0
-            inputs:
-              - name: var-batch-item
-                array: true
-            outputs:
-              - name: var-processed-file-2
-                type: batch-item-processed-file
-              - name: var-processing-status-2
-                type: batch-item-processing-status
-              - name: var-item-mapping-2
-                type: batch-item-mapping
           - code: mh.nop-3
             name: nop 3
             function:

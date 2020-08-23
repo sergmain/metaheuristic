@@ -32,9 +32,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @SpringBootApplication
 @Slf4j
@@ -76,7 +74,7 @@ public class SimpleBatchApp implements CommandLineRunner {
         TaskFileParamsYaml.InputVariable arrayVariable = params.task.inputs.get(0);
 
         File arrayVariableFile = Path.of(
-                params.task.workingPath, arrayVariable.dataType.toString(), arrayVariable.name).toFile();
+                params.task.workingPath, arrayVariable.dataType.toString(), arrayVariable.id).toFile();
 
         String arrayVariableContent = FileUtils.readFileToString(arrayVariableFile, StandardCharsets.UTF_8);
         System.out.println("input array variable:\n" + arrayVariableContent+"\n");

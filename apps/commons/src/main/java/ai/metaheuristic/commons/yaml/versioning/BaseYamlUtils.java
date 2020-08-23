@@ -99,7 +99,7 @@ public class BaseYamlUtils<T extends BaseParams> {
                 currBaseParamsYaml = yamlUtils.upgradeTo(currBaseParamsYaml, vars);
             } while ((yamlUtils=(AbstractParamsYamlUtils)yamlUtils.nextUtil())!=null);
 
-            //noinspection unchecked,UnnecessaryLocalVariable
+            //noinspection unchecked
             T p = (T)currBaseParamsYaml;
 
             p.checkIntegrity();
