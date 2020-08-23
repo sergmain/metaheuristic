@@ -575,7 +575,7 @@ class ExecContextGraphService {
         // find and filter a 'mh.finish' vertex, which doesn't have any outgoing edges
         //noinspection SimplifiableConditionalExpression
         set.stream()
-                .filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty() && (context==null ? true : tv.taskContextId.startsWith(context)))
+                .filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty() && (context==null ? true : ContextUtils.getWithoutSubContext(tv.taskContextId).startsWith(context)))
                 .forEach( tv-> tv.execState = state);
         withTaskList.childrenTasks.addAll(set);
     }

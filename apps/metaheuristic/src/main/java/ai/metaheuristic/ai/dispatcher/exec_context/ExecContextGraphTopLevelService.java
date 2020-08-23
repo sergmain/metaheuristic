@@ -68,6 +68,10 @@ public class ExecContextGraphTopLevelService {
         return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findDirectDescendants(execContext, taskId));
     }
 
+    public Set<ExecContextData.TaskVertex> findDirectAncestors(ExecContextImpl execContext, ExecContextData.TaskVertex vertex) {
+        return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findDirectAncestors(execContext, vertex));
+    }
+
     public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
         return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findAllForAssigning(execContext));
     }

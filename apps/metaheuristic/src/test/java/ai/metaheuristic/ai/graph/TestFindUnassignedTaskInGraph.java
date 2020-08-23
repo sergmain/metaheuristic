@@ -67,7 +67,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertNotNull(execContextForTest);
 
         OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,
-                List.of(), List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
+                List.of(), List.of(new TaskApiData.TaskWithContext(1L, "1")));
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
@@ -77,34 +77,43 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
 
         osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(1L),
-                List.of(new TaskApiData.TaskWithContext(21L, "123###1"), new TaskApiData.TaskWithContext(22L, "123###1")));
+                List.of(new TaskApiData.TaskWithContext(21L, "12###1"), new TaskApiData.TaskWithContext(22L, "12###2")));
 
         osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(21L),
                 List.of(new TaskApiData.TaskWithContext(311L, "123###1"),
-                        new TaskApiData.TaskWithContext(312L, "123###1"),
-                        new TaskApiData.TaskWithContext(313L, "123###1")));
+                        new TaskApiData.TaskWithContext(312L, "123###2"),
+                        new TaskApiData.TaskWithContext(313L, "123###3")));
 
         osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(22L),
-                List.of(new TaskApiData.TaskWithContext(321L, "123###1"),
-                        new TaskApiData.TaskWithContext(322L, "123###1"),
-                        new TaskApiData.TaskWithContext(323L, "123###1")));
+                List.of(new TaskApiData.TaskWithContext(321L, "123###4"),
+                        new TaskApiData.TaskWithContext(322L, "123###5"),
+                        new TaskApiData.TaskWithContext(323L, "123###6")));
+
+        // 999L is mh.finish task
+        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id,List.of(311L, 312L, 313L, 321L, 322L, 323L),
+                List.of(new TaskApiData.TaskWithContext(999L, "1")));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         count = execContextService.getCountUnfinishedTasks(execContextForTest);
-        assertEquals(9, count);
+        assertEquals(10, count);
 
         List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
-        assertEquals(6, leafs.size());
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(311L, 311L, EnumsApi.TaskExecState.NONE, "123###1")));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(312L, 312L, EnumsApi.TaskExecState.NONE, "123###1")));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(313L, 313L, EnumsApi.TaskExecState.NONE, "123###1")));
 
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(321L, 321L, EnumsApi.TaskExecState.NONE, "123###1")));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(322L, 322L, EnumsApi.TaskExecState.NONE, "123###1")));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(323L, 323L, EnumsApi.TaskExecState.NONE, "123###1")));
+        assertEquals(1, leafs.size());
+
+        Set<ExecContextData.TaskVertex> ancestors = execContextGraphTopLevelService.findDirectAncestors(execContextForTest, leafs.get(0));
+
+        assertEquals(6, ancestors.size());
+        assertTrue(ancestors.contains(new ExecContextData.TaskVertex(311L, 311L, EnumsApi.TaskExecState.NONE, "123###1")));
+        assertTrue(ancestors.contains(new ExecContextData.TaskVertex(312L, 312L, EnumsApi.TaskExecState.NONE, "123###1")));
+        assertTrue(ancestors.contains(new ExecContextData.TaskVertex(313L, 313L, EnumsApi.TaskExecState.NONE, "123###1")));
+
+        assertTrue(ancestors.contains(new ExecContextData.TaskVertex(321L, 321L, EnumsApi.TaskExecState.NONE, "123###1")));
+        assertTrue(ancestors.contains(new ExecContextData.TaskVertex(322L, 322L, EnumsApi.TaskExecState.NONE, "123###1")));
+        assertTrue(ancestors.contains(new ExecContextData.TaskVertex(323L, 323L, EnumsApi.TaskExecState.NONE, "123###1")));
 
         Set<EnumsApi.TaskExecState> states;
         execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(execContextForTest.id,1L);
@@ -123,6 +132,9 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(Long.valueOf(1L), vertices.get(0).taskId);
 
         ExecContextOperationStatusWithTaskList status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,1L, EnumsApi.TaskExecState.OK.value, "123###1");
+        for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
+            taskPersistencer.changeTaskState(childrenTask.taskId, childrenTask.execState);
+        }
 
         assertEquals(EnumsApi.OperationStatus.OK, status.status.status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
@@ -135,6 +147,9 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertTrue(Set.of(21L, 22L).contains(vertices.get(0).taskId));
 
         status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.IN_PROGRESS.value, null);
+        for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
+            taskPersistencer.changeTaskState(childrenTask.taskId, childrenTask.execState);
+        }
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         vertices = execContextGraphTopLevelService.findAllForAssigning(
@@ -144,8 +159,10 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
-
         status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.ERROR.value, "123###1");
+        for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
+            taskPersistencer.changeTaskState(childrenTask.taskId, childrenTask.execState);
+        }
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         vertices = execContextGraphTopLevelService.findAllForAssigning(Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
@@ -155,6 +172,9 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
         status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,21L, EnumsApi.TaskExecState.OK.value, "123###1");
+        for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
+            taskPersistencer.changeTaskState(childrenTask.taskId, childrenTask.execState);
+        }
 
         vertices = execContextGraphTopLevelService.findAllForAssigning(Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
 
@@ -165,6 +185,9 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(2).taskId));
 
         status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.OK.value, "123###1");
+        for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
+            taskPersistencer.changeTaskState(childrenTask.taskId, childrenTask.execState);
+        }
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
 
