@@ -98,19 +98,19 @@ public class TestGraph extends PreparingSourceCode {
         assertTrue(leafs.contains(new TaskVertex(2L, "2L", EnumsApi.TaskExecState.NONE, "123###1")));
         assertTrue(leafs.contains(new TaskVertex(3L, "3L", EnumsApi.TaskExecState.NONE, "123###1")));
 
-        setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.BROKEN);
+        setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.ERROR);
         setExecState(execContextForTest, 2L, EnumsApi.TaskExecState.NONE);
         setExecState(execContextForTest, 3L, EnumsApi.TaskExecState.NONE);
 
         ExecContextOperationStatusWithTaskList status =
-                execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(execContextForTest.id,1L);
+                execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsError(execContextForTest.id,1L);
         assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         Set<EnumsApi.TaskExecState> states = execContextGraphTopLevelService.findAll(execContextForTest).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(2, states.size());
-        // there are o'BROKEN' state for 1st task and NONE for the last one
-        assertTrue(states.contains(EnumsApi.TaskExecState.BROKEN));
+        // there are o'ERROR' state for 1st task and NONE for the last one
+        assertTrue(states.contains(EnumsApi.TaskExecState.ERROR));
         assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
 
         count = execContextService.getCountUnfinishedTasks(execContextForTest);
@@ -132,7 +132,7 @@ public class TestGraph extends PreparingSourceCode {
         TaskImpl t1 = new TaskImpl();
         t1.id = id;
         t1.execState = execState.value;
-        execContextGraphTopLevelService.updateTaskExecStateByExecContextId(workbook.id, t1.id, t1.execState );
+        execContextGraphTopLevelService.updateTaskExecStateByExecContextId(workbook.id, t1.id, t1.execState, "123###1");
     }
 
 }

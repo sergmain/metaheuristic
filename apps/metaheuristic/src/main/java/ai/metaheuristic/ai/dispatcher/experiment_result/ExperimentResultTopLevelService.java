@@ -434,7 +434,7 @@ public class ExperimentResultTopLevelService {
         if (statuses.contains(EnumsApi.TaskExecState.OK)) {
             execStatus = FeatureExecStatus.finished;
         }
-        if (statuses.contains(EnumsApi.TaskExecState.ERROR)|| statuses.contains(EnumsApi.TaskExecState.BROKEN)) {
+        if (statuses.contains(EnumsApi.TaskExecState.ERROR)) {
             execStatus = FeatureExecStatus.finished_with_errors;
         }
         if (statuses.contains(EnumsApi.TaskExecState.NONE) || statuses.contains(EnumsApi.TaskExecState.IN_PROGRESS)) {
@@ -792,7 +792,7 @@ public class ExperimentResultTopLevelService {
         return result;
     }
 
-    private Slice<ExperimentResultTaskParamsYaml> findTasks(Long experimentResultId, ExperimentResultParamsYamlWithCache estb, Pageable pageable, ExperimentFeature feature, String[] params) {
+    private Slice<ExperimentResultTaskParamsYaml> findTasks(Long experimentResultId, ExperimentResultParamsYamlWithCache estb, Pageable pageable, @Nullable ExperimentFeature feature, String[] params) {
         if (feature == null) {
             return Page.empty();
         }

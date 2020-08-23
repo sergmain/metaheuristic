@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -29,8 +30,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Serge
@@ -76,16 +77,16 @@ public class ExecContextGraphTopLevelService {
     }
 
     // write operations with graph
-    public OperationStatusRest updateTaskExecStateByExecContextId(Long execContextId, Long taskId, int execState) {
+    public OperationStatusRest updateTaskExecStateByExecContextId(Long execContextId, Long taskId, int execState, @Nullable String taskContextId) {
         return execContextSyncService.getWithSync(execContextId, execContext -> {
-            final ExecContextOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(execContext, taskId, execState);
+            final ExecContextOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(execContext, taskId, execState, taskContextId);
             return status.status;
         });
     }
 
-    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(Long execContextId, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsError(Long execContextId, Long taskId) {
         return execContextSyncService.getWithSync(execContextId, (execContext) ->
-                execContextGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(execContext, taskId));
+                execContextGraphService.updateGraphWithSettingAllChildrenTasksAsError(execContext, taskId));
     }
 
     public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsSkipped(Long execContextId, String taskContextId, Long taskId) {
@@ -104,7 +105,7 @@ public class ExecContextGraphTopLevelService {
                 execContextGraphService.updateGraphWithResettingAllChildrenTasks(execContext, taskId));
     }
 
-    public ExecContextOperationStatusWithTaskList updateTaskExecStates(Long execContextId, ConcurrentHashMap<Long, Integer> taskStates) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecStates(Long execContextId, Map<Long, TaskData.TaskState> taskStates) {
         if (taskStates.isEmpty()) {
             return new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
         }
@@ -120,13 +121,13 @@ public class ExecContextGraphTopLevelService {
                 (execContext) -> execContextGraphService.createEdges(execContext, lastIds, descendants));
     }
 
-    private ExecContextOperationStatusWithTaskList updateTaskExecStateWithoutSync(@Nullable ExecContextImpl execContext, Long taskId, int execState) {
+    private ExecContextOperationStatusWithTaskList updateTaskExecStateWithoutSync(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
         if (execContext==null) {
             // this execContext was deleted
             return new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
         }
         taskPersistencer.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
-        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState);
+        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState, taskContextId);
         taskPersistencer.updateTasksStateInDb(status);
         return status;
     }

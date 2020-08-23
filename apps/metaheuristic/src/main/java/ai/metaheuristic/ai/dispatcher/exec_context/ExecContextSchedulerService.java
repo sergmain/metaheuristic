@@ -19,13 +19,13 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -34,7 +34,6 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -109,36 +108,22 @@ public class ExecContextSchedulerService {
         }
     }
 
-    @Data
-    public static class TaskState {
-        public Long taskId;
-        public Integer execState;
-        public long updatedOn;
-
-        public TaskState(Object[] o) {
-            this.taskId = (Long) o[0];
-            this.execState = (Integer) o[1];
-            Long longObj = (Long) o[2];
-            this.updatedOn = longObj!=null ? longObj : 0;
-        }
-    }
-
     public void reconcileStates(Long execContextId) {
         List<Object[]> list = taskRepository.findAllExecStateByExecContextId(execContextId);
 
         // Reconcile states in db and in graph
-        Map<Long, TaskState> states = new HashMap<>(list.size()+1);
+        Map<Long, TaskData.TaskState> states = new HashMap<>(list.size()+1);
         for (Object[] o : list) {
-            TaskState taskState = new TaskState(o);
+            TaskData.TaskState taskState = new TaskData.TaskState(o);
             states.put(taskState.taskId, taskState);
         }
 
-        ConcurrentHashMap<Long, Integer> taskStates = new ConcurrentHashMap<>();
+        Map<Long, TaskData.TaskState> taskStates = new HashMap<>();
         AtomicBoolean isNullState = new AtomicBoolean(false);
 
         List<ExecContextData.TaskVertex> vertices = execContextService.findAllVertices(execContextId);
         vertices.stream().parallel().forEach(tv -> {
-            TaskState taskState = states.get(tv.taskId);
+            TaskData.TaskState taskState = states.get(tv.taskId);
             if (taskState==null) {
                 isNullState.set(true);
             }
@@ -146,7 +131,7 @@ public class ExecContextSchedulerService {
                 log.info("#751.040 Found different states for task #"+tv.taskId+", " +
                         "db: "+ EnumsApi.TaskExecState.from(taskState.execState)+", " +
                         "graph: "+tv.execState);
-                taskStates.put(tv.taskId, taskState.execState);
+                taskStates.put(tv.taskId, taskState);
             }
         });
 
@@ -180,7 +165,7 @@ public class ExecContextSchedulerService {
                             }
                         }
                         else if (task.resultReceived && task.isCompleted) {
-                            execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, task.id, EnumsApi.TaskExecState.OK.value);
+                            execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, task.id, EnumsApi.TaskExecState.OK.value, tpy.task.taskContextId);
                         }
                     }
                 });

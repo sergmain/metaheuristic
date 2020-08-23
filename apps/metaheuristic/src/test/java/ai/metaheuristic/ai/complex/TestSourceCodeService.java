@@ -469,7 +469,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         taskPersistencer.storeExecResult(r, t -> {
             if (t!=null) {
-                execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState());
+                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
+                execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), tpy.task.taskContextId);
             }
         });
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);

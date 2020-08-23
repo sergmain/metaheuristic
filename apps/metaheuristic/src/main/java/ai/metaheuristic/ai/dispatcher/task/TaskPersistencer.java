@@ -195,13 +195,13 @@ public class TaskPersistencer {
         }
     }
 
-    public void finishTaskAsBrokenOrError(Long taskId, EnumsApi.TaskExecState state) {
-        finishTaskAsBrokenOrError(taskId, state, -999, "#307.080 Task is broken, error is unknown, cant' process it");
+    public void finishTaskAsError(Long taskId, EnumsApi.TaskExecState state) {
+        finishTaskAsError(taskId, state, -999, "#307.080 Task is broken, error is unknown, cant' process it");
     }
 
-    public void finishTaskAsBrokenOrError(Long taskId, EnumsApi.TaskExecState state, int exitCode, String console) {
-        if (state!=EnumsApi.TaskExecState.BROKEN && state!=EnumsApi.TaskExecState.ERROR) {
-            throw new IllegalStateException("#307.070 state must be EnumsApi.TaskExecState.BROKEN or EnumsApi.TaskExecState.ERROR, actual: " +state);
+    public void finishTaskAsError(Long taskId, EnumsApi.TaskExecState state, int exitCode, String console) {
+        if (state!=EnumsApi.TaskExecState.ERROR) {
+            throw new IllegalStateException("#307.070 state must be EnumsApi.TaskExecState.ERROR, actual: " +state);
         }
         taskSyncService.getWithSync(taskId, (task) -> {
             if (task==null) {
@@ -270,7 +270,7 @@ public class TaskPersistencer {
             }
             task.setExecState(state.value);
 
-            if (state==EnumsApi.TaskExecState.ERROR || state==EnumsApi.TaskExecState.BROKEN ) {
+            if (state==EnumsApi.TaskExecState.ERROR) {
                 task.setCompleted(true);
                 task.setCompletedOn(System.currentTimeMillis());
                 task.setResultReceived(true);
@@ -296,9 +296,8 @@ public class TaskPersistencer {
             case NONE:
                 resetTask(taskId);
                 break;
-            case BROKEN:
             case ERROR:
-                finishTaskAsBrokenOrError(taskId, state);
+                finishTaskAsError(taskId, state);
                 break;
             case OK:
                 toOkSimple(taskId);

@@ -121,7 +121,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertEquals(Long.valueOf(1L), vertices.get(0).taskId);
 
-        OperationStatusRest status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,1L, EnumsApi.TaskExecState.OK.value);
+        OperationStatusRest status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,1L, EnumsApi.TaskExecState.OK.value, "123###1");
 
         assertEquals(EnumsApi.OperationStatus.OK, status.status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
@@ -133,7 +133,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertTrue(Set.of(21L, 22L).contains(vertices.get(0).taskId));
 
-        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.IN_PROGRESS.value);
+        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.IN_PROGRESS.value, null);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         vertices = execContextGraphTopLevelService.findAllForAssigning(
@@ -144,7 +144,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
 
-        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.BROKEN.value);
+        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.ERROR.value, "123###1");
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         vertices = execContextGraphTopLevelService.findAllForAssigning(Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
@@ -153,7 +153,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
-        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,21L, EnumsApi.TaskExecState.OK.value);
+        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,21L, EnumsApi.TaskExecState.OK.value, "123###1");
 
         vertices = execContextGraphTopLevelService.findAllForAssigning(Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
 
@@ -163,7 +163,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(1).taskId));
         assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(2).taskId));
 
-        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.OK.value);
+        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.OK.value, "123###1");
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
 

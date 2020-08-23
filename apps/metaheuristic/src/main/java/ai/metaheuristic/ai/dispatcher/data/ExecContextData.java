@@ -69,6 +69,7 @@ public class ExecContextData {
 
         public TaskVertex(Long taskId, String taskContextId) {
             this.taskId = taskId;
+            this.taskIdStr = taskId.toString();
             this.taskContextId = taskContextId;
         }
     }

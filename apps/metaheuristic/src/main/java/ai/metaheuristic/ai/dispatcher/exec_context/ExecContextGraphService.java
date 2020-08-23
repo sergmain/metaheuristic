@@ -18,11 +18,14 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +44,6 @@ import org.springframework.stereotype.Service;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -157,7 +159,7 @@ class ExecContextGraphService {
         return graph;
     }
 
-    public ExecContextOperationStatusWithTaskList updateTaskExecStates(ExecContextImpl execContext, ConcurrentHashMap<Long, Integer> taskStates) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecStates(ExecContextImpl execContext, Map<Long, TaskData.TaskState> taskStates) {
         final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList();
         status.status = OperationStatusRest.OPERATION_STATUS_OK;
         if (taskStates.isEmpty()) {
@@ -172,12 +174,14 @@ class ExecContextGraphService {
 
                 // Don't join streams, a side-effect could be occurred
                 tvs.forEach(taskVertex -> {
-                    taskVertex.execState = EnumsApi.TaskExecState.from(taskStates.get(taskVertex.taskId));
-                    if (taskVertex.execState == EnumsApi.TaskExecState.ERROR || taskVertex.execState == EnumsApi.TaskExecState.BROKEN) {
-                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new ExecContextOperationStatusWithTaskList(), EnumsApi.TaskExecState.BROKEN);
-                    }
-                    else if (taskVertex.execState == EnumsApi.TaskExecState.OK) {
-                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new ExecContextOperationStatusWithTaskList(), EnumsApi.TaskExecState.NONE);
+                    TaskData.TaskState taskState = taskStates.get(taskVertex.taskId);
+                    taskVertex.execState = EnumsApi.TaskExecState.from(taskState.execState);
+                    if (taskVertex.execState == EnumsApi.TaskExecState.ERROR || taskVertex.execState == EnumsApi.TaskExecState.OK) {
+                        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(taskState.params);
+                        EnumsApi.TaskExecState toState = (taskVertex.execState == EnumsApi.TaskExecState.ERROR)
+                                ? EnumsApi.TaskExecState.SKIPPED
+                                : EnumsApi.TaskExecState.NONE;
+                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, new ExecContextOperationStatusWithTaskList(), toState, tpy.task.taskContextId);
                     }
                     else if (taskVertex.execState == EnumsApi.TaskExecState.SKIPPED) {
                         // todo 2020-08-16 need to decide what to do here
@@ -192,7 +196,8 @@ class ExecContextGraphService {
         return status;
     }
 
-    public ExecContextOperationStatusWithTaskList updateTaskExecState(ExecContextImpl execContext, Long taskId, int execState) {
+    @SuppressWarnings("StatementWithEmptyBody")
+    public ExecContextOperationStatusWithTaskList updateTaskExecState(ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
         final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList();
         try {
             changeGraph(execContext, graph -> {
@@ -206,13 +211,17 @@ class ExecContextGraphService {
                 if (tv!=null) {
                     tv.execState = EnumsApi.TaskExecState.from(execState);
                     if (tv.execState==EnumsApi.TaskExecState.ERROR) {
-                        setStateForAllChildrenTasksInternal(graph, tv.taskId, status, EnumsApi.TaskExecState.BROKEN);
+                        final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+                        setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.SKIPPED, taskContextId);
                     }
                     else if (tv.execState==EnumsApi.TaskExecState.OK) {
                         setStateForAllChildrenTasksInternal(graph, tv.taskId, status, EnumsApi.TaskExecState.NONE);
                     }
                     else if (tv.execState == EnumsApi.TaskExecState.SKIPPED) {
                         // todo 2020-08-16 need to decide what to do here
+                    }
+                    else if (tv.execState==EnumsApi.TaskExecState.IN_PROGRESS) {
+                        // do nothing
                     }
                 }
             });
@@ -474,7 +483,7 @@ class ExecContextGraphService {
         try {
             return readOnlyGraphListOfTaskVertex(execContext,
                     graph -> graph.vertexSet().stream()
-                            .filter( v -> v.execState == EnumsApi.TaskExecState.BROKEN || v.execState == EnumsApi.TaskExecState.ERROR )
+                            .filter( v -> v.execState == EnumsApi.TaskExecState.ERROR )
                             .collect(Collectors.toList()));
         }
         catch (Throwable th) {
@@ -527,10 +536,10 @@ class ExecContextGraphService {
         }
     }
 
-    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(ExecContextImpl execContext, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsError(ExecContextImpl execContext, Long taskId) {
         try {
             final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-            changeGraph(execContext, graph -> setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.BROKEN));
+            changeGraph(execContext, graph -> setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.ERROR));
             return withTaskList;
         }
         catch (Throwable th) {
@@ -562,10 +571,9 @@ class ExecContextGraphService {
             Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state, @Nullable String taskContextId) {
 
         Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
-        // find and filter a 'mh.finish' vertex, which doesn't have any outgoing edges
-
         String context = taskContextId!=null ? ContextUtils.getWithoutSubContext(taskContextId) : null;
 
+        // find and filter a 'mh.finish' vertex, which doesn't have any outgoing edges
         //noinspection SimplifiableConditionalExpression
         set.stream()
                 .filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty() && (context==null ? true : tv.taskContextId.startsWith(context)))
@@ -579,7 +587,7 @@ class ExecContextGraphService {
                 List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
                         .stream()
                         .filter(o -> parentTaskIds.contains(o.taskId))
-                        .collect(Collectors.toList());;
+                        .collect(Collectors.toList());
 
                 taskIds.forEach(taskWithContext -> {
                     final ExecContextData.TaskVertex v = new ExecContextData.TaskVertex(taskWithContext.taskId, taskWithContext.taskContextId);

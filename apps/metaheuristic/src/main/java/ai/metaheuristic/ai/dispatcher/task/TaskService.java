@@ -83,9 +83,11 @@ public class TaskService {
                     log.warn("#317.020 Task obsolete and was already deleted");
                     return;
                 }
-                taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
+                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+
+                taskPersistencer.finishTaskAsError(task.getId(), EnumsApi.TaskExecState.ERROR);
                 ExecContextOperationStatusWithTaskList execContextOperationStatusWithTaskList =
-                        execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.execContextId, task.id);
+                        execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsSkipped(task.execContextId, tpy.task.taskContextId, task.id);
                 if (execContextOperationStatusWithTaskList ==null) {
                     log.warn("#317.030 ExecContext for this task was already deleted");
                     return;

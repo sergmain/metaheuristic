@@ -131,19 +131,19 @@ public class ExecContextService {
                     "#705.080 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
 
-        // TODO 2019-11-03 need to investigate why without this call nothing is working
         Task t = taskPersistencer.resetTask(task.id);
         if (t==null) {
-            ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.getExecContextId(), task.id);
+            ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsError(task.getExecContextId(), task.id);
             taskPersistencer.updateTasksStateInDb(withTaskList);
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.100 Can't re-run task #" + taskId + ", see log for more information");
             }
         }
         else {
+//            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
             ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(task.execContextId, task.id);
             if (withTaskList == null) {
-                taskPersistencer.finishTaskAsBrokenOrError(taskId, EnumsApi.TaskExecState.BROKEN);
+                taskPersistencer.finishTaskAsError(taskId, EnumsApi.TaskExecState.ERROR);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#705.120 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any execContext");
             }
@@ -341,6 +341,7 @@ public class ExecContextService {
 
         int page = 0;
         TaskImpl resultTask = null;
+        String resultTaskContextId = null;
         String resultTaskParams = null;
         List<TaskImpl> tasks;
         while ((tasks = getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, vertices, page++)).size()>0) {
@@ -351,7 +352,7 @@ public class ExecContextService {
                 }
                 catch (YAMLException e) {
                     log.error("#705.420 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
+                    taskPersistencer.finishTaskAsError(task.getId(), EnumsApi.TaskExecState.ERROR);
                     continue;
                 }
                 if (task.execState!=EnumsApi.TaskExecState.NONE.value) {
@@ -409,6 +410,7 @@ public class ExecContextService {
                 resultTask = task;
                 try {
                     TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                    resultTaskContextId = tpy.task.taskContextId;
                     resultTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, ss.taskParamsVersion);
                 } catch (DowngradeNotSupportedException e) {
                     log.warn("#705.540 Task #{} can't be assigned to processor #{} because it's too old, downgrade to required taskParams level {} isn't supported",
@@ -442,7 +444,7 @@ public class ExecContextService {
         resultTask.setResultResourceScheduledOn(0);
         taskRepository.save(resultTask);
 
-        execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
+        execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value, null);
         dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processor.getId(), resultTask.getId(), execContextId);
 
         return assignedTaskComplex;
@@ -480,7 +482,8 @@ public class ExecContextService {
             ids.add(result.taskId);
             taskPersistencer.storeExecResult(result, t -> {
                 if (t!=null) {
-                    execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState());
+                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
+                    execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), tpy.task.taskContextId);
                 }
             });
         }

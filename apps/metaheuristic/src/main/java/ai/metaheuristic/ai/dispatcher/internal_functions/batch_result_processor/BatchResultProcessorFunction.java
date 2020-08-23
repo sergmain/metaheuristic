@@ -422,7 +422,6 @@ public class BatchResultProcessorFunction implements InternalFunction {
                         ,'\n');
                 return true;
             case ERROR:
-            case BROKEN:
                 FunctionApiData.FunctionExec functionExec;
                 try {
                     functionExec = FunctionExecUtils.to(task.getFunctionExecResults());

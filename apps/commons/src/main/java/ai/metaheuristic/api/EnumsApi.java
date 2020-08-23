@@ -292,7 +292,7 @@ public class EnumsApi {
         }
     }
 
-    public enum TaskExecState { NONE(0), IN_PROGRESS(1), ERROR(2), OK(3), BROKEN(4), SKIPPED(5);
+    public enum TaskExecState { NONE(0), IN_PROGRESS(1), ERROR(2), OK(3), NOT_USED_ANYMORE(4), SKIPPED(5);
 
         public final int value;
         TaskExecState(int value) {
@@ -310,7 +310,7 @@ public class EnumsApi {
                 case 3:
                     return OK;
                 case 4:
-                    return BROKEN;
+                    return ERROR;
                 case 5:
                     return SKIPPED;
                 default:
@@ -323,8 +323,7 @@ public class EnumsApi {
         }
 
         public static boolean isFinishedState(TaskExecState state) {
-            return state==EnumsApi.TaskExecState.OK || state==EnumsApi.TaskExecState.BROKEN ||
-                    state==EnumsApi.TaskExecState.ERROR || state==EnumsApi.TaskExecState.SKIPPED;
+            return state==EnumsApi.TaskExecState.OK || state==EnumsApi.TaskExecState.ERROR || state==EnumsApi.TaskExecState.SKIPPED;
         }
     }
 
