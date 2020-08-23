@@ -31,6 +31,6 @@ public class ContextUtils {
 
     public static String getWithoutSubContext(String taskContextId) {
         int idx = taskContextId.indexOf(CONTEXT_SEPARATOR);
-        return idx==-1 ?  taskContextId : taskContextId.substring(idx + CONTEXT_SEPARATOR.length());
+        return idx==-1 ?  taskContextId : taskContextId.substring(0, idx);
     }
 }
