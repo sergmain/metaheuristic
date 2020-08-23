@@ -34,4 +34,11 @@ public class TaskApiData {
     public static class ListOfTasksResult extends BaseDataClass {
         public List<Task> items;
     }
+
+    @Data
+    @AllArgsConstructor
+    public static class TaskWithContext {
+        public Long taskId;
+        public String taskContextId;
+    }
 }

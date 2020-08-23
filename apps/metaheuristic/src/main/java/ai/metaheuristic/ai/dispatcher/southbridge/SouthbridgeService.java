@@ -117,7 +117,7 @@ public class SouthbridgeService {
                 () -> getAbstractDataResponseEntity(chunkSize, chunkNum, binaryType, dataId));
     }
 
-    public UploadResult uploadVariable(MultipartFile file, Long taskId, Long variableId) {
+    public UploadResult uploadVariable(MultipartFile file, Long taskId, @Nullable Long variableId) {
         String originFilename = file.getOriginalFilename();
         if (StringUtils.isBlank(originFilename)) {
             return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
@@ -176,7 +176,7 @@ public class SouthbridgeService {
                 : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+ variable.getId()+"");
     }
 
-    private CleanerInfo getAbstractDataResponseEntity(String chunkSize, int chunkNum, EnumsApi.DataType binaryType, String dataId) {
+    private CleanerInfo getAbstractDataResponseEntity(@Nullable String chunkSize, int chunkNum, EnumsApi.DataType binaryType, String dataId) {
 
         AssetFile assetFile;
         BiConsumer<String, File> dataSaver;
@@ -324,7 +324,7 @@ public class SouthbridgeService {
     }
 
     private boolean isProcessorContextNeedToBeChanged(DispatcherCommParamsYaml lcpy) {
-        return lcpy!=null && (lcpy.reAssignedProcessorId !=null || lcpy.assignedProcessorId !=null);
+        return lcpy.reAssignedProcessorId !=null || lcpy.assignedProcessorId !=null;
     }
 
     private void setDispatcherCommContext(DispatcherCommParamsYaml lcpy) {

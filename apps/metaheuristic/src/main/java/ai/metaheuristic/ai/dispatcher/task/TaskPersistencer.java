@@ -243,30 +243,20 @@ public class TaskPersistencer {
 
     @Nullable
     public TaskImpl toInProgressSimple(Long taskId) {
-        return taskSyncService.getWithSync(taskId, (task) -> toInProgressSimpleLambda(taskId, task));
+        return taskSyncService.getWithSync(taskId, this::toInProgressSimpleLambda);
     }
 
     @Nullable
     public TaskImpl toSkippedSimple(Long taskId) {
-        return taskSyncService.getWithSync(taskId, (task) -> toSkippedSimpleLambda(taskId, task));
+        return taskSyncService.getWithSync(taskId, this::toSkippedSimpleLambda);
     }
 
-    @Nullable
-    public TaskImpl toInProgressSimpleLambda(Long taskId, TaskImpl task) {
-        if (task==null) {
-            log.warn("#307.100 Can't find Task for Id: {}", taskId);
-            return null;
-        }
+    public TaskImpl toInProgressSimpleLambda(TaskImpl task) {
         task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         return taskRepository.save(task);
     }
 
-    @Nullable
-    public TaskImpl toSkippedSimpleLambda(Long taskId, TaskImpl task) {
-        if (task==null) {
-            log.warn("#307.100 Can't find Task for Id: {}", taskId);
-            return null;
-        }
+    private TaskImpl toSkippedSimpleLambda(TaskImpl task) {
         task.setExecState(EnumsApi.TaskExecState.SKIPPED.value);
         return taskRepository.save(task);
     }

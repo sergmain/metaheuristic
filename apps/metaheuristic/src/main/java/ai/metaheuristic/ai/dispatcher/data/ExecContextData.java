@@ -50,19 +50,26 @@ public class ExecContextData {
         public Long taskId;
         public String taskIdStr;
         public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
+        public String taskContextId;
 
         public TaskVertex(Long taskId) {
             this.taskId = taskId;
             this.taskIdStr = taskId.toString();
         }
 
-        public TaskVertex(Long taskId, Long taskIdLong, EnumsApi.TaskExecState execState) {
+        public TaskVertex(Long taskId, Long taskIdLong, EnumsApi.TaskExecState execState, String taskContextId) {
             if (!taskId.equals(taskIdLong)) {
                 throw new IllegalStateException("(!taskId.equals(taskIdLong))");
             }
             this.taskId = taskId;
             this.taskIdStr = taskIdLong.toString();
             this.execState = execState;
+            this.taskContextId = taskContextId;
+        }
+
+        public TaskVertex(Long taskId, String taskContextId) {
+            this.taskId = taskId;
+            this.taskContextId = taskContextId;
         }
     }
 

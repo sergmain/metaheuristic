@@ -52,7 +52,6 @@ public class ExecContextTopLevelService {
 
     private final ExecContextCache execContextCache;
     private final ExecContextService execContextService;
-    private final ExecContextGraphService execContextGraphService;
     private final SourceCodeCache sourceCodeCache;
     private final DispatcherParamsService dispatcherParamsService;
     private final TaskService taskService;
@@ -191,9 +190,6 @@ public class ExecContextTopLevelService {
     }
 
     public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
-        if (execContextId==null) {
-            return new SourceCodeApiData.ExecContextResult("#705.160 execContextId is null");
-        }
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
             return new SourceCodeApiData.ExecContextResult("#705.180 execContext wasn't found, execContextId: " + execContextId);

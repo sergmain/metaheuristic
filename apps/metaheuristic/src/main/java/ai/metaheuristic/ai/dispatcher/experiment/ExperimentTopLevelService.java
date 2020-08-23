@@ -32,6 +32,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +42,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.Objects;
@@ -102,7 +102,7 @@ public class ExperimentTopLevelService {
         return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment));
     }
 
-    public ExperimentApiData.ExperimentsEditResult editExperiment(@PathVariable Long id) {
+    public ExperimentApiData.ExperimentsEditResult editExperiment(Long id) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             return new ExperimentApiData.ExperimentsEditResult("#285.100 experiment wasn't found, experimentId: " + id);
@@ -249,7 +249,7 @@ public class ExperimentTopLevelService {
     }
 
     public EnumsApi.ExecContextState getExperimentProcessingStatus(String experimentCode) {
-        if (experimentCode==null || experimentCode.isBlank()) {
+        if (S.b(experimentCode)) {
             return EnumsApi.ExecContextState.UNKNOWN;
         }
         Experiment experiment = experimentRepository.findByCode(experimentCode);
@@ -268,7 +268,7 @@ public class ExperimentTopLevelService {
     }
 
     private OperationStatusRest changeExecStateTo(String experimentCode, EnumsApi.ExecContextState execState, Long companyUniqueId) {
-        if (experimentCode==null || experimentCode.isBlank()) {
+        if (S.b(experimentCode)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.550 experiment code is blank");
         }
         Experiment experiment = experimentRepository.findByCode(experimentCode);

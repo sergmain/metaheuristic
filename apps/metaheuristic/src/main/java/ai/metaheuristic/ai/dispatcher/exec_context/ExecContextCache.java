@@ -41,14 +41,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExecContextCache {
 
-    private final @NonNull ExecContextRepository execContextRepository;
+    private final ExecContextRepository execContextRepository;
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
     public void clearCache() {
     }
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
-    public @NonNull ExecContextImpl save(@NonNull ExecContextImpl execContext) {
+    public ExecContextImpl save(ExecContextImpl execContext) {
         log.debug("#461.010 save execContext, id: #{}, execContext: {}", execContext.id, execContext);
         //noinspection CaughtExceptionImmediatelyRethrown
         try {
@@ -59,7 +59,7 @@ public class ExecContextCache {
     }
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")
-    public void delete(@NonNull ExecContextImpl execContext) {
+    public void delete(ExecContextImpl execContext) {
         try {
             execContextRepository.deleteById(execContext.id);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -74,9 +74,6 @@ public class ExecContextCache {
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void delete(Long execContextId) {
-        if (execContextId ==null) {
-            return;
-        }
         try {
             execContextRepository.deleteById(execContextId);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -86,9 +83,6 @@ public class ExecContextCache {
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void deleteById(Long execContextId) {
-        if (execContextId ==null) {
-            return;
-        }
         try {
             execContextRepository.deleteById(execContextId);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -96,8 +90,9 @@ public class ExecContextCache {
         }
     }
 
+    @Nullable
     @Cacheable(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, unless="#result==null")
-    public @Nullable ExecContextImpl findById(@NonNull Long id) {
+    public ExecContextImpl findById(Long id) {
         return execContextRepository.findById(id).orElse(null);
     }
 }

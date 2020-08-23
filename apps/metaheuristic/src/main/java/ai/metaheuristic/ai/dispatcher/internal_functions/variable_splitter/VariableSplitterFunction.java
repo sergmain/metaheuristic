@@ -24,6 +24,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
@@ -50,8 +51,9 @@ public class VariableSplitterFunction implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            TaskParamsYaml taskParamsYaml) {
+            @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
+            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            @NonNull TaskParamsYaml taskParamsYaml) {
 
         log.debug("#055.020 VariableSplitter function was invoked");
         return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);

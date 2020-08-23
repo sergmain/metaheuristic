@@ -65,7 +65,7 @@ public class SouthbridgeController {
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             String id, String chunkSize, Integer chunkNum) {
         log.debug("deliverResourceAuth(), id: {}, chunkSize: {}, chunkNum: {}", id, chunkSize, chunkNum);
-        if (chunkSize==null || chunkSize.isBlank() || chunkNum==null) {
+        if (chunkSize.isBlank()) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
         }
 

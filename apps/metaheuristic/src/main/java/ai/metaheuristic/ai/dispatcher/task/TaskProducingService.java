@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
@@ -24,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphServic
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -126,9 +127,9 @@ public class TaskProducingService {
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
         if (isPersist) {
-            // for external Functions internalContextId==process.internalContextId
             try {
-                Task t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
+                // for external Functions internalContextId==process.internalContextId
+                TaskImpl t = taskProducingCoreService.createTaskInternal(execContextId, execContextParamsYaml, process, process.internalContextId,
                         execContextParamsYaml.variables.inline);
                 if (t == null) {
                     result.status = TaskProducingStatus.TASK_PRODUCING_ERROR;
@@ -136,7 +137,8 @@ public class TaskProducingService {
                     return result;
                 }
                 result.taskId = t.getId();
-                execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, List.of(t.getId()));
+                List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));
+                execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, taskWithContexts);
             } catch (TaskCreationException e) {
                 result.status = TaskProducingStatus.TASK_PRODUCING_ERROR;
                 result.error = "#375.100 task creation error " + e.getMessage();

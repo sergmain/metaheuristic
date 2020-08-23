@@ -567,9 +567,6 @@ public class ExecContextService {
 
     @Nullable
     private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
-        if (execContextId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 execContextId is null");
-        }
         ExecContext wb = execContextCache.findById(execContextId);
         if (wb==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 ExecContext wasn't found, execContextId: " + execContextId );

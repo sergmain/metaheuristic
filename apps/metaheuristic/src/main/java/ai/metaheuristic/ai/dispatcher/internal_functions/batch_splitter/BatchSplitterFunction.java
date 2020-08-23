@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_splitter;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -30,9 +29,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelServi
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingCoreService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -45,6 +41,7 @@ import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
@@ -60,6 +57,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -88,13 +86,9 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @RequiredArgsConstructor
 public class BatchSplitterFunction implements InternalFunction {
 
-    private final Globals globals;
     private final SourceCodeCache sourceCodeCache;
-    private final VariableRepository variableRepository;
     private final VariableService variableService;
     private final ExecContextCache execContextCache;
-    private final IdsRepository idsRepository;
-    private final GlobalVariableRepository globalVariableRepository;
     private final TaskProducingCoreService taskProducingCoreService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionVariableService internalFunctionVariableService;
@@ -110,18 +104,10 @@ public class BatchSplitterFunction implements InternalFunction {
     }
 
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId, ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            TaskParamsYaml taskParamsYaml) {
+            @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
+            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            @NonNull TaskParamsYaml taskParamsYaml) {
 
-/*
-        if (taskParamsYaml.task.inputs.isEmpty()) {
-            throw new IllegalStateException("Input variable wasn't specified");
-        }
-        if (taskParamsYaml.task.inputs.size()>1) {
-            throw new IllegalStateException("Too many input variables");
-        }
-        TaskParamsYaml.InputVariable inputVariable = taskParamsYaml.task.inputs.get(0);
-*/
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
         if (S.b(inputVariableName)) {
@@ -145,7 +131,7 @@ public class BatchSplitterFunction implements InternalFunction {
 
         String ext = StrUtils.getExtension(originFilename);
 
-        File tempDir=DirUtils.createTempDir("batch-file-upload-");;
+        File tempDir=DirUtils.createTempDir("batch-file-upload-");
         try {
             if (tempDir==null || tempDir.isFile()) {
                 String es = "#995.080 can't create temporary directory in " + System.getProperty("java.io.tmpdir");
@@ -311,9 +297,9 @@ public class BatchSplitterFunction implements InternalFunction {
             if (t==null) {
                 throw new BreakFromLambdaException("#995.380 Creation of task failed");
             }
-            List<Long> currTaskIds = List.of(t.getId());
+            List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
             execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, currTaskIds);
-            parentTaskIds = currTaskIds;
+            parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;
         }
 

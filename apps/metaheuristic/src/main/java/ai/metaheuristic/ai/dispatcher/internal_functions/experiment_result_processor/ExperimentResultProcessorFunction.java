@@ -28,6 +28,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 /**
@@ -55,8 +56,8 @@ public class ExperimentResultProcessorFunction implements InternalFunction {
 
     @Override
     public InternalFunctionData.InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
-            ExecContextParamsYaml.VariableDeclaration variableDeclaration, TaskParamsYaml taskParamsYaml) {
+            @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
+            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml) {
 
         try {
             OperationStatusRest status = experimentResultService.storeExperimentToExperimentResult(execContextId, taskParamsYaml);

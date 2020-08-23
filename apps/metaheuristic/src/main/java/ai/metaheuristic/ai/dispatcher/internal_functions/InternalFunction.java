@@ -39,6 +39,6 @@ public interface InternalFunction {
 
     InternalFunctionData.InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
-            @Nullable ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
             TaskParamsYaml taskParamsYaml);
 }

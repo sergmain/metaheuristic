@@ -59,6 +59,7 @@ import static ai.metaheuristic.commons.CommonConsts.EVENT_DATE_TIME_FORMATTER;
  * Date: 10/14/2019
  * Time: 5:34 PM
  */
+@SuppressWarnings("DuplicatedCode")
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -89,7 +90,7 @@ public class DispatcherEventService {
         if (!globals.isEventEnabled) {
             return;
         }
-        if (event== EnumsApi.DispatcherEventType.BATCH_CREATED && (batchId==null || dispatcherContext ==null)) {
+        if (event==EnumsApi.DispatcherEventType.BATCH_CREATED && (batchId==null || dispatcherContext ==null)) {
             throw new IllegalStateException("Error (event==Enums.DispatcherEventType.BATCH_CREATED && (batchId==null || dispatcherContext==null))");
         }
         DispatcherEventYaml.BatchEventData batchEventData = new DispatcherEventYaml.BatchEventData();

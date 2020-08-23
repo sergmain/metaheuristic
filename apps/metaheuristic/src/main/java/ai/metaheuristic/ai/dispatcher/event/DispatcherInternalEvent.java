@@ -63,9 +63,8 @@ public class DispatcherInternalEvent {
 
     @EqualsAndHashCode(of = "execContextId")
     public static class ExecContextDeletionListener implements ApplicationListener<ExecContextDeletionEvent> {
-        private long execContextId;
-
-        private Consumer<Long> consumer;
+        private final long execContextId;
+        private final Consumer<Long> consumer;
 
         public ExecContextDeletionListener(long execContextId, Consumer<Long> consumer) {
             this.execContextId = execContextId;

@@ -38,7 +38,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
-import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -80,6 +79,7 @@ import java.util.function.BiFunction;
  * Date: 4/19/2020
  * Time: 8:06 PM
  */
+@SuppressWarnings("unused")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -113,8 +113,8 @@ public class BatchResultProcessorFunction implements InternalFunction {
     @SneakyThrows
     @Override
     public InternalFunctionData.InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
-            ExecContextParamsYaml.VariableDeclaration variableDeclaration, TaskParamsYaml taskParamsYaml) {
+            @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
+            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml) {
 
 //        - batch-items: var-processed-file, var-processing-status
 //        - batch-result: var-batch-result

@@ -38,6 +38,7 @@ import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -51,6 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
@@ -90,9 +92,9 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
 
     @Override
     public InternalFunctionProcessingResult process(
-            Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
-            ExecContextParamsYaml.VariableDeclaration variableDeclaration,
-            TaskParamsYaml taskParamsYaml) {
+            @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
+            @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration,
+            @NonNull TaskParamsYaml taskParamsYaml) {
 
         if (CollectionUtils.isNotEmpty(taskParamsYaml.task.inputs)) {
             log.warn("List of input variables isn't empty");
@@ -196,7 +198,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     }
 
     /**
-     *  @param permutedVariables
+     * @param permutedVariables
      * @param execContextId
      * @param execContextParamsYaml
      * @param subProcesses
@@ -231,9 +233,9 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
             if (t==null) {
                 throw new BreakFromLambdaException("Creation of task failed");
             }
-            List<Long> currTaskIds = List.of(t.getId());
+            List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
             execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, currTaskIds);
-            parentTaskIds = currTaskIds;
+            parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;
         }
 

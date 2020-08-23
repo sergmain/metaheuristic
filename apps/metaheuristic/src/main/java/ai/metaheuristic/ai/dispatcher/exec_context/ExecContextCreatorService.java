@@ -115,9 +115,6 @@ public class ExecContextCreatorService {
      * @return ExecContextCreationResult
      */
     public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
-        if (sourceCode==null) {
-            return new ExecContextCreationResult("#560.006 source code wasn't found");
-        }
         // validate the sourceCode
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
         if (sourceCodeValidation.status.status != EnumsApi.SourceCodeValidateStatus.OK) {

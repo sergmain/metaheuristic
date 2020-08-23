@@ -50,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Date: 3/15/2020
  * Time: 10:58 PM
  */
+@SuppressWarnings("unused")
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -87,11 +88,7 @@ public class TaskWithInternalContextEventService {
                         log.error("#707.015 Task #"+event.taskId+" already was finished");
                         return null;
                     }
-                    task = taskPersistencer.toInProgressSimpleLambda(event.taskId, task);
-                    if (task == null) {
-                        log.warn("#707.020 Task #" + event.taskId + " wasn't found");
-                        return null;
-                    }
+                    task = taskPersistencer.toInProgressSimpleLambda(task);
                     ExecContextImpl execContext = execContextCache.findById(task.execContextId);
                     if (execContext == null) {
                         taskPersistencer.finishTaskAsBrokenOrError(event.taskId, EnumsApi.TaskExecState.BROKEN, -10000,
@@ -127,7 +124,6 @@ public class TaskWithInternalContextEventService {
                         ExecContextOperationStatusWithTaskList s =
                                 execContextGraphTopLevelService.updateTaskExecStates(task.execContextId, new ConcurrentHashMap<>(Map.of(task.id, EnumsApi.TaskExecState.BROKEN.value)));
 
-                        //noinspection unused
                         ExecContextOperationStatusWithTaskList status =
                                 execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsBroken(task.execContextId, task.id);
                         return null;
