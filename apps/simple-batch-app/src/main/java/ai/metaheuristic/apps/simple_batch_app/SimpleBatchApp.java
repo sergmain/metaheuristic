@@ -17,6 +17,10 @@ package ai.metaheuristic.apps.simple_batch_app;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.StrUtils;
+import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
+import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYamlUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
@@ -102,6 +106,13 @@ public class SimpleBatchApp implements CommandLineRunner {
 
         FileUtils.copyFile(sourceFile, processedFile);
         FileUtils.write(processingStatusFile, "File "+variable.realName+" was processed successfully", StandardCharsets.UTF_8);
+
+        BatchItemMappingYaml bimy = new BatchItemMappingYaml();
+        bimy.targetDir = S.b(variable.realName) ? "dir-" + variable.id : StrUtils.getName(variable.realName);
+        bimy.realNames.put(variable.id, variable.realName);
+
+        String mapping = BatchItemMappingYamlUtils.BASE_YAML_UTILS.toString(bimy);
+        FileUtils.write(mappingFile, mapping, StandardCharsets.UTF_8);
     }
 
     public String getOutputFileForType(TaskFileParamsYaml params, String type) {

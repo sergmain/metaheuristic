@@ -55,7 +55,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask> {
 
-    private static ObjectMapper mapper;
+    private static final ObjectMapper mapper;
 
     static {
         mapper = new ObjectMapper();
@@ -67,7 +67,6 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
     private static UploadResult fromJson(String json) {
         try {
-            //noinspection UnnecessaryLocalVariable
             UploadResult result = mapper.readValue(json, UploadResult.class);
             return result;
         } catch (IOException e) {
