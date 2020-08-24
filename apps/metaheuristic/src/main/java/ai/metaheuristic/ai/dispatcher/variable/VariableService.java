@@ -185,7 +185,7 @@ public class VariableService {
 
     @Transactional(readOnly = true)
     public List<SimpleVariable> getSimpleVariablesInExecContext(Long execContextId, String ... variables) {
-        if (variables==null || variables.length==0) {
+        if (variables.length==0) {
             return List.of();
         }
         return variableRepository.getIdAndStorageUrlInVarsForExecContext(execContextId, variables);
@@ -305,6 +305,6 @@ public class VariableService {
     }
 
     public Set<String> findAllByExecContextIdAndVariableNames(Long execContextId, Set<String> vars) {
-        return variableRepository.findAllByExecContextIdAndVariableNames(execContextId, vars);
+        return variableRepository.findTaskContextIdsByExecContextIdAndVariableNames(execContextId, vars);
     }
 }

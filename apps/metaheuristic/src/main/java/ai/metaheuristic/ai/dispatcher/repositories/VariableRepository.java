@@ -29,6 +29,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Blob;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,8 +44,8 @@ import java.util.Set;
 public interface VariableRepository extends CrudRepository<Variable, Long> {
 
     @Transactional(readOnly = true)
-    @Query("SELECT v FROM Variable v where v.execContextId=:execContextId and v.name in (:names)")
-    Set<String> findAllByExecContextIdAndVariableNames(Long execContextId, Set<String> names);
+    @Query("SELECT v.taskContextId FROM Variable v where v.execContextId=:execContextId and v.name in (:names)")
+    Set<String> findTaskContextIdsByExecContextIdAndVariableNames(Long execContextId, Set<String> names);
 
     @Transactional(readOnly = true)
     @Query(nativeQuery = true, value =
@@ -54,7 +55,12 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
             "from Variable v where v.name in :vars and v.execContextId=:execContextId")
-    List<SimpleVariable> findByExecContextIdAndNames(Long execContextId, List<String> vars);
+    List<SimpleVariable> findByExecContextIdAndNames(Long execContextId, Collection<String> vars);
+
+    @Transactional(readOnly = true)
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
+            "from Variable v where v.execContextId=:execContextId")
+    List<SimpleVariable> findByExecContextId(Long execContextId);
 
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId) " +
@@ -105,8 +111,4 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
 
     @Transactional
     void deleteByName(String variable);
-
-    @Transactional(readOnly = true)
-    @Query(value="select b.id from Variable b")
-    List<Long> getAllIds();
 }

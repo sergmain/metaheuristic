@@ -77,6 +77,7 @@ public class Variable implements Serializable {
     @Transient
     public byte[] bytes;
 
+    // ai.metaheuristic.api.data_storage.DataStorageParams is here
     @Column(name = "PARAMS")
     public String params;
 

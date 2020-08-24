@@ -51,11 +51,6 @@ public class TaskParamsYaml implements BaseParams {
         if (S.b(task.processCode)) {
             throw new CheckIntegrityFailedException("processCode is blank");
         }
-/*
-        if (task.function==null) {
-
-        }
-*/
         if (task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file)) {
             throw new CheckIntegrityFailedException("(task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file))");
         }
