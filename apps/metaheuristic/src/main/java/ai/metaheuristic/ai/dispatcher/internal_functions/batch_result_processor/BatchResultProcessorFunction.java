@@ -261,6 +261,11 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
     private void storeResultVariables(File zipDir, Long execContextId, ItemWithStatusWithMapping item) {
 
+        if (item.mapping==null || item.status==null || item.item==null) {
+            log.error(S.f("TaskContextId #%s has been skipped, ItemWithStatusWithMapping: %s", item.taskContextId, item));
+            return;
+        }
+
         String resultDirName;
         BatchItemMappingYaml bimy = new BatchItemMappingYaml();
         bimy.targetDir = getResultDirNameFromTaskContextId(item.taskContextId);

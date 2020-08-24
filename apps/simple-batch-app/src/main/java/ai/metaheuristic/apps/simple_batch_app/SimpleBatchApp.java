@@ -90,9 +90,12 @@ public class SimpleBatchApp implements CommandLineRunner {
         File sourceFile = Path.of(params.task.workingPath, variable.dataType.toString(), variable.id).toFile();
 
 
-        String processedFilename = getOutputFileForType(params, "batch-item-processed-file");
-        String processingStatusFilename = getOutputFileForType(params, "batch-item-processing-status");
-        String mappingFilename = getOutputFileForType(params, "batch-item-mapping");
+        TaskFileParamsYaml.OutputVariable processedVar = getOutputFileForType(params, "batch-item-processed-file");
+        String processedFilename = processedVar.id;
+        TaskFileParamsYaml.OutputVariable processingStatusVar = getOutputFileForType(params, "batch-item-processing-status");
+        String processingStatusFilename = processingStatusVar.id;
+        TaskFileParamsYaml.OutputVariable mappingVar = getOutputFileForType(params, "batch-item-mapping");
+        String mappingFilename = mappingVar.id;
 
         System.out.println("processedFilename: " + processedFilename);
         System.out.println("processingStatusFilename: " + processingStatusFilename);
@@ -109,17 +112,16 @@ public class SimpleBatchApp implements CommandLineRunner {
 
         BatchItemMappingYaml bimy = new BatchItemMappingYaml();
         bimy.targetDir = S.b(variable.realName) ? "dir-" + variable.id : StrUtils.getName(variable.realName);
-        bimy.realNames.put(variable.id, variable.realName);
+        bimy.realNames.put(processedVar.id, variable.realName);
 
         String mapping = BatchItemMappingYamlUtils.BASE_YAML_UTILS.toString(bimy);
         FileUtils.write(mappingFile, mapping, StandardCharsets.UTF_8);
     }
 
-    public String getOutputFileForType(TaskFileParamsYaml params, String type) {
+    public TaskFileParamsYaml.OutputVariable getOutputFileForType(TaskFileParamsYaml params, String type) {
         return params.task.outputs
                     .stream()
                     .filter(o-> type.equals(o.type))
-                    .map(o->o.id.toString())
                     .findFirst()
                     .orElseThrow();
     }
