@@ -423,11 +423,14 @@ public class BatchTopLevelService {
             return null;
         }
 
-        String filename = outputFilenameFunction.apply(batch.execContextId, scpy);
+        String filename = variable.originalFilename;
         if (S.b(filename)) {
-            final String es = "#995.340 Can't find filename for file";
-            log.warn(es);
-            return null;
+            filename = outputFilenameFunction.apply(batch.execContextId, scpy);
+            if (S.b(filename)) {
+                final String es = "#995.340 Can't find filename for file";
+                log.warn(es);
+                return null;
+            }
         }
 
         File zipFile = new File(resultDir, Consts.RESULT_ZIP);
