@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.api.EnumsApi;
@@ -51,7 +50,6 @@ public class ExecContextSchedulerService {
     private final ExecContextService execContextService;
     private final ExecContextRepository execContextRepository;
     private final TaskRepository taskRepository;
-    private final ExperimentResultService experimentResultService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
 
@@ -60,27 +58,6 @@ public class ExecContextSchedulerService {
         for (ExecContextImpl execContext : execContexts) {
             updateExecContextStatus(execContext.id, needReconciliation);
         }
-
-/*
-        List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.EXPORTING_TO_EXPERIMENT_RESULT.code);
-        for (Long execContextId : execContextIds) {
-            log.info("Start exporting execContext #{} to ExperimentResult", execContextId);
-            OperationStatusRest status;
-            try {
-                status = experimentResultService.storeExperimentToExperimentResult(execContextId);
-            } catch (Exception e) {
-                execContextFSM.toError(execContextId);
-                continue;
-            }
-
-            if (status.status==EnumsApi.OperationStatus.OK) {
-                log.info("Exporting of execContext #{} was finished", execContextId);
-            } else {
-                execContextFSM.toError(execContextId);
-                log.error("#751.020 Error exporting experiment to ExperimentResult, execContextId #{}\n{}", execContextId, status.getErrorMessagesAsStr());
-            }
-        }
-*/
     }
 
     /**

@@ -18,15 +18,15 @@ package ai.metaheuristic.ai;
 import ai.metaheuristic.ai.dispatcher.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.RoundRobinForDispatcher;
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
-import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
+import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.processor.*;
-import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
+import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -54,7 +54,6 @@ public class Schedulers {
         private final ExecContextSchedulerService execContextSchedulerService;
         private final SourceCodeService sourceCodeService;
         private final ArtifactCleanerAtDispatcher artifactCleanerAtDispatcher;
-        private final ExperimentService experimentService;
         private final BatchService batchService;
         private final ReplicationService replicationService;
 
@@ -74,6 +73,12 @@ public class Schedulers {
             if (!globals.dispatcherEnabled) {
                 return;
             }
+            // if this dispatcher is source of assets then don't do any update of execContext
+            // because this dispatcher isn't processing any tasks
+            if (globals.assetMode==EnumsApi.DispatcherAssetMode.source) {
+                return;
+            }
+
             log.info("Invoking ExecContextService.updateExecContextStatuses()");
             boolean needReconciliation = false;
             try {
@@ -146,7 +151,7 @@ public class Schedulers {
             log.warn("Memory after GC. Free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
         }
 
-        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.asset.sync-timeout'), 30, 3600, 120)*1000 }")
+        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.asset.sync-timeout'), 60, 3600, 120)*1000 }")
         public void syncReplication() {
             if (globals.isUnitTesting) {
                 return;
