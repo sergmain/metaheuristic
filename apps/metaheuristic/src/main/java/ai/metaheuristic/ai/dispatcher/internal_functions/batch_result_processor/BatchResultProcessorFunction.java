@@ -147,13 +147,6 @@ public class BatchResultProcessorFunction implements InternalFunction {
             @NonNull Long sourceCodeId, @NonNull Long execContextId, @NonNull Long taskId, @NonNull String taskContextId,
             @NonNull ExecContextParamsYaml.VariableDeclaration variableDeclaration, @NonNull TaskParamsYaml taskParamsYaml) {
 
-//        - name: var-processed-file-1
-//          type: batch-item-processed-file
-//        - name: var-processing-status-1
-//          type: batch-item-processing-status
-//        - name: var-item-mapping-1
-//          type: batch-item-mapping
-
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec==null) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.exec_context_not_found,
@@ -457,8 +450,8 @@ public class BatchResultProcessorFunction implements InternalFunction {
     }
 
     public boolean prepareStatus(BiFunction<BatchService.PrepareZipData, File, Boolean> prepareZip, @Nullable File zipDir, BatchStatusProcessor bs, Long execContextId) {
-        ExecContextImpl wb = execContextCache.findById(execContextId);
-        if (wb == null) {
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec == null) {
             String msg = "#993.200 ExecContext #" + execContextId + " wasn't found";
             bs.getGeneralStatus().add(msg, '\n');
             log.warn(msg);
@@ -477,14 +470,14 @@ public class BatchResultProcessorFunction implements InternalFunction {
             bs.getGeneralStatus().add(msg, '\n');
             return false;
         }
-        final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getSourceCodeId());
+        final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(ec.getSourceCodeId());
 */
 
         List<ExecContextData.TaskVertex> taskVertices;
         try {
-            taskVertices = execContextGraphTopLevelService.findLeafs(wb);
+            taskVertices = execContextGraphTopLevelService.findLeafs(ec);
         } catch (ObjectOptimisticLockingFailureException e) {
-            String msg = "#993.220 Can't find tasks for execContextId #" + wb.getId() + ", error: " + e.getMessage();
+            String msg = "#993.220 Can't find tasks for execContextId #" + ec.getId() + ", error: " + e.getMessage();
             log.warn(msg);
             bs.getGeneralStatus().add(msg,'\n');
             return false;
@@ -497,7 +490,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         }
         if (taskVertices.size() > 1) {
             String msg = "#993.260 " + mainDocument + ", Can't download file because there are more than one task " +
-                    "at the final state, execContextId: " + execContextId + ", execContextId: " + wb.getId();
+                    "at the final state, execContextId: " + execContextId + ", execContextId: " + ec.getId();
             log.info(msg);
             bs.getGeneralStatus().add(msg,'\n');
             return false;
@@ -520,7 +513,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
             case NONE:
             case IN_PROGRESS:
                 bs.getProgressStatus().add("#993.300 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                                ", execContextId: " + wb.getId() + ", " +
+                                ", execContextId: " + ec.getId() + ", " +
                                 "taskId: " + task.getId() + ", processorId: " + task.getProcessorId() +
                                 ", " + processorIpAndHost
                         ,'\n');
@@ -531,17 +524,17 @@ public class BatchResultProcessorFunction implements InternalFunction {
                     functionExec = FunctionExecUtils.to(task.getFunctionExecResults());
                 } catch (YAMLException e) {
                     bs.getGeneralStatus().add("#993.320 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                            ", execContextId: " + wb.getId() + ", " +
+                            ", execContextId: " + ec.getId() + ", " +
                             "taskId: " + task.getId(),'\n');
                     return false;
                 }
                 if (functionExec==null) {
                     bs.getGeneralStatus().add("#993.340 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                            ", execContextId: " + wb.getId() + ", " +
+                            ", execContextId: " + ec.getId() + ", " +
                             "taskId: " + task.getId(),'\n');
                     return false;
                 }
-                String statusForError = getStatusForError(wb, mainDocument, task, functionExec, processorIpAndHost);
+                String statusForError = getStatusForError(ec, mainDocument, task, functionExec, processorIpAndHost);
                 bs.getErrorStatus().add(statusForError);
                 return true;
             case OK:
@@ -551,9 +544,9 @@ public class BatchResultProcessorFunction implements InternalFunction {
                 break;
         }
 
-        if (wb.getState() != EnumsApi.ExecContextState.FINISHED.code) {
+        if (ec.getState() != EnumsApi.ExecContextState.FINISHED.code) {
             bs.getProgressStatus().add("#993.360 " + mainDocument + ", Task hasn't completed yet, " +
-                            "execContextId: " + wb.getId() + ", " +
+                            "execContextId: " + ec.getId() + ", " +
                             "taskId: " + task.getId() + ", " +
                             "processorId: " + task.getProcessorId() + ", " + processorIpAndHost
                     ,'\n');
