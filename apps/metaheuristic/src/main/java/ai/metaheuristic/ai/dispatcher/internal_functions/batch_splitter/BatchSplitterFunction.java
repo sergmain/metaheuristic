@@ -147,7 +147,7 @@ public class BatchSplitterFunction implements InternalFunction {
 
             if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
                 log.debug("Start unzipping archive");
-                Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir);
+                Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, List.of());
                 log.debug("Start loading file data to db");
                 return loadFilesFromDirAfterZip(sourceCodeId, execContextId, taskContextId, tempDir, mapping, taskParamsYaml, taskId);
             }
