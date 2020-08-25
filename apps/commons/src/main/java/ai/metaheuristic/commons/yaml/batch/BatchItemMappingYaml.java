@@ -38,6 +38,7 @@ public class BatchItemMappingYaml implements BaseParams {
     }
 
     public String targetDir;
+
     // key is Id of variable
-    public Map<String, String> realNames = new HashMap<>();
+    public Map<String, String> filenames = new HashMap<>();
 }

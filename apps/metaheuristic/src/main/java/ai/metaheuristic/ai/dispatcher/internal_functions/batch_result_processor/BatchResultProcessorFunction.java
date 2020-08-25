@@ -327,7 +327,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     }
 
     private void storeVariableToFile(BatchItemMappingYaml bimy, File resultDir, SimpleVariable simpleVariable) {
-        String itemFilename = bimy.realNames.get(simpleVariable.id.toString());
+        String itemFilename = bimy.filenames.get(simpleVariable.id.toString());
         if (S.b(itemFilename)) {
             itemFilename = simpleVariable.id.toString();
         }

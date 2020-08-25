@@ -61,7 +61,7 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable DiskInfo disk;
         public EnumsApi.DataType dataType;
 
-        public @Nullable String realName;
+        public @Nullable String filename;
         public @Nullable String type;
 
         public InputVariable(Long id, String name, EnumsApi.DataSourcing sourcing) {
@@ -84,7 +84,7 @@ public class TaskFileParamsYaml implements BaseParams {
         public EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
-        public @Nullable String realName;
+        public @Nullable String filename;
         public EnumsApi.DataType dataType;
         public @Nullable String type;
 

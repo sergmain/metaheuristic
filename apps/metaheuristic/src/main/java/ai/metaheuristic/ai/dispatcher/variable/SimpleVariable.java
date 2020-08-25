@@ -27,7 +27,7 @@ public class SimpleVariable {
     public final Long id;
     public final String variable;
     public final String storageUrl;
-    public final String originalFilename;
+    public final String filename;
     public final boolean inited;
     public final String taskContextId;
 

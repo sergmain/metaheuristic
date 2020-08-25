@@ -82,20 +82,6 @@ public class TaskParamsYamlV1 implements BaseParams {
         public long length;
     }
 
-    /**
-     * Resource is related one-to-one to a record in table MH_VARIABLE or in table MH_VARIABLE_GLOBAL
-     * for MH_VARIABLE  context will be VariableContext.local
-     * for MH_VARIABLE_GLOBAL  context will be VariableContext.global
-     */
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ResourceV1 {
-        public EnumsApi.VariableContext context;
-        public String id;
-        public String realName;
-    }
-
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -112,7 +98,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         public @Nullable DiskInfo disk;
 
         // name of file if this variable was uploaded from file
-        public @Nullable String realName;
+        public @Nullable String filename;
         public @Nullable String type;
     }
 
@@ -130,8 +116,7 @@ public class TaskParamsYamlV1 implements BaseParams {
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
 
-        // name of file if this variable was uploaded from file
-        public @Nullable String realName;
+        public @Nullable String filename;
 
         public boolean uploaded;
         public @Nullable String type;

@@ -69,7 +69,7 @@ public class TaskFileParamsYamlUtilsV1
         v.sourcing = v1.sourcing;
         v.git = v1.git;
         v.disk = v1.disk;
-        v.realName = v1.realName;
+        v.filename = v1.filename;
         v.type = v1.type;
         return v;
     }
@@ -82,7 +82,7 @@ public class TaskFileParamsYamlUtilsV1
         v.sourcing = v1.sourcing;
         v.git = v1.git;
         v.disk = v1.disk;
-        v.realName = v1.realName;
+        v.filename = v1.filename;
         v.type = v1.type;
         return v;
     }

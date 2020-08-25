@@ -92,8 +92,8 @@ public class TaskParamsYaml implements BaseParams {
         // name of file if this variable was uploaded from file
         // for global variable is always null
         // TODO 2020-08-01 real name of file is stored in db, actually.
-        //  why is it null for global variable?
-        public @Nullable String realName;
+        //  why is it a null for global variable?
+        public @Nullable String filename;
 
         public @Nullable String type;
     }
@@ -112,9 +112,7 @@ public class TaskParamsYaml implements BaseParams {
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
 
-        // name of file if this variable was uploaded from file
-        // todo 2020-03-12 do we need 'realName' field for OutputVariable?
-        public @Nullable String realName;
+        public @Nullable String filename;
 
         public boolean uploaded;
         public @Nullable String type;

@@ -57,7 +57,7 @@ public class VariableArrayParamsYamlV1  implements BaseParams {
         @Nullable
         public DiskInfo disk;
 
-        public @Nullable String realName;
+        public @Nullable String filename;
         public EnumsApi.DataType dataType;
 
         public VariableV1(String id, String name, EnumsApi.DataSourcing sourcing) {

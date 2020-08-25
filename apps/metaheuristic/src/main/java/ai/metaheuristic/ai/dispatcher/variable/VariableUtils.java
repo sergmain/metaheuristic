@@ -45,7 +45,7 @@ public class VariableUtils {
                 v.sourcing = dsp.sourcing;
                 v.git = dsp.git;
                 v.disk = dsp.disk;
-                v.realName = pv.globalVariable.filename;
+                v.filename = pv.globalVariable.filename;
                 v.dataType = EnumsApi.DataType.global_variable;
             }
             else {
@@ -57,7 +57,7 @@ public class VariableUtils {
                 v.sourcing = dsp.sourcing;
                 v.git = dsp.git;
                 v.disk = dsp.disk;
-                v.realName = variable.originalFilename;
+                v.filename = variable.filename;
                 v.dataType = EnumsApi.DataType.variable;
             }
             vapy.array.add(v);
@@ -86,7 +86,7 @@ public class VariableUtils {
         }
 
         public String getFilename() {
-            return globalVariable!=null ? globalVariable.filename : Objects.requireNonNull(variable).originalFilename;
+            return globalVariable!=null ? globalVariable.filename : Objects.requireNonNull(variable).filename;
         }
     }
 }

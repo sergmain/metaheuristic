@@ -360,7 +360,7 @@ public class BatchTopLevelService {
                 return null;
 
             }
-            String filename = StrUtils.getName(inputVariable.originalFilename) + getActualExtension(scpy);
+            String filename = StrUtils.getName(inputVariable.filename) + getActualExtension(scpy);
             return filename;
         });
     }
@@ -423,7 +423,7 @@ public class BatchTopLevelService {
             return null;
         }
 
-        String filename = variable.originalFilename;
+        String filename = variable.filename;
         if (S.b(filename)) {
             filename = outputFilenameFunction.apply(batch.execContextId, scpy);
             if (S.b(filename)) {

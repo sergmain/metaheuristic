@@ -123,7 +123,7 @@ public class TaskProducingCoreService {
                                 v.name, v.context, taskContextId, execContextId));
             }
             iv.id = variable.id;
-            iv.realName = variable.originalFilename;
+            iv.filename = variable.filename;
         }
         else {
             GlobalVariable variable = globalVariableRepository.findIdByName(v.name);

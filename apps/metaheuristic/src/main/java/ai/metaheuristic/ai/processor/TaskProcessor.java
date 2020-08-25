@@ -428,7 +428,7 @@ public class TaskProcessor {
         v.disk = v1.disk;
         v.git = v1.git;
         v.sourcing = v1.sourcing;
-        v.realName = v1.realName;
+        v.filename = v1.filename;
         v.type = v1.type;
         return v;
     }
@@ -441,7 +441,7 @@ public class TaskProcessor {
         v.disk = v1.disk;
         v.git = v1.git;
         v.sourcing = v1.sourcing;
-        v.realName = v1.realName;
+        v.filename = v1.filename;
         v.type = v1.type;
         return v;
     }

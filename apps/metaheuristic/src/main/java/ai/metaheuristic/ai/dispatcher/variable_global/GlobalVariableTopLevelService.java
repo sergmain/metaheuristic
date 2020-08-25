@@ -16,15 +16,14 @@
 package ai.metaheuristic.ai.dispatcher.variable_global;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.data.GlobalVariableData;
+import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +31,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -53,14 +53,10 @@ public class GlobalVariableTopLevelService {
     }
 
     public OperationStatusRest createGlobalVariableFromFile(MultipartFile file, String variable) {
-        String originFilename = file.getOriginalFilename();
-        if (S.b(originFilename)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.010 name of uploaded file is blank");
-        }
-        return storeFileInternal(file, variable, originFilename);
+        return storeInitialGlobalVariable(file, variable, file.getOriginalFilename());
     }
 
-    private OperationStatusRest storeFileInternal(MultipartFile file, String variable, String originFilename) {
+    public OperationStatusRest storeInitialGlobalVariable(MultipartFile file, String variable, @Nullable String originFilename) {
         if (originFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.020 name of uploaded file is null");
         }
@@ -133,11 +129,5 @@ public class GlobalVariableTopLevelService {
         }
         globalVariableService.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    // ============= Service methods =============
-
-    public OperationStatusRest storeInitialGlobalVariable(MultipartFile file, String variable, String filename) {
-        return storeFileInternal(file, variable, filename);
     }
 }

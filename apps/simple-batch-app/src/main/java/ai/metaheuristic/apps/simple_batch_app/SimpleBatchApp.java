@@ -108,12 +108,12 @@ public class SimpleBatchApp implements CommandLineRunner {
         File mappingFile = new File(artifactDir, mappingFilename);
 
         FileUtils.copyFile(sourceFile, processedFile);
-        FileUtils.write(processingStatusFile, "File "+variable.realName+" was processed successfully", StandardCharsets.UTF_8);
+        FileUtils.write(processingStatusFile, "File "+variable.filename +" was processed successfully", StandardCharsets.UTF_8);
 
         BatchItemMappingYaml bimy = new BatchItemMappingYaml();
-        bimy.targetDir = S.b(variable.realName) ? "dir-" + variable.id : StrUtils.getName(variable.realName);
-        bimy.realNames.put(processedVar.id, variable.realName);
-        bimy.realNames.put(processingStatusVar.id, S.b(variable.realName) ? "status.txt" : "status for " + StrUtils.getName(variable.realName)+".txt");
+        bimy.targetDir = S.b(variable.filename) ? "dir-" + variable.id : StrUtils.getName(variable.filename);
+        bimy.filenames.put(processedVar.id, variable.filename);
+        bimy.filenames.put(processingStatusVar.id, S.b(variable.filename) ? "status.txt" : "status for " + StrUtils.getName(variable.filename)+".txt");
 
         String mapping = BatchItemMappingYamlUtils.BASE_YAML_UTILS.toString(bimy);
         FileUtils.write(mappingFile, mapping, StandardCharsets.UTF_8);
