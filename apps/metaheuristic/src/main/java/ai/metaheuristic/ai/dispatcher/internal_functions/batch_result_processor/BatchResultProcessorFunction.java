@@ -43,6 +43,7 @@ import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -51,6 +52,8 @@ import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYamlUtils;
@@ -202,15 +205,19 @@ public class BatchResultProcessorFunction implements InternalFunction {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
                     S.f("#993.010 Variable with type 'batch-result' wasn't found in taskContext %s, execContext #%s", taskContextId, execContextId));
         }
-        SimpleVariable batchSResult = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchStatusVarName, taskContextId, execContextId);
-        if (batchSResult==null) {
+        SimpleVariable batchResult = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchResultVarName, taskContextId, execContextId);
+        if (batchResult==null) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                    S.f("#993.010 Batch result variable %s wasn't found in taskContext %s, execContext #%s", batchStatusVarName, taskContextId, execContextId));
+                    S.f("#993.010 Batch result variable %s wasn't found in taskContext %s, execContext #%s", batchResultVarName, taskContextId, execContextId));
         }
 
         try (FileInputStream fis = new FileInputStream(zipFile)) {
             String originBatchFilename = batchService.findUploadedFilenameForBatchId(execContextId, "batch-result.zip");
-            variableService.update(fis, zipFile.length(), batchSResult, originBatchFilename);
+            String ext = MetaUtils.getValue(taskParamsYaml.task.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
+            if (!S.b(ext)) {
+                originBatchFilename = StrUtils.getName(originBatchFilename) + ext;
+            }
+            variableService.update(fis, zipFile.length(), batchResult, originBatchFilename);
         }
 
         return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);

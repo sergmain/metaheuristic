@@ -1,5 +1,5 @@
 source:
-  uid: source-code-for-batch-processing-1:3
+  uid: source-code-for-batch-processing-1.4
   variables:
     startInputAs: input-data
   processes:
@@ -55,4 +55,6 @@ source:
           type: batch-result
         - name: var-batch-status
           type: batch-status
+      metas:
+        - mh.result-file-extension: .zip
 version: 1
