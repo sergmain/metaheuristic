@@ -174,7 +174,6 @@ public class BatchSplitterFunction implements InternalFunction {
         finally {
             try {
                 if (tempDir!=null && tempDir.exists()) {
-//                    FileUtils.deleteDirectory(tempDir);
                     Files.deleteIfExists(tempDir.toPath());
                 }
             } catch (IOException e) {

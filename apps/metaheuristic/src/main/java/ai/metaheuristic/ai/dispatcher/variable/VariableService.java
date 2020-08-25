@@ -275,6 +275,26 @@ public class VariableService {
         variableRepository.save(data);
     }
 
+    public void update(InputStream is, long size, SimpleVariable simpleVariable) {
+        update(is, size, simpleVariable, null);
+    }
+
+    public void update(InputStream is, long size, SimpleVariable simpleVariable, @Nullable String filename) {
+        Variable data = variableRepository.findById(simpleVariable.id).orElse(null);
+        if (data==null) {
+            log.warn("can't find variable #" + simpleVariable.id);
+            return;
+        }
+        data.filename = filename;
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+
+        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+        data.setData(blob);
+        data.inited = true;
+
+        variableRepository.save(data);
+    }
+
     public Page<Variable> findAll(Pageable pageable) {
         return variableRepository.findAll(pageable);
     }

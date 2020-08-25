@@ -27,7 +27,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author Serge
@@ -53,6 +55,21 @@ public class TaskSyncService {
                 return null;
             }
             return function.apply(task);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void getWithSyncVoid(Long taskId, Consumer<TaskImpl> supplier) {
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(taskId);
+        try {
+            lock.lock();
+            TaskImpl task = taskRepository.findByIdForUpdate(taskId);
+            if (task==null) {
+                log.warn("#306.040 Can't find Task for Id: {}", taskId);
+                return;
+            }
+            supplier.accept(task);
         } finally {
             lock.unlock();
         }

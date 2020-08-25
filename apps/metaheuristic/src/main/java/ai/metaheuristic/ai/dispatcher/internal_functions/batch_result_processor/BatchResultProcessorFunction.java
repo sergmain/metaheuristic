@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
@@ -97,6 +96,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private static final String BATCH_ITEM_PROCESSING_STATUS = "batch-item-processing-status";
     private static final String BATCH_ITEM_MAPPING = "batch-item-mapping";
     private static final String BATCH_STATUS = "batch-status";
+    private static final String BATCH_RESULT = "batch-result";
 
     private final VariableService variableService;
     private final VariableRepository variableRepository;
@@ -138,7 +138,6 @@ public class BatchResultProcessorFunction implements InternalFunction {
         }
     }
 
-    @SuppressWarnings("UnusedAssignment")
     @SneakyThrows
     @Override
     public InternalFunctionData.InternalFunctionProcessingResult process(
@@ -165,10 +164,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         List<SimpleVariable> vars = variableRepository.findByExecContextIdAndNames(execContextId, varNames);
 
         // key is taskContextId
-        Map<String, ItemWithStatusWithMapping> prepared = groupByTaskContextId(vars, nameToVar);
-
-        String batchStatusVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_STATUS.equals(o.type)).findFirst().map(o->o.name)
-                .orElse(S.f("batch-status-%s-%s", execContextId, UUID.randomUUID().toString()));
+        Map<String, ItemWithStatusWithMapping> prepared = groupByTaskContextId(vars, nameToVar, List.of(Consts.TOP_LEVEL_CONTEXT_ID));
 
         File resultDir = DirUtils.createTempDir("batch-result-processing-");
         File zipDir = new File(resultDir, "zip");
@@ -186,55 +182,90 @@ public class BatchResultProcessorFunction implements InternalFunction {
         File zipFile = new File(resultDir, Consts.RESULT_ZIP);
         ZipUtils.createZip(zipDir, zipFile, status.renameTo);
 
-        Variable v;
+        String batchStatusVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_STATUS.equals(o.type)).findFirst().map(o->o.name).orElse(null);
+        if (S.b(batchStatusVarName)) {
+            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
+                    S.f("#993.010 Variable with type 'batch-status' wasn't found in taskContext %s, execContext #%s", taskContextId, execContextId));
+        }
+        SimpleVariable batchStatus = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchStatusVarName, taskContextId, execContextId);
+        if (batchStatus==null) {
+            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
+                    S.f("#993.010 Batch status variable %s wasn't found in taskContext %s, execContext #%s", batchStatusVarName, taskContextId, execContextId));
+        }
+
         byte[] bytes = status.getStatus().getBytes();
-        v = variableService.createInitialized(new ByteArrayInputStream(bytes), bytes.length, batchStatusVarName, "status.txt", execContextId, taskContextId);
+        variableService.update(new ByteArrayInputStream(bytes), bytes.length, batchStatus);
+
+
+        String batchResultVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_RESULT.equals(o.type)).findFirst().map(o->o.name).orElse(null);
+        if (S.b(batchResultVarName)) {
+            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
+                    S.f("#993.010 Variable with type 'batch-result' wasn't found in taskContext %s, execContext #%s", taskContextId, execContextId));
+        }
+        SimpleVariable batchSResult = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchStatusVarName, taskContextId, execContextId);
+        if (batchSResult==null) {
+            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
+                    S.f("#993.010 Batch result variable %s wasn't found in taskContext %s, execContext #%s", batchStatusVarName, taskContextId, execContextId));
+        }
+
         try (FileInputStream fis = new FileInputStream(zipFile)) {
             String originBatchFilename = batchService.findUploadedFilenameForBatchId(execContextId, "batch-result.zip");
-            v = variableService.createInitialized(fis, zipFile.length(), batchStatusVarName, originBatchFilename, execContextId, taskContextId);
+            variableService.update(fis, zipFile.length(), batchSResult, originBatchFilename);
         }
 
         return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
     }
 
-    private Map<String, ItemWithStatusWithMapping> groupByTaskContextId(List<SimpleVariable> vars, Map<String, ExecContextParamsYaml.Variable> nameToVar) {
+    /**
+     *
+     * @param vars - all variables in specific execContext
+     * @param nameToVar
+     * @param excludeContextIds - list of taskContextIds to exclude
+     * @return Map<String, ItemWithStatusWithMapping> - key is taskContextId, value - variables to store as batch item
+     */
+    private Map<String, ItemWithStatusWithMapping> groupByTaskContextId(
+            List<SimpleVariable> vars, Map<String, ExecContextParamsYaml.Variable> nameToVar, List<String> excludeContextIds) {
         Map<String, ItemWithStatusWithMapping> map = new HashMap<>();
 
         for (SimpleVariable var : vars) {
-            ItemWithStatusWithMapping v = map.computeIfAbsent(var.taskContextId, o->new ItemWithStatusWithMapping(var.taskContextId));
-            for (SimpleVariable simpleVariable : vars) {
-                if (v.taskContextId.equals(simpleVariable.taskContextId)) {
-                    continue;
-                }
-                ExecContextParamsYaml.Variable varFromExecContext = nameToVar.get(simpleVariable.variable);
-                if (varFromExecContext==null) {
-                    log.error(S.f("Can't find variable %s in execContext",simpleVariable.variable) );
-                    continue;
-                }
-                if (S.b(varFromExecContext.type)) {
-                    log.warn(S.f("Variable %s doesn't have a type",simpleVariable.variable));
-                    continue;
-                }
+            if (excludeContextIds.contains(var.taskContextId)) {
+                continue;
+            }
+            ItemWithStatusWithMapping v = map.computeIfAbsent(var.taskContextId, o -> new ItemWithStatusWithMapping(var.taskContextId));
+        }
 
-                switch(varFromExecContext.type) {
-                    case BATCH_ITEM_PROCESSED_FILE:
-                        v.item = simpleVariable;
-                        break;
-                    case BATCH_ITEM_PROCESSING_STATUS:
-                        v.status = simpleVariable;
-                        break;
-                    case BATCH_ITEM_MAPPING:
-                        v.mapping = simpleVariable;
-                        break;
-                    default:
-                        log.error(S.f("Unknown type %s in %s variable", varFromExecContext.type, simpleVariable.variable));
-                }
+        for (SimpleVariable simpleVariable : vars) {
+            ItemWithStatusWithMapping v = map.get(simpleVariable.taskContextId);
+            if (v==null) {
+                continue;
+            }
+            ExecContextParamsYaml.Variable varFromExecContext = nameToVar.get(simpleVariable.variable);
+            if (varFromExecContext==null) {
+                log.error(S.f("Can't find variable %s in execContext", simpleVariable.variable) );
+                continue;
+            }
+            if (S.b(varFromExecContext.type)) {
+                continue;
+            }
+
+            switch(varFromExecContext.type) {
+                case BATCH_ITEM_PROCESSED_FILE:
+                    v.item = simpleVariable;
+                    break;
+                case BATCH_ITEM_PROCESSING_STATUS:
+                    v.status = simpleVariable;
+                    break;
+                case BATCH_ITEM_MAPPING:
+                    v.mapping = simpleVariable;
+                    break;
+                default:
+                    log.info(S.f("Skip variable %s with type %s", simpleVariable.variable, varFromExecContext.type));
             }
         }
 
         for (ItemWithStatusWithMapping value : map.values()) {
             if (value.mapping==null || value.status==null || value.item==null) {
-                log.error(S.f("TaskContextId #%s is broken, ItemWithStatusWithMapping: %s", value.taskContextId, value));
+                log.error(S.f("TaskContextId #%s is broken, batch doesn't contain all variables, ItemWithStatusWithMapping: %s", value.taskContextId, value));
             }
         }
         return map;
@@ -243,7 +274,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private Map<String, ExecContextParamsYaml.Variable> gatherVars(ExecContextParamsYaml ecpy) {
         Map<String, ExecContextParamsYaml.Variable> map = ecpy.processes.stream()
                 .flatMap(o->o.outputs.stream())
-                .collect(Collectors.toMap(o->o.name, o->o, (a, b) -> b, HashMap::new));;
+                .collect(Collectors.toMap(o->o.name, o->o, (a, b) -> b, HashMap::new));
         return map;
     }
 

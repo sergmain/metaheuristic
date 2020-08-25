@@ -65,6 +65,7 @@ public class InternalFunctionProcessor {
 
         ExecContextParamsYaml expy = execContext.getExecContextParamsYaml();
         try {
+            // !!! all output variables was already created
             return internalFunction.process(execContext.sourceCodeId, execContext.id, taskId, internalContextId, expy.variables, taskParamsYaml);
         } catch (Throwable th) {
             String es = "#977.020 system error while processing internal function '" + internalFunction.getCode() + "', error: " + th.getMessage();

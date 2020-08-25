@@ -76,26 +76,30 @@ public class TaskWithInternalContextEventService {
     @EventListener
     public void handleAsync(final TaskWithInternalContextEvent event) {
         try {
-            taskSyncService.getWithSync(event.taskId, (task) -> {
+            taskSyncService.getWithSyncVoid(event.taskId, (task) -> {
                 try {
                     if (task == null) {
-                        log.warn("#707.010 step #1");
-                        return null;
+                        log.warn("#707.010 step #1, task is null");
+                        return;
                     }
                     if (task.execState == TaskExecState.IN_PROGRESS.value) {
                         log.error("#707.012 Task #"+event.taskId+" already in progress. mustn't happened. it's, actually, illegal state");
-                        return null;
+                        return;
+                    }
+                    if (task.execState!=TaskExecState.NONE.value) {
+                        log.info("#707.011 Task #"+event.taskId+" was already processed with state " + TaskExecState.from(task.execState));
+                        return;
                     }
                     if (TaskExecState.isFinishedState(task.execState)) {
                         log.error("#707.015 Task #"+event.taskId+" already was finished");
-                        return null;
+                        return;
                     }
                     task = taskPersistencer.toInProgressSimpleLambda(task);
                     ExecContextImpl execContext = execContextCache.findById(task.execContextId);
                     if (execContext == null) {
                         taskPersistencer.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10000,
                                 "#707.030 Task #" + event.taskId + " is broken, execContext #" + task.execContextId + " wasn't found.");
-                        return null;
+                        return;
                     }
 
                     TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
@@ -108,10 +112,13 @@ public class TaskWithInternalContextEventService {
                         }
                         else {
                             log.warn("#707.040 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + execContext.id);
-                            return null;
+                            return;
                         }
                     }
 
+                    // ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService.prepareVariables
+                    // won't be called for initializing output variables in internal function.
+                    // the code which skips initializing is here - ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService.getTaskAndAssignToProcessor
                     variableService.initOutputVariables(taskParamsYaml, execContext, p);
                     taskPersistencer.setParams(event.taskId, taskParamsYaml);
 
@@ -128,7 +135,7 @@ public class TaskWithInternalContextEventService {
 
                         ExecContextOperationStatusWithTaskList status =
                                 execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsSkipped(task.execContextId, taskParamsYaml.task.taskContextId, task.id);
-                        return null;
+                        return;
                     }
                     else {
                         taskPersistencer.setResultReceivedForInternalFunction(event.taskId);
@@ -145,7 +152,7 @@ public class TaskWithInternalContextEventService {
                             execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), taskParamsYaml.task.taskContextId);
                         }
                     });
-                    return null;
+                    return;
                 } catch (CommonErrorWithDataException th) {
                     String es = "#707.067 Task #" + event.taskId + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
                     taskPersistencer.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10002, es);
@@ -155,7 +162,7 @@ public class TaskWithInternalContextEventService {
                     taskPersistencer.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10003, es);
                     log.error(es, th);
                 }
-                return null;
+                return;
             });
         } catch (Throwable th) {
             String es = "#707.080 Task #" + event.taskId + " was processed with error: " + th.getMessage();

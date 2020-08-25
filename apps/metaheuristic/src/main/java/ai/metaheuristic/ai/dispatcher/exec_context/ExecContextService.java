@@ -240,12 +240,6 @@ public class ExecContextService {
             log.warn("#705.300 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
             return;
         }
-/*
-        if (p.function.context== EnumsApi.FunctionExecContext.internal) {
-            // resources for internal Function will be prepared by InternalFunctionProcessor.
-            return;
-        }
-*/
 
         // we dont need to create inputs because all inputs are outputs of previous processes,
         // except globals and startInputAs
@@ -360,7 +354,7 @@ public class ExecContextService {
                             task.getId(), taskParamYaml.task.function.code, EnumsApi.TaskExecState.from(task.execState));
                     continue;
                 }
-                // all tasks with internal function will be processed in different thread
+                // all tasks with internal function will be processed in a different thread
                 if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
                     // Do Not set EnumsApi.TaskExecState.IN_PROGRESS here.
                     // it'll be set in ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEventService.handleAsync
