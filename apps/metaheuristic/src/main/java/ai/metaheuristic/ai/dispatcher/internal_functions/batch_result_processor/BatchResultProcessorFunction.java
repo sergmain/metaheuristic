@@ -18,20 +18,15 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
-import ai.metaheuristic.ai.dispatcher.batch.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
-import ai.metaheuristic.ai.dispatcher.batch.BatchSyncService;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -54,6 +49,7 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYamlUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -79,7 +75,6 @@ import java.util.stream.Collectors;
  * Date: 4/19/2020
  * Time: 8:06 PM
  */
-@SuppressWarnings("unused")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -98,15 +93,10 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private final VariableService variableService;
     private final VariableRepository variableRepository;
     private final BatchService batchService;
-    private final BatchRepository batchRepository;
-    private final BatchCache batchCache;
-    private final BatchSyncService batchSyncService;
     private final ExecContextCache execContextCache;
-    private final ExecContextGraphTopLevelService  execContextGraphTopLevelService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
-    private final DispatcherEventService dispatcherEventService;
 
     @Override
     public String getCode() {
@@ -209,7 +199,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     @Nullable
     private InternalFunctionData.InternalFunctionProcessingResult storeGlobalBatchStatus(
             ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, File zipDir) throws IOException {
-        BatchStatusProcessor status = prepareStatus(execContext, zipDir);
+        BatchStatusProcessor status = prepareStatus(execContext);
 
         File statusFile = new File(zipDir, "status.txt");
         FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);
@@ -245,6 +235,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
             if (excludeContextIds.contains(var.taskContextId)) {
                 continue;
             }
+            //noinspection unused
             ItemWithStatusWithMapping v = map.computeIfAbsent(var.taskContextId, o -> new ItemWithStatusWithMapping(var.taskContextId));
         }
 
@@ -292,18 +283,6 @@ public class BatchResultProcessorFunction implements InternalFunction {
         return map;
     }
 
-    private Set<String> collectTaskContextIds(Long execContextId, String[] batchItems, String batchResult, String batchStatus, @Nullable String batchDirMapping) {
-        Set<String> vars = new HashSet<>(Arrays.asList(batchItems));
-        vars.add(batchResult);
-        vars.add(batchStatus);
-        if (!S.b(batchDirMapping)) {
-            vars.add(batchDirMapping);
-        }
-
-        Set<String> taskContextIds = variableService.findAllByExecContextIdAndVariableNames(execContextId, vars);
-        return taskContextIds;
-    }
-
     private void storeResultVariables(File zipDir, Long execContextId, ItemWithStatusWithMapping item) {
 
         if (item.mapping==null || item.status==null || item.item==null) {
@@ -311,7 +290,6 @@ public class BatchResultProcessorFunction implements InternalFunction {
             return;
         }
 
-        String resultDirName;
         BatchItemMappingYaml bimy = new BatchItemMappingYaml();
         bimy.targetDir = getResultDirNameFromTaskContextId(item.taskContextId);
 
@@ -368,15 +346,9 @@ public class BatchResultProcessorFunction implements InternalFunction {
         }
     }
 
-    private BatchStatusProcessor prepareStatus(ExecContextImpl ec, @Nullable File zipDir) {
+    private BatchStatusProcessor prepareStatus(ExecContextImpl ec) {
         final BatchStatusProcessor bs = new BatchStatusProcessor();
-        prepareBatchStatus(zipDir, bs, ec);
-        initBatchStatus(bs);
-        return bs;
-    }
-
-    private void prepareBatchStatus(@Nullable File zipDir, BatchStatusProcessor bs, ExecContextImpl ec) {
-        bs.ok = false;
+        bs.ok = true;
 
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphService.getAllTasksTopologically(ec);
         for (ExecContextData.TaskVertex taskVertex : taskVertices) {
@@ -385,6 +357,8 @@ public class BatchResultProcessorFunction implements InternalFunction {
             }
             storeStatusOfTask(bs, ec, taskVertex.taskId);
         }
+        initBatchStatus(bs);
+        return bs;
     }
 
     private void storeStatusOfTask(BatchStatusProcessor bs, ExecContextImpl ec, Long taskId) {
@@ -397,17 +371,31 @@ public class BatchResultProcessorFunction implements InternalFunction {
         }
 
         EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
-        Processor s = null;
-        if (task.getProcessorId()!=null) {
-            s = processorCache.findById(task.getProcessorId());
+
+        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+
+        final String processorIpAndHost;
+        String processorId;
+        if (tpy.task.context== EnumsApi.FunctionExecContext.external) {
+            processorId = S.f("processorId: %s", task.getProcessorId());
+            Processor s = null;
+            if (task.getProcessorId() != null) {
+                s = processorCache.findById(task.getProcessorId());
+            }
+            processorIpAndHost = getProcessorIpAndHost(s);
         }
-        final String processorIpAndHost = getProcessorIpAndHost(s);
+        else {
+            processorIpAndHost = "Internal function";
+            processorId = "Dispatcher";
+        }
+
+        String func = tpy.task.function.code;
         switch (execState) {
             case NONE:
             case IN_PROGRESS:
                 bs.getProgressStatus().add(
-                        S.f("#993.300 Task #%s hasn't completed yet, status: %s, execContextId: %s, processorId: %s, %s",
-                                taskId, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost)
+                        S.f("#993.300 Task #%s hasn't completed yet, function: %s, status: %s, execContextId: %s, %s, %s",
+                                taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
                         ,'\n');
                 bs.ok = true;
                 return;
@@ -417,15 +405,15 @@ public class BatchResultProcessorFunction implements InternalFunction {
                     functionExec = FunctionExecUtils.to(task.getFunctionExecResults());
                 } catch (YAMLException e) {
                     bs.getGeneralStatus().add(
-                            S.f("#993.320 Task #%s has broken console output, status: %s, execContextId: %s, processorId: %s, %s",
-                                    taskId, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost)
+                            S.f("#993.320 Task #%s has broken console output, function: %s, status: %s, execContextId: %s, %s, %s",
+                                    taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
                             ,'\n');
                     return;
                 }
                 if (functionExec==null) {
                     bs.getGeneralStatus().add(
-                            S.f("#993.340 Task #%s has broken console output, status: %s, execContextId: %s, processorId: %s, %s",
-                                    taskId, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost)
+                            S.f("#993.340 Task #%s has broken console output, function: %s, status: %s, execContextId: %s, %s, %s",
+                                    taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
                             ,'\n');
                     return;
                 }
@@ -437,16 +425,16 @@ public class BatchResultProcessorFunction implements InternalFunction {
                 break;
             case SKIPPED:
                 bs.getProgressStatus().add(
-                        S.f("#993.300 Task #%s was skipped yet, status: %s, execContextId: %s, processorId: %s, %s",
-                                taskId, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost)
+                        S.f("#993.300 Task #%s was skipped yet, function: %s, status: %s, execContextId: %s, %s, %s",
+                                taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
                         ,'\n');
                 bs.ok = true;
                 return;
         }
 
         bs.getOkStatus().add(
-                S.f("#993.300 Task #%s was completed successfully, status: %s, execContextId: %s, processorId: %s, %s",
-                        taskId, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost)
+                S.f("#993.300 Task #%s was completed successfully, function: %s, status: %s, execContextId: %s, %s, %s",
+                        taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
                 ,'\n');
         bs.ok = true;
     }
