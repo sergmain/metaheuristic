@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,6 +47,7 @@ public class RoundRobinForDispatcher {
         return urls.keySet();
     }
 
+    @Nullable
     public String next() {
         String url = findNext();
         if (url != null) {
@@ -53,10 +55,7 @@ public class RoundRobinForDispatcher {
         }
         reset();
         url = findNext();
-        if (url != null) {
-            return url;
-        }
-        return null;
+        return url;
     }
 
     public void reset() {
@@ -65,6 +64,7 @@ public class RoundRobinForDispatcher {
         }
     }
 
+    @Nullable
     private String findNext() {
         String url = null;
         for (Map.Entry<String, AtomicBoolean> entry : urls.entrySet()) {
