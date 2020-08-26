@@ -23,13 +23,14 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.batch.BatchSyncService;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
-import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
@@ -38,8 +39,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
-import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
-import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
@@ -48,8 +47,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.dispatcher.ExecContext;
-import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -57,7 +54,6 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYamlUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -67,7 +63,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -77,7 +72,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -92,7 +86,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BatchResultProcessorFunction implements InternalFunction {
 
-    private static final String DELEMITER_2 = "\n====================================================================\n";
+    private static final String DELIMITER_2 = "\n====================================================================\n";
     private static final String IP_HOST = "IP: %s, host: %s";
 
     private static final String BATCH_ITEM_PROCESSED_FILE = "batch-item-processed-file";
@@ -109,6 +103,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private final BatchSyncService batchSyncService;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService  execContextGraphTopLevelService;
+    private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
     private final DispatcherEventService dispatcherEventService;
@@ -167,32 +162,28 @@ public class BatchResultProcessorFunction implements InternalFunction {
         //noinspection ResultOfMethodCallIgnored
         zipDir.mkdir();
 
-        BatchStatusProcessor status = prepareStatus(execContextId, this::prepareZip, zipDir);
-
         for (Map.Entry<String, ItemWithStatusWithMapping> entry : prepared.entrySet()) {
             storeResultVariables(zipDir, execContextId, entry.getValue());
         }
 
-        File statusFile = new File(zipDir, "status.txt");
-        FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);
+        InternalFunctionData.InternalFunctionProcessingResult ifprForStatus = storeGlobalBatchStatus(ec, taskContextId, taskParamsYaml, zipDir);
+        if (ifprForStatus != null) {
+            return ifprForStatus;
+        }
+
         File zipFile = new File(resultDir, Consts.RESULT_ZIP);
-        ZipUtils.createZip(zipDir, zipFile, status.renameTo);
+        ZipUtils.createZip(zipDir, zipFile);
 
-        String batchStatusVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_STATUS.equals(o.type)).findFirst().map(o->o.name).orElse(null);
-        if (S.b(batchStatusVarName)) {
-            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
-                    S.f("#993.010 Variable with type 'batch-status' wasn't found in taskContext %s, execContext #%s", taskContextId, execContextId));
-        }
-        SimpleVariable batchStatus = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchStatusVarName, taskContextId, execContextId);
-        if (batchStatus==null) {
-            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                    S.f("#993.010 Batch status variable %s wasn't found in taskContext %s, execContext #%s", batchStatusVarName, taskContextId, execContextId));
+        InternalFunctionData.InternalFunctionProcessingResult ifprForResult = storeBatchResult(execContextId, taskContextId, taskParamsYaml, zipFile);
+        if (ifprForResult != null) {
+            return ifprForResult;
         }
 
-        byte[] bytes = status.getStatus().getBytes();
-        variableService.update(new ByteArrayInputStream(bytes), bytes.length, batchStatus);
+        return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
+    }
 
-
+    @Nullable
+    private InternalFunctionData.InternalFunctionProcessingResult storeBatchResult(Long execContextId, String taskContextId, TaskParamsYaml taskParamsYaml, File zipFile) throws IOException {
         String batchResultVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_RESULT.equals(o.type)).findFirst().map(o->o.name).orElse(null);
         if (S.b(batchResultVarName)) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
@@ -212,8 +203,31 @@ public class BatchResultProcessorFunction implements InternalFunction {
             }
             variableService.update(fis, zipFile.length(), batchResult, originBatchFilename);
         }
+        return null;
+    }
 
-        return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok);
+    @Nullable
+    private InternalFunctionData.InternalFunctionProcessingResult storeGlobalBatchStatus(
+            ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, File zipDir) throws IOException {
+        BatchStatusProcessor status = prepareStatus(execContext, zipDir);
+
+        File statusFile = new File(zipDir, "status.txt");
+        FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);
+
+        String batchStatusVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_STATUS.equals(o.type)).findFirst().map(o->o.name).orElse(null);
+        if (S.b(batchStatusVarName)) {
+            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
+                    S.f("#993.010 Variable with type 'batch-status' wasn't found in taskContext %s, execContext #%s", taskContextId, execContext));
+        }
+        SimpleVariable batchStatus = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchStatusVarName, taskContextId, execContext.id);
+        if (batchStatus==null) {
+            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
+                    S.f("#993.010 Batch status variable %s wasn't found in taskContext %s, execContext #%s", batchStatusVarName, taskContextId, execContext));
+        }
+
+        byte[] bytes = status.getStatus().getBytes();
+        variableService.update(new ByteArrayInputStream(bytes), bytes.length, batchStatus);
+        return null;
     }
 
     /**
@@ -308,7 +322,6 @@ public class BatchResultProcessorFunction implements InternalFunction {
                 bimy = BatchItemMappingYamlUtils.BASE_YAML_UTILS.to(mapping);
             } catch (CommonErrorWithDataException e) {
                 log.warn(S.f("#993.120 no mapping variables with id were found in execContextId #%s", sv.id, execContextId));
-                resultDirName = getResultDirNameFromTaskContextId(item.taskContextId);
             }
         }
 
@@ -328,179 +341,59 @@ public class BatchResultProcessorFunction implements InternalFunction {
         variableService.storeToFile(simpleVariable.id, file);
     }
 
-    @NonNull
     private String getResultDirNameFromTaskContextId(String taskContextId) {
         return S.f("result-dir-%s", StringUtils.replaceEach(taskContextId, new String[]{",", "#"}, new String[]{"_", "-"}));
-    }
-
-    @SuppressWarnings("unused")
-    public Batch changeStateToError(Long batchId, String error) {
-        return batchSyncService.getWithSync(batchId, (b) -> {
-            try {
-                if (b == null) {
-                    log.warn("#993.140 batch not found in db, batchId: #{}", batchId);
-                    return null;
-                }
-                b.setExecState(Enums.BatchExecState.Error.code);
-
-                BatchParamsYaml batchParams = BatchParamsYamlUtils.BASE_YAML_UTILS.to(b.params);
-                if (batchParams == null) {
-                    batchParams = new BatchParamsYaml();
-                }
-                if (batchParams.batchStatus==null) {
-                    batchParams.batchStatus = new BatchParamsYaml.BatchStatus();
-                }
-                BatchStatusProcessor batchStatusProcessor = new BatchStatusProcessor();
-                batchStatusProcessor.getGeneralStatus().add(error);
-                initBatchStatus(batchStatusProcessor);
-                batchParams.batchStatus.status = batchStatusProcessor.status;
-                b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(batchParams);
-
-                b = batchCache.save(b);
-                return b;
-            }
-            finally {
-                dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FINISHED_WITH_ERROR, null, null, null, batchId, null, null );
-            }
-        });
-    }
-
-    private boolean prepareZip(BatchService.PrepareZipData prepareZipData, File zipDir ) {
-        final TaskParamsYaml taskParamYaml;
-        try {
-            taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(prepareZipData.task.getParams());
-        } catch (YAMLException e) {
-            prepareZipData.bs.getErrorStatus().add(
-                    "#993.160 " + prepareZipData.mainDocument + ", " +
-                            "Task has broken data in params, status: " + EnumsApi.TaskExecState.from(prepareZipData.task.getExecState()) +
-                            ", execContextId: " + prepareZipData.execContextId + ", " +
-                            "taskId: " + prepareZipData.task.getId(), '\n');
-            return false;
-        }
-
-        File tempFile;
-        try {
-            tempFile = File.createTempFile("doc-", ".xml", zipDir);
-        } catch (IOException e) {
-            String msg = "#993.180 Error create a temp file in "+zipDir.getAbsolutePath();
-            log.error(msg);
-            prepareZipData.bs.getGeneralStatus().add(msg,'\n');
-            return false;
-        }
-
-        // all documents are sorted in zip folder
-        prepareZipData.bs.renameTo.put("zip/" + tempFile.getName(), "zip/" + prepareZipData.mainDocument);
-
-        return true;
     }
 
     /**
      * Don't forget to call this method before storing in db
      * @param batchStatus
      */
-    public static BatchStatusProcessor initBatchStatus(BatchStatusProcessor batchStatus) {
+    private static void initBatchStatus(BatchStatusProcessor batchStatus) {
         String generalStr = batchStatus.getGeneralStatus().asString();
         if (!generalStr.isBlank()) {
-            batchStatus.status = generalStr + DELEMITER_2;
+            batchStatus.status = generalStr + DELIMITER_2;
         }
         String progressStr = batchStatus.getProgressStatus().asString();
         if (!progressStr.isBlank()) {
-            batchStatus.status += progressStr + DELEMITER_2;
+            batchStatus.status += progressStr + DELIMITER_2;
         }
         String okStr = batchStatus.getOkStatus().asString();
         if (!okStr.isBlank()) {
-            batchStatus.status += okStr + DELEMITER_2;
+            batchStatus.status += okStr + DELIMITER_2;
         }
         String errorStr = batchStatus.getErrorStatus().asString();
         if (!errorStr.isBlank()) {
-            batchStatus.status += errorStr + DELEMITER_2;
+            batchStatus.status += errorStr + DELIMITER_2;
         }
-        return batchStatus;
     }
 
-    public BatchStatusProcessor prepareStatus(Long execContextId, BiFunction<BatchService.PrepareZipData, File, Boolean> prepareZip, @Nullable File zipDir) {
+    private BatchStatusProcessor prepareStatus(ExecContextImpl ec, @Nullable File zipDir) {
         final BatchStatusProcessor bs = new BatchStatusProcessor();
-        bs.ok = prepareStatus(prepareZip, zipDir, bs, execContextId);
+        prepareBatchStatus(zipDir, bs, ec);
         initBatchStatus(bs);
         return bs;
     }
 
-    private BatchParamsYaml.BatchStatus updateBatchStatusWithoutSync(Long batchId) {
-        Batch b = batchRepository.findByIdForUpdate(batchId);
-        if (b == null) {
-            final BatchStatusProcessor statusProcessor = new BatchStatusProcessor().addGeneralStatus("#990.113, Batch wasn't found, batchId: " + batchId, '\n');
-            BatchParamsYaml.BatchStatus batchStatus = new BatchParamsYaml.BatchStatus(initBatchStatus(statusProcessor).status);
-            batchStatus.ok = false;
-            return batchStatus;
-        }
+    private void prepareBatchStatus(@Nullable File zipDir, BatchStatusProcessor bs, ExecContextImpl ec) {
+        bs.ok = false;
 
-        BatchStatusProcessor batchStatus = prepareStatus(b.execContextId, (prepareZipData, file) -> true, null);
-        BatchParamsYaml batchParams = BatchParamsYamlUtils.BASE_YAML_UTILS.to(b.getParams());
-        if (batchParams == null) {
-            batchParams = new BatchParamsYaml();
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphService.getAllTasksTopologically(ec);
+        for (ExecContextData.TaskVertex taskVertex : taskVertices) {
+            if (taskVertex.execState==EnumsApi.TaskExecState.NONE || taskVertex.execState== EnumsApi.TaskExecState.IN_PROGRESS) {
+                continue;
+            }
+            storeStatusOfTask(bs, ec, taskVertex.taskId);
         }
-        if (batchParams.batchStatus == null) {
-            batchParams.batchStatus = new BatchParamsYaml.BatchStatus();
-        }
-        batchParams.batchStatus.status = batchStatus.status;
-        b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(batchParams);
-        batchCache.save(b);
-
-        return batchParams.batchStatus;
     }
 
-    public boolean prepareStatus(BiFunction<BatchService.PrepareZipData, File, Boolean> prepareZip, @Nullable File zipDir, BatchStatusProcessor bs, Long execContextId) {
-        ExecContextImpl ec = execContextCache.findById(execContextId);
-        if (ec == null) {
-            String msg = "#993.200 ExecContext #" + execContextId + " wasn't found";
-            bs.getGeneralStatus().add(msg, '\n');
-            log.warn(msg);
-            return false;
-        }
-
-        // lets find the actual name of target file
-        String mainDocumentPoolCode = "";
-        String mainDocument = "";
-/*
-        final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode, execContextId);
-        if (fullMainDocument == null) {
-            String msg = "#990.270 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
-                    "batchId: " + batchId + ", execContextId: " + execContextId;
-            log.warn(msg);
-            bs.getGeneralStatus().add(msg, '\n');
-            return false;
-        }
-        final String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(ec.getSourceCodeId());
-*/
-
-        List<ExecContextData.TaskVertex> taskVertices;
-        try {
-            taskVertices = execContextGraphTopLevelService.findLeafs(ec);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            String msg = "#993.220 Can't find tasks for execContextId #" + ec.getId() + ", error: " + e.getMessage();
-            log.warn(msg);
-            bs.getGeneralStatus().add(msg,'\n');
-            return false;
-        }
-        if (taskVertices.isEmpty()) {
-            String msg = "#993.240 " + mainDocument + ", Can't find any task for execContextId: " + execContextId;
-            log.info(msg);
-            bs.getGeneralStatus().add(msg,'\n');
-            return false;
-        }
-        if (taskVertices.size() > 1) {
-            String msg = "#993.260 " + mainDocument + ", Can't download file because there are more than one task " +
-                    "at the final state, execContextId: " + execContextId + ", execContextId: " + ec.getId();
-            log.info(msg);
-            bs.getGeneralStatus().add(msg,'\n');
-            return false;
-        }
-        final Task task = taskRepository.findById(taskVertices.get(0).taskId).orElse(null);
+    private void storeStatusOfTask(BatchStatusProcessor bs, ExecContextImpl ec, Long taskId) {
+        final TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            String msg = "#993.280 " + mainDocument + ", Can't find task #" + taskVertices.get(0).taskId;
+            String msg = "#993.280 Can't find task #" + taskId;
             log.info(msg);
             bs.getGeneralStatus().add(msg,'\n');
-            return false;
+            return;
         }
 
         EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
@@ -512,57 +405,50 @@ public class BatchResultProcessorFunction implements InternalFunction {
         switch (execState) {
             case NONE:
             case IN_PROGRESS:
-                bs.getProgressStatus().add("#993.300 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                                ", execContextId: " + ec.getId() + ", " +
-                                "taskId: " + task.getId() + ", processorId: " + task.getProcessorId() +
-                                ", " + processorIpAndHost
+                bs.getProgressStatus().add(
+                        S.f("#993.300 Task #%s hasn't completed yet, status: %s, execContextId: %s, processorId: %s, %s",
+                                taskId, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost)
                         ,'\n');
-                return true;
+                bs.ok = true;
+                return;
             case ERROR:
                 FunctionApiData.FunctionExec functionExec;
                 try {
                     functionExec = FunctionExecUtils.to(task.getFunctionExecResults());
                 } catch (YAMLException e) {
-                    bs.getGeneralStatus().add("#993.320 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                            ", execContextId: " + ec.getId() + ", " +
-                            "taskId: " + task.getId(),'\n');
-                    return false;
+                    bs.getGeneralStatus().add(
+                            S.f("#993.320 Task #%s has broken console output, status: %s, execContextId: %s, processorId: %s, %s",
+                                    taskId, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost)
+                            ,'\n');
+                    return;
                 }
                 if (functionExec==null) {
-                    bs.getGeneralStatus().add("#993.340 " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                            ", execContextId: " + ec.getId() + ", " +
-                            "taskId: " + task.getId(),'\n');
-                    return false;
+                    bs.getGeneralStatus().add(
+                            S.f("#993.340 Task #%s has broken console output, status: %s, execContextId: %s, processorId: %s, %s",
+                                    taskId, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost)
+                            ,'\n');
+                    return;
                 }
-                String statusForError = getStatusForError(ec, mainDocument, task, functionExec, processorIpAndHost);
+                String statusForError = getStatusForError(ec, task, functionExec, processorIpAndHost);
                 bs.getErrorStatus().add(statusForError);
-                return true;
+                bs.ok = true;
+                return;
             case OK:
                 break;
             case SKIPPED:
-                // todo 2020-08-16 need to decide what to do here
-                break;
+                bs.getProgressStatus().add(
+                        S.f("#993.300 Task #%s was skipped yet, status: %s, execContextId: %s, processorId: %s, %s",
+                                taskId, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost)
+                        ,'\n');
+                bs.ok = true;
+                return;
         }
 
-        if (ec.getState() != EnumsApi.ExecContextState.FINISHED.code) {
-            bs.getProgressStatus().add("#993.360 " + mainDocument + ", Task hasn't completed yet, " +
-                            "execContextId: " + ec.getId() + ", " +
-                            "taskId: " + task.getId() + ", " +
-                            "processorId: " + task.getProcessorId() + ", " + processorIpAndHost
-                    ,'\n');
-            return true;
-        }
-
-        BatchService.PrepareZipData prepareZipData = new BatchService.PrepareZipData(bs, task, zipDir, mainDocument, execContextId);
-        boolean isOk = prepareZip.apply(prepareZipData, zipDir);
-        if (!isOk) {
-            return false;
-        }
-
-        String msg = "#993.380 status - Ok, doc: " + mainDocument + ", execContextId: " + execContextId +
-                ", taskId: " + task.getId() + ", processorId: " + task.getProcessorId() + ", " + processorIpAndHost;
-        bs.getOkStatus().add(msg,'\n');
-        return true;
+        bs.getOkStatus().add(
+                S.f("#993.300 Task #%s was completed successfully, status: %s, execContextId: %s, processorId: %s, %s",
+                        taskId, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost)
+                ,'\n');
+        bs.ok = true;
     }
 
     private String getProcessorIpAndHost(@Nullable Processor processor) {
@@ -577,13 +463,12 @@ public class BatchResultProcessorFunction implements InternalFunction {
         return String.format(IP_HOST, ip, host);
     }
 
-    private String getStatusForError(ExecContext ec, String mainDocument, Task task, @NonNull FunctionApiData.FunctionExec functionExec, String processorIpAndHost) {
+    private static String getStatusForError(ExecContextImpl ec, TaskImpl task, FunctionApiData.FunctionExec functionExec, String processorIpAndHost) {
 
         final String header =
-                "#993.400 " + mainDocument + ", Task was completed with an error, execContextId: " + ec.getId() + ", " +
-                        "taskId: " + task.getId() + "\n" +
-                        "processorId: " + task.getProcessorId() + "\n" +
-                        processorIpAndHost + "\n\n";
+                S.f("#993.400 Task #%s was completed with an error, , status: %s, execContextId: %s, processorId: %s, %s\n\n",
+                        task.id, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, task.getProcessorId(), processorIpAndHost);
+
         StringBuilder sb = new StringBuilder(header);
         if (functionExec.generalExec!=null) {
             sb.append("General execution state:\n");
@@ -610,7 +495,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         return sb.toString();
     }
 
-    private String execResultAsStr(FunctionApiData.SystemExecResult execResult) {
+    private static String execResultAsStr(FunctionApiData.SystemExecResult execResult) {
         return
                 "function: " + execResult.functionCode + "\n" +
                         "isOk: " + execResult.isOk + "\n" +

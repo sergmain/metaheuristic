@@ -36,6 +36,7 @@ import org.jgrapht.nio.DefaultAttribute;
 import org.jgrapht.nio.dot.DOTExporter;
 import org.jgrapht.nio.dot.DOTImporter;
 import org.jgrapht.traverse.BreadthFirstIterator;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.jgrapht.util.SupplierUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -58,7 +59,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 @SuppressWarnings("WeakerAccess")
-class ExecContextGraphService {
+public class ExecContextGraphService {
 
     private static final String TASK_ID_STR_ATTR = "task_id_str";
     private static final String TASK_EXEC_STATE_ATTR = "task_exec_state";
@@ -261,6 +262,22 @@ class ExecContextGraphService {
         }
     }
 
+    public List<ExecContextData.TaskVertex> getAllTasksTopologically(ExecContextImpl execContext) {
+        try {
+            return readOnlyGraphListOfTaskVertex(execContext, graph -> {
+                TopologicalOrderIterator<ExecContextData.TaskVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(graph);
+
+                List<ExecContextData.TaskVertex> tasks = new ArrayList<>();
+                iterator.forEachRemaining(tasks::add);
+                return tasks;
+            });
+        }
+        catch (Throwable th) {
+            log.error("#915.013 Error", th);
+            return List.of();
+        }
+    }
+
     public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(ExecContextImpl execContext, Long taskId) {
         try {
             final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
@@ -308,37 +325,6 @@ class ExecContextGraphService {
             log.error("#915.022 Error", th);
             // TODO 2020.03.09 need to implement better handling of Throwable
             return Set.of();
-        }
-    }
-
-    public List<List<ExecContextData.TaskVertex>> graphAsListOfLIst(ExecContextImpl execContext) {
-        try {
-            DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
-            List<List<ExecContextData.TaskVertex>> list = new ArrayList<>();
-
-            // get head of graph
-            List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
-                    .stream()
-                    .filter(o -> graph.getAncestors(o).isEmpty())
-                    .collect(Collectors.toList());
-
-            while (!vertices.isEmpty()) {
-                list.add(vertices);
-
-                List<ExecContextData.TaskVertex> nextLine = new ArrayList<>();
-                for (ExecContextData.TaskVertex vertex : vertices) {
-                    Set<ExecContextData.TaskVertex> descendants = graph.getDescendants(vertex);
-                    nextLine.addAll(descendants);
-                }
-                vertices = nextLine;
-            }
-            return list;
-
-        }
-        catch (Throwable th) {
-            log.error("#916.120 Error", th);
-            // TODO 2020.03.09 need to implement better handling of Throwable
-            return List.of();
         }
     }
 
@@ -432,7 +418,7 @@ class ExecContextGraphService {
 
                 iterator.forEachRemaining(v -> {
                     if (v.execState==EnumsApi.TaskExecState.NONE) {
-                        // remove all tasks which have non-processed tasks as direct parent
+                        // remove all tasks which have non-processed tasks as a direct parent
                         if (isParentFullyProcessed(graph, v)) {
                             vertices.add(v);
                         }

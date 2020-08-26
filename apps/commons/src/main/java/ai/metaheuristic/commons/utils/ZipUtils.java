@@ -196,11 +196,6 @@ public class ZipUtils {
                     File newDir = new File(zipDestinationFolder, name);
                     log.debug("'\t\t\tcreate dirs in {}", newDir.getAbsolutePath());
                     Files.createDirectories(newDir.toPath());
-/*
-                    if (!newDir.mkdirs()) {
-                        throw new RuntimeException("Creation of target dir was failed, target dir: " + zipDestinationFolder+", entity: " + name);
-                    }
-*/
                 }
                 else {
                     String resultName;
@@ -211,8 +206,6 @@ public class ZipUtils {
                             File trgDir = new File(zipDestinationFolder, parentFile.getPath());
 
                             Files.createDirectories(trgDir.toPath());
-//                            trgDir.mkdirs();
-
                             File d = File.createTempFile("doc-", ".bin", trgDir);
                             resultName = new File(parentFile, d.getName()).getPath();
                         }
