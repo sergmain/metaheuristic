@@ -445,4 +445,37 @@ public class BatchTopLevelService {
         return resource;
     }
 
+    @Nullable
+    private String getVariableAsString(
+            Long batchId, @Nullable Long companyUniqueId, boolean includeDeleted,
+            Function<SourceCodeParamsYaml, String> variableSelector) {
+        Batch batch = batchCache.findById(batchId);
+        if (batch == null || (companyUniqueId!=null && !batch.companyId.equals(companyUniqueId)) ||
+                (!includeDeleted && batch.deleted)) {
+            final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
+            log.warn(es);
+            return null;
+        }
+
+        SourceCodeImpl sc = sourceCodeCache.findById(batch.sourceCodeId);
+        if (sc==null) {
+            final String es = "#995.280 SourceCode wasn't found, sourceCodeId: " + batch.sourceCodeId;
+            log.warn(es);
+            return null;
+        }
+        SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+        String resultBatchVariable = variableSelector.apply(scpy);
+
+        SimpleVariable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
+        if (variable==null) {
+            final String es = "#995.320 Can't find variable '"+resultBatchVariable+"'";
+            log.warn(es);
+            return null;
+        }
+
+        String s = variableService.getVariableDataAsString(variable.id);
+        return s;
+    }
+
 }

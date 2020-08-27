@@ -19,12 +19,12 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
+import ai.metaheuristic.commons.utils.TaskFileParamsUtils;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYamlUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
-import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
@@ -37,6 +37,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+
+import static ai.metaheuristic.commons.utils.TaskFileParamsUtils.getOutputVariableForType;
 
 @SpringBootApplication
 @Slf4j
@@ -77,24 +79,15 @@ public class SimpleBatchApp implements CommandLineRunner {
 
         TaskFileParamsYaml.InputVariable arrayVariable = params.task.inputs.get(0);
 
-        File arrayVariableFile = Path.of(
-                params.task.workingPath, arrayVariable.dataType.toString(), arrayVariable.id).toFile();
-
-        String arrayVariableContent = FileUtils.readFileToString(arrayVariableFile, StandardCharsets.UTF_8);
-        System.out.println("input array variable:\n" + arrayVariableContent+"\n");
-
-        VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(
-                arrayVariableContent);
-
-        VariableArrayParamsYaml.Variable variable = vapy.array.get(0);
+        VariableArrayParamsYaml.Variable variable = TaskFileParamsUtils.getInputVariablesAsArray(params, arrayVariable).array.get(0);
         File sourceFile = Path.of(params.task.workingPath, variable.dataType.toString(), variable.id).toFile();
 
 
-        TaskFileParamsYaml.OutputVariable processedVar = getOutputFileForType(params, "batch-item-processed-file");
+        TaskFileParamsYaml.OutputVariable processedVar = getOutputVariableForType(params, "batch-item-processed-file");
         String processedFilename = processedVar.id;
-        TaskFileParamsYaml.OutputVariable processingStatusVar = getOutputFileForType(params, "batch-item-processing-status");
+        TaskFileParamsYaml.OutputVariable processingStatusVar = getOutputVariableForType(params, "batch-item-processing-status");
         String processingStatusFilename = processingStatusVar.id;
-        TaskFileParamsYaml.OutputVariable mappingVar = getOutputFileForType(params, "batch-item-mapping");
+        TaskFileParamsYaml.OutputVariable mappingVar = getOutputVariableForType(params, "batch-item-mapping");
         String mappingFilename = mappingVar.id;
 
         System.out.println("processedFilename: " + processedFilename);
@@ -117,14 +110,6 @@ public class SimpleBatchApp implements CommandLineRunner {
 
         String mapping = BatchItemMappingYamlUtils.BASE_YAML_UTILS.toString(bimy);
         FileUtils.write(mappingFile, mapping, StandardCharsets.UTF_8);
-    }
-
-    public TaskFileParamsYaml.OutputVariable getOutputFileForType(TaskFileParamsYaml params, String type) {
-        return params.task.outputs
-                    .stream()
-                    .filter(o-> type.equals(o.type))
-                    .findFirst()
-                    .orElseThrow();
     }
 
 }

@@ -56,5 +56,5 @@ source:
         - name: var-batch-status
           type: batch-status
       metas:
-        - mh.result-file-extension: .zip
+        - result-file-extension: .zip
 version: 1
