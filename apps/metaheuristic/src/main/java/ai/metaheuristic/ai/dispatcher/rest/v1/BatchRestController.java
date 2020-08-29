@@ -45,6 +45,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -87,9 +88,13 @@ public class BatchRestController {
     }
 
     @GetMapping(value = "/batch-add")
-    public SourceCodeData.SourceCodesForCompany batchAdd(Authentication authentication) {
+    public SourceCodeData.SourceCodeUidsForCompany batchAdd(Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeSelectorService.getAvailableSourceCodesForCompany(context);
+        SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
+        codes.items = sourceCodeSelectorService.getAvailableSourceCodesForCompany(context).items.stream()
+                .map(o->new SourceCodeData.SourceCodeUid(o.getId(), o.getUid()))
+                .collect(Collectors.toList());
+        return codes;
     }
 
     @GetMapping("/batch-delete/{batchId}")

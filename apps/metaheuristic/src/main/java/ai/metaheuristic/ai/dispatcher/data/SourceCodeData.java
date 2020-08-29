@@ -37,13 +37,29 @@ import java.util.List;
 public class SourceCodeData {
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SourceCodeUid {
+        public Long id;
+        public String uid;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SourceCodeUidsForCompany extends BaseDataClass {
+        // it must be full name of class, i.e. with packages
+        // todo 2020-02-24 why?
+//        public List<ai.metaheuristic.api.dispatcher.SourceCode> items;
+        public List<SourceCodeUid> items;
+    }
+
+    @Data
     @EqualsAndHashCode(callSuper = false)
     @AllArgsConstructor
     @NoArgsConstructor
     public static class SourceCodesForCompany extends BaseDataClass {
-        // it must be full name of class, i.e. with packages
-        // todo 2020-02-24 why?
-//        public List<ai.metaheuristic.api.dispatcher.SourceCode> items;
         public List<SourceCode> items;
     }
 
