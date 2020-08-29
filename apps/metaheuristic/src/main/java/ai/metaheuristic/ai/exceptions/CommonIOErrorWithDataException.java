@@ -14,25 +14,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.utils.cleaner;
-
-import lombok.Data;
-import org.springframework.core.io.AbstractResource;
-import org.springframework.http.ResponseEntity;
+package ai.metaheuristic.ai.exceptions;
 
 import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Serge
- * Date: 10/2/2019
- * Time: 5:20 PM
+ * Date: 8/29/2020
+ * Time: 2:03 AM
  */
-@Data
-public class CleanerInfo {
-    public ResponseEntity<AbstractResource> entity;
-    public List<File> toClean = new ArrayList<>();
-    public List<InputStream> inputStreams = new ArrayList<>();
+public class CommonIOErrorWithDataException extends CommonErrorWithDataException {
+
+    public CommonIOErrorWithDataException(String message) {
+        super(message);
+    }
+
+    @Override
+    public String getAdditionalInfo() {
+        return "";
+    }
 }

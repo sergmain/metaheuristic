@@ -31,10 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
-import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
@@ -48,14 +45,16 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -68,6 +67,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
@@ -220,35 +220,48 @@ public class SouthbridgeService {
                 throw e;
             }
         }
-        File f;
-        boolean isLastChunk;
-        CleanerInfo resource = new CleanerInfo();
-        if (chunkSize == null || chunkSize.isBlank()) {
-            f = assetFile.file;
-            isLastChunk = true;
-        } else {
-            File tempDir = DirUtils.createTempDir("chunked-file-");
-            f = new File(tempDir, "file-part.bin");
-            resource.toClean.add(tempDir);
+        FileInputStream fis;
+        try {
+            fis = new FileInputStream(assetFile.file);
+            CleanerInfo resource = new CleanerInfo();
+            resource.inputStreams = List.of(fis);
 
-            final long size = Long.parseLong(chunkSize);
-            final long offset = size * chunkNum;
-            if (offset >= assetFile.file.length()) {
-                MultiValueMap<String, String> headers = new HttpHeaders();
-                headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, "true");
-                headers.add(Consts.HEADER_MH_CHUNK_SIZE, "0");
-                resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, headers, HttpStatus.OK);
-                return resource;
+            InputStream realInputStream = fis;
+
+            boolean isLastChunk;
+            long byteToRead = assetFile.file.length();
+            if (chunkSize == null || chunkSize.isBlank()) {
+                isLastChunk = true;
+            } else {
+                final long size = Long.parseLong(chunkSize);
+                final long offset = size * chunkNum;
+                if (offset >= assetFile.file.length()) {
+                    MultiValueMap<String, String> headers = new HttpHeaders();
+                    headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, "true");
+                    headers.add(Consts.HEADER_MH_CHUNK_SIZE, "0");
+                    resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, headers, HttpStatus.OK);
+                    return resource;
+                }
+                final long realSize = assetFile.file.length() < offset + size ? assetFile.file.length() - offset : size;
+                byteToRead = realSize;
+                long skipped = fis.skip(offset);
+                if (skipped!=offset) {
+                    String es = S.f("Error (skipped!=offset), skipped: %d, offset: %d", skipped, offset);
+                    log.error(es);
+                    throw new CommonIOErrorWithDataException(es);
+
+                }
+                realInputStream = new BoundedInputStream(fis, realSize);
+                isLastChunk = (assetFile.file.length() == (offset + realSize));
             }
-            final long realSize = assetFile.file.length() < offset + size ? assetFile.file.length() - offset : size;
-            copyChunk(assetFile.file, f, offset, realSize);
-            isLastChunk = (assetFile.file.length() == (offset + realSize));
+            final HttpHeaders headers = RestUtils.getHeader(byteToRead);
+            headers.add(Consts.HEADER_MH_CHUNK_SIZE, Long.toString(byteToRead));
+            headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, Boolean.toString(isLastChunk));
+            resource.entity = new ResponseEntity<>(new InputStreamResource(realInputStream), headers, HttpStatus.OK);
+            return resource;
+        } catch (IOException e) {
+            throw new CommonIOErrorWithDataException("Error: " + e.getMessage());
         }
-        final HttpHeaders headers = RestUtils.getHeader(f.length());
-        headers.add(Consts.HEADER_MH_CHUNK_SIZE, Long.toString(f.length()));
-        headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, Boolean.toString(isLastChunk));
-        resource.entity = new ResponseEntity<>(new FileSystemResource(f.toPath()), headers, HttpStatus.OK);
-        return resource;
     }
 
     public static void copyChunk(File sourceFile, File destFile, long offset, long size) {

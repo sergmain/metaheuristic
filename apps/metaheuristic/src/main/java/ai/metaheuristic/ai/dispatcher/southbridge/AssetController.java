@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ import org.springframework.core.io.AbstractResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,9 +60,9 @@ public class AssetController {
     public ResponseEntity<AbstractResource> deliverFunctionAuth(
             HttpServletRequest request,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
-            String code, String chunkSize, Integer chunkNum) {
+            @Nullable String code, @Nullable String chunkSize, @Nullable Integer chunkNum) {
         log.debug("deliverFunctionAuth(), code: {}, chunkSize: {}, chunkNum: {}", code, chunkSize, chunkNum);
-        if (chunkSize==null || chunkSize.isBlank() || chunkNum==null) {
+        if (S.b(code) || S.b(chunkSize) || chunkNum==null) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
         }
 
@@ -89,7 +91,7 @@ public class AssetController {
     private String getFunctionChecksum(HttpServletResponse response, String functionCode) throws IOException {
         Function function = functionService.findByCode(functionCode);
         if (function ==null) {
-            log.warn("#442.100 Function {} wasn't", functionCode);
+            log.warn("#442.100 Function {} wasn't found", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return "";
         }
@@ -103,9 +105,13 @@ public class AssetController {
             HttpServletResponse response,
             @SuppressWarnings("unused") String processorId,
             @SuppressWarnings("unused") String taskId,
-            String code,
+            @Nullable String code,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) throws IOException {
+        if (S.b(code)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return "";
+        }
         return getFunctionConfig(response, code);
     }
 

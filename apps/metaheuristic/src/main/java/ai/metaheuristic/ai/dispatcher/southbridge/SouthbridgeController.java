@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -27,11 +28,14 @@ import org.springframework.core.io.AbstractResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * User: Serg
@@ -50,11 +54,15 @@ public class SouthbridgeController {
 
     @PostMapping("/srv-v2/{random-part}")
     public String processRequestAuth(
-            HttpServletRequest request,
+            HttpServletRequest request, HttpServletResponse response,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
-            @RequestBody String data
-            ) {
+            @Nullable @RequestBody String data
+            ) throws IOException {
         log.debug("processRequestAuth(), data: {}", data);
+        if (S.b(data)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return "";
+        }
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
@@ -63,9 +71,9 @@ public class SouthbridgeController {
             HttpServletRequest request,
             @PathVariable("variableType") String variableType,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
-            String id, String chunkSize, Integer chunkNum) {
+            @Nullable String id, @Nullable String chunkSize, @Nullable Integer chunkNum) {
         log.debug("deliverResourceAuth(), id: {}, chunkSize: {}, chunkNum: {}", id, chunkSize, chunkNum);
-        if (chunkSize.isBlank()) {
+        if (S.b(id) || S.b(chunkSize) || chunkNum==null) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
         }
 
@@ -85,7 +93,7 @@ public class SouthbridgeController {
             MultipartFile file,
             @SuppressWarnings("unused") String processorId,
             @SuppressWarnings("unused") Long taskId,
-            Long variableId,
+            @Nullable Long variableId,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) {
         log.debug("uploadResourceAuth(), variableId: {}", variableId);

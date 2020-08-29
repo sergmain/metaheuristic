@@ -38,6 +38,12 @@ public class TestController {
         public String test(@RequestParam(name = "text", required = false, defaultValue = "") String text) {
             return getString(text);
         }
+
+        @GetMapping("/test/simple-with-id/id-{id}")
+        @ResponseBody
+        public String test(@PathVariable Long id, Long value) {
+            return getString(id.toString() + " " + value);
+        }
     }
 
     @RestController
