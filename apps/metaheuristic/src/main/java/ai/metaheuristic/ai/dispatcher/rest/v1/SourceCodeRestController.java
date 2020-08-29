@@ -73,14 +73,14 @@ public class SourceCodeRestController {
 
     @PostMapping("/source-code-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SourceCodeApiData.SourceCodeResult addFormCommit(@RequestParam(name = "sourceCodeYaml") String sourceCodeYamlAsStr, Authentication authentication) {
+    public SourceCodeApiData.SourceCodeResult addFormCommit(@RequestParam(name = "source") String sourceCodeYamlAsStr, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         return sourceCodeTopLevelService.addSourceCode(sourceCodeYamlAsStr, context);
     }
 
     @PostMapping("/source-code-edit-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public SourceCodeApiData.SourceCodeResult editFormCommit(Long sourceCodeId, @RequestParam(name = "sourceCodeYaml") String sourceCodeYamlAsStr, Authentication authentication) {
+    public SourceCodeApiData.SourceCodeResult editFormCommit(Long sourceCodeId, @RequestParam(name = "source") String sourceCodeYamlAsStr, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         return sourceCodeTopLevelService.updateSourceCode(sourceCodeId, sourceCodeYamlAsStr, context);
     }

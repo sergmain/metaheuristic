@@ -6,14 +6,14 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Edit the source code</h1>
 
-        <!--/*@thymesVar id="sourceCode" type="ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl"*/-->
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.source_code.SourceCodeApiData$SourceCodeResult"*/-->
         <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/source-code/source-code-edit-commit}" accept-charset="UTF-8" id="processor-form" name="f">
-            <input type="hidden" name="sourceCodeId" th:value="${sourceCode.id}"/>
+            <input type="hidden" name="sourceCodeId" th:value="${result.id}"/>
             <fieldset>
 
                 <label for="sourceCodeYamlAsStr">Parameters of sourceCode</label>
                 <textarea name="sourceCodeYamlAsStr" id="sourceCodeYamlAsStr" placeholder="Parameters of source code" cols="70" rows="15"
-                          th:text="${sourceCodeYamlAsStr}" maxlength="10000"></textarea>
+                          th:text="${result.source}" maxlength="10000"></textarea>
                 <span class="pure-form-message">This is a required field.</span>
 
                 <table>
@@ -25,7 +25,7 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="#" th:href="${'/dispatcher/source-code/source-code-validate/' + sourceCode.id}">Validate</a>
+                            <a class="pure-button pure-button-primary" href="#" th:href="${'/dispatcher/source-code/source-code-validate/' + result.id}">Validate</a>
                         </td>
                         <td>
                             &nbsp;

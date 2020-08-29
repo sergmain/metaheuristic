@@ -88,8 +88,15 @@ public class SourceCodeApiData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class SourceCodeResult extends BaseDataClass {
-        public SourceCode sourceCode;
-        public String sourceCodeYamlAsStr;
+        public Long id;
+        public Integer version;
+        public String uid;
+        public Long companyId;
+        public long createdOn;
+        public boolean locked;
+        public boolean valid;
+        public String source;
+
         public EnumsApi.SourceCodeLang lang;
         public SourceCodeValidationResult status = new SourceCodeValidationResult(
                 EnumsApi.SourceCodeValidateStatus.NOT_VERIFIED_YET, "Not verified yet");
@@ -108,16 +115,30 @@ public class SourceCodeApiData {
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public SourceCodeResult(SourceCode sourceCode, SourceCodeStoredParamsYaml storedParams) {
-            this.sourceCode = sourceCode;
-            this.lang = storedParams.lang;
-            this.sourceCodeYamlAsStr = storedParams.source;
+        public SourceCodeResult(SourceCode sc, SourceCodeStoredParamsYaml sourceCode) {
+            this.id = sc.getId();
+            this.version = sc.getVersion();
+            this.uid = sc.getUid();
+            this.companyId = sc.getCompanyId();
+            this.createdOn = sc.getCreatedOn();
+            this.locked = sc.isLocked();
+            this.valid = sc.isValid();
+
+            this.source = sourceCode.source;
+            this.lang = sourceCode.lang;
         }
 
-        public SourceCodeResult(SourceCode sourceCode, EnumsApi.SourceCodeLang lang, String sourceCodeYamlAsStr) {
-            this.sourceCode = sourceCode;
+        public SourceCodeResult(SourceCode sc, EnumsApi.SourceCodeLang lang, String sourceCode) {
+            this.id = sc.getId();
+            this.version = sc.getVersion();
+            this.uid = sc.getUid();
+            this.companyId = sc.getCompanyId();
+            this.createdOn = sc.getCreatedOn();
+            this.locked = sc.isLocked();
+            this.valid = sc.isValid();
+
+            this.source= sourceCode;
             this.lang = lang;
-            this.sourceCodeYamlAsStr = sourceCodeYamlAsStr;
         }
     }
 

@@ -6,27 +6,27 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Archive the sourceCode</h1>
 
-        <!--/*@thymesVar id="sourceCode" type="ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${sourceCode}">
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.source_code.SourceCodeApiData$SourceCodeResult"*/-->
+        <form class="pure-form pure-form-stacked">
             <fieldset>
                 <label for="uid">UID of sourceCode:</label>
-                <p id="uid" th:text="*{uid}">
+                <p id="uid" th:text="${result.uid}">
 
                 <p>&nbsp;</p>
 
                 <label for="sourceCodeYamlAsStr">Source code:</label>
-                <pre id="sourceCodeYamlAsStr"  th:text="${sourceCodeYamlAsStr}"></pre>
+                <pre id="sourceCodeYamlAsStr"  th:text="${result.source}"></pre>
             </fieldset>
         </form>
 
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${sourceCode}" th:method="post" th:action="@{/dispatcher/source-code/source-code-archive-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/dispatcher/source-code/source-code-archive-commit}"
                           accept-charset="UTF-8"
                           id="source-code-archive-commit"
                           name="f">
-                        <input type="hidden" th:field="*{id}"/>
+                        <input type="hidden" th:field="${result.id}"/>
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Archive</button>
                         </fieldset>

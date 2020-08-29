@@ -6,25 +6,25 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Delete the source code</h1>
 
-        <!--/*@thymesVar id="sourceCode" type="ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${sourceCode}">
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.source_code.SourceCodeApiData$SourceCodeResult"*/-->
+        <form class="pure-form pure-form-stacked">
             <fieldset>
                 <label for="uid">UID of source code</label>
-                <pre id="uid" th:text="*{uid}" ></pre>
+                <pre id="uid" th:text="${result.uid}" ></pre>
 
                 <label for="sourceCodeYamlAsStr">Parameters of source code</label>
-                <pre id="sourceCodeYamlAsStr" th:text="${sourceCodeYamlAsStr}" ></pre>
+                <pre id="sourceCodeYamlAsStr" th:text="${result.source}" ></pre>
             </fieldset>
         </form>
 
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${sourceCode}" th:method="post" th:action="@{/dispatcher/source-code/source-code-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/dispatcher/source-code/source-code-delete-commit}"
                           accept-charset="UTF-8"
                           id="source-code-delete-commit"
                           name="f">
-                        <input type="hidden" th:field="*{id}"/>
+                        <input type="hidden" th:field="${result.id}"/>
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Delete</button>
                         </fieldset>

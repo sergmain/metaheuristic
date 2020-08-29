@@ -85,24 +85,23 @@ public class ExecContextController {
 
     @GetMapping(value = "/exec-context-add/{sourceCodeId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String execContextAdd(@ModelAttribute("result") SourceCodeApiData.SourceCodeResult result,
-                              @PathVariable Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+    public String execContextAdd(Model model, @PathVariable Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(sourceCodeId, context);
         if (sourceCodeResultRest.status.status== EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
-        result.sourceCode = sourceCodeResultRest.sourceCode;
+        model.addAttribute("result", sourceCodeResultRest);
         return "dispatcher/source-code/exec-context-add";
     }
 
     /**
-     * right now reference to global variable isn't supported. all global variables must be specified in SourceCode.
+     * right now,ExecContext can be created with Global variables only.
      */
     @PostMapping("/exec-context-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
-    public String execContextAddCommit(Long sourceCodeId, String variable, final RedirectAttributes redirectAttributes, Authentication authentication) {
+    public String execContextAddCommit(Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorService.createExecContext(sourceCodeId, context);
         if (execContextResultRest.isErrorMessages()) {

@@ -94,8 +94,7 @@ public class SourceCodeController {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
-        model.addAttribute("sourceCode", sourceCodeResultRest.sourceCode);
-        model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
+        model.addAttribute("result", sourceCodeResultRest);
         return "dispatcher/source-code/source-code-edit";
     }
 
@@ -109,8 +108,7 @@ public class SourceCodeController {
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
 
-        model.addAttribute("sourceCode", sourceCodeResultRest.sourceCode);
-        model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
+        model.addAttribute("result", sourceCodeResultRest);
         model.addAttribute("infoMessages", sourceCodeResultRest.infoMessages);
         model.addAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
         return "dispatcher/source-code/source-code-edit";
@@ -148,13 +146,13 @@ public class SourceCodeController {
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.updateSourceCode(sourceCodeId, sourceCodeYamlAsStr, context);
         if (sourceCodeResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
-            return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.sourceCode.getId();
+            return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.id;
         }
 
         if (sourceCodeResultRest.status.status== EnumsApi.SourceCodeValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
-        return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.sourceCode.getId();
+        return "redirect:/dispatcher/source-code/source-code-edit/"+ sourceCodeResultRest.id;
     }
 
     @GetMapping("/source-code-delete/{id}")
@@ -170,8 +168,7 @@ public class SourceCodeController {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
-        model.addAttribute("sourceCode", sourceCodeResultRest.sourceCode);
-        model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
+        model.addAttribute("result", sourceCodeResultRest);
         return "dispatcher/source-code/source-code-delete";
     }
 
@@ -195,8 +192,7 @@ public class SourceCodeController {
             redirectAttributes.addFlashAttribute("errorMessage", sourceCodeResultRest.getErrorMessagesAsList());
             return REDIRECT_DISPATCHER_SOURCE_CODES;
         }
-        model.addAttribute("sourceCode", sourceCodeResultRest.sourceCode);
-        model.addAttribute("sourceCodeYamlAsStr", sourceCodeResultRest.sourceCodeYamlAsStr);
+        model.addAttribute("result", sourceCodeResultRest);
         return "dispatcher/source-code/source-code-archive";
     }
 
