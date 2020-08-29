@@ -82,9 +82,13 @@ public class AssetController {
             HttpServletResponse response,
             @SuppressWarnings("unused") String processorId,
             @SuppressWarnings("unused") String taskId,
-            String code,
+            @Nullable String code,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) throws IOException {
+        if (S.b(code)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return "";
+        }
         return getFunctionChecksum(response, code);
     }
 
