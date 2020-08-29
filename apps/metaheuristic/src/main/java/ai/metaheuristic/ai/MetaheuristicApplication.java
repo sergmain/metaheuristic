@@ -29,6 +29,6 @@ public class MetaheuristicApplication {
     public static void main(String[] args) {
         System.setProperty("file.encoding", StandardCharsets.UTF_8.toString());
         System.setProperty("sun.jnu.encoding", StandardCharsets.UTF_8.toString());
-        new SpringApplication(MetaheuristicApplication.class).run();
+        SpringApplication.run(MetaheuristicApplication.class, args);
     }
 }
