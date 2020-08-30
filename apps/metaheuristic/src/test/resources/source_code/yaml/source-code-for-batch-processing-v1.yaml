@@ -2,6 +2,8 @@ source:
   uid: source-code-for-batch-processing-1.4
   variables:
     startInputAs: input-data
+  metas:
+    - mh.result-file-extension: .zip
   processes:
     - code: mh.batch-splitter
       name: mh.batch-splitter
@@ -12,7 +14,6 @@ source:
         - variable-for-splitting: input-data
         - output-is-dynamic: true
         - output-variable: var-batch-item
-#      error-scope: process
       subProcesses:
         logic: sequential
         processes:
@@ -55,6 +56,4 @@ source:
           type: batch-result
         - name: var-batch-status
           type: batch-status
-      metas:
-        - mh.result-file-extension: .zip
 version: 1

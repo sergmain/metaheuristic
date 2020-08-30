@@ -41,7 +41,6 @@ import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -49,7 +48,6 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -360,17 +358,9 @@ public class BatchTopLevelService {
                 return null;
 
             }
-            String filename = StrUtils.getName(inputVariable.filename) + getActualExtension(scpy);
+            String filename = StrUtils.getName(inputVariable.filename) + BatchService.getActualExtension(scpy, globals.defaultResultFileExtension);
             return filename;
         });
-    }
-
-    private String getActualExtension(SourceCodeParamsYaml scpy) {
-        final String ext = MetaUtils.getValue(scpy.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
-
-        return S.b(ext)
-                ? (StringUtils.isNotBlank(globals.defaultResultFileExtension) ? globals.defaultResultFileExtension : ".bin")
-                : ext;
     }
 
     @Nullable

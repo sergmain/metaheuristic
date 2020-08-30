@@ -18,10 +18,12 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
@@ -31,20 +33,19 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
@@ -67,7 +68,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -90,6 +94,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private static final String BATCH_STATUS = "batch-status";
     private static final String BATCH_RESULT = "batch-result";
 
+    private final Globals globals;
     private final VariableService variableService;
     private final VariableRepository variableRepository;
     private final BatchService batchService;
@@ -97,6 +102,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
+    private final SourceCodeCache sourceCodeCache;
 
     @Override
     public String getCode() {
@@ -135,7 +141,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec==null) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.exec_context_not_found,
-                    S.f("#993.010 ExecContext #%s wasn't found", execContextId));
+                    S.f("#993.020 ExecContext #%s wasn't found", execContextId));
         }
 
         ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
@@ -164,7 +170,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         File zipFile = new File(resultDir, Consts.RESULT_ZIP);
         ZipUtils.createZip(zipDir, zipFile);
 
-        InternalFunctionData.InternalFunctionProcessingResult ifprForResult = storeBatchResult(execContextId, taskContextId, taskParamsYaml, zipFile);
+        InternalFunctionData.InternalFunctionProcessingResult ifprForResult = storeBatchResult(sourceCodeId, execContextId, taskContextId, taskParamsYaml, zipFile);
         if (ifprForResult != null) {
             return ifprForResult;
         }
@@ -173,21 +179,26 @@ public class BatchResultProcessorFunction implements InternalFunction {
     }
 
     @Nullable
-    private InternalFunctionData.InternalFunctionProcessingResult storeBatchResult(Long execContextId, String taskContextId, TaskParamsYaml taskParamsYaml, File zipFile) throws IOException {
+    private InternalFunctionData.InternalFunctionProcessingResult storeBatchResult(Long sourceCodeId, Long execContextId, String taskContextId, TaskParamsYaml taskParamsYaml, File zipFile) throws IOException {
         String batchResultVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_RESULT.equals(o.type)).findFirst().map(o->o.name).orElse(null);
         if (S.b(batchResultVarName)) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
-                    S.f("#993.010 Variable with type 'batch-result' wasn't found in taskContext %s, execContext #%s", taskContextId, execContextId));
+                    S.f("#993.040 Variable with type 'batch-result' wasn't found in taskContext %s, execContext #%s", taskContextId, execContextId));
         }
         SimpleVariable batchResult = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchResultVarName, taskContextId, execContextId);
         if (batchResult==null) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                    S.f("#993.010 Batch result variable %s wasn't found in taskContext %s, execContext #%s", batchResultVarName, taskContextId, execContextId));
+                    S.f("#993.060 Batch result variable %s wasn't found in taskContext %s, execContext #%s", batchResultVarName, taskContextId, execContextId));
+        }
+        SourceCodeImpl sc = sourceCodeCache.findById(sourceCodeId);
+        if (sc==null) {
+            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_not_found,
+                    S.f("#993.080 Can't find SourceCode #%s", sourceCodeId));
         }
 
         try (FileInputStream fis = new FileInputStream(zipFile)) {
             String originBatchFilename = batchService.findUploadedFilenameForBatchId(execContextId, "batch-result.zip");
-            String ext = MetaUtils.getValue(taskParamsYaml.task.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
+            String ext = BatchService.getActualExtension(sc.getSourceCodeStoredParamsYaml(), globals.defaultResultFileExtension);
             if (!S.b(ext)) {
                 originBatchFilename = StrUtils.getName(originBatchFilename) + ext;
             }
@@ -207,12 +218,12 @@ public class BatchResultProcessorFunction implements InternalFunction {
         String batchStatusVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_STATUS.equals(o.type)).findFirst().map(o->o.name).orElse(null);
         if (S.b(batchStatusVarName)) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_with_type_not_found,
-                    S.f("#993.010 Variable with type 'batch-status' wasn't found in taskContext %s, execContext #%s", taskContextId, execContext));
+                    S.f("#993.100 Variable with type 'batch-status' wasn't found in taskContext %s, execContext #%s", taskContextId, execContext));
         }
         SimpleVariable batchStatus = variableRepository.findByNameAndTaskContextIdAndExecContextId(batchStatusVarName, taskContextId, execContext.id);
         if (batchStatus==null) {
             return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                    S.f("#993.010 Batch status variable %s wasn't found in taskContext %s, execContext #%s", batchStatusVarName, taskContextId, execContext));
+                    S.f("#993.120 Batch status variable %s wasn't found in taskContext %s, execContext #%s", batchStatusVarName, taskContextId, execContext));
         }
 
         byte[] bytes = status.getStatus().getBytes();
@@ -246,7 +257,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
             }
             ExecContextParamsYaml.Variable varFromExecContext = nameToVar.get(simpleVariable.variable);
             if (varFromExecContext==null) {
-                log.error(S.f("Can't find variable %s in execContext", simpleVariable.variable) );
+                log.error(S.f("#993.140 Can't find variable %s in execContext", simpleVariable.variable) );
                 continue;
             }
             if (S.b(varFromExecContext.type)) {
@@ -270,7 +281,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
         for (ItemWithStatusWithMapping value : map.values()) {
             if (value.mapping==null || value.status==null || value.item==null) {
-                log.error(S.f("TaskContextId #%s is broken, batch doesn't contain all variables, ItemWithStatusWithMapping: %s", value.taskContextId, value));
+                log.error(S.f("#993.160 TaskContextId #%s is broken, batch doesn't contain all variables, ItemWithStatusWithMapping: %s", value.taskContextId, value));
             }
         }
         return map;
@@ -286,7 +297,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private void storeResultVariables(File zipDir, Long execContextId, ItemWithStatusWithMapping item) {
 
         if (item.mapping==null || item.status==null || item.item==null) {
-            log.error(S.f("TaskContextId #%s has been skipped, ItemWithStatusWithMapping: %s", item.taskContextId, item));
+            log.error(S.f("#993.180 TaskContextId #%s has been skipped, ItemWithStatusWithMapping: %s", item.taskContextId, item));
             return;
         }
 
@@ -299,7 +310,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
                 String mapping = variableService.getVariableDataAsString(sv.id);
                 bimy = BatchItemMappingYamlUtils.BASE_YAML_UTILS.to(mapping);
             } catch (CommonErrorWithDataException e) {
-                log.warn(S.f("#993.120 no mapping variables with id were found in execContextId #%s", sv.id, execContextId));
+                log.warn(S.f("#993.200 no mapping variables with id were found in execContextId #%s", sv.id, execContextId));
             }
         }
 
@@ -364,7 +375,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private void storeStatusOfTask(BatchStatusProcessor bs, ExecContextImpl ec, Long taskId) {
         final TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            String msg = "#993.280 Can't find task #" + taskId;
+            String msg = "#993.220 Can't find task #" + taskId;
             log.info(msg);
             bs.getGeneralStatus().add(msg,'\n');
             return;
@@ -425,7 +436,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
                 break;
             case SKIPPED:
                 bs.getProgressStatus().add(
-                        S.f("#993.300 Task #%s was skipped yet, function: %s, status: %s, execContextId: %s, %s, %s",
+                        S.f("#993.360 Task #%s was skipped yet, function: %s, status: %s, execContextId: %s, %s, %s",
                                 taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
                         ,'\n');
                 bs.ok = true;
@@ -433,7 +444,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
         }
 
         bs.getOkStatus().add(
-                S.f("#993.300 Task #%s was completed successfully, function: %s, status: %s, execContextId: %s, %s, %s",
+                S.f("#993.380 Task #%s was completed successfully, function: %s, status: %s, execContextId: %s, %s, %s",
                         taskId, func, EnumsApi.TaskExecState.from(task.getExecState()), ec.id, processorId, processorIpAndHost)
                 ,'\n');
         bs.ok = true;
