@@ -58,6 +58,7 @@ public class EventRestController {
         for (String s : periods) {
             int period = Integer.parseInt(s);
             list.add(period);
+            // if early than jan 2019 or later than jan 2100
             if (period<201900 || period>210000) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
             }

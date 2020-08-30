@@ -81,13 +81,13 @@ public class FunctionDownloadStatusYamlUtilsV1
     }
 
     @Override
-    public String toString(FunctionDownloadStatusYamlV1 yaml) {
+    public String toString(@NonNull FunctionDownloadStatusYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public FunctionDownloadStatusYamlV1 to(String s) {
+    public FunctionDownloadStatusYamlV1 to(@NonNull String s) {
         if (S.b(s)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

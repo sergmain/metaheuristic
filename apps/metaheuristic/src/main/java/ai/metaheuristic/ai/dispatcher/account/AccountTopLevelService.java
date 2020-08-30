@@ -42,11 +42,10 @@ public class AccountTopLevelService {
         return accountService.getAccounts(pageable, context.getCompanyId());
     }
 
-    public OperationStatusRest addAccount(Account account, DispatcherContext context) {
+    public OperationStatusRest addAccount(AccountData.NewAccount account, DispatcherContext context) {
         // company's admin can create only operator via AccountController
         // a fine-grained access is setting via CompanyController
-        account.setRoles("ROLE_OPERATOR");
-        return accountService.addAccount(account, context.getCompanyId());
+        return accountService.addAccount(account, context.getCompanyId(), "ROLE_OPERATOR");
     }
 
     public AccountData.AccountResult getAccount(Long id, DispatcherContext context) {

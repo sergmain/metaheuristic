@@ -188,13 +188,13 @@ public class ProcessorCommParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(ProcessorCommParamsYamlV1 yaml) {
+    public String toString(@NonNull ProcessorCommParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public ProcessorCommParamsYamlV1 to(String s) {
+    public ProcessorCommParamsYamlV1 to(@NonNull String s) {
         final ProcessorCommParamsYamlV1 p = getYaml().load(s);
         return p;
     }

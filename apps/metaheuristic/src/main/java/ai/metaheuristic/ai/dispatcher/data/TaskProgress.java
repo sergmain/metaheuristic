@@ -19,15 +19,25 @@ package ai.metaheuristic.ai.dispatcher.data;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
 
-import java.util.Collection;
+import java.io.Serializable;
 
+/**
+ * !!! This class must be top-level class. Do not move it as inner class to any other
+ *
+ * @author Serge
+ * Date: 8/17/2019
+ * Time: 4:51 PM
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserData {
-    public String username;
-    public String publicName;
-    public Collection<GrantedAuthority> authorities;
+public class TaskProgress implements Serializable {
+    private static final long serialVersionUID = -4322434254825989313L;
+
+    public Long execContextId;
+    public long count;
+    public int execState;
+    public boolean isCompleted;
+    public boolean isResultReceived;
 }

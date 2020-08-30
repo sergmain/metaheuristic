@@ -14,37 +14,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.company;
+package ai.metaheuristic.api.data.account;
 
-import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @author Serge
- * Date: 10/3/2019
- * Time: 4:51 PM
+ * Date: 8/30/2020
+ * Time: 3:18 PM
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class CompanyParamsYamlV1 implements BaseParams {
-
-    public final int version=1;
-
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
+public class AccountApiData {
 
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
-    public static class AccessControlV1 {
-        public String groups;
-    }
+    @AllArgsConstructor
+    public static class SerializableGrantedAuthority implements Serializable {
+        private static final long serialVersionUID = 4854416219001153110L;
 
-    public AccessControlV1 ac;
+        public String authority;
+    }
 
 }

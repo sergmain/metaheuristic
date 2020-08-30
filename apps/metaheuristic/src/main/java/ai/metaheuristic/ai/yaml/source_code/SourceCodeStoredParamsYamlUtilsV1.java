@@ -22,6 +22,7 @@ import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -43,7 +44,7 @@ public class SourceCodeStoredParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public SourceCodeStoredParamsYaml upgradeTo(@NonNull SourceCodeStoredParamsYamlV1 v1, Long ... vars) {
+    public SourceCodeStoredParamsYaml upgradeTo(@NonNull SourceCodeStoredParamsYamlV1 v1, @Nullable Long ... vars) {
         v1.checkIntegrity();
         SourceCodeStoredParamsYaml p = new SourceCodeStoredParamsYaml();
         p.internalParams.init(v1.internalParams.archived, v1.internalParams.published, v1.internalParams.updatedOn, null);
@@ -72,13 +73,13 @@ public class SourceCodeStoredParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(SourceCodeStoredParamsYamlV1 sourceCodeParamsYaml) {
+    public String toString(@NonNull SourceCodeStoredParamsYamlV1 sourceCodeParamsYaml) {
         return getYaml().dump(sourceCodeParamsYaml);
     }
 
     @NonNull
     @Override
-    public SourceCodeStoredParamsYamlV1 to(String s) {
+    public SourceCodeStoredParamsYamlV1 to(@NonNull String s) {
         final SourceCodeStoredParamsYamlV1 p = getYaml().load(s);
         if (p.source ==null) {
             throw new IllegalStateException("#635.010 SourceCode Yaml is null");

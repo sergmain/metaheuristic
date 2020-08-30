@@ -158,13 +158,13 @@ public class DispatcherCommParamsYamlUtilsV1 extends
     }
 
     @Override
-    public String toString(DispatcherCommParamsYamlV1 yaml) {
+    public String toString(@NonNull DispatcherCommParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public DispatcherCommParamsYamlV1 to(String s) {
+    public DispatcherCommParamsYamlV1 to(@NonNull String s) {
         final DispatcherCommParamsYamlV1 p = getYaml().load(s);
         return p;
     }

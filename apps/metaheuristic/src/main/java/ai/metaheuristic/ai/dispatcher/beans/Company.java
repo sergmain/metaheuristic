@@ -52,24 +52,27 @@ public class Company implements Serializable {
     public Long uniqueId;
 
     @Column(name = "PARAMS")
+    @Nullable
     private String params;
 
-    public void setParams(String params) {
+    public String name;
+
+    public void setParams(@Nullable String params) {
         synchronized (this) {
             this.params = params;
             this.cpy=null;
         }
     }
 
+    @Nullable
     public String getParams() {
         return params;
     }
 
-    public String name;
-
     @Transient
     @JsonIgnore
-    private @Nullable CompanyParamsYaml cpy = null;
+    @Nullable
+    private CompanyParamsYaml cpy = null;
 
     @JsonIgnore
     public CompanyParamsYaml getCompanyParamsYaml() {

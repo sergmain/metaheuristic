@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.ai.yaml.company;
 
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -43,7 +43,7 @@ public class CompanyParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public CompanyParamsYamlV2 upgradeTo(@NonNull CompanyParamsYamlV1 src, Long ... vars) {
+    public CompanyParamsYamlV2 upgradeTo(@NonNull CompanyParamsYamlV1 src, @Nullable Long ... vars) {
         src.checkIntegrity();
         CompanyParamsYamlV2 trg = new CompanyParamsYamlV2();
         if (src.ac!=null) {
@@ -70,17 +70,13 @@ public class CompanyParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(CompanyParamsYamlV1 yaml) {
+    public String toString(@NonNull CompanyParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public CompanyParamsYamlV1 to(String s) {
-        if (S.b(s)) {
-            return null;
-        }
-        //noinspection UnnecessaryLocalVariable
+    public CompanyParamsYamlV1 to(@NonNull String s) {
         final CompanyParamsYamlV1 p = getYaml().load(s);
         return p;
     }

@@ -56,7 +56,7 @@ create table mh_account
     USERNAME varchar(30) not null,
     PASSWORD varchar(100) not null,
     ROLES varchar(100),
-    PUBLIC_NAME varchar(100),
+    PUBLIC_NAME varchar(100) not null,
 
     is_acc_not_expired BOOLEAN not null default true,
     is_not_locked BOOLEAN not null default false,

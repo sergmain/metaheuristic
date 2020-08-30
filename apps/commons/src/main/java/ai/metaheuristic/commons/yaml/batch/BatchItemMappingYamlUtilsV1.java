@@ -70,13 +70,13 @@ public class BatchItemMappingYamlUtilsV1
     }
 
     @Override
-    public String toString(BatchItemMappingYamlV1 yaml) {
+    public String toString(@NonNull BatchItemMappingYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public BatchItemMappingYamlV1 to(String yaml) {
+    public BatchItemMappingYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

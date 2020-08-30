@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskProgress;
+import ai.metaheuristic.ai.dispatcher.data.TaskProgress;
 import ai.metaheuristic.api.dispatcher.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -110,7 +110,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query("SELECT t FROM TaskImpl t where t.id in :ids order by t.id asc ")
     List<TaskImpl> findTasksByIds(List<Long> ids);
 
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.beans.TaskProgress(" +
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.data.TaskProgress(" +
             "t.execContextId, count(*), t.execState, t.isCompleted, t.resultReceived ) " +
             "from TaskImpl t where t.execContextId=:execContextId " +
             "group by t.execContextId, t.execState, t.isCompleted, t.resultReceived "

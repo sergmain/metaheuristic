@@ -88,13 +88,13 @@ public class FunctionConfigListYamlUtilsV1
     }
 
     @Override
-    public String toString(FunctionConfigListYamlV1 yaml) {
+    public String toString(@NonNull FunctionConfigListYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public FunctionConfigListYamlV1 to(String yaml) {
+    public FunctionConfigListYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.api.data.account.SimpleAccount;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,8 +51,9 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
     Page<Account> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
-    @Query(value="select a from Account a where a.companyId=:companyUniqueId")
-    Page<Account> findAllByCompanyUniqueId(Pageable pageable, Long companyUniqueId);
+    @Query(value="select new ai.metaheuristic.api.data.account.SimpleAccount(a.id, a.companyId, a.username, a.publicName, a.enabled, a.createdOn, a.updatedOn) " +
+            " from Account a where a.companyId=:companyUniqueId")
+    Page<SimpleAccount> findAllByCompanyUniqueId(Pageable pageable, Long companyUniqueId);
 
     @Transactional(readOnly = true)
     @Query(value="select a.username from Account a")

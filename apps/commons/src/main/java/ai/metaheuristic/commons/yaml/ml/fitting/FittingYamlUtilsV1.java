@@ -69,13 +69,13 @@ public class FittingYamlUtilsV1
     }
 
     @Override
-    public String toString(FittingYamlV1 yaml) {
+    public String toString(@NonNull FittingYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public FittingYamlV1 to(String yaml) {
+    public FittingYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

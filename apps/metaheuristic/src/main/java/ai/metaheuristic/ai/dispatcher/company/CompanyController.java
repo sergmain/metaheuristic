@@ -157,8 +157,7 @@ public class CompanyController {
 
     @PostMapping("/company-account-add-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
-    public String addFormCommit(Model model, Account account, @PathVariable Long companyUniqueId) {
-        account.companyId = companyUniqueId;
+    public String addFormCommit(Model model, AccountData.NewAccount account, @PathVariable Long companyUniqueId) {
         OperationStatusRest operationStatusRest = companyAccountTopLevelService.addAccount(account, companyUniqueId);
         if (operationStatusRest.isErrorMessages()) {
             model.addAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());

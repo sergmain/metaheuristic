@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.account.SimpleAccount;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -58,29 +59,36 @@ public class AccountService {
         return result;
     }
 
-    public OperationStatusRest addAccount(Account account, Long companyUniqueId) {
+    public OperationStatusRest addAccount(AccountData.NewAccount acc, Long companyUniqueId, String roles) {
 
-        if (StringUtils.isBlank(account.getUsername()) ||
-                StringUtils.isBlank(account.getPassword()) ||
-                StringUtils.isBlank(account.getPassword2()) ||
-                StringUtils.isBlank(account.getPublicName())) {
+        if (StringUtils.isBlank(acc.getUsername()) ||
+                StringUtils.isBlank(acc.getPassword()) ||
+                StringUtils.isBlank(acc.getPassword2()) ||
+                StringUtils.isBlank(acc.getPublicName())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.010 Username, roles, password, and public name must be not null");
         }
-        if (account.getUsername().indexOf('=')!=-1 ) {
+        if (acc.getUsername().indexOf('=')!=-1 ) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.020 Username can't contain '='");
         }
-        if (!account.getPassword().equals(account.getPassword2())) {
+        if (!acc.getPassword().equals(acc.getPassword2())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.030 Both passwords must be equal");
         }
 
-        final Account byUsername = accountRepository.findByUsername(account.getUsername());
+        final Account byUsername = accountRepository.findByUsername(acc.getUsername());
         if (byUsername !=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    String.format("#237.040 Username '%s' was already used", account.getUsername()));
+                    String.format("#237.040 Username '%s' was already used", acc.getUsername()));
         }
+
+        Account account = new Account();
+        account.setRoles(roles);
+        account.username = acc.username;
+        account.password = acc.password;
+        account.publicName = acc.publicName;
+        account.roles = roles;
 
         account.setPassword(passwordEncoder.encode(account.getPassword()));
         account.setCreatedOn(System.currentTimeMillis());
@@ -100,9 +108,11 @@ public class AccountService {
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
             return new AccountData.AccountResult("#237.050 account wasn't found, accountId: " + id);
         }
-        Account acc = (Account) account.clone();
-        acc.maskPassword=true;
-        return new AccountData.AccountResult(acc);
+        return new AccountData.AccountResult(toSimple(account));
+    }
+
+    private static SimpleAccount toSimple(Account acc) {
+        return new SimpleAccount(acc.id, acc.companyId, acc.username, acc.publicName, acc.enabled, acc.createdOn, acc.updatedOn);
     }
 
     public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, Long companyUniqueId) {
@@ -162,18 +172,18 @@ public class AccountService {
         List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES;
 
         String role = possibleRoles.get(roleId);
-        boolean isAccountContainsRole = account.hasRole(role);
+        boolean isAccountContainsRole = account.accountRoles.hasRole(role);
         if (isAccountContainsRole && !checkbox){
-            account.removeRole(role);
+            account.accountRoles.removeRole(role);
         } else if (!isAccountContainsRole && checkbox) {
-            account.addRole(role);
+            account.accountRoles.addRole(role);
         }
 
         if (!Consts.ID_1.equals(account.getCompanyId())) {
-            account.removeRole(SecConsts.ROLE_SERVER_REST_ACCESS);
+            account.accountRoles.removeRole(SecConsts.ROLE_SERVER_REST_ACCESS);
         }
 
-        String roles = String.join(", ", account.getRolesAsList());
+        String roles = String.join(", ", account.accountRoles.getRolesAsList());
         account.setRoles(roles);
         account.updatedOn = System.currentTimeMillis();
         accountCache.save(account);

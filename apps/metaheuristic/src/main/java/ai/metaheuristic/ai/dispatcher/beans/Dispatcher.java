@@ -47,9 +47,11 @@ public class Dispatcher implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Nullable
     public Long id;
 
     @Version
+    @Nullable
     public Integer version;
 
     @Column(name = "PARAMS")

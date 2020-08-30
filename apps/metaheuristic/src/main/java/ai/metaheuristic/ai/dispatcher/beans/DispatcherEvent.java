@@ -39,9 +39,11 @@ public class DispatcherEvent implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Nullable
     public Long id;
 
     @Version
+    @Nullable
     private Integer version;
 
     // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field

@@ -104,13 +104,13 @@ public class TaskFileParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(TaskFileParamsYamlV1 params) {
+    public String toString(@NonNull TaskFileParamsYamlV1 params) {
         return getYaml().dump(params);
     }
 
     @NonNull
     @Override
-    public TaskFileParamsYamlV1 to(String yaml) {
+    public TaskFileParamsYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

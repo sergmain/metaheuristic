@@ -71,13 +71,13 @@ public class DispatcherParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(DispatcherParamsYamlV1 yaml) {
+    public String toString(@NonNull DispatcherParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public DispatcherParamsYamlV1 to(String s) {
+    public DispatcherParamsYamlV1 to(@NonNull String s) {
         final DispatcherParamsYamlV1 p = getYaml().load(s);
         return p;
     }

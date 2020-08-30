@@ -69,13 +69,13 @@ public class TaskExtendedResultYamlUtilsV1
     }
 
     @Override
-    public String toString(TaskExtendedResultYamlV1 yaml) {
+    public String toString(@NonNull TaskExtendedResultYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public TaskExtendedResultYamlV1 to(String yaml) {
+    public TaskExtendedResultYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

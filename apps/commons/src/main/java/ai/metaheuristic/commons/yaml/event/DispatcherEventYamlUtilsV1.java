@@ -88,13 +88,13 @@ public class DispatcherEventYamlUtilsV1
     }
 
     @Override
-    public String toString(DispatcherEventYamlV1 yaml) {
+    public String toString(@NonNull DispatcherEventYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public DispatcherEventYamlV1 to(String yaml) {
+    public DispatcherEventYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

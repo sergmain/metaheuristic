@@ -14,30 +14,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.beans;
+package ai.metaheuristic.api.data.account;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * !!! This class must be top-level class. Do not move it as inner class to any other
- *
  * @author Serge
- * Date: 8/17/2019
- * Time: 4:51 PM
+ * Date: 8/30/2020
+ * Time: 3:08 PM
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskProgress implements Serializable {
-    private static final long serialVersionUID = -4322434254825989313L;
+public class SimpleAccount {
+    public Long id;
+    public Long companyId;
+    public String username;
+    public String publicName;
+    public boolean enabled;
+    public long createdOn;
+    public long updatedOn;
 
-    public Long execContextId;
-    public long count;
-    public int execState;
-    public boolean isCompleted;
-    public boolean isResultReceived;
+    public final List<String> authorities = new ArrayList<>();
 }

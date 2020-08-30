@@ -95,13 +95,13 @@ public class ProcessorStatusYamlUtilsV1
     }
 
     @Override
-    public String toString(ProcessorStatusYamlV1 yaml) {
+    public String toString(@NonNull ProcessorStatusYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public ProcessorStatusYamlV1 to(String s) {
+    public ProcessorStatusYamlV1 to(@NonNull String s) {
         if (S.b(s)) {
             return null;
         }

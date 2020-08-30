@@ -16,7 +16,6 @@
 package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -26,7 +25,6 @@ import lombok.ToString;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Entity
@@ -39,9 +37,11 @@ public class SourceCodeImpl implements Serializable, SourceCode {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Nullable
     public Long id;
 
     @Version
+    @Nullable
     public Integer version;
 
     @Column(name = "COMPANY_ID")

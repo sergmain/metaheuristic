@@ -69,12 +69,12 @@ public class AccountController {
     }
 
     @GetMapping(value = "/account-add")
-    public String add(@ModelAttribute("account") Account account) {
+    public String add(@ModelAttribute("account") AccountData.NewAccount account) {
         return "dispatcher/account/account-add";
     }
 
     @PostMapping("/account-add-commit")
-    public String addFormCommit(Model model, Account account, Authentication authentication) {
+    public String addFormCommit(Model model, AccountData.NewAccount account, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = accountTopLevelService.addAccount(account, context);
         if (operationStatusRest.isErrorMessages()) {

@@ -108,13 +108,13 @@ public class SourceCodeParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(SourceCodeParamsYamlV1 sourceCodeParamsYaml) {
+    public String toString(@NonNull SourceCodeParamsYamlV1 sourceCodeParamsYaml) {
         return getYaml().dump(sourceCodeParamsYaml);
     }
 
     @NonNull
     @Override
-    public SourceCodeParamsYamlV1 to(String s) {
+    public SourceCodeParamsYamlV1 to(@NonNull String s) {
         final SourceCodeParamsYamlV1 p = getYaml().load(s);
         if (p.source ==null) {
             throw new IllegalStateException("#635.010 SourceCode Yaml is null");

@@ -116,8 +116,8 @@ public class CustomUserDetails implements UserDetailsService {
         }
 
         // fix role, the role ROLE_SERVER_REST_ACCESS can't be assigned to any user whose company isn't the master company with id==1
-        if (!Consts.ID_1.equals(account.getCompanyId()) && account.hasRole(SecConsts.ROLE_SERVER_REST_ACCESS)) {
-            account.removeRole(SecConsts.ROLE_SERVER_REST_ACCESS);
+        if (!Consts.ID_1.equals(account.getCompanyId()) && account.accountRoles.hasRole(SecConsts.ROLE_SERVER_REST_ACCESS)) {
+            account.accountRoles.removeRole(SecConsts.ROLE_SERVER_REST_ACCESS);
         }
 
         return account;

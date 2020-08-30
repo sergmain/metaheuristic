@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -38,9 +39,11 @@ public class FunctionData implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Nullable
     public Long id;
 
     @Version
+    @Nullable
     private Integer version;
 
     @Column(name = "FUNCTION_CODE")

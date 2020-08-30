@@ -75,14 +75,13 @@ public class BatchParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(BatchParamsYamlV1 yaml) {
+    public String toString(@NonNull BatchParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public BatchParamsYamlV1 to(String s) {
-        //noinspection UnnecessaryLocalVariable
+    public BatchParamsYamlV1 to(@NonNull String s) {
         final BatchParamsYamlV1 p = getYaml().load(s);
         return p;
     }

@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.beans.Account;
-import ai.metaheuristic.ai.dispatcher.data.UserData;
+import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -37,11 +37,11 @@ public class AuthRestController {
 
     // this end-point is used by angular's part only
     @RequestMapping("/user")
-    public UserData user(Principal user) {
+    public AccountData.UserData user(Principal user) {
         UsernamePasswordAuthenticationToken passwordAuthenticationToken = (UsernamePasswordAuthenticationToken) user;
         Account acc = (Account) passwordAuthenticationToken.getPrincipal();
         Collection<GrantedAuthority> authorities = passwordAuthenticationToken.getAuthorities();
-        return new UserData(acc.username, acc.getPublicName(), authorities);
+        return new AccountData.UserData(acc.username, acc.getPublicName(), authorities);
     }
 
 

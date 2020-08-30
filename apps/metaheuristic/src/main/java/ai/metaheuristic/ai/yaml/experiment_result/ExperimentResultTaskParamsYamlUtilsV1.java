@@ -76,13 +76,13 @@ public class ExperimentResultTaskParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(ExperimentResultTaskParamsYamlV1 paramsYaml) {
+    public String toString(@NonNull ExperimentResultTaskParamsYamlV1 paramsYaml) {
         return getYaml().dump(paramsYaml);
     }
 
     @NonNull
     @Override
-    public ExperimentResultTaskParamsYamlV1 to(String s) {
+    public ExperimentResultTaskParamsYamlV1 to(@NonNull String s) {
         final ExperimentResultTaskParamsYamlV1 p = getYaml().load(s);
         return p;
     }

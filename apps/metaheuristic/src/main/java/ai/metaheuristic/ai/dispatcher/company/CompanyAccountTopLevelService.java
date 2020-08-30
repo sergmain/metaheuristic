@@ -42,10 +42,9 @@ public class CompanyAccountTopLevelService {
         return accountService.getAccounts(pageable, companyUniqueId);
     }
 
-    public OperationStatusRest addAccount(Account account, Long companyUniqueId) {
+    public OperationStatusRest addAccount(AccountData.NewAccount account, Long companyUniqueId) {
         // don't set any role when account is created
-        account.setRoles("");
-        return accountService.addAccount(account, companyUniqueId);
+        return accountService.addAccount(account, companyUniqueId, "");
     }
 
     public AccountData.AccountResult getAccount(Long id, Long companyUniqueId){

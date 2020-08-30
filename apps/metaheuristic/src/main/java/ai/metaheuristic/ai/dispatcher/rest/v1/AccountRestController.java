@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.account.AccountTopLevelService;
-import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -51,7 +50,7 @@ public class AccountRestController {
     }
 
     @PostMapping("/account-add-commit")
-    public OperationStatusRest addFormCommit(@RequestBody Account account, Authentication authentication) {
+    public OperationStatusRest addFormCommit(@RequestBody AccountData.NewAccount account, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         return accountTopLevelService.addAccount(account, context);
     }

@@ -84,13 +84,13 @@ public class VariableArrayParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(VariableArrayParamsYamlV1 params) {
+    public String toString(@NonNull VariableArrayParamsYamlV1 params) {
         return getYaml().dump(params);
     }
 
     @NonNull
     @Override
-    public VariableArrayParamsYamlV1 to(String yaml) {
+    public VariableArrayParamsYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

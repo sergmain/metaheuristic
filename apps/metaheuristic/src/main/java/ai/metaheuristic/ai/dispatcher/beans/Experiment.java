@@ -44,9 +44,11 @@ public class Experiment implements Serializable, Cloneable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Nullable
     public Long id;
 
     @Version
+    @Nullable
     public Integer version;
 
     // 1-1 relation with ExecContext

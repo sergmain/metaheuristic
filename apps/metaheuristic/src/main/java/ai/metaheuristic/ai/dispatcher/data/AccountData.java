@@ -16,15 +16,17 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
-import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.account.SimpleAccount;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.GrantedAuthority;
 
+import java.util.Collection;
 import java.util.Collections;
 
 public class AccountData {
@@ -32,9 +34,19 @@ public class AccountData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class NewAccount {
+        public String username;
+        public String password;
+        public String password2;
+        public String publicName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class AccountsResult extends BaseDataClass {
-        public Page<Account> accounts;
+        public Page<SimpleAccount> accounts;
         public EnumsApi.DispatcherAssetMode assetMode;
     }
 
@@ -42,19 +54,37 @@ public class AccountData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class AccountResult extends BaseDataClass {
-        public Account account;
+        public SimpleAccount account;
 
         public AccountResult(String errorMessage) {
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public AccountResult(Account account, String errorMessage) {
+        public AccountResult(SimpleAccount account, String errorMessage) {
             this.account = account;
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public AccountResult(Account account) {
+        public AccountResult(SimpleAccount account) {
             this.account = account;
         }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SerializableGrantedAuthority implements GrantedAuthority {
+        private static final long serialVersionUID = 8923383713825441981L;
+
+        public String authority;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UserData {
+        public String username;
+        public String publicName;
+        public Collection<GrantedAuthority> authorities;
     }
 }

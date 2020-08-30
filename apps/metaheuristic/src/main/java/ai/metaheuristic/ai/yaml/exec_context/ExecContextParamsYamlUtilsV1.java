@@ -106,13 +106,13 @@ public class ExecContextParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(ExecContextParamsYamlV1 yaml) {
+    public String toString(@NonNull ExecContextParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public ExecContextParamsYamlV1 to(String s) {
+    public ExecContextParamsYamlV1 to(@NonNull String s) {
         final ExecContextParamsYamlV1 p = getYaml().load(s);
         return p;
     }

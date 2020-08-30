@@ -73,7 +73,7 @@ public class TwoFactorAuthController {
         String secret = GoogleAuthenticator.generateSecretKey();
         String url = GoogleAuthenticator.getQRBarcodeURL(ISSUER+"-"+context.getUsername(), "localhost", secret, ISSUER);
 
-        if (a.hasRole(SecConsts.ROLE_MASTER_ADMIN) && (S.b(a.secretKey) || !a.twoFA)) {
+        if (a.accountRoles.hasRole(SecConsts.ROLE_MASTER_ADMIN) && (S.b(a.secretKey) || !a.twoFA)) {
             // TODO 2019-10-30 set up secret key
 /*
             UserServerBean user = entityDAO.setUserSercretCodeForCurrentUser(secret, a.id);
