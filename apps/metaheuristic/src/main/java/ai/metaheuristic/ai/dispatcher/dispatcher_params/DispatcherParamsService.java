@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.dispatcher_params;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Dispatcher;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.DispatcherParamsRepository;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
@@ -29,7 +30,9 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -48,6 +51,12 @@ import java.util.function.Consumer;
 public class DispatcherParamsService {
 
     private final DispatcherParamsRepository dispatcherParamsRepository;
+
+    @Async
+    @EventListener
+    public void handleAsync(final DispatcherCacheRemoveSourceCodeEvent event) {
+        unregisterSourceCode(event.sourceCodeUid);
+    }
 
     public void registerSourceCode(SourceCodeImpl sourceCode) {
         unregisterSourceCode(sourceCode.uid);

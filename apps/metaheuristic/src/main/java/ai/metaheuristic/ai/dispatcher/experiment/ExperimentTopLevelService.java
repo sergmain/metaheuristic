@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
@@ -37,6 +38,7 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -63,6 +65,7 @@ public class ExperimentTopLevelService {
     private final ExecContextService execContextService;
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeRepository sourceCodeRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
@@ -107,61 +110,7 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentApiData.ExperimentsEditResult("#285.100 experiment wasn't found, experimentId: " + id);
         }
-/*
-        Iterable<Function> functions = functionRepository.findAll();
-        ExperimentApiData.FunctionResult functionResult = new ExperimentApiData.FunctionResult();
-
-        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        final List<String> functionCodes = epy.getFunctionCodes();
-        List<Function> experimentFunctions = functionService.getFunctionsForCodes(functionCodes);
-
-        functionResult.functions = experimentFunctions.stream().map(es->
-                new ExperimentApiData.ExperimentFunctionResult(
-                        es.getId(), es.getVersion(), es.getCode(), es.type, experiment.id)).collect(Collectors.toList());
-
-        functionResult.selectOptions = functionService.getSelectOptions(
-                functions,
-                functionResult.functions.stream().map(o -> new FunctionData.FunctionCode(o.getId(), o.getFunctionCode())).collect(Collectors.toList()),
-                (s) -> {
-                    if (!experimentFunctionTypes.contains(s.type) ) {
-                        return true;
-                    }
-                    if (CommonConsts.FIT_TYPE.equals(s.type) && functionService.hasType(experimentFunctions, CommonConsts.FIT_TYPE)) {
-                        return true;
-                    }
-                    else if (CommonConsts.PREDICT_TYPE.equals(s.type) && functionService.hasType(experimentFunctions, CommonConsts.PREDICT_TYPE)) {
-                        return true;
-                    }
-                    else if (CommonConsts.CHECK_FITTING_TYPE.equals(s.type)) {
-                        if (functionService.hasType(experimentFunctions, CommonConsts.CHECK_FITTING_TYPE)) {
-                            return true;
-                        }
-                        for (Function function : experimentFunctions) {
-                            if (CommonConsts.PREDICT_TYPE.equals(function.getType())) {
-                                final Meta meta = MetaUtils.getMeta(function.getFunctionConfig(false).metas, ConstsApi.META_MH_FITTING_DETECTION_SUPPORTED);
-                                if (MetaUtils.isTrue(meta)) {
-                                    // don't include this Function because 'predict' function doesn't support fitting detection
-                                    return false;
-                                }
-                            }
-                        }
-                        return true;
-                    } else {
-                        return false;
-                    }
-                });
-
-        functionResult.sortFunctionsByOrder();
-*/
-
         ExperimentApiData.ExperimentsEditResult result = new ExperimentApiData.ExperimentsEditResult();
-
-/*
-        ExperimentApiData.HyperParamsResult r = new ExperimentApiData.HyperParamsResult();
-        r.items = epy.experimentYaml.getHyperParams().stream().map(ExperimentTopLevelService::asHyperParamData).collect(Collectors.toList());
-        result.hyperParams = r;
-        result.functionResult = functionResult;
-*/
         result.simpleExperiment = asSimpleExperiment(experiment);
         return result;
     }
@@ -181,8 +130,9 @@ public class ExperimentTopLevelService {
     public OperationStatusRest addExperimentCommit(String sourceCodeUid, String name, String code, String description, DispatcherContext context) {
         SourceCodeImpl sc = sourceCodeRepository.findByUid(sourceCodeUid);
         if (sc==null) {
+            eventPublisher.publishEvent(new DispatcherCacheRemoveSourceCodeEvent(sourceCodeUid));
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.110 SourceCode wasn't found, sourceCodeUid: " + sourceCodeUid);
+                    "#285.110 SourceCode wasn't found, sourceCodeUid: " + sourceCodeUid+". Try to refresh page");
         }
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorService.createExecContext(sourceCodeUid, context);
         if (execContextResultRest.isErrorMessages()) {

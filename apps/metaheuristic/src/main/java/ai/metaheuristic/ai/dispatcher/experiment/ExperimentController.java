@@ -83,9 +83,22 @@ public class ExperimentController {
     }
 
     @GetMapping(value = "/experiment-add")
-    public String add(Model model) {
+    public String add(Model model, @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes) {
         model.addAttribute("sourceCodeUids", dispatcherParamsService.getExperiments());
         return "dispatcher/ai/experiment/experiment-add-form";
+    }
+
+    @PostMapping("/experiment-add-form-commit")
+    public String addFormCommit(
+            String sourceCodeUid, String name, String code, String description,
+            final RedirectAttributes redirectAttributes, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        OperationStatusRest status = experimentTopLevelService.addExperimentCommit(sourceCodeUid, name, code, description, context);
+        if (status.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
+            return "redirect:/dispatcher/ai/experiment/experiment-add";
+        }
+        return REDIRECT_DISPATCHER_EXPERIMENTS;
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
@@ -100,6 +113,15 @@ public class ExperimentController {
         return "dispatcher/ai/experiment/experiment-edit-form";
     }
 
+    @PostMapping("/experiment-edit-form-commit")
+    public String editFormCommit(ExperimentApiData.SimpleExperiment simpleExperiment, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = experimentTopLevelService.editExperimentCommit(simpleExperiment);
+        if (status.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
+        }
+        return "redirect:/dispatcher/ai/experiment/experiment-edit/" + simpleExperiment.getId();
+    }
+
     @GetMapping("/experiment-target-state/{state}/{experimentId}")
     public String execContextTargetExecState(
             @PathVariable Long experimentId, @PathVariable String state, final RedirectAttributes redirectAttributes, Authentication authentication) {
@@ -110,28 +132,6 @@ public class ExperimentController {
             return SourceCodeController.REDIRECT_DISPATCHER_SOURCE_CODES;
         }
         return REDIRECT_DISPATCHER_EXPERIMENTS;
-    }
-
-    @PostMapping("/experiment-add-form-commit")
-    public String addFormCommit(
-            String sourceCodeUid, String name, String code, String description,
-            final RedirectAttributes redirectAttributes, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        OperationStatusRest status = experimentTopLevelService.addExperimentCommit(sourceCodeUid, name, code, description, context);
-        if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
-            return "dispatcher/ai/experiment/experiment-add-form";
-        }
-        return REDIRECT_DISPATCHER_EXPERIMENTS;
-    }
-
-    @PostMapping("/experiment-edit-form-commit")
-    public String editFormCommit(ExperimentApiData.SimpleExperiment simpleExperiment, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = experimentTopLevelService.editExperimentCommit(simpleExperiment);
-        if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
-        }
-        return "redirect:/dispatcher/ai/experiment/experiment-edit/" + simpleExperiment.getId();
     }
 
     @GetMapping("/experiment-delete/{id}")
