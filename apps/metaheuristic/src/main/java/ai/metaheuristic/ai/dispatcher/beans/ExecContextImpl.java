@@ -39,11 +39,9 @@ public class ExecContextImpl implements Serializable, ExecContext {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Nullable
     public Long id;
 
     @Version
-    @Nullable
     private Integer version;
 
     @Column(name = "SOURCE_CODE_ID")

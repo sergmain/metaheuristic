@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -33,11 +32,9 @@ public class ExperimentResult implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Nullable
     public Long id;
 
     @Version
-    @Nullable
     public Integer version;
 
     @NotNull

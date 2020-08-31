@@ -76,11 +76,10 @@ public class Checksum {
 
     public static Checksum fromJson(String json) {
         try {
-            //noinspection UnnecessaryLocalVariable
             Checksum checksum = mapper.readValue(json, Checksum.class);
             return checksum;
         } catch (IOException e) {
-            throw new RuntimeException("error", e);
+            throw new RuntimeException("error in json:\n"+json, e);
         }
     }
 
