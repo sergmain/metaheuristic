@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.apps.gen_passwords;
+package ai.metaheuristic.apps.encrypt_password;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

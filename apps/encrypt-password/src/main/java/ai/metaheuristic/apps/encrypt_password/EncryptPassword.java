@@ -13,40 +13,36 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.apps.gen_passwords;
+package ai.metaheuristic.apps.encrypt_password;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.io.IOException;
-import java.security.*;
-import java.util.UUID;
-
 @SpringBootApplication
-public class GeneratePasswords implements CommandLineRunner {
+public class EncryptPassword implements CommandLineRunner {
 
     private final PasswordEncoder passwordEncoder;
 
-    public GeneratePasswords(PasswordEncoder passwordEncoder) {
+    public EncryptPassword(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(GeneratePasswords.class, args);
+        SpringApplication.run(EncryptPassword.class, args);
     }
 
     @Override
-    public void run(String... args) throws IOException, GeneralSecurityException {
+    public void run(String... args) {
 
         if (args.length==0) {
-            System.out.println("GeneratePasswords <master password>");
+            System.out.println("EncryptPassword <password>");
             return;
         }
 
         System.out.println("Passwords:");
-        System.out.println("\tplain password: " + args[0]);
+        System.out.println("\tplain password:   " + args[0]);
         System.out.println("\tpassword encoded: " + passwordEncoder.encode(args[0]));
    }
 }
