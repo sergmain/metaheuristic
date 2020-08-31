@@ -37,6 +37,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
 
+import static ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService.*;
+
 /**
  * @author Serge
  * Date: 10/27/2019
@@ -55,10 +57,11 @@ public class CompanyController {
 
     @PreAuthorize("hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT')")
     @GetMapping("/companies")
-    public String companies(Model model,
-                           @PageableDefault(size = CompanyTopLevelService.ROWS_IN_TABLE) Pageable pageable,
-                           @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
-                           @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
+    public String companies(
+            Model model,
+            @PageableDefault(size = ROWS_IN_TABLE) Pageable pageable,
+            @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
+            @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
 
         CompanyData.CompaniesResult companies = companyTopLevelService.getCompanies(pageable);
         ControllerUtils.addMessagesToModel(model, companies);
@@ -69,7 +72,7 @@ public class CompanyController {
     // for AJAX
     @PostMapping("/companies-part")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT')")
-    public String getCompaniesViaAJAX(Model model, @PageableDefault(size=CompanyTopLevelService.ROWS_IN_TABLE) Pageable pageable)  {
+    public String getCompaniesViaAJAX(Model model, @PageableDefault(size= ROWS_IN_TABLE) Pageable pageable)  {
         CompanyData.CompaniesResult companies = companyTopLevelService.getCompanies(pageable);
         model.addAttribute("result", companies);
         return "dispatcher/company/companies :: table";
@@ -150,7 +153,7 @@ public class CompanyController {
 
     @GetMapping(value = "/company-account-add/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
-    public String add(Model model, @ModelAttribute("account") Account account, @PathVariable Long companyUniqueId) {
+    public String add(Model model, @ModelAttribute("account") AccountData.NewAccount account, @PathVariable Long companyUniqueId) {
         model.addAttribute("companyUniqueId", companyUniqueId);
         return "dispatcher/company/company-account-add";
     }
