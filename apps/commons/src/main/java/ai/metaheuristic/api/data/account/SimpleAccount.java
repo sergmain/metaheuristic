@@ -16,11 +16,13 @@
 
 package ai.metaheuristic.api.data.account;
 
+import ai.metaheuristic.commons.account.AccountRoles;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
+import javax.persistence.Transient;
 import java.util.List;
 
 /**
@@ -39,6 +41,14 @@ public class SimpleAccount {
     public boolean enabled;
     public long createdOn;
     public long updatedOn;
+    public String roles;
 
-    public final List<String> authorities = new ArrayList<>();
+    @Transient
+    @JsonIgnore
+    public final AccountRoles accountRoles = new AccountRoles(()-> roles, (o)->roles = o);
+
+    @SuppressWarnings("unused")
+    public List<AccountApiData.SerializableGrantedAuthority> getAuthorities() {
+        return accountRoles.getAuthorities();
+    }
 }

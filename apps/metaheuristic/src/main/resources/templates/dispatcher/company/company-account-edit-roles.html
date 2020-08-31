@@ -24,7 +24,7 @@
                       th:id="${'form-change-role-' + i.index}" name="f">
                     <input type="hidden" th:name="roleId" th:value="${i.index}"/>
                     <input type="hidden" th:name="accountId" th:value="${account.id}"/>
-                    <input name="checkbox" id="checkbox" type="checkbox" placeholder="checkbox" th:checked="${account.hasRole(r)}"
+                    <input name="checkbox" id="checkbox" type="checkbox" placeholder="checkbox" th:checked="${account.accountRoles.hasRole(r)}"
                            th:onclick="'document.getElementById(\'form-change-role-'+${i.index}+'\').submit();'">
                 </form>
             </td>
