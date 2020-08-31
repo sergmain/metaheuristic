@@ -1,0 +1,4 @@
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.ai.internal_function;
+
+import javax.annotation.ParametersAreNonnullByDefault;

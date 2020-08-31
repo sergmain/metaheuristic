@@ -1,0 +1,4 @@
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.ai.experiment_result;
+
+import javax.annotation.ParametersAreNonnullByDefault;
