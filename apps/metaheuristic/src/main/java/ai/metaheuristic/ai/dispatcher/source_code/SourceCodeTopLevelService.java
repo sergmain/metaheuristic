@@ -133,7 +133,7 @@ public class SourceCodeTopLevelService {
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
         result.errorMessages = sourceCodeValidation.errorMessages;
         result.infoMessages = sourceCodeValidation.infoMessages;
-        result.status = sourceCodeValidation.status;
+        result.validationResult = sourceCodeValidation.status;
         return result;
     }
 

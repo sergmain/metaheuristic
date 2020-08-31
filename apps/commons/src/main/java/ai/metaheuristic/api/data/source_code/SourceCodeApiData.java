@@ -98,16 +98,16 @@ public class SourceCodeApiData {
         public String source;
 
         public EnumsApi.SourceCodeLang lang;
-        public SourceCodeValidationResult status = new SourceCodeValidationResult(
+        public SourceCodeValidationResult validationResult = new SourceCodeValidationResult(
                 EnumsApi.SourceCodeValidateStatus.NOT_VERIFIED_YET, "Not verified yet");
 
-        public SourceCodeResult(String errorMessage, SourceCodeValidationResult status) {
-            this.status = status;
+        public SourceCodeResult(String errorMessage, SourceCodeValidationResult validationResult) {
+            this.validationResult = validationResult;
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public SourceCodeResult(List<String> errorMessage, SourceCodeValidationResult status) {
-            this.status = status;
+        public SourceCodeResult(List<String> errorMessage, SourceCodeValidationResult validationResult) {
+            this.validationResult = validationResult;
             this.errorMessages = errorMessage;
         }
 
