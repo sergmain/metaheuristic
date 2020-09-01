@@ -91,9 +91,9 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private static final String BATCH_STATUS = "batch-status";
     private static final String BATCH_RESULT = "batch-result";
 
-    private static final String BATCH_ITEM_PROCESSED_FILE = "batch-item-processed-file";
-    private static final String BATCH_ITEM_PROCESSING_STATUS = "batch-item-processing-status";
-    private static final String BATCH_ITEM_MAPPING = "batch-item-mapping";
+    private static final String BATCH_ITEM_PROCESSED_FILE = "batch-type-processed-file";
+    private static final String BATCH_ITEM_PROCESSING_STATUS = "batch-type-processing-status";
+    private static final String BATCH_ITEM_MAPPING = "batch-type-mapping";
 
 
     private final Globals globals;
