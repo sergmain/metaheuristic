@@ -23,6 +23,7 @@ import lombok.SneakyThrows;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.commons.utils.TaskFileParamsUtils.getOutputVariableForType;
@@ -36,7 +37,7 @@ import static ai.metaheuristic.commons.utils.TaskFileParamsUtils.getOutputVariab
 public class BatchUtils {
 
     @SneakyThrows
-    public static BatchApiData.TaskVariables getTaskVariables(TaskFileParamsYaml params, String processedType, String statusType, String mappingType) {
+    public static BatchApiData.TaskVariables getTaskVariables(TaskFileParamsYaml params, List<String> processedType, String statusType, String mappingType) {
         BatchApiData.TaskVariables taskVariables = new BatchApiData.TaskVariables();
 
         TaskFileParamsYaml.InputVariable arrayVariable = params.task.inputs.get(0);
@@ -46,8 +47,7 @@ public class BatchUtils {
                 .map(o->Path.of(params.task.workingPath, o.dataType.toString(), o.id).toFile())
                 .collect(Collectors.toList());
 
-        taskVariables.processedVar = getOutputVariableForType(params, processedType);
-        String processedFilename = taskVariables.processedVar.id;
+        taskVariables.processedVars = getOutputVariableForType(params, processedType);
         taskVariables.processingStatusVar = getOutputVariableForType(params, statusType);
         String processingStatusFilename = taskVariables.processingStatusVar.id;
         taskVariables.mappingVar = getOutputVariableForType(params, mappingType);
@@ -55,7 +55,6 @@ public class BatchUtils {
 
         File artifactDir = Path.of(params.task.workingPath, ConstsApi.ARTIFACTS_DIR).toFile();
 
-        taskVariables.processedFile = new File(artifactDir, processedFilename);
         taskVariables.processingStatusFile = new File(artifactDir, processingStatusFilename);
         taskVariables.mappingFile = new File(artifactDir, mappingFilename);
 

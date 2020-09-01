@@ -65,8 +65,4 @@ public class ConstsApi {
 
     public final static SourceCodeApiData.SourceCodeValidationResult SOURCE_CODE_VALIDATION_RESULT_OK = new SourceCodeApiData.SourceCodeValidationResult(OK, null);
 
-    public static final String BATCH_ITEM_PROCESSED_FILE = "batch-item-processed-file";
-    public static final String BATCH_ITEM_PROCESSING_STATUS = "batch-item-processing-status";
-    public static final String BATCH_ITEM_MAPPING = "batch-item-mapping";
-
 }

@@ -213,14 +213,20 @@ public class ExecContextService {
 
         DispatcherCommParamsYaml.AssignedTask result = execContextSyncService.getWithSyncNullable(assignedTaskComplex.execContextId,
                 execContext -> {
-                    prepareVariables(assignedTaskComplex);
-                    TaskImpl task = taskRepository.findById(assignedTaskComplex.task.getId()).orElse(null);
-                    if (task==null) {
-                        log.warn("#705.260 task wasn't found with id #"+ assignedTaskComplex.task.getId());
-                        return null;
+                    try {
+                        prepareVariables(assignedTaskComplex);
+                        TaskImpl task = taskRepository.findById(assignedTaskComplex.task.getId()).orElse(null);
+                        if (task==null) {
+                            log.warn("#705.260 task wasn't found with id #"+ assignedTaskComplex.task.getId());
+                            return null;
+                        }
+                        return new DispatcherCommParamsYaml.AssignedTask(task.params, task.getId(), task.execContextId);
+                    } catch (Throwable th) {
+                        String es = "#705.270 Something wrong";
+                        log.error(es, th);
+                        throw new IllegalStateException(es, th);
                     }
-                    return new DispatcherCommParamsYaml.AssignedTask(task.params, task.getId(), task.execContextId);
-        });
+                });
         return result;
     }
 

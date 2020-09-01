@@ -22,6 +22,7 @@ import lombok.Data;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -35,11 +36,10 @@ public class BatchApiData {
         public List<VariableArrayParamsYaml.Variable> inputVariables;
         public List<File> sourceFiles;
 
-        public TaskFileParamsYaml.OutputVariable processedVar;
+        public Map<String, List<TaskFileParamsYaml.OutputVariable>> processedVars;
         public TaskFileParamsYaml.OutputVariable processingStatusVar;
         public TaskFileParamsYaml.OutputVariable mappingVar;
 
-        public File processedFile;
         public File processingStatusFile;
         public File mappingFile;
     }

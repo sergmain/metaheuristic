@@ -25,6 +25,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -35,11 +38,22 @@ import java.nio.file.Path;
 public class TaskFileParamsUtils {
 
     public static TaskFileParamsYaml.OutputVariable getOutputVariableForType(TaskFileParamsYaml params, String type) {
+        Map<String, List<TaskFileParamsYaml.OutputVariable>> list = getOutputVariableForType(params, List.of(type));
+        if (list.isEmpty()) {
+            throw new RuntimeException("Output variable with type " + type+" wasn't found");
+        }
+        List<TaskFileParamsYaml.OutputVariable> vs = list.get(type);
+        if (vs==null || vs.isEmpty()) {
+            throw new RuntimeException("Output variable with type " + type+" wasn't found");
+        }
+        return vs.get(0);
+    }
+
+    public static Map<String, List<TaskFileParamsYaml.OutputVariable>> getOutputVariableForType(TaskFileParamsYaml params, List<String> type) {
         return params.task.outputs
                 .stream()
-                .filter(o-> type.equals(o.type))
-                .findFirst()
-                .orElseThrow();
+                .filter(o-> type.contains(o.type))
+                .collect(Collectors.groupingBy(TaskFileParamsYaml.OutputVariable::getType));
     }
 
     public static VariableArrayParamsYaml getInputVariablesAsArray(TaskFileParamsYaml params, TaskFileParamsYaml.InputVariable arrayVariable) throws IOException {

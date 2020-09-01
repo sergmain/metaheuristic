@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static ai.metaheuristic.commons.utils.TaskFileParamsUtils.getOutputVariableForType;
@@ -83,29 +85,38 @@ public class SimpleBatchApp implements CommandLineRunner {
         File sourceFile = Path.of(params.task.workingPath, variable.dataType.toString(), variable.id).toFile();
 
 
-        TaskFileParamsYaml.OutputVariable processedVar = getOutputVariableForType(params, ConstsApi.BATCH_ITEM_PROCESSED_FILE);
-        String processedFilename = processedVar.id;
-        TaskFileParamsYaml.OutputVariable processingStatusVar = getOutputVariableForType(params, ConstsApi.BATCH_ITEM_PROCESSING_STATUS);
+        Map<String, List<TaskFileParamsYaml.OutputVariable>> processedVars = getOutputVariableForType(params, List.of("processed-file-type-1", "processed-file-type-2"));
+
+        TaskFileParamsYaml.OutputVariable processedVar1 = processedVars.get("processed-file-type-1").get(0);
+        String processedFilename1 = processedVar1.id;
+        TaskFileParamsYaml.OutputVariable processedVar2 = processedVars.get("processed-file-type-2").get(0);
+        String processedFilename2 = processedVar2.id;
+
+        TaskFileParamsYaml.OutputVariable processingStatusVar = getOutputVariableForType(params, "processing-status-type");
         String processingStatusFilename = processingStatusVar.id;
-        TaskFileParamsYaml.OutputVariable mappingVar = getOutputVariableForType(params, ConstsApi.BATCH_ITEM_MAPPING);
+        TaskFileParamsYaml.OutputVariable mappingVar = getOutputVariableForType(params, "mapping-type");
         String mappingFilename = mappingVar.id;
 
-        System.out.println("processedFilename: " + processedFilename);
+        System.out.println("processedFilename1: " + processedFilename1);
+        System.out.println("processedFilename2: " + processedFilename2);
         System.out.println("processingStatusFilename: " + processingStatusFilename);
         System.out.println("mappingFilename: " + mappingFilename);
 
         File artifactDir = Path.of(params.task.workingPath, ConstsApi.ARTIFACTS_DIR).toFile();
 
-        File processedFile = new File(artifactDir, processedFilename);
+        File processedFile1 = new File(artifactDir, processedFilename1);
+        File processedFile2 = new File(artifactDir, processedFilename2);
         File processingStatusFile = new File(artifactDir, processingStatusFilename);
         File mappingFile = new File(artifactDir, mappingFilename);
 
-        FileUtils.copyFile(sourceFile, processedFile);
+        FileUtils.copyFile(sourceFile, processedFile1);
         FileUtils.write(processingStatusFile, "File "+variable.filename +" was processed successfully", StandardCharsets.UTF_8);
+        FileUtils.write(processedFile2, "File processedFile2 was processed successfully", StandardCharsets.UTF_8);
 
         BatchItemMappingYaml bimy = new BatchItemMappingYaml();
         bimy.targetDir = S.b(variable.filename) ? "dir-" + variable.id : StrUtils.getName(variable.filename);
-        bimy.filenames.put(processedVar.id, variable.filename);
+        bimy.filenames.put(processedVar1.id, variable.filename);
+        bimy.filenames.put(processedVar2.id, variable.filename+"-comments.txt");
         bimy.filenames.put(processingStatusVar.id, S.b(variable.filename) ? "status.txt" : "status-for-" + StrUtils.getName(variable.filename)+".txt");
 
         String mapping = BatchItemMappingYamlUtils.BASE_YAML_UTILS.toString(bimy);
