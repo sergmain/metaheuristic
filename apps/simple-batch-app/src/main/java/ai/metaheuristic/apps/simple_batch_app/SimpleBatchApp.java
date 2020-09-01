@@ -83,11 +83,11 @@ public class SimpleBatchApp implements CommandLineRunner {
         File sourceFile = Path.of(params.task.workingPath, variable.dataType.toString(), variable.id).toFile();
 
 
-        TaskFileParamsYaml.OutputVariable processedVar = getOutputVariableForType(params, "batch-item-processed-file");
+        TaskFileParamsYaml.OutputVariable processedVar = getOutputVariableForType(params, ConstsApi.BATCH_ITEM_PROCESSED_FILE);
         String processedFilename = processedVar.id;
-        TaskFileParamsYaml.OutputVariable processingStatusVar = getOutputVariableForType(params, "batch-item-processing-status");
+        TaskFileParamsYaml.OutputVariable processingStatusVar = getOutputVariableForType(params, ConstsApi.BATCH_ITEM_PROCESSING_STATUS);
         String processingStatusFilename = processingStatusVar.id;
-        TaskFileParamsYaml.OutputVariable mappingVar = getOutputVariableForType(params, "batch-item-mapping");
+        TaskFileParamsYaml.OutputVariable mappingVar = getOutputVariableForType(params, ConstsApi.BATCH_ITEM_MAPPING);
         String mappingFilename = mappingVar.id;
 
         System.out.println("processedFilename: " + processedFilename);

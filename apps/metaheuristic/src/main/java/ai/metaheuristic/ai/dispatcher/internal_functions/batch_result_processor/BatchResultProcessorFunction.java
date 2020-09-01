@@ -40,6 +40,7 @@ import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -88,9 +89,6 @@ public class BatchResultProcessorFunction implements InternalFunction {
     private static final String DELIMITER_2 = "\n====================================================================\n";
     private static final String IP_HOST = "IP: %s, host: %s";
 
-    private static final String BATCH_ITEM_PROCESSED_FILE = "batch-item-processed-file";
-    private static final String BATCH_ITEM_PROCESSING_STATUS = "batch-item-processing-status";
-    private static final String BATCH_ITEM_MAPPING = "batch-item-mapping";
     private static final String BATCH_STATUS = "batch-status";
     private static final String BATCH_RESULT = "batch-result";
 
@@ -270,13 +268,13 @@ public class BatchResultProcessorFunction implements InternalFunction {
             }
 
             switch(varFromExecContext.type) {
-                case BATCH_ITEM_PROCESSED_FILE:
+                case ConstsApi.BATCH_ITEM_PROCESSED_FILE:
                     v.item = simpleVariable;
                     break;
-                case BATCH_ITEM_PROCESSING_STATUS:
+                case ConstsApi.BATCH_ITEM_PROCESSING_STATUS:
                     v.status = simpleVariable;
                     break;
-                case BATCH_ITEM_MAPPING:
+                case ConstsApi.BATCH_ITEM_MAPPING:
                     v.mapping = simpleVariable;
                     break;
                 default:
