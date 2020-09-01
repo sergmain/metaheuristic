@@ -164,8 +164,9 @@ public class VariableService {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                log.warn("#087.030 Binary data for variableId {} wasn't found", variableId);
-                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, "#087.040 Variable data wasn't found, variableId: " + variableId);
+                String es = S.f("#087.030 Data for variableId #%d wasn't found", variableId);
+                log.warn(es);
+                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
             try (InputStream is = blob.getBinaryStream()) {
                 FileUtils.copyInputStreamToFile(is, trgFile);
