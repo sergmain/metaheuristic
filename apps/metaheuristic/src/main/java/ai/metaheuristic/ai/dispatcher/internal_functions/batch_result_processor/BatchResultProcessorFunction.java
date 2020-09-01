@@ -158,13 +158,18 @@ public class BatchResultProcessorFunction implements InternalFunction {
         //noinspection ResultOfMethodCallIgnored
         zipDir.mkdir();
 
-        for (Map.Entry<String, ItemWithStatusWithMapping> entry : prepared.entrySet()) {
-            storeResultVariables(zipDir, execContextId, entry.getValue());
-        }
-
         InternalFunctionData.InternalFunctionProcessingResult ifprForStatus = storeGlobalBatchStatus(ec, taskContextId, taskParamsYaml, zipDir);
         if (ifprForStatus != null) {
             return ifprForStatus;
+        }
+
+        Map<String, List<ExecContextData.TaskVertex>> vertices = execContextGraphService.findVerticesByTaskContextIds(ec, prepared.keySet());
+        for (Map.Entry<String, List<ExecContextData.TaskVertex>> entry : vertices.entrySet()) {
+            boolean isOK = entry.getValue().stream().noneMatch(o->o.execState!= EnumsApi.TaskExecState.OK);
+            if (isOK) {
+                ItemWithStatusWithMapping item = prepared.get(entry.getKey());
+                storeResultVariables(zipDir, execContextId, item);
+            }
         }
 
         File zipFile = new File(resultDir, Consts.RESULT_ZIP);

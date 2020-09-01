@@ -97,13 +97,6 @@ public class ExecContextGraphService {
         return writer.toString();
     }
 
-    private List<ExecContextData.TaskVertex> readOnlyGraphListOfTaskVertex(
-            ExecContextImpl execContext,
-            Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, List<ExecContextData.TaskVertex>> callable) {
-        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
-        return callable.apply(graph);
-    }
-
     private Set<ExecContextData.TaskVertex> readOnlyGraphSetOfTaskVertex(
             ExecContextImpl execContext,
             Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, Set<ExecContextData.TaskVertex>> callable) {
@@ -113,9 +106,16 @@ public class ExecContextGraphService {
     }
 
     @Nullable
-    private ExecContextData.TaskVertex readOnlyGraphTaskVertex(
+    private <T> T readOnlyGraphNullable(
             ExecContextImpl execContext,
-            Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, ExecContextData.TaskVertex> callable) {
+            Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, T> callable) {
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
+        return callable.apply(graph);
+    }
+
+    private <T> T readOnlyGraph(
+            ExecContextImpl execContext,
+            Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, T> callable) {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContext);
         return callable.apply(graph);
     }
@@ -250,7 +250,7 @@ public class ExecContextGraphService {
 
     public List<ExecContextData.TaskVertex> getUnfinishedTaskVertices(ExecContextImpl execContext) {
         try {
-            return readOnlyGraphListOfTaskVertex(execContext, graph -> graph
+            return readOnlyGraph(execContext, graph -> graph
                     .vertexSet()
                     .stream()
                     .filter(o -> o.execState==EnumsApi.TaskExecState.NONE || o.execState==EnumsApi.TaskExecState.IN_PROGRESS)
@@ -264,7 +264,7 @@ public class ExecContextGraphService {
 
     public List<ExecContextData.TaskVertex> getAllTasksTopologically(ExecContextImpl execContext) {
         try {
-            return readOnlyGraphListOfTaskVertex(execContext, graph -> {
+            return readOnlyGraph(execContext, graph -> {
                 TopologicalOrderIterator<ExecContextData.TaskVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(graph);
 
                 List<ExecContextData.TaskVertex> tasks = new ArrayList<>();
@@ -296,7 +296,7 @@ public class ExecContextGraphService {
 
     public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
         try {
-            return readOnlyGraphListOfTaskVertex(execContext, graph -> {
+            return readOnlyGraph(execContext, graph -> {
 
                 try {
                     List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
@@ -391,7 +391,7 @@ public class ExecContextGraphService {
 
     public List<ExecContextData.TaskVertex> findAllForAssigning(ExecContextImpl execContext) {
         try {
-            return readOnlyGraphListOfTaskVertex(execContext, graph -> {
+            return readOnlyGraph(execContext, graph -> {
 
                 log.debug("Start find a task for assigning");
                 if (log.isDebugEnabled()) {
@@ -466,7 +466,7 @@ public class ExecContextGraphService {
 
     public List<ExecContextData.TaskVertex> findAllBroken(ExecContextImpl execContext) {
         try {
-            return readOnlyGraphListOfTaskVertex(execContext,
+            return readOnlyGraph(execContext,
                     graph -> graph.vertexSet().stream()
                             .filter( v -> v.execState == EnumsApi.TaskExecState.ERROR )
                             .collect(Collectors.toList()));
@@ -491,7 +491,7 @@ public class ExecContextGraphService {
 
     public List<ExecContextData.TaskVertex> findAll(ExecContextImpl execContext) {
         try {
-            return readOnlyGraphListOfTaskVertex(execContext, graph -> {
+            return readOnlyGraph(execContext, graph -> {
                 List<ExecContextData.TaskVertex> vertices = new ArrayList<>(graph.vertexSet());
                 return vertices;
             });
@@ -506,7 +506,7 @@ public class ExecContextGraphService {
     @Nullable
     public ExecContextData.TaskVertex findVertex(ExecContextImpl execContext, Long taskId) {
         try {
-            return readOnlyGraphTaskVertex(execContext, graph -> {
+            return readOnlyGraphNullable(execContext, graph -> {
                 ExecContextData.TaskVertex vertex = graph.vertexSet()
                         .stream()
                         .filter(o -> o.taskId.equals(taskId))
@@ -519,6 +519,20 @@ public class ExecContextGraphService {
             log.error("#915.040 Error", th);
             return null;
         }
+    }
+
+    @SneakyThrows
+    public Map<String, List<ExecContextData.TaskVertex>> findVerticesByTaskContextIds(ExecContextImpl execContext, Collection<String> taskContextIds) {
+        return readOnlyGraph(execContext, graph -> {
+            Map<String, List<ExecContextData.TaskVertex>> vertices = new HashMap<>();
+            for (ExecContextData.TaskVertex v : graph.vertexSet()) {
+                if (!taskContextIds.contains(v.taskContextId)) {
+                    continue;
+                }
+                vertices.computeIfAbsent(v.taskContextId, (o)->new ArrayList<>()).add(v);
+            }
+            return vertices;
+        });
     }
 
     public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsError(ExecContextImpl execContext, Long taskId) {
