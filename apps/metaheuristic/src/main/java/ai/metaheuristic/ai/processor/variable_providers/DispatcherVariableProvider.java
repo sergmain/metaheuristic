@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -143,6 +144,7 @@ public class DispatcherVariableProvider implements VariableProvider {
     }
 
     @Override
+    @Nullable
     public FunctionApiData.SystemExecResult processOutputVariable(
             File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorTask task, Metadata.DispatcherInfo dispatcherCode,
@@ -154,12 +156,12 @@ public class DispatcherVariableProvider implements VariableProvider {
             uploadVariableTask.dispatcher = dispatcher.dispatcherLookup;
             uploadVariableTask.processorId = dispatcherCode.processorId;
             uploadVariableService.add(uploadVariableTask);
+            return null;
         } else {
             String es = "Result data file doesn't exist, resultDataFile: " + outputVariableFile.getPath();
             log.error(es);
             return new FunctionApiData.SystemExecResult(functionConfig.code,false, -1, es);
         }
-        return null;
     }
 
     @Override

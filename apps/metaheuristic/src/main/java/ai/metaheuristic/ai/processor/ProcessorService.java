@@ -102,18 +102,12 @@ public class ProcessorService {
     }
 
     public void assignTasks(String dispatcherUrl, DispatcherCommParamsYaml.AssignedTask task) {
-        if (task==null) {
-            return;
-        }
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             processorTaskService.createTask(dispatcherUrl, task.taskId, task.execContextId, task.params);
         }
     }
 
     public Enums.ResendTaskOutputResourceStatus resendTaskOutputResources(String dispatcherUrl, Long taskId, Long variableId) {
-        if (dispatcherUrl==null) {
-            throw new IllegalStateException("#749.020 dispatcherUrl is null");
-        }
         ProcessorTask task = processorTaskService.findById(dispatcherUrl, taskId);
         if (task==null) {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
@@ -155,9 +149,13 @@ public class ProcessorService {
             log.warn("#749.040 Resource wasn't found. Considering that this task is broken, {}", assetFile);
             processorTaskService.markAsFinishedWithError(dispatcherUrl, taskId,
                     "#749.050 Resource wasn't found. Considering that this task is broken");
+
+            // TODO 2020-09-01 do we still need to set uploaded status?
+/*
             if (true) {
                 throw new NotImplementedException("need to set uploaded in params, not completed for task");
             }
+*/
             processorTaskService.setCompleted(dispatcherUrl, taskId);
             return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
         }

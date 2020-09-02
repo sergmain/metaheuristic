@@ -298,10 +298,13 @@ public class ProcessorTaskService {
                 if (!functionExec.allFunctionsAreOk()) {
                     log.info("#713.115 task #{} was finished with an error, set completed to true", taskId);
                     // there are some problems with this task. mark it as completed
+                    task.setDelivered(true);
                     task.setCompleted(true);
                 }
+                else {
+                    task.setCompleted(false);
+                }
                 task.setFinishedOn(System.currentTimeMillis());
-                task.setDelivered(false);
                 task.setReported(false);
                 task.setFunctionExecResult(FunctionExecUtils.toString(functionExec));
 
@@ -325,9 +328,6 @@ public class ProcessorTaskService {
 
     boolean isNeedNewTask(String dispatcherUrl, String processorId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            if (processorId == null) {
-                return false;
-            }
             // TODO 2019-10-24 need to optimize
             List<ProcessorTask> tasks = findAllByCompletedIsFalse(dispatcherUrl);
             for (ProcessorTask task : tasks) {
@@ -395,9 +395,6 @@ public class ProcessorTaskService {
     }
 
     public void createTask(String dispatcherUrl, long taskId, Long execContextId, String params) {
-        if (dispatcherUrl==null) {
-            throw new IllegalStateException("#713.150 dispatcherUrl is null");
-        }
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
 //            log.info("Assign new task #{}, params:\n{}", taskId, params );
             log.info("Assign new task #{}", taskId);
