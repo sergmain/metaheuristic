@@ -147,4 +147,6 @@ public final class Enums {
             return this.toString().equals(type);
         }
     }
+
+    public enum ChecksumStateEnum { unknown, signature_not_required, signature_not_valid }
 }

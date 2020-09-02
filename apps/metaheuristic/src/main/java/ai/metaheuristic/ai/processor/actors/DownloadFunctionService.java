@@ -18,21 +18,20 @@ package ai.metaheuristic.ai.processor.actors;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.utils.asset.AssetFile;
-import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.MetadataService;
-import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
+import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
+import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -122,11 +121,10 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 }
                 functionConfig = downloadedFunctionConfigStatus.functionConfig;
             }
-            MetadataService.ChecksumState checksumState = metadataService.prepareChecksum(functionCode, dispatcher.url, functionConfig);
-            if (!checksumState.signatureIsOk) {
+            MetadataService.ChecksumState checksumState = metadataService.prepareChecksum(dispatcher.signatureRequired, functionCode, dispatcher.url, functionConfig);
+            if (checksumState.state==Enums.ChecksumStateEnum.signature_not_valid) {
                 continue;
             }
-            Checksum checksum = checksumState.getChecksum();
 
             final Metadata.DispatcherInfo dispatcherInfo = metadataService.dispatcherUrlAsCode(dispatcher.url);
             final File baseResourceDir = dispatcherLookupExtendedService.prepareBaseResourceDir(dispatcherInfo);
@@ -264,7 +262,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                     }
                 }
 
-                CheckSumAndSignatureStatus status = metadataService.getCheckSumAndSignatureStatus(functionCode, dispatcher, checksum, functionTempFile);
+                CheckSumAndSignatureStatus status = metadataService.getCheckSumAndSignatureStatus(functionCode, dispatcher, checksumState, functionTempFile);
                 if (status.checksum==CheckSumAndSignatureStatus.Status.correct && status.signature==CheckSumAndSignatureStatus.Status.correct) {
                     //noinspection ResultOfMethodCallIgnored
                     functionTempFile.renameTo(assetFile.file);
