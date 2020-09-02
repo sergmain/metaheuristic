@@ -68,6 +68,9 @@ public class DispatcherLookupConfig {
         public String restUsername;
         public Asset asset;
 
+        // must be deleted when DispatcherLookup will be based on ParamsYaml versioning
+        // this field is only for compatibility
+        @Deprecated
         public boolean acceptOnlySignedFunctions = false;
 
         private final Map<Integer, PublicKey> publicKeyMap = new HashMap<>();

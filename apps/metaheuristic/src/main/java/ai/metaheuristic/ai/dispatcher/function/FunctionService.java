@@ -17,13 +17,11 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
@@ -47,8 +45,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -89,19 +89,6 @@ public class FunctionService {
         }
     }
 
-    public List<Function> getFunctionsForCodes(List<String> functionCodes) {
-        if (functionCodes==null || functionCodes.isEmpty()) {
-            return List.of();
-        }
-        //noinspection UnnecessaryLocalVariable
-        List<Function> list = functionRepository.findIdsByCodes(functionCodes).stream()
-                .map(functionCache::findById)
-                .filter(Objects::nonNull)
-                .sorted(FunctionService::experimentFunctionComparator)
-                .collect(Collectors.toList());
-        return list;
-    }
-
     public @Nullable TaskParamsYaml.FunctionConfig getFunctionConfig(SimpleFunctionDefinition functionDef) {
         TaskParamsYaml.FunctionConfig functionConfig = null;
         if(StringUtils.isNotBlank(functionDef.getCode())) {
@@ -138,39 +125,6 @@ public class FunctionService {
         return S.b(s) ? "" : s;
     }
 
-    public boolean hasType(List<Function> experimentFunctions, String type) {
-        if (experimentFunctions ==null || experimentFunctions.isEmpty()) {
-            return false;
-        }
-        for (Function function : experimentFunctions) {
-            if (type.equals(function.getType())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public List<SimpleSelectOption> getSelectOptions(Iterable<Function> functions, List<FunctionData.FunctionCode> functionCodes,
-                                                     java.util.function.Function<Function, Boolean> skip) {
-        List<SimpleSelectOption> selectOptions = new ArrayList<>();
-        for (Function function : functions) {
-            boolean isExist=false;
-            for (FunctionData.FunctionCode functionCode : functionCodes) {
-                if (function.getCode().equals(functionCode.getFunctionCode()) ) {
-                    isExist = true;
-                    break;
-                }
-            }
-            if (!isExist) {
-                if (skip.apply(function)) {
-                    continue;
-                }
-                selectOptions.add( new SimpleSelectOption(function.getCode(), String.format("Type: %s; Code: %s", function.getType(), function.getCode())));
-            }
-        }
-        return selectOptions;
-    }
-
     void loadFunctionsRecursively(List<FunctionApiData.FunctionConfigStatus> statuses, File startDir) throws IOException {
         final File[] dirs = startDir.listFiles(File::isDirectory);
 
@@ -200,7 +154,6 @@ public class FunctionService {
         FunctionConfigListYaml functionConfigList = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(cfg);
         List<FunctionApiData.FunctionConfigStatus> statuses = new ArrayList<>();
         for (FunctionConfigListYaml.FunctionConfig functionConfig : functionConfigList.functions) {
-//            FunctionConfigYaml functionConfig = FunctionCoreUtils.to(scTemp);
             FunctionApiData.FunctionConfigStatus status = null;
             try {
                 status = FunctionCoreUtils.validate(functionConfig);

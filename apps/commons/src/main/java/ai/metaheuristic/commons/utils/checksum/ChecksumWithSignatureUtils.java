@@ -76,7 +76,7 @@ public class ChecksumWithSignatureUtils {
             }
         }
         if (status.signature== CheckSumAndSignatureStatus.Status.wrong) {
-            log.error("{}, Signature is wrong", infoPrefix);
+            log.error("{}, Signature is not correct", infoPrefix);
         }
         return status;
     }
@@ -86,7 +86,6 @@ public class ChecksumWithSignatureUtils {
         if (idx == -1) {
             throw new IllegalStateException("Wrong format of checksum with signature");
         }
-        //noinspection UnnecessaryLocalVariable
         ChecksumWithSignature checksumWithSignature = new ChecksumWithSignature(data.substring(0, idx), data.substring(idx + SecUtils.SIGNATURE_DELIMITER.length()));
         return checksumWithSignature;
     }

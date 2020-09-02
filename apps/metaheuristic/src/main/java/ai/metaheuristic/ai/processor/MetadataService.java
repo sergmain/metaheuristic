@@ -226,11 +226,11 @@ public class MetadataService {
                 status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksumState.checksum, "Dispatcher url: "+ dispatcher.url +", function: "+functionCode, fis, true, dispatcher.createPublicKey());
             }
             if (status.signature != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.120 dispatcher.acceptOnlySignedFunctions is {} but function {} has the broken signature", dispatcher.acceptOnlySignedFunctions, functionCode);
+                log.warn("#815.120 dispatcher.signatureRequired is {} but function {} has the broken signature", dispatcher.signatureRequired, functionCode);
                 setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.signature_wrong);
             }
             else if (status.checksum != CheckSumAndSignatureStatus.Status.correct) {
-                log.warn("#815.140 dispatcher.acceptOnlySignedFunctions is {} but function {} has the broken signature", dispatcher.acceptOnlySignedFunctions, functionCode);
+                log.warn("#815.140 dispatcher.signatureRequired is {} but function {} has the broken signature", dispatcher.signatureRequired, functionCode);
                 setFunctionState(dispatcher.url, functionCode, Enums.FunctionState.checksum_wrong);
             }
         }

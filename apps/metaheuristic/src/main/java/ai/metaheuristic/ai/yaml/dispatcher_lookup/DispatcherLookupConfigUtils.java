@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -32,11 +33,11 @@ public class DispatcherLookupConfigUtils {
     }
 
     public static String toString(DispatcherLookupConfig config) {
-        if (config==null || config.dispatchers ==null) {
+        if (config.dispatchers ==null) {
             throw new IllegalStateException("DispatcherLookupConfig is null");
         }
         for (DispatcherLookupConfig.DispatcherLookup signatureConfig : config.dispatchers) {
-            if (signatureConfig.signatureRequired && StringUtils.isBlank(signatureConfig.publicKey)) {
+            if (signatureConfig.signatureRequired && S.b(signatureConfig.publicKey)) {
                 throw new IllegalStateException("signatureConfig.publicKey is blank");
             }
             if (signatureConfig.lookupType ==null) {

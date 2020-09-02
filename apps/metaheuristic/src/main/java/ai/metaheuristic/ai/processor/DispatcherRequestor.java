@@ -240,7 +240,7 @@ public class DispatcherRequestor {
                     final boolean b = processorTaskService.isNeedNewTask(dispatcherUrl, processorId);
                     Monitoring.log("##012", Enums.Monitor.MEMORY);
                     if (b && dispatcher.schedule.isCurrentTimeActive()) {
-                        setRequestTask(scpy, new ProcessorCommParamsYaml.RequestTask(dispatcher.dispatcherLookup.acceptOnlySignedFunctions));
+                        setRequestTask(scpy, new ProcessorCommParamsYaml.RequestTask(dispatcher.dispatcherLookup.signatureRequired));
                     }
                     else {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
