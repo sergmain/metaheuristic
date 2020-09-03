@@ -42,7 +42,7 @@ public class OperationStatusRest extends BaseDataClass {
         this.errorMessages = errorMessages;
     }
 
-    public OperationStatusRest(EnumsApi.OperationStatus status, List<String> errorMessages, List<String> infoMessages) {
+    public OperationStatusRest(EnumsApi.OperationStatus status, @Nullable List<String> errorMessages, @Nullable List<String> infoMessages) {
         this.status = status;
         this.errorMessages = errorMessages;
         this.infoMessages = infoMessages;
@@ -53,9 +53,9 @@ public class OperationStatusRest extends BaseDataClass {
         this.errorMessages = Collections.singletonList(errorMessage);
     }
 
-    public OperationStatusRest(EnumsApi.OperationStatus status, String infoMessage, @Nullable String errorMessage) {
+    public OperationStatusRest(EnumsApi.OperationStatus status, @Nullable String infoMessage, @Nullable String errorMessage) {
         this.status = status;
-        if (infoMessage!=null) {
+        if (!S.b(infoMessage)) {
             this.infoMessages = List.of(infoMessage);
         }
         if (!S.b(errorMessage)) {

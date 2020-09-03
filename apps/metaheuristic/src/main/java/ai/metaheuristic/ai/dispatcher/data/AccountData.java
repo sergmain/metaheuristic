@@ -24,10 +24,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class AccountData {
 
@@ -67,6 +69,20 @@ public class AccountData {
 
         public AccountResult(SimpleAccount account) {
             this.account = account;
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class AccountWithRoleResult extends BaseDataClass {
+        public SimpleAccount account;
+        public List<String> possibleRoles;
+
+        public AccountWithRoleResult(SimpleAccount account, List<String> possibleRoles, @Nullable List<String> errorMessage) {
+            this.account = account;
+            this.possibleRoles = possibleRoles;
+            this.errorMessages = errorMessage;
         }
     }
 

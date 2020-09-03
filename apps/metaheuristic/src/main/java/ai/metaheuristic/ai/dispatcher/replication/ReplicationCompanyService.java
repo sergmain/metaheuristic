@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -95,12 +96,13 @@ public class ReplicationCompanyService {
             return;
         }
 
-        Company c = companyRepository.findByUniqueId(companyShortAsset.uniqueId);
+        Company c = companyCache.findByUniqueId(companyShortAsset.uniqueId);
         if (c!=null) {
             return;
         }
 
         companyAsset.company.id=null;
+        companyAsset.company.version=null;
         companyCache.save(companyAsset.company);
     }
 
@@ -117,6 +119,7 @@ public class ReplicationCompanyService {
 
     }
 
+    @Nullable
     private ReplicationData.CompanyAsset getCompanyAsset(Long uniqueId) {
         ReplicationData.CompanyAsset companyAsset = requestCompanyAsset(uniqueId);
         if (companyAsset.isErrorMessages()) {

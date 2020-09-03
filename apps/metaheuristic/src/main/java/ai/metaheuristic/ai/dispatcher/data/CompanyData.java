@@ -38,6 +38,15 @@ public class CompanyData {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
+    public static class SimpleCompaniesResult extends BaseDataClass {
+        public Page<SimpleCompany> companies;
+        public EnumsApi.DispatcherAssetMode assetMode;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
     public static class CompaniesResult extends BaseDataClass {
         public Page<Company> companies;
         public EnumsApi.DispatcherAssetMode assetMode;
@@ -67,6 +76,27 @@ public class CompanyData {
         }
 
         public CompanyResult(Company company) {
+            this.company = company;
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class SimpleCompanyResult extends BaseDataClass {
+        public SimpleCompany company;
+        public final CompanyAccessControl companyAccessControl = new CompanyAccessControl();
+
+        public SimpleCompanyResult(String errorMessage) {
+            this.errorMessages = Collections.singletonList(errorMessage);
+        }
+
+        public SimpleCompanyResult(SimpleCompany company, String errorMessage) {
+            this.company = company;
+            this.errorMessages = Collections.singletonList(errorMessage);
+        }
+
+        public SimpleCompanyResult(SimpleCompany company) {
             this.company = company;
         }
     }

@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.company;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.data.CompanyData;
@@ -36,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService.*;
 
@@ -63,7 +63,7 @@ public class CompanyController {
             @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
             @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
 
-        CompanyData.CompaniesResult companies = companyTopLevelService.getCompanies(pageable);
+        CompanyData.SimpleCompaniesResult companies = companyTopLevelService.getCompanies(pageable);
         ControllerUtils.addMessagesToModel(model, companies);
         model.addAttribute("result", companies);
         return "dispatcher/company/companies";
@@ -73,7 +73,7 @@ public class CompanyController {
     @PostMapping("/companies-part")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public String getCompaniesViaAJAX(Model model, @PageableDefault(size= ROWS_IN_TABLE) Pageable pageable)  {
-        CompanyData.CompaniesResult companies = companyTopLevelService.getCompanies(pageable);
+        CompanyData.SimpleCompaniesResult companies = companyTopLevelService.getCompanies(pageable);
         model.addAttribute("result", companies);
         return "dispatcher/company/companies :: table";
     }
@@ -101,7 +101,7 @@ public class CompanyController {
     @GetMapping(value = "/company-edit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String editCompany(@PathVariable Long companyUniqueId, Model model, final RedirectAttributes redirectAttributes){
-        CompanyData.CompanyResult companyResult = companyTopLevelService.getCompany(companyUniqueId);
+        CompanyData.SimpleCompanyResult companyResult = companyTopLevelService.getSimpleCompany(companyUniqueId);
         if (companyResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", companyResult.getErrorMessagesAsList());
             return "redirect:/dispatcher/company/companies";
@@ -239,6 +239,7 @@ public class CompanyController {
         return "dispatcher/company/company-account-edit-roles";
     }
 
+    // ! this method accepts an index in an array of possible roles
     @PostMapping("/company-account-edit-roles-commit/{companyId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String rolesEditFormCommit(
@@ -250,7 +251,10 @@ public class CompanyController {
             return "redirect:/dispatcher/company/company-accounts/"+companyId;
         }
 
-        OperationStatusRest operationStatusRest = companyAccountTopLevelService.storeRolesForUserById(accountId, roleId, checkbox, companyId);
+        List<String> possibleRoles = Consts.ID_1.equals(companyId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES;
+        String role = possibleRoles.get(roleId);
+
+        OperationStatusRest operationStatusRest = companyAccountTopLevelService.storeRolesForUserById(accountId, role, checkbox, companyId);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }

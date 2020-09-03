@@ -164,14 +164,17 @@ public class AccountService {
     }
 
     // this method is using with company-accounts
-    public OperationStatusRest storeRolesForUserById(Long accountId, int roleId, boolean checkbox, Long companyUniqueId) {
+    public OperationStatusRest storeRolesForUserById(Long accountId, String role, boolean checkbox, Long companyUniqueId) {
         Account account = accountRepository.findByIdForUpdate(accountId);
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.110 account wasn't found, accountId: " + accountId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.120 account wasn't found, accountId: " + accountId);
         }
-        List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES;
 
-        String role = possibleRoles.get(roleId);
+        List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES;
+        if (!possibleRoles.contains(role)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.130 account wasn't found, accountId: " + accountId);
+        }
+
         boolean isAccountContainsRole = account.accountRoles.hasRole(role);
         if (isAccountContainsRole && !checkbox){
             account.accountRoles.removeRole(role);

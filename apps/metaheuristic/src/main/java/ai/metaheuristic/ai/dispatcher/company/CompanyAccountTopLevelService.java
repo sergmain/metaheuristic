@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.ai.dispatcher.company;
 
-import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.account.AccountService;
-import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
+import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,6 @@ import org.springframework.stereotype.Service;
 public class CompanyAccountTopLevelService {
 
     private final AccountService accountService;
-    private final Globals globals;
 
     public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyUniqueId)  {
         pageable = ControllerUtils.fixPageSize(50, pageable);
@@ -51,6 +50,13 @@ public class CompanyAccountTopLevelService {
         return accountService.getAccount(id, companyUniqueId);
     }
 
+    public AccountData.AccountWithRoleResult getAccountWithRole(Long id, Long companyUniqueId){
+        AccountData.AccountResult account = accountService.getAccount(id, companyUniqueId);
+        return new AccountData.AccountWithRoleResult(
+                account.account,
+                Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES, account.getErrorMessages());
+    }
+
     public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled, Long companyUniqueId) {
         return accountService.editFormCommit(accountId, publicName, enabled, companyUniqueId);
     }
@@ -59,8 +65,8 @@ public class CompanyAccountTopLevelService {
         return accountService.passwordEditFormCommit(accountId, password, password2, companyId);
     }
 
-    public OperationStatusRest storeRolesForUserById(Long accountId, int roleId, boolean checkbox, Long companyId) {
-        return accountService.storeRolesForUserById(accountId, roleId, checkbox, companyId);
+    public OperationStatusRest storeRolesForUserById(Long accountId, String role, boolean checkbox, Long companyId) {
+        return accountService.storeRolesForUserById(accountId, role, checkbox, companyId);
     }
 
 

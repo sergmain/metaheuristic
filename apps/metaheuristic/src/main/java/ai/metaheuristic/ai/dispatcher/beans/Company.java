@@ -57,6 +57,10 @@ public class Company implements Serializable {
 
     public String name;
 
+    public Company(String companyName) {
+        this.name = companyName;
+    }
+
     public void setParams(@Nullable String params) {
         synchronized (this) {
             this.params = params;

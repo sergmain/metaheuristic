@@ -7,8 +7,8 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Edit company</h1>
 
-        <!--/*@thymesVar id="company" type="ai.metaheuristic.ai.dispatcher.beans.Company"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${company}" method="post" action="#" th:method="POST"
+        <!--/*@thymesVar id="company" type="ai.metaheuristic.ai.dispatcher.data.SimpleCompany"*/-->
+        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
               th:action="@{/dispatcher/company/company-edit-commit}" accept-charset="UTF-8" id="company-form"
               name="f">
             <input type="hidden" th:name="companyUniqueId" th:value="${company.uniqueId}"/>
@@ -20,13 +20,6 @@
 
                 <label for="groups">Company's groups</label>
                 <input name="groups" id="groups" type="text" placeholder="Groups" size="100" th:value="${groups}">
-
-<!--
-                <label for="companyYamlAsStr">Parameters of company</label>
-                <textarea name="companyYamlAsStr" id="companyYamlAsStr" placeholder="Parameters of company" cols="70" rows="15"
-                          th:text="${companyYamlAsStr}" maxlength="10000"></textarea>
-                <span class="pure-form-message">This is a required field.</span>
--->
 
                 <table>
                     <tr>

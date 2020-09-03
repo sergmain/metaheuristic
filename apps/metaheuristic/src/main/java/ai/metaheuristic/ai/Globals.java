@@ -195,13 +195,14 @@ public class Globals {
         }
 
         String threadNumberAsStr = env.getProperty("MH_THREAD_NUMBER");
+        int oldValue = threadNumber;
         if (threadNumberAsStr!=null && !threadNumberAsStr.isBlank()) {
             try {
                 threadNumber = Integer.parseInt(threadNumberAsStr);
             } catch (Throwable th) {
                 log.error("Wrong value in env MH_THREAD_NUMBER, must be digit, " +
-                        "actual: " + threadNumberAsStr+". Will be used a 4 thread value.");
-                threadNumber = 4;
+                        "actual: " + threadNumberAsStr+". Will be used "+oldValue+" as a value for number of threads.");
+                threadNumber = oldValue;
             }
         }
 
@@ -484,7 +485,6 @@ public class Globals {
         if (StringUtils.isBlank(prefix)) {
             throw new IllegalStateException("Prefix is blank");
         }
-        //noinspection UnnecessaryLocalVariable
         File tempFile = new File(dispatcherTempDir,
                 prefix + r.nextInt(99999999) + '-' + System.nanoTime()
         );

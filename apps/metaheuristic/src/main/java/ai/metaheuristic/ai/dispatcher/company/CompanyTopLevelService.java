@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.Ids;
 import ai.metaheuristic.ai.dispatcher.data.CompanyData;
+import ai.metaheuristic.ai.dispatcher.data.SimpleCompany;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -47,12 +48,16 @@ public class CompanyTopLevelService {
     private final CompanyCache companyCache;
     private final IdsRepository idsRepository;
 
-    public CompanyData.CompaniesResult getCompanies(Pageable pageable)  {
+    public CompanyData.SimpleCompaniesResult getCompanies(Pageable pageable)  {
         pageable = ControllerUtils.fixPageSize(ROWS_IN_TABLE, pageable);
-        CompanyData.CompaniesResult result = new CompanyData.CompaniesResult();
-        result.companies = companyRepository.findAll(pageable);
+        CompanyData.SimpleCompaniesResult result = new CompanyData.SimpleCompaniesResult();
+        result.companies = companyRepository.findAllAsSimple(pageable);
         result.assetMode = globals.assetMode;
         return result;
+    }
+
+    public OperationStatusRest addCompany(String companyName) {
+        return addCompany(new Company(companyName));
     }
 
     public OperationStatusRest addCompany(Company company) {
@@ -103,20 +108,21 @@ public class CompanyTopLevelService {
         return newUniqueId;
     }
 
-    public CompanyData.CompanyResult getCompany(Long companyUniqueId){
-        Company company = companyRepository.findByUniqueId(companyUniqueId);
+    public CompanyData.SimpleCompanyResult getSimpleCompany(Long companyUniqueId){
+        Company company = companyCache.findByUniqueId(companyUniqueId);
         if (company == null) {
-            return new CompanyData.CompanyResult("#237.050 company wasn't found, companyUniqueId: " + companyUniqueId);
+            return new CompanyData.SimpleCompanyResult("#237.050 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
         String groups = "";
-        if (!S.b(company.getParams())) {
-            CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
-            if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
-                groups = cpy.ac.groups;
-            }
+        CompanyParamsYaml cpy = company.getCompanyParamsYaml();
+        if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
+            groups = cpy.ac.groups;
         }
-
-        CompanyData.CompanyResult companyResult = new CompanyData.CompanyResult(company);
+        SimpleCompany simpleCompany = new SimpleCompany();
+        simpleCompany.id = company.id;
+        simpleCompany.uniqueId = company.uniqueId;
+        simpleCompany.name = company.name;
+        CompanyData.SimpleCompanyResult companyResult = new CompanyData.SimpleCompanyResult(simpleCompany);
         companyResult.companyAccessControl.groups = groups;
         return companyResult;
     }
@@ -138,16 +144,20 @@ public class CompanyTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.060 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
 
-        CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(c.getParams());
-        if (cpy==null) {
-            cpy = new CompanyParamsYaml();
-            cpy.createdOn = System.currentTimeMillis();
-        }
-        cpy.updatedOn = System.currentTimeMillis();
-
-        cpy.ac = new CompanyParamsYaml.AccessControl(groups);
         String paramsYaml;
         try {
+            String p;
+            if (S.b(c.getParams())) {
+                CompanyParamsYaml params = new CompanyParamsYaml();
+                params.createdOn = System.currentTimeMillis();
+                p = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(params);
+            }
+            else {
+                p = c.getParams();
+            }
+            CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(p);
+            cpy.updatedOn = System.currentTimeMillis();
+            cpy.ac = new CompanyParamsYaml.AccessControl(groups);
             paramsYaml = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(cpy);
         } catch (Throwable th) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.080 company params is in wrong format, error: " + th.getMessage());

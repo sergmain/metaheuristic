@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.data.SimpleCompany;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,6 +51,10 @@ public interface CompanyRepository extends CrudRepository<Company, Long> {
     @Transactional(readOnly = true)
     @Query(value="select a from Company a order by a.uniqueId")
     Page<Company> findAll(Pageable pageable);
+
+    @Transactional(readOnly = true)
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.data.SimpleCompany(a.id, a.uniqueId, a.name) from Company a order by a.uniqueId")
+    Page<SimpleCompany> findAllAsSimple(Pageable pageable);
 
     @Query(value="select max(c.uniqueId) from Company c")
     Long getMaxUniqueIdValue();
