@@ -33,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -71,7 +72,8 @@ public class ExecContextRestController {
     }
 
     /**
-     * !! right now reference to global variable isn't supported. all global variables must be specified in SourceCode.
+     * !! right now the reference to global variable isn't supported.
+     * all global variables must be specified in SourceCode.
      *
      * create ExecContext by uid of sourceCode
      * useful for creating ExecContext from command-line with cURL
@@ -124,5 +126,14 @@ public class ExecContextRestController {
         DispatcherContext context = userContextService.getContext(authentication);
         return execContextService.changeExecContextState(state, id, context);
     }
+
+    @GetMapping("/exec-context-state/{sourceCodeId}/{execContextId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
+    public ExecContextApiData.ExecContextStateResult execContextsState(@PathVariable Long sourceCodeId, @PathVariable Long execContextId, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sourceCodeId, execContextId, context);
+        return execContextState;
+    }
+
 
 }
