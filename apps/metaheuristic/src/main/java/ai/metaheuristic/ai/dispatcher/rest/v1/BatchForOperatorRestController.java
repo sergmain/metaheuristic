@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.company;
+package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
@@ -39,7 +39,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -48,13 +47,19 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
+/**
+ * @author Serge
+ * Date: 9/3/2020
+ * Time: 1:22 PM
+ */
 @SuppressWarnings("DuplicatedCode")
-@Controller
-@RequestMapping("/dispatcher/company/batch")
+@RestController
+@RequestMapping("/rest/v1/dispatcher/company/batch")
 @Slf4j
 @Profile("dispatcher")
+@CrossOrigin
 @RequiredArgsConstructor
-public class BatchForOperatorController {
+public class BatchForOperatorRestController {
 
     private final BatchTopLevelService batchTopLevelService;
     private final UserContextService userContextService;
@@ -68,42 +73,12 @@ public class BatchForOperatorController {
             @ModelAttribute("errorMessage") final String errorMessage,
             @ModelAttribute("infoMessages") final String infoMessages,
             @PathVariable Long companyUniqueId
-            ) {
+    ) {
         BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyUniqueId, null, true, false);
         ControllerUtils.addMessagesToModel(model, batchesResult);
         model.addAttribute("result", batchesResult);
         model.addAttribute("companyUniqueId", companyUniqueId);
         return "dispatcher/company/batch/company-batches";
-    }
-
-/*
-    // TODO 2020-09-03 looks like that this method isn't required
-    @GetMapping("/company-batches-usage-info/{companyUniqueId}/{days}")
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
-    public String batches(
-            Model model,
-            @ModelAttribute("errorMessage") final String errorMessage,
-            @ModelAttribute("infoMessages") final String infoMessages,
-            @PathVariable Long companyUniqueId,
-            @PathVariable Integer days
-        ) {
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(null, companyUniqueId, null, true, false);
-        ControllerUtils.addMessagesToModel(model, batchesResult);
-        model.addAttribute("result", batchesResult);
-        model.addAttribute("companyUniqueId", companyUniqueId);
-        model.addAttribute("days", days);
-        return "dispatcher/company/batch/company-batches-usage-info";
-    }
-*/
-
-    @PostMapping("/company-batches-part/{companyUniqueId}")
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
-    public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, @PathVariable Long companyUniqueId) {
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyUniqueId, null, true, false);
-        ControllerUtils.addMessagesToModel(model, batchesResult);
-        model.addAttribute("result", batchesResult);
-        model.addAttribute("companyUniqueId", companyUniqueId);
-        return "dispatcher/company/batch/company-batches :: table";
     }
 
     @GetMapping(value = "/company-batch-add/{companyUniqueId}")
@@ -136,56 +111,33 @@ public class BatchForOperatorController {
 
     @PostMapping("/company-batch-delete-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
-    public String processResourceDeleteCommit(
-            Long batchId,
-            @PathVariable Long companyUniqueId,
-            final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest processResourceDeleteCommit(Long batchId, @PathVariable Long companyUniqueId) {
         OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, companyUniqueId, false);
-        if (r.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
-        }
-        return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
+        return r;
     }
 
     @PostMapping(value = "/company-batch-upload-from-file/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
-    public String uploadFile(
-            final MultipartFile file,
-            @PathVariable Long companyUniqueId,
-            Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+    public BatchData.UploadingStatus uploadFile(final MultipartFile file, @PathVariable Long companyUniqueId,
+                                                Long sourceCodeId, Authentication authentication) {
         // create context with putting current user to specific company
         DispatcherContext context = userContextService.getContext(authentication, companyUniqueId);
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
-        if (uploadingStatus.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", uploadingStatus.getErrorMessagesAsList());
-        }
-        return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
+        return uploadingStatus;
     }
 
     @GetMapping(value= "/company-batch-status/{companyUniqueId}/{batchId}" )
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
-    public String getProcessingResourceStatus(
-            Model model,
-            @PathVariable Long companyUniqueId,
-            @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes) {
+    public BatchData.Status getProcessingResourceStatus(@PathVariable Long companyUniqueId, @PathVariable("batchId") Long batchId) {
         BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyUniqueId, true);
-        if (status.isErrorMessages()) {
-            redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
-            return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
-        }
-        model.addAttribute("batchId", batchId);
-        model.addAttribute("console", status.console);
-        model.addAttribute("companyUniqueId", companyUniqueId);
-        return "dispatcher/company/batch/company-batch-status";
+        return status;
     }
 
-    @GetMapping(value= "/company-batch-download-result/{companyUniqueId}/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value= "/company-batch-download-result/{companyUniqueId}/{batchId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request,
-            @PathVariable Long companyUniqueId,
-            @PathVariable("batchId") Long batchId,
-            @SuppressWarnings("unused") @PathVariable("fileName") String fileName) throws IOException {
+            @PathVariable Long companyUniqueId, @PathVariable("batchId") Long batchId) throws IOException {
         final ResponseEntity<AbstractResource> entity;
         try {
             CleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, companyUniqueId, true);
@@ -195,7 +147,7 @@ public class BatchForOperatorController {
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (CommonErrorWithDataException e) {
-            // TODO 2019-10-13 in case of this exception resources won't be cleaned, need to re-write
+            // TODO 2019-10-13 in case of this exception, resources won't be cleaned. Need to re-write
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
         return entity;
@@ -218,11 +170,12 @@ public class BatchForOperatorController {
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
         } catch (CommonErrorWithDataException e) {
-            // TODO 2019-10-13 in case of this exception resources won't be cleaned, need to re-write
+            // TODO 2019-10-13 in case of this exception, resources won't be cleaned. Need to re-write
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         } catch (Throwable e) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
         return entity;
     }
+
 }

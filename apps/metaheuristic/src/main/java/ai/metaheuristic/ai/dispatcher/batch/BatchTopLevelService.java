@@ -133,7 +133,7 @@ public class BatchTopLevelService {
 
     public BatchData.BatchesResult getBatches(Pageable pageable, Long companyUniqueId, @Nullable Account account, boolean includeDeleted, boolean filterBatches) {
         if (filterBatches && account==null) {
-            log.warn("(filterBatches && account==null)");
+            log.warn("#981.020 (filterBatches && account==null)");
             return new BatchData.BatchesResult();
         }
         pageable = ControllerUtils.fixPageSize(20, pageable);
@@ -179,7 +179,7 @@ public class BatchTopLevelService {
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
-            return new BatchData.UploadingStatus("#995.040 name of uploaded file is blank");
+            return new BatchData.UploadingStatus("#981.040 name of uploaded file is blank");
         }
         // fix for the case when browser sends full path, ie Edge
         final String originFilename = new File(tempFilename).getName();
@@ -187,10 +187,10 @@ public class BatchTopLevelService {
         String ext = StrUtils.getExtension(originFilename);
         if (ext==null) {
             return new BatchData.UploadingStatus(
-                    "#995.043 file without extension, bad filename: " + originFilename);
+                    "#981.060 file without extension, bad filename: " + originFilename);
         }
         if (!StringUtils.equalsAny(ext.toLowerCase(), ZIP_EXT, XML_EXT)) {
-            return new BatchData.UploadingStatus("#995.046 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
+            return new BatchData.UploadingStatus("#981.080 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, dispatcherContext.getCompanyId());
@@ -199,15 +199,15 @@ public class BatchTopLevelService {
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
-            return new BatchData.UploadingStatus("#995.050 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
+            return new BatchData.UploadingStatus("#981.100 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
         }
         if (!sourceCode.getId().equals(sourceCodeId)) {
-            return new BatchData.UploadingStatus("#995.038 Fatal error in configuration of sourceCode, report to developers immediately");
+            return new BatchData.UploadingStatus("#981.120 Fatal error in configuration of sourceCode, report to developers immediately");
         }
         dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, dispatcherContext.getCompanyId(), originFilename, file.getSize(), null, null, dispatcherContext );
 
         if (file.getSize()==0) {
-            return new BatchData.UploadingStatus("#995.040 Empty files aren't supported");
+            return new BatchData.UploadingStatus("#981.140 Empty files aren't supported");
         }
 
         // TODO 2019-07-06 Do we need to validate the sourceCode here in case that there is another check?
@@ -215,19 +215,19 @@ public class BatchTopLevelService {
         // validate the sourceCode
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
         if (sourceCodeValidation.status.status != EnumsApi.SourceCodeValidateStatus.OK ) {
-            return new BatchData.UploadingStatus("#995.060 validation of sourceCode was failed, status: " + sourceCodeValidation.status);
+            return new BatchData.UploadingStatus("#981.160 validation of sourceCode was failed, status: " + sourceCodeValidation.status);
         }
 
         Batch b;
         try {
             ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorService.createExecContext(sourceCodeId, dispatcherContext);
             if (creationResult.isErrorMessages()) {
-                throw new BatchResourceProcessingException("#995.075 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
+                throw new BatchResourceProcessingException("#981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
 
             String startInputAs = creationResult.execContext.getExecContextParamsYaml().variables.startInputAs;
             if (S.b(startInputAs)) {
-                return new BatchData.UploadingStatus("#995.078 Wrong format of sourceCode, startInputAs isn't specified");
+                return new BatchData.UploadingStatus("#981.200 Wrong format of sourceCode, startInputAs isn't specified");
             }
             variableService.createInitialized(
                     file.getInputStream(), file.getSize(), startInputAs,
@@ -249,10 +249,10 @@ public class BatchTopLevelService {
             final Batch batch = batchService.changeStateToPreparing(b.id);
             // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed
             if (batch==null) {
-                return new BatchData.UploadingStatus("#995.080 can't find batch with id " + b.id);
+                return new BatchData.UploadingStatus("#981.220 can't find batch with id " + b.id);
             }
 
-            log.info("The file {} was successfully stored for processing", originFilename);
+            log.info("#981.240 The file {} was successfully stored for processing", originFilename);
             //noinspection unused
             int i=0;
             // start producing new tasks
@@ -275,8 +275,9 @@ public class BatchTopLevelService {
             return uploadingStatus;
         }
         catch (Throwable th) {
-            log.error("Error", th);
-            return new BatchData.UploadingStatus("#995.120 can't load file, error: " + th.getMessage()+", class: " + th.getClass());
+            String es = "#981.260 can't load file, error: " + th.getMessage() + ", class: " + th.getClass();
+            log.error(es, th);
+            return new BatchData.UploadingStatus(es);
         }
     }
 
@@ -288,7 +289,7 @@ public class BatchTopLevelService {
 
         Batch batch = batchCache.findById(batchId);
         if (batch == null || !batch.companyId.equals(companyUniqueId)) {
-            final String es = "#995.250 Batch wasn't found, batchId: " + batchId;
+            final String es = "#981.280 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -310,13 +311,13 @@ public class BatchTopLevelService {
         try {
             CleanerInfo cleanerInfo = getBatchProcessingResultInternal(batchId, companyUniqueId, includeDeleted, "batch-status");
             if (cleanerInfo==null) {
-                final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
+                final String es = "#981.300 Batch wasn't found, batchId: " + batchId;
                 log.warn(es);
                 return new BatchData.Status(es);
             }
             AbstractResource body = cleanerInfo.entity.getBody();
             if (body==null) {
-                final String es = "#995.280 Batch wasn't found, batchId: " + batchId;
+                final String es = "#981.320 Batch wasn't found, batchId: " + batchId;
                 log.warn(es);
                 return new BatchData.Status(es);
             }
@@ -324,7 +325,7 @@ public class BatchTopLevelService {
             String status = IOUtils.toString(body.getInputStream(), StandardCharsets.UTF_8);
             return new BatchData.Status(batchId, status, true);
         } catch (IOException e) {
-            final String es = "#995.290 System error: " + batchId;
+            final String es = "#981.340 System error: " + batchId;
             log.warn(es);
             return new BatchData.Status(es);
         }
@@ -340,12 +341,12 @@ public class BatchTopLevelService {
         return getVariable(batchId, companyUniqueId, includeDeleted, (scpy)-> {
             List<SourceCodeParamsYaml.Variable> vars = SourceCodeService.findVariableByType(scpy, variableType);
             if (vars.isEmpty()) {
-                final String es = "#995.300 variable with type '"+variableType+"' wasn't found";
+                final String es = "#981.360 variable with type '"+variableType+"' wasn't found";
                 log.warn(es);
                 return null;
             }
             if (vars.size()>1) {
-                final String es = "#995.305 too many variables with type '"+variableType+"'. " + vars;
+                final String es = "#981.380 too many variables with type '"+variableType+"'. " + vars;
                 log.warn(es);
                 return null;
             }
@@ -353,7 +354,7 @@ public class BatchTopLevelService {
         }, (execContextId, scpy) -> {
             SimpleVariable inputVariable = variableService.getVariableAsSimple(execContextId, scpy.source.variables.startInputAs);
             if (inputVariable==null) {
-                final String es = "#995.340 Can't find a start input variable '"+scpy.source.variables.startInputAs+"'";
+                final String es = "#981.400 Can't find a start input variable '"+scpy.source.variables.startInputAs+"'";
                 log.warn(es);
                 return null;
 
@@ -368,7 +369,7 @@ public class BatchTopLevelService {
         return getVariable(batchId, null, true, (scpy)-> {
             String variableName = scpy.source.variables.startInputAs;
             if (S.b(variableName)) {
-                final String es = "#995.300 a start input variable '" + scpy.source.variables.startInputAs +"' wasn't found";
+                final String es = "#981.420 a start input variable '" + scpy.source.variables.startInputAs +"' wasn't found";
                 log.warn(es);
                 return null;
             }
@@ -383,7 +384,7 @@ public class BatchTopLevelService {
         Batch batch = batchCache.findById(batchId);
         if (batch == null || (companyUniqueId!=null && !batch.companyId.equals(companyUniqueId)) ||
                 (!includeDeleted && batch.deleted)) {
-            final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
+            final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return null;
         }
@@ -398,7 +399,7 @@ public class BatchTopLevelService {
 
         SourceCodeImpl sc = sourceCodeCache.findById(batch.sourceCodeId);
         if (sc==null) {
-            final String es = "#995.280 SourceCode wasn't found, sourceCodeId: " + batch.sourceCodeId;
+            final String es = "#981.460 SourceCode wasn't found, sourceCodeId: " + batch.sourceCodeId;
             log.warn(es);
             return null;
         }
@@ -408,7 +409,7 @@ public class BatchTopLevelService {
 
         SimpleVariable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
         if (variable==null) {
-            final String es = "#995.320 Can't find variable '"+resultBatchVariable+"'";
+            final String es = "#981.480 Can't find variable '"+resultBatchVariable+"'";
             log.warn(es);
             return null;
         }
@@ -417,7 +418,7 @@ public class BatchTopLevelService {
         if (S.b(filename)) {
             filename = outputFilenameFunction.apply(batch.execContextId, scpy);
             if (S.b(filename)) {
-                final String es = "#995.340 Can't find filename for file";
+                final String es = "#981.500 Can't find filename for file";
                 log.warn(es);
                 return null;
             }
@@ -442,14 +443,14 @@ public class BatchTopLevelService {
         Batch batch = batchCache.findById(batchId);
         if (batch == null || (companyUniqueId!=null && !batch.companyId.equals(companyUniqueId)) ||
                 (!includeDeleted && batch.deleted)) {
-            final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
+            final String es = "#981.520 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return null;
         }
 
         SourceCodeImpl sc = sourceCodeCache.findById(batch.sourceCodeId);
         if (sc==null) {
-            final String es = "#995.280 SourceCode wasn't found, sourceCodeId: " + batch.sourceCodeId;
+            final String es = "#981.540 SourceCode wasn't found, sourceCodeId: " + batch.sourceCodeId;
             log.warn(es);
             return null;
         }
@@ -459,7 +460,7 @@ public class BatchTopLevelService {
 
         SimpleVariable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
         if (variable==null) {
-            final String es = "#995.320 Can't find variable '"+resultBatchVariable+"'";
+            final String es = "#981.560 Can't find variable '"+resultBatchVariable+"'";
             log.warn(es);
             return null;
         }

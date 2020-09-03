@@ -75,7 +75,7 @@ public class SourceCodeSelectorService {
     private SourceCodeData.SourceCodesForCompany getSourceCodeInternal(Long companyId, final Function<SourceCode, Boolean> sourceCodeFilter) {
         SourceCodeData.SourceCodesForCompany availableSourceCodesForCompany = getAvailableSourceCodesForCompany(companyId, sourceCodeFilter);
         if (availableSourceCodesForCompany.items.size()>1) {
-            log.error("!!!!!!!!!!!!!!!! error in code -  (availableSourceCodesForCompany.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
+            log.error("#984.020 !!!!!!!!!!!!!!!! error in code -  (availableSourceCodesForCompany.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
         }
         return availableSourceCodesForCompany;
     }
@@ -94,11 +94,11 @@ public class SourceCodeSelectorService {
                 SourceCodeStoredParamsYaml scspy = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
                 return !scspy.internalParams.archived;
             } catch (YAMLException e) {
-                final String es = "#995.010 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
+                final String es = "#984.040 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
                 sourceCodesForCompany.addErrorMessage(es);
                 log.error(es);
-                log.error("#995.015 Params:\n{}", o.getParams());
-                log.error("#995.020 Error: {}", e.toString());
+                log.error("#984.060 Params:\n{}", o.getParams());
+                log.error("#984.080 Error: {}", e.toString());
                 return false;
             }
         }).collect(Collectors.toList());
@@ -113,11 +113,11 @@ public class SourceCodeSelectorService {
                     Stream.of(arr).forEach(s-> groups.add(s.strip()));
                 }
             } catch (YAMLException e) {
-                final String es = "#995.025 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
+                final String es = "#984.100 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
                 sourceCodesForCompany.addErrorMessage(es);
                 log.error(es);
-                log.error("#995.027 Params:\n{}", company.getParams());
-                log.error("#995.030 Error: {}", e.toString());
+                log.error("#984.120 Params:\n{}", company.getParams());
+                log.error("#984.140 Error: {}", e.toString());
                 return sourceCodesForCompany;
             }
 
@@ -139,11 +139,11 @@ public class SourceCodeSelectorService {
                         }
                         return false;
                     } catch (YAMLException e) {
-                        final String es = "#995.033 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
+                        final String es = "#984.160 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
                         sourceCodesForCompany.addErrorMessage(es);
                         log.error(es);
-                        log.error("#995.035 Params:\n{}", o.getParams());
-                        log.error("#995.037 Error: {}", e.toString());
+                        log.error("#984.180 Params:\n{}", o.getParams());
+                        log.error("#984.200 Error: {}", e.toString());
                         return false;
                     }
                 }).collect(Collectors.toList());
