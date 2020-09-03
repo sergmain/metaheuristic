@@ -35,21 +35,20 @@ public class FunctionCoreUtils {
 
     private static final FunctionApiData.FunctionConfigStatus FUNCTION_CONFIG_STATUS_OK = new FunctionApiData.FunctionConfigStatus(true, null);
 
-    public static FunctionConfigYaml to(FunctionConfigListYaml.FunctionConfig snSrc) {
-        FunctionConfigYaml snTrg = new FunctionConfigYaml();
-        BeanUtils.copyProperties(snSrc, snTrg, "checksumMap", "metas");
+    public static FunctionConfigYaml to(FunctionConfigListYaml.FunctionConfig fnSrc) {
+        FunctionConfigYaml fnTrg = new FunctionConfigYaml();
+        BeanUtils.copyProperties(fnSrc, fnTrg, "checksumMap", "metas");
 
-        snTrg.checksumMap = new HashMap<>();
-        if (snSrc.checksumMap!=null) {
-            snTrg.checksumMap.putAll(snSrc.checksumMap);
+        fnTrg.checksumMap = new HashMap<>();
+        if (fnSrc.checksumMap!=null) {
+            fnTrg.checksumMap.putAll(fnSrc.checksumMap);
         }
-        snTrg.metas = new ArrayList<>();
-        if (snSrc.metas!=null) {
-            snTrg.metas.addAll(snSrc.metas);
+        fnTrg.metas = new ArrayList<>();
+        if (fnSrc.metas!=null) {
+            fnTrg.metas.addAll(fnSrc.metas);
         }
 
-        snTrg.info = new FunctionConfigYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
-        return  snTrg;
+        return  fnTrg;
     }
 
     public static FunctionApiData.FunctionConfigStatus validate(FunctionConfigListYaml.FunctionConfig functionConfig) {

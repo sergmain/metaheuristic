@@ -59,9 +59,6 @@ public class FunctionConfigListYamlUtilsV1
             if (snSrc.checksumMap!=null) {
                 snTrg.checksumMap = new HashMap<>(snSrc.checksumMap);
             }
-            if (snSrc.info!=null) {
-                snTrg.info = new FunctionConfigListYaml.FunctionInfo(snSrc.info.signed, snSrc.info.length);
-            }
             if (snSrc.metas!=null) {
                 snTrg.metas = new ArrayList<>(snSrc.metas);
             }

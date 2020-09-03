@@ -148,5 +148,5 @@ public final class Enums {
         }
     }
 
-    public enum ChecksumStateEnum { unknown, signature_not_required, signature_not_valid }
+    public enum ChecksumStateEnum { unknown, signature_ok, signature_not_required, signature_not_valid }
 }

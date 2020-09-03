@@ -154,8 +154,6 @@ public abstract class PreparingCore {
                 sc.env = "python-3";
                 sc.type = CommonConsts.FIT_TYPE;
                 sc.file = "fit-filename.txt";
-                sc.checksum = "sha2";
-                sc.info = new FunctionConfigYaml.FunctionInfo(false, bytes.length);
 
                 function.setCode(TEST_FIT_FUNCTION);
                 function.setType(CommonConsts.FIT_TYPE);
@@ -182,8 +180,6 @@ public abstract class PreparingCore {
                 sc.type = CommonConsts.PREDICT_TYPE;
                 sc.env = "python-3";
                 sc.file = "predict-filename.txt";
-                sc.info = new FunctionConfigYaml.FunctionInfo(false, bytes.length);
-                sc.checksum = "sha2";
 
                 predictFunction.setCode(TEST_PREDICT_FUNCTION);
                 predictFunction.setType(CommonConsts.PREDICT_TYPE);

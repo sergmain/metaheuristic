@@ -21,7 +21,12 @@ import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.StringUtils;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.lang.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,45 +44,40 @@ public class ChecksumWithSignatureUtils {
         public String signature;
     }
 
-    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(@NonNull Checksum checksum, String infoPrefix, InputStream fis, boolean isVerifySignature, PublicKey publicKey ) throws IOException {
+    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(@NonNull Checksum checksum, String infoPrefix, InputStream fis, PublicKey publicKey ) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
         for (Map.Entry<EnumsApi.HashAlgo, String> entry : checksum.checksums.entrySet()) {
-            String sum, entrySum;
-            if (entry.getKey()== EnumsApi.HashAlgo.SHA256WithSignature) {
-                ChecksumWithSignature checksumWithSignature = parse(entry.getValue());
-                entrySum = checksumWithSignature.checksum;
-
-                if (isVerifySignature) {
-                    status.signature = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, publicKey);
-                    if (status.signature== CheckSumAndSignatureStatus.Status.wrong) {
-                        log.warn("{}, validation was failed, checksum: {}, signature: {}, publicKey: {}", infoPrefix, checksumWithSignature.checksum, checksumWithSignature.signature, publicKey);
-                        break;
-                    }
-                    log.info("{}, signature is Ok", infoPrefix);
-                }
-                sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);
-            }
-            else {
-                if (isVerifySignature) {
-                    log.warn("{}, can't validate signature with checksum type {}", infoPrefix, entry.getKey());
-                    break;
-                }
-                sum = Checksum.getChecksum(entry.getKey(), fis);
-                entrySum = entry.getValue();
-            }
-
-            if (sum.equals(entrySum)) {
-                status.checksum = CheckSumAndSignatureStatus.Status.correct;
-                log.info("{}, checksum is Ok", infoPrefix);
-            } else {
-                log.error("S{}, checksum is wrong, expected: {}, actual: {}", infoPrefix, entrySum, sum);
-                status.checksum = CheckSumAndSignatureStatus.Status.wrong;
-                break;
+            status = verifyChecksumAndSignature(infoPrefix, fis, publicKey, entry.getValue(), entry.getKey());
+            if (status.checksum== CheckSumAndSignatureStatus.Status.correct && status.signature== CheckSumAndSignatureStatus.Status.correct) {
+                return status;
             }
         }
         if (status.signature== CheckSumAndSignatureStatus.Status.wrong) {
             log.error("{}, Signature is not correct", infoPrefix);
         }
+        return status;
+    }
+
+    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(String infoPrefix, InputStream fis, PublicKey publicKey, String value, EnumsApi.HashAlgo hashAlgo) {
+        CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
+        if (hashAlgo != EnumsApi.HashAlgo.SHA256WithSignature) {
+            status.signature = CheckSumAndSignatureStatus.Status.wrong;
+            return status;
+        }
+
+        ChecksumWithSignature checksumWithSignature = parse(value);
+        String actualSum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);
+        if (actualSum.equals(checksumWithSignature.checksum)) {
+            status.checksum = CheckSumAndSignatureStatus.Status.correct;
+            log.info("{}, checksum is Ok", infoPrefix);
+        } else {
+            log.error("S{}, checksum is wrong, expected: {}, actual: {}", infoPrefix, checksumWithSignature.checksum, actualSum);
+            status.checksum = CheckSumAndSignatureStatus.Status.wrong;
+        }
+
+        status.signature = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, publicKey);
+        log.info("{}, signature is {}", infoPrefix, status.signature);
+
         return status;
     }
 
@@ -95,8 +95,7 @@ public class ChecksumWithSignatureUtils {
             Signature signature = Signature.getInstance("SHA256withRSA");
             signature.initVerify(publicKey);
             signature.update(data);
-            //noinspection
-            final byte[] bytes = Base64.decodeBase64(signatureAsBase64);
+            final byte[] bytes = Base64.decodeBase64(StringUtils.getBytesUsAscii(signatureAsBase64));
             boolean status = signature.verify(bytes);
             return status ? CheckSumAndSignatureStatus.Status.correct : CheckSumAndSignatureStatus.Status.wrong;
         }

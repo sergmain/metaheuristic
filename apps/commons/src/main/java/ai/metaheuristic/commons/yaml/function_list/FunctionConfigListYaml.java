@@ -39,17 +39,6 @@ public class FunctionConfigListYaml implements BaseParams {
     }
 
     @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class FunctionInfo {
-        public boolean signed;
-        /**
-         * function's binary length
-         */
-        public long length;
-    }
-
-    @Data
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
@@ -83,8 +72,6 @@ public class FunctionConfigListYaml implements BaseParams {
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
         public Map<EnumsApi.HashAlgo, String> checksumMap;
-        public FunctionInfo info = new FunctionInfo();
-        public @Nullable String checksum;
         public GitInfo git;
         public boolean skipParams = false;
         public List<Map<String, String>> metas = new ArrayList<>();

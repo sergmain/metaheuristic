@@ -62,17 +62,6 @@ public class FunctionConfigYamlV1 implements Cloneable, BaseParams {
         return clone;
     }
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class FunctionInfoV1 {
-        public boolean signed;
-        /**
-         * function's binary length
-         */
-        public long length;
-    }
-
     /**
      * code of function, i.e. simple-app:1.0
      */
@@ -88,8 +77,6 @@ public class FunctionConfigYamlV1 implements Cloneable, BaseParams {
     public String env;
     public EnumsApi.FunctionSourcing sourcing;
     public @Nullable Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
-    public @Nullable FunctionInfoV1 info = null;
-    public String checksum;
     public @Nullable GitInfo git;
     public boolean skipParams = false;
     public @Nullable List<Map<String, String>> metas = new ArrayList<>();

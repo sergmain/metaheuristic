@@ -27,7 +27,7 @@
     </parent>
     <groupId>ai.metaheuristic</groupId>
     <artifactId>mh-commons</artifactId>
-    <version>4.1.4</version>
+    <version>4.1.5</version>
 
     <packaging>jar</packaging>
 
@@ -155,16 +155,6 @@
     </build>
 
     <repositories>
-<!--
-        <repository>
-            <id>spring-snapshots</id>
-            <name>Spring Snapshots</name>
-            <url>https://repo.spring.io/snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
--->
         <repository>
             <id>spring-milestones</id>
             <name>Spring Milestones</name>
@@ -176,16 +166,6 @@
     </repositories>
 
     <pluginRepositories>
-<!--
-        <pluginRepository>
-            <id>spring-snapshots</id>
-            <name>Spring Snapshots</name>
-            <url>https://repo.spring.io/snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
--->
         <pluginRepository>
             <id>spring-milestones</id>
             <name>Spring Milestones</name>

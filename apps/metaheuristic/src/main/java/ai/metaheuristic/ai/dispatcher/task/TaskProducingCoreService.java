@@ -74,7 +74,7 @@ public class TaskProducingCoreService {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(
                     process.function.code, "internal", null, S.b(process.function.params) ? "" : process.function.params,"internal",
                     EnumsApi.FunctionSourcing.dispatcher, null,
-                    new TaskParamsYaml.FunctionInfo(false, 0), null, null, false );
+                    null, false );
         }
         else {
             TaskParamsYaml.FunctionConfig fConfig = functionService.getFunctionConfig(process.function);

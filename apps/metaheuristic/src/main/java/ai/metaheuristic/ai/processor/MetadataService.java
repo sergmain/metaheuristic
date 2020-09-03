@@ -32,16 +32,17 @@ import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -66,9 +67,17 @@ public class MetadataService {
     private Metadata metadata = null;
 
     @Data
-    public static class ChecksumState {
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ChecksumWithSignatureState {
         public Enums.ChecksumStateEnum state = Enums.ChecksumStateEnum.unknown;
-        public Checksum checksum;
+        public ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature;
+        public String originChecksumWithSignature;
+        public EnumsApi.HashAlgo hashAlgo;
+
+        public ChecksumWithSignatureState(Enums.ChecksumStateEnum state) {
+            this.state = state;
+        }
     }
 
     @Data
@@ -111,27 +120,37 @@ public class MetadataService {
         int i=0;
     }
 
-    public ChecksumState prepareChecksum(boolean signatureRequired, String functionCode, String dispatcherUrl, TaskParamsYaml.FunctionConfig functionConfig) {
-        ChecksumState checksumState = new ChecksumState();
+    public ChecksumWithSignatureState prepareChecksumWithSignature(boolean signatureRequired, String functionCode, String dispatcherUrl, TaskParamsYaml.FunctionConfig functionConfig) {
         if (!signatureRequired) {
-            checksumState.state= Enums.ChecksumStateEnum.signature_not_required;
-            return checksumState;
+            return new ChecksumWithSignatureState(Enums.ChecksumStateEnum.signature_not_required);
         }
 
         // check requirements of signature
-        if (S.b(functionConfig.checksum)) {
-            setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.signature_not_found);
-            checksumState.state = Enums.ChecksumStateEnum.signature_not_valid;
-            return checksumState;
+        if (functionConfig.checksumMap==null) {
+            return setSignatureNotValid(functionCode, dispatcherUrl);
         }
-        checksumState.checksum = Checksum.fromJson(functionConfig.checksum);
-        boolean isSignature = checksumState.checksum.checksums.entrySet().stream().anyMatch(e -> e.getKey().isSign);
-        if (!isSignature) {
-            setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.signature_not_found);
-            checksumState.state = Enums.ChecksumStateEnum.signature_not_valid;
-            return checksumState;
+
+        // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing
+        String data = functionConfig.checksumMap.entrySet().stream()
+                .filter(o -> o.getKey() == EnumsApi.HashAlgo.SHA256WithSignature)
+                .findFirst()
+                .map(Map.Entry::getValue).orElse(null);
+
+        if (S.b(data)) {
+            return setSignatureNotValid(functionCode, dispatcherUrl);
         }
-        return checksumState;
+        ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(data);
+        if (S.b(checksumWithSignature.checksum) || S.b(checksumWithSignature.signature)) {
+            return setSignatureNotValid(functionCode, dispatcherUrl);
+        }
+
+        return new ChecksumWithSignatureState(Enums.ChecksumStateEnum.signature_ok, checksumWithSignature, data, EnumsApi.HashAlgo.SHA256WithSignature);
+    }
+
+    @NonNull
+    public ChecksumWithSignatureState setSignatureNotValid(String functionCode, String dispatcherUrl) {
+        setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.signature_not_found);
+        return new ChecksumWithSignatureState(Enums.ChecksumStateEnum.signature_not_valid);
     }
 
     private void markAllAsUnverified() {
@@ -188,7 +207,7 @@ public class MetadataService {
         }
         TaskParamsYaml.FunctionConfig functionConfig = downloadedFunctionConfigStatus.functionConfig;
 
-        ChecksumState checksumState = prepareChecksum(simpleCache.dispatcher.dispatcherLookup.signatureRequired, functionCode, dispatcherUrl, functionConfig);
+        ChecksumWithSignatureState checksumState = prepareChecksumWithSignature(simpleCache.dispatcher.dispatcherLookup.signatureRequired, functionCode, dispatcherUrl, functionConfig);
         if (checksumState.state==Enums.ChecksumStateEnum.signature_not_valid) {
             return;
         }
@@ -219,11 +238,13 @@ public class MetadataService {
     }
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-            String functionCode, DispatcherLookupConfig.DispatcherLookup dispatcher, ChecksumState checksumState, File functionTempFile) throws IOException {
+            String functionCode, DispatcherLookupConfig.DispatcherLookup dispatcher, ChecksumWithSignatureState checksumState, File functionTempFile) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus(CheckSumAndSignatureStatus.Status.correct, CheckSumAndSignatureStatus.Status.correct);
         if (checksumState.state!=Enums.ChecksumStateEnum.signature_not_required) {
             try (FileInputStream fis = new FileInputStream(functionTempFile)) {
-                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksumState.checksum, "Dispatcher url: "+ dispatcher.url +", function: "+functionCode, fis, true, dispatcher.createPublicKey());
+                status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
+                        "Dispatcher url: "+ dispatcher.url +", function: "+functionCode, fis, dispatcher.createPublicKey(),
+                        checksumState.originChecksumWithSignature, checksumState.hashAlgo);
             }
             if (status.signature != CheckSumAndSignatureStatus.Status.correct) {
                 log.warn("#815.120 dispatcher.signatureRequired is {} but function {} has the broken signature", dispatcher.signatureRequired, functionCode);

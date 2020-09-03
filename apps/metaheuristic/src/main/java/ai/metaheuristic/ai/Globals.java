@@ -74,9 +74,6 @@ public class Globals {
     @Value("${mh.dispatcher.is-ssl-required:#{true}}")
     public boolean isSslRequired = true;
 
-    @Value("${mh.dispatcher.function-checksum-required:#{true}}")
-    public boolean isFunctionChecksumRequired = true;
-
     @Value("${mh.dispatcher.function-signature-required:#{true}}")
     public boolean isFunctionSignatureRequired = true;
 
@@ -193,6 +190,10 @@ public class Globals {
         if (dispatcherPublicKeyStr !=null) {
             dispatcherPublicKey = SecUtils.getPublicKey(dispatcherPublicKeyStr);
         }
+        if (dispatcherPublicKeyStr==null && isFunctionSignatureRequired) {
+            throw new GlobalConfigurationException("Public key wasn't configured but isFunctionSignatureRequired is true");
+        }
+
         String threadNumberAsStr = env.getProperty("MH_THREAD_NUMBER");
         if (threadNumberAsStr!=null && !threadNumberAsStr.isBlank()) {
             try {

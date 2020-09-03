@@ -103,15 +103,11 @@ public class TaskParamsYamlUtilsV1
 
     private static TaskParamsYaml.FunctionConfig toUp(TaskParamsYamlV1.FunctionConfigV1 src) {
         TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig();
-        trg.checksum = src.checksum;
         trg.checksumMap = src.checksumMap;
         trg.code = src.code;
         trg.env = src.env;
         trg.file = src.file;
         trg.git = src.git;
-        if (src.info!=null) {
-            trg.info = new TaskParamsYaml.FunctionInfo(src.info.signed, src.info.length);
-        }
         trg.metas.addAll(src.metas);
         trg.params = src.params;
         trg.skipParams = src.skipParams;
@@ -142,7 +138,6 @@ public class TaskParamsYamlUtilsV1
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        //noinspection UnnecessaryLocalVariable
         final TaskParamsYamlV1 p = getYaml().load(yaml);
         return p;
     }

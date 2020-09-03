@@ -92,32 +92,32 @@ public class PackageFunction implements CommandLineRunner {
             return;
         }
         String yamlContent = FileUtils.readFileToString(snippetYamlFile, StandardCharsets.UTF_8);
-        FunctionConfigListYaml snippetConfigList = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(yamlContent);
+        FunctionConfigListYaml functionConfigList = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(yamlContent);
 
         // Verify
         boolean isError = false;
         Set<String> set = new HashSet<>();
-        for (FunctionConfigListYaml.FunctionConfig snippet : snippetConfigList.getFunctions()) {
-            final FunctionApiData.FunctionConfigStatus verify = FunctionCoreUtils.validate(snippet);
+        for (FunctionConfigListYaml.FunctionConfig function : functionConfigList.getFunctions()) {
+            final FunctionApiData.FunctionConfigStatus verify = FunctionCoreUtils.validate(function);
             if (!verify.isOk) {
                 System.out.println(verify.error);
                 isError=true;
             }
-            if (snippet.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-                File sn = new File(snippetYamlFile.getParent(), snippet.file);
+            if (function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
+                File sn = new File(snippetYamlFile.getParent(), function.file);
                 if (!sn.exists()) {
                     System.out.println("File " + sn.getPath() + " wasn't found");
                     isError = true;
                 }
 
-                if (set.contains(snippet.code)) {
-                    System.out.println("Found duplicate function: " + snippet.code);
+                if (set.contains(function.code)) {
+                    System.out.println("Found duplicate function: " + function.code);
                     isError = true;
                 }
-                set.add(snippet.code);
-                File f = new File(snippet.file);
-                if (!f.getPath().equals(snippet.file)) {
-                    System.out.println("Relative path for function file isn't supported, file: " + snippet.file);
+                set.add(function.code);
+                File f = new File(function.file);
+                if (!f.getPath().equals(function.file)) {
+                    System.out.println("Relative path for function file isn't supported, file: " + function.file);
                     isError = true;
                 }
             }
@@ -127,7 +127,7 @@ public class PackageFunction implements CommandLineRunner {
         }
 
         // Process
-        for (FunctionConfigListYaml.FunctionConfig functionConfig : snippetConfigList.getFunctions()) {
+        for (FunctionConfigListYaml.FunctionConfig functionConfig : functionConfigList.getFunctions()) {
             String sum;
             if (functionConfig.sourcing== EnumsApi.FunctionSourcing.processor ||
                     functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
@@ -140,7 +140,6 @@ public class PackageFunction implements CommandLineRunner {
                 try (FileInputStream fis = new FileInputStream(snippetFile)) {
                     sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);
                 }
-                functionConfig.info.length = snippetFile.length();
             }
             else {
                 throw new IllegalArgumentException();
@@ -150,15 +149,13 @@ public class PackageFunction implements CommandLineRunner {
             if (privateKey!=null) {
                 String signature = SecUtils.getSignature(sum, privateKey);
                 functionConfig.checksumMap.put(EnumsApi.HashAlgo.SHA256WithSignature, sum + SecUtils.SIGNATURE_DELIMITER + signature);
-                functionConfig.info.signed = true;
             }
             else {
                 functionConfig.checksumMap.put(EnumsApi.HashAlgo.SHA256, sum);
-                functionConfig.info.signed = false;
             }
         }
 
-        String yaml = FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(snippetConfigList);
+        String yaml = FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(functionConfigList);
         final File file = new File(targetDir, SNIPPETS_YAML);
         FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
 

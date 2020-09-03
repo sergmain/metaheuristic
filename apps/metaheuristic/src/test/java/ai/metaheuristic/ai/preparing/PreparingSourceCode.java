@@ -51,6 +51,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -254,7 +255,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
         sc.setEnv("env-"+functionCode);
         sc.sourcing = EnumsApi.FunctionSourcing.processor;
 
-        sc.info = new FunctionConfigYaml.FunctionInfo(false, 1000);
 //  metas:
 //  - mh.task-params-version: '5'
         Objects.requireNonNull(sc.metas).add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5"));
@@ -350,7 +350,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         }
     }
 
-    private void deleteFunction(Function s) {
+    private void deleteFunction(@Nullable Function s) {
         if (s!=null) {
             try {
                 functionCache.delete(s);

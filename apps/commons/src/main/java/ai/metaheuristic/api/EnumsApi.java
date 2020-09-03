@@ -330,10 +330,10 @@ public class EnumsApi {
     public enum HashAlgo {
         MD5(false), SHA256(false), SHA256WithSignature(true);
 
-        public boolean isSign;
+        public boolean isSigned;
 
-        HashAlgo(boolean isSign) {
-            this.isSign = isSign;
+        HashAlgo(boolean isSigned) {
+            this.isSigned = isSigned;
         }
 
     }

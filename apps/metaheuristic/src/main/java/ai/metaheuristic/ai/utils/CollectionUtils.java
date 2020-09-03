@@ -16,8 +16,6 @@
 
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsYaml;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -26,11 +24,11 @@ import java.util.List;
 
 public class CollectionUtils {
 
-    public static boolean isNotEmpty(Collection<?> collection) {
+    public static boolean isNotEmpty(@Nullable Collection<?> collection) {
         return collection!=null && !collection.isEmpty();
     }
 
-    public static boolean isEmpty(Collection<?> collection) {
+    public static boolean isEmpty(@Nullable Collection<?> collection) {
         return !isNotEmpty(collection);
     }
 

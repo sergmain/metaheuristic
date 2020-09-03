@@ -99,8 +99,6 @@ public class TestTaskParamYaml {
                 EnumsApi.FunctionSourcing.dispatcher,
                 Map.of(),
                 null,
-                null,
-                null,
                 false,
                 List.of()
         )));

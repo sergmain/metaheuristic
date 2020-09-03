@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -78,7 +79,7 @@ public class AssetController {
     }
 
     @PostMapping("/function-checksum/{random-part}")
-    public String functionChecksumAuth(
+    public Map<EnumsApi.HashAlgo, String> functionChecksumAuth(
             HttpServletResponse response,
             @SuppressWarnings("unused") String processorId,
             @SuppressWarnings("unused") String taskId,
@@ -87,21 +88,21 @@ public class AssetController {
     ) throws IOException {
         if (S.b(code)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-            return "";
+            return Map.of();
         }
         return getFunctionChecksum(response, code);
     }
 
-    private String getFunctionChecksum(HttpServletResponse response, String functionCode) throws IOException {
+    private Map<EnumsApi.HashAlgo, String> getFunctionChecksum(HttpServletResponse response, String functionCode) throws IOException {
         Function function = functionService.findByCode(functionCode);
         if (function ==null) {
             log.warn("#442.100 Function {} wasn't found", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
-            return "";
+            return Map.of();
         }
         FunctionConfigYaml sc = function.getFunctionConfig(false);
-        log.info("#442.120 Send checksum {} for function {}", sc.checksum, sc.getCode());
-        return sc.checksum;
+        log.info("#442.120 Send checksum {} for function {}", sc.checksumMap, sc.getCode());
+        return sc.checksumMap==null ? Map.of() : sc.checksumMap;
     }
 
     @PostMapping("/function-config/{random-part}")

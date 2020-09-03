@@ -66,17 +66,6 @@ public class TaskParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class FunctionInfo {
-        public boolean signed;
-        /**
-         * function's binary length
-         */
-        public long length;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
     public static class InputVariable {
         // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
         // for context==VariableContext.local the table is MH_VARIABLE
@@ -152,8 +141,6 @@ public class TaskParamsYaml implements BaseParams {
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
         public @Nullable Map<EnumsApi.HashAlgo, String> checksumMap;
-        public FunctionInfo info = new FunctionInfo();
-        public @Nullable String checksum;
         public @Nullable GitInfo git;
         public boolean skipParams = false;
         public final List<Map<String, String>> metas = new ArrayList<>();

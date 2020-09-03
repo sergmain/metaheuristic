@@ -406,7 +406,7 @@ public class ExecContextService {
                 }
 
                 if (isAcceptOnlySigned) {
-                    if (!taskParamYaml.task.function.info.isSigned()) {
+                    if (taskParamYaml.task.function.checksumMap==null || taskParamYaml.task.function.checksumMap.keySet().stream().noneMatch(o->o.isSigned)) {
                         log.warn("#705.520 Function with code {} wasn't signed", taskParamYaml.task.function.getCode());
                         continue;
                     }

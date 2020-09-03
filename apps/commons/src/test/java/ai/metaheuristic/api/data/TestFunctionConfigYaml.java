@@ -57,10 +57,6 @@ public class TestFunctionConfigYaml {
         assertNotNull(sc2.checksumMap);
         assertEquals(1, sc2.checksumMap.size());
         assertNotNull(sc2.checksumMap.get(EnumsApi.HashAlgo.SHA256));
-        assertNotNull(sc2.info);
-        assertEquals(sc2.info.length, 42);
-        assertTrue(sc2.info.signed);
-        assertEquals(sc2.checksum, "sc.checksum");
         assertNotNull(sc2.git);
         assertEquals(sc2.git.repo, "repo");
         assertEquals(sc2.git.branch, "branch");
@@ -92,8 +88,6 @@ public class TestFunctionConfigYaml {
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         assertNotNull(sc.checksumMap);
         sc.checksumMap.put(EnumsApi.HashAlgo.SHA256, "qwe321");
-        sc.info = new FunctionConfigYamlV1.FunctionInfoV1(true, 42);
-        sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;
         assertNotNull(sc.metas);
@@ -111,8 +105,6 @@ public class TestFunctionConfigYaml {
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         Objects.requireNonNull(sc.checksumMap).put(EnumsApi.HashAlgo.SHA256, "qwe321");
-        sc.info = new FunctionConfigYaml.FunctionInfo(true, 42);
-        sc.checksum = "sc.checksum";
         sc.git = new GitInfo("repo", "branch", "commit");
         sc.skipParams = true;
         Objects.requireNonNull(sc.metas).add(Map.of("key1", "value1"));
@@ -137,10 +129,6 @@ public class TestFunctionConfigYaml {
         assertEquals(1, sc.checksumMap.size());
         assertNotNull(sc.checksumMap.get(EnumsApi.HashAlgo.SHA256));
         assertNull(sc.checksumMap.get(EnumsApi.HashAlgo.SHA256WithSignature));
-        assertNotNull(sc.info);
-        assertEquals(sc.info.length, 42);
-        assertTrue(sc.info.signed);
-        assertEquals(sc.checksum, "sc.checksum");
         assertNotNull(sc.git);
         assertEquals(sc.git.repo, "repo");
         assertEquals(sc.git.branch, "branch");
@@ -160,7 +148,6 @@ public class TestFunctionConfigYaml {
         sc.params = "sc.params";
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        sc.checksum = "sc.checksum";
         sc.skipParams = true;
 
         FunctionConfigYaml sc1 = sc.clone();
@@ -173,7 +160,6 @@ public class TestFunctionConfigYaml {
         assertEquals(sc1.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc1.checksumMap);
         assertTrue(sc1.checksumMap.isEmpty());
-        assertEquals(sc1.checksum, "sc.checksum");
         assertNull(sc1.git);
         assertTrue(sc1.skipParams);
         assertNotNull(sc1.metas);

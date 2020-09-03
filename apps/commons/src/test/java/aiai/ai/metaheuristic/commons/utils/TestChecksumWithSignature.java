@@ -15,31 +15,120 @@
  */
 package aiai.ai.metaheuristic.commons.utils;
 
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.security.CreateKeys;
+import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.utils.SecUtils;
+import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
+import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.StringUtils;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.*;
+import java.util.Map;
+import java.util.Random;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestChecksumWithSignature {
 
+    private static final String CONTENT_1 = Long.toString(System.currentTimeMillis());
+    private static final String CONTENT_2 = CONTENT_1 + "1234";
+
+    public static final Random r = new Random();
+
+    private static byte[] createBytes(int size) {
+        byte[] bytes = new byte[size];
+        r.nextBytes(bytes);
+        return bytes;
+    }
+
     @Test
-    public void test() throws IOException, GeneralSecurityException {
-        // TODO 2019-07-01 rewrite to use generated key-pair
-/*
-        File file = new File("config", "private-key.txt");
-        String base64 = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+    public void testEncode() throws DecoderException, GeneralSecurityException {
+        CreateKeys keys = new CreateKeys(2048);
 
-        PrivateKey privateKey = SecUtils.getPrivateKey(base64);
-        String checksum = "69c33a60e09f00fa3610fb8833bef54487f9c8b99db48b339cd6ed0f192ba5c9";
+        byte[] bytes = createBytes(30_000_000);
+        String sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(bytes));
+        String signature = SecUtils.getSignature(sum, keys.getPrivateKey());
 
-        String signature = SecUtils.getSignature(checksum, privateKey);
+        CheckSumAndSignatureStatus.Status status = ChecksumWithSignatureUtils.isValid(sum.getBytes(), signature, keys.getPublicKey());
+        System.out.println(status);
 
-        String forVerifying = checksum + SecUtils.SIGNATURE_DELIMITER + signature;
+        assertEquals(CheckSumAndSignatureStatus.Status.correct, status);
 
-        ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(forVerifying);
 
-        assertTrue(ChecksumWithSignatureUtils.isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, globals.dispatcherPublicKey));
-*/
+        Signature signer= Signature.getInstance("SHA256withRSA");
+        signer.initSign(keys.getPrivateKey());
+        signer.update(CONTENT_1.getBytes(StandardCharsets.UTF_8));
+        byte[] sign = signer.sign();
+        byte[] byte64 = Base64.encodeBase64(sign, false);
+        String base1 = StringUtils.newStringUsAscii(byte64);
+        final byte[] decoded1 = Base64.decodeBase64(StringUtils.getBytesUsAscii(base1));
+
+        assertArrayEquals(sign, decoded1);
+
+    }
+
+    @Test
+    public void test() throws GeneralSecurityException, IOException {
+        CreateKeys keys = new CreateKeys(2048);
+
+        String checksum1 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, CONTENT_1);
+        String signature1 = SecUtils.getSignature(checksum1, keys.getPrivateKey());
+        String forVerifying1 = checksum1 + SecUtils.SIGNATURE_DELIMITER + signature1;
+
+        ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature1 = ChecksumWithSignatureUtils.parse(forVerifying1);
+        assertEquals(checksum1, checksumWithSignature1.checksum);
+        assertEquals(signature1, checksumWithSignature1.signature);
+
+        assertEquals(CheckSumAndSignatureStatus.Status.correct,
+                ChecksumWithSignatureUtils.isValid(
+                        checksumWithSignature1.checksum.getBytes(), checksumWithSignature1.signature, keys.getPublicKey()));
+
+
+        String checksum2 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, CONTENT_2);
+        String signature2 = SecUtils.getSignature(checksum2, keys.getPrivateKey());
+        String forVerifying2 = checksum2 + SecUtils.SIGNATURE_DELIMITER + signature2;
+
+        ChecksumWithSignatureUtils.ChecksumWithSignature checksumWithSignature2 = ChecksumWithSignatureUtils.parse(forVerifying2);
+        assertEquals(checksum2, checksumWithSignature2.checksum);
+        assertEquals(signature2, checksumWithSignature2.signature);
+
+        assertEquals(CheckSumAndSignatureStatus.Status.correct,
+                ChecksumWithSignatureUtils.isValid(
+                        checksumWithSignature2.checksum.getBytes(), checksumWithSignature2.signature, keys.getPublicKey()));
+
+        assertEquals(CheckSumAndSignatureStatus.Status.wrong,
+                ChecksumWithSignatureUtils.isValid(
+                        checksumWithSignature1.checksum.getBytes(), checksumWithSignature2.signature, keys.getPublicKey()));
+
+        assertEquals(CheckSumAndSignatureStatus.Status.wrong,
+                ChecksumWithSignatureUtils.isValid(
+                        checksumWithSignature2.checksum.getBytes(), checksumWithSignature1.signature, keys.getPublicKey()));
+
+        String signature = SecUtils.getSignature(checksum1, keys.getPrivateKey());
+
+        String checksumWithSignature = checksum1 + SecUtils.SIGNATURE_DELIMITER + signature;
+
+        ChecksumWithSignatureUtils.ChecksumWithSignature cws = ChecksumWithSignatureUtils.parse(checksumWithSignature);
+
+        Checksum checksum = new Checksum();
+        checksum.checksums = Map.of(EnumsApi.HashAlgo.SHA256WithSignature, checksumWithSignature);
+
+        InputStream is = new ByteArrayInputStream(CONTENT_1.getBytes());
+        CheckSumAndSignatureStatus status = ChecksumWithSignatureUtils.verifyChecksumAndSignature("info:", is, keys.getPublicKey(), checksumWithSignature, EnumsApi.HashAlgo.SHA256WithSignature);
+//        CheckSumAndSignatureStatus status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(checksum, "info:", is, keys.getPublicKey());
+        System.out.println(status);
+        assertEquals(CheckSumAndSignatureStatus.Status.correct, status.checksum);
+        assertEquals(CheckSumAndSignatureStatus.Status.correct, status.signature);
     }
 
 

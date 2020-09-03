@@ -37,17 +37,6 @@ public class FunctionConfigListYamlV1 implements BaseParams {
 
     public List<FunctionConfigV1> functions;
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class FunctionInfoV1 {
-        public boolean signed;
-        /**
-         * function's binary length
-         */
-        public long length;
-    }
-
     @SuppressWarnings("DuplicatedCode")
     @Data
     @ToString
@@ -83,8 +72,6 @@ public class FunctionConfigListYamlV1 implements BaseParams {
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
         public Map<EnumsApi.HashAlgo, String> checksumMap;
-        public FunctionInfoV1 info = new FunctionInfoV1();
-        public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
         public List<Map<String, String>> metas = new ArrayList<>();

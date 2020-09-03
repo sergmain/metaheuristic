@@ -26,6 +26,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ public class Checksum {
     }
 
     public static String getChecksum(EnumsApi.HashAlgo type, String data)  {
-        return getChecksum(type, IOUtils.toInputStream(data, Charsets.UTF_8));
+        return getChecksum(type, IOUtils.toInputStream(data, StandardCharsets.UTF_8));
     }
 
     @SneakyThrows

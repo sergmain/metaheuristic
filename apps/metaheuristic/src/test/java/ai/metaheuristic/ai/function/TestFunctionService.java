@@ -106,8 +106,6 @@ public class TestFunctionService {
             sc.type = "test";
             sc.env = "python-3";
             sc.file = "predict-filename.txt";
-            sc.info = new FunctionConfigYaml.FunctionInfo(false, bytes.length);
-            sc.checksum = "sha2";
             sc.skipParams = false;
             sc.params = FUNCTION_PARAMS;
 

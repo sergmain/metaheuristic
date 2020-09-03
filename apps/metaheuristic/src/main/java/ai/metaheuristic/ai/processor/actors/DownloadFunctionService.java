@@ -121,8 +121,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 }
                 functionConfig = downloadedFunctionConfigStatus.functionConfig;
             }
-            MetadataService.ChecksumState checksumState = metadataService.prepareChecksum(dispatcher.signatureRequired, functionCode, dispatcher.url, functionConfig);
-            if (checksumState.state==Enums.ChecksumStateEnum.signature_not_valid) {
+            MetadataService.ChecksumWithSignatureState state = metadataService.prepareChecksumWithSignature(dispatcher.signatureRequired, functionCode, dispatcher.url, functionConfig);
+            if (state.state==Enums.ChecksumStateEnum.signature_not_valid) {
                 continue;
             }
 
@@ -262,7 +262,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                     }
                 }
 
-                CheckSumAndSignatureStatus status = metadataService.getCheckSumAndSignatureStatus(functionCode, dispatcher, checksumState, functionTempFile);
+                CheckSumAndSignatureStatus status = metadataService.getCheckSumAndSignatureStatus(functionCode, dispatcher, state, functionTempFile);
                 if (status.checksum==CheckSumAndSignatureStatus.Status.correct && status.signature==CheckSumAndSignatureStatus.Status.correct) {
                     //noinspection ResultOfMethodCallIgnored
                     functionTempFile.renameTo(assetFile.file);
