@@ -21,12 +21,14 @@ import ai.metaheuristic.ai.dispatcher.batch.data.BatchExecStatus;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,6 +38,18 @@ import java.util.List;
  */
 public final class BatchData {
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BulkOperation {
+        public Long batchId;
+        public OperationStatusRest status;
+    }
+
+    @Data
+    public static class BulkOperations {
+        public List<BulkOperation> operations = new ArrayList<>();
+    }
 
     @Data
     @EqualsAndHashCode(callSuper = false)

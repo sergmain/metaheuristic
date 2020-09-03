@@ -126,7 +126,7 @@ public class BatchController {
     @PostMapping("/batch-delete-commit")
     public String processResourceDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, context, true);
+        OperationStatusRest r = batchTopLevelService.processBatchDeleteCommit(batchId, context, true);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
         }
@@ -147,7 +147,7 @@ public class BatchController {
     public String getProcessingResourceStatus(
             Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, context.getCompanyId(), false);
+        BatchData.Status status = batchTopLevelService.getBatchProcessingStatus(batchId, context.getCompanyId(), false);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
             return REDIRECT_BATCH_BATCHES;

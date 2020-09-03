@@ -97,7 +97,7 @@ public class BatchForOperatorRestController {
             Model model,
             @PathVariable Long companyUniqueId,
             @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyUniqueId, true);
+        BatchData.Status status = batchTopLevelService.getBatchProcessingStatus(batchId, companyUniqueId, true);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
             return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
@@ -112,7 +112,14 @@ public class BatchForOperatorRestController {
     @PostMapping("/company-batch-delete-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
     public OperationStatusRest processResourceDeleteCommit(Long batchId, @PathVariable Long companyUniqueId) {
-        OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, companyUniqueId, false);
+        OperationStatusRest r = batchTopLevelService.processBatchDeleteCommit(batchId, companyUniqueId, false);
+        return r;
+    }
+
+    @PostMapping("/company-batch-bulk-delete-commit/{companyUniqueId}")
+    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
+    public BatchData.BulkOperations processResourceDeleteCommit(String batchIds, @PathVariable Long companyUniqueId) {
+        BatchData.BulkOperations r = batchTopLevelService.processBatchBulkDeleteCommit(batchIds, companyUniqueId, false);
         return r;
     }
 
@@ -129,7 +136,7 @@ public class BatchForOperatorRestController {
     @GetMapping(value= "/company-batch-status/{companyUniqueId}/{batchId}" )
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public BatchData.Status getProcessingResourceStatus(@PathVariable Long companyUniqueId, @PathVariable("batchId") Long batchId) {
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyUniqueId, true);
+        BatchData.Status status = batchTopLevelService.getBatchProcessingStatus(batchId, companyUniqueId, true);
         return status;
     }
 

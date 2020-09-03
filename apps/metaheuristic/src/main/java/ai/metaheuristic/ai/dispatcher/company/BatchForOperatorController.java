@@ -122,7 +122,7 @@ public class BatchForOperatorController {
             Model model,
             @PathVariable Long companyUniqueId,
             @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyUniqueId, true);
+        BatchData.Status status = batchTopLevelService.getBatchProcessingStatus(batchId, companyUniqueId, true);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
             return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
@@ -140,7 +140,7 @@ public class BatchForOperatorController {
             Long batchId,
             @PathVariable Long companyUniqueId,
             final RedirectAttributes redirectAttributes) {
-        OperationStatusRest r = batchTopLevelService.processResourceDeleteCommit(batchId, companyUniqueId, false);
+        OperationStatusRest r = batchTopLevelService.processBatchDeleteCommit(batchId, companyUniqueId, false);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.getErrorMessagesAsList());
         }
@@ -168,7 +168,7 @@ public class BatchForOperatorController {
             Model model,
             @PathVariable Long companyUniqueId,
             @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes) {
-        BatchData.Status status = batchTopLevelService.getProcessingResourceStatus(batchId, companyUniqueId, true);
+        BatchData.Status status = batchTopLevelService.getBatchProcessingStatus(batchId, companyUniqueId, true);
         if (status.isErrorMessages()) {
             redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
             return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;

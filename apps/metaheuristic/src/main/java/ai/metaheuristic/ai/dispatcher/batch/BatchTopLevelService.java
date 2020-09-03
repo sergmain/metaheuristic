@@ -281,11 +281,11 @@ public class BatchTopLevelService {
         }
     }
 
-    public OperationStatusRest processResourceDeleteCommit(Long batchId, DispatcherContext context, boolean isVirtualDeletion) {
-        return processResourceDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
+    public OperationStatusRest processBatchDeleteCommit(Long batchId, DispatcherContext context, boolean isVirtualDeletion) {
+        return processBatchDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
     }
 
-    public OperationStatusRest processResourceDeleteCommit(Long batchId, Long companyUniqueId, boolean isVirtualDeletion) {
+    public OperationStatusRest processBatchDeleteCommit(Long batchId, Long companyUniqueId, boolean isVirtualDeletion) {
 
         Batch batch = batchCache.findById(batchId);
         if (batch == null || !batch.companyId.equals(companyUniqueId)) {
@@ -307,7 +307,19 @@ public class BatchTopLevelService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
     }
 
-    public BatchData.Status getProcessingResourceStatus(Long batchId, Long companyUniqueId, boolean includeDeleted) {
+    public BatchData.BulkOperations processBatchBulkDeleteCommit(String batchIdsStr, Long companyUniqueId, boolean isVirtualDeletion) {
+        BatchData.BulkOperations bulkOperations = new BatchData.BulkOperations();
+        String[] batchIds = StringUtils.split(batchIdsStr, ", ");
+        for (String batchIdStr : batchIds) {
+            Long batchId = Long.parseLong(batchIdStr);
+            OperationStatusRest statusRest = processBatchDeleteCommit(batchId, companyUniqueId, isVirtualDeletion);
+            bulkOperations.operations.add( new BatchData.BulkOperation(batchId, statusRest));
+        }
+        return bulkOperations;
+    }
+
+
+    public BatchData.Status getBatchProcessingStatus(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         try {
             CleanerInfo cleanerInfo = getBatchProcessingResultInternal(batchId, companyUniqueId, includeDeleted, "batch-status");
             if (cleanerInfo==null) {

@@ -99,12 +99,12 @@ public class BatchRestController {
 
     @GetMapping("/batch-delete/{batchId}")
     public BatchData.Status processResourceDelete(@PathVariable Long batchId, Authentication authentication) {
-        return batchTopLevelService.getProcessingResourceStatus(batchId, userContextService.getContext(authentication).getCompanyId(), false);
+        return batchTopLevelService.getBatchProcessingStatus(batchId, userContextService.getContext(authentication).getCompanyId(), false);
     }
 
     @PostMapping("/batch-delete-commit")
     public OperationStatusRest processResourceDeleteCommit(Long batchId, Authentication authentication) {
-        return batchTopLevelService.processResourceDeleteCommit(batchId, userContextService.getContext(authentication), true);
+        return batchTopLevelService.processBatchDeleteCommit(batchId, userContextService.getContext(authentication), true);
     }
 
     @PostMapping(value = "/batch-upload-from-file")
@@ -118,7 +118,7 @@ public class BatchRestController {
 
     @GetMapping(value= "/batch-status/{batchId}" )
     public BatchData.Status getProcessingResourceStatus(@PathVariable("batchId") Long batchId, Authentication authentication) {
-        return batchTopLevelService.getProcessingResourceStatus(batchId, userContextService.getContext(authentication).getCompanyId(), false);
+        return batchTopLevelService.getBatchProcessingStatus(batchId, userContextService.getContext(authentication).getCompanyId(), false);
     }
 
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
