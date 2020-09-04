@@ -154,6 +154,7 @@ public class BatchForOperatorController {
             @PathVariable Long companyUniqueId,
             Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
         // create context with putting current user to specific company
+        // so a master operator can pretend that he is a user of specific company
         DispatcherContext context = userContextService.getContext(authentication, companyUniqueId);
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
         if (uploadingStatus.isErrorMessages()) {

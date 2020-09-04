@@ -1,4 +1,4 @@
-update aiai.mh_account
+update mh_account
 set PUBLIC_NAME = concat('user-', id)
 where PUBLIC_NAME is null or length(PUBLIC_NAME)=0;
 
