@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,10 +80,14 @@ public class FunctionTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest uploadFunction(final MultipartFile file) {
+    public OperationStatusRest uploadFunction(@Nullable final MultipartFile file) {
         if (globals.assetMode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.020 Can't upload function while 'replicated' mode of asset is active");
+        }
+        if (file==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#424.025 File with function wasn't selected");
         }
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {

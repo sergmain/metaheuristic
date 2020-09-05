@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.variable_global;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.data.GlobalVariableData;
-import ai.metaheuristic.ai.exceptions.StoreNewFileException;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -106,8 +106,8 @@ public class GlobalVariableTopLevelService {
 
         try {
             globalVariableService.createGlobalVariableWithExternalStorage(variable, params);
-        } catch (StoreNewFileException e) {
-            String es = "#172.080 An error while saving data to file, " + e.toString();
+        } catch (VariableSavingException e) {
+            String es = "#172.080 An error while saving variable to db, " + e.toString();
             log.error(es, e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }

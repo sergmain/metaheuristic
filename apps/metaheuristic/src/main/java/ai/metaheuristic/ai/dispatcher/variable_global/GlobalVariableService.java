@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.variable_global;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
@@ -31,6 +32,7 @@ import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -150,12 +152,9 @@ public class GlobalVariableService {
 
             return data;
         }
-        catch(IllegalStateException e) {
-            throw e;
-        }
         catch(Throwable th) {
             log.error("#089.090 error storing data to db", th);
-            throw new RuntimeException("Error", th);
+            throw new VariableSavingException("Error", th);
         }
     }
 

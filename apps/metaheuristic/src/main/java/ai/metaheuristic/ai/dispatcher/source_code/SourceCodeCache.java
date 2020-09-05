@@ -52,7 +52,7 @@ public class SourceCodeCache {
 
     @CacheEvict(cacheNames = {Consts.SOURCE_CODES_CACHE}, key = "#sourceCode.id")
     public void delete(SourceCode sourceCode) {
-        if (sourceCode ==null || sourceCode.getId()==null) {
+        if (sourceCode.getId()==null) {
             return;
         }
         try {

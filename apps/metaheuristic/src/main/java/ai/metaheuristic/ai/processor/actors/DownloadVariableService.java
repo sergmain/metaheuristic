@@ -227,7 +227,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     log.warn("#810.060 Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());
                     continue;
                 }
-                log.info("Resource #{} was loaded", task.variableId);
+                log.info("Variable #{} was loaded", task.variableId);
             } catch (HttpResponseException e) {
                 if (e.getStatusCode() == HttpServletResponse.SC_CONFLICT) {
                     log.warn("#810.080 Variable with id {} is broken and need to be recreated", task.variableId);

@@ -38,6 +38,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -159,9 +160,9 @@ public class SourceCodeTopLevelService {
         if (StringUtils.isBlank(code)) {
             return new SourceCodeApiData.SourceCodeResult("#560.130 the code of sourceCode is empty");
         }
-        SourceCode f = sourceCodeRepository.findByUidAndCompanyId(code, context.getCompanyId());
+        SourceCode f = sourceCodeRepository.findByUid(code);
         if (f!=null) {
-            return new SourceCodeApiData.SourceCodeResult("#560.150 the sourceCode with such code already exists, code: " + code);
+            return new SourceCodeApiData.SourceCodeResult("#560.150 the sourceCode with code "+code+" already exists");
         }
 
         SourceCodeImpl sourceCode = new SourceCodeImpl();
@@ -176,7 +177,11 @@ public class SourceCodeTopLevelService {
         sourceCode.uid = ppy.source.uid;
 
 
-        sourceCode = sourceCodeCache.save(sourceCode);
+        try {
+            sourceCode = sourceCodeCache.save(sourceCode);
+        } catch (DataIntegrityViolationException e) {
+            return new SourceCodeApiData.SourceCodeResult("#560.155 data integrity error: " + e.getMessage());
+        }
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
 
