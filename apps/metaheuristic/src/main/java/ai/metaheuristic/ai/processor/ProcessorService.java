@@ -157,7 +157,7 @@ public class ProcessorService {
             }
 */
             processorTaskService.setCompleted(dispatcherUrl, taskId);
-            return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
+            return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;
         }
         final Metadata.DispatcherInfo dispatcherCode = metadataService.dispatcherUrlAsCode(dispatcherUrl);
         final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =

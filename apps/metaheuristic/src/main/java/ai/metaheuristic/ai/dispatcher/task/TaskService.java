@@ -75,7 +75,7 @@ public class TaskService {
             case SEND_SCHEDULED:
                 log.info("#317.010 Processor #{} scheduled sending of output variables of task #{} for sending. This is normal operation of Processor", processorId, taskId);
                 break;
-            case RESOURCE_NOT_FOUND:
+            case VARIABLE_NOT_FOUND:
             case TASK_IS_BROKEN:
             case TASK_PARAM_FILE_NOT_FOUND:
                 TaskImpl task = taskRepository.findById(taskId).orElse(null);
