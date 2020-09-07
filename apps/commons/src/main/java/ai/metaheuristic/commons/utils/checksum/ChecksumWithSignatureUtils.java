@@ -21,14 +21,9 @@ import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.binary.StringUtils;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.lang.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
@@ -44,7 +39,7 @@ public class ChecksumWithSignatureUtils {
         public String signature;
     }
 
-    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(@NonNull Checksum checksum, String infoPrefix, InputStream fis, PublicKey publicKey ) throws IOException {
+    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(@NonNull Checksum checksum, String infoPrefix, InputStream fis, PublicKey publicKey ) {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
         for (Map.Entry<EnumsApi.HashAlgo, String> entry : checksum.checksums.entrySet()) {
             status = verifyChecksumAndSignature(infoPrefix, fis, publicKey, entry.getValue(), entry.getKey());
@@ -69,7 +64,7 @@ public class ChecksumWithSignatureUtils {
         String actualSum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);
         if (actualSum.equals(checksumWithSignature.checksum)) {
             status.checksum = CheckSumAndSignatureStatus.Status.correct;
-            log.info("{}, checksum is Ok", infoPrefix);
+            log.info("{}, checksum is correct", infoPrefix);
         } else {
             log.error("S{}, checksum is wrong, expected: {}, actual: {}", infoPrefix, checksumWithSignature.checksum, actualSum);
             status.checksum = CheckSumAndSignatureStatus.Status.wrong;

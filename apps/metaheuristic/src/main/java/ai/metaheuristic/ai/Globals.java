@@ -47,7 +47,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class Globals {
 
+    private static final List<String> POSSIBLE_PROFILES = List.of("dispatcher", "processor", "quickstart");
+
     private final Environment env;
+
+    @Value("${spring.profiles.active}")
+    private String activeProfiles;
 
     // Globals' globals
 
@@ -182,6 +187,8 @@ public class Globals {
 
     @PostConstruct
     public void init() {
+        checkProfiles();
+
         String publicKeyAsStr = env.getProperty("MH_PUBLIC_KEY");
         if (publicKeyAsStr!=null && !publicKeyAsStr.isBlank()) {
             dispatcherPublicKeyStr = publicKeyAsStr;
@@ -367,6 +374,19 @@ public class Globals {
         logDepricated();
     }
 
+    private void checkProfiles() {
+        List<String> profiles = Arrays.stream(StringUtils.split(activeProfiles, ", "))
+                .filter(o-> !POSSIBLE_PROFILES.contains(o))
+                .peek(o-> log.error(S.f("\n!!! Unknown profile: %s\n", o)))
+                .collect(Collectors.toList());
+
+        if (!profiles.isEmpty()) {
+            log.error("\nUnknown profile(s) was encountered in property spring.profiles.active.\nNeed to be fixed.\n" +
+                    "Allowed profiles are: " + POSSIBLE_PROFILES);
+            System.exit(-1);
+        }
+    }
+
     private void logDepricated() {
         if (isReplaceSnapshot!=null) {
             log.warn("property 'mh.dispatcher.is-replace-snapshot' isn't supported any more and need to be deleted");
@@ -465,6 +485,7 @@ public class Globals {
         log.info("'\tisFunctionSignatureRequired: {}", isFunctionSignatureRequired);
         log.info("'\tdispatcherDir: {}", dispatcherDir!=null ? dispatcherDir.getAbsolutePath() : "<dispatcher dir is null>");
         log.info("'\tdispatcherMasterUsername: {}", dispatcherMasterUsername);
+        log.info("'\tdispatcherPublicKey: {}", dispatcherPublicKey!=null ? "provided" : "wasn't provided");
         log.info("'\tassetMode: {}", assetMode);
         log.info("'\tassetUsername: {}", assetUsername);
         log.info("'\tassetSourceUrl: {}", assetSourceUrl);
