@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@SuppressWarnings({"WeakerAccess"})
+@SuppressWarnings({"WeakerAccess", "DuplicatedCode"})
 @Service
 @Slf4j
 @Profile("processor")
@@ -174,6 +174,28 @@ public class ProcessorTaskService {
                 log.error("#713.070 ProcessorRestTask wasn't found for Id " + taskId);
                 return;
             }
+            task.setReported(true);
+            task.setReportedOn(System.currentTimeMillis());
+            save(task);
+        }
+    }
+
+    public void setInputAsEmpty(String dispatcherUrl, long taskId, String variableId) {
+        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+            log.info("setReportedOn({}, {})", dispatcherUrl, taskId);
+            ProcessorTask task = findById(dispatcherUrl, taskId);
+            if (task == null) {
+                log.error("#713.070 ProcessorRestTask wasn't found for Id " + taskId);
+                return;
+            }
+            final ProcessorTask.EmptyStateOfInput input = task.empty.empties.stream().filter(o -> o.variableId.equals(variableId)).findAny().orElse(null);
+            if (input==null) {
+                task.empty.empties.add(new ProcessorTask.EmptyStateOfInput(variableId, true));
+            }
+            else {
+                input.empty = true;
+            }
+
             task.setReported(true);
             task.setReportedOn(System.currentTimeMillis());
             save(task);

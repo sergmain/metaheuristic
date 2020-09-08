@@ -39,7 +39,7 @@ public final class Enums {
 
     public enum StoringStatus {OK, CANT_BE_STORED}
 
-    public enum VariableState {none, ok, file_too_big, variable_doesnt_exist, unknown_error, transmitting_error}
+    public enum VariableState {none, ok, file_too_big, variable_doesnt_exist, unknown_error, transmitting_error, variable_cant_be_null }
 
     public enum UploadResourceStatus {
         OK,

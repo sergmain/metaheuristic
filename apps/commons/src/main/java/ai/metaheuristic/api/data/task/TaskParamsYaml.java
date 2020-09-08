@@ -85,6 +85,17 @@ public class TaskParamsYaml implements BaseParams {
         public @Nullable String filename;
 
         public @Nullable String type;
+
+        public boolean empty = false;
+        private Boolean nullable;
+
+        public Boolean getNullable() {
+            return nullable==null ? false : nullable;
+        }
+
+        public void setNullable(Boolean nullable) {
+            this.nullable = nullable;
+        }
     }
 
     @Data
@@ -105,6 +116,17 @@ public class TaskParamsYaml implements BaseParams {
 
         public boolean uploaded;
         public @Nullable String type;
+
+        public boolean empty = false;
+        private Boolean nullable;
+
+        public Boolean getNullable() {
+            return nullable==null ? false : nullable;
+        }
+
+        public void setNullable(Boolean nullable) {
+            this.nullable = nullable;
+        }
     }
 
     @Data

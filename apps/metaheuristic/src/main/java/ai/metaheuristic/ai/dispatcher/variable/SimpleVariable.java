@@ -29,6 +29,7 @@ public class SimpleVariable {
     public final String storageUrl;
     public final String filename;
     public final boolean inited;
+    public final boolean nullified;
     public final String taskContextId;
 
     public DataStorageParams getParams() {

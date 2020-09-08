@@ -36,12 +36,16 @@ public class TestAbstractTaskQueue {
 
         DispatcherLookupConfig.DispatcherLookup dispatcherStub = new DispatcherLookupConfig.DispatcherLookup();
 
-        DownloadVariableTask task = new DownloadVariableTask(4242L, EnumsApi.VariableContext.local, 10, new File("aaa"), 10L, dispatcherStub, "1");
+        DownloadVariableTask task = new DownloadVariableTask(
+                4242L, EnumsApi.VariableContext.local, 10,
+                new File("aaa"), 10L, dispatcherStub, "1", false);
 
         actor.add(task);
         assertEquals(1, actor.queueSize());
 
-        DownloadVariableTask task1 = new DownloadVariableTask(4242L, EnumsApi.VariableContext.local, 10, new File("bbb"), 10L, dispatcherStub, "1");
+        DownloadVariableTask task1 = new DownloadVariableTask(
+                4242L, EnumsApi.VariableContext.local, 10,
+                new File("bbb"), 10L, dispatcherStub, "1", false);
         actor.add(task1);
         assertEquals(1, actor.queueSize());
 
@@ -51,17 +55,17 @@ public class TestAbstractTaskQueue {
         DownloadVariableTask t2 = actor.poll();
         assertNull(t2);
 
-        DownloadVariableTask task2 = new DownloadVariableTask(4201L, EnumsApi.VariableContext.local, 10, new File("."), 10L, dispatcherStub, "1");
+        DownloadVariableTask task2 = new DownloadVariableTask(4201L, EnumsApi.VariableContext.local, 10, new File("."), 10L, dispatcherStub, "1", false);
         actor.add(task1);
         actor.add(task2);
         assertEquals(2, actor.queueSize());
 
         // now it doesn't matter which task because resourceId is unique across all tasks
-        DownloadVariableTask task31 = new DownloadVariableTask(4201L, EnumsApi.VariableContext.local, 11, new File("."), 10L, dispatcherStub, "1");
+        DownloadVariableTask task31 = new DownloadVariableTask(4201L, EnumsApi.VariableContext.local, 11, new File("."), 10L, dispatcherStub, "1", false);
         actor.add(task31);
         assertEquals(2, actor.queueSize());
 
-        DownloadVariableTask task32 = new DownloadVariableTask(4201L, EnumsApi.VariableContext.global, 11, new File("."), 10L, dispatcherStub, "1");
+        DownloadVariableTask task32 = new DownloadVariableTask(4201L, EnumsApi.VariableContext.global, 11, new File("."), 10L, dispatcherStub, "1", false);
         actor.add(task32);
         assertEquals(3, actor.queueSize());
 

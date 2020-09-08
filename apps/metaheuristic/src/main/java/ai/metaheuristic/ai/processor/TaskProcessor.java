@@ -154,7 +154,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingOfAssets(task, dispatcherInfo, taskParamYaml, dispatcher, taskDir);
+            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingOVariables(task, dispatcherInfo, taskParamYaml, dispatcher, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }

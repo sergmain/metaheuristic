@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.processor.tasks;
 
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
 import ai.metaheuristic.api.EnumsApi;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -33,16 +32,17 @@ public class DownloadVariableTask extends ProcessorRestTask {
     public final Long chunkSize;
     public final DispatcherLookupConfig.DispatcherLookup dispatcher;
     public final String processorId;
+    public final boolean nullable;
 
     public DownloadVariableTask(
             Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
-                                DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId) {
-        this(variableId.toString(), context, taskId, targetDir, chunkSize, dispatcher, processorId);
+                                DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId, boolean nullable) {
+        this(variableId.toString(), context, taskId, targetDir, chunkSize, dispatcher, processorId, nullable);
     }
 
     public DownloadVariableTask(
             String variableId, EnumsApi.VariableContext context, long taskId, File targetDir, Long chunkSize,
-                                DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId) {
+                                DispatcherLookupConfig.DispatcherLookup dispatcher, String processorId, boolean nullable) {
         this.variableId = variableId;
         this.context = context;
         this.taskId = taskId;
@@ -50,6 +50,7 @@ public class DownloadVariableTask extends ProcessorRestTask {
         this.chunkSize = chunkSize;
         this.dispatcher = dispatcher;
         this.processorId = processorId;
+        this.nullable = nullable;
     }
 
     @Override

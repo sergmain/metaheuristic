@@ -78,6 +78,8 @@ public class TaskParamsYamlUtilsV1
         v.git = v1.git;
         v.filename = v1.filename;
         v.type = v1.type;
+        v.empty = v1.empty;
+        v.setNullable(v1.getNullable());
         return v;
     }
 
@@ -92,6 +94,8 @@ public class TaskParamsYamlUtilsV1
         v.filename = v1.filename;
         v.uploaded = v1.uploaded;
         v.type = v1.type;
+        v.empty = v1.empty;
+        v.setNullable(v1.getNullable());
         return v;
     }
 

@@ -320,7 +320,7 @@ public class BatchSplitterFunction implements InternalFunction {
                         } catch (IOException e) {
                             throw new BreakFromLambdaException(e);
                         }
-                        SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.taskContextId);
+                        SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
                         return new VariableUtils.VariableHolder(sv);
                     })
                     .collect(Collectors.toList());

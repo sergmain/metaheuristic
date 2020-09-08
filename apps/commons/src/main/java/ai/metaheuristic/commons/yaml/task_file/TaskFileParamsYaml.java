@@ -64,6 +64,17 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable String filename;
         public @Nullable String type;
 
+        public boolean empty = false;
+        private Boolean nullable;
+
+        public Boolean getNullable() {
+            return nullable==null ? false : nullable;
+        }
+
+        public void setNullable(Boolean nullable) {
+            this.nullable = nullable;
+        }
+
         public InputVariable(Long id, String name, EnumsApi.DataSourcing sourcing) {
             this(id.toString(), name, sourcing);
         }
@@ -87,6 +98,16 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable String filename;
         public EnumsApi.DataType dataType;
         public @Nullable String type;
+        public boolean empty = false;
+        private Boolean nullable;
+
+        public Boolean getNullable() {
+            return nullable==null ? false : nullable;
+        }
+
+        public void setNullable(Boolean nullable) {
+            this.nullable = nullable;
+        }
 
         public OutputVariable(Long id, String name, EnumsApi.DataSourcing sourcing) {
             this(id.toString(), name, sourcing);

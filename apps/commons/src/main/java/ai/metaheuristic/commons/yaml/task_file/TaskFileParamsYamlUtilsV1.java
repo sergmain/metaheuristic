@@ -71,6 +71,8 @@ public class TaskFileParamsYamlUtilsV1
         v.disk = v1.disk;
         v.filename = v1.filename;
         v.type = v1.type;
+        v.empty = v1.empty;
+        v.setNullable(v1.getNullable());
         return v;
     }
 
@@ -84,6 +86,8 @@ public class TaskFileParamsYamlUtilsV1
         v.disk = v1.disk;
         v.filename = v1.filename;
         v.type = v1.type;
+        v.empty = v1.empty;
+        v.setNullable(v1.getNullable());
         return v;
     }
 

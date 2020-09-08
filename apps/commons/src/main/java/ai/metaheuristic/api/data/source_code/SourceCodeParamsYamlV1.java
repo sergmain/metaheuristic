@@ -82,6 +82,15 @@ public class SourceCodeParamsYamlV1 implements BaseParams {
         public Boolean parentContext;
         public boolean array = false;
         public String type;
+        private Boolean nullable;
+
+        public Boolean getNullable() {
+            return nullable==null ? false : nullable;
+        }
+
+        public void setNullable(Boolean nullable) {
+            this.nullable = nullable;
+        }
 
         public VariableV1(EnumsApi.DataSourcing sourcing, String name) {
             this.sourcing = sourcing;

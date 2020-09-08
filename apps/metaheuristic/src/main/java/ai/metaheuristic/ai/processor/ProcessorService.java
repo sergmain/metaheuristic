@@ -178,20 +178,25 @@ public class ProcessorService {
         public boolean isError = false;
     }
 
-    public ProcessorService.ResultOfChecking checkForPreparingOfAssets(ProcessorTask task, Metadata.DispatcherInfo dispatcherCode, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+    public ProcessorService.ResultOfChecking checkForPreparingOVariables(ProcessorTask task, Metadata.DispatcherInfo dispatcherCode, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         try {
             taskParamYaml.task.inputs.forEach(input -> {
-                    VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(input.sourcing);
-                    // the method prepareForDownloadingVariable() is creating a list dynamically. So don't cache the result
-                    List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(taskDir, dispatcher, task, dispatcherCode, input);
-                    for (AssetFile assetFile : assetFiles) {
-                        // is this resource prepared?
-                        if (assetFile.isError || !assetFile.isContent) {
-                            result.isAllLoaded = false;
-                            break;
-                        }
+                VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(input.sourcing);
+                // the method prepareForDownloadingVariable() is creating a list dynamically. So don't cache the result
+
+                if (task.empty.isEmpty(input.id.toString())) {
+                    // variable was initialized and is empty so we don't need to download it again
+                    return;
+                }
+                List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingVariable(taskDir, dispatcher, task, dispatcherCode, input);
+                for (AssetFile assetFile : assetFiles) {
+                    // is this resource prepared?
+                    if (assetFile.isError || !assetFile.isContent) {
+                        result.isAllLoaded = false;
+                        break;
                     }
+                }
             });
         }
         catch (BreakFromLambdaException e) {

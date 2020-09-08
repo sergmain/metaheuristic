@@ -148,6 +148,20 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                                 task.dispatcher.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
                         File partFile = new File(dir, String.format(mask, idx));
                         final HttpResponse httpResponse = response.returnResponse();
+                        if (httpResponse.getStatusLine().getStatusCode()==HttpServletResponse.SC_NO_CONTENT) {
+                            if (task.nullable) {
+                                processorTaskService.setInputAsEmpty(payloadRestUrl, task.taskId, task.variableId);
+                                resourceState = Enums.VariableState.ok;
+                            }
+                            else {
+                                es = String.format("#810.027 Dispatcher reported that variable #%s is empty but configuration states nullable==false. " +
+                                        "Task #%s is finished with error.", task.variableId, task.getTaskId());
+                                log.warn(es);
+                                processorTaskService.markAsFinishedWithError(task.dispatcher.url, task.getTaskId(), es);
+                                resourceState = Enums.VariableState.variable_cant_be_null;
+                            }
+                            break;
+                        }
                         if (httpResponse.getStatusLine().getStatusCode()==HttpServletResponse.SC_GONE) {
                             resourceState = setVariableWasntFound(task);
                             break;
@@ -209,7 +223,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     log.warn("#810.053 Variable {} can't be acquired, state: {}", task.variableId, resourceState);
                     continue;
                 }
-                else if (resourceState == Enums.VariableState.transmitting_error) {
+                else if (resourceState == Enums.VariableState.transmitting_error || resourceState == Enums.VariableState.variable_cant_be_null) {
                     continue;
                 }
 

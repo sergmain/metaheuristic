@@ -38,7 +38,7 @@ public class ProcessorTask {
         // variableId of Variable.
         public Long variableId;
 
-        // was resource(output resource as the result of execution of function) uploaded to dispatcher?
+        // was a variable (an output variable as the result of execution of function) uploaded to dispatcher?
         public boolean uploaded;
     }
 
@@ -53,7 +53,28 @@ public class ProcessorTask {
         }
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class EmptyStateOfInput {
+        // variableId of Variable.
+        public String variableId;
+        public Boolean empty = null;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class Empty {
+        public final List<EmptyStateOfInput> empties = new ArrayList<>();
+
+        @JsonIgnore
+        public boolean isEmpty(String variableId) {
+            return empties.stream().filter(o->o.variableId.equals(variableId)).findFirst().map(o-> Boolean.TRUE.equals(o.empty)).orElse(false);
+        }
+    }
+
     public final Output output = new Output();
+    public final Empty empty = new Empty();
 
     public Long taskId;
 

@@ -46,6 +46,9 @@ public class Variable implements Serializable {
     @Column(name = "IS_INITED")
     public boolean inited;
 
+    @Column(name = "IS_NULLIFIED")
+    public boolean nullified;
+
     @Column(name = "NAME")
     public String name;
 

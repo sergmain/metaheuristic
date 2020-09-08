@@ -200,6 +200,7 @@ public class VariableService {
         try {
             Variable data = new Variable();
             data.inited = true;
+            data.nullified = false;
             data.setName(variable);
             data.setFilename(filename);
             data.setExecContextId(execContextId);
@@ -235,10 +236,12 @@ public class VariableService {
             }
             Variable v = createUninitialized(variable.name, execContext.id, contextId);
 
+            // even variable.getNullable() can be false, we set empty to true because variable will be inited later
+            // and consistency of fields 'empty'  and 'nullable' will be enforced before calling Functions
             taskParams.task.outputs.add(
                     new TaskParamsYaml.OutputVariable(
                             v.id, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
-                            null, false, variable.type
+                            null, false, variable.type, true, variable.getNullable()
                     ));
         }
     }
@@ -247,11 +250,12 @@ public class VariableService {
         try {
             Variable data = new Variable();
             data.inited = false;
+            data.nullified = true;
             data.setName(variable);
             data.setExecContextId(execContextId);
 
-            // TODO right now only DataSourcing.dispatcher is supporting as internal variable.
-            //  the code has to be added for another type of sourcing
+            // TODO right now, only DataSourcing.dispatcher is supported as internal variable.
+            //   a new code has to be added for another type of sourcing
             data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
 
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
@@ -272,6 +276,7 @@ public class VariableService {
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
         data.setData(blob);
         data.inited = true;
+        data.nullified = false;
 
         variableRepository.save(data);
     }
@@ -292,6 +297,7 @@ public class VariableService {
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
         data.setData(blob);
         data.inited = true;
+        data.nullified = false;
 
         variableRepository.save(data);
     }

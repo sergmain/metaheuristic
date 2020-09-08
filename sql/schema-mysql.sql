@@ -104,6 +104,7 @@ CREATE TABLE mh_variable
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
     IS_INITED       BOOLEAN not null default false,
+    IS_NULLIFIED    BOOLEAN not null default false,
     NAME            VARCHAR(250) not null,
     TASK_CONTEXT_ID      VARCHAR(250) not null,
     EXEC_CONTEXT_ID NUMERIC(10, 0) not null,

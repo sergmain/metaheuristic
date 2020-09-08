@@ -37,7 +37,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -76,12 +75,12 @@ public class DispatcherVariableProvider implements VariableProvider {
             if (dispatcher.context.chunkSize != null) {
                 if (variable.context==EnumsApi.VariableContext.array) {
                     createDownloadTasksForArray(variable.id, task.getTaskId(), taskDir, dispatcher.context.chunkSize,
-                            dispatcher.dispatcherLookup, dispatcherCode.processorId);
+                            dispatcher.dispatcherLookup, dispatcherCode.processorId, variable.getNullable());
                 }
                 else {
                     DownloadVariableTask variableTask = new DownloadVariableTask(
                             variable.id, variable.context, task.getTaskId(), taskDir, dispatcher.context.chunkSize,
-                            dispatcher.dispatcherLookup, dispatcherCode.processorId);
+                            dispatcher.dispatcherLookup, dispatcherCode.processorId, variable.getNullable());
                     downloadVariableService.add(variableTask);
                 }
             }
@@ -103,10 +102,11 @@ public class DispatcherVariableProvider implements VariableProvider {
         }
     }
 
-    private void createDownloadTasksForArray(Long variableId, Long taskId, File taskDir, Long chunkSize,
-                                             DispatcherLookupConfig.DispatcherLookup dispatcherLookup, String processorId) throws IOException {
+    private void createDownloadTasksForArray(
+            Long variableId, Long taskId, File taskDir, Long chunkSize, DispatcherLookupConfig.DispatcherLookup dispatcherLookup,
+            String processorId, boolean nullable) throws IOException {
         DownloadVariableTask task = new DownloadVariableTask(
-                variableId, EnumsApi.VariableContext.local, taskId, taskDir, chunkSize, dispatcherLookup, processorId);
+                variableId, EnumsApi.VariableContext.local, taskId, taskDir, chunkSize, dispatcherLookup, processorId, nullable);
         downloadVariableService.add(task);
 
         AssetFile assetFile = AssetUtils.prepareFileForVariable(taskDir, variableId.toString(), null, DataType.variable);
@@ -114,8 +114,9 @@ public class DispatcherVariableProvider implements VariableProvider {
         List<VariableArrayParamsYaml.Variable> variables = getVariablesForArray(assetFile);
 
         for (VariableArrayParamsYaml.Variable v : variables) {
+            // element of array of variables can't be nullable
             DownloadVariableTask task1 = new DownloadVariableTask(
-                    v.id, EnumsApi.VariableContext.local, taskId, taskDir, chunkSize, dispatcherLookup, processorId);
+                    v.id, EnumsApi.VariableContext.local, taskId, taskDir, chunkSize, dispatcherLookup, processorId, false);
             downloadVariableService.add(task1);
         }
     }

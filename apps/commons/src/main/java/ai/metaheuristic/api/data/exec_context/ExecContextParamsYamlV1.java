@@ -62,6 +62,15 @@ public class ExecContextParamsYamlV1 implements BaseParams {
         public Boolean parentContext;
         @Nullable
         public String type;
+        private Boolean nullable;
+
+        public Boolean getNullable() {
+            return nullable==null ? false : nullable;
+        }
+
+        public void setNullable(Boolean nullable) {
+            this.nullable = nullable;
+        }
 
         public VariableV1(String name) {
             this.name = name;

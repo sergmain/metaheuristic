@@ -104,7 +104,7 @@ public class TaskAssetPreparer {
 
             // Start preparing data for function
             File taskDir = processorTaskService.prepareTaskDir(dispatcherInfo, task.taskId);
-            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingOfAssets(task, dispatcherInfo, taskParamYaml, dispatcher, taskDir);
+            ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingOVariables(task, dispatcherInfo, taskParamYaml, dispatcher, taskDir);
             if (resultOfChecking.isError) {
                 continue;
             }
