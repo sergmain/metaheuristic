@@ -20,6 +20,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import lombok.extern.slf4j.Slf4j;
@@ -55,8 +56,11 @@ public class FunctionCoreUtils {
         if ((functionConfig.file ==null || functionConfig.file.isBlank()) && (functionConfig.env ==null || functionConfig.env.isBlank())) {
             return new FunctionApiData.FunctionConfigStatus(false, "#401.10 Fields 'file' and 'env' can't be null or empty both.");
         }
-        if (functionConfig.code ==null || functionConfig.code.isBlank() || functionConfig.type ==null || functionConfig.type.isBlank()) {
-            return new FunctionApiData.FunctionConfigStatus(false, "#401.15 A field is null or empty: " + functionConfig.toString());
+        if (S.b(functionConfig.code)) {
+            return new FunctionApiData.FunctionConfigStatus(false, "#401.15 The field 'code' is blank: " + functionConfig.toString());
+        }
+        if (S.b(functionConfig.type)) {
+            return new FunctionApiData.FunctionConfigStatus(false, "#401.17 The field 'type is blank: " + functionConfig.toString());
         }
         if (!StrUtils.isCodeOk(functionConfig.code)) {
             return new FunctionApiData.FunctionConfigStatus(false, "#401.20 Function code has wrong chars: "+ functionConfig.code +", allowed only: " + StrUtils.ALLOWED_CHARS_IN_CODE_REGEXP);
