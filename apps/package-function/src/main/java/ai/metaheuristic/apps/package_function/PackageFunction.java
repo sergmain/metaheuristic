@@ -42,7 +42,7 @@ import java.util.Set;
 @SpringBootApplication
 public class PackageFunction implements CommandLineRunner {
 
-    private static final String SNIPPETS_YAML = "functions.yaml";
+    private static final String FUNCTIONS_YAML = "functions.yaml";
     private static final String ZIP_EXTENSION = ".zip";
 
     public static void main(String[] args) {
@@ -53,7 +53,7 @@ public class PackageFunction implements CommandLineRunner {
     public void run(String... args) throws IOException, GeneralSecurityException {
 
         if (args.length==0) {
-            System.out.println("PackageSnippet <target zip file> [private key file]");
+            System.out.println("PackageFunction <target zip file> [private key file]");
             return;
         }
         if (!args[0].endsWith(ZIP_EXTENSION)) {
@@ -72,9 +72,9 @@ public class PackageFunction implements CommandLineRunner {
             privateKey = SecUtils.getPrivateKey(privateKeyStr);
         }
 
-        File snippetYamlFile = new File(SNIPPETS_YAML);
-        if (!snippetYamlFile.exists()) {
-            System.out.println("File "+snippetYamlFile.getPath()+" wasn't found");
+        File functionYamlFile = new File(FUNCTIONS_YAML);
+        if (!functionYamlFile.exists()) {
+            System.out.println("File "+functionYamlFile.getPath()+" wasn't found");
             return;
         }
 
@@ -91,7 +91,7 @@ public class PackageFunction implements CommandLineRunner {
             System.out.println("Directory "+targetDir.getPath()+" already exists");
             return;
         }
-        String yamlContent = FileUtils.readFileToString(snippetYamlFile, StandardCharsets.UTF_8);
+        String yamlContent = FileUtils.readFileToString(functionYamlFile, StandardCharsets.UTF_8);
         FunctionConfigListYaml functionConfigList = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(yamlContent);
 
         // Verify
@@ -104,7 +104,7 @@ public class PackageFunction implements CommandLineRunner {
                 isError=true;
             }
             if (function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-                File sn = new File(snippetYamlFile.getParent(), function.file);
+                File sn = new File(functionYamlFile.getParent(), function.file);
                 if (!sn.exists()) {
                     System.out.println("File " + sn.getPath() + " wasn't found");
                     isError = true;
@@ -135,9 +135,9 @@ public class PackageFunction implements CommandLineRunner {
                 sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(s.getBytes()));
             }
             else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-                final File snippetFile = new File(targetDir, functionConfig.file);
-                FileUtils.copyFile(new File(functionConfig.file), snippetFile);
-                try (FileInputStream fis = new FileInputStream(snippetFile)) {
+                final File functionFile = new File(targetDir, functionConfig.file);
+                FileUtils.copyFile(new File(functionConfig.file), functionFile);
+                try (FileInputStream fis = new FileInputStream(functionFile)) {
                     sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);
                 }
             }
@@ -156,7 +156,7 @@ public class PackageFunction implements CommandLineRunner {
         }
 
         String yaml = FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(functionConfigList);
-        final File file = new File(targetDir, SNIPPETS_YAML);
+        final File file = new File(targetDir, FUNCTIONS_YAML);
         FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
 
         ZipUtils.createZip(targetDir, targetZip);
