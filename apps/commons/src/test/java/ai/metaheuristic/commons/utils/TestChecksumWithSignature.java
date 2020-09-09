@@ -13,17 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.metaheuristic.commons.utils;
+package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.security.CreateKeys;
-import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.binary.StringUtils;
 import org.junit.jupiter.api.Test;
 

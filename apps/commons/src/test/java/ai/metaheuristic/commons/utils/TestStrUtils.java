@@ -14,9 +14,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.metaheuristic.commons.utils;
+package ai.metaheuristic.commons.utils;
 
-import ai.metaheuristic.commons.utils.StrUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;

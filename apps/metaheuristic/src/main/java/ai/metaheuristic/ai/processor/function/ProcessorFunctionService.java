@@ -86,9 +86,13 @@ public class ProcessorFunctionService {
             if (e.getStatusCode()== HttpServletResponse.SC_FORBIDDEN) {
                 log.warn("#813.200 Access denied to url {}", functionChecksumUrl);
             }
+            else if (e.getStatusCode()== HttpServletResponse.SC_NOT_FOUND) {
+                functionConfigStatus.status = ConfigStatus.not_found;
+                log.warn("#813.203 Url {} wasn't found. Need to check the dispatcher.yaml config file", asset.url);
+            }
             else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
                 functionConfigStatus.status = ConfigStatus.not_found;
-                log.warn("#813.200 Function with code {} wasn't found", functionCode);
+                log.warn("#813.205 Function with code {} wasn't found", functionCode);
             }
             else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
                 log.warn("#813.210 Function with id {} is broken and need to be recreated", functionCode);
