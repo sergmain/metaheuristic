@@ -60,9 +60,9 @@ import java.util.Map;
 public class FunctionService {
 
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/function#configuration.\n";
-    private static final YamlSchemeValidator<String> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
+    public static final YamlSchemeValidator<String> FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
             "functions",
-            List.of("code", "env", "file", "params", "metas", "skipParams", "sourcing", "type", "checksumMap"),
+            List.of("code", "env", "file", "git", "params", "metas", "skipParams", "sourcing", "type", "checksumMap"),
             List.of(),
             SEE_MORE_INFO, List.of("1"),
             "the config file functions.yaml",
@@ -164,7 +164,7 @@ public class FunctionService {
         }
 
         String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
-        String errorString = YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        String errorString = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         if (errorString!=null) {
             return List.of(new FunctionApiData.FunctionConfigStatus(false, errorString));
         }

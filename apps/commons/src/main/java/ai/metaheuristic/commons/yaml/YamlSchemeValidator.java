@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -89,6 +90,7 @@ public class YamlSchemeValidator<T> {
         }
 
         boolean isError = false;
+        List<String> unknowns = new ArrayList<>();
         for (Object o : (List) rootObj) {
             if (!(o instanceof Map)) {
                 final String es = "\nBroken content of "+filename+". Must be in .yaml format.\n" + seeMoreInfo;
@@ -99,6 +101,7 @@ public class YamlSchemeValidator<T> {
             Map<String, Object> props = (Map)o;
             for (Map.Entry<String, Object> entry : props.entrySet()) {
                 if (!possibleElements2dnLevel.contains(entry.getKey())) {
+                    unknowns.add(entry.getKey());
                     log.error("\n"+filename+", unknown property: " + entry.getKey());
                     isError=true;
                 }
@@ -109,7 +112,7 @@ public class YamlSchemeValidator<T> {
         }
 
         if (isError) {
-            final String es = "\nUnknown elements was encountered in " + filename + ".\n" +
+            final String es = "\nUnknown elements "+unknowns+" were encountered in " + filename + ".\n" +
                     "Need to be fixed.\n" +
                     "Allowed elements are: " + possibleElements2dnLevel + "\n" +
                     seeMoreInfo;
