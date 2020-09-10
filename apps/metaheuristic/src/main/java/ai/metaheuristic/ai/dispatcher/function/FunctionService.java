@@ -62,7 +62,7 @@ public class FunctionService {
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/function#configuration.\n";
     private static final YamlSchemeValidator<String> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
             "functions",
-            List.of("code", "env", "file", "params", "metas", "skipParams", "sourcing", "type"),
+            List.of("code", "env", "file", "params", "metas", "skipParams", "sourcing", "type", "checksumMap"),
             List.of(),
             SEE_MORE_INFO, List.of("1"),
             "the config file functions.yaml",
