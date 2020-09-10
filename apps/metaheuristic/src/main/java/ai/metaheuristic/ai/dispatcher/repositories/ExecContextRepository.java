@@ -26,12 +26,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Repository
-@Transactional
+@Transactional(propagation = Propagation.NOT_SUPPORTED)
 @Profile("dispatcher")
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
 
@@ -39,30 +40,23 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     @Query(value="select e from ExecContextImpl e where e.id=:id")
     ExecContextImpl findByIdForUpdate(@NonNull Long id);
 
-    @Transactional(readOnly = true)
     @Query(value="select w.id, w.state from ExecContextImpl w ")
     List<Object[]> findAllExecStates();
 
-    @Transactional(readOnly = true)
     @Query(value="select w.id from ExecContextImpl w")
     List<Long> findAllIds();
 
-    @Transactional(readOnly = true)
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState order by e.createdOn asc ")
     List<Long> findByStateOrderByCreatedOnAsc(int execState);
 
-    @Transactional
     List<ExecContextImpl> findByState(int execState);
 
-    @Transactional(readOnly = true)
     @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
     List<Long> findIdsByExecState(int execState);
 
-    @Transactional(readOnly = true)
     @Query(value="select e.id from ExecContextImpl e where e.sourceCodeId=:sourceCodeId")
     List<Long> findIdsBySourceCodeId(Long sourceCodeId);
 
-    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.api.data.exec_context.ExecContextsListItem(" +
             "b.id, b.createdOn, b.valid, b.completedOn, b.state ) " +
             "from ExecContextImpl b " +
