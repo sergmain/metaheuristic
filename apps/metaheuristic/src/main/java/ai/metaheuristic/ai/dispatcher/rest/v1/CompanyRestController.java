@@ -88,7 +88,7 @@ public class CompanyRestController {
 
     @PostMapping("/company-account-add-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
-    public OperationStatusRest addFormCommit(AccountData.NewAccount account, @PathVariable Long companyUniqueId) {
+    public OperationStatusRest addFormCommit(@RequestBody AccountData.NewAccount account, @PathVariable Long companyUniqueId) {
         OperationStatusRest operationStatusRest = companyAccountTopLevelService.addAccount(account, companyUniqueId);
         return operationStatusRest;
     }
