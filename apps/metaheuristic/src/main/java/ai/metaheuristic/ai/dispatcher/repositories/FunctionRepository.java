@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
@@ -37,6 +38,9 @@ public interface FunctionRepository extends CrudRepository<Function, Long> {
     @Nullable
     @Query(value="select b.id from Function b where b.code=:code")
     Long findIdByCode(String code);
+
+    @NonNull
+    List<Function> findAll();
 
     @Nullable
     @Query(value="select b from Function b where b.code=:code")

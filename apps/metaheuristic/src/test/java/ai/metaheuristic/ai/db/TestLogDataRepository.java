@@ -51,7 +51,7 @@ public class TestLogDataRepository {
         logData.setLogData("This is log data");
         logData.setType(LogData.Type.ASSEMBLING);
         logData.setRefId(42L);
-        logData = logDataRepository.saveAndFlush(logData);
+        logData = logDataRepository.save(logData);
         assertNotNull(logData);
 
 /*

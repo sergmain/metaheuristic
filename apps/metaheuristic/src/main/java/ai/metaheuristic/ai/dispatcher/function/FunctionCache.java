@@ -38,7 +38,7 @@ public class FunctionCache {
     @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#result.id")
     public Function save(Function function) {
         function.reset();
-        return functionRepository.saveAndFlush(function);
+        return functionRepository.save(function);
     }
 
     @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#function.id")
