@@ -164,6 +164,9 @@ public class TaskParamsYaml implements BaseParams {
         public EnumsApi.FunctionSourcing sourcing;
         public @Nullable Map<EnumsApi.HashAlgo, String> checksumMap;
         public @Nullable GitInfo git;
+
+        // TODO 2020-09-11 need to decide - do we still need this variable?
+        //  its purpose isn't clear
         public boolean skipParams = false;
         public final List<Map<String, String>> metas = new ArrayList<>();
     }

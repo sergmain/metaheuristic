@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.ai.utils.DigitUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.env.DiskStorage;
+import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorTask;
@@ -605,6 +607,12 @@ public class ProcessorTaskService {
     @AllArgsConstructor
     public static class EnvYamlShort {
         public final Map<String, String> envs;
+        public final List<DiskStorage> disk;
+
+        public EnvYamlShort(EnvYaml envYaml) {
+            this.envs = envYaml.envs;
+            this.disk = envYaml.disk;
+        }
     }
 
     private static Yaml getYamlForEnvYamlShort() {
@@ -621,7 +629,7 @@ public class ProcessorTaskService {
         if (envFile.isDirectory()) {
             return "#713.220 path "+ artifactDir.getAbsolutePath()+" is dir, can't continue processing";
         }
-        EnvYamlShort envYaml = new EnvYamlShort(envService.getEnvYaml().envs);
+        EnvYamlShort envYaml = new EnvYamlShort(envService.getEnvYaml());
         final String newEnv = envYamlShortToString(envYaml);
 
         try {

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.yaml.env;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.lang.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +31,7 @@ public class EnvYaml {
     public final Map<String, String> envs = new ConcurrentHashMap<>();
     public final List<DiskStorage> disk = new ArrayList<>();
 
+    @Nullable
     public DiskStorage findDiskStorageByCode(String code) {
         for (DiskStorage diskStorage : disk) {
             if (Objects.equals(diskStorage.code, code)) {

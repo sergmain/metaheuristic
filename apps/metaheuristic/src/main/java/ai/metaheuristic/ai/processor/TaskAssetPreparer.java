@@ -89,10 +89,12 @@ public class TaskAssetPreparer {
                 continue;
             }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+/*
             if (CollectionUtils.isEmpty(taskParamYaml.task.inputs)) {
-                log.warn("#951.100 taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
+                log.info("#951.100 task.inputs is empty\n{}", task.getParams());
                 continue;
             }
+*/
             final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
                     dispatcherLookupExtendedService.lookupExtendedMap.get(task.dispatcherUrl);
 

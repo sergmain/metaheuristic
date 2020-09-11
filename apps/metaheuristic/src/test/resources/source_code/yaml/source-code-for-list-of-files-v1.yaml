@@ -1,0 +1,17 @@
+source:
+  uid: source-code-for-list-of-files-v-1.2
+  metas:
+    - mh.result-file-extension: .zip
+  variables:
+    inline:
+      list-files:
+        dir-code: 'dir-for-processing'
+  processes:
+    - code: get-list-of-files:1.2
+      name: get-list-of-files:1.2
+      function:
+        code: get-list-of-files:1.2
+      outputs:
+        - name: var-logger
+        - name: var-result
+version: 1

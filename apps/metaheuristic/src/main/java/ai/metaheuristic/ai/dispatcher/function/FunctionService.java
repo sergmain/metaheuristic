@@ -109,9 +109,6 @@ public class FunctionService {
             if (function != null) {
                 functionConfig = TaskParamsUtils.toFunctionConfig(function.getFunctionConfig(true));
                 boolean paramsAsFile = MetaUtils.isTrue(functionConfig.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
-                if (paramsAsFile) {
-                    throw new NotImplementedException("#295.020 mh.function-params-as-file==true isn't supported right now");
-                }
                 if (!functionConfig.skipParams) {
                     // TODO 2019-10-09 need to handle a case when field 'params'
                     //  contains actual code (mh.function-params-as-file==true)
