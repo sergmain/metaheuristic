@@ -17,8 +17,8 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
@@ -29,7 +29,7 @@ import java.util.List;
 @Repository
 @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 @Profile("dispatcher")
-public interface FunctionRepository extends JpaRepository<Function, Long> {
+public interface FunctionRepository extends CrudRepository<Function, Long> {
 
     @Nullable
     Function findByCode(String code);
@@ -37,9 +37,6 @@ public interface FunctionRepository extends JpaRepository<Function, Long> {
     @Nullable
     @Query(value="select b.id from Function b where b.code=:code")
     Long findIdByCode(String code);
-
-    @Query(value="select b.id from Function b where b.code in :codes")
-    List<Long> findIdsByCodes(List<String> codes);
 
     @Nullable
     @Query(value="select b from Function b where b.code=:code")

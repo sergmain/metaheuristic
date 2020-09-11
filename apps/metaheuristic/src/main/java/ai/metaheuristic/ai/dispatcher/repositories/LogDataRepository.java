@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.LogData;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +33,6 @@ import java.util.List;
 @Repository
 @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 @Profile("dispatcher")
-public interface LogDataRepository extends JpaRepository<LogData, Long> {
+public interface LogDataRepository extends CrudRepository<LogData, Long> {
     List<LogData> findAllByLogType(int logType);
 }
