@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -31,14 +32,13 @@ import java.util.List;
  * Time: 8:20 PM
  */
 @Repository
+@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 @Profile("dispatcher")
 public interface DispatcherEventRepository extends CrudRepository<DispatcherEvent, Long> {
 
-    @Transactional(readOnly = true)
     @Query(value="select e.id from DispatcherEvent e where e.period in :periods")
     List<Long> findIdByPeriod(List<Integer> periods);
 
-    @Transactional(readOnly = true)
     @Query(value="select e from DispatcherEvent e where e.id in :ids ")
     List<DispatcherEvent> findByIds(List<Long> ids);
 }

@@ -26,6 +26,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Blob;
@@ -40,40 +41,34 @@ import java.util.Set;
  * Time: 15:41
  */
 @Repository
+@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 @Profile("dispatcher")
 public interface VariableRepository extends CrudRepository<Variable, Long> {
 
-    @Transactional(readOnly = true)
     @Query("SELECT v.taskContextId FROM Variable v where v.execContextId=:execContextId and v.name in (:names)")
     Set<String> findTaskContextIdsByExecContextIdAndVariableNames(Long execContextId, Set<String> names);
 
-    @Transactional(readOnly = true)
     @Query(nativeQuery = true, value =
             "select d.id from mh_variable d where d.EXEC_CONTEXT_ID is not null and d.EXEC_CONTEXT_ID not in (select z.id from mh_exec_context z)")
     List<Long> findAllOrphanExecContextData();
 
-    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +
             "from Variable v where v.name in :vars and v.execContextId=:execContextId")
     List<SimpleVariable> findByExecContextIdAndNames(Long execContextId, Collection<String> vars);
 
-    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +
             "from Variable v where v.execContextId=:execContextId")
     List<SimpleVariable> findByExecContextId(Long execContextId);
 
-    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +
             "from Variable v where v.execContextId=:execContextId and v.name in (:names)")
     List<SimpleVariable> getIdAndStorageUrlInVarsForExecContext(Long execContextId, String[] names);
 
     @Nullable
-    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.dispatcher.variable.SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId) " +
             "from Variable v where v.name=:name and v.taskContextId=:taskContextId and v.execContextId=:execContextId")
     SimpleVariable findByNameAndTaskContextIdAndExecContextId(String name, String taskContextId, Long execContextId);
 
-    @Transactional(readOnly = true)
     @Query(value="select v.id from Variable v where v.name=:name and v.execContextId=:execContextId")
     List<Long> findIdByNameAndExecContextId(String name, Long execContextId);
 
@@ -85,22 +80,15 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Query(value="select b.filename from Variable b where b.name=:variable and b.execContextId=:execContextId ")
     List<String> findFilenameByVariableAndExecContextId(Long execContextId, String variable);
 
-    @NonNull
-    @Transactional(readOnly = true)
-    Optional<Variable> findById(@NonNull Long id);
-
     @Nullable
-    @Transactional(readOnly = true)
     @Query(value="select b.data from Variable b where b.id=:id")
     Blob getDataAsStreamById(Long id);
 
     @Nullable
-    @Transactional
     @Query(value="select b from Variable b where b.id=:id")
     Variable findByIdForUpdate(Long id);
 
     @NonNull
-    @Transactional(readOnly = true)
     Page<Variable> findAll(@NonNull Pageable pageable);
 
     @Transactional

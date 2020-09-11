@@ -25,6 +25,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -35,7 +36,7 @@ import java.util.List;
  * Time: 15:41
  */
 @Repository
-@Transactional
+@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 @Profile("dispatcher")
 public interface AccountRepository extends CrudRepository<Account, Long> {
 
@@ -44,18 +45,14 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
     Account findByIdForUpdate(Long id);
 
     @Nullable
-    @Transactional(readOnly = true)
     Account findByUsername(String username);
 
-    @Transactional(readOnly = true)
     Page<Account> findAll(Pageable pageable);
 
-    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.api.data.account.SimpleAccount(a.id, a.companyId, a.username, a.publicName, a.enabled, a.createdOn, a.updatedOn, a.roles) " +
             " from Account a where a.companyId=:companyUniqueId")
     Page<SimpleAccount> findAllByCompanyUniqueId(Pageable pageable, Long companyUniqueId);
 
-    @Transactional(readOnly = true)
     @Query(value="select a.username from Account a")
     List<String> findAllUsernames();
 }

@@ -16,15 +16,12 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.api.dispatcher.ExecContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Profile("dispatcher")
@@ -36,10 +33,7 @@ public class TaskCollector {
         this.taskRepository = taskRepository;
     }
 
-    @Transactional
     public List<Object[]> getTasks(ExecContext execContext) {
-        try (Stream<Object[]> stream = taskRepository.findByExecContextId(execContext.getId()) ) {
-            return stream.collect(Collectors.toList());
-        }
+        return taskRepository.findByExecContextId(execContext.getId());
     }
 }

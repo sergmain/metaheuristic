@@ -29,5 +29,5 @@ public class SimpleGlobalVariable {
     public String variable;
     public java.util.Date uploadTs;
     public String filename;
-    public String storageUrl;
+    public String params;
 }

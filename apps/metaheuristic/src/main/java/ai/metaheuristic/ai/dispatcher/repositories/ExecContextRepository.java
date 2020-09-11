@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-@Transactional(propagation = Propagation.NOT_SUPPORTED)
+@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 @Profile("dispatcher")
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
 

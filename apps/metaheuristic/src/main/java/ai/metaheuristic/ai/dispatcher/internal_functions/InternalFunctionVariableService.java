@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -25,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -73,7 +73,7 @@ public class InternalFunctionVariableService {
                 holders.add(new VariableUtils.VariableHolder(v));
             }
             else {
-                GlobalVariable gv = globalVariableRepository.findIdByName(name);
+                SimpleGlobalVariable gv = globalVariableRepository.findIdByName(name);
                 if (gv!=null) {
                     holders.add(new VariableUtils.VariableHolder(gv));
                 }

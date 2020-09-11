@@ -23,6 +23,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -31,12 +32,11 @@ import org.springframework.transaction.annotation.Transactional;
  * Time: 6:24 PM
  */
 @Repository
-@Transactional
+@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 @Profile("dispatcher")
 public interface DispatcherParamsRepository extends CrudRepository<Dispatcher, Long> {
 
     @Nullable
-    @Transactional(readOnly = true)
     @Query(value="select a from Dispatcher a where a.code=:code")
     Dispatcher findByCode(String code);
 

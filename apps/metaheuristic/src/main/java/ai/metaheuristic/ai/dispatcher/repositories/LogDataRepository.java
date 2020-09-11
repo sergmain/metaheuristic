@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.LogData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -30,7 +31,7 @@ import java.util.List;
  * Time: 15:41
  */
 @Repository
-@Transactional
+@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 @Profile("dispatcher")
 public interface LogDataRepository extends JpaRepository<LogData, Long> {
     List<LogData> findAllByLogType(int logType);

@@ -99,16 +99,17 @@ CREATE TABLE MH_LOG_DATA
 
 CREATE TABLE MH_VARIABLE
 (
-  ID            SERIAL PRIMARY KEY,
-  VERSION       NUMERIC(5, 0) NOT NULL,
-  IS_INITED     BOOLEAN not null default false,
-  NAME          VARCHAR(250) not null,
-  TASK_CONTEXT_ID    VARCHAR(250) not null,
+  ID                SERIAL PRIMARY KEY,
+  VERSION           NUMERIC(5, 0) NOT NULL,
+  IS_INITED         BOOLEAN not null default false,
+  IS_NULLIFIED      BOOLEAN not null default false,
+  NAME              VARCHAR(250) not null,
+  TASK_CONTEXT_ID   VARCHAR(250) not null,
   EXEC_CONTEXT_ID   NUMERIC(10, 0) not null,
-  UPLOAD_TS     TIMESTAMP DEFAULT to_timestamp(0),
-  DATA          OID,
-  FILENAME      VARCHAR(150),
-  PARAMS        TEXT not null
+  UPLOAD_TS         TIMESTAMP DEFAULT to_timestamp(0),
+  DATA              OID,
+  FILENAME          VARCHAR(150),
+  PARAMS            TEXT not null
 );
 
 CREATE INDEX MH_VARIABLE_EXEC_CONTEXT_ID_IDX

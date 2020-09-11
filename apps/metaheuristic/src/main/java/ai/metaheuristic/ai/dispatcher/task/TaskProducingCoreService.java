@@ -16,13 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -126,7 +126,7 @@ public class TaskProducingCoreService {
             iv.filename = variable.filename;
         }
         else {
-            GlobalVariable variable = globalVariableRepository.findIdByName(v.name);
+            SimpleGlobalVariable variable = globalVariableRepository.findIdByName(v.name);
             if (variable==null) {
                 throw new TaskCreationException(
                         S.f("#171.080 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",

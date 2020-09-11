@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.complex;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -31,6 +30,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -129,7 +129,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         execContextFSM.toStarted(execContextForTest);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
 
-        GlobalVariable gv = globalVariableRepository.findIdByName("global-test-variable");
+        SimpleGlobalVariable gv = globalVariableRepository.findIdByName("global-test-variable");
         assertNotNull(gv);
 
         assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());

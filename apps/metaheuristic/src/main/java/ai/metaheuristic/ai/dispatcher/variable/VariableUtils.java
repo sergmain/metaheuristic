@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
+import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -39,7 +40,7 @@ public class VariableUtils {
             VariableArrayParamsYaml.Variable v = new VariableArrayParamsYaml.Variable();
             if (pv.globalVariable!=null) {
                 v.id = pv.globalVariable.id.toString();
-                v.name = pv.globalVariable.name;
+                v.name = pv.globalVariable.variable;
 
                 DataStorageParams dsp = DataStorageParamsUtils.to(pv.globalVariable.params);
                 v.sourcing = dsp.sourcing;
@@ -71,9 +72,9 @@ public class VariableUtils {
         public SimpleVariable variable;
 
         @Nullable
-        public GlobalVariable globalVariable;
+        public SimpleGlobalVariable globalVariable;
 
-        public VariableHolder(@Nullable GlobalVariable globalVariable) {
+        public VariableHolder(@Nullable SimpleGlobalVariable globalVariable) {
             this.globalVariable = globalVariable;
         }
 
@@ -82,7 +83,7 @@ public class VariableUtils {
         }
 
         public String getName() {
-            return globalVariable!=null ? globalVariable.name : Objects.requireNonNull(variable).variable;
+            return globalVariable!=null ? globalVariable.variable : Objects.requireNonNull(variable).variable;
         }
 
         public String getFilename() {

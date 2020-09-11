@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-@Transactional(propagation = Propagation.NOT_SUPPORTED)
+@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 @Profile("dispatcher")
 public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Long> {
 
@@ -55,12 +55,10 @@ public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Lon
     @Query(value="select p.id from SourceCodeImpl p")
     List<Long> findAllAsIds();
 
-    @Transactional(readOnly = true)
     @Query(value="select p.uid from SourceCodeImpl p")
     List<String> findAllSourceCodeUids();
 
     @Nullable
-    @Transactional(readOnly = true)
     SourceCodeImpl findByUid(String uid);
 }
 

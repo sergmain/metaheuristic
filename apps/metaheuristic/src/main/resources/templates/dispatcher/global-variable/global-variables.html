@@ -121,7 +121,7 @@ git:
             <td th:text="${#dates.format(p.uploadTs, 'dd-MMM-yy HH:mm')}">Upload date</td>
             <td th:text="${p.variable}">Variable</td>
             <td th:text="${p.filename}">Filename</td>
-            <td th:text="${p.storageUrl}">Storage url</td>
+            <td th:text="${p.getParams}">Storage url</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/dispatcher/global-variable/global-variable-delete/' + p.id}">Delete</a></td>
         </tr>
         <tr>

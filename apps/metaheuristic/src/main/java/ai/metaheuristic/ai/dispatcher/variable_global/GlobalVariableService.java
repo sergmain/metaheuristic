@@ -17,12 +17,11 @@
 package ai.metaheuristic.ai.dispatcher.variable_global;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
-import ai.metaheuristic.ai.exceptions.StoreNewFileException;
-import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -32,7 +31,6 @@ import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,17 +40,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.List;
 import java.util.Optional;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
 @Service
-@Transactional
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
@@ -87,6 +86,7 @@ public class GlobalVariableService {
         }
     }
 
+    @Transactional(readOnly = true)
     public void storeToFile(Long variableId, File trgFile) {
         try {
             Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
@@ -110,6 +110,7 @@ public class GlobalVariableService {
         globalVariableRepository.deleteByName(variable);
     }
 
+    @Transactional
     public GlobalVariable save(InputStream is, long size, String variable, String filename) {
         try {
             GlobalVariable data = new GlobalVariable();
@@ -139,6 +140,7 @@ public class GlobalVariableService {
     }
 
     @SuppressWarnings("UnusedReturnValue")
+    @Transactional
     public GlobalVariable createGlobalVariableWithExternalStorage(String variable, String params) {
 
         try {
@@ -158,6 +160,7 @@ public class GlobalVariableService {
         }
     }
 
+    @Transactional
     public void update(InputStream is, long size, GlobalVariable data) {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
@@ -175,24 +178,17 @@ public class GlobalVariableService {
         globalVariableRepository.deleteById(id);
     }
 
-    @Transactional(readOnly = true)
     public Optional<GlobalVariable> findById(Long id) {
         return globalVariableRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
     public Slice<SimpleGlobalVariable> getAllAsSimpleGlobalVariable(Pageable pageable) {
         return globalVariableRepository.getAllAsSimpleGlobalVariable(pageable);
     }
 
     @Nullable
-    @Transactional(readOnly = true)
     public SimpleGlobalVariable getByIdAsSimpleGlobalVariable(Long id) {
         return globalVariableRepository.getByIdAsSimpleGlobalVariable(id);
     }
 
-    @Transactional(readOnly = true)
-    public List<String> getFilenamesByVariable(String variable) {
-        return globalVariableRepository.findFilenamesByVar(variable);
-    }
 }
