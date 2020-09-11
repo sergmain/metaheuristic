@@ -67,46 +67,16 @@ public class BatchForOperatorRestController {
 
     @GetMapping("/company-batches/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
-    public String batches(
-            Model model,
-            @PageableDefault(size = 20) Pageable pageable,
-            @ModelAttribute("errorMessage") final String errorMessage,
-            @ModelAttribute("infoMessages") final String infoMessages,
-            @PathVariable Long companyUniqueId
-    ) {
+    public BatchData.BatchesResult batches(@PageableDefault(size = 20) Pageable pageable, @PathVariable Long companyUniqueId) {
         BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyUniqueId, null, true, false);
-        ControllerUtils.addMessagesToModel(model, batchesResult);
-        model.addAttribute("result", batchesResult);
-        model.addAttribute("companyUniqueId", companyUniqueId);
-        return "dispatcher/company/batch/company-batches";
-    }
-
-    @GetMapping(value = "/company-batch-add/{companyUniqueId}")
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
-    public String batchAdd(Model model, @PathVariable Long companyUniqueId) {
-        SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeSelectorService.getAvailableSourceCodesForCompany(companyUniqueId);
-        ControllerUtils.addMessagesToModel(model, sourceCodes);
-        model.addAttribute("result", sourceCodes);
-        model.addAttribute("companyUniqueId", companyUniqueId);
-        return "dispatcher/company/batch/company-batch-add";
+        return batchesResult;
     }
 
     @GetMapping("/company-batch-delete/{companyUniqueId}/{batchId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
-    public String processResourceDelete(
-            Model model,
-            @PathVariable Long companyUniqueId,
-            @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
+    public BatchData.Status processResourceDelete(@PathVariable Long companyUniqueId, @PathVariable Long batchId) {
         BatchData.Status status = batchTopLevelService.getBatchProcessingStatus(batchId, companyUniqueId, true);
-        if (status.isErrorMessages()) {
-            redirectAttributes.addAttribute("errorMessage", status.getErrorMessages());
-            return "redirect:/dispatcher/company/batch/company-batches/" + companyUniqueId;
-        }
-        model.addAttribute("batchId", batchId);
-        model.addAttribute("console", status.console);
-        model.addAttribute("isOk", status.ok);
-        model.addAttribute("companyUniqueId", companyUniqueId);
-        return "dispatcher/company/batch/company-batch-delete";
+        return status;
     }
 
     @PostMapping("/company-batch-delete-commit/{companyUniqueId}")
