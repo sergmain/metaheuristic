@@ -103,9 +103,11 @@ public class GlobalVariableTopLevelService {
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
+        dsp.name = variable;
+        String realParams = DataStorageParamsUtils.toString(dsp);
 
         try {
-            globalVariableService.createGlobalVariableWithExternalStorage(variable, params);
+            globalVariableService.createGlobalVariableWithExternalStorage(variable, realParams);
         } catch (VariableSavingException e) {
             String es = "#172.080 An error while saving variable to db, " + e.toString();
             log.error(es, e);
