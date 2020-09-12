@@ -21,10 +21,8 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -39,10 +37,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -74,21 +70,27 @@ public class BatchForOperatorRestController {
 
     @GetMapping("/company-batch-delete/{companyUniqueId}/{batchId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
-    public BatchData.Status processResourceDelete(@PathVariable Long companyUniqueId, @PathVariable Long batchId) {
+    public BatchData.Status processBatchDelete(@PathVariable Long companyUniqueId, @PathVariable Long batchId) {
         BatchData.Status status = batchTopLevelService.getBatchProcessingStatus(batchId, companyUniqueId, true);
         return status;
     }
 
     @PostMapping("/company-batch-delete-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
-    public OperationStatusRest processResourceDeleteCommit(Long batchId, @PathVariable Long companyUniqueId) {
+    public OperationStatusRest processBatchDeleteCommit(Long batchId, @PathVariable Long companyUniqueId) {
         OperationStatusRest r = batchTopLevelService.processBatchDeleteCommit(batchId, companyUniqueId, false);
         return r;
     }
 
+    /**
+     *
+     * @param batchIds comma-separated list of batchId for deleting
+     * @param companyUniqueId Company.uniqueId
+     * @return
+     */
     @PostMapping("/company-batch-bulk-delete-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
-    public BatchData.BulkOperations processResourceDeleteCommit(String batchIds, @PathVariable Long companyUniqueId) {
+    public BatchData.BulkOperations processBatchesBulkDeleteCommit(String batchIds, @PathVariable Long companyUniqueId) {
         BatchData.BulkOperations r = batchTopLevelService.processBatchBulkDeleteCommit(batchIds, companyUniqueId, false);
         return r;
     }

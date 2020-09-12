@@ -163,7 +163,7 @@ public class AccountService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", "");
     }
 
-    // this method is using with company-accounts
+    // this method is for using with company-accounts
     public OperationStatusRest storeRolesForUserById(Long accountId, String role, boolean checkbox, Long companyUniqueId) {
         Account account = accountRepository.findByIdForUpdate(accountId);
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {

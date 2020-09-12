@@ -128,7 +128,14 @@ public class CompanyRestController {
         return accountWithRole;
     }
 
-    // ! this method accepts role as String
+    /**
+     *
+     * @param accountId Account.id
+     * @param role name of role to set or remove
+     * @param checkbox flag to set a role or to remove it
+     * @param companyId Account.companyId
+     * @return see @ai.metaheuristic.api.data.OperationStatusRest
+     */
     @PostMapping("/company-account-edit-roles-commit/{companyId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public OperationStatusRest rolesEditFormCommit(Long accountId, String role, @RequestParam(required = false, defaultValue = "false") boolean checkbox,

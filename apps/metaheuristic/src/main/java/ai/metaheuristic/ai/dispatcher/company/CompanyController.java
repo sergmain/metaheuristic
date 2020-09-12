@@ -90,8 +90,10 @@ public class CompanyController {
         OperationStatusRest operationStatusRest = companyTopLevelService.addCompany(company);
         if (operationStatusRest.isErrorMessages()) {
             model.addAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
-            company.id = null;
-            company.version = null;
+            Company c = new Company();
+            c.uniqueId = company.uniqueId;
+            c.name = company.name;
+            c.setParams( company.getParams() );
             model.addAttribute("company", company);
             return "dispatcher/company/company-add";
         }
@@ -225,6 +227,12 @@ public class CompanyController {
         return "redirect:/dispatcher/company/company-accounts/" + companyUniqueId;
     }
 
+    /**
+     *
+     * @param id - Account.id
+     * @param companyUniqueId - Account.companyId
+     * @return
+     */
     @GetMapping(value = "/company-account-edit-roles/{companyUniqueId}/{id}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String editRoles(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @PathVariable Long companyUniqueId) {
@@ -239,11 +247,13 @@ public class CompanyController {
         return "dispatcher/company/company-account-edit-roles";
     }
 
-    // ! this method accepts an index in an array of possible roles
+    /**
+     * !!! this method accepts an index(roleIndex) in an array of possible roles
+     */
     @PostMapping("/company-account-edit-roles-commit/{companyId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String rolesEditFormCommit(
-            Long accountId, Integer roleId, @RequestParam(required = false, defaultValue = "false") boolean checkbox,
+            Long accountId, Integer roleIndex, @RequestParam(required = false, defaultValue = "false") boolean checkbox,
                                       final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
         AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(accountId, companyId);
         if (accountResult.isErrorMessages()) {
@@ -252,7 +262,7 @@ public class CompanyController {
         }
 
         List<String> possibleRoles = Consts.ID_1.equals(companyId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES;
-        String role = possibleRoles.get(roleId);
+        String role = possibleRoles.get(roleIndex);
 
         OperationStatusRest operationStatusRest = companyAccountTopLevelService.storeRolesForUserById(accountId, role, checkbox, companyId);
         if (operationStatusRest.isErrorMessages()) {
