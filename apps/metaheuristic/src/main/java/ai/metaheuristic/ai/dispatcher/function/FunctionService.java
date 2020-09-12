@@ -108,11 +108,22 @@ public class FunctionService {
             Function function = findByCode(functionDef.getCode());
             if (function != null) {
                 functionConfig = TaskParamsUtils.toFunctionConfig(function.getFunctionConfig(true));
-                boolean paramsAsFile = MetaUtils.isTrue(functionConfig.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
                 if (!functionConfig.skipParams) {
-                    // TODO 2019-10-09 need to handle a case when field 'params'
-                    //  contains actual code (mh.function-params-as-file==true)
-                    functionConfig.params = produceFinalCommandLineParams(functionConfig.params, functionDef.getParams());
+                    boolean paramsAsFile = MetaUtils.isTrue(functionConfig.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
+                    if (paramsAsFile) {
+                        // TODO 2019-10-09 need to handle a case when field 'params'
+                        //  contains actual code (mh.function-params-as-file==true)
+                        //  2020-09-12 need to add a new field 'content' which will hold the content of file
+                        // functionConfig.params = produceFinalCommandLineParams(null, functionDef.getParams());
+                        if (!S.b(functionDef.getParams())) {
+                            log.error("#295.035 defining parameters in SourceCode " +
+                                    "and using FUnction.params as a holder for a code isn't supported right now. " +
+                                    "Will be executed without a parameter from SourceCode");
+                        }
+                    }
+                    else {
+                        functionConfig.params = produceFinalCommandLineParams(functionConfig.params, functionDef.getParams());
+                    }
                 }
             } else {
                 log.warn("#295.040 Can't find function for code {}", functionDef.getCode());

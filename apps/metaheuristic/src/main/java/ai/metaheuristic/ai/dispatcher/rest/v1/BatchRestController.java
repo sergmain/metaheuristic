@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -44,6 +45,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -64,6 +66,7 @@ public class BatchRestController {
     private final BatchTopLevelService batchTopLevelService;
     private final UserContextService userContextService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
+    private final DispatcherParamsService dispatcherParamsService;
 
     @GetMapping("/batches")
     public BatchData.BatchesResult batches(
@@ -91,7 +94,9 @@ public class BatchRestController {
     public SourceCodeData.SourceCodeUidsForCompany batchAdd(Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
+        List<String> uids = dispatcherParamsService.getBatches();
         codes.items = sourceCodeSelectorService.getAvailableSourceCodesForCompany(context).items.stream()
+                .filter(o->uids.contains(o.getUid()))
                 .map(o->new SourceCodeData.SourceCodeUid(o.getId(), o.getUid()))
                 .collect(Collectors.toList());
         return codes;

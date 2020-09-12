@@ -165,8 +165,11 @@ public class TaskParamsYaml implements BaseParams {
         public @Nullable Map<EnumsApi.HashAlgo, String> checksumMap;
         public @Nullable GitInfo git;
 
-        // TODO 2020-09-11 need to decide - do we still need this variable?
-        //  its purpose isn't clear
+        /**
+         * this field tell Processor don't add absolute path to params.yaml file
+         * as the last parameter in command line.
+         * Useful for defining FUnction which is invoking curl as a command
+         */
         public boolean skipParams = false;
         public final List<Map<String, String>> metas = new ArrayList<>();
     }

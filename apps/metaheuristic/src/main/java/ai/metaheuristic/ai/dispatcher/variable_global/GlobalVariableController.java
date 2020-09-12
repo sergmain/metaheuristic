@@ -52,17 +52,17 @@ public class GlobalVariableController {
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
                        @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                        @ModelAttribute("errorMessage") final ArrayList<String> errorMessages) {
-        GlobalVariableData.GlobalVariablesResult globalVariablesResultRest = globalVariableTopLevelService.getGlobalVariables(pageable);
-        ControllerUtils.addMessagesToModel(model, globalVariablesResultRest);
-        model.addAttribute("result", globalVariablesResultRest);
+        GlobalVariableData.GlobalVariablesResult globalVariables = globalVariableTopLevelService.getGlobalVariables(pageable);
+        ControllerUtils.addMessagesToModel(model, globalVariables);
+        model.addAttribute("result", globalVariables);
         return "dispatcher/global-variable/global-variables";
     }
 
     // for AJAX
     @PostMapping("/global-variables-part")
     public String getGlobalVariablesForAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
-        GlobalVariableData.GlobalVariablesResult globalVariablesResultRest = globalVariableTopLevelService.getGlobalVariables(pageable);
-        model.addAttribute("result", globalVariablesResultRest);
+        GlobalVariableData.GlobalVariablesResult globalVariables = globalVariableTopLevelService.getGlobalVariables(pageable);
+        model.addAttribute("result", globalVariables);
         return "dispatcher/global-variable/global-variables :: fragment-table";
     }
 
