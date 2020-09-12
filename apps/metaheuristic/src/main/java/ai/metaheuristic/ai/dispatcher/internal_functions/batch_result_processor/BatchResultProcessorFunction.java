@@ -312,8 +312,14 @@ public class BatchResultProcessorFunction implements InternalFunction {
         }
 
         for (ItemWithStatusWithMapping value : map.values()) {
-            if (value.mapping==null || value.status==null || value.items ==null) {
-                log.error(S.f("#993.160 TaskContextId #%s is broken, batch doesn't contain all variables, ItemWithStatusWithMapping: %s", value.taskContextId, value));
+            if (value.status==null) {
+                log.error(S.f("#993.180 TaskContextId #%s has been skipped, (item.status==null)", value.taskContextId));
+            }
+            if (value.items ==null) {
+                log.error(S.f("#993.185 TaskContextId #%s has been skipped, (item.items==null)", value.taskContextId));
+            }
+            if (value.mapping==null) {
+                log.warn(S.f("#993.170 TaskContextId #%s doesn't have a mapping for files. VariableId will be used as a file name", value.taskContextId));
             }
         }
         return map;
@@ -328,9 +334,16 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
     private void storeResultVariables(File zipDir, Long execContextId, ItemWithStatusWithMapping item) {
 
-        if (item.mapping==null || item.status==null || item.items ==null) {
-            log.error(S.f("#993.180 TaskContextId #%s has been skipped, ItemWithStatusWithMapping: %s", item.taskContextId, item));
+        if (item.status==null) {
+            log.error(S.f("#993.180 TaskContextId #%s has been skipped, (item.status==null).", item.taskContextId));
             return;
+        }
+        if (item.items ==null) {
+            log.error(S.f("#993.185 TaskContextId #%s has been skipped, (item.items==null).", item.taskContextId));
+            return;
+        }
+        if (item.mapping==null) {
+            log.warn(S.f("#993.190 TaskContextId #%s doesn't have a mapping for files. VariableId will be used as a file name.", item.taskContextId));
         }
 
         BatchItemMappingYaml bimy = new BatchItemMappingYaml();
