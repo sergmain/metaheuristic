@@ -44,52 +44,19 @@ public class MetaUtils {
         return isTrue(getMeta(metas, keys));
     }
 
-/*
-    public static boolean isTrue(@Nullable List<Meta> metas, String... keys) {
-        return isTrue(getMeta(metas, keys));
-    }
-*/
-
     public static boolean isFalse(@Nullable List<Map<String, String>> metas, String... keys) {
         return isFalse(getMeta(metas, keys));
     }
-
-/*
-    public static boolean isFalse(@Nullable List<Meta> metas, String... keys) {
-        return isFalse(getMeta(metas, keys));
-    }
-
-*/
-/*
-    public static @Nullable String getValue(@Nullable List<Meta> metas, String... keys) {
-        Meta m = getMeta(metas, keys);
-        return m!=null ? m.getValue() : null;
-    }
-*/
 
     public static @Nullable String getValue(@Nullable List<Map<String, String>> metas, String... keys) {
         Meta m = getMeta(metas, keys);
         return m!=null ? m.getValue() : null;
     }
 
-/*
-    public static @Nullable Meta getMeta(@Nullable List<Meta> metas, @NonNull String... keys) {
-        if (metas==null) {
-            return null;
-        }
-        if (keys.length==0) {
-            return null;
-        }
-        for (Meta meta : metas) {
-            for (String key : keys) {
-                if (meta.key.equals(key)) {
-                    return meta;
-                }
-            }
-        }
-        return null;
+    public static @Nullable Long getLong(@Nullable List<Map<String, String>> metas, String... keys) {
+        Meta m = getMeta(metas, keys);
+        return m!=null ? Long.valueOf(m.getValue()) : null;
     }
-*/
 
     public static @Nullable Meta getMeta(@Nullable List<Map<String, String>> metas, @NonNull String... keys) {
         if (metas==null) {

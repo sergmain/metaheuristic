@@ -113,6 +113,7 @@ public class Consts {
 
     public static final String MH_NOP_FUNCTION = "mh.nop";
     public static final String MH_BATCH_SPLITTER_FUNCTION = "mh.batch-splitter";
+    public static final String MH_BATCH_LINE_SPLITTER_FUNCTION = "mh.batch-line-splitter";
     public static final String MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION = "mh.permute-variables-and-inlines";
     public static final String MH_AGGREGATE_FUNCTION = "mh.aggregate";
     public static final String MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION = "mh.aggregate-internal-context";
