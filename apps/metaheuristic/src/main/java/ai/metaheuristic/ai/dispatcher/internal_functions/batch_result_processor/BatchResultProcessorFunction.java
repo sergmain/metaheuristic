@@ -167,13 +167,16 @@ public class BatchResultProcessorFunction implements InternalFunction {
         final List<String> statusTypes = Stream.of(StringUtils.split(statusFileTypes, ", ")).collect(Collectors.toList());
 
         String mappingFileTypes = MetaUtils.getValue(taskParamsYaml.task.metas, BATCH_ITEM_MAPPING);
+        final List<String> mappingTypes;
         if (S.b(mappingFileTypes)) {
-            return new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
-                    S.f("#993.029 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_MAPPING, execContextId));
+            log.info(S.f("#993.029 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_MAPPING, execContextId));
+            mappingTypes = List.of();
         }
-        final List<String> mappingTypes = Stream.of(StringUtils.split(mappingFileTypes, ", ")).collect(Collectors.toList());
+        else {
+            mappingTypes = Stream.of(StringUtils.split(mappingFileTypes, ", ")).collect(Collectors.toList());
+        }
 
-        // key is taskContextId
+            // key is taskContextId
         Map<String, ItemWithStatusWithMapping> prepared = groupByTaskContextId(vars, nameToVar, List.of(Consts.TOP_LEVEL_CONTEXT_ID),
                 outputTypes::contains, statusTypes::contains, mappingTypes::contains);
 

@@ -26,13 +26,13 @@ import lombok.Data;
 public class SimpleVariable {
     public final Long id;
     public final String variable;
-    public final String storageUrl;
+    public final String params;
     public final String filename;
     public final boolean inited;
     public final boolean nullified;
     public final String taskContextId;
 
     public DataStorageParams getParams() {
-        return DataStorageParamsUtils.to(storageUrl);
+        return DataStorageParamsUtils.to(params);
     }
 }

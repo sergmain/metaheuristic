@@ -38,6 +38,7 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
@@ -129,7 +130,7 @@ public class BatchSplitterFunction implements InternalFunction {
                 File zipDir=new File(tempDir, "zip");
 
                 Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, zipDir, true, List.of());
-                log.debug("Start loading file data to db");
+                log.debug("Start loading .zip file data to db");
                 return loadFilesFromDirAfterZip(sourceCodeId, execContextId, zipDir, mapping, taskParamsYaml, taskId);
             }
             else {
@@ -155,7 +156,7 @@ public class BatchSplitterFunction implements InternalFunction {
         finally {
             try {
                 if (tempDir!=null && tempDir.exists()) {
-                    Files.deleteIfExists(tempDir.toPath());
+                    FileUtils.deleteDirectory(tempDir);
                 }
             } catch (IOException e) {
                 log.warn("#995.180 Error deleting dir: {}, error: {}", tempDir.getAbsolutePath(), e.getMessage());

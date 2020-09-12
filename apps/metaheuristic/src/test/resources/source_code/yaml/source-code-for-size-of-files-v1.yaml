@@ -1,0 +1,55 @@
+source:
+  uid: source-code-for-size-of-files-v1.5
+  metas:
+    - mh.result-file-extension: .zip
+  variables:
+    inline:
+      list-files:
+        dir-code: 'dir-for-processing'
+  processes:
+    - code: get-list-of-files:1.4
+      name: get-list-of-files:1.4
+      function:
+        code: get-list-of-files:1.4
+      outputs:
+        - name: var-logger-list-of-files
+        - name: var-list-of-files
+    - code: mh.batch-line-splitter
+      name: mh.batch-line-splitter
+      function:
+        code: mh.batch-line-splitter
+        context: internal
+      metas:
+        - number-of-lines-per-task: 500
+        - variable-for-splitting: var-list-of-files
+        - output-is-dynamic: true
+        - output-variable: var-batch-item
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: get-length-of-file-by-ref:1.0
+            name: get-length-of-file-by-ref:1.0
+            function:
+              code: get-length-of-file-by-ref:1.0
+            inputs:
+              - name: var-batch-item
+                array: true
+            outputs:
+              - name: var-result
+                type: processed-file-type-1
+              - name: var-logger
+                type: processing-status-type
+    - code: mh.batch-result-processor
+      name: batch result processor
+      function:
+        code: mh.batch-result-processor
+        context: internal
+      outputs:
+        - name: var-batch-result
+          type: batch-result
+        - name: var-batch-status
+          type: batch-status
+      metas:
+        - batch-type-processed-file: processed-file-type-1
+        - batch-type-processing-status: processing-status-type
+version: 1

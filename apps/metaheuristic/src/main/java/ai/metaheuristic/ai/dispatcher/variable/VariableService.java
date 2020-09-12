@@ -226,6 +226,7 @@ public class VariableService {
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
             SimpleVariable sv = getVariableAsSimple(variable.name, p.processCode, execContext);
             if (sv!=null) {
+                log.warn(S.f("Variable %s was already initialized for process %s. May be there is double declaration of variables",variable.name, p.processCode) );
                 continue;
             }
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? getParentContext(taskParams.task.taskContextId) : taskParams.task.taskContextId;

@@ -178,6 +178,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
         List<List<String>> allLines = new ArrayList<>();
         LineIterator it = IOUtils.lineIterator(new ByteArrayInputStream(content.getBytes()), StandardCharsets.UTF_8);
         List<String> currList = new ArrayList<>();
+        allLines.add(currList);
         while (it.hasNext()) {
             if (currList.size()==numberOfLines) {
                 currList = new ArrayList<>();
