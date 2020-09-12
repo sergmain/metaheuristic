@@ -1,5 +1,5 @@
 source:
-  uid: source-code-for-size-of-files-v1.5
+  uid: source-code-for-size-of-files-v1.6
   metas:
     - mh.result-file-extension: .zip
   variables:
@@ -27,10 +27,10 @@ source:
       subProcesses:
         logic: sequential
         processes:
-          - code: get-length-of-file-by-ref:1.0
-            name: get-length-of-file-by-ref:1.0
+          - code: get-length-of-file-by-ref:1.1
+            name: get-length-of-file-by-ref:1.1
             function:
-              code: get-length-of-file-by-ref:1.0
+              code: get-length-of-file-by-ref:1.1
             inputs:
               - name: var-batch-item
                 array: true

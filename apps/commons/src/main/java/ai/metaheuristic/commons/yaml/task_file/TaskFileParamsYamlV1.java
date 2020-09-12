@@ -60,8 +60,11 @@ public class TaskFileParamsYamlV1 implements BaseParams {
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
         public EnumsApi.DataType dataType;
+        // TODO 2020-09-12 right now a context of variable won't be set.
+        //  So you need to check compatibility between SourceCode and Function manually.
+//        public boolean array;
 
-        // real file name of resource, is present
+        // real file name of variable, is present
         public @Nullable String filename;
         public @Nullable String type;
         public boolean empty = false;
