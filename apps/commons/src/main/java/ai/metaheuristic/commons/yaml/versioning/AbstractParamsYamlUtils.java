@@ -36,7 +36,7 @@ abstract public class AbstractParamsYamlUtils<CurrT extends BaseParams, NextT ex
 
     public abstract @Nullable NextU nextUtil();
 
-    public abstract PrevU prevUtil();
+    public abstract @Nullable PrevU prevUtil();
 
     public abstract String toString(CurrT yaml);
 

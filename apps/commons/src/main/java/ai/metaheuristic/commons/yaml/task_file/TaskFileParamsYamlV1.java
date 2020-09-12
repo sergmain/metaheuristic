@@ -113,7 +113,7 @@ public class TaskFileParamsYamlV1 implements BaseParams {
     }
 
     @Data
-    public static class TaskYamlV1 {
+    public static class TaskV1 {
         public Long execContextId;
         public boolean clean = false;
 
@@ -126,6 +126,6 @@ public class TaskFileParamsYamlV1 implements BaseParams {
         public String workingPath;
     }
 
-    public TaskYamlV1 task = new TaskYamlV1();
+    public TaskV1 task = new TaskV1();
 
 }

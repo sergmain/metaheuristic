@@ -60,6 +60,7 @@ public class TaskFileParamsYaml implements BaseParams {
         public @Nullable GitInfo git;
         public @Nullable DiskInfo disk;
         public EnumsApi.DataType dataType;
+        public boolean array;
 
         public @Nullable String filename;
         public @Nullable String type;

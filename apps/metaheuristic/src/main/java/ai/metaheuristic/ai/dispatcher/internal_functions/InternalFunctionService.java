@@ -187,8 +187,9 @@ public class InternalFunctionService {
                 String variableName = S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
                 Variable v;
                 try {
-                    try( InputStream is = new ByteArrayInputStream(inputVariableContent.getBytes())) {
-                        v = variableService.createInitialized(is, inputVariableContent.length(), variableName, variableName, execContextId, currTaskContextId);
+                    final byte[] bytes = inputVariableContent.getBytes();
+                    try(InputStream is = new ByteArrayInputStream(bytes)) {
+                        v = variableService.createInitialized(is, bytes.length, variableName, variableName, execContextId, currTaskContextId);
                     }
                 } catch (IOException e) {
                     throw new BreakFromLambdaException(e);
