@@ -133,18 +133,18 @@ public class CompanyRestController {
      * @param accountId Account.id
      * @param role name of role to set or remove
      * @param checkbox flag to set a role or to remove it
-     * @param companyId Account.companyId
+     * @param companyUniqueId Account.companyId
      * @return see @ai.metaheuristic.api.data.OperationStatusRest
      */
-    @PostMapping("/company-account-edit-roles-commit/{companyId}")
+    @PostMapping("/company-account-edit-roles-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public OperationStatusRest rolesEditFormCommit(Long accountId, String role, @RequestParam(required = false, defaultValue = "false") boolean checkbox,
-                                      @PathVariable Long companyId) {
-        AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(accountId, companyId);
+                                      @PathVariable Long companyUniqueId) {
+        AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(accountId, companyUniqueId);
         if (accountResult.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, accountResult.getErrorMessages(), accountResult.infoMessages);
         }
-        OperationStatusRest operationStatusRest = companyAccountTopLevelService.storeRolesForUserById(accountId, role, checkbox, companyId);
+        OperationStatusRest operationStatusRest = companyAccountTopLevelService.storeRolesForUserById(accountId, role, checkbox, companyUniqueId);
         return operationStatusRest;
     }
 

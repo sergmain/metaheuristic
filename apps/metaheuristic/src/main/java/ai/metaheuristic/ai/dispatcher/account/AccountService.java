@@ -190,7 +190,7 @@ public class AccountService {
         account.setRoles(roles);
         account.updatedOn = System.currentTimeMillis();
         accountCache.save(account);
-        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Roles was changed successfully", "");
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Role "+role+" was changed successfully", "");
     }
 
 }

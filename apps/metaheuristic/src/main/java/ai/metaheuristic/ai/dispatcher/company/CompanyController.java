@@ -250,28 +250,24 @@ public class CompanyController {
     /**
      * !!! this method accepts an index(roleIndex) in an array of possible roles
      */
-    @PostMapping("/company-account-edit-roles-commit/{companyId}")
+    @PostMapping("/company-account-edit-roles-commit/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
     public String rolesEditFormCommit(
-            Long accountId, Integer roleIndex, @RequestParam(required = false, defaultValue = "false") boolean checkbox,
-                                      final RedirectAttributes redirectAttributes, @PathVariable Long companyId) {
-        AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(accountId, companyId);
+            Long accountId, String role, @RequestParam(required = false, defaultValue = "false") boolean checkbox,
+                                      final RedirectAttributes redirectAttributes, @PathVariable Long companyUniqueId) {
+        AccountData.AccountResult accountResult = companyAccountTopLevelService.getAccount(accountId, companyUniqueId);
         if (accountResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", accountResult.getErrorMessagesAsList());
-            return "redirect:/dispatcher/company/company-accounts/"+companyId;
+            return "redirect:/dispatcher/company/company-accounts/"+companyUniqueId;
         }
-
-        List<String> possibleRoles = Consts.ID_1.equals(companyId) ? SecConsts.COMPANY_1_ROLES : SecConsts.POSSIBLE_ROLES;
-        String role = possibleRoles.get(roleIndex);
-
-        OperationStatusRest operationStatusRest = companyAccountTopLevelService.storeRolesForUserById(accountId, role, checkbox, companyId);
+        OperationStatusRest operationStatusRest = companyAccountTopLevelService.storeRolesForUserById(accountId, role, checkbox, companyUniqueId);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         if (operationStatusRest.isInfoMessages()) {
             redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
         }
-        return "redirect:/dispatcher/company/company-account-edit-roles/"+companyId + "/" + accountId;
+        return "redirect:/dispatcher/company/company-account-edit-roles/"+companyUniqueId + "/" + accountId;
     }
 
 }

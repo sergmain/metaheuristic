@@ -61,12 +61,12 @@ public class CompanyAccountTopLevelService {
         return accountService.editFormCommit(accountId, publicName, enabled, companyUniqueId);
     }
 
-    public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, Long companyId) {
-        return accountService.passwordEditFormCommit(accountId, password, password2, companyId);
+    public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, Long companyUniqueId) {
+        return accountService.passwordEditFormCommit(accountId, password, password2, companyUniqueId);
     }
 
-    public OperationStatusRest storeRolesForUserById(Long accountId, String role, boolean checkbox, Long companyId) {
-        return accountService.storeRolesForUserById(accountId, role, checkbox, companyId);
+    public OperationStatusRest storeRolesForUserById(Long accountId, String role, boolean checkbox, Long companyUniqueId) {
+        return accountService.storeRolesForUserById(accountId, role, checkbox, companyUniqueId);
     }
 
 

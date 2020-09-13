@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
 @Profile("dispatcher")
 @CrossOrigin
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")
+@PreAuthorize("hasAnyRole('MASTER_ADMIN', 'ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")
 public class BatchRestController {
 
     private final BatchTopLevelService batchTopLevelService;
