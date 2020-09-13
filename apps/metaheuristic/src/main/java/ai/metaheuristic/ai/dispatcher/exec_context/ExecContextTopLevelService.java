@@ -31,7 +31,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -105,7 +104,6 @@ public class ExecContextTopLevelService {
         return r;
     }
 
-    @NonNull
     public static ExecContextApiData.ExecContextStateResult getExecContextStateResult(
             Long sourceCodeId, List<TaskData.SimpleTaskInfo> infos,
             List<String> processCodes, EnumsApi.SourceCodeType sourceCodeType, String sourceCodeUid, boolean sourceCodeValid) {

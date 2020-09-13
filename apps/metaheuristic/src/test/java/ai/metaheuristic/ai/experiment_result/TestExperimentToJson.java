@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.experiment_result;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
-import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
@@ -37,9 +36,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 public class TestExperimentToJson extends PreparingSourceCode {
-
-    @Autowired
-    private ExperimentTopLevelService experimentTopLevelService;
 
     @Autowired
     private ExperimentResultService experimentResultService;
