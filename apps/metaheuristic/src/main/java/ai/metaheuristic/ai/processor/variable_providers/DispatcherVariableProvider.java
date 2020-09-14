@@ -116,7 +116,7 @@ public class DispatcherVariableProvider implements VariableProvider {
         for (VariableArrayParamsYaml.Variable v : variables) {
             // element of array of variables can't be nullable
             DownloadVariableTask task1 = new DownloadVariableTask(
-                    v.id, EnumsApi.VariableContext.local, taskId, taskDir, chunkSize, dispatcherLookup, processorId, false);
+                    v.id, v.dataType==DataType.variable ? EnumsApi.VariableContext.local : EnumsApi.VariableContext.global, taskId, taskDir, chunkSize, dispatcherLookup, processorId, false);
             downloadVariableService.add(task1);
         }
     }

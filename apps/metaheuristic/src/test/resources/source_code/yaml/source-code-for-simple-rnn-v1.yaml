@@ -1,0 +1,58 @@
+source:
+  clean: false
+  uid: source-code-for-simple-rnn-v1.1
+  variables:
+    globals:
+      - cosine
+    inline:
+      mh.hyper-params:
+        batch_size: '[10]'
+        time_steps: '[20]'
+        RNN: '[GRU]'
+        epoch: '500'
+        activation: '[sigmoid]'
+        optimizer: '[adam]'
+  #        activation: '[hard_sigmoid, softplus, softmax, softsign, relu, tanh, sigmoid, linear, elu]'
+  #        optimizer: '[sgd, nadam, adagrad, adadelta, rmsprop, adam, adamax]'
+  processes:
+    - code: mh.permute-variables-and-inlines
+      name: permute variables and inlines
+      function:
+        code: mh.permute-variables-and-inlines
+        context: internal
+      metas:
+        - variables-for-permutation: cosine
+        - output-is-dynamic: true
+        - inline-key: mh.hyper-params
+        - permute-inline: true
+        - output-variable: var-dataset
+        - inline-permutation: var-inline-permutation
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: simple-rnn
+            name: simple-rnn
+            function:
+              code: simple-rnn:1.1
+            inputs:
+              - name: var-dataset
+                array: true
+              - name: var-inline-permutation
+            outputs:
+              - name: var-metrics
+              - name: var-predicted
+              - name: var-fitting
+    - code: mh.experiment-result-processor
+      name: experiment result processor
+      function:
+        code: mh.experiment-result-processor
+        context: internal
+      metas:
+        - feature-item: var-dataset
+        - inline-permutation: var-inline-permutation
+        - metrics: var-metrics
+        - predicted: var-predicted
+        - fitting: var-fitting
+        - inline-key: mh.hyper-params
+        - permute-inline: true
+version: 1

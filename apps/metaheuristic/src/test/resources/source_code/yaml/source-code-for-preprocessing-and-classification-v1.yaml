@@ -96,4 +96,17 @@ source:
               - name: predicted
             outputs:
               - name: overfitting
+    - code: mh.experiment-result-processor
+      name: experiment result processor
+      function:
+        code: mh.experiment-result-processor
+        context: internal
+      metas:
+        - feature-item: var-feature-item
+        - inline-permutation: var-inline-permutation
+        - metrics: var-metrics
+        - predicted: var-predicted
+        - fitting: var-fitting
+        - inline-key: mh.hyper-params
+        - permute-inline: true
 version: 1

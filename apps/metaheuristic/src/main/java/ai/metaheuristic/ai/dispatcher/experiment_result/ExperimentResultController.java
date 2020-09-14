@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.experiment_result;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -28,6 +30,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -48,6 +51,7 @@ public class ExperimentResultController {
     private static final String REDIRECT_DISPATCHER_EXPERIMENT_RESULT_EXPERIMENT_RESULTS = "redirect:/dispatcher/ai/experiment-result/experiment-results";
     private final ExperimentResultService experimentResultService;
     private final ExperimentResultTopLevelService experimentResultTopLevelService;
+    private final UserContextService userContextService;
 
     @GetMapping("/experiment-results")
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
@@ -118,8 +122,9 @@ public class ExperimentResultController {
     }
 
     @PostMapping(value = "/experiment-result-upload-from-file")
-    public String uploadExperimentResult(final MultipartFile file, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = experimentResultTopLevelService.uploadExperiment(file);
+    public String uploadExperimentResult(final MultipartFile file, final RedirectAttributes redirectAttributes, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        OperationStatusRest operationStatusRest = experimentResultTopLevelService.uploadExperiment(file, context);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }

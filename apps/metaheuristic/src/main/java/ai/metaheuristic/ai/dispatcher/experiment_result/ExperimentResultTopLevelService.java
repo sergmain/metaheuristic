@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentTask;
@@ -112,7 +113,7 @@ public class ExperimentResultTopLevelService {
         }
     }
 
-    public OperationStatusRest uploadExperiment(MultipartFile file) {
+    public OperationStatusRest uploadExperiment(MultipartFile file, DispatcherContext context) {
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -167,6 +168,7 @@ public class ExperimentResultTopLevelService {
             experimentResult.description = experimentResult.name;
             experimentResult.code = experimentResult.name;
             experimentResult.params = params;
+            experimentResult.companyId = context.getCompanyId();
             experimentResult = experimentResultRepository.save(experimentResult);
 
             ExperimentResultParamsYaml apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(params);
@@ -175,7 +177,7 @@ public class ExperimentResultTopLevelService {
                 if (++count%100==0) {
                     log.info("#422.045 Current number of imported task: {} of total {}", count, apy.taskFeatures.size());
                 }
-                File taskFile = new File(tasksDir, S.f(TASK_YAML_FILE, taskFeature));
+                File taskFile = new File(tasksDir, S.f(TASK_YAML_FILE, taskFeature.taskId));
 
                 ExperimentTask at = new ExperimentTask();
                 at.experimentResultId = experimentResult.id;

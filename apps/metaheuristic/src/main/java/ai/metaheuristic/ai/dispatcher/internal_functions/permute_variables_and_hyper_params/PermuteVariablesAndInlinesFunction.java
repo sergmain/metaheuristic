@@ -149,12 +149,12 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
         final Permutation<VariableUtils.VariableHolder> permutation = new Permutation<>();
         final String variableName = MetaUtils.getValue(process.metas, "output-variable");
         if (S.b(variableName)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.output_variable_not_defined,
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
                     "Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
         }
         final String inlineVariableName = MetaUtils.getValue(process.metas, "inline-permutation");
         if (S.b(inlineVariableName)) {
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.output_variable_not_defined,
+            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
                     "Meta with key 'inline-permutation' wasn't found for process '"+process.processCode+"'");
         }
         final List<Long> lastIds = new ArrayList<>();

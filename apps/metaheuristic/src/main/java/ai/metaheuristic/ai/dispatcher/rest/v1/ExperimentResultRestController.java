@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultTopLevelService;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
@@ -26,6 +28,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,6 +43,7 @@ public class ExperimentResultRestController {
 
     private final ExperimentResultService experimentResultService;
     private final ExperimentResultTopLevelService experimentResultTopLevelService;
+    private final UserContextService userContextService;
 
     @GetMapping("/experiment-results")
     public ExperimentResultData.ExperimentResultSimpleList init(@PageableDefault(size = 5) Pageable pageable) {
@@ -82,7 +86,8 @@ public class ExperimentResultRestController {
     }
 
     @PostMapping(value = "/experiment-result-upload-from-file")
-    public OperationStatusRest uploadExperimentResult(final MultipartFile file) {
-        return experimentResultTopLevelService.uploadExperiment(file);
+    public OperationStatusRest uploadExperimentResult(final MultipartFile file, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return experimentResultTopLevelService.uploadExperiment(file, context);
     }
 }
