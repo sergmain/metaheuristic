@@ -68,7 +68,7 @@ public class DispatcherSchedule {
         }
         this.asString = cfg;
         final ExtendedTimePeriod config = ExtendedTimePeriodUtils.to(cfg);
-        this.policy = config.policy;
+        this.policy = config.policy==null ? ExtendedTimePeriod.SchedulePolicy.normal : config.policy;
 
         try {
             if (!S.b(config.workingDay)) {
