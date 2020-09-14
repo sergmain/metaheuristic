@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.core;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
 import ai.metaheuristic.api.data.FunctionApiData;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.util.Date;
@@ -30,23 +30,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Service
 @Slf4j
-public class SystemProcessService {
+@RequiredArgsConstructor
+public class SystemProcessLauncher {
 
     private static final String TIMEOUT_MESSAGE =
             "===============================================================\n" +
             "After %d seconds of timeout this process has been destroyed.\n" +
             "===============================================================\n";
 
-
     public static class StreamHolder {
         public InputStream is;
     }
 
-    public FunctionApiData.SystemExecResult execCommand(
+    public static FunctionApiData.SystemExecResult execCommand(
             List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate, String functionCode,
-            @Nullable final DispatcherSchedule schedule) throws IOException, InterruptedException {
+            @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines) throws IOException, InterruptedException {
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
         log.info("\ttaskDir: {}", execDir.getPath());
@@ -174,7 +173,7 @@ public class SystemProcessService {
         log.debug("'\tdestroyed with timeout: {}", isTerminated.get());
         log.debug("'\tcmd: {}", cmd);
         log.debug("'\texecDir: {}", execDir.getAbsolutePath());
-        String console = readLastLines(1000, consoleLogFile) + '\n' + timeoutMessage;
+        String console = readLastLines(taskConsoleOutputMaxLines, consoleLogFile) + '\n' + timeoutMessage;
 
         log.debug("'\tconsole output:\n{}", console);
         return new FunctionApiData.SystemExecResult(functionCode, exitCode==0, exitCode, console);
@@ -198,7 +197,7 @@ public class SystemProcessService {
         }
     }
 
-    private String readLastLines(int maxSize, File consoleLogFile) throws IOException {
+    private static String readLastLines(int maxSize, File consoleLogFile) throws IOException {
         LinkedList<String> lines = new LinkedList<>();
         String inputLine;
         try(FileReader fileReader = new FileReader(consoleLogFile); BufferedReader in = new BufferedReader(fileReader) ) {

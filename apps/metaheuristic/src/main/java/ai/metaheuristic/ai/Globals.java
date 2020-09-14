@@ -166,6 +166,9 @@ public class Globals {
     @Value("${mh.processor.env-hot-deploy-supported:#{false}}")
     public boolean processorEnvHotDeploySupported = false;
 
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.task-console-output-max-lines'), 1000, 100000, 1000) }")
+    public int taskConsoleOutputMaxLines;
+
 
     // some fields
     public File dispatcherTempDir;

@@ -18,12 +18,12 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.core.SystemProcessService;
+import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherSchedule;
@@ -66,8 +66,6 @@ import java.util.stream.Stream;
 public class TaskProcessor {
 
     private final Globals globals;
-
-    private final SystemProcessService systemProcessService;
     private final ProcessorTaskService processorTaskService;
     private final CurrentExecState currentExecState;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
@@ -527,8 +525,9 @@ public class TaskProcessor {
             File consoleLogFile = new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
             // Exec function
-            systemExecResult = systemProcessService.execCommand(
-                    cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule);
+            systemExecResult = SystemProcessLauncher.execCommand(
+                    cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
+                    globals.taskConsoleOutputMaxLines);
 
         }
         catch (ScheduleInactivePeriodException e) {

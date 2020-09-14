@@ -17,7 +17,8 @@
 package ai.metaheuristic.ai.processor.sourcing.git;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.core.SystemProcessService;
+import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.processor.env.EnvService;
 import ai.metaheuristic.api.EnumsApi;
@@ -46,14 +47,14 @@ public class GitSourcingService {
     private static final String GIT_VERSION_PREFIX = "git version";
     private static final String GIT_PREFIX = "git";
 
-    private final SystemProcessService systemProcessService;
     private final EnvService envService;
+    private final Globals globals;
 
     public final GitStatusInfo gitStatusInfo;
 
-    public GitSourcingService(SystemProcessService systemProcessService, EnvService envService) {
-        this.systemProcessService = systemProcessService;
+    public GitSourcingService(EnvService envService, Globals globals) {
         this.envService = envService;
+        this.globals = globals;
         this.gitStatusInfo = getGitStatus();
     }
 
@@ -115,8 +116,9 @@ public class GitSourcingService {
         File consoleLogFile = null;
         try {
             consoleLogFile = File.createTempFile("console-", ".log");
-            FunctionApiData.SystemExecResult systemExecResult = systemProcessService.execCommand(
-                    gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec", null );
+            FunctionApiData.SystemExecResult systemExecResult = SystemProcessLauncher.execCommand(
+                    gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec", null,
+                    globals.taskConsoleOutputMaxLines);
             log.info("systemExecResult: {}" , systemExecResult);
             return new GitExecResult(systemExecResult, systemExecResult.isOk, systemExecResult.console);
         } catch (InterruptedException | IOException e) {

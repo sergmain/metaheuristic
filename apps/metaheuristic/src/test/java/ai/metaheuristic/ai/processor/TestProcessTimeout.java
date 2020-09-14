@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.processor;
 
-import ai.metaheuristic.ai.core.SystemProcessService;
+import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ public class TestProcessTimeout {
         pb.redirectErrorStream(true);
         final Process process = pb.start();
 
-        final SystemProcessService.StreamHolder streamHolder = new SystemProcessService.StreamHolder();
+        final SystemProcessLauncher.StreamHolder streamHolder = new SystemProcessLauncher.StreamHolder();
         int exitCode;
         long timeout = TimeUnit.SECONDS.toMillis(15);
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.system;
 
-import ai.metaheuristic.ai.core.SystemProcessService;
+import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import com.mysql.cj.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -55,7 +55,7 @@ public class TestDestroyProcesses {
         pb.redirectErrorStream(true);
         final Process process = pb.start();
 
-        final SystemProcessService.StreamHolder streamHolder = new SystemProcessService.StreamHolder();
+        final SystemProcessLauncher.StreamHolder streamHolder = new SystemProcessLauncher.StreamHolder();
 
         final AtomicBoolean isRun = new AtomicBoolean(false);
 /*
@@ -80,7 +80,7 @@ public class TestDestroyProcesses {
 
         Thread.sleep(TimeUnit.SECONDS.toMillis(5));
         LinkedList<ProcessHandle> handles = new LinkedList<>();
-        SystemProcessService.collectHandlers(handles, process.toHandle());
+        SystemProcessLauncher.collectHandlers(handles, process.toHandle());
         int numberOfAlive = getNumberOfAlive(handles);
         assertNotEquals(0, numberOfAlive);
 
@@ -88,10 +88,10 @@ public class TestDestroyProcesses {
         for (ProcessHandle handle : handles) {
             log.info("\tPID: {}", handle.pid());
         }
-        SystemProcessService.destroy(handles);
+        SystemProcessLauncher.destroy(handles);
         Thread.sleep(TimeUnit.SECONDS.toMillis(5));
         handles.clear();
-        SystemProcessService.collectHandlers(handles, process.toHandle());
+        SystemProcessLauncher.collectHandlers(handles, process.toHandle());
         log.info("Number of handlers after destroying: {}", handles.size());
         for (ProcessHandle handle : handles) {
             log.info("\tPID: {}", handle.pid());
