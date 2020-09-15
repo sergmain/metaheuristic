@@ -100,7 +100,7 @@ public class BatchForOperatorRestController {
 
     @GetMapping(value = "/company-batch-source-codes/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
-    public SourceCodeData.SourceCodesForCompany batchAdd(@PathVariable Long companyUniqueId) {
+    public SourceCodeData.SourceCodesForCompany sourceCodesForCompany(@PathVariable Long companyUniqueId) {
         SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeSelectorService.getAvailableSourceCodesForCompany(companyUniqueId);
         return sourceCodes;
     }
