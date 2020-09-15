@@ -76,26 +76,6 @@ public class BatchForOperatorController {
         return "dispatcher/company/batch/company-batches";
     }
 
-/*
-    // TODO 2020-09-03 looks like that this method isn't required
-    @GetMapping("/company-batches-usage-info/{companyUniqueId}/{days}")
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
-    public String batches(
-            Model model,
-            @ModelAttribute("errorMessage") final String errorMessage,
-            @ModelAttribute("infoMessages") final String infoMessages,
-            @PathVariable Long companyUniqueId,
-            @PathVariable Integer days
-        ) {
-        BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(null, companyUniqueId, null, true, false);
-        ControllerUtils.addMessagesToModel(model, batchesResult);
-        model.addAttribute("result", batchesResult);
-        model.addAttribute("companyUniqueId", companyUniqueId);
-        model.addAttribute("days", days);
-        return "dispatcher/company/batch/company-batches-usage-info";
-    }
-*/
-
     @PostMapping("/company-batches-part/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
     public String batchesPart(Model model, @PageableDefault(size = 20) Pageable pageable, @PathVariable Long companyUniqueId) {
@@ -153,8 +133,8 @@ public class BatchForOperatorController {
             final MultipartFile file,
             @PathVariable Long companyUniqueId,
             Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
-        // create context with putting current user to specific company
-        // so a master operator can pretend that he is a user of specific company
+        // create context with putting a current user to specific company
+        // so a master operator can pretend to be a user of specific company
         DispatcherContext context = userContextService.getContext(authentication, companyUniqueId);
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
         if (uploadingStatus.isErrorMessages()) {
