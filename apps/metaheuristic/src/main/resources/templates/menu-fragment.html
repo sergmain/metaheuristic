@@ -7,7 +7,7 @@
         <li th:attr="class=${#httpServletRequest.requestURI=='/about'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="about.html" th:href="@{/about}">About</a>
         </li>
-        <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')"
+        <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER')"
             th:if="${#bools.isTrue(@environment.getProperty('mh.dispatcher.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/dispatcher/ai/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="dispatcher/ai/experiment/experiments.html" th:href="@{/dispatcher/ai/experiment/experiments}">AI</a>
         </li>

@@ -67,7 +67,7 @@ public class BatchRestController {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final DispatcherParamsService dispatcherParamsService;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @GetMapping("/batches")
     public BatchData.BatchesResult batches(
             @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
@@ -83,7 +83,7 @@ public class BatchRestController {
         return batchTopLevelService.getBatchExecStatuses(context);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @PostMapping("/batches-part")
     public BatchData.BatchesResult batchesPart(
             @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
@@ -92,7 +92,7 @@ public class BatchRestController {
         return batchTopLevelService.getBatches(pageable, context, false, filterBatches);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @GetMapping(value = "/batch-add")
     public SourceCodeData.SourceCodeUidsForCompany batchAdd(Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
@@ -105,19 +105,19 @@ public class BatchRestController {
         return codes;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @GetMapping("/batch-delete/{batchId}")
     public BatchData.Status processResourceDelete(@PathVariable Long batchId, Authentication authentication) {
         return batchTopLevelService.getBatchProcessingStatus(batchId, userContextService.getContext(authentication).getCompanyId(), false);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @PostMapping("/batch-delete-commit")
     public OperationStatusRest processResourceDeleteCommit(Long batchId, Authentication authentication) {
         return batchTopLevelService.processBatchDeleteCommit(batchId, userContextService.getContext(authentication), true);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @PostMapping(value = "/batch-upload-from-file")
     public OperationStatusRest uploadFile(final MultipartFile file, Long sourceCodeId, Authentication authentication) {
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, userContextService.getContext(authentication));
@@ -127,13 +127,13 @@ public class BatchRestController {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @GetMapping(value= "/batch-status/{batchId}" )
     public BatchData.Status getProcessingResourceStatus(@PathVariable("batchId") Long batchId, Authentication authentication) {
         return batchTopLevelService.getBatchProcessingStatus(batchId, userContextService.getContext(authentication).getCompanyId(), false);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request, @PathVariable("batchId") Long batchId,

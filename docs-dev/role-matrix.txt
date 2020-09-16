@@ -1,0 +1,15 @@
+top menu
+'AI' - 'ADMIN', 'DATA', 'MANAGER'
+all sub-menu - the same roles
+
+'Batch' = 'ADMIN', 'DATA', 'MANAGER', 'OPERATOR'
+all sub-menu - the same roles
+
+'Control panel' - 'MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT', 'ADMIN', 'DATA', 'MANAGER'
+sub-menu:
+    'Source codes' - 'ADMIN', 'DATA', 'MANAGER'
+    'Variables' - 'ADMIN', 'DATA'
+    'Functions' - 'ADMIN', 'DATA'
+    'Processors' - 'ADMIN', 'DATA'
+    'Accounts' - 'ADMIN'
+    'Company' - 'MASTER_ADMIN', 'MASTER_OPERATOR', 'MASTER_SUPPORT'
