@@ -19,16 +19,16 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupConfig;
-import ai.metaheuristic.ai.yaml.metadata.Metadata;
-import ai.metaheuristic.ai.yaml.metadata.MetadataUtils;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYamlUtils;
+import ai.metaheuristic.ai.yaml.metadata.Metadata;
+import ai.metaheuristic.ai.yaml.metadata.MetadataUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -41,8 +41,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -54,12 +55,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("UnusedReturnValue")
 @Service
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor
 public class MetadataService {
 
+    private final ApplicationContext appCtx;
     private final Globals globals;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorFunctionService processorFunctionService;
@@ -101,10 +104,12 @@ public class MetadataService {
                 metadata = MetadataUtils.to(yaml);
             } catch (org.yaml.snakeyaml.reader.ReaderException e) {
                 log.error("#815.020 Bad data in " + metadataFile.getAbsolutePath()+"\nYaml:\n" + yaml);
-                throw new IllegalStateException("#815.015 Error while loading file: " + metadataFile.getPath(), e);
-            } catch (IOException e) {
+                System.exit(SpringApplication.exit(appCtx, () -> -500));
+//                throw new IllegalStateException("#815.015 Error while loading file: " + metadataFile.getPath(), e);
+            } catch (Throwable e) {
                 log.error("#815.040 Error", e);
-                throw new IllegalStateException("#815.060 Error while loading file: " + metadataFile.getPath(), e);
+                System.exit(SpringApplication.exit(appCtx, () -> -500));
+//                throw new IllegalStateException("#815.060 Error while loading file: " + metadataFile.getPath(), e);
             }
         }
         if (metadata==null) {
@@ -113,7 +118,7 @@ public class MetadataService {
         for (Map.Entry<String, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
             dispatcherUrlAsCode(entry.getKey());
         }
-        // update metadata.yaml file after fixing brocked metas
+        // update metadata.yaml file after fixing broken metas
         updateMetadataFile();
         markAllAsUnverified();
         //noinspection unused
@@ -147,8 +152,7 @@ public class MetadataService {
         return new ChecksumWithSignatureState(Enums.ChecksumStateEnum.signature_ok, checksumWithSignature, data, EnumsApi.HashAlgo.SHA256WithSignature);
     }
 
-    @NonNull
-    public ChecksumWithSignatureState setSignatureNotValid(String functionCode, String dispatcherUrl) {
+    private ChecksumWithSignatureState setSignatureNotValid(String functionCode, String dispatcherUrl) {
         setFunctionState(dispatcherUrl, functionCode, Enums.FunctionState.signature_not_found);
         return new ChecksumWithSignatureState(Enums.ChecksumStateEnum.signature_not_valid);
     }
@@ -163,7 +167,7 @@ public class MetadataService {
             final String dispatcherUrl = status.dispatcherUrl;
             final String functionCode = status.code;
 
-            setVerifiedStatus(dispatcherUrl, functionCode, false);
+            setAsUnverifiedStatus(dispatcherUrl, functionCode);
         }
     }
 
@@ -362,7 +366,7 @@ public class MetadataService {
         }
     }
 
-    public boolean removeFunction(final String dispatcherUrl, String functionCode) {
+    private boolean removeFunction(final String dispatcherUrl, String functionCode) {
         if (S.b(dispatcherUrl)) {
             throw new IllegalStateException("#815.260 dispatcherUrl is null");
         }
@@ -382,7 +386,7 @@ public class MetadataService {
         }
     }
 
-    public boolean setVerifiedStatus(final String dispatcherUrl, String functionCode, boolean verified) {
+    private boolean setAsUnverifiedStatus(final String dispatcherUrl, String functionCode) {
         if (S.b(dispatcherUrl)) {
             throw new IllegalStateException("#815.300 dispatcherUrl is null");
         }
@@ -396,7 +400,7 @@ public class MetadataService {
             if (status == null) {
                 return false;
             }
-            status.verified = verified;
+            status.verified = false;
             String yaml = FunctionDownloadStatusYamlUtils.BASE_YAML_UTILS.toString(functionDownloadStatusYaml);
             metadata.metadata.put(Consts.META_FUNCTION_DOWNLOAD_STATUS, yaml);
             updateMetadataFile();
@@ -478,6 +482,7 @@ public class MetadataService {
         }
     }
 
+    @SuppressWarnings("unused")
     public void setSessionId(final String dispatcherUrl, String sessionId) {
         if (StringUtils.isBlank(dispatcherUrl)) {
             throw new IllegalStateException("#815.380 dispatcherUrl is null");
@@ -504,23 +509,37 @@ public class MetadataService {
             File yamlFileBak = new File(globals.processorDir, Consts.METADATA_YAML_FILE_NAME + ".bak");
             //noinspection ResultOfMethodCallIgnored
             yamlFileBak.delete();
-            if (metadataFile.exists()) {
-                //noinspection ResultOfMethodCallIgnored
-                metadataFile.renameTo(yamlFileBak);
-            }
+            //noinspection ResultOfMethodCallIgnored
+            metadataFile.renameTo(yamlFileBak);
         }
 
         try {
             String data = MetadataUtils.toString(metadata);
-            FileUtils.write(metadataFile, data, StandardCharsets.UTF_8, false);
+            FileUtils.writeStringToFile(metadataFile, data, StandardCharsets.UTF_8, false);
             String check = FileUtils.readFileToString(metadataFile, StandardCharsets.UTF_8);
             if (!check.equals(data)) {
-                log.warn("#815.440 Metadata was persisted with an error, content is different, size - expected: {}, actual: {}", data.length(), check.length());
+                log.error("#815.440 Metadata was persisted with an error, content is different, size - expected: {}, actual: {}, Processor will be closed", data.length(), check.length());
+                System.exit(SpringApplication.exit(appCtx, () -> -500));
             }
-        } catch (IOException e) {
-            log.error("#815.460 Error", e);
-            throw new IllegalStateException("#815.480 Error while writing to file: " + metadataFile.getPath(), e);
+        } catch (Throwable th) {
+            log.error("#815.460 Error, Processor will be closed", th);
+            System.exit(SpringApplication.exit(appCtx, () -> -500));
         }
+    }
+
+    @SuppressWarnings("unused")
+    private void restoreFromBackup() {
+        log.info("#815.480 Trying to restore previous state of metadata.yaml");
+        try {
+            File yamlFileBak = new File(globals.processorDir, Consts.METADATA_YAML_FILE_NAME + ".bak");
+            String content = FileUtils.readFileToString(yamlFileBak, StandardCharsets.UTF_8);
+            File yamlFile = new File(globals.processorDir, Consts.METADATA_YAML_FILE_NAME);
+            FileUtils.writeStringToFile(yamlFile, content, StandardCharsets.UTF_8, false);
+        } catch (IOException e) {
+            log.error("#815.500 restoring of metadata.yaml from backup was failed. Processor will be stopped.");
+            System.exit(SpringApplication.exit(appCtx, () -> -500));
+        }
+
     }
 
     private Metadata.DispatcherInfo asCode(String dispatcherUrl) {
