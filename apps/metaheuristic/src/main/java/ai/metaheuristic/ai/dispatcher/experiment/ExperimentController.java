@@ -19,10 +19,12 @@ package ai.metaheuristic.ai.dispatcher.experiment;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -41,6 +43,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Serg
@@ -63,6 +66,7 @@ public class ExperimentController {
     private final ExperimentCache experimentCache;
     private final DispatcherParamsService dispatcherParamsService;
     private final UserContextService userContextService;
+    private final SourceCodeSelectorService sourceCodeSelectorService;
 
     @GetMapping("/experiments")
     public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable,
@@ -83,8 +87,13 @@ public class ExperimentController {
     }
 
     @GetMapping(value = "/experiment-add")
-    public String add(Model model, @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes) {
-        model.addAttribute("sourceCodeUids", dispatcherParamsService.getExperiments());
+    public String add(Model model, @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication, final RedirectAttributes redirectAttributes) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
+        List<String> uids = dispatcherParamsService.getBatches();
+        codes.items = sourceCodeSelectorService.filterSourceCodes(context, uids);
+
+        model.addAttribute("result", codes);
         return "dispatcher/ai/experiment/experiment-add-form";
     }
 

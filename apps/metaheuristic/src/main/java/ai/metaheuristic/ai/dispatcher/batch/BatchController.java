@@ -101,12 +101,13 @@ public class BatchController {
     @GetMapping(value = "/batch-add")
     public String batchAdd(Model model, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeSelectorService.getAvailableSourceCodesForCompany(context);
+
+        SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
         List<String> uids = dispatcherParamsService.getBatches();
-        sourceCodes = new SourceCodeData.SourceCodesForCompany(
-                sourceCodes.items.stream().filter(o->uids.contains(o.getUid())).collect(Collectors.toList()));
-        ControllerUtils.addMessagesToModel(model, sourceCodes);
-        model.addAttribute("result", sourceCodes);
+        codes.items = sourceCodeSelectorService.filterSourceCodes(context, uids);
+
+        ControllerUtils.addMessagesToModel(model, codes);
+        model.addAttribute("result", codes);
         return "dispatcher/batch/batch-add";
     }
 

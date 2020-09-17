@@ -60,6 +60,14 @@ public class SourceCodeSelectorService {
     private final SourceCodeRepository sourceCodeRepository;
     private final CompanyCache companyCache;
 
+    public List<SourceCodeData.SourceCodeUid> filterSourceCodes(DispatcherContext context, List<String> uids) {
+        List<SourceCodeData.SourceCodeUid> codes = getAvailableSourceCodesForCompany(context).items.stream()
+                .filter(o->uids.contains(o.getUid()))
+                .map(o->new SourceCodeData.SourceCodeUid(o.getId(), o.getUid()))
+                .collect(Collectors.toList());
+        return codes;
+    }
+
     public SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(DispatcherContext context) {
         return getAvailableSourceCodesForCompany(context.getCompanyId());
     }

@@ -47,7 +47,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -98,10 +97,7 @@ public class BatchRestController {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
         List<String> uids = dispatcherParamsService.getBatches();
-        codes.items = sourceCodeSelectorService.getAvailableSourceCodesForCompany(context).items.stream()
-                .filter(o->uids.contains(o.getUid()))
-                .map(o->new SourceCodeData.SourceCodeUid(o.getId(), o.getUid()))
-                .collect(Collectors.toList());
+        codes.items = sourceCodeSelectorService.filterSourceCodes(context, uids);
         return codes;
     }
 

@@ -6,13 +6,13 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New experiment</h1>
 
-        <!--/*@thymesVar id="sourceCodeUids" type="java.util.List"*/-->
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.dispatcher.data.SourceCodeData$SourceCodeUidsForCompany"*/-->
         <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/dispatcher/ai/experiment/experiment-add-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <fieldset>
 
                 <label for="sourceCodeUids">List of Uids of source codes</label>
                 <select id="sourceCodeUids" class="pure-input-medium" th:name="sourceCodeUid">
-                    <option th:each="uid : ${sourceCodeUids}" th:value="${uid}" th:text="${uid} "></option>
+                    <option th:each="o : ${result.items}" th:value="${o.uid}" th:text="${o.uid} "></option>
                 </select>
                 <span class="pure-form-message">This is a required field.</span>
 

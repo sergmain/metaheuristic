@@ -18,8 +18,11 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
@@ -31,6 +34,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/rest/v1/dispatcher/experiment")
@@ -45,6 +50,8 @@ public class ExperimentRestController {
     private final ExperimentTopLevelService experimentTopLevelService;
     private final ExecContextService execContextService;
     private final UserContextService userContextService;
+    private final SourceCodeSelectorService sourceCodeSelectorService;
+    private final DispatcherParamsService dispatcherParamsService;
 
     @GetMapping("/experiments")
     public ExperimentApiData.ExperimentsResult getExperiments(@PageableDefault(size = 5) Pageable pageable) {
@@ -54,6 +61,15 @@ public class ExperimentRestController {
     @GetMapping(value = "/experiment/{id}")
     public ExperimentApiData.ExperimentResult getExperiment(@PathVariable Long id) {
         return experimentTopLevelService.getExperimentWithoutProcessing(id);
+    }
+
+    @GetMapping(value = "/experiment-add")
+    public SourceCodeData.SourceCodeUidsForCompany experimentAdd(Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
+        List<String> uids = dispatcherParamsService.getExperiments();
+        codes.items = sourceCodeSelectorService.filterSourceCodes(context, uids);
+        return codes;
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
