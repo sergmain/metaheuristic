@@ -75,7 +75,7 @@ public class ExecContextController {
     }
 
     @GetMapping("/exec-context-state/{sourceCodeId}/{execContextId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')")
     public String execContextsState(Model model, @PathVariable Long sourceCodeId,  @PathVariable Long execContextId,
                                     @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
