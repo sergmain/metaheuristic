@@ -117,7 +117,7 @@ public class BatchForOperatorRestController {
 
     @GetMapping(value= "/company-batch-status/{companyUniqueId}/{batchId}" )
     @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
-    public BatchData.Status getProcessingResourceStatus(@PathVariable Long companyUniqueId, @PathVariable("batchId") Long batchId) {
+    public BatchData.Status getBatchStatus(@PathVariable Long companyUniqueId, @PathVariable("batchId") Long batchId) {
         BatchData.Status status = batchTopLevelService.getBatchProcessingStatus(batchId, companyUniqueId, true);
         return status;
     }
