@@ -80,7 +80,7 @@ public class AccountService {
         final Account byUsername = accountRepository.findByUsername(acc.getUsername());
         if (byUsername !=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    String.format("#235.040 Username '%s' was already used", acc.getUsername()));
+                    String.format("#235.040 Username '%s' was already registered", acc.getUsername()));
         }
 
         Account account = new Account();

@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +38,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
