@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
+import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import lombok.AllArgsConstructor;
@@ -49,6 +50,7 @@ public class ReplicationSourceCodeService {
     public final ReplicationCoreService replicationCoreService;
     public final SourceCodeRepository sourceCodeRepository;
     public final SourceCodeCache sourceCodeCache;
+    private final DispatcherParamsService dispatcherParamsService;
 
     @Data
     @AllArgsConstructor
@@ -81,6 +83,10 @@ public class ReplicationSourceCodeService {
             }
 
             if (isDeleted) {
+                SourceCodeImpl sc = sourceCodeCache.findById(id);
+                if (sc!=null) {
+                    dispatcherParamsService.unregisterSourceCode(sc.uid);
+                }
                 sourceCodeCache.deleteById(id);
             }
             forCreating.removeIf(sourceCodeShortAsset -> sourceCodeShortAsset.uid.equals(p.uid));
@@ -100,7 +106,8 @@ public class ReplicationSourceCodeService {
         sourceCodeLoopEntry.sourceCode.locked = sourceCodeAsset.sourceCode.locked;
         sourceCodeLoopEntry.sourceCode.valid = sourceCodeAsset.sourceCode.valid;
 
-        sourceCodeCache.save(sourceCodeLoopEntry.sourceCode);
+        SourceCodeImpl sc = sourceCodeCache.save(sourceCodeLoopEntry.sourceCode);
+        dispatcherParamsService.registerSourceCode(sc);
     }
 
     private void createSourceCode(ReplicationData.SourceCodeShortAsset sourceCodeShortAsset) {
@@ -117,7 +124,8 @@ public class ReplicationSourceCodeService {
         // this inspection is suspended because in this case we need to create new record from existing one
         //noinspection ConstantConditions
         sourceCodeAsset.sourceCode.id=null;
-        sourceCodeCache.save(sourceCodeAsset.sourceCode);
+        SourceCodeImpl sc = sourceCodeCache.save(sourceCodeAsset.sourceCode);
+        dispatcherParamsService.registerSourceCode(sc);
     }
 
     @Nullable

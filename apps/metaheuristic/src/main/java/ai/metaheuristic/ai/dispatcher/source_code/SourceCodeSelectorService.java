@@ -67,6 +67,7 @@ public class SourceCodeSelectorService {
                 .filter(o->uids.contains(o.getUid()))
                 .map(o->new SourceCodeData.SourceCodeUid(o.getId(), o.getUid()))
                 .collect(Collectors.toList());
+        log.info("#984.015 result list: {}", codes);
         return codes;
     }
 
