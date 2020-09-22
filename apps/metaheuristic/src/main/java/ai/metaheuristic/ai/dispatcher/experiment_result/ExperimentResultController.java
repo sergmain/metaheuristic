@@ -120,7 +120,7 @@ public class ExperimentResultController {
         return REDIRECT_DISPATCHER_EXPERIMENT_RESULT_EXPERIMENT_RESULTS;
     }
 
-    @GetMapping(value= "/experiment-result-export/experiment-result-{experimentResultId}.yaml", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value= "/experiment-result-export/{experimentResultId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request,
             @PathVariable("experimentResultId") Long experimentResultId) {
@@ -140,12 +140,6 @@ public class ExperimentResultController {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
         }
         return REDIRECT_DISPATCHER_EXPERIMENT_RESULT_EXPERIMENT_RESULTS;
-    }
-
-    @GetMapping(value= "/experiment-result-export/{experimentResultId}")
-    public String exportExperiment(Model model, @PathVariable("experimentResultId") Long experimentResultId) {
-        model.addAttribute("experimentResultId", experimentResultId);
-        return "dispatcher/ai/experiment-result/experiment-result-export";
     }
 
     @GetMapping(value= "/experiment-result-import")

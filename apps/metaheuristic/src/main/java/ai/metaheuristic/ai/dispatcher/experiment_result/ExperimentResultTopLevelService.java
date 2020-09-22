@@ -54,10 +54,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.*;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -262,8 +259,9 @@ public class ExperimentResultTopLevelService {
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            httpHeaders.setContentDispositionFormData("attachment", zipFile.getName());
-            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile.toPath()), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
+            httpHeaders.setContentDisposition(ContentDisposition.parse(
+                    "filename*=UTF-8''experiment-result-"+experimentResultId+".zip"));
+            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
             return resource;
         }
         catch(Throwable th) {

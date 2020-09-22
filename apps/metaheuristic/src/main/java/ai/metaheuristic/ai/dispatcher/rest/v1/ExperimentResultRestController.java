@@ -101,7 +101,7 @@ public class ExperimentResultRestController {
     }
 
     @GetMapping(value= "/experiment-result-export/{experimentResultId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<AbstractResource> downloadExperimentReuslt(
+    public ResponseEntity<AbstractResource> downloadExperimentResult(
             HttpServletRequest request,
             @PathVariable("experimentResultId") Long experimentResultId) {
         CleanerInfo resource = experimentResultTopLevelService.exportExperimentResultToFile(experimentResultId);
