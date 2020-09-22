@@ -98,16 +98,14 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     @AfterEach
-    public void afterTestPlanService() {
-        System.out.println("Finished TestSourceCodeService.afterTestPlanService()");
+    public void afterTestSourceCodeService() {
+        System.out.println("Finished TestSourceCodeService.afterTestSourceCodeService()");
         variableRepository.deleteByExecContextId(execContextForTest.id);
     }
 
     @SneakyThrows
     @Test
     public void testCreateTasks() {
-        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getSourceCodeYamlAsString());
-
         SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();
         List<Object[]> tasks = taskCollector.getTasks(execContextForTest);
 
@@ -228,6 +226,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertNull(t);
             waitForFinishing(aggregateTask.id, 20);
         }
+        verifyGraphIntegrity();
         taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
         assertEquals(1, taskVertices.size());
         {
@@ -237,6 +236,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertNull(t);
             waitForFinishing(finishTask.id, 20);
         }
+        verifyGraphIntegrity();
         taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
         assertEquals(0, taskVertices.size());
 
@@ -449,14 +449,17 @@ public class TestSourceCodeService extends PreparingSourceCode {
     private void verifyGraphIntegrity() {
 
         List<TaskImpl> tasks = taskRepository.findByExecContextIdAsList(execContextForTest.id);
+
+        execContextForTest = Objects.requireNonNull(execContextCache.findById(this.execContextForTest.id));
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContextForTest);
         assertEquals(tasks.size(), taskVertices.size());
 
         for (ExecContextData.TaskVertex taskVertex : taskVertices) {
             Task t = tasks.stream().filter(o->o.id.equals(taskVertex.taskId)).findAny().orElse(null);
             assertNotNull(t, "task with id #"+ taskVertex.taskId+" wasn't found");
-            assertEquals(t.getExecState(), taskVertex.execState.value, "task has a different states in db and graph, " +
-                    "db: " + EnumsApi.TaskExecState.from(t.getExecState())+", graph: " + taskVertex.execState);
+            final EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(t.getExecState());
+            assertEquals(taskExecState, taskVertex.execState, "task has a different states in db and graph, " +
+                    "db: " + taskExecState +", graph: " + taskVertex.execState);
         }
     }
 

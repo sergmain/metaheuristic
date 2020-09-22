@@ -310,6 +310,7 @@ public class EnumsApi {
                 case 3:
                     return OK;
                 case 4:
+                    //noinspection
                     return ERROR;
                 case 5:
                     return SKIPPED;
