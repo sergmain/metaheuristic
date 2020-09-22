@@ -105,6 +105,7 @@ public class ExperimentService {
         ed.description = params.description;
         ed.createdOn = params.createdOn;
         ed.numberOfTask = 0;
+        ed.sourceCodeUid = ec.getExecContextParamsYaml().sourceCodeUid;
 
         return ed;
     }

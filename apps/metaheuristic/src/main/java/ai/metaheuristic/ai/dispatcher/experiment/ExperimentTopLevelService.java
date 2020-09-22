@@ -158,7 +158,9 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.110 experiment wasn't found, experimentId: " + simpleExperiment.id);
         }
-        e.code = StringUtils.strip(simpleExperiment.getCode());
+        if (e.code.equals(StringUtils.strip(simpleExperiment.getCode()))) {
+            op.addInfoMessage("The code of experiment can't be changed. It will be remained as "+ e.code);
+        }
 
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
         return updateParamsAndSave(e, params, simpleExperiment.getName(), simpleExperiment.getDescription());

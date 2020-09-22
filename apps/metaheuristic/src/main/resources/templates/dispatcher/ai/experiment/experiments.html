@@ -42,7 +42,7 @@
         <div th:remove="tag" th:each="r : ${result.items}" >
             <tr>
                 <td>
-                    <div th:text="${'Code: ' + r.experiment.code}">Code</div>
+                    <div th:text="${'Code: ' + r.experiment.code+', SourceCodeUid: '+r.experiment.sourceCodeUid}">Code, SourceCodeUid</div>
                     <div th:text="${'Desc: ' + r.experiment.description}">Description</div>
                 </td>
                 <td rowspan="2">

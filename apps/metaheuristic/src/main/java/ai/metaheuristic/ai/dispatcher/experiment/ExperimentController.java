@@ -17,19 +17,14 @@
 package ai.metaheuristic.ai.dispatcher.experiment;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeController;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -61,9 +56,6 @@ public class ExperimentController {
 
     private static final String REDIRECT_DISPATCHER_EXPERIMENTS = "redirect:/dispatcher/ai/experiment/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
-    private final ExecContextService execContextService;
-    private final ExecContextCache execContextCache;
-    private final ExperimentCache experimentCache;
     private final DispatcherParamsService dispatcherParamsService;
     private final UserContextService userContextService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
