@@ -59,6 +59,9 @@ public class ReplicationSourceCodeService {
         public SourceCodeImpl sourceCode;
     }
 
+    // TODO 2020-09-21 Need to create a reconciliation algo for case when
+    //  there is a record in MH_SOURCE_CODE but this SourceCode wasn't registered
+
     public void syncSourceCodes(List<ReplicationData.SourceCodeShortAsset> actualSourceCodes) {
         List<SourceCodeLoopEntry> forUpdating = new ArrayList<>(actualSourceCodes.size());
         LinkedList<ReplicationData.SourceCodeShortAsset> forCreating = new LinkedList<>(actualSourceCodes);
