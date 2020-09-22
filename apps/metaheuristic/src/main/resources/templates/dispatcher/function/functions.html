@@ -16,7 +16,7 @@
             my_confirm('Do you really want to delete this function?', 'Delete function?', "Delete", function() {
                 console.log("Deletion of function was confirmed.");
                 $.get('/dispatcher/function/function-delete/' + id, function(status) {
-                    console.log("task-rerun is finished, Status: " + status);
+                    console.log("function-delete is finished, Status: " + status);
                     var text;
                     if (status==="true") {
                         text = 'Function was deleted.';

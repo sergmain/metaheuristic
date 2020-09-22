@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.api.EnumsApi;
@@ -48,7 +47,6 @@ import java.util.List;
 public class ExperimentRestController {
 
     private final ExperimentTopLevelService experimentTopLevelService;
-    private final ExecContextService execContextService;
     private final UserContextService userContextService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final DispatcherParamsService dispatcherParamsService;
@@ -89,8 +87,9 @@ public class ExperimentRestController {
     }
 
     @PostMapping("/experiment-delete-commit")
-    public OperationStatusRest deleteCommit(Long id) {
-        return experimentTopLevelService.experimentDeleteCommit(id);
+    public OperationStatusRest deleteCommit(Long id, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return experimentTopLevelService.experimentDeleteCommit(id, context);
     }
 
     @PostMapping("/experiment-clone-commit")
@@ -99,10 +98,15 @@ public class ExperimentRestController {
         return experimentTopLevelService.experimentCloneCommit(id, context);
     }
 
-    @PostMapping("/task-rerun/{taskId}")
-    public OperationStatusRest rerunTask(@PathVariable Long taskId) {
-        return execContextService.resetTask(taskId);
+    @PostMapping("/experiment-target-state/{state}/{experimentId}")
+    public OperationStatusRest execContextTargetExecState(
+            @PathVariable Long experimentId, @PathVariable String state, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        OperationStatusRest operationStatusRest = experimentTopLevelService.changeExecContextState(state, experimentId, context);
+        return operationStatusRest;
     }
+
+    // only for command-line. there aren't equal methods in ExperimentController and won't be
 
     @PostMapping("/produce-tasks")
     public OperationStatusRest produceTasks(String experimentCode, Authentication authentication) {
@@ -120,10 +124,4 @@ public class ExperimentRestController {
     public EnumsApi.ExecContextState getExperimentProcessingStatus(@PathVariable String experimentCode) {
         return experimentTopLevelService.getExperimentProcessingStatus(experimentCode);
     }
-
-    @GetMapping(value = "/experiment-to-experiment-result/{id}")
-    public OperationStatusRest toExperimentResult(@PathVariable Long id) {
-        return experimentTopLevelService.toExperimentResult(id);
-    }
-
 }

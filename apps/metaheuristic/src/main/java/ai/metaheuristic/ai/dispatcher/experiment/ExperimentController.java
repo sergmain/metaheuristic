@@ -158,41 +158,10 @@ public class ExperimentController {
     @PostMapping("/experiment-delete-commit")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        Experiment experiment = experimentCache.findById(id);
-        if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "#285.260 experiment wasn't found, experimentId: " + id);
-            return REDIRECT_DISPATCHER_EXPERIMENTS;
-        }
-        if (experiment.execContextId !=null) {
-            ExecContext ex = execContextCache.findById(experiment.execContextId);
-            if (ex != null) {
-                OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context);
-                if (operationStatusRest.isErrorMessages()) {
-                    redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
-                    return REDIRECT_DISPATCHER_EXPERIMENTS;
-                }
-            }
-        }
-        OperationStatusRest status = experimentTopLevelService.experimentDeleteCommit(id);
+        OperationStatusRest status = experimentTopLevelService.experimentDeleteCommit(id, context);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
         }
         return REDIRECT_DISPATCHER_EXPERIMENTS;
-    }
-
-    @PostMapping("/task-rerun/{taskId}")
-    public @ResponseBody boolean rerunTask(@PathVariable Long taskId) {
-        return execContextService.resetTask(taskId).status == EnumsApi.OperationStatus.OK;
-    }
-
-    @GetMapping("/task-reset-all-broken/{execContextId}/{experimentId}")
-    public String rerunBrokenTasks(
-            @PathVariable Long execContextId, @PathVariable Long experimentId, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = execContextService.resetBrokenTasks(execContextId);
-        if (status.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", status.getErrorMessagesAsList());
-        }
-        return "redirect:/dispatcher/ai/experiment/experiment-info/"+experimentId;
     }
 }

@@ -194,10 +194,23 @@ public class ExperimentTopLevelService {
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK, "Exporting of experiment was successfully started", "");
     }
 
+    /**
+     * this method is for using in command-line
+     *
+     * @param experimentCode
+     * @param companyUniqueId
+     * @return
+     */
     public OperationStatusRest produceTasks(String experimentCode, Long companyUniqueId) {
         return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.PRODUCING, companyUniqueId);
     }
 
+    /**
+     * this method is for using in command-line
+     *
+     * @param experimentCode
+     * @return
+     */
     public EnumsApi.ExecContextState getExperimentProcessingStatus(String experimentCode) {
         if (S.b(experimentCode)) {
             return EnumsApi.ExecContextState.UNKNOWN;
@@ -213,6 +226,13 @@ public class ExperimentTopLevelService {
         return EnumsApi.ExecContextState.toState(ec.getState());
     }
 
+    /**
+     * this method is for using in command-line
+     *
+     * @param experimentCode
+     * @param companyUniqueId
+     * @return
+     */
     public OperationStatusRest startProcessingOfTasks(String experimentCode, Long companyUniqueId) {
         return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.STARTED, companyUniqueId);
     }
@@ -234,7 +254,21 @@ public class ExperimentTopLevelService {
     }
 
 
-    public OperationStatusRest experimentDeleteCommit(Long id) {
+    public OperationStatusRest experimentDeleteCommit(Long id, DispatcherContext context) {
+        Experiment experiment = experimentCache.findById(id);
+        if (experiment == null) {
+            return  new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.260 experiment wasn't found, experimentId: " + id);
+        }
+        if (experiment.execContextId !=null) {
+            ExecContext ex = execContextCache.findById(experiment.execContextId);
+            if (ex != null) {
+                OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context);
+                if (operationStatusRest.isErrorMessages()) {
+                    return operationStatusRest;
+                }
+            }
+        }
         experimentCache.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
