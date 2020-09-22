@@ -80,6 +80,11 @@ public class ReplicationCoreService {
     }
 
     public ReplicationData.ReplicationAsset getData(String uri, Class clazz, Function<URI, Request> requestFunc) {
+        if (S.b(globals.assetSourceUrl) || S.b(globals.assetUsername) || S.b(globals.assetPassword) ) {
+            return new ReplicationData.AssetAcquiringError(
+                    S.f("Error in configuration of asset server, some parameter(s) is blank, assetSourceUrl: %s, assetUsername: %s, assetPassword is blank: %s",
+                    globals.assetSourceUrl, globals.assetUsername, S.b(globals.assetPassword)));
+        }
         try {
             final String url = globals.assetSourceUrl + uri;
 
@@ -105,11 +110,14 @@ public class ReplicationCoreService {
                         globals.assetSourceUrl, httpResponse.getStatusLine().getStatusCode()));
             }
             final HttpEntity entity = httpResponse.getEntity();
-            Object assetResponse = null;
             if (entity != null) {
-                assetResponse = JsonUtils.getMapper().readValue(entity.getContent(), clazz);
+                Object assetResponse = JsonUtils.getMapper().readValue(entity.getContent(), clazz);
+                return (ReplicationData.ReplicationAsset)assetResponse;
             }
-            return (ReplicationData.ReplicationAsset)assetResponse;
+            else {
+                return new ReplicationData.AssetAcquiringError( S.f("Entry is null, url %s",
+                        globals.assetSourceUrl));
+            }
         }
         catch (HttpHostConnectException | SocketTimeoutException th) {
             log.error("Error: {}", th.getMessage());

@@ -149,7 +149,6 @@ public class ReplicationAccountService {
         if (data instanceof ReplicationData.AssetAcquiringError) {
             return new ReplicationData.AccountAsset(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());
         }
-        //noinspection UnnecessaryLocalVariable
         ReplicationData.AccountAsset response = (ReplicationData.AccountAsset) data;
         return response;
     }
