@@ -22,14 +22,12 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * @author Serge
@@ -46,7 +44,7 @@ public class TaskSyncService {
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
     public @Nullable <T> T getWithSync(Long taskId, Function<TaskImpl, T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(taskId);
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         try {
             lock.lock();
             TaskImpl task = taskRepository.findByIdForUpdate(taskId);
@@ -61,7 +59,7 @@ public class TaskSyncService {
     }
 
     public void getWithSyncVoid(Long taskId, Consumer<TaskImpl> supplier) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(taskId);
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         try {
             lock.lock();
             TaskImpl task = taskRepository.findByIdForUpdate(taskId);

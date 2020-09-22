@@ -123,7 +123,7 @@ public class TaskWithInternalContextEventService {
                     taskPersistencer.setParams(event.taskId, taskParamsYaml);
 
                     InternalFunctionData.InternalFunctionProcessingResult result = internalFunctionProcessor.process(
-                            execContext, event.taskId, p.internalContextId, taskParamsYaml);
+                            execContext.id, event.taskId, p.internalContextId, taskParamsYaml);
 
                     if (result.processing != Enums.InternalFunctionProcessing.ok) {
                         log.error("#707.050 error type: {}, message: {}\n\tsourceCodeId: {}, ececContextId: {}", result.processing, result.error, execContext.sourceCodeId, execContext.id);

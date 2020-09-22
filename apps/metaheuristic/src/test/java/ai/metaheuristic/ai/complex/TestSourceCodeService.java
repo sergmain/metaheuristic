@@ -142,7 +142,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         //   processCode: feature-processing-2, function code: function-04:1.1
         step_CommonProcessing();
 
-        List<ExecContextData.TaskVertex> taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
         assertEquals(3, taskVertices.size());
         TaskImpl finishTask = null, permuteTask = null, aggregateTask = null;
 
@@ -196,7 +196,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                 "Current status: " + taskExecState + ", exitCode: " + functionExec.exec.exitCode+", console: " + functionExec.exec.console);
 
         verifyGraphIntegrity();
-        taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+        taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
 
         // there are 3 'test.fit.function:1.0' tasks,
         // 3 'test.predict.function:1.0',
@@ -216,7 +216,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         }
 
         verifyGraphIntegrity();
-        taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+        taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
         // 1 'mh.aggregate-internal-context'  task,
         // and 1 'mh.finish' task
         assertEquals(2, taskVertices.size());
@@ -228,7 +228,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertNull(t);
             waitForFinishing(aggregateTask.id, 20);
         }
-        taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+        taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
         assertEquals(1, taskVertices.size());
         {
             DispatcherCommParamsYaml.AssignedTask t =
@@ -237,7 +237,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertNull(t);
             waitForFinishing(finishTask.id, 20);
         }
-        taskVertices = execContextService.getUnfinishedTaskVertices(execContextForTest.id);
+        taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
         assertEquals(0, taskVertices.size());
 
         ExecContext execContext = execContextCache.findById(execContextForTest.id);
@@ -449,7 +449,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     private void verifyGraphIntegrity() {
 
         List<TaskImpl> tasks = taskRepository.findByExecContextIdAsList(execContextForTest.id);
-        List<ExecContextData.TaskVertex> taskVertices = execContextService.findAllVertices(execContextForTest.id);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(execContextForTest);
         assertEquals(tasks.size(), taskVertices.size());
 
         for (ExecContextData.TaskVertex taskVertex : taskVertices) {

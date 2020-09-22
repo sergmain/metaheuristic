@@ -72,7 +72,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-        long count = execContextService.getCountUnfinishedTasks(execContextForTest);
+        long count = execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest);
         assertEquals(1, count);
 
 
@@ -96,7 +96,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
-        count = execContextService.getCountUnfinishedTasks(execContextForTest);
+        count = execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest);
         assertEquals(10, count);
 
         List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);

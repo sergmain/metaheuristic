@@ -78,16 +78,6 @@ public class ExecContextFSM {
         toStateWithCompletion(execContextId, EnumsApi.ExecContextState.FINISHED);
     }
 
-/*
-    public void toExportingToExperimentResult(Long execContextId) {
-        toStateWithCompletion(execContextId, EnumsApi.ExecContextState.EXPORTING_TO_EXPERIMENT_RESULT);
-    }
-
-    public void toExportingToExperimentResultStarted(Long execContextId) {
-        toStateWithCompletion(execContextId, EnumsApi.ExecContextState.EXPORTING_TO_EXPERIMENT_RESULT_WAS_STARTED);
-    }
-*/
-
     public void toError(Long execContextId) {
         toStateWithCompletion(execContextId, EnumsApi.ExecContextState.ERROR);
     }

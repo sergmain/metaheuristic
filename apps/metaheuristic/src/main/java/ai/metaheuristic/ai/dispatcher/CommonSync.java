@@ -38,9 +38,9 @@ public class CommonSync<T> {
     @Data
     public static class TimedLock {
         public long mills;
-        public ReentrantReadWriteLock.WriteLock lock;
+        public ReentrantReadWriteLock lock;
 
-        public TimedLock(ReentrantReadWriteLock.WriteLock lock) {
+        public TimedLock(ReentrantReadWriteLock lock) {
             this.mills = System.currentTimeMillis();
             this.lock = lock;
         }
@@ -49,7 +49,15 @@ public class CommonSync<T> {
     private long lastCheckMills = 0L;
     private final Map<T, TimedLock> map = new HashMap<>(100);
 
-    public synchronized ReentrantReadWriteLock.WriteLock getLock(T id) {
+    public ReentrantReadWriteLock.WriteLock getWriteLock(T id) {
+        return getLock(id).writeLock();
+    }
+
+    public ReentrantReadWriteLock.ReadLock getReadLock(T id) {
+        return getLock(id).readLock();
+    }
+
+    private synchronized ReentrantReadWriteLock getLock(T id) {
         if (System.currentTimeMillis() - lastCheckMills > TEN_MINUTES_TO_MILLS) {
             lastCheckMills = System.currentTimeMillis();
             List<T> ids = new ArrayList<>();
@@ -67,7 +75,7 @@ public class CommonSync<T> {
             }
         }
 
-        final TimedLock timedLock = map.computeIfAbsent(id, o -> new TimedLock(new ReentrantReadWriteLock().writeLock()));
+        final TimedLock timedLock = map.computeIfAbsent(id, o -> new TimedLock(new ReentrantReadWriteLock()));
         timedLock.mills = System.currentTimeMillis();
         return timedLock.lock;
     }

@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +43,7 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @RequiredArgsConstructor
 public class InternalFunctionProcessor {
 
+    private final ExecContextSyncService execContextSyncService;
     public final List<InternalFunction> internalFunctions;
 
     private final Map<String, InternalFunction> internalFunctionMap = new HashMap<>();
@@ -56,21 +57,23 @@ public class InternalFunctionProcessor {
         return internalFunctionMap.containsKey(functionCode);
     }
 
-    public InternalFunctionProcessingResult process(ExecContextImpl execContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
+    public InternalFunctionProcessingResult process(Long execContextId, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
 
         InternalFunction internalFunction = internalFunctionMap.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {
             return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found);
         }
 
-        ExecContextParamsYaml expy = execContext.getExecContextParamsYaml();
-        try {
-            // !!! all output variables was already created
-            return internalFunction.process(execContext.sourceCodeId, execContext.id, taskId, internalContextId, expy.variables, taskParamsYaml);
-        } catch (Throwable th) {
-            String es = "#977.020 system error while processing internal function '" + internalFunction.getCode() + "', error: " + th.getMessage();
-            log.error(es, th);
-            return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
-        }
+        return execContextSyncService.getWithSync(execContextId, (execContext) -> {
+            ExecContextParamsYaml expy = execContext.getExecContextParamsYaml();
+            try {
+                // ! all output variables must be already created at this point
+                return internalFunction.process(execContext.sourceCodeId, execContext.id, taskId, internalContextId, expy.variables, taskParamsYaml);
+            } catch (Throwable th) {
+                String es = "#977.020 system error while processing internal function '" + internalFunction.getCode() + "', error: " + th.getMessage();
+                log.error(es, th);
+                return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es);
+            }
+        });
     }
 }

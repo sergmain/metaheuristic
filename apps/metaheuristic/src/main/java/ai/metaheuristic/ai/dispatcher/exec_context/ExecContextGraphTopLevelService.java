@@ -80,7 +80,16 @@ public class ExecContextGraphTopLevelService {
         return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.findAllBroken(execContext));
     }
 
+    public Long getCountUnfinishedTasks(ExecContextImpl execContext) {
+        return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.getCountUnfinishedTasks(execContext));
+    }
+
+    public List<ExecContextData.TaskVertex> getUnfinishedTaskVertices(ExecContextImpl execContext) {
+        return execContextSyncService.getWithSyncReadOnly(execContext.id, () -> execContextGraphService.getUnfinishedTaskVertices(execContext));
+    }
+
     // write operations with graph
+
     public ExecContextOperationStatusWithTaskList updateTaskExecStateByExecContextId(Long execContextId, Long taskId, int execState, @Nullable String taskContextId) {
         return execContextSyncService.getWithSync(execContextId, execContext -> {
             final ExecContextOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(execContext, taskId, execState, taskContextId);
@@ -125,6 +134,7 @@ public class ExecContextGraphTopLevelService {
                 (execContext) -> execContextGraphService.createEdges(execContext, lastIds, descendants));
     }
 
+    // this method is here because we need to call taskPersistencer
     private ExecContextOperationStatusWithTaskList updateTaskExecStateWithoutSync(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
         if (execContext==null) {
             // this execContext was deleted

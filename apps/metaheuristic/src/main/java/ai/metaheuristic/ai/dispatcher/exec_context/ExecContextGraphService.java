@@ -173,7 +173,7 @@ public class ExecContextGraphService {
                         .filter(o -> taskStates.containsKey(o.taskId))
                         .collect(Collectors.toList());
 
-                // Don't join streams, a side-effect could be occurred
+                // Don't join streams, a side-effect could be occurred because of setStateForAllChildrenTasksInternal()
                 tvs.forEach(taskVertex -> {
                     TaskData.TaskState taskState = taskStates.get(taskVertex.taskId);
                     taskVertex.execState = EnumsApi.TaskExecState.from(taskState.execState);

@@ -37,6 +37,20 @@ public interface InternalFunction {
 
     String getName();
 
+    /**
+     * !!! all call of internal functions will be synchronized over execContextId in method
+     * ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor#process
+     *
+     * @param sourceCodeId
+     * @param execContextId
+     * @param taskId
+     * @param taskContextId
+     * @param variableDeclaration
+     * @param taskParamsYaml
+     * @return
+     *
+     * @see ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor#process
+     */
     InternalFunctionData.InternalFunctionProcessingResult process(
             Long sourceCodeId, Long execContextId, Long taskId, String taskContextId,
             ExecContextParamsYaml.VariableDeclaration variableDeclaration,

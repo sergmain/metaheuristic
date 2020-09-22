@@ -101,7 +101,7 @@ public class SouthbridgeService {
 
     private static <T> T getWithSync(final EnumsApi.DataType binaryType, final String code, Supplier<T> function) {
         final String key = "--" + binaryType + "--" + code;
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(key);
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(key);
         try {
             lock.lock();
             return function.get();

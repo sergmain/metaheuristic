@@ -85,7 +85,6 @@ public class ExecContextService {
     private final TaskPersistencer taskPersistencer;
     private final ProcessorCache processorCache;
     private final ExecContextCache execContextCache;
-    private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextFSM execContextFSM;
@@ -94,6 +93,7 @@ public class ExecContextService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
 
+    // TODO 2020-09-22 do we still need this method?
     public OperationStatusRest resetBrokenTasks(Long execContextId) {
         final ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
@@ -140,7 +140,6 @@ public class ExecContextService {
             }
         }
         else {
-//            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
             ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(task.execContextId, task.id);
             if (withTaskList == null) {
                 taskPersistencer.finishTaskAsError(taskId, EnumsApi.TaskExecState.ERROR);
@@ -160,22 +159,6 @@ public class ExecContextService {
         }
 
         return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    public long getCountUnfinishedTasks(ExecContextImpl execContext) {
-        return getCountUnfinishedTasks(execContext.id);
-    }
-
-    public Long getCountUnfinishedTasks(Long execContextId) {
-        return execContextSyncService.getWithSync(execContextId, execContextGraphService::getCountUnfinishedTasks);
-    }
-
-    public List<ExecContextData.TaskVertex> getUnfinishedTaskVertices(Long execContextId) {
-        return execContextSyncService.getWithSync(execContextId, execContextGraphService::getUnfinishedTaskVertices);
-    }
-
-    public List<ExecContextData.TaskVertex> findAllVertices(Long execContextId) {
-        return execContextSyncService.getWithSync(execContextId, execContextGraphService::findAll);
     }
 
     public void changeValidStatus(Long execContextId, boolean status) {

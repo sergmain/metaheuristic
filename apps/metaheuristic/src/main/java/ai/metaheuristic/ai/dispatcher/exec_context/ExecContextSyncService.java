@@ -43,8 +43,8 @@ public class ExecContextSyncService {
     private final ExecContextRepository execContextRepository;
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-    <T> T getWithSync(Long execContextId, Function<ExecContextImpl, T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(execContextId);
+    public <T> T getWithSync(Long execContextId, Function<ExecContextImpl, T> function) {
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(execContextId);
         try {
             lock.lock();
             ExecContextImpl execContext = execContextRepository.findByIdForUpdate(execContextId);
@@ -55,8 +55,8 @@ public class ExecContextSyncService {
     }
 
     @Nullable
-    <T> T getWithSyncNullable(Long execContextId, Function<ExecContextImpl, T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(execContextId);
+    public <T> T getWithSyncNullable(Long execContextId, Function<ExecContextImpl, T> function) {
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(execContextId);
         try {
             lock.lock();
             ExecContextImpl execContext = execContextRepository.findByIdForUpdate(execContextId);
@@ -66,8 +66,8 @@ public class ExecContextSyncService {
         }
     }
 
-    <T> T getWithSyncReadOnly(Long execContextId, Supplier<T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(execContextId);
+    public <T> T getWithSyncReadOnly(Long execContextId, Supplier<T> function) {
+        final ReentrantReadWriteLock.ReadLock lock = commonSync.getReadLock(execContextId);
         try {
             lock.lock();
             return function.get();

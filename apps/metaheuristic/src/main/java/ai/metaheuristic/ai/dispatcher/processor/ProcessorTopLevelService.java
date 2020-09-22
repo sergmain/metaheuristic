@@ -147,7 +147,7 @@ public class ProcessorTopLevelService {
             return;
         }
         final Long processorId = Long.valueOf(processorIdAsStr);
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(processorId);
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(processorId);
         log.debug("Before entering in sync block, storeProcessorStatus()");
         try {
             lock.lock();

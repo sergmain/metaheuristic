@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -39,7 +38,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -58,20 +56,6 @@ public class ExecContextProcessGraphService {
 
     private static final String PROCESS_NAME_ATTR = "process";
     private static final String PROCESS_CONTEXT_ID_NAME_ATTR = "process_context_id";
-
-    private final ExecContextCache execContextCache;
-
-    private void changeGraph(ExecContextImpl execContext, Consumer<DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge>> callable) {
-        ExecContextParamsYaml wpy = execContext.getExecContextParamsYaml();
-        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = importProcessGraph(wpy);
-        try {
-            callable.accept(processGraph);
-        } finally {
-            wpy.processesGraph = asString(processGraph);
-            execContext.updateParams(wpy);
-            execContextCache.save(execContext);
-        }
-    }
 
     public static String asString(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph) {
         Function<ExecContextData.ProcessVertex, String> vertexIdProvider = v -> v.id.toString();
@@ -187,7 +171,8 @@ public class ExecContextProcessGraphService {
         return error;
     }
 
-    public @Nullable static ExecContextData.ProcessVertex findVertex(
+    @Nullable
+    public static ExecContextData.ProcessVertex findVertex(
             DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, String process) {
 
         ExecContextData.ProcessVertex vertex = processGraph.vertexSet()

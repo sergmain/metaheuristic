@@ -43,7 +43,7 @@ public class BatchSyncService {
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
     public void getWithSyncVoid(Long batchId, Consumer<Batch> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(batchId);
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(batchId);
         try {
             lock.lock();
 //                Batch batch = batchRepository.findByIdForUpdate(batchId, execContext.account.companyId);
@@ -57,7 +57,7 @@ public class BatchSyncService {
     }
 
     public <T> T getWithSync(Long batchId, Function<Batch, T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(batchId);
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(batchId);
         try {
             lock.lock();
             Batch batch = batchRepository.findByIdForUpdate(batchId);
@@ -69,7 +69,7 @@ public class BatchSyncService {
 
     @Nullable
     public <T> T getWithSyncNullable(Long batchId, Function<Batch, T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(batchId);
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(batchId);
         try {
             lock.lock();
             Batch batch = batchRepository.findByIdForUpdate(batchId);
@@ -80,7 +80,7 @@ public class BatchSyncService {
     }
 
     public <T> T getWithSyncReadOnly(Long batchId, Supplier<T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getLock(batchId);
+        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(batchId);
         try {
             lock.lock();
             return function.get();

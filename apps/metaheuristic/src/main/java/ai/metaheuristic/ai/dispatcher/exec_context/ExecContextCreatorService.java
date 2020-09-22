@@ -35,7 +35,6 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -136,7 +135,6 @@ public class ExecContextCreatorService {
         return ecr;
     }
 
-    @NonNull
     private ExecContextImpl createExecContext(SourceCodeImpl sourceCode, Long companyId, SourceCodeData.SourceCodeGraph sourceCodeGraph) {
 
         ExecContextImpl ec = new ExecContextImpl();
