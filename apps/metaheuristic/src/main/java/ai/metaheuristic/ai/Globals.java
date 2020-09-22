@@ -19,7 +19,6 @@ import ai.metaheuristic.ai.exceptions.GlobalConfigurationException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.SecUtils;
-import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -145,6 +144,9 @@ public class Globals {
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.password')) }")
     public @Nullable String assetPassword;
+
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.dispatcher.asset.sync-timeout')) }")
+    public @Nullable String assetSyncTimeout;
 
     // Processor's globals
 
@@ -493,6 +495,7 @@ public class Globals {
         log.info("'\tassetMode: {}", assetMode);
         log.info("'\tassetUsername: {}", assetUsername);
         log.info("'\tassetSourceUrl: {}", assetSourceUrl);
+        log.info("'\tassetSyncTimeout: {}", assetSyncTimeout);
         log.info("'\tchunkSize: {}", chunkSize);
         log.info("'\tresourceRowsLimit: {}", globalVariableRowsLimit);
         log.info("'\texperimentRowsLimit: {}", experimentRowsLimit);

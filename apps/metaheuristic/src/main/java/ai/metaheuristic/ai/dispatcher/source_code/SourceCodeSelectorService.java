@@ -61,7 +61,9 @@ public class SourceCodeSelectorService {
     private final CompanyCache companyCache;
 
     public List<SourceCodeData.SourceCodeUid> filterSourceCodes(DispatcherContext context, List<String> uids) {
+        log.info("#984.005 list for filtering: {}", uids);
         List<SourceCodeData.SourceCodeUid> codes = getAvailableSourceCodesForCompany(context).items.stream()
+                .peek(o->log.info("\t#984.010 sourceCodeUid: {}", o.getUid()))
                 .filter(o->uids.contains(o.getUid()))
                 .map(o->new SourceCodeData.SourceCodeUid(o.getId(), o.getUid()))
                 .collect(Collectors.toList());
