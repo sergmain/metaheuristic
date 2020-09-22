@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
@@ -51,7 +52,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
@@ -197,69 +197,80 @@ public class ExperimentResultTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public ResponseEntity<AbstractResource> exportExperimentResultToFile(Long experimentResultId) {
-        File resultDir = DirUtils.createTempDir("prepare-file-export-result-");
-        File zipDir = new File(resultDir, ZIP_DIR);
-        zipDir.mkdir();
-        if (!zipDir.exists()) {
-            log.error("#422.060 Error, zip dir wasn't created, path: {}", zipDir.getAbsolutePath());
-            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        File taskDir = new File(zipDir, TASKS_DIR);
-        taskDir.mkdir();
-        if (!taskDir.exists()) {
-            log.error("#422.070 Error, task dir wasn't created, path: {}", taskDir.getAbsolutePath());
-            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        File zipFile = new File(resultDir, S.f("export-%s.zip", experimentResultId));
-        if (zipFile.isDirectory()) {
-            log.error("#422.080 Error, path for zip file is actually directory, path: {}", zipFile.getAbsolutePath());
-            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
-        if (experimentResult==null) {
-            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.NOT_FOUND);
-        }
-        File exportFile = new File(zipDir, EXPERIMENT_YAML_FILE);
+    public CleanerInfo exportExperimentResultToFile(Long experimentResultId) {
+        CleanerInfo resource = new CleanerInfo();
         try {
+            File resultDir = DirUtils.createTempDir("prepare-file-export-result-");
+            resource.toClean.add(resultDir);
+
+            File zipDir = new File(resultDir, ZIP_DIR);
+            zipDir.mkdir();
+            if (!zipDir.exists()) {
+                log.error("#422.060 Error, zip dir wasn't created, path: {}", zipDir.getAbsolutePath());
+                resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
+                return resource;
+            }
+            File taskDir = new File(zipDir, TASKS_DIR);
+            taskDir.mkdir();
+            if (!taskDir.exists()) {
+                log.error("#422.070 Error, task dir wasn't created, path: {}", taskDir.getAbsolutePath());
+                resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
+                return resource;
+            }
+            File zipFile = new File(resultDir, S.f("export-%s.zip", experimentResultId));
+            if (zipFile.isDirectory()) {
+                log.error("#422.080 Error, path for zip file is actually directory, path: {}", zipFile.getAbsolutePath());
+                resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
+                return resource;
+            }
+            ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
+            if (experimentResult == null) {
+                resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.NOT_FOUND);
+                return resource;
+            }
+            File exportFile = new File(zipDir, EXPERIMENT_YAML_FILE);
             FileUtils.write(exportFile, experimentResult.params, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            log.error("#422.090 Error", e);
-            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        Set<Long> experimentTaskIds = experimentTaskRepository.findIdsByExperimentResultId(experimentResultId);
+            Set<Long> experimentTaskIds = experimentTaskRepository.findIdsByExperimentResultId(experimentResultId);
 
-        ExperimentResultParamsYaml apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params);
-        if (experimentTaskIds.size()!=apy.taskFeatures.size()) {
-            log.warn("numbers of tasks in params of stored experiment and in db are different, " +
-                    "experimentTaskIds.size: {}, apy.taskIds.size: {}", experimentTaskIds.size(), apy.taskFeatures.size());
-        }
-
-        int count = 0;
-        for (Long experimentTaskId : experimentTaskIds) {
-            if (++count%100==0) {
-                log.info("#422.095 Current number of exported task: {} of total {}", count, experimentTaskIds.size());
+            ExperimentResultParamsYaml apy = ExperimentResultParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.params);
+            if (experimentTaskIds.size() != apy.taskFeatures.size()) {
+                log.warn("numbers of tasks in params of stored experiment and in db are different, " +
+                        "experimentTaskIds.size: {}, apy.taskIds.size: {}", experimentTaskIds.size(), apy.taskFeatures.size());
             }
-            ExperimentTask at = experimentTaskRepository.findById(experimentTaskId).orElse(null);
-            if (at==null) {
-                log.error("#422.100 ExperimentResultTask wasn't found for is #{}", experimentTaskId);
-                continue;
+
+            int count = 0;
+            for (Long experimentTaskId : experimentTaskIds) {
+                if (++count % 100 == 0) {
+                    log.info("#422.095 Current number of exported task: {} of total {}", count, experimentTaskIds.size());
+                }
+                ExperimentTask at = experimentTaskRepository.findById(experimentTaskId).orElse(null);
+                if (at == null) {
+                    log.error("#422.100 ExperimentResultTask wasn't found for is #{}", experimentTaskId);
+                    continue;
+                }
+                File taskFile = new File(taskDir, S.f(TASK_YAML_FILE, at.taskId));
+                try {
+                    FileUtils.writeStringToFile(taskFile, at.params, StandardCharsets.UTF_8);
+                } catch (IOException e) {
+                    log.error("#422.110 Error writing task's params to file {}", taskFile.getAbsolutePath());
+                    resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
+                    return resource;
+                }
             }
-            File taskFile = new File(taskDir, S.f(TASK_YAML_FILE, at.taskId));
-            try {
-                FileUtils.writeStringToFile(taskFile, at.params, StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                log.error("#422.110 Error writing task's params to file {}", taskFile.getAbsolutePath());
-                return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+
+            ZipUtils.createZip(zipDir, zipFile);
+
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            httpHeaders.setContentDispositionFormData("attachment", zipFile.getName());
+            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile.toPath()), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
+            return resource;
         }
-
-        ZipUtils.createZip(zipDir, zipFile);
-
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        httpHeaders.setContentDispositionFormData("attachment", zipFile.getName());
-        return new ResponseEntity<>(new FileSystemResource(zipFile.toPath()), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
+        catch(Throwable th) {
+            log.error("#422.115 General error", th);
+            resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
+            return resource;
+        }
     }
 
     public ExperimentResultSimpleResult getExperimentResultData(Long experimentResultId) {

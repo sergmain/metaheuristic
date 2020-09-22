@@ -167,19 +167,17 @@ public class BatchForOperatorController {
             @PathVariable Long companyUniqueId,
             @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName) throws IOException {
-        final ResponseEntity<AbstractResource> entity;
         try {
             CleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, companyUniqueId, true);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }
-            entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
+            return resource.entity == null ? new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE) : resource.entity;
         } catch (CommonErrorWithDataException e) {
             // TODO 2019-10-13 in case of this exception resources won't be cleaned, need to re-write
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
-        return entity;
     }
 
     @SuppressWarnings("TryWithIdenticalCatches")
@@ -190,20 +188,18 @@ public class BatchForOperatorController {
             @PathVariable Long companyUniqueId,
             @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName) {
-        final ResponseEntity<AbstractResource> entity;
         try {
             CleanerInfo resource = batchTopLevelService.getBatchOriginFile(batchId);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }
-            entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
+            return resource.entity == null ? new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE) : resource.entity;
         } catch (CommonErrorWithDataException e) {
             // TODO 2019-10-13 in case of this exception resources won't be cleaned, need to re-write
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         } catch (Throwable e) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
-        return entity;
     }
 }
