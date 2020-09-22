@@ -19,7 +19,6 @@ import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
@@ -27,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 @Slf4j
 public class DirUtils {
@@ -80,5 +80,25 @@ public class DirUtils {
             }
         }
         return null;
+    }
+
+    public static void deleteFiles(@Nullable List<File> toClean) {
+        if (toClean!=null) {
+            try {
+                for (File file : toClean) {
+                    if (!file.exists()) {
+                        continue;
+                    }
+                    if (file.isFile()) {
+                        file.delete();
+                    }
+                    else {
+                        deleteAsync(file);
+                    }
+                }
+            } catch (Throwable th) {
+                log.error("Error while cleaning resources", th);
+            }
+        }
     }
 }

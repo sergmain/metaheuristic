@@ -327,15 +327,26 @@ public class BatchTopLevelService {
                 log.warn(es);
                 return new BatchData.Status(es);
             }
-            AbstractResource body = cleanerInfo.entity.getBody();
-            if (body==null) {
-                final String es = "#981.320 Batch wasn't found, batchId: " + batchId;
-                log.warn(es);
-                return new BatchData.Status(es);
-            }
+            try {
+                if (cleanerInfo.entity==null) {
+                    final String es = "#981.305 Batch wasn't found, batchId: " + batchId;
+                    log.warn(es);
+                    return new BatchData.Status(es);
+                }
 
-            String status = IOUtils.toString(body.getInputStream(), StandardCharsets.UTF_8);
-            return new BatchData.Status(batchId, status, true);
+                AbstractResource body = cleanerInfo.entity.getBody();
+                if (body == null) {
+                    final String es = "#981.320 Batch wasn't found, batchId: " + batchId;
+                    log.warn(es);
+                    return new BatchData.Status(es);
+                }
+
+                String status = IOUtils.toString(body.getInputStream(), StandardCharsets.UTF_8);
+                return new BatchData.Status(batchId, status, true);
+            }
+            finally {
+                DirUtils.deleteFiles(cleanerInfo.toClean);
+            }
         } catch (IOException e) {
             final String es = "#981.340 System error: " + batchId;
             log.warn(es);
@@ -376,8 +387,7 @@ public class BatchTopLevelService {
         });
     }
 
-    @Nullable
-    public CleanerInfo getBatchOriginFile(Long batchId) throws IOException {
+    public CleanerInfo getBatchOriginFile(Long batchId) {
         return getVariable(batchId, null, true, (scpy)-> {
             String variableName = scpy.source.variables.startInputAs;
             if (S.b(variableName)) {
@@ -389,63 +399,69 @@ public class BatchTopLevelService {
         }, (execContextId, scpy) -> batchService.findUploadedFilenameForBatchId(batchId, "origin-file.zip"));
     }
 
-    @Nullable
     private CleanerInfo getVariable(
             Long batchId, @Nullable Long companyUniqueId, boolean includeDeleted,
-            Function<SourceCodeParamsYaml, String> variableSelector, BiFunction<Long, SourceCodeParamsYaml, String> outputFilenameFunction) throws IOException {
-        Batch batch = batchCache.findById(batchId);
-        if (batch == null || (companyUniqueId!=null && !batch.companyId.equals(companyUniqueId)) ||
-                (!includeDeleted && batch.deleted)) {
-            final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
-            log.warn(es);
-            return null;
-        }
+            Function<SourceCodeParamsYaml, String> variableSelector, BiFunction<Long, SourceCodeParamsYaml, String> outputFilenameFunction) {
+
         CleanerInfo resource = new CleanerInfo();
-
-        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
-        resource.toClean.add(resultDir);
-
-        File zipDir = new File(resultDir, "zip");
-        //noinspection ResultOfMethodCallIgnored
-        zipDir.mkdir();
-
-        SourceCodeImpl sc = sourceCodeCache.findById(batch.sourceCodeId);
-        if (sc==null) {
-            final String es = "#981.460 SourceCode wasn't found, sourceCodeId: " + batch.sourceCodeId;
-            log.warn(es);
-            return null;
-        }
-        SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
-        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-        String resultBatchVariable = variableSelector.apply(scpy);
-
-        SimpleVariable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
-        if (variable==null) {
-            final String es = "#981.480 Can't find variable '"+resultBatchVariable+"'";
-            log.warn(es);
-            return null;
-        }
-
-        String filename = variable.filename;
-        if (S.b(filename)) {
-            filename = outputFilenameFunction.apply(batch.execContextId, scpy);
-            if (S.b(filename)) {
-                final String es = "#981.500 Can't find filename for file";
+        try {
+            Batch batch = batchCache.findById(batchId);
+            if (batch == null || (companyUniqueId!=null && !batch.companyId.equals(companyUniqueId)) ||
+                    (!includeDeleted && batch.deleted)) {
+                final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
                 log.warn(es);
-                return null;
+                return resource;
             }
+
+            File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
+            resource.toClean.add(resultDir);
+
+            File zipDir = new File(resultDir, "zip");
+            //noinspection ResultOfMethodCallIgnored
+            zipDir.mkdir();
+
+            SourceCodeImpl sc = sourceCodeCache.findById(batch.sourceCodeId);
+            if (sc==null) {
+                final String es = "#981.460 SourceCode wasn't found, sourceCodeId: " + batch.sourceCodeId;
+                log.warn(es);
+                return resource;
+            }
+            SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
+            SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+            String resultBatchVariable = variableSelector.apply(scpy);
+
+            SimpleVariable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
+            if (variable==null) {
+                final String es = "#981.480 Can't find variable '"+resultBatchVariable+"'";
+                log.warn(es);
+                return resource;
+            }
+
+            String filename = variable.filename;
+            if (S.b(filename)) {
+                filename = outputFilenameFunction.apply(batch.execContextId, scpy);
+                if (S.b(filename)) {
+                    final String es = "#981.500 Can't find filename for file";
+                    log.warn(es);
+                    return resource;
+                }
+            }
+
+            File zipFile = new File(resultDir, Consts.RESULT_ZIP);
+            variableService.storeToFile(variable.id, zipFile);
+
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
+            httpHeaders.setContentDisposition(ContentDisposition.parse(
+                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
+            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
+            return resource;
+        } catch (Throwable th) {
+            log.error("#981.515 General error", th);
+            resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+            return resource;
         }
-
-        File zipFile = new File(resultDir, Consts.RESULT_ZIP);
-        variableService.storeToFile(variable.id, zipFile);
-
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
-        httpHeaders.setContentDisposition(ContentDisposition.parse(
-                "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
-        resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
-        return resource;
     }
 
     @Nullable

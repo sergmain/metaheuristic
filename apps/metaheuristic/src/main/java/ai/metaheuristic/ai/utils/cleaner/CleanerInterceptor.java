@@ -38,22 +38,7 @@ public class CleanerInterceptor extends HandlerInterceptorAdapter {
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         super.afterCompletion(request, response, handler, ex);
         List<File> toClean = (List<File>) request.getAttribute(Consts.RESOURCES_TO_CLEAN);
-        if (toClean!=null) {
-            try {
-                for (File file : toClean) {
-                    if (!file.exists()) {
-                        continue;
-                    }
-                    if (file.isFile()) {
-                        file.delete();
-                    }
-                    else {
-                        DirUtils.deleteAsync(file);
-                    }
-                }
-            } catch (Throwable th) {
-                log.error("Error while cleaning resourses", th);
-            }
-        }
+        DirUtils.deleteFiles(toClean);
     }
+
 }

@@ -135,18 +135,16 @@ public class BatchRestController {
             HttpServletRequest request, @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) throws IOException {
         DispatcherContext context = userContextService.getContext(authentication);
-        final ResponseEntity<AbstractResource> entity;
         try {
             CleanerInfo resource = batchTopLevelService.getBatchProcessingResult(batchId, context.getCompanyId(), false);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }
-            entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
+            return resource.entity == null ? new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE) : resource.entity;
         } catch (CommonErrorWithDataException e) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
-        return entity;
     }
 
 }
