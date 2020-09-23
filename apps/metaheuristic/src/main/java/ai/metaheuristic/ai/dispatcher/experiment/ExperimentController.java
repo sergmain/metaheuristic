@@ -82,7 +82,7 @@ public class ExperimentController {
     public String add(Model model, @ModelAttribute("errorMessage") final String errorMessage, Authentication authentication, final RedirectAttributes redirectAttributes) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
-        List<String> uids = dispatcherParamsService.getBatches();
+        List<String> uids = dispatcherParamsService.getExperiments();
         codes.items = sourceCodeSelectorService.filterSourceCodes(context, uids);
 
         model.addAttribute("result", codes);

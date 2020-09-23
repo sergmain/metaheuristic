@@ -81,7 +81,7 @@ public class ExperimentResultRestController {
             @PathVariable Long experimentResultId,
             @PathVariable Long experimentId, @PathVariable Long featureId,
             @PathVariable String[] params, @PathVariable String[] paramsAxis) {
-        return experimentResultTopLevelService.getPlotData(experimentResultId, experimentId, featureId, params, paramsAxis);
+        return experimentResultTopLevelService.getPlotData(experimentResultId, featureId, params, paramsAxis);
     }
 
     @PostMapping("/experiment-result-feature-progress-console-part/{experimentResultId}/{taskId}")

@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -178,7 +177,7 @@ public class ExperimentResultController {
             @PathVariable Long experimentResultId,
             @PathVariable Long experimentId, @PathVariable Long featureId,
             @PathVariable String[] params, @PathVariable String[] paramsAxis) {
-        return experimentResultTopLevelService.getPlotData(experimentResultId, experimentId, featureId, params, paramsAxis);
+        return experimentResultTopLevelService.getPlotData(experimentResultId, featureId, params, paramsAxis);
     }
 
     @PostMapping("/experiment-result-feature-progress-console-part/{experimentResultId}/{taskId}")

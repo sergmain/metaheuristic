@@ -388,7 +388,7 @@ public class ExperimentResultTopLevelService {
     }
 
 
-    public PlotData getPlotData(Long experimentResultId, Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
+    public PlotData getPlotData(Long experimentResultId, Long featureId, String[] params, String[] paramsAxis) {
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
             return new PlotData("#422.230 experiment wasn't found in ExperimentResult, id: " + experimentResultId);
@@ -482,10 +482,9 @@ public class ExperimentResultTopLevelService {
             Long experimentResultId, ExperimentResultParamsYamlWithCache apywc, ExperimentFeature feature, String[] params, String[] paramsAxis) {
         if (apywc.experimentResult.features.isEmpty() ) {
             return EMPTY_PLOT_DATA;
-        } else {
-            List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, apywc, feature, params);
-            return collectDataForPlotting(apywc, selected, paramsAxis);
         }
+        List<ExperimentResultTaskParamsYaml> selected = getTasksForFeatureIdAndParams(experimentResultId, apywc, feature, params);
+        return collectDataForPlotting(apywc, selected, paramsAxis);
     }
 
     private List<ExperimentResultTaskParamsYaml> getTasksForFeatureIdAndParams(

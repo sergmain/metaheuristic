@@ -47,6 +47,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 
@@ -68,10 +69,6 @@ public class SourceCodeValidationService {
     private final DispatcherParamsService dispatcherParamsService;
 
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
-        if (sourceCode==null) {
-            return new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR, "#177.020 SourceCode is null");
-        }
         if (StringUtils.isBlank(sourceCode.uid)) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_UID_EMPTY_ERROR, "#177.040 UID can't be blank");
@@ -142,10 +139,46 @@ public class SourceCodeValidationService {
             }
         }
 
+        for (Map.Entry e : sourceCodeParamsYaml.source.variables.inline.entrySet()) {
+            if (!(e.getKey() instanceof String)) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                        "#177.223 Inline variable at group level must be type of String, actual: " + e.getKey().getClass()+", value: " + e.getKey());
+            }
+
+            Object o = e.getValue();
+            if (!(o instanceof Map)) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                        "#177.225 Inline variables group must be type of Map, actual: " + o.getClass());
+
+            }
+
+            Map<Object, Object> m = ((Map)o);
+            for (Map.Entry entry : m.entrySet()) {
+                if (!(entry.getKey() instanceof String)) {
+                    return new SourceCodeApiData.SourceCodeValidationResult(
+                            EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                            "#177.227 key in Inline variable must be type of String, actual: " + e.getKey().getClass()+", value: " + entry.getKey());
+                }
+
+                Object obj = entry.getValue();
+                if (!(obj instanceof String)) {
+                    return new SourceCodeApiData.SourceCodeValidationResult(
+                            EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                            S.f("#177.229 Value of Inline variables with key '%s' must be type of String, actual: %s", entry.getKey(), o.getClass()));
+
+                }
+            }
+
+
+        }
+
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
     }
 
-    private @Nullable String validateProcessCode(List<String> processCodes, SourceCodeParamsYaml.Process process) {
+    @Nullable
+    private String validateProcessCode(List<String> processCodes, SourceCodeParamsYaml.Process process) {
         if (processCodes.contains(process.code)) {
             return process.code;
         }
