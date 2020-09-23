@@ -21,9 +21,9 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
@@ -60,8 +60,8 @@ public class ProcessorTopLevelService {
     private final Globals globals;
     private final ProcessorRepository processorRepository;
     private final ProcessorCache processorCache;
-    private final ExecContextService execContextService;
     private final TaskRepository taskRepository;
+    private final TaskTransactionalService taskTransactionalService;
 
     // Attention, this value must be greater than
     // ai.metaheuristic.ai.dispatcher.server.ServerService.SESSION_UPDATE_TIMEOUT
@@ -262,7 +262,7 @@ public class ProcessorTopLevelService {
                 log.info("\tstatuses: {}", statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()));
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tisFound: {}, is expired: {}", isFound, isExpired);
-                OperationStatusRest result = execContextService.resetTask(taskId);
+                OperationStatusRest result = taskTransactionalService.resetTask(taskId);
                 if (result.status== EnumsApi.OperationStatus.ERROR) {
                     log.error("#179.10 Resetting of task #{} was failed. See log for more info.", taskId);
                 }

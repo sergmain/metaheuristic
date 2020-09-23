@@ -25,6 +25,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -178,11 +179,13 @@ public class ExecContextGraphService {
                     TaskData.TaskState taskState = taskStates.get(taskVertex.taskId);
                     taskVertex.execState = EnumsApi.TaskExecState.from(taskState.execState);
                     if (taskVertex.execState == EnumsApi.TaskExecState.ERROR || taskVertex.execState == EnumsApi.TaskExecState.OK) {
-                        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(taskState.params);
-                        EnumsApi.TaskExecState toState = (taskVertex.execState == EnumsApi.TaskExecState.ERROR)
-                                ? EnumsApi.TaskExecState.SKIPPED
-                                : EnumsApi.TaskExecState.NONE;
-                        setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, status, toState, tpy.task.taskContextId);
+                        if (!S.b(taskState.params)) {
+                            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(taskState.params);
+                            EnumsApi.TaskExecState toState = (taskVertex.execState == EnumsApi.TaskExecState.ERROR)
+                                    ? EnumsApi.TaskExecState.SKIPPED
+                                    : EnumsApi.TaskExecState.NONE;
+                            setStateForAllChildrenTasksInternal(graph, taskVertex.taskId, status, toState, tpy.task.taskContextId);
+                        }
                     }
                     else if (taskVertex.execState == EnumsApi.TaskExecState.SKIPPED) {
                         // todo 2020-08-16 need to decide what to do here

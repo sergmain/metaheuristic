@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
@@ -36,11 +37,9 @@ import ai.metaheuristic.ai.source_code.TaskCollector;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
@@ -71,6 +70,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
     public TaskService taskService;
     @Autowired
     public TaskPersistencer taskPersistencer;
+    @Autowired
+    public TaskTransactionalService taskTransactionalService;
     @Autowired
     public TaskCollector taskCollector;
 
@@ -470,10 +471,10 @@ public class TestSourceCodeService extends PreparingSourceCode {
         r.setTaskId(simpleTask.getTaskId());
         r.setResult(getOKExecResult());
 
-        taskPersistencer.storeExecResult(r, t -> {
+        taskTransactionalService.storeExecResult(r, t -> {
             if (t!=null) {
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
-                execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), tpy.task.taskContextId);
+                taskTransactionalService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), tpy.task.taskContextId);
             }
         });
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);

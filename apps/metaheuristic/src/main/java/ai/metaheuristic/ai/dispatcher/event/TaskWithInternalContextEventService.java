@@ -23,10 +23,11 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
+import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -65,6 +66,8 @@ public class TaskWithInternalContextEventService {
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final VariableService variableService;
+    private final TaskTransactionalService taskTransactionalService;
+    private final TaskExecStateService taskExecStateService;
 
     private static Long lastTaskId=null;
     // this code is only for testing
@@ -94,10 +97,12 @@ public class TaskWithInternalContextEventService {
                         log.error("#707.015 Task #"+event.taskId+" already was finished");
                         return;
                     }
-                    task = taskPersistencer.toInProgressSimpleLambda(task);
+                    taskTransactionalService.updateTaskExecStates(task.execContextId,
+                            Map.of(task.id, new TaskData.TaskState(task.id, TaskExecState.IN_PROGRESS.value, 0L, task.params)));
+
                     ExecContextImpl execContext = execContextCache.findById(task.execContextId);
                     if (execContext == null) {
-                        taskPersistencer.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10000,
+                        taskExecStateService.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10000,
                                 "#707.030 Task #" + event.taskId + " is broken, execContext #" + task.execContextId + " wasn't found.");
                         return;
                     }
@@ -126,20 +131,10 @@ public class TaskWithInternalContextEventService {
                             execContext.id, event.taskId, p.internalContextId, taskParamsYaml);
 
                     if (result.processing != Enums.InternalFunctionProcessing.ok) {
-                        log.error("#707.050 error type: {}, message: {}\n\tsourceCodeId: {}, ececContextId: {}", result.processing, result.error, execContext.sourceCodeId, execContext.id);
-                        taskPersistencer.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10001,
-                                "#707.060 Task #" + event.taskId + " was finished with status '" + result.processing + "', text of error: " + result.error);
-
-                        ExecContextOperationStatusWithTaskList s = execContextGraphTopLevelService.updateTaskExecStates(
-                                task.execContextId, Map.of(task.id, new TaskData.TaskState(task.id, TaskExecState.ERROR.value, 0L, task.params)));
-
-                        ExecContextOperationStatusWithTaskList status =
-                                execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsSkipped(task.execContextId, taskParamsYaml.task.taskContextId, task.id);
+                        taskTransactionalService.markAsFinishedWithError(task, execContext, taskParamsYaml, result);
                         return;
                     }
-                    else {
-                        taskPersistencer.setResultReceivedForInternalFunction(event.taskId);
-                    }
+                    taskPersistencer.setResultReceivedForInternalFunction(event.taskId);
 
                     ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
                     r.taskId = event.taskId;
@@ -147,30 +142,31 @@ public class TaskWithInternalContextEventService {
                     functionExec.exec = new FunctionApiData.SystemExecResult(taskParamsYaml.task.function.code, true, 0, "");
                     r.result = FunctionExecUtils.toString(functionExec);
 
-                    taskPersistencer.storeExecResult(r, t -> {
+                    taskTransactionalService.storeExecResult(r, t -> {
                         if (t != null) {
-                            execContextGraphTopLevelService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), taskParamsYaml.task.taskContextId);
+                            taskTransactionalService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), taskParamsYaml.task.taskContextId);
                         }
                     });
                     return;
                 } catch (CommonErrorWithDataException th) {
                     String es = "#707.067 Task #" + event.taskId + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
-                    taskPersistencer.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10002, es);
+                    taskExecStateService.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10002, es);
                     log.error(es);
                 } catch (Throwable th) {
                     String es = "#707.070 Task #" + event.taskId + " was processed with error: " + th.getMessage();
-                    taskPersistencer.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10003, es);
+                    taskExecStateService.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10003, es);
                     log.error(es, th);
                 }
                 return;
             });
         } catch (Throwable th) {
             String es = "#707.080 Task #" + event.taskId + " was processed with error: " + th.getMessage();
-            taskPersistencer.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10004, es);
+            taskExecStateService.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10004, es);
             log.error(es, th);
         }
         finally {
             lastTaskId = event.taskId;
         }
     }
+
 }

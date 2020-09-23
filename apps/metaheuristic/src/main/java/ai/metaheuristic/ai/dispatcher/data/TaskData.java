@@ -59,7 +59,8 @@ public class TaskData {
         public Long taskId;
         public Integer execState;
         public long updatedOn;
-        public String params;
+
+        @Nullable public String params;
 
         public TaskState(Object[] o) {
             this.taskId = (Long) o[0];

@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -54,6 +55,7 @@ public class ExecContextSchedulerService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
+    private final TaskTransactionalService taskTransactionalService;
 
     public void updateExecContextStatuses(boolean needReconciliation) {
         List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.STARTED.code);
@@ -126,7 +128,7 @@ public class ExecContextSchedulerService {
             execContextFSM.toError(execContextId);
         }
         else {
-            execContextGraphTopLevelService.updateTaskExecStates(execContextId, taskStates);
+            taskTransactionalService.updateTaskExecStates(execContextId, taskStates);
         }
 
         // fix actual state of tasks (can be as a result of OptimisticLockingException)
@@ -148,11 +150,11 @@ public class ExecContextSchedulerService {
                             long timeout = Math.min(multiplyBy2, oneHourToMills);
                             if ((System.currentTimeMillis() - task.assignedOn) > timeout) {
                                 log.info("#751.080 Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
-                                execContextService.resetTask(task.id);
+                                taskTransactionalService.resetTask(task.id);
                             }
                         }
                         else if (task.resultReceived && task.isCompleted) {
-                            execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextId, task.id, EnumsApi.TaskExecState.OK.value, tpy.task.taskContextId);
+                            taskTransactionalService.updateTaskExecStateByExecContextId(execContextId, task.id, EnumsApi.TaskExecState.OK.value, tpy.task.taskContextId);
                         }
                     }
                 });

@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -53,7 +53,7 @@ public class ExecContextTopLevelService {
     private final ExecContextService execContextService;
     private final SourceCodeCache sourceCodeCache;
     private final DispatcherParamsService dispatcherParamsService;
-    private final TaskService taskService;
+    private final TaskTransactionalService taskTransactionService;
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
         ExecContextApiData.ExecContextsResult result = execContextService.getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
@@ -91,7 +91,7 @@ public class ExecContextTopLevelService {
         result.sourceCodeId = sourceCodeId;
         initInfoAboutSourceCode(sourceCodeId, result);
 
-        List<TaskData.SimpleTaskInfo> infos = taskService.getSimpleTaskInfos(execContextId);
+        List<TaskData.SimpleTaskInfo> infos = taskTransactionService.getSimpleTaskInfos(execContextId);
         ExecContextImpl ec = execContextCache.findById(execContextId);
         if (ec==null) {
             ExecContextApiData.ExecContextStateResult resultWithError = new ExecContextApiData.ExecContextStateResult();

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -52,6 +53,9 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
     @Autowired
     public ExecContextCache execContextCache;
+
+    @Autowired
+    public TaskTransactionalService taskTransactionalService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -131,10 +135,12 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertEquals(Long.valueOf(1L), vertices.get(0).taskId);
 
-        ExecContextOperationStatusWithTaskList status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,1L, EnumsApi.TaskExecState.OK.value, "123###1");
+        ExecContextOperationStatusWithTaskList status = taskTransactionalService.updateTaskExecStateByExecContextId(execContextForTest.id,1L, EnumsApi.TaskExecState.OK.value, "123###1");
+/*
         for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
             taskPersistencer.changeTaskState(childrenTask.taskId, childrenTask.execState);
         }
+*/
 
         assertEquals(EnumsApi.OperationStatus.OK, status.status.status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
@@ -146,10 +152,12 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertTrue(Set.of(21L, 22L).contains(vertices.get(0).taskId));
 
-        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.IN_PROGRESS.value, null);
+        status = taskTransactionalService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.IN_PROGRESS.value, null);
+/*
         for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
             taskPersistencer.changeTaskState(childrenTask.taskId, childrenTask.execState);
         }
+*/
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         vertices = execContextGraphTopLevelService.findAllForAssigning(
@@ -159,10 +167,12 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
-        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.ERROR.value, "123###1");
+        status = taskTransactionalService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.ERROR.value, "123###1");
+/*
         for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
             taskPersistencer.changeTaskState(childrenTask.taskId, childrenTask.execState);
         }
+*/
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         vertices = execContextGraphTopLevelService.findAllForAssigning(Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
@@ -171,10 +181,12 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
-        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,21L, EnumsApi.TaskExecState.OK.value, "123###1");
+        status = taskTransactionalService.updateTaskExecStateByExecContextId(execContextForTest.id,21L, EnumsApi.TaskExecState.OK.value, "123###1");
+/*
         for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
             taskPersistencer.changeTaskState(childrenTask.taskId, childrenTask.execState);
         }
+*/
 
         vertices = execContextGraphTopLevelService.findAllForAssigning(Objects.requireNonNull(execContextRepository.findByIdForUpdate(execContextForTest.id)));
 
@@ -184,10 +196,12 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(1).taskId));
         assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(2).taskId));
 
-        status = execContextGraphTopLevelService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.OK.value, "123###1");
+        status = taskTransactionalService.updateTaskExecStateByExecContextId(execContextForTest.id,22L, EnumsApi.TaskExecState.OK.value, "123###1");
+/*
         for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
             taskPersistencer.changeTaskState(childrenTask.taskId, childrenTask.execState);
         }
+*/
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
 

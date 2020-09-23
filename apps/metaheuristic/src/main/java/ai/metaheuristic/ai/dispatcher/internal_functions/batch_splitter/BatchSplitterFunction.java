@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelServi
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
@@ -72,6 +73,7 @@ public class BatchSplitterFunction implements InternalFunction {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final InternalFunctionService internalFunctionService;
+    private final TaskTransactionalService taskTransactionalService;
 
     @Override
     public String getCode() {
@@ -194,13 +196,13 @@ public class BatchSplitterFunction implements InternalFunction {
                                         final String actualFileName = mapping.get(currFileName);
                                         return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
                                     });
-                            internalFunctionService.createTasksForSubProcesses(
+                            taskTransactionalService.createTasksForSubProcesses(
                                     files, null,
                                     execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds
                             );
                         } else {
                             String actualFileName = mapping.get(file.getName());
-                            internalFunctionService.createTasksForSubProcesses(
+                            taskTransactionalService.createTasksForSubProcesses(
                                     Stream.of(new BatchTopLevelService.FileWithMapping(file, actualFileName)), null,
                                     execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds
                             );

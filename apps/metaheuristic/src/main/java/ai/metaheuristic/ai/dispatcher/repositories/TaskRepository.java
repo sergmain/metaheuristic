@@ -66,7 +66,6 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(value="select t.id, t.execState, t.updatedOn, t.params from TaskImpl t where t.execContextId=:execContextId")
     List<Object[]> findAllExecStateByExecContextId(Long execContextId);
 
-    @Transactional
     void deleteByExecContextId(Long execContextId);
 
     @Query(value="select t.id, t.params from TaskImpl t where t.execContextId=:execContextId")

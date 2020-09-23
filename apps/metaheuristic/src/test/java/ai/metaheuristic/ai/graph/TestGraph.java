@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -54,6 +55,8 @@ public class TestGraph extends PreparingSourceCode {
 
     @Autowired
     public ExecContextCache execContextCache;
+    @Autowired
+    public TaskTransactionalService taskTransactionalService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -132,7 +135,7 @@ public class TestGraph extends PreparingSourceCode {
         TaskImpl t1 = new TaskImpl();
         t1.id = id;
         t1.execState = execState.value;
-        execContextGraphTopLevelService.updateTaskExecStateByExecContextId(workbook.id, t1.id, t1.execState, "123###1");
+        taskTransactionalService.updateTaskExecStateByExecContextId(workbook.id, t1.id, t1.execState, "123###1");
     }
 
 }

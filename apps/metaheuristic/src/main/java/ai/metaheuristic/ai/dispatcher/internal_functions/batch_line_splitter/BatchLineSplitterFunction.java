@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelServi
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
@@ -69,6 +70,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final InternalFunctionService internalFunctionService;
+    private final TaskTransactionalService taskTransactionService;
 
     @Override
     public String getCode() {
@@ -160,7 +162,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
             currTaskNumber.incrementAndGet();
             try {
                 String str = StringUtils.join(lines, '\n' );
-                internalFunctionService.createTasksForSubProcesses(
+                taskTransactionService.createTasksForSubProcesses(
                         Stream.empty(), str, execContextId, executionContextData, currTaskNumber, taskId, variableName, lastIds );
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;

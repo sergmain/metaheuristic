@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
@@ -46,7 +46,7 @@ public class ExecContextGraphTopLevelService {
 
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextSyncService execContextSyncService;
-    private final TaskPersistencer taskPersistencer;
+    private final TaskExecStateService taskExecStateService;
 
     // section 'execContext graph methods'
 
@@ -90,13 +90,6 @@ public class ExecContextGraphTopLevelService {
 
     // write operations with graph
 
-    public ExecContextOperationStatusWithTaskList updateTaskExecStateByExecContextId(Long execContextId, Long taskId, int execState, @Nullable String taskContextId) {
-        return execContextSyncService.getWithSync(execContextId, execContext -> {
-            final ExecContextOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(execContext, taskId, execState, taskContextId);
-            return status;
-        });
-    }
-
     public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsError(Long execContextId, Long taskId) {
         return execContextSyncService.getWithSync(execContextId, (execContext) ->
                 execContextGraphService.updateGraphWithSettingAllChildrenTasksAsError(execContext, taskId));
@@ -124,7 +117,7 @@ public class ExecContextGraphTopLevelService {
         }
         return execContextSyncService.getWithSync(execContextId, (execContext) -> {
             final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecStates(execContext, taskStates);
-            taskPersistencer.updateTasksStateInDb(status);
+            taskExecStateService.updateTasksStateInDb(status);
             return status;
         });
     }
@@ -134,15 +127,14 @@ public class ExecContextGraphTopLevelService {
                 (execContext) -> execContextGraphService.createEdges(execContext, lastIds, descendants));
     }
 
-    // this method is here because we need to call taskPersistencer
-    private ExecContextOperationStatusWithTaskList updateTaskExecStateWithoutSync(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecStateWithoutSync(@Nullable ExecContextImpl execContext, Long taskId, int execState, @Nullable String taskContextId) {
         if (execContext==null) {
             // this execContext was deleted
             return new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
         }
-        taskPersistencer.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
+        taskExecStateService.changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContext, taskId, execState, taskContextId);
-        taskPersistencer.updateTasksStateInDb(status);
+        taskExecStateService.updateTasksStateInDb(status);
         return status;
     }
 
