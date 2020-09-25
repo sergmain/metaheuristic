@@ -107,147 +107,152 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @SneakyThrows
     @Test
     public void testCreateTasks() {
-        SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();
-        List<Object[]> tasks = taskCollector.getTasks(execContextForTest);
+        execContextSyncService.getWithSync(execContextForTest.id, () -> {
 
-        assertNotNull(result);
-        assertNotNull(execContextForTest);
-        assertNotNull(tasks);
-        assertFalse(tasks.isEmpty());
+            SourceCodeApiData.TaskProducingResultComplex result = produceTasksForTest();
+            List<Object[]> tasks = taskCollector.getTasks(execContextForTest);
 
-        verifyGraphIntegrity();
+            assertNotNull(result);
+            assertNotNull(execContextForTest);
+            assertNotNull(tasks);
+            assertFalse(tasks.isEmpty());
 
-        // ======================
+            verifyGraphIntegrity();
 
-        // the calling of this method will produce a warning "#705.380 ExecContext wasn't started." which is correct behaviour
-        DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+            // ======================
 
-        assertNull(simpleTask0);
+            // the calling of this method will produce a warning "#705.380 ExecContext wasn't started." which is correct behaviour
+            DispatcherCommParamsYaml.AssignedTask simpleTask0 =
+                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
 
-        execContextFSM.toStarted(execContextForTest);
-        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
+            assertNull(simpleTask0);
 
-        SimpleGlobalVariable gv = globalVariableRepository.findIdByName("global-test-variable");
-        assertNotNull(gv);
+            execContextFSM.toStarted(execContextForTest);
+            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
 
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
-        step_AssembledRaw();
-        step_DatasetProcessing();
+            SimpleGlobalVariable gv = globalVariableRepository.findIdByName("global-test-variable");
+            assertNotNull(gv);
 
-        //   processCode: feature-processing-1, function code: function-03:1.1
-        step_CommonProcessing();
+            assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
+            step_AssembledRaw();
+            step_DatasetProcessing();
 
-        //   processCode: feature-processing-2, function code: function-04:1.1
-        step_CommonProcessing();
+            //   processCode: feature-processing-1, function code: function-03:1.1
+            step_CommonProcessing();
 
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
-        assertEquals(3, taskVertices.size());
-        TaskImpl finishTask = null, permuteTask = null, aggregateTask = null;
+            //   processCode: feature-processing-2, function code: function-04:1.1
+            step_CommonProcessing();
 
-        for (ExecContextData.TaskVertex taskVertex : taskVertices) {
-            TaskImpl tempTask = taskRepository.findById(taskVertex.taskId).orElse(null);
-            assertNotNull(tempTask);
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
-            assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION, Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION,
-                    "test.fit.function:1.0", "test.predict.function:1.0")
-                    .contains(tpy.task.function.code));
+            List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
+            assertEquals(3, taskVertices.size());
+            TaskImpl finishTask = null, permuteTask = null, aggregateTask = null;
 
-            switch(tpy.task.function.code) {
-                case Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION:
-                    permuteTask = tempTask;
-                    break;
-                case Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION:
-                    aggregateTask = tempTask;
-                    break;
-                case Consts.MH_FINISH_FUNCTION:
-                    finishTask = tempTask;
-                    break;
+            for (ExecContextData.TaskVertex taskVertex : taskVertices) {
+                TaskImpl tempTask = taskRepository.findById(taskVertex.taskId).orElse(null);
+                assertNotNull(tempTask);
+                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
+                assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION, Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION,
+                        "test.fit.function:1.0", "test.predict.function:1.0")
+                        .contains(tpy.task.function.code));
+
+                switch(tpy.task.function.code) {
+                    case Consts.MH_PERMUTE_VARIABLES_AND_INLINES_FUNCTION:
+                        permuteTask = tempTask;
+                        break;
+                    case Consts.MH_AGGREGATE_INTERNAL_CONTEXT_FUNCTION:
+                        aggregateTask = tempTask;
+                        break;
+                    case Consts.MH_FINISH_FUNCTION:
+                        finishTask = tempTask;
+                        break;
 //                case "test.fit.function:1.0":
 //                case "test.predict.function:1.0":
 //                    break;
-                default:
-                    throw new IllegalStateException("unknown code: " + tpy.task.function.code );
+                    default:
+                        throw new IllegalStateException("unknown code: " + tpy.task.function.code );
+                }
             }
-        }
-        assertNotNull(permuteTask);
-        assertNotNull(aggregateTask);
-        assertNotNull(finishTask);
+            assertNotNull(permuteTask);
+            assertNotNull(aggregateTask);
+            assertNotNull(finishTask);
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(permuteTask.params);
-        assertFalse(tpy.task.metas.isEmpty());
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(permuteTask.params);
+            assertFalse(tpy.task.metas.isEmpty());
 
-        DispatcherCommParamsYaml.AssignedTask task40 =
-                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-        // null because current task is 'internal' and will be processed in async way
-        assertNull(task40);
-
-        waitForFinishing(permuteTask.id, 20);
-        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
-
-        TaskImpl tempTask = taskRepository.findById(permuteTask.id).orElse(null);
-        assertNotNull(tempTask);
-
-        EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(tempTask.execState);
-        FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(tempTask.functionExecResults);
-        assertNotNull(functionExec);
-        assertEquals(EnumsApi.TaskExecState.OK, taskExecState,
-                "Current status: " + taskExecState + ", exitCode: " + functionExec.exec.exitCode+", console: " + functionExec.exec.console);
-
-        verifyGraphIntegrity();
-        taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
-
-        // there are 3 'test.fit.function:1.0' tasks,
-        // 3 'test.predict.function:1.0',
-        // 1 'mh.aggregate-internal-context'  task,
-        // and 1 'mh.finish' task
-        assertEquals(14, taskVertices.size());
-
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContextForTest, permuteTask.id);
-        assertEquals(14, descendants.size());
-
-        descendants = execContextGraphTopLevelService.findDirectDescendants(execContextForTest, permuteTask.id);
-        assertEquals(7, descendants.size());
-
-        // process and complete fit/predict tasks
-        for (int i = 0; i < 12; i++) {
-            step_FitAndPredict();
-        }
-
-        verifyGraphIntegrity();
-        taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
-        // 1 'mh.aggregate-internal-context'  task,
-        // and 1 'mh.finish' task
-        assertEquals(2, taskVertices.size());
-
-        {
-            DispatcherCommParamsYaml.AssignedTask t =
+            DispatcherCommParamsYaml.AssignedTask task40 =
                     execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
             // null because current task is 'internal' and will be processed in async way
-            assertNull(t);
-            waitForFinishing(aggregateTask.id, 20);
-        }
-        verifyGraphIntegrity();
-        taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
-        assertEquals(1, taskVertices.size());
-        {
-            DispatcherCommParamsYaml.AssignedTask t =
-                    execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-            // null because current task is 'internal' and will be processed in async way
-            assertNull(t);
-            waitForFinishing(finishTask.id, 20);
-        }
-        verifyGraphIntegrity();
-        taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
-        assertEquals(0, taskVertices.size());
+            assertNull(task40);
 
-        ExecContext execContext = execContextCache.findById(execContextForTest.id);
-        assertNotNull(execContext);
-        assertEquals(EnumsApi.ExecContextState.FINISHED, EnumsApi.ExecContextState.toState(execContext.getState()));
+            waitForFinishing(permuteTask.id, 20);
+            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
-        execContext = execContextRepository.findById(execContextForTest.id).orElse(null);
-        assertNotNull(execContext);
-        assertEquals(EnumsApi.ExecContextState.FINISHED, EnumsApi.ExecContextState.toState(execContext.getState()));
+            TaskImpl tempTask = taskRepository.findById(permuteTask.id).orElse(null);
+            assertNotNull(tempTask);
+
+            EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(tempTask.execState);
+            FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(tempTask.functionExecResults);
+            assertNotNull(functionExec);
+            assertEquals(EnumsApi.TaskExecState.OK, taskExecState,
+                    "Current status: " + taskExecState + ", exitCode: " + functionExec.exec.exitCode+", console: " + functionExec.exec.console);
+
+            verifyGraphIntegrity();
+            taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
+
+            // there are 3 'test.fit.function:1.0' tasks,
+            // 3 'test.predict.function:1.0',
+            // 1 'mh.aggregate-internal-context'  task,
+            // and 1 'mh.finish' task
+            assertEquals(14, taskVertices.size());
+
+            Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(execContextForTest, permuteTask.id);
+            assertEquals(14, descendants.size());
+
+            descendants = execContextGraphTopLevelService.findDirectDescendants(execContextForTest, permuteTask.id);
+            assertEquals(7, descendants.size());
+
+            // process and complete fit/predict tasks
+            for (int i = 0; i < 12; i++) {
+                step_FitAndPredict();
+            }
+
+            verifyGraphIntegrity();
+            taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
+            // 1 'mh.aggregate-internal-context'  task,
+            // and 1 'mh.finish' task
+            assertEquals(2, taskVertices.size());
+
+            {
+                DispatcherCommParamsYaml.AssignedTask t =
+                        execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+                // null because current task is 'internal' and will be processed in async way
+                assertNull(t);
+                waitForFinishing(aggregateTask.id, 20);
+            }
+            verifyGraphIntegrity();
+            taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
+            assertEquals(1, taskVertices.size());
+            {
+                DispatcherCommParamsYaml.AssignedTask t =
+                        execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+                // null because current task is 'internal' and will be processed in async way
+                assertNull(t);
+                waitForFinishing(finishTask.id, 20);
+            }
+            verifyGraphIntegrity();
+            taskVertices = execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest);
+            assertEquals(0, taskVertices.size());
+
+            ExecContext execContext = execContextCache.findById(execContextForTest.id);
+            assertNotNull(execContext);
+            assertEquals(EnumsApi.ExecContextState.FINISHED, EnumsApi.ExecContextState.toState(execContext.getState()));
+
+            execContext = execContextRepository.findById(execContextForTest.id).orElse(null);
+            assertNotNull(execContext);
+            assertEquals(EnumsApi.ExecContextState.FINISHED, EnumsApi.ExecContextState.toState(execContext.getState()));
+
+            return null;
+        });
     }
 
     public void step_CommonProcessing() {

@@ -65,12 +65,12 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
     @Test
     public void test() {
 
+        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
+        execContextForTest = result.execContext;
+        assertNotNull(execContextForTest);
+
         execContextSyncService.getWithSyncNullable(execContextForTest.id, () -> {
 
-            ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
-            execContextForTest = result.execContext;
-
-            assertNotNull(execContextForTest);
 
             OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id),
                     List.of(), List.of(new TaskApiData.TaskWithContext(1L, "1")));

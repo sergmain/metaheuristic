@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
@@ -55,6 +56,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
@@ -106,6 +108,7 @@ public class BatchTopLevelService {
     private final ExecContextCreatorService execContextCreatorService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final SourceCodeService sourceCodeService;
+    private final ExecContextSyncService execContextSyncService;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -218,61 +221,66 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#981.160 validation of sourceCode was failed, status: " + sourceCodeValidation.status);
         }
 
-        Batch b;
         try {
             ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorService.createExecContext(sourceCodeId, dispatcherContext);
             if (creationResult.isErrorMessages()) {
                 throw new BatchResourceProcessingException("#981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
+            return execContextSyncService.getWithSync(creationResult.execContext.id, () -> {
+                Batch b;
+                String startInputAs = creationResult.execContext.getExecContextParamsYaml().variables.startInputAs;
+                if (S.b(startInputAs)) {
+                    return new BatchData.UploadingStatus("#981.200 Wrong format of sourceCode, startInputAs isn't specified");
+                }
+                try {
+                    variableService.createInitialized(
+                            file.getInputStream(), file.getSize(), startInputAs,
+                            originFilename, creationResult.execContext.getId(),"1"
+                    );
+                } catch (IOException e) {
+                    ExceptionUtils.rethrow(e);
+                }
 
-            String startInputAs = creationResult.execContext.getExecContextParamsYaml().variables.startInputAs;
-            if (S.b(startInputAs)) {
-                return new BatchData.UploadingStatus("#981.200 Wrong format of sourceCode, startInputAs isn't specified");
-            }
-            variableService.createInitialized(
-                    file.getInputStream(), file.getSize(), startInputAs,
-                    originFilename, creationResult.execContext.getId(),"1"
-            );
+                b = new Batch(sourceCodeId, creationResult.execContext.getId(), Enums.BatchExecState.Stored,
+                        dispatcherContext.getAccountId(), dispatcherContext.getCompanyId());
 
-            b = new Batch(sourceCodeId, creationResult.execContext.getId(), Enums.BatchExecState.Stored,
-                    dispatcherContext.getAccountId(), dispatcherContext.getCompanyId());
+                BatchParamsYaml bpy = new BatchParamsYaml();
+                bpy.username = dispatcherContext.account.username;
+                b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
+                b = batchCache.save(b);
 
-            BatchParamsYaml bpy = new BatchParamsYaml();
-            bpy.username = dispatcherContext.account.username;
-            b.params = BatchParamsYamlUtils.BASE_YAML_UTILS.toString(bpy);
-            b = batchCache.save(b);
+                dispatcherEventService.publishBatchEvent(
+                        EnumsApi.DispatcherEventType.BATCH_CREATED, dispatcherContext.getCompanyId(),
+                        sourceCode.uid, null, b.id, creationResult.execContext.getId(), dispatcherContext );
 
-            dispatcherEventService.publishBatchEvent(
-                    EnumsApi.DispatcherEventType.BATCH_CREATED, dispatcherContext.getCompanyId(),
-                    sourceCode.uid, null, b.id, creationResult.execContext.getId(), dispatcherContext );
+                final Batch batch = batchService.changeStateToPreparing(b.id);
+                // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed
+                if (batch==null) {
+                    return new BatchData.UploadingStatus("#981.220 can't find batch with id " + b.id);
+                }
 
-            final Batch batch = batchService.changeStateToPreparing(b.id);
-            // TODO 2019-10-14 when batch is null tempDir won't be deleted, this is wrong behavior and need to be fixed
-            if (batch==null) {
-                return new BatchData.UploadingStatus("#981.220 can't find batch with id " + b.id);
-            }
+                log.info("#981.240 The file {} was successfully stored for processing", originFilename);
+                //noinspection unused
+                int i=0;
+                // start producing new tasks
+                OperationStatusRest operationStatus = execContextService.execContextTargetState(
+                        creationResult.execContext.getId(), EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
 
-            log.info("#981.240 The file {} was successfully stored for processing", originFilename);
-            //noinspection unused
-            int i=0;
-            // start producing new tasks
-            OperationStatusRest operationStatus = execContextService.execContextTargetState(
-                    creationResult.execContext.getId(), EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
+                if (operationStatus.isErrorMessages()) {
+                    throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
+                }
+                sourceCodeService.createAllTasks();
+                operationStatus = execContextService.execContextTargetState(creationResult.execContext.getId(), EnumsApi.ExecContextState.STARTED, dispatcherContext.getCompanyId());
 
-            if (operationStatus.isErrorMessages()) {
-                throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
-            }
-            sourceCodeService.createAllTasks();
-            operationStatus = execContextService.execContextTargetState(creationResult.execContext.getId(), EnumsApi.ExecContextState.STARTED, dispatcherContext.getCompanyId());
+                if (operationStatus.isErrorMessages()) {
+                    throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
+                }
 
-            if (operationStatus.isErrorMessages()) {
-                throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
-            }
+                batchService.changeStateToProcessing(batch.id);
 
-            batchService.changeStateToProcessing(batch.id);
-
-            BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, creationResult.execContext.getId());
-            return uploadingStatus;
+                BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus(b.id, creationResult.execContext.getId());
+                return uploadingStatus;
+            });
         }
         catch (Throwable th) {
             String es = "#981.260 can't load file, error: " + th.getMessage() + ", class: " + th.getClass();
