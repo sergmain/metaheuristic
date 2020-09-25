@@ -44,7 +44,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-@Transactional(propagation = Propagation.MANDATORY)
 public class TaskExecStateService {
 
     private final TaskRepository taskRepository;

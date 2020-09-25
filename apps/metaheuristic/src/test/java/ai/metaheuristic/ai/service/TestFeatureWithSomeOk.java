@@ -37,16 +37,17 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
     @Test
     public void testFeatureCompletionWithPartialError() {
+        assertTrue(isCorrectInit);
+
+        long mills = System.currentTimeMillis();
+        log.info("Start produceTasks()");
+        produceTasks();
+        log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
+
         execContextSyncService.getWithSync(execContextForTest.id, () -> {
-            assertTrue(isCorrectInit);
-
-            long mills = System.currentTimeMillis();
-            log.info("Start produceTasks()");
-            produceTasks();
-            log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
-
             execContextFSM.toStarted(execContextForTest);
             execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
+
             assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
 
             getTaskAndAssignToProcessor_mustBeNewTask();

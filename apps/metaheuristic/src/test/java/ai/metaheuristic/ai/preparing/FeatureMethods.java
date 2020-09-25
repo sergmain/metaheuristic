@@ -95,9 +95,12 @@ public abstract class FeatureMethods extends PreparingSourceCode {
     }
 
     public void toStarted() {
-        execContextFSM.toStarted(execContextForTest);
-        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
-        assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
+        execContextSyncService.getWithSync(execContextForTest.id, () -> {
+            execContextFSM.toStarted(execContextForTest);
+            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.getId()));
+            assertEquals(EnumsApi.ExecContextState.STARTED.code, execContextForTest.getState());
+            return null;
+        });
     }
 
     public String initSessionId() {
@@ -121,17 +124,15 @@ public abstract class FeatureMethods extends PreparingSourceCode {
     }
 
     protected void produceTasks() {
-        {
-            SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
-            assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
+        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
+        assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
 
-            ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
-            execContextForTest = result.execContext;
-            assertFalse(result.isErrorMessages());
-            assertNotNull(execContextForTest);
-            assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
-
-
+        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
+        execContextForTest = result.execContext;
+        assertFalse(result.isErrorMessages());
+        assertNotNull(execContextForTest);
+        assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
+        execContextSyncService.getWithSync(execContextForTest.id, () -> {
             EnumsApi.TaskProducingStatus producingStatus = execContextFSM.toProducing(execContextForTest.id, execContextService);
             execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
@@ -142,8 +143,7 @@ public abstract class FeatureMethods extends PreparingSourceCode {
 
             List<Object[]> tasks02 = taskCollector.getTasks(result.execContext);
             assertTrue(tasks02.isEmpty());
-        }
-        {
+
             long mills = System.currentTimeMillis();
             SourceCodeApiData.TaskProducingResultComplex taskProducingResultComplex = sourceCodeService.produceAllTasks(true, sourceCode, execContextForTest);
             log.info("All tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
@@ -151,7 +151,9 @@ public abstract class FeatureMethods extends PreparingSourceCode {
             execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
             assertEquals(EnumsApi.TaskProducingStatus.OK, taskProducingResultComplex.taskProducingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(execContextForTest.getState()));
-        }
+
+            return null;
+        });
     }
 
     protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor_mustBeNewTask() {

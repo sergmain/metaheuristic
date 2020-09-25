@@ -45,6 +45,7 @@ import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -101,7 +102,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @AfterEach
     public void afterTestSourceCodeService() {
         System.out.println("Finished TestSourceCodeService.afterTestSourceCodeService()");
-        variableRepository.deleteByExecContextId(execContextForTest.id);
+        if (execContextForTest!=null) {
+            variableRepository.deleteByExecContextId(execContextForTest.id);
+        }
     }
 
     @SneakyThrows
@@ -436,20 +439,24 @@ public class TestSourceCodeService extends PreparingSourceCode {
         execContextSchedulerService.updateExecContextStatuses(true);
     }
 
-    public void waitForFinishing(Long id, int secs) throws InterruptedException {
-        long mills = System.currentTimeMillis();
-        boolean finished = false;
-        System.out.println("Start waiting for finishing of task #"+ id);
-        int period = secs * 1000;
-        while(true) {
-            if (!(System.currentTimeMillis() - mills < period)) break;
-            TimeUnit.SECONDS.sleep(1);
-            finished = TaskWithInternalContextEventService.taskFinished(id);
-            if (finished) {
-                break;
+    public void waitForFinishing(Long id, int secs) {
+        try {
+            long mills = System.currentTimeMillis();
+            boolean finished = false;
+            System.out.println("Start waiting for finishing of task #"+ id);
+            int period = secs * 1000;
+            while(true) {
+                if (!(System.currentTimeMillis() - mills < period)) break;
+                TimeUnit.SECONDS.sleep(1);
+                finished = TaskWithInternalContextEventService.taskFinished(id);
+                if (finished) {
+                    break;
+                }
             }
+            assertTrue(finished, "After 60 seconds permuteTask still isn't finished ");
+        } catch (InterruptedException e) {
+            ExceptionUtils.rethrow(e);
         }
-        assertTrue(finished, "After 60 seconds permuteTask still isn't finished ");
     }
 
     private void verifyGraphIntegrity() {
