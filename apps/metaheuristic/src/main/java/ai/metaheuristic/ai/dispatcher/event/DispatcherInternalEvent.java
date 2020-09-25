@@ -40,6 +40,18 @@ public class DispatcherInternalEvent {
 
     @Data
     @AllArgsConstructor
+    public static class DeleteExperimentByExecContextIdEvent {
+        public Long execContextId;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class DeleteExperimentEvent {
+        public Long experimentId;
+    }
+
+    @Data
+    @AllArgsConstructor
     public static class SourceCodeLockingEvent {
         public Long sourceCodeId;
         @Nullable

@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -29,19 +29,42 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-@Transactional(propagation = Propagation.REQUIRED)
 public class TaskPersistencer {
 
     private final TaskRepository taskRepository;
     private final TaskSyncService taskSyncService;
+    private final ExecContextSyncService execContextSyncService;
+
+    public TaskImpl save(TaskImpl task) {
+        if (task.id!=null) {
+            ReentrantReadWriteLock.WriteLock lock = taskSyncService.getWriteLock(task.id);
+            if (!lock.isHeldByCurrentThread()) {
+                try {
+                    throw new RuntimeException("Thread isn't locked by taskSyncService");
+                }
+                catch (RuntimeException e) {
+                    log.error("Thread isn't locked by taskSyncService", e);
+                }
+            }
+        }
+        if (!execContextSyncService.getWriteLock(task.execContextId).isHeldByCurrentThread()) {
+            try {
+                throw new RuntimeException("Thread isn't locked by execContextSyncService");
+            }
+            catch (RuntimeException e) {
+                log.error("Thread isn't locked by execContextSyncService", e);
+            }
+        }
+        return taskRepository.save(task);
+    }
 
     @Nullable
     public TaskImpl setParams(Long taskId, TaskParamsYaml params) {
@@ -57,7 +80,7 @@ public class TaskPersistencer {
                     return null;
                 }
                 task.setParams(taskParams);
-                taskRepository.save(task);
+                save(task);
                 return task;
             } catch (ObjectOptimisticLockingFailureException e) {
                 log.error("#307.020 !!!NEED TO INVESTIGATE. Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
@@ -88,7 +111,7 @@ public class TaskPersistencer {
                 task.setCompleted(allUploaded);
                 task.setCompletedOn(System.currentTimeMillis());
                 task.setResultReceived(allUploaded);
-                taskRepository.save(task);
+                save(task);
                 return Enums.UploadResourceStatus.OK;
             } catch (ObjectOptimisticLockingFailureException e) {
                 log.warn("#307.040 !!!NEED TO INVESTIGATE. Error set resultReceived() for taskId: {}, variableId: {}, error: {}", taskId, variableId, e.toString());
@@ -118,7 +141,7 @@ public class TaskPersistencer {
                 task.setCompleted(true);
                 task.setCompletedOn(System.currentTimeMillis());
                 task.setResultReceived(true);
-                taskRepository.save(task);
+                save(task);
                 return Enums.UploadResourceStatus.OK;
             } catch (ObjectOptimisticLockingFailureException e) {
                 log.warn("#307.100 !!!NEED TO INVESTIGATE. Error set setResultReceivedForInternalFunction() for taskId: {}, error: {}", taskId, e.toString());

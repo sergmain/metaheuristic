@@ -32,8 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -47,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TaskExecStateService {
 
     private final TaskRepository taskRepository;
+    private final TaskPersistencer taskPersistencer;
     private final TaskSyncService taskSyncService;
     private final DispatcherEventService dispatcherEventService;
 
@@ -66,7 +65,7 @@ public class TaskExecStateService {
             task.setExecState(EnumsApi.TaskExecState.NONE.value);
             task.setResultReceived(false);
             task.setResultResourceScheduledOn(0);
-            task = taskRepository.save(task);
+            task = taskPersistencer.save(task);
 
             log.info("#305.030 task #{} was re-setted to initial state", taskId);
             return task;
@@ -74,12 +73,12 @@ public class TaskExecStateService {
     }
     public TaskImpl toInProgressSimpleLambda(TaskImpl task) {
         task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
-        return taskRepository.save(task);
+        return taskPersistencer.save(task);
     }
 
     private TaskImpl toSkippedSimpleLambda(TaskImpl task) {
         task.setExecState(EnumsApi.TaskExecState.SKIPPED.value);
-        return taskRepository.save(task);
+        return taskPersistencer.save(task);
     }
 
     public void toOkSimple(Long taskId) {
@@ -92,7 +91,7 @@ public class TaskExecStateService {
                 return task;
             }
             task.setExecState(EnumsApi.TaskExecState.OK.value);
-            return taskRepository.save(task);
+            return taskPersistencer.save(task);
         });
     }
 
@@ -106,7 +105,7 @@ public class TaskExecStateService {
                 return task;
             }
             task.setExecState(EnumsApi.TaskExecState.NONE.value);
-            return taskRepository.save(task);
+            return taskPersistencer.save(task);
         });
     }
 
@@ -134,7 +133,7 @@ public class TaskExecStateService {
             }
             task.setResultReceived(true);
 
-            task = taskRepository.save(task);
+            task = taskPersistencer.save(task);
             dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR,null, task.id, task.getExecContextId());
 
             return task;

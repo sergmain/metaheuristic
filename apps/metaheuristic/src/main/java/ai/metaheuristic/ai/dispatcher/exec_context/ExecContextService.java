@@ -221,7 +221,7 @@ public class ExecContextService {
     }
 
     public void deleteExecContext(Long execContextId, Long companyUniqueId) {
-        eventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExecContextEvent(execContextId));
+        eventPublisher.publishEvent(new DispatcherInternalEvent.DeleteExperimentByExecContextIdEvent(execContextId));
         variableService.deleteByExecContextId(execContextId);
         ExecContext execContext = execContextCache.findById(execContextId);
         if (execContext != null) {

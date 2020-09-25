@@ -56,6 +56,7 @@ import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
  * Date: 2/23/2020
  * Time: 9:05 PM
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 @Slf4j
 @Profile("dispatcher")
 @Service

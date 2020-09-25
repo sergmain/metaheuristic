@@ -43,9 +43,24 @@ public class TaskSyncService {
     private final TaskRepository taskRepository;
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
+    public void checkWriteLockPresent(Long execContextId) {
+        if (!getWriteLock(execContextId).isHeldByCurrentThread()) {
+            throw new IllegalStateException("#306.005 Must be locked by WriteLock");
+        }
+    }
+
+    public ReentrantReadWriteLock.WriteLock getWriteLock(Long taskId) {
+        return commonSync.getWriteLock(taskId);
+    }
+
+    private ReentrantReadWriteLock.ReadLock getReadLock(Long taskId) {
+        return commonSync.getReadLock(taskId);
+    }
+
     public @Nullable <T> T getWithSync(Long taskId, Function<TaskImpl, T> function) {
         return getWithSync(false, taskId, function);
     }
+
     public @Nullable <T> T getWithSync(boolean debug, Long taskId, Function<TaskImpl, T> function) {
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
         if (debug) {

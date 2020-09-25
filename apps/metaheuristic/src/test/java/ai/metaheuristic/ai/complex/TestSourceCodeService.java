@@ -214,7 +214,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(tempTask.functionExecResults);
             assertNotNull(functionExec);
             assertEquals(EnumsApi.TaskExecState.OK, taskExecState,
-                    "Current status: " + taskExecState + ", exitCode: " + functionExec.exec.exitCode+", console: " + functionExec.exec.console);
+                    "Current status: " + taskExecState + ", exitCode: " + functionExec.exec.exitCode + ", console: " + functionExec.exec.console);
 
             verifyGraphIntegrity();
             taskVertices.clear();
@@ -243,25 +243,28 @@ public class TestSourceCodeService extends PreparingSourceCode {
             // 1 'mh.aggregate-internal-context'  task,
             // and 1 'mh.finish' task
             assertEquals(2, taskVertices.size());
+            return null;
+        });
+        DispatcherCommParamsYaml.AssignedTask t =
+                execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+        // null because current task is 'internal' and will be processed in async way
+        assertNull(t);
+        waitForFinishing(aggregateTask.task.id, 20);
 
-            {
-                DispatcherCommParamsYaml.AssignedTask t =
-                        execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-                // null because current task is 'internal' and will be processed in async way
-                assertNull(t);
-                waitForFinishing(aggregateTask.task.id, 20);
-            }
+        execContextSyncService.getWithSync(execContextForTest.id, () -> {
+            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
             verifyGraphIntegrity();
             taskVertices.clear();
             taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));
             assertEquals(1, taskVertices.size());
-            {
-                DispatcherCommParamsYaml.AssignedTask t =
-                        execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
-                // null because current task is 'internal' and will be processed in async way
-                assertNull(t);
-                waitForFinishing(finishTask.task.id, 20);
-            }
+            return null;
+        });
+        t = execContextService.getTaskAndAssignToProcessor(processor.getId(), false, execContextForTest.getId());
+        // null because current task is 'internal' and will be processed in async way
+        assertNull(t);
+        waitForFinishing(finishTask.task.id, 20);
+
+        execContextSyncService.getWithSync(execContextForTest.id, () -> {
             verifyGraphIntegrity();
             taskVertices.clear();
             taskVertices.addAll(execContextGraphTopLevelService.getUnfinishedTaskVertices(execContextForTest));

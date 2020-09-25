@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -109,6 +110,7 @@ public class BatchTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final SourceCodeService sourceCodeService;
     private final ExecContextSyncService execContextSyncService;
+    private final ExecContextFSM execContextFSM;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
@@ -303,6 +305,8 @@ public class BatchTopLevelService {
         }
         if (isVirtualDeletion) {
             if (!batch.deleted) {
+                execContextFSM.toStopped(batch.execContextId);
+
                 Batch b = batchRepository.findByIdForUpdate(batch.id, batch.companyId);
                 b.deleted = true;
                 batchCache.save(b);

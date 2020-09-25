@@ -150,7 +150,7 @@ public class TaskTransactionalService {
                 }
             }
             task.setFunctionExecResults(result.getResult());
-            task = taskRepository.save(task);
+            task = taskPersistencer.save(task);
 
             return task;
         });

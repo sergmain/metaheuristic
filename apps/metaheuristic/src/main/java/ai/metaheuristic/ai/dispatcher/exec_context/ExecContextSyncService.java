@@ -48,7 +48,7 @@ public class ExecContextSyncService {
         }
     }
 
-    private ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextId) {
+    public ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextId) {
         return commonSync.getWriteLock(execContextId);
     }
 

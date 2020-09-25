@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
@@ -50,7 +49,7 @@ public class TaskProducingCoreService {
 
     private final VariableService variableService;
     private final GlobalVariableRepository globalVariableRepository;
-    private final TaskRepository taskRepository;
+    private final TaskPersistencer taskPersistencer;
     private final FunctionService functionService;
 
     @Nullable
@@ -102,7 +101,7 @@ public class TaskProducingCoreService {
         TaskImpl task = new TaskImpl();
         task.setExecContextId(execContextId);
         task.setParams(params);
-        taskRepository.save(task);
+        taskPersistencer.save(task);
 
         return task;
     }

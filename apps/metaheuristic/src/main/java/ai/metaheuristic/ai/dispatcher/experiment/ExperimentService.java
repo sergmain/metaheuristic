@@ -49,8 +49,14 @@ public class ExperimentService {
 
     @Async
     @EventListener
-    public void handleAsync(DispatcherInternalEvent.DeleteExecContextEvent event) {
-        deleteExperiment(event.execContextId);
+    public void handleAsync(DispatcherInternalEvent.DeleteExperimentEvent event) {
+        deleteExperiment(event.experimentId);
+    }
+
+    @Async
+    @EventListener
+    public void handleAsync(DispatcherInternalEvent.DeleteExperimentByExecContextIdEvent event) {
+        deleteExperimentByExecContextId(event.execContextId);
     }
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
@@ -111,7 +117,11 @@ public class ExperimentService {
         return ed;
     }
 
-    private void deleteExperiment(Long execContextId) {
+    private void deleteExperiment(Long experimentId) {
+        experimentCache.deleteById(experimentId);
+    }
+
+    private void deleteExperimentByExecContextId(Long execContextId) {
         Long id = experimentRepository.findIdByExecContextId(execContextId);
         if (id==null) {
             return;
