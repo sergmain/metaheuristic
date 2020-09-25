@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.CommonSync;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -26,10 +25,11 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
+ * it's a Spring based implementation because we need singleton
+ *
  * @author Serge
  * Date: 8/11/2019
  * Time: 10:56 AM
@@ -40,37 +40,48 @@ import java.util.function.Supplier;
 @Slf4j
 public class ExecContextSyncService {
 
-    private final ExecContextRepository execContextRepository;
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
-    public <T> T getWithSync(Long execContextId, Function<ExecContextImpl, T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(execContextId);
+    public void checkWriteLockPresent(Long execContextId) {
+        if (!getWriteLock(execContextId).isHeldByCurrentThread()) {
+            throw new IllegalStateException("#977.020 Must be locked by WriteLock");
+        }
+    }
+
+    private ReentrantReadWriteLock.WriteLock getWriteLock(Long execContextId) {
+        return commonSync.getWriteLock(execContextId);
+    }
+
+    private ReentrantReadWriteLock.ReadLock getReadLock(Long execContextId) {
+        return commonSync.getReadLock(execContextId);
+    }
+
+    public <T> T getWithSync(Long execContextId, Supplier<T> supplier) {
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
         try {
             lock.lock();
-            ExecContextImpl execContext = execContextRepository.findByIdForUpdate(execContextId);
-            return function.apply(execContext);
+            return supplier.get();
         } finally {
             lock.unlock();
         }
     }
 
     @Nullable
-    public <T> T getWithSyncNullable(Long execContextId, Function<ExecContextImpl, T> function) {
-        final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(execContextId);
+    public <T> T getWithSyncNullable(Long execContextId, Supplier<T> supplier) {
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
         try {
             lock.lock();
-            ExecContextImpl execContext = execContextRepository.findByIdForUpdate(execContextId);
-            return execContext == null ? null : function.apply(execContext);
+            return supplier.get();
         } finally {
             lock.unlock();
         }
     }
 
-    public <T> T getWithSyncReadOnly(Long execContextId, Supplier<T> function) {
-        final ReentrantReadWriteLock.ReadLock lock = commonSync.getReadLock(execContextId);
+    public <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> supplier) {
+        final ReentrantReadWriteLock.ReadLock lock = getReadLock(execContext.id);
         try {
             lock.lock();
-            return function.get();
+            return supplier.get();
         } finally {
             lock.unlock();
         }

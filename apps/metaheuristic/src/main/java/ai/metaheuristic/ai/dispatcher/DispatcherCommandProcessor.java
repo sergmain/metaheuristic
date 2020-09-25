@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
-import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -62,7 +62,7 @@ public class DispatcherCommandProcessor {
     private final ExecContextService execContextService;
     private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
-    private final TaskTransactionalService taskTransactionalService;
+    private final ExecContextFSM execContextFSM;
 
     private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(5);
     private List<DispatcherCommParamsYaml.Functions.Info> functionInfosCache = new ArrayList<>();
@@ -112,7 +112,7 @@ public class DispatcherCommandProcessor {
             return;
         }
         for (ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {
-            taskTransactionalService.processResendTaskOutputResourceResult(request.processorCommContext.processorId, status.status, status.taskId, status.variableId);
+            execContextFSM.processResendTaskOutputResourceResult(request.processorCommContext.processorId, status.status, status.taskId, status.variableId);
         }
     }
 
@@ -129,7 +129,8 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public @Nullable DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(ProcessorCommParamsYaml request) {
+    @Nullable
+    private DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(ProcessorCommParamsYaml request) {
         if (request.reportTaskProcessingResult==null || request.reportTaskProcessingResult.results==null) {
             return null;
         }
@@ -140,7 +141,7 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public void processReportProcessorStatus(ProcessorCommParamsYaml request) {
+    private void processReportProcessorStatus(ProcessorCommParamsYaml request) {
         if (request.reportProcessorStatus ==null) {
             return;
         }
@@ -153,7 +154,8 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    public @Nullable DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml request) {
+    @Nullable
+    private DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml request) {
         if (request.requestTask==null || request.processorCommContext==null || S.b(request.processorCommContext.processorId)) {
             return null;
         }

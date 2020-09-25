@@ -471,12 +471,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         r.setTaskId(simpleTask.getTaskId());
         r.setResult(getOKExecResult());
 
-        taskTransactionalService.storeExecResult(r, t -> {
-            if (t!=null) {
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
-                taskTransactionalService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), tpy.task.taskContextId);
-            }
-        });
+        taskTransactionalService.storeExecResult(r);
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);
 

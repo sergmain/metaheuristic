@@ -19,10 +19,7 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -109,6 +106,12 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @Autowired
     public ExecContextCreatorService execContextCreatorService;
+
+    @Autowired
+    public ExecContextGraphService execContextGraphService;
+
+    @Autowired
+    public ExecContextSyncService execContextSyncService;
 
     public SourceCodeImpl sourceCode = null;
     public Function s1 = null;

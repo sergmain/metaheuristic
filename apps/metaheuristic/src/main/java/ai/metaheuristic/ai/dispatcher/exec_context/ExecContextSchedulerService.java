@@ -49,7 +49,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class ExecContextSchedulerService {
 
-    private final ExecContextService execContextService;
     private final ExecContextRepository execContextRepository;
     private final TaskRepository taskRepository;
     private final ExecContextFSM execContextFSM;
@@ -57,6 +56,7 @@ public class ExecContextSchedulerService {
     private final ExecContextSyncService execContextSyncService;
     private final ExecContextCache execContextCache;
     private final TaskTransactionalService taskTransactionalService;
+    private final ExecContextGraphService execContextGraphService;
 
     public void updateExecContextStatuses(boolean needReconciliation) {
         List<ExecContextImpl> execContexts = execContextRepository.findByState(EnumsApi.ExecContextState.STARTED.code);
@@ -72,12 +72,20 @@ public class ExecContextSchedulerService {
      * @return ExecContextImpl updated execContext
      */
     public void updateExecContextStatus(Long execContextId, boolean needReconciliation) {
-        execContextSyncService.getWithSyncNullable(execContextId, (execContext) -> {
+        execContextSyncService.getWithSyncNullable(execContextId, () -> {
 
+            ExecContextImpl execContext = execContextCache.findById(execContextId);
+            if (execContext==null) {
+                return null;
+            }
             long countUnfinishedTasks = execContextGraphTopLevelService.getCountUnfinishedTasks(execContext);
             if (countUnfinishedTasks==0) {
                 // workaround for situation when states in graph and db are different
                 reconcileStates(execContextId);
+                execContext = execContextCache.findById(execContextId);
+                if (execContext==null) {
+                    return null;
+                }
                 countUnfinishedTasks = execContextGraphTopLevelService.getCountUnfinishedTasks(execContext);
                 if (countUnfinishedTasks==0) {
                     log.info("ExecContext #{} was finished", execContextId);
@@ -105,7 +113,7 @@ public class ExecContextSchedulerService {
         }
 
         // Reconcile states in db and in graph
-        List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAll(execContext);
+        List<ExecContextData.TaskVertex> vertices = execContextGraphService.findAll(execContext);
         vertices.stream().parallel().forEach(tv -> {
             TaskData.TaskState taskState = states.get(tv.taskId);
             if (taskState==null) {
@@ -152,11 +160,11 @@ public class ExecContextSchedulerService {
                             long timeout = Math.min(multiplyBy2, oneHourToMills);
                             if ((System.currentTimeMillis() - task.assignedOn) > timeout) {
                                 log.info("#751.080 Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
-                                taskTransactionalService.resetTask(task.id);
+                                execContextFSM.resetTask(task.id);
                             }
                         }
                         else if (task.resultReceived && task.isCompleted) {
-                            taskTransactionalService.updateTaskExecStateByExecContextId(execContextId, task.id, EnumsApi.TaskExecState.OK.value, tpy.task.taskContextId);
+                            execContextGraphTopLevelService.updateTaskExecStateWithoutSync(execContextCache.findById(execContextId), task.id, EnumsApi.TaskExecState.OK.value, tpy.task.taskContextId);
                         }
                     }
                 });

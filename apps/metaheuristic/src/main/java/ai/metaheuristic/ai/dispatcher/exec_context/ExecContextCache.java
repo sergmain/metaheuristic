@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 public class ExecContextCache {
 
     private final ExecContextRepository execContextRepository;
+    private final ExecContextSyncService execContextSyncService;
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
     public void clearCache() {
@@ -48,6 +49,7 @@ public class ExecContextCache {
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
     public ExecContextImpl save(ExecContextImpl execContext) {
+        execContextSyncService.checkWriteLockPresent(execContext.id);
         log.debug("#461.010 save execContext, id: #{}, execContext: {}", execContext.id, execContext);
         //noinspection CaughtExceptionImmediatelyRethrown
         try {

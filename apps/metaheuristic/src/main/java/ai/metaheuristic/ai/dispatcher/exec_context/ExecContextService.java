@@ -94,22 +94,25 @@ public class ExecContextService {
     }
 
     public void changeValidStatus(Long execContextId, boolean status) {
-        execContextSyncService.getWithSyncNullable(execContextId, execContext -> {
-            execContext.setValid(status);
-            execContextCache.save(execContext);
-            return null;
-        });
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return;
+        }
+        execContext.setValid(status);
+        execContextCache.save(execContext);
     }
 
     public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
-        return execContextSyncService.getWithSync(execContextId, execContext -> {
-            if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
-                return EnumsApi.TaskProducingStatus.OK;
-            }
-            execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
-            execContextCache.save(execContext);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return EnumsApi.TaskProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
+        }
+        if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
             return EnumsApi.TaskProducingStatus.OK;
-        });
+        }
+        execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
+        execContextCache.save(execContext);
+        return EnumsApi.TaskProducingStatus.OK;
     }
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
@@ -126,23 +129,19 @@ public class ExecContextService {
             return null;
         }
 
-        DispatcherCommParamsYaml.AssignedTask result = execContextSyncService.getWithSyncNullable(assignedTaskComplex.execContextId,
-                execContext -> {
-                    try {
-                        prepareVariables(assignedTaskComplex);
-                        TaskImpl task = taskRepository.findById(assignedTaskComplex.task.getId()).orElse(null);
-                        if (task==null) {
-                            log.warn("#705.260 task wasn't found with id #"+ assignedTaskComplex.task.getId());
-                            return null;
-                        }
-                        return new DispatcherCommParamsYaml.AssignedTask(task.params, task.getId(), task.execContextId);
-                    } catch (Throwable th) {
-                        String es = "#705.270 Something wrong";
-                        log.error(es, th);
-                        throw new IllegalStateException(es, th);
-                    }
-                });
-        return result;
+        try {
+            prepareVariables(assignedTaskComplex);
+            TaskImpl task = taskRepository.findById(assignedTaskComplex.task.getId()).orElse(null);
+            if (task==null) {
+                log.warn("#705.260 task wasn't found with id #"+ assignedTaskComplex.task.getId());
+                return null;
+            }
+            return new DispatcherCommParamsYaml.AssignedTask(task.params, task.getId(), task.execContextId);
+        } catch (Throwable th) {
+            String es = "#705.270 Something wrong";
+            log.error(es, th);
+            throw new IllegalStateException(es, th);
+        }
     }
 
     private void prepareVariables(ExecContextData.AssignedTaskComplex assignedTaskComplex) {
@@ -216,7 +215,7 @@ public class ExecContextService {
 
         for (Long execContextId : execContextIds) {
             ExecContextData.AssignedTaskComplex result = execContextSyncService.getWithSyncNullable(execContextId,
-                    execContext -> taskTransactionalService.findUnassignedTaskAndAssign(execContextId, processor, ss, isAcceptOnlySigned));
+                    () -> execContextFSM.findUnassignedTaskAndAssign(execContextId, processor, ss, isAcceptOnlySigned));
             if (result!=null) {
                 return result;
             }
@@ -229,7 +228,7 @@ public class ExecContextService {
         List<Long> ids = new ArrayList<>();
         for (ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result : results) {
             ids.add(result.taskId);
-            taskTransactionalService.storeExecResult(result);
+            execContextFSM.storeExecResult(result);
         }
         return ids;
     }

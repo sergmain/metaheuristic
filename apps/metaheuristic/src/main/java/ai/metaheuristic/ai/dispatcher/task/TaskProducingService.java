@@ -20,7 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
@@ -47,8 +48,9 @@ import static ai.metaheuristic.api.EnumsApi.TaskProducingStatus;
 public class TaskProducingService {
 
     private final TaskProducingCoreService taskProducingCoreService;
-    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionProcessor internalFunctionProcessor;
+    private final ExecContextGraphService execContextGraphService;
+    private final ExecContextCache execContextCache;
 
     public TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
@@ -138,7 +140,7 @@ public class TaskProducingService {
                 }
                 result.taskId = t.getId();
                 List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));
-                execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, taskWithContexts);
+                execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextId), parentTaskIds, taskWithContexts);
             } catch (TaskCreationException e) {
                 result.status = TaskProducingStatus.TASK_PRODUCING_ERROR;
                 result.error = "#375.100 task creation error " + e.getMessage();

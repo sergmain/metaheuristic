@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InlineVariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
@@ -79,6 +80,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
     private final TaskProducingCoreService taskProducingCoreService;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    private final ExecContextGraphService execContextGraphService;
 
     @Override
     public String getCode() {
@@ -193,7 +195,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 return new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage());
             }
         }
-        execContextGraphTopLevelService.createEdges(execContextId, lastIds, descendants);
+        execContextGraphService.createEdges(execContextCache.findById(execContextId), lastIds, descendants);
         return Consts.INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 
@@ -234,7 +236,7 @@ public class PermuteVariablesAndInlinesFunction implements InternalFunction {
                 throw new BreakFromLambdaException("Creation of task failed");
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), currTaskContextId));
-            execContextGraphTopLevelService.addNewTasksToGraph(execContextId, parentTaskIds, currTaskIds);
+            execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextId), parentTaskIds, currTaskIds);
             parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;
         }

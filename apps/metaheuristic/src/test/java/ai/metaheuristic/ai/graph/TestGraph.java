@@ -63,6 +63,11 @@ public class TestGraph extends PreparingSourceCode {
         return getSourceParamsYamlAsString_Simple();
     }
 
+    private ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsError(ExecContextImpl execContext, Long taskId) {
+        return execContextSyncService.getWithSync(execContext.id, () ->
+                execContextGraphService.updateGraphWithSettingAllChildrenTasksAsError(execContext, taskId));
+    }
+
     /**
      * this test will produce warnings in log such:
      *      #306.010 Can't find Task for Id: 1
@@ -77,7 +82,7 @@ public class TestGraph extends PreparingSourceCode {
 
         assertNotNull(execContextForTest);
 
-        OperationStatusRest osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id, List.of(),
+        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(),
                 List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
@@ -87,7 +92,7 @@ public class TestGraph extends PreparingSourceCode {
         assertEquals(1, count);
 
 
-        osr = execContextGraphTopLevelService.addNewTasksToGraph(execContextForTest.id, List.of(1L),
+        osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(1L),
                 List.of(new TaskApiData.TaskWithContext(2L, "123###1"), new TaskApiData.TaskWithContext(3L, "123###1")));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
@@ -105,8 +110,9 @@ public class TestGraph extends PreparingSourceCode {
         setExecState(execContextForTest, 2L, EnumsApi.TaskExecState.NONE);
         setExecState(execContextForTest, 3L, EnumsApi.TaskExecState.NONE);
 
-        ExecContextOperationStatusWithTaskList status =
-                execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsError(execContextForTest.id,1L);
+        ExecContextOperationStatusWithTaskList status = updateGraphWithSettingAllChildrenTasksAsError(
+                        Objects.requireNonNull(execContextCache.findById(execContextForTest.id)),1L);
+
         assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
@@ -122,7 +128,7 @@ public class TestGraph extends PreparingSourceCode {
 
 
         setExecState(execContextForTest, 1L, EnumsApi.TaskExecState.NONE);
-        execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(execContextForTest.id,1L);
+        execContextGraphService.updateGraphWithResettingAllChildrenTasks(execContextCache.findById(execContextForTest.id), 1L);
         execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
         // there is only 'NONE' exec state
@@ -135,7 +141,8 @@ public class TestGraph extends PreparingSourceCode {
         TaskImpl t1 = new TaskImpl();
         t1.id = id;
         t1.execState = execState.value;
-        taskTransactionalService.updateTaskExecStateByExecContextId(workbook.id, t1.id, t1.execState, "123###1");
+        execContextGraphTopLevelService.updateTaskExecStateWithoutSync(
+                execContextCache.findById(workbook.id), t1.id, t1.execState, "123###1");
     }
 
 }

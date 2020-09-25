@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
@@ -70,7 +72,8 @@ import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalF
 @RequiredArgsConstructor
 public class BatchSplitterFunction implements InternalFunction {
 
-    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    private final ExecContextCache execContextCache;
+    private final ExecContextGraphService execContextGraphService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final InternalFunctionService internalFunctionService;
     private final TaskTransactionalService taskTransactionalService;
@@ -215,7 +218,7 @@ public class BatchSplitterFunction implements InternalFunction {
                         throw new BatchResourceProcessingException(es);
                     }
                 });
-        execContextGraphTopLevelService.createEdges(execContextId, lastIds, executionContextData.descendants);
+        execContextGraphService.createEdges(execContextCache.findById(execContextId), lastIds, executionContextData.descendants);
         return INTERNAL_FUNCTION_PROCESSING_RESULT_OK;
     }
 

@@ -67,8 +67,11 @@ public class ExecContextGraphService {
     private static final String TASK_CONTEXT_ID_ATTR = "task_context_id";
 
     private final ExecContextCache execContextCache;
+    private final ExecContextSyncService execContextSyncService;
 
     private void changeGraph(ExecContextImpl execContext, Consumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>> callable) {
+        execContextSyncService.checkWriteLockPresent(execContext.id);
+
         ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = importProcessGraph(ecpy);
         try {
@@ -161,12 +164,13 @@ public class ExecContextGraphService {
         return graph;
     }
 
-    public ExecContextOperationStatusWithTaskList updateTaskExecStates(ExecContextImpl execContext, Map<Long, TaskData.TaskState> taskStates) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecStates(@Nullable ExecContextImpl execContext, Map<Long, TaskData.TaskState> taskStates) {
         final ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList();
         status.status = OperationStatusRest.OPERATION_STATUS_OK;
-        if (taskStates.isEmpty()) {
+        if (execContext == null || taskStates.isEmpty()) {
             return status;
         }
+
         try {
             changeGraph(execContext, graph -> {
                 List<ExecContextData.TaskVertex> tvs = graph.vertexSet()
@@ -281,9 +285,12 @@ public class ExecContextGraphService {
         }
     }
 
-    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(ExecContextImpl execContext, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(@Nullable ExecContextImpl execContext, Long taskId) {
         try {
             final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+            if (execContext==null) {
+                return withTaskList;
+            }
             changeGraph(execContext, graph -> {
 
                 Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
@@ -538,9 +545,12 @@ public class ExecContextGraphService {
         });
     }
 
-    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsError(ExecContextImpl execContext, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsError(@Nullable ExecContextImpl execContext, Long taskId) {
         try {
             final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+            if (execContext==null) {
+                return withTaskList;
+            }
             changeGraph(execContext, graph -> setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.ERROR));
             return withTaskList;
         }
@@ -550,9 +560,12 @@ public class ExecContextGraphService {
         }
     }
 
-    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsSkipped(ExecContextImpl execContext, String taskContextId, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsSkipped(@Nullable ExecContextImpl execContext, String taskContextId, Long taskId) {
         try {
             final ExecContextOperationStatusWithTaskList withTaskList = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+            if (execContext==null) {
+                return withTaskList;
+            }
             changeGraph(execContext, graph -> setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.SKIPPED, taskContextId));
             return withTaskList;
         }
@@ -587,7 +600,10 @@ public class ExecContextGraphService {
         withTaskList.childrenTasks.addAll(setFiltered);
     }
 
-    public OperationStatusRest addNewTasksToGraph(ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+    public OperationStatusRest addNewTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+        if (execContext==null) {
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
         try {
             changeGraph(execContext, graph -> {
                 List<ExecContextData.TaskVertex> vertices = graph.vertexSet()
@@ -610,7 +626,10 @@ public class ExecContextGraphService {
     }
 
     @Nullable
-    public Void createEdges(ExecContextImpl execContext, List<Long> lastIds, Set<ExecContextData.TaskVertex> descendants) {
+    public Void createEdges(@Nullable ExecContextImpl execContext, List<Long> lastIds, Set<ExecContextData.TaskVertex> descendants) {
+        if (execContext==null) {
+            return null;
+        }
         changeGraph(execContext, graph ->
                 graph.vertexSet().stream()
                         .filter(o -> lastIds.contains(o.taskId))
