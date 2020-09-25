@@ -302,13 +302,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
             catch (Throwable th) {
                 log.error("Error while workbookRepository.deleteById()", th);
             }
-            try {
+            assertDoesNotThrow(()->{
                 taskRepository.deleteByExecContextId(execContextForTest.getId());
-//            } catch (ObjectOptimisticLockingFailureException th) {
-
-            } catch (Throwable th) {
-                log.error("Error while taskRepository.deleteByRefIdAndRefType()", th);
-            }
+            });
         }
         try {
             globalVariableService.deleteByVariable(GLOBAL_TEST_VARIABLE);
@@ -318,15 +314,15 @@ public abstract class PreparingSourceCode extends PreparingCore {
     }
 
     public TaskProducingResultComplex produceTasksForTest() {
-        {
-            SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getSourceCodeYamlAsString());
-            assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(getSourceCodeYamlAsString());
+        assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
 
-            SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
-            assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
+        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
+        assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
 
-            ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
-            execContextForTest = result.execContext;
+        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContext(sourceCode, company.getUniqueId());
+        execContextForTest = result.execContext;
+        return execContextSyncService.getWithSync(execContextForTest.id, () -> {
 
             assertFalse(result.isErrorMessages());
             assertNotNull(execContextForTest);
@@ -338,8 +334,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
             execContextForTest = Objects.requireNonNull(execContextCache.findById(this.execContextForTest.id));
             assertNotNull(execContextForTest);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
-        }
-        {
             SourceCodeApiData.TaskProducingResultComplex result1 = sourceCodeService.produceAllTasks(true, sourceCode, this.execContextForTest);
             experiment = Objects.requireNonNull(experimentCache.findById(experiment.id));
 
@@ -350,7 +344,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertEquals(EnumsApi.TaskProducingStatus.OK, result1.taskProducingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCED, EnumsApi.ExecContextState.toState(this.execContextForTest.getState()));
             return result1;
-        }
+        });
     }
 
     private void deleteFunction(@Nullable Function s) {

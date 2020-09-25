@@ -63,46 +63,47 @@ public class TestGraphEdges extends PreparingSourceCode {
         execContextForTest = result.execContext;
 
         assertNotNull(execContextForTest);
+        execContextSyncService.getWithSync(execContextForTest.id, () -> {
+            OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(),
+                    List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
+            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
-        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id), List.of(),
-                List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
-        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+            assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
-        assertEquals(EnumsApi.OperationStatus.OK, osr.status);
+            long count = execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest);
+            assertEquals(1, count);
 
-        long count = execContextGraphTopLevelService.getCountUnfinishedTasks(execContextForTest);
-        assertEquals(1, count);
+            osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id),List.of(1L),
+                    List.of(new TaskApiData.TaskWithContext(21L, "123###1"),
+                            new TaskApiData.TaskWithContext(22L, "123###1"),
+                            new TaskApiData.TaskWithContext(23L, "123###1")));
+            assertEquals(EnumsApi.OperationStatus.OK, osr.status);
+            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
+            List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
 
-        osr = execContextGraphService.addNewTasksToGraph(execContextCache.findById(execContextForTest.id),List.of(1L),
-                List.of(new TaskApiData.TaskWithContext(21L, "123###1"),
-                        new TaskApiData.TaskWithContext(22L, "123###1"),
-                        new TaskApiData.TaskWithContext(23L, "123###1")));
-        assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+            assertEquals(3, leafs.size());
 
-        List<ExecContextData.TaskVertex> leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
+            assertTrue(leafs.contains(new ExecContextData.TaskVertex(21L, 21L, EnumsApi.TaskExecState.NONE, "123###1")));
+            assertTrue(leafs.contains(new ExecContextData.TaskVertex(22L, 22L, EnumsApi.TaskExecState.NONE, "123###1")));
+            assertTrue(leafs.contains(new ExecContextData.TaskVertex(23L, 23L, EnumsApi.TaskExecState.NONE, "123###1")));
 
-        assertEquals(3, leafs.size());
+            osr = execContextGraphService.addNewTasksToGraph( execContextCache.findById(execContextForTest.id), List.of(21L),
+                    List.of(new TaskApiData.TaskWithContext(311L, "123###1"),
+                            new TaskApiData.TaskWithContext(312L, "123###1"),
+                            new TaskApiData.TaskWithContext(313L, "123###1")));
+            assertEquals(EnumsApi.OperationStatus.OK, osr.status);
+            execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
 
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(21L, 21L, EnumsApi.TaskExecState.NONE, "123###1")));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(22L, 22L, EnumsApi.TaskExecState.NONE, "123###1")));
-        assertTrue(leafs.contains(new ExecContextData.TaskVertex(23L, 23L, EnumsApi.TaskExecState.NONE, "123###1")));
+            Set<ExecContextData.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 1L);
+            assertEquals(6, descendands.size());
 
-        osr = execContextGraphService.addNewTasksToGraph( execContextCache.findById(execContextForTest.id), List.of(21L),
-                List.of(new TaskApiData.TaskWithContext(311L, "123###1"),
-                        new TaskApiData.TaskWithContext(312L, "123###1"),
-                        new TaskApiData.TaskWithContext(313L, "123###1")));
-        assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
+            descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 21L);
+            assertEquals(3, descendands.size());
 
-        Set<ExecContextData.TaskVertex> descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 1L);
-        assertEquals(6, descendands.size());
-
-        descendands = execContextGraphTopLevelService.findDescendants(execContextForTest, 21L);
-        assertEquals(3, descendands.size());
-
-        leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
-        assertEquals(5, leafs.size());
+            leafs = execContextGraphTopLevelService.findLeafs(execContextForTest);
+            assertEquals(5, leafs.size());
+            return null;
+        });
     }
 }
