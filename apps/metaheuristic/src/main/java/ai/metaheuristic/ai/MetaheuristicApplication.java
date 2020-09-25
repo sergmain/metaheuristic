@@ -21,8 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.nio.charset.StandardCharsets;
-
 @SpringBootApplication
 @Slf4j
 public class MetaheuristicApplication {
@@ -30,7 +28,8 @@ public class MetaheuristicApplication {
     public static void main(String[] args) {
         final String encoding = System.getProperty("file.encoding");
         if (!StringUtils.equalsAnyIgnoreCase(encoding, "utf8", "utf-8")) {
-            System.out.println("Must be run with -Dfile.encoding=UTF-8 ");
+            System.out.println("Must be run with -Dfile.encoding=UTF-8, actual file.encoding: " + encoding);
+            System.exit(-1);
         }
 //        System.setProperty("file.encoding", StandardCharsets.UTF_8.toString());
 //        System.setProperty("sun.jnu.encoding", StandardCharsets.UTF_8.toString());
