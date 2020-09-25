@@ -29,6 +29,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -93,14 +94,7 @@ public class ExecContextSchedulerService {
     }
 
     private void reconcileStates(Long execContextId) {
-        List<Object[]> list = taskRepository.findAllExecStateByExecContextId(execContextId);
-
-        // Reconcile states in db and in graph
-        Map<Long, TaskData.TaskState> states = new HashMap<>(list.size()+1);
-        for (Object[] o : list) {
-            TaskData.TaskState taskState = new TaskData.TaskState(o);
-            states.put(taskState.taskId, taskState);
-        }
+        final Map<Long, TaskData.TaskState> states = getExecStateOfTasks(execContextId);
 
         Map<Long, TaskData.TaskState> taskStates = new HashMap<>();
         AtomicBoolean isNullState = new AtomicBoolean(false);
@@ -109,6 +103,8 @@ public class ExecContextSchedulerService {
         if (execContext==null) {
             return;
         }
+
+        // Reconcile states in db and in graph
         List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAll(execContext);
         vertices.stream().parallel().forEach(tv -> {
             TaskData.TaskState taskState = states.get(tv.taskId);
@@ -126,15 +122,21 @@ public class ExecContextSchedulerService {
         if (isNullState.get()) {
             log.info("#751.060 Found non-created task, graph consistency is failed");
             execContextFSM.toError(execContextId);
+            return;
         }
-        else {
-            taskTransactionalService.updateTaskExecStates(execContextId, taskStates);
+
+        if (taskStates.isEmpty()) {
+            return;
         }
+
+        taskTransactionalService.updateTaskExecStates(execContextId, taskStates);
+
+        final Map<Long, TaskData.TaskState> newStates = getExecStateOfTasks(execContextId);
 
         // fix actual state of tasks (can be as a result of OptimisticLockingException)
         // fix IN_PROCESSING state
         // find and reset all hanging up tasks
-        states.entrySet().stream()
+        newStates.entrySet().stream()
                 .filter(e-> EnumsApi.TaskExecState.IN_PROGRESS.value==e.getValue().execState)
                 .forEach(e->{
                     Long taskId = e.getKey();
@@ -158,5 +160,17 @@ public class ExecContextSchedulerService {
                         }
                     }
                 });
+    }
+
+    @NonNull
+    private Map<Long, TaskData.TaskState> getExecStateOfTasks(Long execContextId) {
+        List<Object[]> list = taskRepository.findAllExecStateByExecContextId(execContextId);
+
+        Map<Long, TaskData.TaskState> states = new HashMap<>(list.size()+1);
+        for (Object[] o : list) {
+            TaskData.TaskState taskState = new TaskData.TaskState(o);
+            states.put(taskState.taskId, taskState);
+        }
+        return states;
     }
 }

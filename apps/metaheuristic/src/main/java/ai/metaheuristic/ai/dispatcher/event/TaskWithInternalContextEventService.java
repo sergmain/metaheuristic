@@ -19,11 +19,14 @@ package ai.metaheuristic.ai.dispatcher.event;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -68,6 +71,8 @@ public class TaskWithInternalContextEventService {
     private final VariableService variableService;
     private final TaskTransactionalService taskTransactionalService;
     private final TaskExecStateService taskExecStateService;
+    private final ExecContextSyncService execContextSyncService;
+    private final TaskRepository taskRepository;
 
     private static Long lastTaskId=null;
     // this code is only for testing
@@ -79,33 +84,34 @@ public class TaskWithInternalContextEventService {
     @EventListener
     public void handleAsync(final TaskWithInternalContextEvent event) {
         try {
-            taskSyncService.getWithSyncVoid(event.taskId, (task) -> {
+            TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
+            if (task==null) {
+                log.warn("Task #{} with internal context doesn't exist", event.taskId);
+                return;
+            }
+
+            //            taskSyncService.getWithSyncVoid(event.taskId, (task) -> {
+             execContextSyncService.getWithSyncNullable(task.execContextId, execContext -> {
+                if (execContext == null) {
+                    taskExecStateService.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10000,
+                            "#707.030 Task #" + event.taskId + " is broken, execContext #" + task.execContextId + " wasn't found.");
+                    return null;
+                }
                 try {
-                    if (task == null) {
-                        log.warn("#707.010 step #1, task is null");
-                        return;
-                    }
                     if (task.execState == TaskExecState.IN_PROGRESS.value) {
                         log.error("#707.012 Task #"+event.taskId+" already in progress. mustn't happened. it's, actually, illegal state");
-                        return;
+                        return null;
                     }
                     if (task.execState!=TaskExecState.NONE.value) {
                         log.info("#707.011 Task #"+event.taskId+" was already processed with state " + TaskExecState.from(task.execState));
-                        return;
+                        return null;
                     }
                     if (TaskExecState.isFinishedState(task.execState)) {
                         log.error("#707.015 Task #"+event.taskId+" already was finished");
-                        return;
+                        return null;
                     }
                     taskTransactionalService.updateTaskExecStates(task.execContextId,
                             Map.of(task.id, new TaskData.TaskState(task.id, TaskExecState.IN_PROGRESS.value, 0L, task.params)));
-
-                    ExecContextImpl execContext = execContextCache.findById(task.execContextId);
-                    if (execContext == null) {
-                        taskExecStateService.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10000,
-                                "#707.030 Task #" + event.taskId + " is broken, execContext #" + task.execContextId + " wasn't found.");
-                        return;
-                    }
 
                     TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
                     ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
@@ -117,7 +123,7 @@ public class TaskWithInternalContextEventService {
                         }
                         else {
                             log.warn("#707.040 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + execContext.id);
-                            return;
+                            return null;
                         }
                     }
 
@@ -132,7 +138,7 @@ public class TaskWithInternalContextEventService {
 
                     if (result.processing != Enums.InternalFunctionProcessing.ok) {
                         taskTransactionalService.markAsFinishedWithError(task, execContext, taskParamsYaml, result);
-                        return;
+                        return null;
                     }
                     taskPersistencer.setResultReceivedForInternalFunction(event.taskId);
 
@@ -147,7 +153,7 @@ public class TaskWithInternalContextEventService {
                             taskTransactionalService.updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), taskParamsYaml.task.taskContextId);
                         }
                     });
-                    return;
+                    return null;
                 } catch (CommonErrorWithDataException th) {
                     String es = "#707.067 Task #" + event.taskId + " and "+th.getAdditionalInfo()+" was processed with error: " + th.getMessage();
                     taskExecStateService.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10002, es);
@@ -157,7 +163,7 @@ public class TaskWithInternalContextEventService {
                     taskExecStateService.finishTaskAsError(event.taskId, TaskExecState.ERROR, -10003, es);
                     log.error(es, th);
                 }
-                return;
+                 return null;
             });
         } catch (Throwable th) {
             String es = "#707.080 Task #" + event.taskId + " was processed with error: " + th.getMessage();

@@ -577,10 +577,14 @@ public class ExecContextGraphService {
 
         // find and filter a 'mh.finish' vertex, which doesn't have any outgoing edges
         //noinspection SimplifiableConditionalExpression
-        set.stream()
+        Set<ExecContextData.TaskVertex> setFiltered = set.stream()
                 .filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty() && (context==null ? true : ContextUtils.getWithoutSubContext(tv.taskContextId).startsWith(context)))
-                .forEach( tv-> tv.execState = state);
-        withTaskList.childrenTasks.addAll(set);
+                .filter( tv-> tv.execState!=state)
+                .collect(Collectors.toSet());
+
+        setFiltered.forEach( tv-> tv.execState = state);
+
+        withTaskList.childrenTasks.addAll(setFiltered);
     }
 
     public OperationStatusRest addNewTasksToGraph(ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {

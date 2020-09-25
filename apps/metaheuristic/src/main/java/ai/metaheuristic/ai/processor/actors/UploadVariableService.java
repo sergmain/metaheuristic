@@ -163,7 +163,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             if (status!=null) {
                 switch(status) {
                     case OK:
-                        log.info("Resource was successfully uploaded to server, {}, {} ", task.dispatcher.url, task.taskId);
+                        log.info("Variable #{} was successfully uploaded to server, {}, {} ", finalTask.variableId, task.dispatcher.url, task.taskId);
                         processorTaskService.setVariableUploadedAndCompleted(task.dispatcher.url, task.taskId, finalTask.variableId);
                         break;
                     case FILENAME_IS_BLANK:

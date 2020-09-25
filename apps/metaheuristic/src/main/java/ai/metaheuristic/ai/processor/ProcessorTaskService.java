@@ -235,7 +235,7 @@ public class ProcessorTaskService {
 
     public void setVariableUploadedAndCompleted(String dispatcherUrl, Long taskId, Long outputVariableId) {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            log.info("setResourceUploadedAndCompleted({}, {})", dispatcherUrl, taskId);
+            log.info("setResourceUploadedAndCompleted({}, {}, {})", dispatcherUrl, taskId, outputVariableId);
             ProcessorTask task = findById(dispatcherUrl, taskId);
             if (task == null) {
                 log.error("#713.090 ProcessorTask wasn't found for Id {}", taskId);

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -27,8 +28,12 @@ import java.nio.charset.StandardCharsets;
 public class MetaheuristicApplication {
 
     public static void main(String[] args) {
-        System.setProperty("file.encoding", StandardCharsets.UTF_8.toString());
-        System.setProperty("sun.jnu.encoding", StandardCharsets.UTF_8.toString());
+        final String encoding = System.getProperty("file.encoding");
+        if (!StringUtils.equalsAnyIgnoreCase(encoding, "utf8", "utf-8")) {
+            System.out.println("Must be run with -Dfile.encoding=UTF-8 ");
+        }
+//        System.setProperty("file.encoding", StandardCharsets.UTF_8.toString());
+//        System.setProperty("sun.jnu.encoding", StandardCharsets.UTF_8.toString());
         SpringApplication.run(MetaheuristicApplication.class, args);
     }
 }

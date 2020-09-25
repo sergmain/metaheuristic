@@ -109,47 +109,49 @@ public class TaskTransactionalService {
                     "#705.080 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
 
-        Task t = taskExecStateService.resetTask(task.id);
-        if (t==null) {
-            ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsError(task.getExecContextId(), task.id);
-            taskExecStateService.updateTasksStateInDb(withTaskList);
-            if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.100 Can't re-run task #" + taskId + ", see log for more information");
-            }
-        }
-        else {
-            ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(task.execContextId, task.id);
-            if (withTaskList == null) {
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-                finishWithError(taskId, task.execContextId, tpy.task.taskContextId, task.params);
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#705.120 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any execContext");
+        return execContextSyncService.getWithSync(task.execContextId, execContext -> {
+
+            Task t = taskExecStateService.resetTask(task.id);
+            if (t == null) {
+                ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithSettingAllChildrenTasksAsError(task.getExecContextId(), task.id);
+                taskExecStateService.updateTasksStateInDb(withTaskList);
+                if (withTaskList.status.status == EnumsApi.OperationStatus.ERROR) {
+                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.100 Can't re-run task #" + taskId + ", see log for more information");
+                }
+            } else {
+                ExecContextOperationStatusWithTaskList withTaskList = execContextGraphTopLevelService.updateGraphWithResettingAllChildrenTasks(task.execContextId, task.id);
+                if (withTaskList == null) {
+                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+                    finishWithError(taskId, task.execContextId, tpy.task.taskContextId, task.params);
+                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                            "#705.120 Can't re-run task " + taskId + ", this task is orphan and doesn't belong to any execContext");
+                }
+
+                if (withTaskList.status.status == EnumsApi.OperationStatus.ERROR) {
+                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.140 Can't re-run task #" + taskId + ", see log for more information");
+                }
+                taskExecStateService.updateTasksStateInDb(withTaskList);
+
+                ExecContextImpl ec = execContextCache.findById(task.execContextId);
+                if (ec != null && ec.state != EnumsApi.ExecContextState.STARTED.code) {
+                    execContextFSM.toState(ec.id, EnumsApi.ExecContextState.STARTED);
+                }
             }
 
-            if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.140 Can't re-run task #" + taskId + ", see log for more information");
-            }
-            taskExecStateService.updateTasksStateInDb(withTaskList);
-
-            ExecContextImpl execContext = execContextCache.findById(task.execContextId);
-            if (execContext!=null && execContext.state != EnumsApi.ExecContextState.STARTED.code) {
-                execContextFSM.toState(execContext.id, EnumsApi.ExecContextState.STARTED);
-            }
-        }
-
-        return OperationStatusRest.OPERATION_STATUS_OK;
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        });
     }
 
     public void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, Consumer<Task> action) {
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(result.getResult());
         if (functionExec==null) {
-            String es = "#307.045 Task #" + result.taskId + " has empty execResult";
+            String es = "#303.045 Task #" + result.taskId + " has empty execResult";
             log.info(es);
             functionExec = new FunctionApiData.FunctionExec();
         }
         FunctionApiData.SystemExecResult systemExecResult = functionExec.generalExec!=null ? functionExec.generalExec : functionExec.exec;
         if (!systemExecResult.isOk) {
-            log.warn("#307.050 Task #{} finished with error, functionCode: {}, console: {}",
+            log.warn("#303.050 Task #{} finished with error, functionCode: {}, console: {}",
                     result.taskId,
                     systemExecResult.functionCode,
                     StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>");
@@ -165,8 +167,8 @@ public class TaskTransactionalService {
                     null, result.taskId, t.getExecContextId());
             action.accept(t);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#307.060 !!!NEED TO INVESTIGATE. Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
-            log.error("#307.061 ObjectOptimisticLockingFailureException", e);
+            log.error("#303.060 !!!NEED TO INVESTIGATE. Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
+            log.error("#303.061 ObjectOptimisticLockingFailureException", e);
         }
     }
 
@@ -174,7 +176,7 @@ public class TaskTransactionalService {
     private Task prepareAndSaveTask(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
         return taskSyncService.getWithSync(result.taskId, (task) -> {
             if (task==null) {
-                log.warn("#307.110 Can't find Task for Id: {}", result.taskId);
+                log.warn("#303.110 Can't find Task for Id: {}", result.taskId);
                 return null;
             }
             task.setExecState(state.value);
@@ -201,14 +203,22 @@ public class TaskTransactionalService {
     }
 
     public void storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
-        storeExecResult(result, t -> {
-            if (t!=null) {
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
-                ExecContextOperationStatusWithTaskList status = updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), tpy.task.taskContextId);
-                for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
-                    taskExecStateService.changeTaskState(childrenTask.taskId, childrenTask.execState);
+        TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
+        if (task==null) {
+            log.warn("Reporting about non-existed task #{}", result.taskId);
+            return;
+        }
+        execContextSyncService.getWithSyncNullable(task.execContextId, execContext -> {
+            storeExecResult(result, t -> {
+                if (t != null) {
+                    TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
+                    ExecContextOperationStatusWithTaskList status = updateTaskExecStateByExecContextId(t.getExecContextId(), t.getId(), t.getExecState(), tpy.task.taskContextId);
+                    for (ExecContextData.TaskVertex childrenTask : status.childrenTasks) {
+                        taskExecStateService.changeTaskState(childrenTask.taskId, childrenTask.execState);
+                    }
                 }
-            }
+            });
+            return null;
         });
     }
 
@@ -357,7 +367,7 @@ public class TaskTransactionalService {
     }
 
     public void finishWithError(Long taskId, Long execContextId, @Nullable String taskContextId, @Nullable String params) {
-        finishWithError(taskId, "#307.080 Task was finished with an unknown error, can't process it", execContextId, taskContextId, params);
+        finishWithError(taskId, "#303.080 Task was finished with an unknown error, can't process it", execContextId, taskContextId, params);
     }
 
     @SuppressWarnings("unused")

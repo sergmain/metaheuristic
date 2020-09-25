@@ -54,15 +54,11 @@ public class TaskExecStateService {
     @Nullable
     public Task resetTask(final Long taskId) {
         return taskSyncService.getWithSync(taskId, (task) -> {
-            log.info("Start resetting task #{}", taskId);
+            log.info("#305.010 Start re-setting task #{}", taskId);
             if (task==null) {
-                log.error("#307.020 task is null");
+                log.error("#305.020 task is null");
                 return null;
             }
-            if (task.execState== EnumsApi.TaskExecState.NONE.value) {
-                return task;
-            }
-
             task.setFunctionExecResults(null);
             task.setProcessorId(null);
             task.setAssignedOn(null);
@@ -73,6 +69,7 @@ public class TaskExecStateService {
             task.setResultResourceScheduledOn(0);
             task = taskRepository.save(task);
 
+            log.info("#305.030 task #{} was re-setted to initial state", taskId);
             return task;
         });
     }
@@ -89,21 +86,38 @@ public class TaskExecStateService {
     public void toOkSimple(Long taskId) {
         taskSyncService.getWithSync(taskId, (task) -> {
             if (task==null) {
-                log.warn("#307.040 Can't find Task for Id: {}", taskId);
+                log.warn("#305.040 Can't find Task for Id: {}", taskId);
                 return null;
+            }
+            if (task.execState==EnumsApi.TaskExecState.OK.value) {
+                return task;
             }
             task.setExecState(EnumsApi.TaskExecState.OK.value);
             return taskRepository.save(task);
         });
     }
 
+    public void toNoneSimple(Long taskId) {
+        taskSyncService.getWithSync(taskId, (task) -> {
+            if (task==null) {
+                log.warn("#305.040 Can't find Task for Id: {}", taskId);
+                return null;
+            }
+            if (task.execState==EnumsApi.TaskExecState.NONE.value) {
+                return task;
+            }
+            task.setExecState(EnumsApi.TaskExecState.NONE.value);
+            return taskRepository.save(task);
+        });
+    }
+
     public void finishTaskAsError(Long taskId, EnumsApi.TaskExecState state, int exitCode, String console) {
         if (state!=EnumsApi.TaskExecState.ERROR) {
-            throw new IllegalStateException("#307.060 state must be EnumsApi.TaskExecState.ERROR, actual: " +state);
+            throw new IllegalStateException("#305.060 state must be EnumsApi.TaskExecState.ERROR, actual: " +state);
         }
         taskSyncService.getWithSync(taskId, (task) -> {
             if (task==null) {
-                log.warn("#307.080 Can't find Task for Id: {}", taskId);
+                log.warn("#305.080 Can't find Task for Id: {}", taskId);
                 return null;
             }
             if (task.execState==state.value && task.isCompleted && task.resultReceived && !S.b(task.functionExecResults)) {
@@ -128,23 +142,21 @@ public class TaskExecStateService {
         });
     }
 
-    @Nullable
-    public TaskImpl toInProgressSimple(Long taskId) {
-        return taskSyncService.getWithSync(taskId, this::toInProgressSimpleLambda);
+    private void toInProgressSimple(Long taskId) {
+        taskSyncService.getWithSync(taskId, this::toInProgressSimpleLambda);
     }
 
-    @Nullable
-    public TaskImpl toSkippedSimple(Long taskId) {
-        return taskSyncService.getWithSync(taskId, this::toSkippedSimpleLambda);
+    private void toSkippedSimple(Long taskId) {
+        taskSyncService.getWithSync(taskId, this::toSkippedSimpleLambda);
     }
 
     public void changeTaskState(Long taskId, EnumsApi.TaskExecState state){
         switch (state) {
             case NONE:
-                resetTask(taskId);
+                toNoneSimple(taskId);
                 break;
             case ERROR:
-                finishTaskAsError(taskId, state, -997, "#307.100 Task was finished with an unknown error, can't process it");
+                finishTaskAsError(taskId, state, -997, "#305.100 Task was finished with an unknown error, can't process it");
                 break;
             case OK:
                 toOkSimple(taskId);

@@ -44,7 +44,7 @@ public class SystemProcessLauncher {
     }
 
     public static FunctionApiData.SystemExecResult execCommand(
-            List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate, String functionCode,
+            List<String> cmd, File execDir, File consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines) throws IOException, InterruptedException {
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);

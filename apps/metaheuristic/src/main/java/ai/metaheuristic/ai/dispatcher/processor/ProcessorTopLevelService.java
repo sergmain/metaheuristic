@@ -107,7 +107,7 @@ public class ProcessorTopLevelService {
 
     private @Nullable String processorBlacklisted(ProcessorStatusYaml status) {
         if (status.taskParamsVersion > TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
-            return "Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
+            return "#807.020 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
         }
         return null;
     }
@@ -115,7 +115,7 @@ public class ProcessorTopLevelService {
     public ProcessorData.ProcessorResult getProcessor(Long id) {
         Processor processor = processorCache.findById(id);
         if (processor==null) {
-            return new ProcessorData.ProcessorResult("Processor wasn't found for id #"+ id);
+            return new ProcessorData.ProcessorResult("#807.040 Processor wasn't found for id #"+ id);
         }
         ProcessorData.ProcessorResult r = new ProcessorData.ProcessorResult(processor);
         return r;
@@ -124,7 +124,7 @@ public class ProcessorTopLevelService {
     public ProcessorData.ProcessorResult saveProcessor(Processor processor) {
         Processor s = processorRepository.findByIdForUpdate(processor.getId());
         if (s==null) {
-            return new ProcessorData.ProcessorResult("#807.05 processor wasn't found, processorId: " + processor.getId());
+            return new ProcessorData.ProcessorResult("#807.060 processor wasn't found, processorId: " + processor.getId());
         }
         s.description = processor.description;
         ProcessorData.ProcessorResult r = new ProcessorData.ProcessorResult(processorCache.save(s));
@@ -134,7 +134,7 @@ public class ProcessorTopLevelService {
     public OperationStatusRest deleteProcessorById(Long id) {
         Processor processor = processorCache.findById(id);
         if (processor == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.15 Processor wasn't found, processorId: " + id);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.080 Processor wasn't found, processorId: " + id);
         }
         processorCache.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -154,7 +154,7 @@ public class ProcessorTopLevelService {
             final Processor processor = processorRepository.findByIdForUpdate(processorId);
             if (processor == null) {
                 // we throw ISE cos all checks have to be made early
-                throw new IllegalStateException("Processor wasn't found for processorId: " + processorId);
+                throw new IllegalStateException("#807.100 Processor wasn't found for processorId: " + processorId);
             }
             ProcessorStatusYaml ss = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.status);
             boolean isUpdated = false;
@@ -190,10 +190,10 @@ public class ProcessorTopLevelService {
             }
             if (isUpdated) {
                 try {
-                    log.debug("Save new processor status, processor: {}", processor);
+                    log.debug("#807.120 Save new processor status, processor: {}", processor);
                     processorCache.save(processor);
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.warn("#807.105 ObjectOptimisticLockingFailureException was encountered\n" +
+                    log.warn("#807.140 ObjectOptimisticLockingFailureException was encountered\n" +
                             "new processor:\n{}\n" +
                             "db processor\n{}", processor, processorRepository.findById(processorId).orElse(null));
 
@@ -201,12 +201,12 @@ public class ProcessorTopLevelService {
                 }
             }
             else {
-                log.debug("Processor status is equal to the status stored in db");
+                log.debug("#807.160 Processor status is equal to the status stored in db");
             }
         } finally {
             lock.unlock();
         }
-        log.debug("After leaving sync block");
+        log.debug("#807.180 After leaving sync block");
     }
 
     public static boolean isProcessorStatusDifferent(ProcessorStatusYaml ss, ProcessorCommParamsYaml.ReportProcessorStatus status) {
@@ -236,8 +236,6 @@ public class ProcessorTopLevelService {
         return false;
     }
 
-    // TODO Need to re-write this method
-    // TODO 2020-01-18 why need to re-write?
     public void reconcileProcessorTasks(@Nullable String processorIdAsStr, List<ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus> statuses) {
         if (S.b(processorIdAsStr)) {
             return;
@@ -248,23 +246,23 @@ public class ProcessorTopLevelService {
             long taskId = ((Number)obj[0]).longValue();
             Long assignedOn = obj[1]!=null ? ((Number)obj[1]).longValue() : null;
 
-            boolean isFound = false;
-            for (ProcessorCommParamsYaml.ReportProcessorTaskStatus.SimpleStatus status : statuses) {
-                if (status.taskId == taskId) {
-                    isFound = true;
-                    break;
-                }
+            if (assignedOn==null) {
+                log.error("#807.190 Processor #{} has a task with assignedOn is null", processorIdAsStr);
             }
 
+            boolean isFound = statuses.stream().anyMatch(status -> status.taskId == taskId);
             boolean isExpired = assignedOn!=null && (System.currentTimeMillis() - assignedOn > 90_000);
+
+            // if Processor haven't reported back about this task in 90 seconds,
+            // this task will be de-assigned from this Processor
             if (!isFound && isExpired) {
-                log.info("De-assign task #{} from processor #{}", taskId, processorIdAsStr);
+                log.info("#807.200 De-assign task #{} from processor #{}", taskId, processorIdAsStr);
                 log.info("\tstatuses: {}", statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()));
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
-                log.info("\tisFound: {}, is expired: {}", isFound, isExpired);
+                log.info("\tassignedOn: {}, isFound: {}, is expired: {}", assignedOn, isFound, isExpired);
                 OperationStatusRest result = taskTransactionalService.resetTask(taskId);
                 if (result.status== EnumsApi.OperationStatus.ERROR) {
-                    log.error("#179.10 Resetting of task #{} was failed. See log for more info.", taskId);
+                    log.error("#807.220 Resetting of task #{} was failed. See log for more info.", taskId);
                 }
             }
         }

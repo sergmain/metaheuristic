@@ -44,7 +44,13 @@ public class TaskSyncService {
     private static final CommonSync<Long> commonSync = new CommonSync<>();
 
     public @Nullable <T> T getWithSync(Long taskId, Function<TaskImpl, T> function) {
+        return getWithSync(false, taskId, function);
+    }
+    public @Nullable <T> T getWithSync(boolean debug, Long taskId, Function<TaskImpl, T> function) {
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(taskId);
+        if (debug) {
+            log.debug("WriteLock: " + lock);
+        }
         try {
             lock.lock();
             TaskImpl task = taskRepository.findByIdForUpdate(taskId);

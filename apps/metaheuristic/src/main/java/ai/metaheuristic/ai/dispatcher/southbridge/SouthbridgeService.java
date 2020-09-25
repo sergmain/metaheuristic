@@ -130,12 +130,6 @@ public class SouthbridgeService {
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 Variable for variableId "+variableId+" wasn't found" );
         }
 
-        // TODO 2020-07-31 should this code be deleted?
-/*
-        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable)));
-        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(variable.getParams());
-*/
-
         File tempDir=null;
         try {
             tempDir = DirUtils.createTempDir("upload-resource-");

@@ -42,11 +42,11 @@ public class TestDestroyProcesses {
     public void testDestroyProcesses() throws IOException, InterruptedException {
 
         if (!StringUtils.startsWithIgnoreCase(System.getProperty("os.name"), "Windows")) {
-            log.info("Can't run this test on non-window OS");
+            log.info("this test can't be run on non-window OS");
         }
         File f = new File("config\\exe\\HelloWorldCmd.exe");
         if (!f.exists()) {
-            log.info("Can't run this test, exe file doesn't exist.");
+            log.info("this test can't run, exe file doesn't exist.");
         }
 
         ProcessBuilder pb = new ProcessBuilder();

@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -64,11 +65,11 @@ public class GitSourcingService {
     @ToString
     public static class GitExecResult {
         public File functionDir;
-        public FunctionApiData.SystemExecResult systemExecResult;
+        public @Nullable FunctionApiData.SystemExecResult systemExecResult;
         public boolean ok;
         public String error;
 
-        public GitExecResult(FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
+        public GitExecResult(@Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
             this.systemExecResult = systemExecResult;
             this.ok = ok;
             this.error = error;
@@ -253,35 +254,30 @@ public class GitSourcingService {
 //fatal: index file corrupt
 
         // git fsck --full
-        //noinspection UnnecessaryLocalVariable
         GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", functionConfig.git.commit),0L);
         return result;
     }
 
     private GitExecResult execCheckoutRevision(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // git checkout sha1
-        //noinspection UnnecessaryLocalVariable
         GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", functionConfig.git.commit),0L);
         return result;
     }
 
     private GitExecResult execPullOrigin(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // pull origin master
-        //noinspection UnnecessaryLocalVariable
         GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", functionConfig.git.branch),0L);
         return result;
     }
 
     private GitExecResult execCleanDF(File repoDir) {
         // git clean -df
-        //noinspection UnnecessaryLocalVariable
         GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "clean", "-df"),120L);
         return result;
     }
 
     private GitExecResult execRevParse(File repoDir) {
         // git rev-parse --is-inside-work-tree
-        //noinspection UnnecessaryLocalVariable
         GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "rev-parse", "--is-inside-work-tree"),60L);
         return result;
     }
@@ -289,7 +285,6 @@ public class GitSourcingService {
     // TODO 2019-05-11 add this before checkout for new changes
     private GitExecResult execResetHardHead(File repoDir) {
         // git reset --hard HEAD
-        //noinspection UnnecessaryLocalVariable
         GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "reset", "--hard", "HEAD"),120L);
         return result;
     }
@@ -306,7 +301,6 @@ public class GitSourcingService {
         String gitUrl = mirror!=null ? mirror : functionConfig.git.repo;
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "clone", gitUrl, "git");
         log.info("exec {}", cmd);
-        //noinspection UnnecessaryLocalVariable
         GitExecResult result = execGitCmd(cmd, 0L);
         return result;
     }
