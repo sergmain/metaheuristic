@@ -74,7 +74,7 @@ public class ExecContextService {
     private final ProcessorCache processorCache;
     private final ExecContextCache execContextCache;
     private final ExecContextSyncService execContextSyncService;
-    private final ExecContextFSM execContextFSM;
+    public final ExecContextFSM execContextFSM;
     private final TaskProducingService taskProducingService;
     private final TaskProducingCoreService taskProducingCoreService;
     private final ApplicationEventPublisher eventPublisher;
@@ -100,19 +100,6 @@ public class ExecContextService {
         }
         execContext.setValid(status);
         execContextCache.save(execContext);
-    }
-
-    public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            return EnumsApi.TaskProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
-        }
-        if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
-            return EnumsApi.TaskProducingStatus.OK;
-        }
-        execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
-        execContextCache.save(execContext);
-        return EnumsApi.TaskProducingStatus.OK;
     }
 
     public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
@@ -231,36 +218,6 @@ public class ExecContextService {
             execContextFSM.storeExecResult(result);
         }
         return ids;
-    }
-
-    public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, ExecContextImpl execContext) {
-
-        ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
-
-        // create all not dynamic tasks
-        TaskData.ProduceTaskResult produceTaskResult = taskProducingService.produceTasks(isPersist, execContext.sourceCodeId, execContext.id, execContextParamsYaml);
-        if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
-            log.info(S.f("#705.560 Tasks were produced with status %s", produceTaskResult.status));
-        }
-        else {
-            log.info(S.f("#705.580 Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
-        }
-
-
-        SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
-        if (isPersist) {
-            if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
-                execContextFSM.toProduced(execContext.id);
-            }
-            else {
-                execContextFSM.toError(execContext.id);
-            }
-        }
-        result.numberOfTasks = produceTaskResult.numberOfTasks;
-        result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
-        result.taskProducingStatus = produceTaskResult.status;
-
-        return result;
     }
 
     public void deleteExecContext(Long execContextId, Long companyUniqueId) {

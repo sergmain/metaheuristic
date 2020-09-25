@@ -333,7 +333,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
 
 
-            EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForTest.id);
+            EnumsApi.TaskProducingStatus producingStatus = execContextFSM.toProducing(execContextForTest.id, execContextService);
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
             execContextForTest = Objects.requireNonNull(execContextCache.findById(this.execContextForTest.id));
             assertNotNull(execContextForTest);

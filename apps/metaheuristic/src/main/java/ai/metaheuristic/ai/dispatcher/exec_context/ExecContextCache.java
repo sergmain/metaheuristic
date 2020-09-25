@@ -49,7 +49,10 @@ public class ExecContextCache {
 
     @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
     public ExecContextImpl save(ExecContextImpl execContext) {
-        execContextSyncService.checkWriteLockPresent(execContext.id);
+        // execContext.id is null for a newly created bean
+        if (execContext.id!=null) {
+            execContextSyncService.checkWriteLockPresent(execContext.id);
+        }
         log.debug("#461.010 save execContext, id: #{}, execContext: {}", execContext.id, execContext);
         //noinspection CaughtExceptionImmediatelyRethrown
         try {

@@ -28,12 +28,16 @@ import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskPersistencer;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
@@ -411,6 +415,19 @@ public class ExecContextFSM {
         return false;
     }
 
-
+    public EnumsApi.TaskProducingStatus toProducing(Long execContextId, ExecContextService execContextService) {
+        return execContextSyncService.getWithSync(execContextId, () -> {
+            ExecContextImpl execContext = execContextCache.findById(execContextId);
+            if (execContext==null) {
+                return EnumsApi.TaskProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
+            }
+            if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
+                return EnumsApi.TaskProducingStatus.OK;
+            }
+            execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
+            execContextCache.save(execContext);
+            return EnumsApi.TaskProducingStatus.OK;
+        });
+    }
 
 }

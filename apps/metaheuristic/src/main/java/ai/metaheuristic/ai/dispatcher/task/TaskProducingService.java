@@ -17,15 +17,17 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionProcessor;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
+import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +53,8 @@ public class TaskProducingService {
     private final InternalFunctionProcessor internalFunctionProcessor;
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextCache execContextCache;
+    private final ExecContextSyncService execContextSyncService;
+    private final ExecContextFSM execContextFSM;
 
     public TaskData.ProduceTaskResult produceTasks(boolean isPersist, Long sourceCodeId, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
@@ -152,6 +156,39 @@ public class TaskProducingService {
         result.status = TaskProducingStatus.OK;
         return result;
     }
+
+    public SourceCodeApiData.TaskProducingResultComplex produceTasks(boolean isPersist, ExecContextImpl execContext) {
+        return execContextSyncService.getWithSync(execContext.id, () -> {
+
+            ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
+
+            // create all not dynamic tasks
+            TaskData.ProduceTaskResult produceTaskResult = produceTasks(isPersist, execContext.sourceCodeId, execContext.id, execContextParamsYaml);
+            if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
+                log.info(S.f("#705.560 Tasks were produced with status %s", produceTaskResult.status));
+            }
+            else {
+                log.info(S.f("#705.580 Tasks were produced with status %s, error: %s", produceTaskResult.status, produceTaskResult.error));
+            }
+
+
+            SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
+            if (isPersist) {
+                if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
+                    execContextFSM.toProduced(execContext.id);
+                }
+                else {
+                    execContextFSM.toError(execContext.id);
+                }
+            }
+            result.numberOfTasks = produceTaskResult.numberOfTasks;
+            result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+            result.taskProducingStatus = produceTaskResult.status;
+
+            return result;
+        });
+    }
+
 
 
 }

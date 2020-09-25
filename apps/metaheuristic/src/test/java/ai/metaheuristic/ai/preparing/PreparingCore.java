@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
@@ -92,6 +93,9 @@ public abstract class PreparingCore {
 
     @Autowired
     private FunctionDataService functionDataService;
+
+    @Autowired
+    public ExecContextFSM execContextFSM;
 
     public Processor processor = null;
     public String processorIdAsStr;

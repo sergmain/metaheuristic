@@ -21,8 +21,8 @@ import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -44,8 +44,8 @@ public class SourceCodeService {
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeValidationService sourceCodeValidationService;
 
-    private final ExecContextService execContextService;
     private final ExecContextFSM execContextFSM;
+    private final TaskProducingService taskProducingService;
 
 
     // TODO 2019.05.19 add reporting of producing of tasks
@@ -94,7 +94,7 @@ public class SourceCodeService {
         }
         Monitoring.log("##022", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        result = execContextService.produceTasks(isPersist, execContext);
+        result = taskProducingService.produceTasks(isPersist, execContext);
         log.info("#701.170 SourceCodeService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 

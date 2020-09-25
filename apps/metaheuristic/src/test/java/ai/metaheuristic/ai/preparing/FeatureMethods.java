@@ -132,7 +132,7 @@ public abstract class FeatureMethods extends PreparingSourceCode {
             assertEquals(EnumsApi.ExecContextState.NONE.code, execContextForTest.getState());
 
 
-            EnumsApi.TaskProducingStatus producingStatus = execContextService.toProducing(execContextForTest.id);
+            EnumsApi.TaskProducingStatus producingStatus = execContextFSM.toProducing(execContextForTest.id, execContextService);
             execContextForTest = Objects.requireNonNull(execContextCache.findById(execContextForTest.id));
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, execContextForTest.getState());
